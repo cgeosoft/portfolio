@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: #0b0f19;
+    --background-widget: #111726;
+    --background-card: #151d30;
+    --border: #1e293b;
+    --border-accent: #DD3C73;
+    --accent: #DD3C73;
+    --accent-rgb: 221, 60, 115;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --status-success: #A7E2C0;
+    --status-success-rgb: 167, 226, 192;
+    --status-error: #DD3C73;
+    --status-error-rgb: 221, 60, 115;
+    --status-warning: #E3EACD;
+    --status-info: #243C8F;
+
+    --palette-purple: #341B83;
+    --palette-pink: #DD3C73;
+    --palette-cream: #E3EACD;
+    --palette-mint: #A7E2C0;
+    --palette-blue: #243C8F;
+  }
+
+  html,
+  body {
+    color-scheme: dark;
+    margin: 0;
+    padding: 0;
+    font-family: 'JetBrains Mono', monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background-color: var(--background);
+    color: var(--text-main);
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  select,
+  option,
+  optgroup {
+    color-scheme: dark;
+  }
+
+  select {
+    background-color: var(--background-widget);
+    color: var(--text-main);
+  }
+
+  option {
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+
+  optgroup {
+    background-color: #0b0f19;
+    color: #94a3b8;
+  }
+
+  /* Tactical Cyberpunk Grid & Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0f19;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+}
+
+.cx-card {
+  background-color: var(--background-widget);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.cx-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}

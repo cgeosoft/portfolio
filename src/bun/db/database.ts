@@ -1,0 +1,128 @@
+import { Database } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { getStorageDir } from "../config.js";
+
+const DB_PATH = join(getStorageDir(), "data", "portfolio.sqlite");
+
+let db: Database | null = null;
+
+/** Get or create the SQLite database connection */
+export function getDatabase(): Database {
+  if (db) return db;
+
+  // Ensure directory exists
+  mkdirSync(dirname(DB_PATH), { recursive: true });
+
+  db = new Database(DB_PATH, { create: true });
+
+  // Enable WAL mode for better concurrent read performance
+  db.run("PRAGMA journal_mode = WAL");
+  db.run("PRAGMA foreign_keys = ON");
+
+  initializeSchema(db);
+
+  return db;
+}
+
+/** Create tables and indexes if they do not exist */
+function initializeSchema(database: Database): void {
+  database.run(`
+    CREATE TABLE IF NOT EXISTS portfolios (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT 'Main Portfolio',
+      description TEXT,
+      baseCurrency TEXT NOT NULL DEFAULT 'EUR',
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS transactions (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      date TEXT NOT NULL,
+      datetime TEXT,
+      type TEXT NOT NULL,
+      assetClass TEXT,
+      name TEXT,
+      symbol TEXT NOT NULL,
+      isin TEXT,
+      shares REAL,
+      price REAL,
+      amount REAL,
+      fee REAL,
+      tax REAL,
+      currency TEXT NOT NULL DEFAULT 'EUR',
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio ON transactions(portfolioId)`);
+  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)`);
+  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_symbol ON transactions(symbol)`);
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      period TEXT NOT NULL,
+      weekStartDate TEXT NOT NULL,
+      weekEndDate TEXT NOT NULL,
+      weekKey TEXT NOT NULL,
+      title TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      content TEXT NOT NULL,
+      metrics TEXT NOT NULL,
+      model TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'success',
+      error TEXT,
+      isFallback INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
+  database.run(`CREATE INDEX IF NOT EXISTS idx_reports_portfolio ON reports(portfolioId)`);
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS snapshots (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      date TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      totalValue REAL NOT NULL,
+      totalCost REAL NOT NULL,
+      totalGainLoss REAL NOT NULL,
+      cashBalance REAL NOT NULL DEFAULT 0,
+      totalPortfolioValue REAL NOT NULL,
+      holdingsJson TEXT,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(portfolioId, date)
+    )
+  `);
+
+  database.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_portfolio ON snapshots(portfolioId)`);
+
+  // Schema version tracking for future migrations
+  database.run(`
+    CREATE TABLE IF NOT EXISTS schema_version (
+      version INTEGER NOT NULL
+    )
+  `);
+
+  const versionRow = database.query("SELECT version FROM schema_version LIMIT 1").get() as { version: number } | null;
+  if (!versionRow) {
+    database.run("INSERT INTO schema_version (version) VALUES (1)");
+  }
+}
+
+/** Close the database connection */
+export function closeDatabase(): void {
+  if (db) {
+    db.close();
+    db = null;
+  }
+}

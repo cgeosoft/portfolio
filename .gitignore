@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+artifacts/
+modules/**/dist/
+coverage/
+*.tsbuildinfo
+.cottontail-tmp/
+.hutch/
+.scratch/
+
+# Runtime data
+data/
+
+# Logs
+*.log
+logs/
+
+# Local environment & secret files
+.env
+.env.*
+!.env.example
+!.env.scripts.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+

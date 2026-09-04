@@ -1,0 +1,162 @@
+name: Release Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to attach packages to (leave empty for build-only test run)'
+        required: false
+        default: ''
+
+jobs:
+  build-debian:
+    name: Build Debian Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg zstd libwebkit2gtk-4.1-dev libgtk-3-dev
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and package Debian
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(bun -e "console.log(require('./package.json').version)")"
+          else
+            bun pm version "$VERSION" --no-git-tag-version 2>/dev/null || npm version "$VERSION" --no-git-tag-version --allow-same-version 2>/dev/null || true
+          fi
+          echo "Building Debian package version $VERSION"
+          bash scripts/release.sh debian --version="$VERSION"
+
+      - name: Upload Debian artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-package
+          path: |
+            dist/*.deb
+            artifacts/*-Setup.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows Package
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and package Windows
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(bun -e "console.log(require('./package.json').version)")"
+          else
+            npm version "$VERSION" --no-git-tag-version --allow-same-version 2>/dev/null || true
+          fi
+          echo "Building Windows package version $VERSION"
+          bash scripts/release.sh windows --version="$VERSION"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: |
+            dist/*.exe
+            dist/*.zip
+            artifacts/*.exe
+          if-no-files-found: warn
+
+  build-macos:
+    name: Build macOS Package
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and package macOS
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(bun -e "console.log(require('./package.json').version)")"
+          else
+            npm version "$VERSION" --no-git-tag-version --allow-same-version 2>/dev/null || true
+          fi
+          echo "Building macOS package version $VERSION"
+          bash scripts/release.sh macos --version="$VERSION"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            artifacts/*.dmg
+          if-no-files-found: warn
+
+  publish-release:
+    name: Publish Release Assets
+    needs: [build-debian, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Attach artifacts to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          echo "Publishing artifacts for release tag: $TAG_NAME"
+          ls -lh release-artifacts/
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME exists, uploading/updating assets..."
+            gh release upload "$TAG_NAME" release-artifacts/* --clobber
+          else
+            echo "Release $TAG_NAME not found, creating release..."
+            gh release create "$TAG_NAME" release-artifacts/* --title "$TAG_NAME" --generate-notes
+          fi

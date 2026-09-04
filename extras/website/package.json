@@ -1,0 +1,10 @@
+{
+  "name": "portfolio-marketing-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Marketing website for Portfolio Desktop with OS detection and Cloudflare Pages deployment",
+  "scripts": {
+    "dev": "bun --serve .",
+    "deploy": "./deploy.sh"
+  }
+}
