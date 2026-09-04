@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Shield,
   Sparkles,
@@ -9,19 +9,38 @@ import {
   ArrowRight,
   Check,
   Zap,
+  X,
 } from "lucide-react";
 import { rpc } from "../../rpc";
 
 interface SetupWizardModalProps {
   isOpen: boolean;
   onComplete: () => void;
+  onClose: () => void;
 }
 
-export function SetupWizardModal({ isOpen, onComplete }: SetupWizardModalProps) {
+export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardModalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [populateDemo, setPopulateDemo] = useState(true);
   const [enableTelemetry, setEnableTelemetry] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isSubmitting) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isSubmitting, onClose]);
 
   if (!isOpen) return null;
 
@@ -56,15 +75,27 @@ export function SetupWizardModal({ isOpen, onComplete }: SetupWizardModalProps) 
               <p className="text-xs text-slate-400">Step {step} of 3</p>
             </div>
           </div>
-          <div className="flex gap-1.5">
-            {[1, 2, 3].map((s) => (
-              <div
-                key={s}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  step === s ? "w-6 bg-[#DD3C73]" : step > s ? "bg-[#A7E2C0]" : "bg-slate-700"
-                }`}
-              />
-            ))}
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1.5">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    step === s ? "w-6 bg-[#DD3C73]" : step > s ? "bg-[#A7E2C0]" : "bg-slate-700"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+              aria-label="Close setup wizard"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -209,19 +240,28 @@ export function SetupWizardModal({ isOpen, onComplete }: SetupWizardModalProps) 
             <button
               type="button"
               onClick={() => setStep((s) => (s - 1) as 1 | 2)}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               Back
             </button>
           ) : (
-            <div />
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Close
+            </button>
           )}
 
           {step < 3 ? (
             <button
               type="button"
               onClick={() => setStep((s) => (s + 1) as 2 | 3)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#c93264] text-xs font-bold text-white transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#c93264] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
             >
               <span>Continue</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -11,6 +11,7 @@ import {
   Layers,
   Percent,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 
 interface TransactionModalProps {
@@ -77,16 +78,33 @@ export function TransactionModal({
     setSearchQuery("");
   }, [transaction, isOpen]);
 
-  // Keyboard escape handler
+  // Keyboard escape handler & outside click for autocomplete dropdown
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen && !isSubmitting) {
+        if (searchResults.length > 0) {
+          e.stopPropagation();
+          setSearchResults([]);
+          return;
+        }
         onClose();
       }
     };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setSearchResults([]);
+      }
+    };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isSubmitting, onClose]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, isSubmitting, onClose, searchResults.length]);
 
   // Search autocomplete debounce
   useEffect(() => {
@@ -255,18 +273,21 @@ export function TransactionModal({
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                   Transaction Type
                 </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] cursor-pointer"
-                >
-                  <option value="BUY" className="bg-slate-900 text-slate-100">BUY (Asset Purchase)</option>
-                  <option value="SELL" className="bg-slate-900 text-slate-100">SELL (Asset Sale)</option>
-                  <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND (Cash Payout)</option>
-                  <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST (Fixed Yield)</option>
-                  <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT (Cash Inflow)</option>
-                  <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL (Cash Outflow)</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
+                  >
+                    <option value="BUY" className="bg-slate-900 text-slate-100">BUY (Asset Purchase)</option>
+                    <option value="SELL" className="bg-slate-900 text-slate-100">SELL (Asset Sale)</option>
+                    <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND (Cash Payout)</option>
+                    <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST (Fixed Yield)</option>
+                    <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT (Cash Inflow)</option>
+                    <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL (Cash Outflow)</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -292,6 +313,25 @@ export function TransactionModal({
                       required
                       className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73]"
                     />
+                    {/* Autocomplete Dropdown */}
+                    {searchResults.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-30 max-h-48 overflow-y-auto custom-scrollbar">
+                        {searchResults.map((r) => (
+                          <div
+                            key={r.symbol}
+                            onClick={() => {
+                              setSymbol(r.symbol);
+                              setName(r.name);
+                              setSearchResults([]);
+                            }}
+                            className="p-2.5 hover:bg-slate-800/80 cursor-pointer border-b border-slate-800/60 last:border-0 flex items-center justify-between text-xs"
+                          >
+                            <span className="font-bold text-[#DD3C73]">{r.symbol}</span>
+                            <span className="text-[11px] text-slate-400 truncate max-w-[240px]">{r.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <input
                     type="text"
@@ -301,26 +341,6 @@ export function TransactionModal({
                     className="w-20 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73] text-center font-bold"
                   />
                 </div>
-
-                {/* Autocomplete Dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="absolute left-3 right-3 top-[72px] bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-30 max-h-48 overflow-y-auto custom-scrollbar">
-                    {searchResults.map((r) => (
-                      <div
-                        key={r.symbol}
-                        onClick={() => {
-                          setSymbol(r.symbol);
-                          setName(r.name);
-                          setSearchResults([]);
-                        }}
-                        className="p-2.5 hover:bg-slate-800/80 cursor-pointer border-b border-slate-800/60 last:border-0 flex items-center justify-between text-xs"
-                      >
-                        <span className="font-bold text-[#DD3C73]">{r.symbol}</span>
-                        <span className="text-[11px] text-slate-400 truncate max-w-[240px]">{r.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
@@ -341,16 +361,19 @@ export function TransactionModal({
                   <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                     Asset Class
                   </label>
-                  <select
-                    value={assetClass}
-                    onChange={(e) => setAssetClass(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] cursor-pointer"
-                  >
-                    <option value="EQUITY" className="bg-slate-900 text-slate-100">Stock / Equity</option>
-                    <option value="FUND" className="bg-slate-900 text-slate-100">ETF / Fund</option>
-                    <option value="CRYPTO" className="bg-slate-900 text-slate-100">Crypto Asset</option>
-                    <option value="PRIVATE_FUND" className="bg-slate-900 text-slate-100">Private Investment / Fund</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={assetClass}
+                      onChange={(e) => setAssetClass(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
+                    >
+                      <option value="EQUITY" className="bg-slate-900 text-slate-100">Stock / Equity</option>
+                      <option value="FUND" className="bg-slate-900 text-slate-100">ETF / Fund</option>
+                      <option value="CRYPTO" className="bg-slate-900 text-slate-100">Crypto Asset</option>
+                      <option value="PRIVATE_FUND" className="bg-slate-900 text-slate-100">Private Investment / Fund</option>
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                 </div>
               </div>
             </div>

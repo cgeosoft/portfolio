@@ -9,7 +9,6 @@ import {
   History,
   TrendingUp,
   AlertCircle,
-  BriefcaseBusiness,
 } from "lucide-react";
 
 interface DeletePortfolioModalProps {
@@ -103,7 +102,7 @@ export function DeletePortfolioModal({
           {/* Portfolio Info Card */}
           <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <BriefcaseBusiness className="w-4 h-4 text-[#DD3C73] shrink-0" />
+              <TrendingUp className="w-4 h-4 text-[#DD3C73] shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-bold text-slate-100 truncate" title={portfolio.name}>
                   {portfolio.name}

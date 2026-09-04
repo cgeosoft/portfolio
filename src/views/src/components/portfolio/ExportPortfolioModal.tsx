@@ -10,7 +10,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
-  BriefcaseBusiness,
+  TrendingUp,
   Archive,
   Check,
   Coins,
@@ -322,7 +322,7 @@ export function ExportPortfolioModal({
           <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
-                <BriefcaseBusiness className="w-3.5 h-3.5 text-[#DD3C73]" />
+                <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73]" />
                 <span>Target Portfolio</span>
               </div>
               <div className="text-sm font-bold text-slate-100 truncate mt-0.5" title={portfolio.name}>
@@ -501,7 +501,7 @@ export function ExportPortfolioModal({
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
-                    <BriefcaseBusiness className="w-4 h-4 text-sky-400 shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-sky-400 shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>Portfolio Summary Manifest</span>

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { X, BriefcaseBusiness, ShieldCheck, Cpu, Keyboard, Sparkles } from "lucide-react";
+import { X, TrendingUp, ShieldCheck, Cpu, Keyboard, Sparkles } from "lucide-react";
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -26,7 +26,8 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
     { key: "Ctrl + T", desc: "Add Transaction" },
     { key: "Ctrl + I", desc: "Import CSV Data" },
     { key: "Ctrl + E", desc: "Export Active Portfolio" },
-    { key: "Ctrl + R", desc: "Refresh Market Quotes" },
+    { key: "Ctrl + R", desc: "Reload Page" },
+    { key: "Ctrl + J", desc: "Toggle Assistant Sidebar" },
     { key: "Ctrl + H", desc: "Toggle Privacy Mode (Mask Values)" },
     { key: "Ctrl + ,", desc: "Open Preferences / Settings" },
     { key: "Ctrl + Q", desc: "Quit Application" },
@@ -45,7 +46,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <BriefcaseBusiness className="w-5 h-5 text-[#DD3C73]" />
+                <TrendingUp className="w-5 h-5 text-[#DD3C73]" />
               </div>
             </div>
             <div>

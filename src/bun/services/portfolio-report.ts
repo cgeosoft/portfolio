@@ -76,8 +76,12 @@ export class PortfolioReportService {
 
     const model = options.model || config.llmModel || defaultModel;
     const apiKey = options.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
-    const configuredBaseUrl = options.baseUrl || config.llmBaseUrls?.[provider] || config.llmBaseUrl;
-    const baseUrl = provider === "llamacpp-server" ? undefined : configuredBaseUrl;
+    const configuredBaseUrl =
+      options.baseUrl ||
+      config.llmBaseUrls?.[provider] ||
+      config.llmBaseUrl ||
+      (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
+    const baseUrl = configuredBaseUrl;
 
     const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
     const data = options.portfolioData || (await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency));
@@ -153,9 +157,9 @@ Please structure your report as follows:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        { provider, model, apiKey, baseUrl },
+        { provider, model, apiKey, baseUrl, isReport: true },
       );
-      content = sanitizeLlmResponse(content);
+      content = sanitizeLlmResponse(content, true);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error(`[PortfolioReport] Failed to generate LLM report: ${errMsg}`);

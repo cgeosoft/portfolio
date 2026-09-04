@@ -26,6 +26,8 @@ declare module "electrobun/bun" {
   }
 
   export class BrowserWindow {
+    id: number;
+    readonly ptr: any;
     constructor(options?: WindowOptionsType);
     focus(): void;
     activate(): void;
@@ -41,6 +43,12 @@ declare module "electrobun/bun" {
     isMaximized(): boolean;
     close(): void;
     setTitle(title: string): void;
+    setPosition(x: number, y: number): void;
+    setSize(width: number, height: number): void;
+    setFrame(x: number, y: number, width: number, height: number): void;
+    getFrame(): { x: number; y: number; width: number; height: number };
+    getPosition(): { x: number; y: number };
+    getSize(): { width: number; height: number };
     on(name: string, handler: (event: any) => void): void;
   }
 

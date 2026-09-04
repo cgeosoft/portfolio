@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PortfolioHolding, PortfolioSummary } from "../../types/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
-import { Search, ArrowUpDown, Layers } from "lucide-react";
+import { Search, ArrowUpDown, Layers, ChevronDown } from "lucide-react";
 
 interface HoldingsTableCardProps {
   holdings: PortfolioHolding[];
@@ -156,7 +156,7 @@ export function HoldingsTableCard({
               </span>
             )}
           </div>
-          <div className={isCash ? "text-[11px] text-slate-400 font-semibold" : "text-[11px] text-[#DD3C73]"}>
+          <div className={isCash ? "text-[11px] text-slate-400 font-semibold" : "text-[11px] text-white"}>
             {fmtCurrency(h.currentValue, h.currency || currency, hideValues)} ({h.weightPercent.toFixed(1)}%)
           </div>
         </td>
@@ -258,18 +258,21 @@ export function HoldingsTableCard({
           </div>
 
           {/* Type filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-950/70 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer"
-          >
-            <option value="ALL" className="bg-slate-900 text-slate-100">All Asset Types</option>
-            <option value="Stock" className="bg-slate-900 text-slate-100">Stocks</option>
-            <option value="ETF" className="bg-slate-900 text-slate-100">ETFs</option>
-            <option value="Crypto" className="bg-slate-900 text-slate-100">Crypto</option>
-            <option value="Cash" className="bg-slate-900 text-slate-100">Cash Liquidity</option>
-            <option value="Other" className="bg-slate-900 text-slate-100">Other / Funds</option>
-          </select>
+          <div className="relative">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer appearance-none transition-colors"
+            >
+              <option value="ALL" className="bg-slate-900 text-slate-100">All Asset Types</option>
+              <option value="Stock" className="bg-slate-900 text-slate-100">Stocks</option>
+              <option value="ETF" className="bg-slate-900 text-slate-100">ETFs</option>
+              <option value="Crypto" className="bg-slate-900 text-slate-100">Crypto</option>
+              <option value="Cash" className="bg-slate-900 text-slate-100">Cash Liquidity</option>
+              <option value="Other" className="bg-slate-900 text-slate-100">Other / Funds</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
       </div>
 

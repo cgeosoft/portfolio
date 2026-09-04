@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { PortfolioItem } from "../../types/portfolio";
 import { rpc } from "../../rpc";
-import { X, Plus, Loader2, AlertCircle, BriefcaseBusiness, Sparkles } from "lucide-react";
+import { X, Plus, Loader2, AlertCircle, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
 
 interface CreatePortfolioModalProps {
   isOpen: boolean;
@@ -73,7 +73,7 @@ export function CreatePortfolioModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0">
           <div className="flex items-center gap-1.5 min-w-0">
-            <BriefcaseBusiness className="w-4 h-4 text-slate-400 shrink-0" />
+            <TrendingUp className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 truncate">
               Create New Portfolio
             </span>
@@ -153,16 +153,19 @@ export function CreatePortfolioModal({
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                   Base Currency
                 </label>
-                <select
-                  value={baseCurrency}
-                  onChange={(e) => setBaseCurrency(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] cursor-pointer"
-                >
-                  <option value="EUR" className="bg-slate-900 text-slate-100">EUR (€) — Euro</option>
-                  <option value="USD" className="bg-slate-900 text-slate-100">USD ($) — US Dollar</option>
-                  <option value="GBP" className="bg-slate-900 text-slate-100">GBP (£) — British Pound</option>
-                  <option value="CHF" className="bg-slate-900 text-slate-100">CHF (Fr) — Swiss Franc</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={baseCurrency}
+                    onChange={(e) => setBaseCurrency(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
+                  >
+                    <option value="EUR" className="bg-slate-900 text-slate-100">EUR (€) - Euro</option>
+                    <option value="USD" className="bg-slate-900 text-slate-100">USD ($) - US Dollar</option>
+                    <option value="GBP" className="bg-slate-900 text-slate-100">GBP (£) - British Pound</option>
+                    <option value="CHF" className="bg-slate-900 text-slate-100">CHF (Fr) - Swiss Franc</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
                 <p className="text-[10px] text-slate-500 mt-1 font-mono">
                   Note: The base currency is fixed after creation for valuation consistency.
                 </p>

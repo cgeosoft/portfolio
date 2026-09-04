@@ -14,18 +14,18 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  RotateCw,
   Sparkles,
   HelpCircle,
   Info,
   Check,
   Keyboard,
-  BriefcaseBusiness,
 } from "lucide-react";
 
 export interface AppMenuBarProps {
-  portfolios: PortfolioItem[];
+  portfolios?: PortfolioItem[];
   activePortfolio: PortfolioItem | null;
-  onSelectPortfolio: (id: string) => void;
+  onSelectPortfolio?: (id: string) => void;
   onNewPortfolio: () => void;
   onImportCsv: () => void;
   onExportPortfolio: () => void;
@@ -38,10 +38,13 @@ export interface AppMenuBarProps {
   onToggleHideCurrency: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onReload?: () => void;
   onAnalyzePortfolio: () => void;
   onOpenSetupWizard: () => void;
   onOpenAbout: () => void;
   onQuit: () => void;
+  isAssistantOpen?: boolean;
+  onToggleAssistant?: () => void;
 }
 
 type MenuKey = "file" | "edit" | "view" | "portfolio" | "help" | null;
@@ -72,10 +75,13 @@ export function AppMenuBar({
   onToggleHideCurrency,
   onRefresh,
   isRefreshing,
+  onReload,
   onAnalyzePortfolio,
   onOpenSetupWizard,
   onOpenAbout,
   onQuit,
+  isAssistantOpen,
+  onToggleAssistant,
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -181,6 +187,15 @@ export function AppMenuBar({
       },
     },
     {
+      label: "Transactions",
+      icon: History,
+      checked: activeTab === "transactions",
+      action: () => {
+        closeMenu();
+        onSelectTab("transactions");
+      },
+    },
+    {
       label: "Reports",
       icon: FileText,
       checked: activeTab === "reports",
@@ -190,13 +205,36 @@ export function AppMenuBar({
       },
     },
     {
-      label: "Transactions",
-      icon: History,
-      checked: activeTab === "transactions",
+      label: isAssistantOpen ? "Close Assistant Sidebar" : "Open Assistant Sidebar",
+      shortcut: "Ctrl+J",
+      icon: Sparkles,
       action: () => {
         closeMenu();
-        onSelectTab("transactions");
+        onToggleAssistant?.();
       },
+    },
+    { type: "separator" },
+    {
+      label: "Reload Page",
+      shortcut: "Ctrl+R",
+      icon: RotateCw,
+      action: () => {
+        closeMenu();
+        if (onReload) {
+          onReload();
+        } else if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      },
+    },
+    {
+      label: isRefreshing ? "Refreshing Market Quotes..." : "Refresh Market Quotes",
+      icon: RefreshCw,
+      action: () => {
+        closeMenu();
+        onRefresh();
+      },
+      disabled: isRefreshing,
     },
     { type: "separator" },
     {
@@ -208,30 +246,21 @@ export function AppMenuBar({
         onToggleHideCurrency();
       },
     },
-    {
-      label: isRefreshing ? "Refreshing Market Quotes..." : "Refresh Market Quotes",
-      shortcut: "Ctrl+R",
-      icon: RefreshCw,
-      action: () => {
-        closeMenu();
-        onRefresh();
-      },
-      disabled: isRefreshing,
-    },
   ];
 
   const portfolioItems: MenuItemDef[] = [
-    { type: "header", label: "Select Portfolio" },
-    ...portfolios.map((p) => ({
-      label: p.name,
-      checked: activePortfolio?.id === p.id,
-      icon: BriefcaseBusiness,
+    {
+      label: "Chat with Assistant...",
+      shortcut: "Ctrl+J",
+      icon: Sparkles,
       action: () => {
         closeMenu();
-        onSelectPortfolio(p.id);
+        if (!isAssistantOpen) {
+          onToggleAssistant?.();
+        }
       },
-    })),
-    { type: "separator" },
+      disabled: !activePortfolio,
+    },
     {
       label: "Analyze Portfolio (AI Report)...",
       icon: Sparkles,
@@ -287,6 +316,13 @@ export function AppMenuBar({
   // Keyboard navigation within active dropdown & Alt accelerators
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Global Ctrl+J / Cmd+J to toggle assistant
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        onToggleAssistant?.();
+        return;
+      }
+
       // Alt shortcuts (Alt+F, Alt+E, Alt+V, Alt+P, Alt+H)
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
@@ -372,7 +408,7 @@ export function AppMenuBar({
   return (
     <div
       ref={menuBarRef}
-      className="bg-[#080b13] border-b border-slate-800/80 px-2 py-0.5 flex items-center justify-between text-[11px] font-mono select-none z-40 relative"
+      className="bg-[#080b13] border-b border-slate-800/80 px-2 py-0.5 flex items-center text-[11px] font-mono select-none z-40 relative shrink-0"
       role="menubar"
       aria-label="Application Menu"
     >
@@ -463,21 +499,6 @@ export function AppMenuBar({
             </div>
           );
         })}
-      </div>
-
-      {/* Right Side Indicator: Active Portfolio badge & Privacy state */}
-      <div className="hidden sm:flex items-center gap-2 text-[10px] text-slate-500 pr-1">
-        {activePortfolio && (
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900/80 border border-slate-800 text-slate-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#A7E2C0] animate-pulse" />
-            <span className="truncate max-w-[140px] font-medium">{activePortfolio.name}</span>
-          </div>
-        )}
-        {hideCurrencyValues && (
-          <span className="text-[#E3EACD] bg-[#E3EACD]/10 px-1.5 py-0.2 rounded border border-[#E3EACD]/20">
-            Privacy ON
-          </span>
-        )}
       </div>
     </div>
   );

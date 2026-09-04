@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import type { FinancialPortfolioData, PortfolioReport } from "../../types/portfolio";
-import { fmtCurrency } from "./utils";
+import { fmtCurrency, maskFinancialValues } from "./utils";
 
 interface AnalyzePortfolioModalProps {
   isOpen: boolean;
@@ -158,7 +158,7 @@ export function AnalyzePortfolioModal({
         provider: config.llmProvider, 
         model: config.llmModel, 
         apiKey: config.llmApiKey, 
-        baseUrl: config.llmBaseUrl 
+        baseUrl: config.llmBaseUrl || config.llamacppServerUrl 
       });
       clearTimers();
       const report: PortfolioReport | undefined = result;
@@ -448,7 +448,7 @@ export function AnalyzePortfolioModal({
                 </div>
 
                 <div className="text-xs text-slate-300 leading-relaxed line-clamp-3 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                  {generatedReport.summary || "Quantitative strategic review and rebalancing tactical recommendations generated."}
+                  {(hideCurrencyValues ? maskFinancialValues(generatedReport.summary) : generatedReport.summary) || "Quantitative strategic review and rebalancing tactical recommendations generated."}
                 </div>
               </div>
             </div>

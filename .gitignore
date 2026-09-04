@@ -17,6 +17,7 @@ data/
 
 # Logs
 *.log
+*.jsonl
 logs/
 
 # Local environment & secret files

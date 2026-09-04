@@ -19,6 +19,7 @@ export function getDatabase(): Database {
   // Enable WAL mode for better concurrent read performance
   db.run("PRAGMA journal_mode = WAL");
   db.run("PRAGMA foreign_keys = ON");
+  db.run("PRAGMA busy_timeout = 5000");
 
   initializeSchema(db);
 
@@ -105,6 +106,29 @@ function initializeSchema(database: Database): void {
   `);
 
   database.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_portfolio ON snapshots(portfolioId)`);
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS market_cache (
+      key TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL
+    )
+  `);
+
+  database.run(`
+    CREATE TABLE IF NOT EXISTS assistant_conversations (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT 'New Chat',
+      messages TEXT NOT NULL DEFAULT '[]',
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_portfolio ON assistant_conversations(portfolioId)`);
+  database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_updated ON assistant_conversations(updatedAt)`);
 
   // Schema version tracking for future migrations
   database.run(`

@@ -61,7 +61,7 @@ export function getRsiZone(rsi?: number): { label: string; color: string; bgClas
   return { label: "NEUTRAL", color: "text-[#E3EACD]", bgClass: "bg-[#E3EACD]/10", textClass: "text-[#E3EACD]", borderClass: "border-[#E3EACD]/20" };
 }
 
-export function cleanThinkTags(text: string | undefined): string {
+export function cleanThinkTags(text: string | undefined, isReport = false): string {
   if (!text) return "";
 
   let cleaned = text;
@@ -89,8 +89,8 @@ export function cleanThinkTags(text: string | undefined): string {
 
   cleaned = cleaned.trim();
 
-  // 5. If leading garbage/CJK artifact exists before the first header "#" or "1.", strip it
-  if (!cleaned.startsWith("#") && !cleaned.startsWith("1.")) {
+  // 5. If leading garbage/CJK artifact exists before the first header "#" or "1." in reports, strip it
+  if (isReport && !cleaned.startsWith("#") && !cleaned.startsWith("1.")) {
     const headerIdx = cleaned.search(/(?:^|\n)(?:#+|1\.\s+\*\*)/);
     if (headerIdx > 0) {
       const prefix = cleaned.slice(0, headerIdx).trim();
@@ -102,5 +102,61 @@ export function cleanThinkTags(text: string | undefined): string {
 
   return cleaned.trim();
 }
+
+/** Format ISO timestamp to relative time string ("x ago") */
+export function formatTimeAgo(isoString?: string | null): string {
+  if (!isoString) return "never";
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0 || isNaN(diffMs)) return "just now";
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 45) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}d ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  const diffYears = Math.floor(diffMonths / 12);
+  return `${diffYears}y ago`;
+}
+
+/**
+ * Mask financial values in unstructured text and markdown for privacy mode.
+ * Preserves percentages, dates, and technical indicators.
+ */
+export function maskFinancialValues(text: string | undefined): string {
+  if (!text) return "";
+  let result = text;
+  // 1. Preceding currency symbols: $1,234.56, €50,000, +$100, -$50.20, £50k, € 100
+  result = result.replace(/([+$−-]?\s*[$€£¥])\s*[\d,]+(?:\.\d+)?(?:\s*[kKmMbBtT]\b)?/g, "$1••••");
+  // 2. Trailing currency symbols: 1234.56 €, 500 $
+  result = result.replace(/([+$−-]?\s*)[\d,]+(?:\.\d+)?\s*([$€£¥])/g, "$1•••• $2");
+  // 3. Preceding currency code and amounts: EUR12,345.67, USD 50,000, EUR: 1,800, Val: EUR1800
+  result = result.replace(/\b(USD|EUR|GBP|CHF|CAD|AUD|JPY)\s*([:=]?)\s*[+$−-]?\s*[\d,]+(?:\.\d+)?(?:\s*[kKmMbBtT]\b)?/g, "$1$2 ••••");
+  // 4. Amounts followed by currency code: 150.00 USD, 1,200 EUR
+  result = result.replace(/([+$−-]?\s*)[\d,]+(?:\.\d+)?\s*(USD|EUR|GBP|CHF|CAD|AUD|JPY)\b/g, "$1•••• $2");
+  // 5. Swiss Franc: Fr 1,200.50 or Fr. 500
+  result = result.replace(/\b(Fr\.?)\s*[+$−-]?\s*[\d,]+(?:\.\d+)?/g, "$1 ••••");
+  // 6. Price expressions: @ 150.25, @ $150
+  result = result.replace(/(@\s*(?:[$€£¥]|(?:USD|EUR|GBP|CHF)\s*)?)\s*[\d,]+(?:\.\d+)?/g, "$1••••");
+  // 7. Valuation and balance phrases: e.g. "portfolio value of 15000"
+  result = result.replace(/\b(valuation|balance|cost basis|market value|portfolio value)\s*(?:of|is|stands at)?\s*[:=]?\s*([+$−-]?)\s*[\d,]+(?:\.\d+)?/gi, "$1 $2••••");
+  return result;
+}
+
+/**
+ * Reload the application page.
+ */
+export function reloadPage(): void {
+  if (typeof window !== "undefined") {
+    window.location.reload();
+  }
+}
+
+
 
 

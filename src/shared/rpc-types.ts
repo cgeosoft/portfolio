@@ -89,6 +89,50 @@ export interface DeleteReportRequest {
   reportId: string;
 }
 
+export interface PortfolioChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface AssistantConversation {
+  id: string;
+  portfolioId: string;
+  title: string;
+  messages: PortfolioChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetAssistantConversationsRequest {
+  portfolioId: string;
+}
+
+export interface GetAssistantConversationsResponse {
+  conversations: AssistantConversation[];
+}
+
+export interface DeleteAssistantConversationRequest {
+  portfolioId: string;
+  conversationId: string;
+}
+
+export interface ChatWithPortfolioRequest {
+  portfolioId: string;
+  conversationId?: string;
+  title?: string;
+  messages: PortfolioChatMessage[];
+  provider?: string;
+  model?: string;
+}
+
+export interface ChatWithPortfolioResponse {
+  message: PortfolioChatMessage;
+  conversationId: string;
+  title: string;
+  provider: string;
+  model: string;
+}
+
 export interface CompleteSetupRequest {
   populateDemo: boolean;
   enableTelemetry: boolean;
@@ -120,11 +164,78 @@ export interface TestLlmRequest {
   baseUrl?: string;
 }
 
-// ── RPC Schema ───────────────────────────────────────────────────────────────
+export type LlmTestStepId = "config" | "connection" | "inference" | "integrity";
+
+export interface TestLlmStepRequest {
+  step: LlmTestStepId;
+  provider: string;
+  model: string;
+  apiKey?: string;
+  baseUrl?: string;
+  previousOutput?: string;
+}
+
+export interface TestLlmStepResponse {
+  success: boolean;
+  message: string;
+  latencyMs?: number;
+  output?: string;
+}
+
+export interface GetProviderModelsRequest {
+  provider: string;
+  baseUrl?: string;
+  apiKey?: string;
+}
+
+export interface GetProviderModelsResponse {
+  models: string[];
+}
+
+export interface GetAppInfoResponse {
+  version: string;
+  majorMinor: string;
+  webpageUrl: string;
+  lastQuotesSync?: string;
+}
+
+export interface OpenExternalUrlRequest {
+  url: string;
+}
+
+export interface SyncQuotesResponse {
+  success: boolean;
+  lastSync: string;
+  error?: string;
+}
+
+export interface GetSponsorBannerRequest {
+  url?: string;
+}
+
+export interface GetSponsorBannerResponse {
+  success: boolean;
+  html: string;
+  error?: string;
+}
+
+export interface LogClientEventRequest {
+  level: "info" | "success" | "warning" | "error" | "debug";
+  source: string;
+  step?: string;
+  message: string;
+  durationMs?: number;
+  data?: Record<string, unknown>;
+}
+
+// -- RPC Schema ---------------------------------------------------------------
 
 export type PortfolioRPC = {
   bun: RPCSchema<{
     requests: {
+      // Client telemetry & diagnostic logging
+      logClientEvent: { params: LogClientEventRequest; response: { success: boolean } };
+
       // Portfolio CRUD
       getPortfolios: { params: Record<string, never>; response: GetPortfoliosResponse };
       getPortfolioData: { params: GetPortfolioDataRequest; response: FinancialPortfolioData };
@@ -144,12 +255,23 @@ export type PortfolioRPC = {
       generateReport: { params: GenerateReportRequest; response: PortfolioReport };
       deleteReport: { params: DeleteReportRequest; response: { success: boolean } };
 
-      // LLM
+      // LLM & Assistant
+      chatWithPortfolio: { params: ChatWithPortfolioRequest; response: ChatWithPortfolioResponse };
+      getAssistantConversations: { params: GetAssistantConversationsRequest; response: GetAssistantConversationsResponse };
+      deleteAssistantConversation: { params: DeleteAssistantConversationRequest; response: { success: boolean } };
       testLlm: { params: TestLlmRequest; response: { success: boolean; message: string } };
+      testLlmStep: { params: TestLlmStepRequest; response: TestLlmStepResponse };
+      getProviderModels: { params: GetProviderModelsRequest; response: GetProviderModelsResponse };
 
       // Config
       getConfig: { params: Record<string, never>; response: DesktopConfig };
       saveConfig: { params: Partial<DesktopConfig>; response: DesktopConfig };
+
+      // App info, external browser links, and sync
+      getAppInfo: { params: Record<string, never>; response: GetAppInfoResponse };
+      openExternalUrl: { params: OpenExternalUrlRequest; response: { success: boolean } };
+      syncQuotes: { params: Record<string, never>; response: SyncQuotesResponse };
+      getSponsorBanner: { params: GetSponsorBannerRequest; response: GetSponsorBannerResponse };
 
       // Setup wizard
       completeSetup: { params: CompleteSetupRequest; response: { success: boolean } };

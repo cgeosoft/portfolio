@@ -19,7 +19,7 @@ export class TelemetryService {
     const config = loadConfig();
     this.deviceId = config.deviceId;
 
-    if (config.telemetryEnabled && POSTHOG_API_KEY !== "phc_PLACEHOLDER") {
+    if (config.telemetryEnabled) {
       this.client = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_HOST });
       console.log("[Telemetry] Anonymous analytics enabled");
     }

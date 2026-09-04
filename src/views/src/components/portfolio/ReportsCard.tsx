@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { PortfolioReport, FinancialPortfolioData } from "../../types/portfolio";
-import { fmtCurrency, fmtPercent, cleanThinkTags } from "./utils";
+import { fmtCurrency, fmtPercent, cleanThinkTags, formatTimeAgo, maskFinancialValues } from "./utils";
 import {
   Sparkles,
   Calendar,
@@ -22,6 +22,8 @@ import {
   Wallet,
   Activity,
   Info,
+  Copy,
+  CheckCheck,
 } from "lucide-react";
 import { AnalyzePortfolioModal } from "./AnalyzePortfolioModal";
 
@@ -80,6 +82,8 @@ export function ReportsCard({
   const [selectedReportId, setSelectedReportId] = useState<string | null>(() => (reports[0] ? reports[0].id : null));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -117,12 +121,38 @@ export function ReportsCard({
       setSelectedReportId(newReportId);
       try {
         await onRefreshReports();
-      } catch (err: any) {
-        setGenError(err?.message || "Failed to refresh reports list");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setGenError(msg || "Failed to refresh reports list");
       }
     },
     [onRefreshReports]
   );
+
+  const handleManualRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await onRefreshReports();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setGenError(msg || "Failed to refresh reports list");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefreshReports]);
+
+  const handleCopyMarkdown = useCallback(async () => {
+    if (!activeReport?.content) return;
+    try {
+      const raw = cleanThinkTags(activeReport.content);
+      const textToCopy = hideValues ? maskFinancialValues(raw) : raw;
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy report to clipboard:", err);
+    }
+  }, [activeReport, hideValues]);
 
   const baseCurrency = activeReport?.metrics?.baseCurrency || portfolioData?.summary?.baseCurrency || currency;
   const returnPercent = activeReport?.metrics?.periodGainLossPercent ?? activeReport?.metrics?.weeklyGainLossPercent ?? 0;
@@ -135,16 +165,28 @@ export function ReportsCard({
     (activeReport?.content?.includes("Automated AI advice generation encountered an issue") ?? false);
 
   return (
-    <div className="flex flex-col gap-3 min-h-0 flex-1 overflow-hidden font-mono">
-      {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
-        {/* Left: Custom Report Dropdown Picker */}
-        <div className="flex items-center gap-2 min-w-0" ref={dropdownRef}>
-          {reports.length > 0 && activeReport ? (
-            <div className="relative inline-block max-w-full">
+    <div className="flex flex-col gap-3.5 flex-1 min-h-0 font-mono">
+      {/* Top Header Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 pb-1">
+        <div className="min-w-0">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
+            <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
+            <span className="truncate">Reports</span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+            Generated reports from your portfolio
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto" ref={dropdownRef}>
+          {/* Custom Report Dropdown Picker */}
+          {reports.length > 0 && activeReport && (
+            <div className="relative inline-block">
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={isDropdownOpen}
                 className={`h-8 inline-flex items-center justify-between gap-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider cursor-pointer transition-all ${
                   isDropdownOpen
                     ? "border-[#DD3C73] bg-[#DD3C73]/15 text-[#DD3C73] shadow-lg shadow-[#DD3C73]/10"
@@ -152,7 +194,7 @@ export function ReportsCard({
                 }`}
               >
                 <Calendar className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-                <span className="truncate max-w-[200px] sm:max-w-[280px] md:max-w-[340px] text-left">
+                <span className="truncate max-w-[170px] sm:max-w-[240px] md:max-w-[300px] text-left">
                   {formatReportDropdownLabel(activeReport)}
                 </span>
                 <ChevronDown
@@ -164,10 +206,10 @@ export function ReportsCard({
 
               {/* Dropdown Menu Popover */}
               {isDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1.5 z-50 min-w-[280px] sm:min-w-[340px] max-w-[90vw] rounded-xl border border-slate-800 bg-slate-950 shadow-2xl p-1.5 flex flex-col gap-0.5 overflow-hidden">
+                <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[280px] sm:min-w-[340px] max-w-[90vw] rounded-xl border border-slate-800 bg-slate-950 shadow-2xl p-1.5 flex flex-col gap-0.5 overflow-hidden">
                   <div className="px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 mb-1 flex items-center gap-1.5 min-w-0">
                     <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span className="truncate">Available Reports ({reports.length})</span>
+                    <span className="truncate">Historical Briefings ({reports.length})</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto font-mono text-xs flex flex-col gap-0.5 custom-scrollbar">
                     {reports.map((rep) => {
@@ -215,26 +257,21 @@ export function ReportsCard({
                 </div>
               )}
             </div>
-          ) : (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 uppercase tracking-wider font-bold min-w-0">
-              <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="truncate">AI Reports</span>
-            </div>
           )}
-        </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+          {/* Analyze Portfolio Button */}
           <button
+            type="button"
             onClick={() => setIsAnalysisModalOpen(true)}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Analyze Portfolio</span>
+            <span>Analyze</span>
           </button>
         </div>
       </div>
 
+      {/* Error Alert */}
       {genError && (
         <div className="rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 px-3.5 py-2.5 flex items-center justify-between text-xs text-[#DD3C73] shrink-0">
           <div className="flex items-center gap-2">
@@ -247,21 +284,24 @@ export function ReportsCard({
         </div>
       )}
 
-      {loadingReports && reports.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-10 text-center">
-          <RefreshCw className="w-6 h-6 animate-spin text-[#DD3C73] mb-3" />
-          <div className="text-xs text-slate-400">Loading portfolio reports history…</div>
+      {/* Main Reports Layout Container */}
+      {(loadingReports || isRefreshing) && reports.length === 0 ? (
+        <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#DD3C73] mb-3" />
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Loading Portfolio Briefings</div>
+          <div className="text-[11px] text-slate-500 mt-1">Retrieving stored quantitative and qualitative reports...</div>
         </div>
       ) : !activeReport ? (
-        <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-10 text-center">
-          <div className="w-12 h-12 rounded-full border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-3">
+        <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
+          <div className="w-12 h-12 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-4">
             <Bot className="w-6 h-6" />
           </div>
-          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">No Reports Yet</div>
+          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">No Reports Recorded Yet</div>
           <p className="max-w-md text-xs text-slate-400 leading-relaxed mb-6">
-            The Autonomous AI analyzes your multi-asset portfolio, tracks moving averages, and synthesizes tactical rebalancing recommendations.
+            The Autonomous AI analyzes your multi-asset portfolio, evaluates moving averages, and synthesizes tactical qualitative rebalancing briefings.
           </p>
           <button
+            type="button"
             onClick={() => setIsAnalysisModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
           >
@@ -270,31 +310,112 @@ export function ReportsCard({
           </button>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
-          {/* Fallback Warning Banner */}
-          {isReportFallback && (
-            <div className="cx-card p-3 rounded-xl border border-[#E3EACD]/50 bg-[#E3EACD]/10 flex items-start gap-3 text-xs shrink-0 font-mono">
-              <AlertTriangle className="w-4 h-4 text-[#E3EACD] shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-[#E3EACD] uppercase tracking-wider text-xs flex items-center gap-2 min-w-0">
-                  <span className="truncate">AI Fallback Notice</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD] font-bold uppercase shrink-0">
-                    Degraded Mode
+        <div className="cx-card flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Integrated Container Header */}
+          <div className="px-4 sm:px-5 py-3 border-b border-slate-800 bg-slate-950/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-slate-100 uppercase tracking-wide truncate">
+                  {activeReport.title || "Weekly Tactical Portfolio Briefing"}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-[#DD3C73]" />
+                    <span>{activeReport.period || activeReport.weekKey}</span>
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-400">
+                    Model: <span className="text-slate-200 font-semibold">{activeReport.model}</span>
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-400">
+                    Provider: <span className="text-slate-200 uppercase font-semibold">{activeReport.provider || "Local"}</span>
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={activeReport.error ? `Inference notice: ${activeReport.error}. Baseline quantitative telemetry is displayed below.` : "AI reasoning advisor could not complete inference. Baseline quantitative telemetry is displayed below."}>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Status indicator badge */}
+              {isReportFallback ? (
+                <span className="text-[10px] px-2 py-0.5 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD] font-bold uppercase flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>Fallback Mode</span>
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] font-bold uppercase flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  <span>Synthesized</span>
+                </span>
+              )}
+
+              {/* Copy markdown button */}
+              <button
+                type="button"
+                onClick={handleCopyMarkdown}
+                className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-300 hover:text-white hover:border-slate-700 transition-colors cursor-pointer"
+                title="Copy markdown report to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
+                    <span className="text-[#A7E2C0]">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+
+              {/* Delete button */}
+              <button
+                type="button"
+                onClick={() => onDeleteReport(activeReport.id)}
+                className="h-7 inline-flex items-center justify-center gap-1 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-colors cursor-pointer"
+                title="Delete active report"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Degraded Inference Banner */}
+          {isReportFallback && (
+            <div className="px-4 py-2.5 bg-[#E3EACD]/10 border-b border-[#E3EACD]/30 flex items-start gap-2.5 text-xs text-[#E3EACD] shrink-0 font-mono">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <span className="font-bold uppercase tracking-wider">AI Fallback Telemetry Notice:</span>{" "}
+                <span className="text-slate-300">
                   {activeReport.error
-                    ? `Inference notice: ${activeReport.error}. Baseline quantitative telemetry is displayed below.`
-                    : "AI reasoning advisor could not complete inference. Baseline quantitative telemetry is displayed below."}
-                </p>
+                    ? `Inference notice: ${activeReport.error.replace(/\.+$/, "")}. Baseline quantitative telemetry is displayed.`
+                    : "AI reasoning advisor could not complete inference. Baseline quantitative telemetry is displayed."}
+                </span>
               </div>
             </div>
           )}
 
-          {/* Split Layout: Markdown Left, Sidebar Right */}
-          <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 overflow-hidden">
+          {/* Split Panes Body: Markdown Left, Telemetry Right */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
             {/* Markdown Report Body */}
-            <div className="cx-card p-5 bg-slate-900 border border-slate-800 flex-1 min-h-0 min-w-0 overflow-y-auto font-mono text-xs leading-relaxed select-text custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 bg-slate-950/20 custom-scrollbar select-text font-mono text-xs leading-relaxed">
+              {activeReport.summary && (
+                <div className="p-3.5 rounded-xl border border-[#DD3C73]/30 bg-[#DD3C73]/5 mb-4 text-xs text-slate-300">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] mb-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Executive Summary</span>
+                  </div>
+                  <p className="italic text-slate-200">
+                    {hideValues ? maskFinancialValues(activeReport.summary) : activeReport.summary}
+                  </p>
+                </div>
+              )}
+
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -332,72 +453,16 @@ export function ReportsCard({
                   ),
                 }}
               >
-                {cleanThinkTags(activeReport.content)}
+                {hideValues
+                  ? maskFinancialValues(cleanThinkTags(activeReport.content))
+                  : cleanThinkTags(activeReport.content)}
               </ReactMarkdown>
             </div>
 
             {/* Sidebar with Metadata & Performance States */}
-            <div className="w-full md:w-64 lg:w-72 shrink-0 flex flex-col gap-3 overflow-y-auto min-h-0 custom-scrollbar">
-              {/* Metadata Card */}
-              <div className="cx-card p-3.5 bg-slate-900 border border-slate-800 flex flex-col gap-2.5 shrink-0 text-xs">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
-                  <Info className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate">Report Metadata</span>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Generated Date</span>
-                  </div>
-                  <div className="text-slate-300 font-medium">
-                    {new Date(activeReport.createdAt).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Period Window</span>
-                  </div>
-                  <div className="text-slate-300 font-medium">{activeReport.period}</div>
-                </div>
-
-                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Bot className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Engine</span>
-                  </div>
-                  <div className="text-slate-300 font-medium">{activeReport.model}</div>
-                </div>
-
-                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    {isReportFallback ? (
-                      <AlertTriangle className="w-3 h-3 text-[#E3EACD] shrink-0" />
-                    ) : (
-                      <Check className="w-3 h-3 text-[#A7E2C0] shrink-0" />
-                    )}
-                    <span>Status</span>
-                  </div>
-                  <div className="font-bold">
-                    {isReportFallback ? (
-                      <span className="text-[#E3EACD]">Fallback / Offline</span>
-                    ) : (
-                      <span className="text-[#A7E2C0]">Optimal (AI Generated)</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Performance States Card */}
-              <div className="cx-card p-3.5 bg-slate-900 border border-slate-800 flex flex-col gap-2.5 shrink-0 text-xs">
+            <aside className="w-full lg:w-72 xl:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950/40 p-4 overflow-y-auto min-h-0 custom-scrollbar flex flex-col gap-3 text-xs">
+              {/* Performance States Box */}
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2.5 shrink-0">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
                   <Activity className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="truncate">Performance States</span>
@@ -486,27 +551,70 @@ export function ReportsCard({
                 </div>
               </div>
 
-              {/* Actions / Delete Report Card */}
-              <div className="cx-card p-3.5 bg-slate-900 border border-slate-800 flex flex-col gap-2.5 shrink-0 text-xs">
+              {/* Metadata Box */}
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2 shrink-0">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
-                  <Trash2 className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate">Report Actions</span>
+                  <Info className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="truncate">Report Telemetry</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onDeleteReport(activeReport.id)}
-                  className="w-full h-8.5 inline-flex items-center justify-center gap-2 px-3 rounded-lg border border-slate-800 bg-slate-950 text-xs font-bold text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-colors cursor-pointer uppercase tracking-wider"
-                  title="Delete Active Report"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Delete Report</span>
-                </button>
+
+                <div className="flex flex-col gap-1">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-[#DD3C73] shrink-0" />
+                    <span>Generated Timestamp</span>
+                  </div>
+                  <div className="text-slate-300 font-medium text-[11px]">
+                    {new Date(activeReport.createdAt).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    <span className="text-slate-500">({formatTimeAgo(activeReport.createdAt)})</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-[#DD3C73] shrink-0" />
+                    <span>Period Window</span>
+                  </div>
+                  <div className="text-slate-300 font-medium text-[11px]">{activeReport.period}</div>
+                </div>
+
+                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Bot className="w-3 h-3 text-[#DD3C73] shrink-0" />
+                    <span>Inference Model</span>
+                  </div>
+                  <div className="text-slate-300 font-medium text-[11px] truncate">{activeReport.model}</div>
+                </div>
+
+                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    {isReportFallback ? (
+                      <AlertTriangle className="w-3 h-3 text-[#E3EACD] shrink-0" />
+                    ) : (
+                      <Check className="w-3 h-3 text-[#A7E2C0] shrink-0" />
+                    )}
+                    <span>Execution Health</span>
+                  </div>
+                  <div className="font-bold text-[11px]">
+                    {isReportFallback ? (
+                      <span className="text-[#E3EACD]">Fallback / Degraded</span>
+                    ) : (
+                      <span className="text-[#A7E2C0]">Optimal (AI Synthesized)</span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       )}
 
+      {/* Analysis Modal */}
       <AnalyzePortfolioModal
         isOpen={isAnalysisModalOpen}
         onClose={() => setIsAnalysisModalOpen(false)}
@@ -519,3 +627,4 @@ export function ReportsCard({
   );
 }
 
+export const ReportsLayoutContainer = ReportsCard;

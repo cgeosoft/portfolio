@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Sparkles,
   Layers,
+  ChevronDown,
 } from "lucide-react";
 import type { PortfolioTransaction } from "../../types/portfolio";
 import { fmtCurrency } from "./utils";
@@ -1202,42 +1203,48 @@ export function ImportCsvModal({
                       <Layers className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span className="hidden sm:inline">Template:</span>
                     </span>
-                    <select
-                      value={selectedTemplate}
-                      onChange={(e) => handleTemplateChange(e.target.value)}
-                      className="w-full sm:w-auto px-2 sm:px-2.5 py-1.5 rounded-lg border border-[#DD3C73]/50 bg-[#18181b] text-xs text-[#DD3C73] font-bold font-mono outline-none focus:border-[#DD3C73] cursor-pointer shadow-[0_0_8px_rgba(221,60,115,0.15)]"
-                    >
-                      {CSV_TEMPLATES.map((tpl) => (
+                    <div className="relative w-full sm:w-auto">
+                      <select
+                        value={selectedTemplate}
+                        onChange={(e) => handleTemplateChange(e.target.value)}
+                        className="w-full sm:w-auto pl-2 sm:pl-2.5 pr-7 py-1.5 rounded-lg border border-[#DD3C73]/50 bg-[#18181b] text-xs text-[#DD3C73] font-bold font-mono outline-none focus:border-[#DD3C73] cursor-pointer appearance-none shadow-[0_0_8px_rgba(221,60,115,0.15)]"
+                      >
+                        {CSV_TEMPLATES.map((tpl) => (
+                          <option
+                            key={tpl.id}
+                            value={tpl.id}
+                            className="bg-[#18181b] text-slate-100"
+                          >
+                            {tpl.badge ? `[${tpl.badge}] ` : ""}{tpl.name}
+                          </option>
+                        ))}
                         <option
-                          key={tpl.id}
-                          value={tpl.id}
+                          value="custom"
                           className="bg-[#18181b] text-slate-100"
                         >
-                          {tpl.badge ? `[${tpl.badge}] ` : ""}{tpl.name}
+                          [MANUAL] Custom Column Mapping
                         </option>
-                      ))}
-                      <option
-                        value="custom"
-                        className="bg-[#18181b] text-slate-100"
-                      >
-                        [MANUAL] Custom Column Mapping
-                      </option>
-                    </select>
+                      </select>
+                      <ChevronDown className="w-3.5 h-3.5 text-[#DD3C73] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
                   </div>
 
                   {/* Currency Selector */}
                   <div className="flex items-center gap-1.5 text-xs">
                     <span className="text-slate-400 text-[11px] sm:text-xs">Cur:</span>
-                    <select
-                      value={customBaseCurrency}
-                      onChange={(e) => setCustomBaseCurrency(e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-slate-700 bg-[#18181b] text-xs text-slate-200 outline-none focus:border-[#DD3C73] cursor-pointer font-mono"
-                    >
-                      <option value="EUR" className="bg-[#18181b] text-slate-100">EUR (€)</option>
-                      <option value="USD" className="bg-[#18181b] text-slate-100">USD ($)</option>
-                      <option value="GBP" className="bg-[#18181b] text-slate-100">GBP (£)</option>
-                      <option value="CHF" className="bg-[#18181b] text-slate-100">CHF (Fr)</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={customBaseCurrency}
+                        onChange={(e) => setCustomBaseCurrency(e.target.value)}
+                        className="pl-2 pr-6 py-1.5 rounded-lg border border-slate-700 bg-[#18181b] text-xs text-slate-200 outline-none focus:border-[#DD3C73] cursor-pointer appearance-none font-mono"
+                      >
+                        <option value="EUR" className="bg-[#18181b] text-slate-100">EUR (€)</option>
+                        <option value="USD" className="bg-[#18181b] text-slate-100">USD ($)</option>
+                        <option value="GBP" className="bg-[#18181b] text-slate-100">GBP (£)</option>
+                        <option value="CHF" className="bg-[#18181b] text-slate-100">CHF (Fr)</option>
+                      </select>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
                   </div>
 
                   <button
@@ -1286,25 +1293,28 @@ export function ImportCsvModal({
                                     <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">IGNORED</span>
                                   )}
                                 </div>
-                                <select
-                                  value={currentField}
-                                  onChange={(e) => handleMappingChange(colIdx, e.target.value as SystemFieldKey)}
-                                  className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-mono font-semibold outline-none transition-colors cursor-pointer ${
-                                    isMapped
-                                      ? "border-[#DD3C73] text-[#DD3C73] bg-[#1a121d] shadow-[0_0_8px_rgba(221,60,115,0.15)]"
-                                      : "border-slate-700 bg-[#18181b] text-slate-400 hover:border-slate-600"
-                                  }`}
-                                >
-                                  {SYSTEM_FIELDS.map((f) => (
-                                    <option
-                                      key={f.key}
-                                      value={f.key}
-                                      className="bg-[#18181b] text-slate-100"
-                                    >
-                                      {f.label}
-                                    </option>
-                                  ))}
-                                </select>
+                                <div className="relative w-full">
+                                  <select
+                                    value={currentField}
+                                    onChange={(e) => handleMappingChange(colIdx, e.target.value as SystemFieldKey)}
+                                    className={`w-full pl-2.5 pr-7 py-1.5 rounded-lg border text-xs font-mono font-semibold outline-none transition-colors cursor-pointer appearance-none ${
+                                      isMapped
+                                        ? "border-[#DD3C73] text-[#DD3C73] bg-[#1a121d] shadow-[0_0_8px_rgba(221,60,115,0.15)]"
+                                        : "border-slate-700 bg-[#18181b] text-slate-400 hover:border-slate-600"
+                                    }`}
+                                  >
+                                    {SYSTEM_FIELDS.map((f) => (
+                                      <option
+                                        key={f.key}
+                                        value={f.key}
+                                        className="bg-[#18181b] text-slate-100"
+                                      >
+                                        {f.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className={`w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${isMapped ? "text-[#DD3C73]" : "text-slate-500"}`} />
+                                </div>
                               </div>
                             </th>
                           );

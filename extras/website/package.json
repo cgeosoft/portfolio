@@ -4,7 +4,7 @@
   "private": true,
   "description": "Marketing website for Portfolio Desktop with OS detection and Cloudflare Pages deployment",
   "scripts": {
-    "dev": "bun --serve .",
+    "dev": "bunx serve .",
     "deploy": "./deploy.sh"
   }
 }

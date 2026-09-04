@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run build:css && bunx electrobun dev",
+    "dev": "bash scripts/setup-dev-icon.sh && bun run build:css && bunx electrobun dev",
+    "setup:desktop": "bash scripts/setup-dev-icon.sh",
     "build:css": "tailwindcss -i src/views/src/input.css -o src/views/style.css --minify",
     "watch:css": "tailwindcss -i src/views/src/input.css -o src/views/style.css --watch",
     "build": "bun run build:css && bunx electrobun build",

@@ -1,7 +1,15 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
+
+export interface WindowStateConfig {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  isMaximized?: boolean;
+}
 
 export interface DesktopConfig {
   /** Whether the first-launch setup wizard has been completed */
@@ -32,6 +40,16 @@ export interface DesktopConfig {
   llmBaseUrls: Record<string, string>;
   /** Last opened directory for CSV import file picker */
   lastImportDirectory?: string;
+  /** ISO timestamp of the last market quotes synchronization with Yahoo Finance */
+  lastQuotesSync?: string;
+  /** Base webpage URL for terms and external site */
+  webpageUrl?: string;
+  /** Interval in minutes for automatically refreshing market quotes (0 = manual only) */
+  marketQuotesInterval: number;
+  /** Whether to start Portfolio Desktop on system boot */
+  startWithBoot: boolean;
+  /** Stored window position, dimensions, and state */
+  windowState?: WindowStateConfig;
 }
 
 /** Returns the standard configuration directory */
@@ -63,11 +81,47 @@ const DEFAULT_CONFIG: DesktopConfig = {
   llmApiKey: "",
   llmBaseUrl: "",
   llmTemperature: 0.3,
-  llamacppServerUrl: "",
+  llamacppServerUrl: "http://127.0.0.1:9100",
   llmApiKeys: {},
   llmBaseUrls: {},
   lastImportDirectory: "",
+  lastQuotesSync: undefined,
+  webpageUrl: process.env["WEBPAGE_URL"] || "http://localhost:3000",
+  marketQuotesInterval: 15,
+  startWithBoot: false,
+  windowState: undefined,
 };
+
+/** Synchronize Linux autostart desktop entry */
+export function syncAutostart(enabled: boolean): void {
+  if (process.platform !== "linux") return;
+  try {
+    const home = homedir() || process.env["HOME"] || "~";
+    const autostartDir = join(home, ".config", "autostart");
+    const desktopFilePath = join(autostartDir, "portfolio.desktop");
+    if (enabled) {
+      mkdirSync(autostartDir, { recursive: true });
+      const execCommand = process.env["APPIMAGE"] || process.execPath || "portfolio";
+      const content = `[Desktop Entry]
+Type=Application
+Name=Portfolio Desktop
+Comment=Personal Investment Portfolio Tracker
+Exec=${execCommand}
+Icon=portfolio
+Terminal=false
+Categories=Finance;Office;
+X-GNOME-Autostart-enabled=true
+`;
+      writeFileSync(desktopFilePath, content, "utf-8");
+    } else {
+      if (existsSync(desktopFilePath)) {
+        unlinkSync(desktopFilePath);
+      }
+    }
+  } catch {
+    // Best-effort Linux autostart management
+  }
+}
 
 /** Load configuration from disk, creating defaults if not found */
 export function loadConfig(): DesktopConfig {
@@ -81,7 +135,14 @@ export function loadConfig(): DesktopConfig {
   try {
     const raw = readFileSync(CONFIG_PATH, "utf-8");
     const parsed = JSON.parse(raw) as Partial<DesktopConfig>;
-    return { ...DEFAULT_CONFIG, ...parsed };
+    const cfg = { ...DEFAULT_CONFIG, ...parsed };
+    if (!cfg.llamacppServerUrl && cfg.llmBaseUrl && (!cfg.llmProvider || cfg.llmProvider === "llamacpp-server" || cfg.llmProvider === "llamacpp")) {
+      cfg.llamacppServerUrl = cfg.llmBaseUrl;
+    }
+    if (process.env["WEBPAGE_URL"]) {
+      cfg.webpageUrl = process.env["WEBPAGE_URL"];
+    }
+    return cfg;
   } catch {
     return { ...DEFAULT_CONFIG };
   }
@@ -97,6 +158,19 @@ export function saveConfig(config: DesktopConfig): void {
 export function updateConfig(updates: Partial<DesktopConfig>): DesktopConfig {
   const current = loadConfig();
   const updated = { ...current, ...updates };
+  if (
+    updates.llmBaseUrl !== undefined &&
+    (!updated.llamacppServerUrl || updated.llmProvider === "llamacpp-server" || updated.llmProvider === "llamacpp")
+  ) {
+    updated.llamacppServerUrl = updates.llmBaseUrl;
+  }
+  if (updates.llamacppServerUrl !== undefined && !updated.llmBaseUrl) {
+    updated.llmBaseUrl = updates.llamacppServerUrl;
+  }
   saveConfig(updated);
+  if (typeof updates.startWithBoot === "boolean") {
+    syncAutostart(updates.startWithBoot);
+  }
   return updated;
 }
+

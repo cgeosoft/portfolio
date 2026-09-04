@@ -119,6 +119,12 @@ export function countByPortfolio(portfolioId: string): number {
   return row.cnt;
 }
 
+export function countTotal(): number {
+  const db = getDatabase();
+  const row = db.query("SELECT COUNT(*) as cnt FROM transactions").get() as { cnt: number } | null;
+  return row?.cnt ?? 0;
+}
+
 export function deleteByPortfolio(portfolioId: string): number {
   const db = getDatabase();
   const result = db.run("DELETE FROM transactions WHERE portfolioId = ?", [portfolioId]);

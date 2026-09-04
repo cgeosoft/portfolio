@@ -1,13 +1,13 @@
 # Portfolio Desktop Marketing Website
 
-A modern, tactical cyberpunk marketing landing page for [Portfolio Desktop](https://github.com/your-username/portfolio).
+A modern, marketing landing page for [Portfolio Desktop](https://github.com/your-username/portfolio).
 
 ## Features
 
 - **Automated OS Detection**: Dynamically inspects the client's operating system (Windows, macOS, Linux) and adapts the primary hero download CTA with the appropriate installer (`.exe`, `.dmg`, or `.deb`).
 - **Interactive App Showcase**: Embedded terminal/UI mockup highlighting live portfolio analytics, holdings indicators, AI briefings, and broker CSV importer.
 - **3-Platform Download Matrix**: Direct installer and portable archive links for Windows, macOS, and Linux with verified checksum indicators.
-- **Tactical Cyberpunk Aesthetic**: Monospace typography (`JetBrains Mono`), dark space palette (`#0b0f19`), cyber pink primary accent (`#DD3C73`), mint highlights (`#A7E2C0`), and responsive glassmorphic cards.
+- **Aesthetic**: Monospace typography (`JetBrains Mono`), dark space palette (`#0b0f19`), cyber pink primary accent (`#DD3C73`), mint highlights (`#A7E2C0`), and responsive glassmorphic cards.
 - **Single-Script Cloudflare Pages Deployment**: Instant deployment using `./deploy.sh`.
 
 ## Local Development & Preview

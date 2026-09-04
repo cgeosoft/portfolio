@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PortfolioTransaction } from "../../types/portfolio";
-import { formatMoney } from "./utils";
-import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft } from "lucide-react";
+import { formatMoney, fmtCurrency } from "./utils";
+import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft, ChevronDown } from "lucide-react";
 
 interface TransactionsCardProps {
   transactions: PortfolioTransaction[];
@@ -10,6 +10,7 @@ interface TransactionsCardProps {
   onOpenEditModal: (tx: PortfolioTransaction) => void;
   onDeleteTransaction: (id: string) => void;
   onOpenImportModal: () => void;
+  hideValues?: boolean;
 }
 
 export function TransactionsCard({
@@ -19,6 +20,7 @@ export function TransactionsCard({
   onOpenEditModal,
   onDeleteTransaction,
   onOpenImportModal,
+  hideValues = false,
 }: TransactionsCardProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
@@ -88,19 +90,22 @@ export function TransactionsCard({
             />
           </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-950/70 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer"
-          >
-            <option value="ALL" className="bg-slate-900 text-slate-100">All Types</option>
-            <option value="BUY" className="bg-slate-900 text-slate-100">BUY</option>
-            <option value="SELL" className="bg-slate-900 text-slate-100">SELL</option>
-            <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND</option>
-            <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST</option>
-            <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT</option>
-            <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL</option>
-          </select>
+          <div className="relative">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer appearance-none transition-colors"
+            >
+              <option value="ALL" className="bg-slate-900 text-slate-100">All Types</option>
+              <option value="BUY" className="bg-slate-900 text-slate-100">BUY</option>
+              <option value="SELL" className="bg-slate-900 text-slate-100">SELL</option>
+              <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND</option>
+              <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST</option>
+              <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT</option>
+              <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
 
           <button
             onClick={onOpenImportModal}
@@ -154,18 +159,22 @@ export function TransactionsCard({
                     </td>
                     <td className="py-2.5 px-3 font-bold text-slate-200">{tx.symbol}</td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
-                      {typeof tx.shares === "number"
+                      {tx.shares === undefined || tx.shares === null
+                        ? "—"
+                        : hideValues
+                        ? "••••"
+                        : typeof tx.shares === "number"
                         ? tx.shares.toLocaleString("en-US", { maximumFractionDigits: 4 })
-                        : (tx.shares ?? "—")}
+                        : tx.shares}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-400">
-                      {tx.price ? formatMoney(tx.price, tx.currency || currency) : "—"}
+                      {typeof tx.price === "number" ? formatMoney(tx.price, tx.currency || currency, 2, hideValues) : "—"}
                     </td>
                     <td className="py-2.5 px-3 text-right font-medium text-slate-100">
-                      {tx.amount ? formatMoney(Math.abs(tx.amount), tx.currency || currency) : "—"}
+                      {typeof tx.amount === "number" ? formatMoney(Math.abs(tx.amount), tx.currency || currency, 2, hideValues) : "—"}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-500 text-[11px]">
-                      {(tx.fee || tx.tax) ? `€${((tx.fee || 0) + (tx.tax || 0)).toFixed(2)}` : "—"}
+                      {(tx.fee || tx.tax) ? fmtCurrency((tx.fee || 0) + (tx.tax || 0), tx.currency || currency, hideValues) : "—"}
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">

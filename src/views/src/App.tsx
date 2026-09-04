@@ -19,13 +19,22 @@ import { ReportsCard } from "./components/portfolio/ReportsCard";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
 import { ImportCsvModal } from "./components/portfolio/ImportCsvModal";
 import { AnalyzePortfolioModal } from "./components/portfolio/AnalyzePortfolioModal";
+import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SetupWizardModal } from "./components/common/SetupWizardModal";
-import { SettingsPage } from "./components/settings/SettingsPage";
-import { ManagePortfoliosPage } from "./components/portfolio/ManagePortfoliosPage";
+import { SettingsPage, type SettingsSection } from "./components/settings/SettingsPage";
+import { TermsPage } from "./components/common/TermsPage";
+import { BottomBar } from "./components/layout/BottomBar";
 import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
-import { fmtCurrency, fmtPercent } from "./components/portfolio/utils";
-import type { DesktopConfig, GetPortfoliosResponse } from "../../shared/rpc-types";
-import { rpc } from "./rpc";
+import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
+import { fmtCurrency, fmtPercent, reloadPage } from "./components/portfolio/utils";
+import type {
+  DesktopConfig,
+  GetPortfoliosResponse,
+  GetAppInfoResponse,
+  PortfolioChatMessage,
+  AssistantConversation,
+} from "../../shared/rpc-types";
+import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge } from "./rpc";
 import {
   Wallet,
   TrendingUp,
@@ -40,6 +49,7 @@ import {
   CircleDollarSign,
   Flame,
   Info,
+  AlertTriangle,
 } from "lucide-react";
 
 const VALID_TABS: readonly string[] = ["overview", "reports", "transactions"];
@@ -55,13 +65,28 @@ function getTabFromHash(hash: string): PortfolioTabKey {
 }
 
 export default function App() {
-  const [view, setView] = useState<"dashboard" | "settings" | "portfolios">(() => {
+  const [view, setView] = useState<"dashboard" | "settings" | "portfolios" | "terms">(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
-      if (hash === "#portfolios") return "portfolios";
-      if (hash === "#settings") return "settings";
+      if (hash === "#portfolios") return "settings";
+      if (hash.startsWith("#settings")) return "settings";
+      if (hash === "#terms") return "terms";
     }
     return "dashboard";
+  });
+
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.startsWith("#settings/")) {
+        const sec = hash.replace("#settings/", "") as SettingsSection;
+        if (["general", "portfolios", "assistant", "about"].includes(sec)) {
+          return sec;
+        }
+      }
+      if (hash === "#portfolios") return "portfolios";
+    }
+    return "general";
   });
 
   const [activeTab, setActiveTab] = useState<PortfolioTabKey>(() => {
@@ -82,10 +107,11 @@ export default function App() {
     }
   }, []);
 
-  const handleOpenSettings = useCallback(() => {
+  const handleOpenSettings = useCallback((section: SettingsSection = "general") => {
+    setSettingsSection(section);
     setView("settings");
     if (typeof window !== "undefined") {
-      const newHash = "#settings";
+      const newHash = section === "general" ? "#settings" : `#settings/${section}`;
       if (window.location.hash !== newHash) {
         window.history.pushState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
       }
@@ -93,9 +119,13 @@ export default function App() {
   }, []);
 
   const handleOpenManagePortfolios = useCallback(() => {
-    setView("portfolios");
+    handleOpenSettings("portfolios");
+  }, [handleOpenSettings]);
+
+  const handleOpenTerms = useCallback(() => {
+    setView("terms");
     if (typeof window !== "undefined") {
-      const newHash = "#portfolios";
+      const newHash = "#terms";
       if (window.location.hash !== newHash) {
         window.history.pushState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
       }
@@ -119,9 +149,18 @@ export default function App() {
     const handleRouting = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#portfolios") {
-        setView("portfolios");
-      } else if (hash === "#settings") {
+        setSettingsSection("portfolios");
         setView("settings");
+      } else if (hash.startsWith("#settings")) {
+        const parts = hash.split("/");
+        if (parts[1] && ["general", "portfolios", "assistant", "about"].includes(parts[1])) {
+          setSettingsSection(parts[1] as SettingsSection);
+        } else {
+          setSettingsSection("general");
+        }
+        setView("settings");
+      } else if (hash === "#terms") {
+        setView("terms");
       } else {
         setView("dashboard");
         setActiveTab(getTabFromHash(window.location.hash));
@@ -145,13 +184,177 @@ export default function App() {
   });
 
   const [portfolioData, setPortfolioData] = useState<FinancialPortfolioData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [reports, setReports] = useState<PortfolioReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [currency, setCurrency] = useState("EUR");
+  const [loadingSlowWarning, setLoadingSlowWarning] = useState(false);
+  const [currency, setCurrency] = useState<string>(() => {
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem("selected_currency") || "EUR";
+    }
+    return "EUR";
+  });
+
+  useEffect(() => {
+    if (typeof localStorage !== "undefined" && currency) {
+      localStorage.setItem("selected_currency", currency);
+    }
+  }, [currency]);
 
   // Privacy Mode Toggle State
   const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(false);
+
+  // Assistant Chat & Conversations State
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [conversations, setConversations] = useState<AssistantConversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<PortfolioChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [assistantProvider, setAssistantProvider] = useState<string | undefined>(undefined);
+  const [assistantModel, setAssistantModel] = useState<string | undefined>(undefined);
+
+  const loadConversations = useCallback(async (portfolioId: string) => {
+    try {
+      await ensureRpcReady();
+      const res = await rpc.request.getAssistantConversations({ portfolioId });
+      const convs = res.conversations || [];
+      setConversations(convs);
+      if (convs.length > 0) {
+        setCurrentConversationId(convs[0].id);
+        setChatMessages(convs[0].messages);
+      } else {
+        setCurrentConversationId(null);
+        setChatMessages([]);
+      }
+    } catch (err) {
+      console.error("Failed to load assistant conversations:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activePortfolioId) {
+      void loadConversations(activePortfolioId);
+    }
+  }, [activePortfolioId, loadConversations]);
+
+  const handleToggleAssistant = useCallback(() => {
+    setIsAssistantOpen((prev) => !prev);
+  }, []);
+
+  const handleSelectConversation = useCallback(
+    (convId: string) => {
+      const found = conversations.find((c) => c.id === convId);
+      if (found) {
+        setCurrentConversationId(found.id);
+        setChatMessages(found.messages);
+        setChatError(null);
+      }
+    },
+    [conversations],
+  );
+
+  const handleNewChat = useCallback(() => {
+    setCurrentConversationId(null);
+    setChatMessages([]);
+    setChatError(null);
+  }, []);
+
+  const handleDeleteConversation = useCallback(
+    async (convId: string) => {
+      if (!activePortfolioId) return;
+      try {
+        await ensureRpcReady();
+        await rpc.request.deleteAssistantConversation({
+          portfolioId: activePortfolioId,
+          conversationId: convId,
+        });
+        setConversations((prev) => {
+          const next = prev.filter((c) => c.id !== convId);
+          if (currentConversationId === convId) {
+            if (next.length > 0) {
+              setCurrentConversationId(next[0].id);
+              setChatMessages(next[0].messages);
+            } else {
+              setCurrentConversationId(null);
+              setChatMessages([]);
+            }
+          }
+          return next;
+        });
+      } catch (err) {
+        console.error("Failed to delete assistant conversation:", err);
+      }
+    },
+    [activePortfolioId, currentConversationId],
+  );
+
+  const handleClearChat = useCallback(async () => {
+    if (currentConversationId && activePortfolioId) {
+      await handleDeleteConversation(currentConversationId);
+    } else {
+      setChatMessages([]);
+      setChatError(null);
+    }
+  }, [currentConversationId, activePortfolioId, handleDeleteConversation]);
+
+  const handleSendChatMessage = useCallback(
+    async (userText: string) => {
+      if (!activePortfolioId) {
+        setChatError("Please select or create a portfolio first.");
+        return;
+      }
+      const userMsg: PortfolioChatMessage = { role: "user", content: userText };
+      const updatedMessages = [...chatMessages, userMsg];
+      setChatMessages(updatedMessages);
+      setIsChatLoading(true);
+      setChatError(null);
+
+      try {
+        await ensureRpcReady();
+        const res = await rpc.request.chatWithPortfolio({
+          portfolioId: activePortfolioId,
+          conversationId: currentConversationId || undefined,
+          messages: updatedMessages,
+        });
+        const fullMessages = [...updatedMessages, res.message];
+        setChatMessages(fullMessages);
+        setCurrentConversationId(res.conversationId);
+        if (res.provider) setAssistantProvider(res.provider);
+        if (res.model) setAssistantModel(res.model);
+
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => c.id === res.conversationId);
+          const updatedConv: AssistantConversation = {
+            id: res.conversationId,
+            portfolioId: activePortfolioId,
+            title: res.title,
+            messages: fullMessages,
+            createdAt: idx >= 0 ? prev[idx].createdAt : new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          if (idx >= 0) {
+            const copy = [...prev];
+            copy.splice(idx, 1);
+            return [updatedConv, ...copy];
+          }
+          return [updatedConv, ...prev];
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setChatError(msg);
+      } finally {
+        setIsChatLoading(false);
+      }
+    },
+    [activePortfolioId, chatMessages, currentConversationId],
+  );
+
+  // App Info & Quotes Sync State
+  const [appVersion, setAppVersion] = useState("0.1");
+  const [webpageUrl, setWebpageUrl] = useState("http://localhost:3000");
+  const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
 
   const toggleHideCurrencyValues = () => {
     setHideCurrencyValues((prev) => {
@@ -167,10 +370,10 @@ export default function App() {
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
-  const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
   const [selectedMetricKey, setSelectedMetricKey] = useState<MetricKey>("totalGain");
 
   const handleOpenMetricModal = useCallback((metricKey: MetricKey) => {
@@ -188,35 +391,82 @@ export default function App() {
     }
   }, []);
 
-  // Safe retry helper for startup RPC handshakes
-  const callWithRetry = async <T,>(fn: () => Promise<T>, attempts = 3, delayMs = 500): Promise<T> => {
+  const handleReload = useCallback(() => {
+    reloadPage();
+  }, []);
+
+  // Reusable retry wrapper for startup RPC calls with per-attempt timeout and logging
+  const callWithRetry = async <T,>(
+    name: string,
+    fn: () => Promise<T>,
+    retries = 3,
+    delayMs = 250,
+    attemptTimeoutMs = 3500,
+  ): Promise<T> => {
     let lastError: unknown;
-    for (let i = 0; i < attempts; i++) {
+    for (let i = 0; i < retries; i++) {
+      const attemptStart = performance.now();
       try {
-        return await fn();
+        clientLogger.log(
+          "info",
+          `${name}:attempt`,
+          `Starting RPC "${name}" (attempt ${i + 1}/${retries}, timeout=${attemptTimeoutMs}ms)`,
+        );
+        const attemptPromise = fn();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`RPC "${name}" attempt timed out after ${attemptTimeoutMs}ms`)), attemptTimeoutMs)
+        );
+        const res = await Promise.race([attemptPromise, timeoutPromise]);
+        const dur = Math.round(performance.now() - attemptStart);
+        clientLogger.log("success", `${name}:success`, `RPC "${name}" succeeded on attempt ${i + 1} in ${dur}ms`, dur);
+        return res;
       } catch (err) {
+        const dur = Math.round(performance.now() - attemptStart);
         lastError = err;
-        if (i < attempts - 1) {
+        const msg = err instanceof Error ? err.message : String(err);
+        clientLogger.log("warning", `${name}:retry`, `RPC "${name}" attempt ${i + 1}/${retries} failed after ${dur}ms: ${msg}`, dur);
+        
+        // Socket stall watchdog: force fallback to native WebKitGTK bridge immediately on first failure
+        forceFallbackToNativeBridge();
+
+        if (i < retries - 1) {
           await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
         }
       }
     }
+    const finalMsg = lastError instanceof Error ? lastError.message : String(lastError);
+    clientLogger.log("error", `${name}:failed`, `RPC "${name}" failed after all ${retries} attempts: ${finalMsg}`);
     throw lastError;
   };
 
   // Check setup status and load initial config on mount
   useEffect(() => {
     const initApp = async () => {
+      clientLogger.log("info", "initApp:start", "Initializing application config and system info");
+      await ensureRpcReady();
       try {
-        const config = await callWithRetry<DesktopConfig>(() => rpc.request.getConfig({}));
+        const config = await callWithRetry<DesktopConfig>("getConfig", () => rpc.request.getConfig({}), 3, 200, 3000);
         if (config.baseCurrency) setCurrency(config.baseCurrency);
         if (config.hideCurrencyValues !== undefined) setHideCurrencyValues(config.hideCurrencyValues);
+        if (config.llmProvider) setAssistantProvider(config.llmProvider);
+        if (config.llmModel) setAssistantModel(config.llmModel);
 
         if (!config.setupCompleted) {
           setIsSetupWizardOpen(true);
         }
       } catch (e) {
+        clientLogger.log("error", "initApp:config_error", `Failed to load initial config: ${e}`);
         console.error("Failed to load initial config:", e);
+      }
+
+      try {
+        const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", () => rpc.request.getAppInfo({}), 3, 200, 3000);
+        if (appInfo.majorMinor) setAppVersion(appInfo.majorMinor);
+        if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
+        if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
+      } catch (e) {
+        clientLogger.log("error", "initApp:appInfo_error", `Failed to load app info: ${e}`);
+        console.error("Failed to load app info:", e);
       }
     };
     initApp();
@@ -225,9 +475,15 @@ export default function App() {
   // Load portfolios list
   const loadPortfolios = useCallback(async () => {
     try {
-      const data = await callWithRetry<GetPortfoliosResponse>(() => rpc.request.getPortfolios({}));
+      clientLogger.log("info", "loadPortfolios:start", "Loading portfolios list from database");
+      await ensureRpcReady();
+      const data = await callWithRetry<GetPortfoliosResponse>("getPortfolios", () => rpc.request.getPortfolios({}), 3, 200, 3000);
       const list: PortfolioItem[] = data.portfolios || [];
       setPortfolios(list);
+      clientLogger.log("info", "loadPortfolios:received", `Received ${list.length} portfolio(s)`, undefined, {
+        portfolios: list.map((p) => ({ id: p.id, name: p.name })),
+        activePortfolioId,
+      });
 
       if (list.length > 0) {
         const targetId =
@@ -235,13 +491,17 @@ export default function App() {
           list[0]!.id;
 
         if (targetId !== activePortfolioId) {
+          clientLogger.log("info", "loadPortfolios:select_active", `Setting active portfolio to ${targetId}`);
           setActivePortfolioId(targetId);
           if (typeof localStorage !== "undefined") {
             localStorage.setItem("selected_portfolio_id", targetId);
           }
         }
+      } else {
+        clientLogger.log("warning", "loadPortfolios:empty", "No portfolios found in database");
       }
     } catch (e) {
+      clientLogger.log("error", "loadPortfolios:error", `Error loading portfolios: ${e}`);
       console.error("Error loading portfolios:", e);
     }
   }, [activePortfolioId]);
@@ -254,6 +514,7 @@ export default function App() {
   const loadReports = useCallback(async () => {
     if (!activePortfolioId) return;
     try {
+      await ensureRpcReady();
       const res = await rpc.request.getReports({ portfolioId: activePortfolioId });
       setReports(res.reports || []);
     } catch (e) {
@@ -264,19 +525,66 @@ export default function App() {
   // Fetch portfolio data
   const loadData = useCallback(
     async (forceRefresh = false) => {
-      if (!activePortfolioId) return;
+      if (!activePortfolioId) {
+        clientLogger.log("warning", "loadData:skipped", "loadData called but activePortfolioId is null");
+        return;
+      }
       if (forceRefresh) setIsRefreshing(true);
       else setIsLoading(true);
 
+      const loadStart = performance.now();
+      clientLogger.log(
+        "info",
+        "loadData:start",
+        `Loading portfolio data (id=${activePortfolioId}, currency=${currency}, forceRefresh=${forceRefresh})`,
+      );
+
+      setLoadError(null);
       try {
-        const data = await rpc.request.getPortfolioData({
-          portfolioId: activePortfolioId,
-          baseCurrency: currency,
-          refresh: forceRefresh,
-        });
+        await ensureRpcReady();
+        const data = await callWithRetry<FinancialPortfolioData>(
+          `getPortfolioData:${activePortfolioId.slice(0, 8)}`,
+          () =>
+            rpc.request.getPortfolioData({
+              portfolioId: activePortfolioId,
+              baseCurrency: currency,
+              refresh: forceRefresh,
+            }),
+          forceRefresh ? 2 : 3,
+          250,
+          forceRefresh ? 30000 : 4000,
+        );
+        const dur = Math.round(performance.now() - loadStart);
         setPortfolioData(data);
+        setLoadError(null);
+        clientLogger.log(
+          "success",
+          "loadData:success",
+          `Portfolio data loaded (${data.holdings?.length ?? 0} holdings, totalValue=${data.summary?.totalValue}) in ${dur}ms`,
+          dur,
+          {
+            portfolioId: activePortfolioId,
+            holdingsCount: data.holdings?.length ?? 0,
+            totalValue: data.summary?.totalValue,
+          },
+        );
+        if (data.summary?.lastUpdated) {
+          setLastQuotesSync(data.summary.lastUpdated);
+          if (forceRefresh) {
+            rpc.request.saveConfig({ lastQuotesSync: data.summary.lastUpdated }).catch(() => {});
+          }
+        }
       } catch (e) {
+        const dur = Math.round(performance.now() - loadStart);
+        const errMsg = e instanceof Error ? e.message : String(e);
+        clientLogger.log(
+          "error",
+          "loadData:error",
+          `Failed to load portfolio data after ${dur}ms: ${errMsg}`,
+          dur,
+        );
         console.error("Error loading portfolio data:", e);
+        setLoadError(errMsg);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -286,11 +594,53 @@ export default function App() {
     [activePortfolioId, currency, loadReports],
   );
 
+  const handleSyncQuotes = useCallback(async () => {
+    if (activePortfolioId) {
+      await loadData(true);
+    } else {
+      setIsRefreshing(true);
+      try {
+        await ensureRpcReady();
+        const res = await rpc.request.syncQuotes({});
+        if (res.lastSync) setLastQuotesSync(res.lastSync);
+      } catch (e) {
+        console.error("Error syncing quotes:", e);
+      } finally {
+        setIsRefreshing(false);
+      }
+    }
+  }, [activePortfolioId, loadData]);
+
   useEffect(() => {
     if (activePortfolioId) {
       loadData();
     }
   }, [activePortfolioId, currency, loadData]);
+
+  // Background quotes refresh timer based on configured interval
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    void (async () => {
+      try {
+        await ensureRpcReady();
+        const cfg = await rpc.request.getConfig({});
+        if (cfg.llmProvider) setAssistantProvider(cfg.llmProvider);
+        if (cfg.llmModel) setAssistantModel(cfg.llmModel);
+        const intervalMins = cfg.marketQuotesInterval ?? 15;
+        if (intervalMins > 0) {
+          timer = setInterval(() => {
+            void loadData(true);
+          }, intervalMins * 60 * 1000);
+        }
+      } catch (err) {
+        console.warn("Failed to schedule background quotes refresh:", err);
+      }
+    })();
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [loadData]);
 
   // Portfolio Switching & Management
   const handleSelectPortfolio = (id: string) => {
@@ -396,7 +746,7 @@ export default function App() {
 
       if (e.key === "F5" || (isCmdOrCtrl && e.key.toLowerCase() === "r")) {
         e.preventDefault();
-        void loadData(true);
+        handleReload();
         return;
       }
 
@@ -432,11 +782,27 @@ export default function App() {
 
     window.addEventListener("keydown", handleGlobalShortcuts);
     return () => window.removeEventListener("keydown", handleGlobalShortcuts);
-  }, [handleOpenSettings, handleQuitApp, loadData]);
+  }, [handleOpenSettings, handleQuitApp, handleReload, loadData]);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (isLoading && !portfolioData) {
+      clientLogger.log("info", "sync_screen:shown", "Showing 'Synchronizing Portfolio & Market Quotes...' overlay");
+      timer = setTimeout(() => {
+        clientLogger.log("warning", "sync_screen:slow_warning", "Market data fetch exceeded 3500ms, showing 'Continue Offline' prompt");
+        setLoadingSlowWarning(true);
+      }, 3500);
+    } else {
+      setLoadingSlowWarning(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isLoading, portfolioData]);
 
   if (isLoading && !portfolioData && view === "dashboard") {
     return (
-      <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col font-mono">
+      <div className="h-dvh min-h-0 overflow-hidden bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full min-w-0">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -456,6 +822,7 @@ export default function App() {
           onToggleHideCurrency={toggleHideCurrencyValues}
           onRefresh={() => loadData(true)}
           isRefreshing={true}
+          onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
           onOpenAbout={() => setIsAboutModalOpen(true)}
@@ -477,15 +844,124 @@ export default function App() {
           onNavigateDashboard={handleNavigateDashboard}
           reportsCount={reports.length}
           transactionsCount={0}
-          hideCurrencyValues={hideCurrencyValues}
-          onToggleHideCurrency={toggleHideCurrencyValues}
         />
         <div className="flex-1 flex flex-col items-center justify-center space-y-3 p-8">
           <RefreshCw className="w-8 h-8 text-[#DD3C73] animate-spin" />
           <p className="text-xs text-slate-400 font-mono tracking-wider uppercase">
             Synchronizing Portfolio &amp; Market Quotes...
           </p>
+          {loadingSlowWarning && (
+            <div className="flex flex-col items-center space-y-2 pt-2">
+              <p className="text-xs text-slate-500 font-mono">Market data response is taking longer than usual.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoading(false);
+                  setIsRefreshing(false);
+                }}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition-colors border border-slate-700 cursor-pointer font-mono"
+              >
+                Continue Offline
+              </button>
+            </div>
+          )}
         </div>
+        <BottomBar
+          version={appVersion}
+          lastQuotesSync={lastQuotesSync}
+          onOpenTerms={handleOpenTerms}
+          onSyncQuotes={handleSyncQuotes}
+          isSyncingQuotes={isRefreshing}
+          hideCurrencyValues={hideCurrencyValues}
+          onToggleHideCurrency={toggleHideCurrencyValues}
+        />
+      </div>
+    );
+  }
+
+  if (!isLoading && loadError && !portfolioData && view === "dashboard") {
+    return (
+      <div className="h-dvh min-h-0 overflow-hidden bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full min-w-0">
+        <AppMenuBar
+          portfolios={portfolios}
+          activePortfolio={activePortfolio}
+          onSelectPortfolio={handleSelectPortfolio}
+          onNewPortfolio={() => setIsCreateModalOpen(true)}
+          onImportCsv={() => setIsImportModalOpen(true)}
+          onExportPortfolio={() => setIsExportModalOpen(true)}
+          onAddTransaction={() => {
+            setEditingTx(null);
+            setIsTxModalOpen(true);
+          }}
+          onManagePortfolios={handleOpenManagePortfolios}
+          onOpenSettings={handleOpenSettings}
+          onSelectTab={handleTabChange}
+          activeTab={activeTab}
+          hideCurrencyValues={hideCurrencyValues}
+          onToggleHideCurrency={toggleHideCurrencyValues}
+          onRefresh={() => loadData(true)}
+          isRefreshing={isRefreshing}
+          onReload={handleReload}
+          onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
+          onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+          onOpenAbout={() => setIsAboutModalOpen(true)}
+          onQuit={handleQuitApp}
+        />
+        <Header
+          currency={currency}
+          onChangeCurrency={setCurrency}
+          activePortfolio={activePortfolio}
+          portfolios={portfolios}
+          onChangePortfolio={handleSelectPortfolio}
+          onOpenManagePortfolios={handleOpenManagePortfolios}
+          onRefresh={() => loadData(true)}
+          isRefreshing={isRefreshing}
+          onOpenSettings={handleOpenSettings}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          activeView={view}
+          onNavigateDashboard={handleNavigateDashboard}
+          reportsCount={reports.length}
+          transactionsCount={0}
+        />
+        <div className="flex-1 flex flex-col items-center justify-center space-y-4 p-8 text-center max-w-md mx-auto">
+          <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/30 text-[#DD3C73]">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Synchronization Failed</h3>
+            <p className="text-xs text-slate-400 font-sans max-w-sm">{loadError}</p>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                forceFallbackToNativeBridge();
+                void loadData(false);
+              }}
+              className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#DD3C73]/20"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry Sync
+            </button>
+            <button
+              type="button"
+              onClick={handleReload}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono transition-colors border border-slate-700 cursor-pointer"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+        <BottomBar
+          version={appVersion}
+          lastQuotesSync={lastQuotesSync}
+          onOpenTerms={handleOpenTerms}
+          onSyncQuotes={handleSyncQuotes}
+          isSyncingQuotes={isRefreshing}
+          hideCurrencyValues={hideCurrencyValues}
+          onToggleHideCurrency={toggleHideCurrencyValues}
+        />
       </div>
     );
   }
@@ -499,13 +975,7 @@ export default function App() {
   const isDayUp = (summary?.dayGainLossDollar ?? 0) >= 0;
 
   return (
-    <div
-      className={`bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full overflow-x-hidden min-w-0 ${
-        view === "dashboard" && (activeTab === "transactions" || activeTab === "reports")
-          ? "h-dvh min-h-0 overflow-hidden"
-          : "min-h-screen"
-      }`}
-    >
+    <div className="h-dvh min-h-0 overflow-hidden bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full min-w-0">
       {/* Application Menu Bar (Native HTML Menu for Linux) */}
       <AppMenuBar
         portfolios={portfolios}
@@ -526,59 +996,83 @@ export default function App() {
         onToggleHideCurrency={toggleHideCurrencyValues}
         onRefresh={() => loadData(true)}
         isRefreshing={isRefreshing}
+        onReload={handleReload}
         onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
         onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onQuit={handleQuitApp}
+        isAssistantOpen={isAssistantOpen}
+        onToggleAssistant={handleToggleAssistant}
       />
 
-      {/* Top Header */}
-      <Header
-        currency={currency}
-        onChangeCurrency={setCurrency}
-        activePortfolio={activePortfolio}
-        portfolios={portfolios}
-        onChangePortfolio={handleSelectPortfolio}
-        onOpenManagePortfolios={handleOpenManagePortfolios}
-        onRefresh={() => loadData(true)}
-        isRefreshing={isRefreshing}
-        onOpenSettings={handleOpenSettings}
-        lastUpdated={summary?.lastUpdated}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        activeView={view}
-        onNavigateDashboard={handleNavigateDashboard}
-        reportsCount={reports.length}
-        transactionsCount={transactions.length}
-        hideCurrencyValues={hideCurrencyValues}
-        onToggleHideCurrency={toggleHideCurrencyValues}
-      />
+      {/* Main Content Area & Assistant Sidebar */}
+      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+        <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+          {/* Main Menu / Navigation Bar (Header) - pushed when assistant sidebar is shown */}
+          <Header
+            currency={currency}
+            onChangeCurrency={setCurrency}
+            activePortfolio={activePortfolio}
+            portfolios={portfolios}
+            onChangePortfolio={handleSelectPortfolio}
+            onOpenManagePortfolios={handleOpenManagePortfolios}
+            onRefresh={() => loadData(true)}
+            isRefreshing={isRefreshing}
+            onOpenSettings={handleOpenSettings}
+            lastUpdated={summary?.lastUpdated}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            activeView={view}
+            onNavigateDashboard={handleNavigateDashboard}
+            reportsCount={reports.length}
+            transactionsCount={transactions.length}
+            isAssistantOpen={isAssistantOpen}
+            onToggleAssistant={handleToggleAssistant}
+          />
 
-      {/* Main View Router */}
-      {view === "settings" && (
-        <main className="flex-1 w-full max-w-full p-4 sm:p-6 lg:p-8">
-          <SettingsPage onBack={() => handleNavigateDashboard()} />
-        </main>
-      )}
-
-      {view === "portfolios" && (
-        <main className="flex-1 w-full max-w-full">
-          <ManagePortfoliosPage
+          {/* Main View Router */}
+          {view === "settings" && (
+        <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
+          <SettingsPage
+            onBack={() => handleNavigateDashboard()}
+            initialSection={settingsSection}
             portfolios={portfolios}
             activePortfolio={activePortfolio}
             onSelectPortfolio={handleSelectPortfolio}
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
-            onBack={() => handleNavigateDashboard()}
           />
+        </main>
+      )}
+
+      {view === "portfolios" && (
+        <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
+          <SettingsPage
+            onBack={() => handleNavigateDashboard()}
+            initialSection="portfolios"
+            portfolios={portfolios}
+            activePortfolio={activePortfolio}
+            onSelectPortfolio={handleSelectPortfolio}
+            onPortfolioCreated={handlePortfolioCreated}
+            onPortfolioUpdated={handlePortfolioUpdated}
+            onPortfolioDeleted={handlePortfolioDeleted}
+          />
+        </main>
+      )}
+
+      {view === "terms" && (
+        <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+          <TermsPage onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
         </main>
       )}
 
       {view === "dashboard" && (
         <main
-          className={`flex-1 w-full max-w-full p-4 sm:p-6 lg:p-8 space-y-6 min-w-0 ${
-            activeTab === "transactions" || activeTab === "reports" ? "flex flex-col h-full min-h-0 pb-2" : ""
+          className={`flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
+            activeTab === "transactions" || activeTab === "reports"
+              ? "flex flex-col h-full min-h-0 pb-2 sm:pb-3 overflow-hidden"
+              : "pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar"
           }`}
         >
           {/* TAB: OVERVIEW (Charts & Holdings) */}
@@ -714,6 +1208,9 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Sponsor Banner Box */}
+              <SponsorBannerCard webpageUrl={webpageUrl} />
+
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 min-w-0">
@@ -781,6 +1278,7 @@ export default function App() {
               <TransactionsCard
                 transactions={transactions}
                 currency={currency}
+                hideValues={hideCurrencyValues}
                 onOpenAddModal={() => {
                   setEditingTx(null);
                   setIsTxModalOpen(true);
@@ -796,11 +1294,46 @@ export default function App() {
           )}
         </main>
       )}
+        </div>
+
+        {/* Assistant Sidebar (Persistent across all views & tabs) */}
+        <AssistantSidebar
+          isOpen={isAssistantOpen}
+          onClose={() => setIsAssistantOpen(false)}
+          portfolio={activePortfolio}
+          portfolioData={portfolioData}
+          onOpenSettings={() => handleOpenSettings("assistant")}
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewChat={handleNewChat}
+          onDeleteConversation={handleDeleteConversation}
+          messages={chatMessages}
+          onSendMessage={handleSendChatMessage}
+          onClearMessages={handleClearChat}
+          isLoading={isChatLoading}
+          error={chatError}
+          activeProvider={assistantProvider}
+          activeModel={assistantModel}
+        />
+      </div>
+
+      {/* Bottom Status Bar */}
+      <BottomBar
+        version={appVersion}
+        lastQuotesSync={summary?.lastUpdated || lastQuotesSync}
+        onOpenTerms={handleOpenTerms}
+        onSyncQuotes={handleSyncQuotes}
+        isSyncingQuotes={isRefreshing}
+        hideCurrencyValues={hideCurrencyValues}
+        onToggleHideCurrency={toggleHideCurrencyValues}
+      />
 
       {/* Modals */}
       <SetupWizardModal
         isOpen={isSetupWizardOpen}
         onComplete={handleSetupComplete}
+        onClose={() => setIsSetupWizardOpen(false)}
       />
 
       <TransactionModal
