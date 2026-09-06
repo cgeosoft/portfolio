@@ -80,7 +80,7 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
         const sec = hash.replace("#settings/", "") as SettingsSection;
-        if (["general", "portfolios", "assistant", "about"].includes(sec)) {
+        if (["general", "portfolios", "assistant", "support", "about"].includes(sec)) {
           return sec;
         }
       }
@@ -153,7 +153,7 @@ export default function App() {
         setView("settings");
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
-        if (parts[1] && ["general", "portfolios", "assistant", "about"].includes(parts[1])) {
+        if (parts[1] && ["general", "portfolios", "assistant", "support", "about"].includes(parts[1])) {
           setSettingsSection(parts[1] as SettingsSection);
         } else {
           setSettingsSection("general");

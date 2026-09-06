@@ -59,6 +59,69 @@ export class SupportTicketService {
   }
 
   /**
+   * Anonymize sensitive and personal data from log content:
+   * - Masks home directory and user paths
+   * - Redacts API keys and bearer tokens
+   * - Redacts portfolio names, portfolio UUIDs, and ticker lists
+   * - Redacts financial values, quantities, and cash balances
+   */
+  public anonymizeLogContent(content: string, customPortfolioNames?: string[]): string {
+    let text = content;
+
+    // 1. Redact API keys and authorization tokens
+    text = text.replace(/sk-[a-zA-Z0-9_-]{20,}/g, "sk-[REDACTED_KEY]");
+    text = text.replace(/gsk_[a-zA-Z0-9_-]{20,}/g, "gsk_[REDACTED_KEY]");
+    text = text.replace(/AIzaSy[a-zA-Z0-9_-]{20,}/g, "AIzaSy[REDACTED_KEY]");
+    text = text.replace(/sk-ant-[a-zA-Z0-9_-]{20,}/g, "sk-ant-[REDACTED_KEY]");
+    text = text.replace(/sk-or-v1-[a-zA-Z0-9_-]{20,}/g, "sk-or-v1-[REDACTED_KEY]");
+    text = text.replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED_TOKEN]");
+    text = text.replace(/"(llmApiKey|apiKey|token|key)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"');
+
+    // 2. Redact file system paths and usernames
+    const home = homedir();
+    if (home && home.length > 1) {
+      text = text.replaceAll(home, "~");
+    }
+    const projectDir = getProjectLogDir();
+    if (projectDir) {
+      const rootDir = dirname(projectDir);
+      if (rootDir && rootDir.length > 2) {
+        text = text.replaceAll(rootDir, "[PROJECT_DIR]");
+      }
+    }
+    // Generic Unix home paths: /home/<username> or /Users/<username>
+    text = text.replace(/(?:\/home|\/Users)\/[a-zA-Z0-9._-]+/g, "/home/[USER]");
+    // Generic Windows user paths: C:\Users\<username>
+    text = text.replace(/[a-zA-Z]:\\Users\\[a-zA-Z0-9._-]+/gi, "C:\\Users\\[USER]");
+
+    // 3. Redact financial metrics, balances, prices, and quantities
+    text = text.replace(/"(totalValue|unrealizedGain|unrealizedGainPercent|realizedGain|cashBalance|totalCost|quantity|price|value|weight)":\s*-?[\d.]+(?:e[+-]?\d+)?/gi, '"$1":"[REDACTED]"');
+    text = text.replace(/\b(totalValue|cashBalance|totalCost|realizedGain|unrealizedGain)\s*=\s*[\d.-]+/gi, "$1=[REDACTED]");
+
+    // 4. Redact portfolio IDs (UUIDs)
+    text = text.replace(/"portfolioId":\s*"[a-f0-9-]{36}"/gi, '"portfolioId":"[PORTFOLIO_ID_REDACTED]"');
+    text = text.replace(/"activePortfolioId":\s*"[a-f0-9-]{36}"/gi, '"activePortfolioId":"[PORTFOLIO_ID_REDACTED]"');
+    text = text.replace(/\bportfolioId=([a-f0-9-]{36}|[a-f0-9]{8})/gi, "portfolioId=[PORTFOLIO_ID_REDACTED]");
+    text = text.replace(/\bgetPortfolioData:([a-f0-9]{8})/gi, "getPortfolioData:[REDACTED]");
+
+    // 5. Redact portfolio names in structured payload
+    text = text.replace(/"name":\s*"([^"]+)"(?=,\s*"baseCurrency"|,\s*"description"|,\s*"createdAt")/gi, '"name":"[PORTFOLIO_NAME]"');
+
+    // Redact specific portfolio names if provided
+    const namesToRedact = new Set<string>(customPortfolioNames || []);
+    for (const pName of namesToRedact) {
+      if (pName && pName.trim().length >= 2) {
+        text = text.replaceAll(pName.trim(), "[PORTFOLIO_NAME]");
+      }
+    }
+
+    // 6. Redact stock holdings symbols list
+    text = text.replace(/"symbols":\s*\[[^\]]*\]/gi, '"symbols":["[REDACTED]"]');
+
+    return text;
+  }
+
+  /**
    * Package diagnostic logs from the previous 24 hours into a ZIP archive.
    */
   public async packageRecentLogs(outputDir?: string): Promise<{ zipPath: string; logCount: number }> {
@@ -67,15 +130,26 @@ export class SupportTicketService {
     const logDir = this.getLogsDirectory();
     let totalLogsCount = 0;
 
+    // Retrieve portfolio names to redact
+    const knownPortfolioNames: string[] = [];
+    try {
+      const { findAll } = await import("../db/portfolio.repo.js");
+      const portfolios = findAll();
+      for (const p of portfolios) {
+        if (p.name) knownPortfolioNames.push(p.name);
+      }
+    } catch {}
+
     // 1. Process portfolio.log
     const mainLogPath = join(logDir, "portfolio.log");
     if (existsSync(mainLogPath)) {
       try {
         const raw = readFileSync(mainLogPath, "utf-8");
         const filtered = this.filterLogContent(raw, cutoffMs);
-        if (filtered.trim().length > 0) {
-          zip.file("portfolio.log", filtered);
-          totalLogsCount += filtered.split("\n").length;
+        const anonymized = this.anonymizeLogContent(filtered, knownPortfolioNames);
+        if (anonymized.trim().length > 0) {
+          zip.file("portfolio.log", anonymized);
+          totalLogsCount += anonymized.split("\n").length;
         }
       } catch (err) {
         appLogger.log("warning", `Could not read main log file: ${err}`);
@@ -90,9 +164,10 @@ export class SupportTicketService {
         if (stats.mtimeMs >= cutoffMs) {
           const raw = readFileSync(rotatedLogPath, "utf-8");
           const filtered = this.filterLogContent(raw, cutoffMs);
-          if (filtered.trim().length > 0) {
-            zip.file("portfolio.log.1", filtered);
-            totalLogsCount += filtered.split("\n").length;
+          const anonymized = this.anonymizeLogContent(filtered, knownPortfolioNames);
+          if (anonymized.trim().length > 0) {
+            zip.file("portfolio.log.1", anonymized);
+            totalLogsCount += anonymized.split("\n").length;
           }
         }
       } catch {}
@@ -142,7 +217,8 @@ export class SupportTicketService {
             }
 
             if (validLines.length > 0 && sessionFolder) {
-              sessionFolder.file(file, validLines.join("\n") + "\n");
+              const anonymizedLines = validLines.map((l) => this.anonymizeLogContent(l, knownPortfolioNames));
+              sessionFolder.file(file, anonymizedLines.join("\n") + "\n");
               totalLogsCount += validLines.length;
             }
           } catch {}
@@ -168,6 +244,8 @@ export class SupportTicketService {
       bunVersion: process.versions.bun || "unknown",
       generatedAt: new Date().toISOString(),
       logEntriesCount: totalLogsCount,
+      anonymized: true,
+      anonymizationPolicy: "Paths, API credentials, portfolio names, tickers, quantities, and balances are redacted.",
     };
     zip.file("system_info.json", JSON.stringify(systemInfo, null, 2));
 
@@ -177,9 +255,14 @@ export class SupportTicketService {
       "",
       `Generated: ${new Date().toISOString()}`,
       `Support Recipient: ${SUPPORT_EMAIL_RECIPIENT}`,
+      "Log Anonymization: ACTIVE",
       "",
       "This archive contains diagnostic log events from the previous 24 hours.",
-      "The archive does not contain personal financial balances, quantities, or portfolio keys.",
+      "All sensitive data was anonymized before packaging:",
+      "- User home directories, usernames, and file system paths are masked.",
+      "- API tokens, keys, and authorization headers are redacted.",
+      "- Portfolio names, portfolio UUIDs, and ticker lists are masked.",
+      "- Financial quantities, asset values, cash balances, and prices are redacted.",
     ].join("\n");
     zip.file("README.txt", readmeText);
 

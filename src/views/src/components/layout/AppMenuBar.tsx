@@ -21,6 +21,7 @@ import {
   Info,
   Check,
   Keyboard,
+  LifeBuoy,
 } from "lucide-react";
 
 export interface AppMenuBarProps {
@@ -32,7 +33,7 @@ export interface AppMenuBarProps {
   onExportPortfolio: () => void;
   onAddTransaction: () => void;
   onManagePortfolios: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (section?: any) => void;
   onSelectTab: (tab: "overview" | "reports" | "transactions") => void;
   activeTab: string;
   hideCurrencyValues: boolean;
@@ -288,6 +289,14 @@ export function AppMenuBar({
       action: () => {
         closeMenu();
         onOpenAbout();
+      },
+    },
+    {
+      label: "Support Ticket...",
+      icon: LifeBuoy,
+      action: () => {
+        closeMenu();
+        onOpenSettings("support");
       },
     },
     { type: "separator" },
