@@ -23,6 +23,7 @@ import { generateDemoTransactions, DEMO_ASSETS } from "./services/demo-portfolio
 import { telemetry } from "./services/telemetry.js";
 import { setupLinuxDesktop, setNativeWindowIcon } from "./services/linux-desktop.js";
 import { WindowStateManager, normalizeWindowState } from "./services/window-state.js";
+import { supportTicketService } from "./services/support-ticket.js";
 
 // ── Initialize ──────────────────────────────────────────────────────────────
 
@@ -348,6 +349,16 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
           appLogger.log("error", `Failed to open external URL ${params.url}: ${err}`);
           return { success: false };
         }
+      },
+
+      openSupportTicket: async (params) => {
+        appLogger.log("info", `Opening support ticket (includeLogs: ${params.includeLogs ? "yes" : "no"})`);
+        return await supportTicketService.openSupportTicket(params);
+      },
+
+      revealFile: async (params) => {
+        appLogger.log("info", `Revealing file in file manager: ${params.filePath}`);
+        return await supportTicketService.revealInFileManager(params.filePath);
       },
 
       syncQuotes: async () => {

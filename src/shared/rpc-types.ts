@@ -219,6 +219,30 @@ export interface GetSponsorBannerResponse {
   error?: string;
 }
 
+export interface OpenSupportTicketRequest {
+  subject?: string;
+  message?: string;
+  includeLogs?: boolean;
+}
+
+export interface OpenSupportTicketResponse {
+  success: boolean;
+  recipient: string;
+  zipPath?: string;
+  logCount?: number;
+  message?: string;
+  error?: string;
+}
+
+export interface RevealFileRequest {
+  filePath: string;
+}
+
+export interface RevealFileResponse {
+  success: boolean;
+  error?: string;
+}
+
 export interface LogClientEventRequest {
   level: "info" | "success" | "warning" | "error" | "debug";
   source: string;
@@ -267,9 +291,11 @@ export type PortfolioRPC = {
       getConfig: { params: Record<string, never>; response: DesktopConfig };
       saveConfig: { params: Partial<DesktopConfig>; response: DesktopConfig };
 
-      // App info, external browser links, and sync
+      // App info, external browser links, support, and sync
       getAppInfo: { params: Record<string, never>; response: GetAppInfoResponse };
       openExternalUrl: { params: OpenExternalUrlRequest; response: { success: boolean } };
+      openSupportTicket: { params: OpenSupportTicketRequest; response: OpenSupportTicketResponse };
+      revealFile: { params: RevealFileRequest; response: RevealFileResponse };
       syncQuotes: { params: Record<string, never>; response: SyncQuotesResponse };
       getSponsorBanner: { params: GetSponsorBannerRequest; response: GetSponsorBannerResponse };
 

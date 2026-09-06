@@ -3,7 +3,6 @@ import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import JSZip from "jszip";
 import { appLogger, getLogDir, getProjectLogDir } from "../logger.js";
-import { Utils } from "electrobun/bun";
 
 export const SUPPORT_EMAIL_RECIPIENT = "christos@cgeosoft.com";
 
@@ -273,8 +272,9 @@ export class SupportTicketService {
     if (!emailLaunched) {
       const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(ticketSubject)}&body=${encodeURIComponent(emailBody)}`;
       try {
-        if (typeof Utils !== "undefined" && typeof Utils.openExternal === "function") {
-          await Utils.openExternal(mailtoUrl);
+        const electrobun = await import("electrobun/bun").catch(() => null);
+        if (electrobun?.Utils?.openExternal) {
+          await electrobun.Utils.openExternal(mailtoUrl);
           emailLaunched = true;
         }
       } catch {}

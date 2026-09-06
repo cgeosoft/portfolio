@@ -29,6 +29,11 @@ import {
   Keyboard,
   Sparkles,
   Database,
+  LifeBuoy,
+  Mail,
+  FolderOpen,
+  Copy,
+  Check,
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "../../types/portfolio";
@@ -277,6 +282,18 @@ export function SettingsPage({
   const [quotesInterval, setQuotesInterval] = useState<number>(15);
   const [startWithBoot, setStartWithBoot] = useState(false);
 
+  // Support ticket state
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
+  const [ticketIncludeLogs, setTicketIncludeLogs] = useState(true);
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [ticketStatus, setTicketStatus] = useState<{
+    type: "success" | "error";
+    text: string;
+    zipPath?: string;
+  } | null>(null);
+  const [copiedZipPath, setCopiedZipPath] = useState(false);
+
   // Assistant settings state
   const [reportProvider, setReportProvider] = useState("llamacpp-server");
   const [reportModel, setReportModel] = useState("qwen3-abliterated-14b-q4_k_m");
@@ -400,6 +417,53 @@ export function SettingsPage({
       text: `Portfolio "${p.name}" and all associated data were successfully removed.`,
     });
     setTimeout(() => setPortfolioStatusMsg(null), 3500);
+  };
+
+  const handleOpenSupportTicket = async () => {
+    setIsSubmittingTicket(true);
+    setTicketStatus(null);
+    try {
+      const res = await rpc.request.openSupportTicket({
+        subject: ticketSubject.trim() || undefined,
+        message: ticketMessage.trim() || undefined,
+        includeLogs: ticketIncludeLogs,
+      });
+      if (res.success) {
+        setTicketStatus({
+          type: "success",
+          text: res.zipPath
+            ? "Support ticket email opened. Diagnostic logs archive created."
+            : "Support ticket email opened in your default email application.",
+          zipPath: res.zipPath,
+        });
+      } else {
+        setTicketStatus({
+          type: "error",
+          text: res.error || "Failed to open support ticket email.",
+        });
+      }
+    } catch (err: any) {
+      setTicketStatus({
+        type: "error",
+        text: err?.message || "An unexpected error occurred while creating the support ticket.",
+      });
+    } finally {
+      setIsSubmittingTicket(false);
+    }
+  };
+
+  const handleRevealZipFile = async (path: string) => {
+    try {
+      await rpc.request.revealFile({ filePath: path });
+    } catch {}
+  };
+
+  const handleCopyZipPath = (path: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(path);
+      setCopiedZipPath(true);
+      setTimeout(() => setCopiedZipPath(false), 2000);
+    }
   };
 
   const filteredPortfolios = (portfolios || []).filter((p) => {
@@ -597,6 +661,151 @@ export function SettingsPage({
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* 4. Support Ticket */}
+              <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                      <LifeBuoy className="w-4 h-4 text-[#DD3C73]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                        Support Ticket
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                        Open a support ticket or submit a technical issue directly to our team.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2 border-t border-slate-800/80">
+                  {/* Recipient */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-[#DD3C73]" />
+                      <span>Recipient Email</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        readOnly
+                        value="christos@cgeosoft.com"
+                        className="w-full bg-slate-950/90 border border-slate-800/80 rounded-xl px-3.5 py-2 text-xs text-slate-300 font-mono focus:outline-none cursor-default select-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subject */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                      Ticket Subject
+                    </label>
+                    <input
+                      type="text"
+                      value={ticketSubject}
+                      onChange={(e) => setTicketSubject(e.target.value)}
+                      placeholder="e.g. Issue with transaction import or quote sync"
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
+                    />
+                  </div>
+
+                  {/* Message */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                      Problem Description (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={ticketMessage}
+                      onChange={(e) => setTicketMessage(e.target.value)}
+                      placeholder="Describe what happened or steps to reproduce..."
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
+                    />
+                  </div>
+
+                  {/* Checkbox for 24h logs */}
+                  <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800/70 flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="ticket-include-logs"
+                      checked={ticketIncludeLogs}
+                      onChange={(e) => setTicketIncludeLogs(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
+                    />
+                    <label htmlFor="ticket-include-logs" className="cursor-pointer select-none space-y-0.5">
+                      <div className="text-xs font-semibold text-slate-200">
+                        Submit last day logs as a zip attachment
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Packages diagnostic log entries and system metadata from the previous 24 hours into a ZIP file. Personal financial values are excluded.
+                      </p>
+                    </label>
+                  </div>
+
+                  {/* Status / Alert Banner */}
+                  {ticketStatus && (
+                    <div
+                      className={`p-3 text-xs rounded-xl flex flex-col gap-2 ${
+                        ticketStatus.type === "success"
+                          ? "text-emerald-300 bg-emerald-950/40 border border-emerald-800/50"
+                          : "text-rose-300 bg-rose-950/40 border border-rose-800/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {ticketStatus.type === "success" ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                        )}
+                        <span>{ticketStatus.text}</span>
+                      </div>
+
+                      {ticketStatus.zipPath && (
+                        <div className="pt-2 border-t border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <code className="text-[10px] text-emerald-200 bg-slate-950/70 px-2 py-1 rounded border border-emerald-800/40 truncate max-w-md">
+                            {ticketStatus.zipPath}
+                          </code>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleRevealZipFile(ticketStatus.zipPath!)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                              title="Open folder containing ZIP archive"
+                            >
+                              <FolderOpen className="w-3.5 h-3.5" />
+                              <span>Open Folder</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyZipPath(ticketStatus.zipPath!)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors cursor-pointer"
+                              title="Copy path to clipboard"
+                            >
+                              {copiedZipPath ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{copiedZipPath ? "Copied" : "Copy Path"}</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="pt-1 flex items-center justify-end">
+                    <button
+                      type="button"
+                      disabled={isSubmittingTicket}
+                      onClick={handleOpenSupportTicket}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-[#DD3C73]/20"
+                    >
+                      <LifeBuoy className={`w-3.5 h-3.5 ${isSubmittingTicket ? "animate-spin" : ""}`} />
+                      <span>{isSubmittingTicket ? "Preparing Ticket..." : "Open Support Ticket"}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Privacy Guarantee Note */}
