@@ -1130,39 +1130,39 @@ export default function App() {
 
               {/* Secondary Capital Metrics Panel */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-xs">
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Invested Capital</span>
-                    <button onClick={() => handleOpenMetricModal("capitalInjected")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Invested Capital">Invested Capital</span>
+                    <button onClick={() => handleOpenMetricModal("capitalInjected")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
-                  <div className="font-bold text-slate-200 mt-0.5">
+                  <div className="font-bold text-slate-200 mt-0.5 truncate">
                     {fmtCurrency(summary?.totalCashInjected, currency, hideCurrencyValues)}
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Current Holdings Cost</span>
-                    <button onClick={() => handleOpenMetricModal("valuation")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Current Holdings Cost">Current Holdings Cost</span>
+                    <button onClick={() => handleOpenMetricModal("valuation")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
-                  <div className="font-bold text-slate-200 mt-0.5">
+                  <div className="font-bold text-slate-200 mt-0.5 truncate">
                     {fmtCurrency(summary?.totalCost, currency, hideCurrencyValues)}
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Realized P&amp;L</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Realized P&L">Realized P&amp;L</span>
+                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
                   <div
-                    className={`font-bold mt-0.5 ${
+                    className={`font-bold mt-0.5 truncate ${
                       (summary?.realizedPnL ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"
                     }`}
                   >
@@ -1171,38 +1171,38 @@ export default function App() {
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Dividends &amp; Interest</span>
-                    <button onClick={() => handleOpenMetricModal("dividends")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Dividends & Interest">Dividends &amp; Interest</span>
+                    <button onClick={() => handleOpenMetricModal("dividends")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
-                  <div className="font-bold text-emerald-400 mt-0.5">
+                  <div className="font-bold text-emerald-400 mt-0.5 truncate">
                     +{fmtCurrency((summary?.totalDividends ?? 0) + (summary?.totalInterest ?? 0), currency, hideCurrencyValues)}
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Broker Fees</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Broker Fees">Broker Fees</span>
+                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
-                  <div className="font-bold text-slate-400 mt-0.5">
+                  <div className="font-bold text-slate-400 mt-0.5 truncate">
                     {fmtCurrency(summary?.totalFees, currency, hideCurrencyValues)}
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <span>Taxes Withheld</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                    <span className="truncate whitespace-nowrap" title="Taxes Withheld">Taxes Withheld</span>
+                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
                       <Info className="w-2.5 h-2.5" />
                     </button>
                   </div>
-                  <div className="font-bold text-slate-400 mt-0.5">
+                  <div className="font-bold text-slate-400 mt-0.5 truncate">
                     {fmtCurrency(summary?.totalTaxes, currency, hideCurrencyValues)}
                   </div>
                 </div>

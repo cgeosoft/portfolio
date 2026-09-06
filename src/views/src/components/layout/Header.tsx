@@ -8,7 +8,6 @@ import {
   FileText,
   History,
   Users,
-  Sparkles,
   Bot,
 } from "lucide-react";
 
@@ -56,7 +55,10 @@ export function Header({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (portfolioMenuRef.current && !portfolioMenuRef.current.contains(e.target as Node)) {
+      if (
+        portfolioMenuRef.current &&
+        !portfolioMenuRef.current.contains(e.target as Node)
+      ) {
         setIsPortfolioDropdownOpen(false);
       }
     };
@@ -100,10 +102,9 @@ export function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-30 px-3 sm:px-6 py-1.5 flex items-center justify-between font-mono select-none gap-2 shrink-0 w-full bg-transparent">
-      <div className="flex items-center gap-1.5 min-w-0">
-        <nav aria-label="Page navigation" className="flex items-center gap-1">
-          {tabs.map((tab) => {
+    <header className="sticky top-0 z-30 px-3 sm:px-6 py-1.5 flex items-center justify-center font-mono select-none gap-1.5 shrink-0 w-full bg-transparent">
+      <nav aria-label="Page navigation" className="flex items-center gap-1">
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeView === "dashboard" && activeTab === tab.id;
           return (
@@ -119,11 +120,34 @@ export function Header({
               <Icon className="w-3 h-3" />
               <span>
                 {tab.label}
-                {tab.badge !== null && tab.badge !== undefined && ` (${tab.badge})`}
+                {tab.badge !== null &&
+                  tab.badge !== undefined &&
+                  ` (${tab.badge})`}
               </span>
             </button>
           );
         })}
+
+        {onToggleAssistant && (
+          <button
+            type="button"
+            onClick={onToggleAssistant}
+            className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              isAssistantOpen
+                ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
+            }`}
+            title={
+              isAssistantOpen
+                ? "Close Assistant (Ctrl+J)"
+                : "Open Assistant (Ctrl+J)"
+            }
+            aria-label="Toggle Assistant"
+          >
+            <Bot className="w-3 h-3" />
+            <span>Assistant</span>
+          </button>
+        )}
       </nav>
 
       {portfolios && portfolios.length > 1 && (
@@ -143,7 +167,9 @@ export function Header({
             <span className="truncate">
               {activePortfolio?.name || "Main Portfolio"}
             </span>
-            <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform shrink-0 ${isPortfolioDropdownOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`w-3 h-3 text-slate-400 transition-transform shrink-0 ${isPortfolioDropdownOpen ? "rotate-180" : ""}`}
+            />
           </button>
 
           {isPortfolioDropdownOpen && (
@@ -173,16 +199,23 @@ export function Header({
                       onClick={() => {
                         onChangePortfolio(p.id);
                         setIsPortfolioDropdownOpen(false);
-                        if (activeView !== "dashboard" && onNavigateDashboard) {
+                        if (
+                          activeView !== "dashboard" &&
+                          onNavigateDashboard
+                        ) {
                           onNavigateDashboard();
                         }
                       }}
                       className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                        isActive ? "bg-[#DD3C73]/10 text-[#DD3C73] font-bold" : "text-slate-300"
+                        isActive
+                          ? "bg-[#DD3C73]/10 text-[#DD3C73] font-bold"
+                          : "text-slate-300"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate min-w-0 flex-1">
-                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`} />
+                        <Icon
+                          className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`}
+                        />
                         <span className="truncate">{p.name}</span>
                         {p.isShared && (
                           <span className="text-[10px] text-slate-500 font-normal shrink-0">
@@ -190,7 +223,9 @@ export function Header({
                           </span>
                         )}
                       </div>
-                      {isActive && <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />}
+                      {isActive && (
+                        <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
+                      )}
                     </button>
                   );
                 })}
@@ -198,23 +233,6 @@ export function Header({
             </div>
           )}
         </div>
-      )}
-      </div>
-
-      {onToggleAssistant && (
-        <button
-          onClick={onToggleAssistant}
-          className={`h-7 w-7 rounded-md flex items-center justify-center transition-all cursor-pointer ml-auto shrink-0 ${
-            isAssistantOpen
-              ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/50 shadow-sm"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
-          }`}
-          title={isAssistantOpen ? "Close Assistant (Ctrl+J)" : "Open Assistant (Ctrl+J)"}
-          aria-label="Toggle Assistant"
-          type="button"
-        >
-          <Bot className="w-4 h-4" />
-        </button>
       )}
     </header>
   );
