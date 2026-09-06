@@ -391,10 +391,6 @@ export default function App() {
     }
   }, []);
 
-  const handleReload = useCallback(() => {
-    reloadPage();
-  }, []);
-
   // Reusable retry wrapper for startup RPC calls with per-attempt timeout and logging
   const callWithRetry = async <T,>(
     name: string,
@@ -724,6 +720,15 @@ export default function App() {
     setIsSetupWizardOpen(false);
     await loadPortfolios();
   }, [loadPortfolios]);
+
+  const handleReload = useCallback(() => {
+    clientLogger.log("info", "app_reload", "Reloading application requested by user");
+    setIsRefreshing(true);
+    void reloadPage(() => {
+      setLoadError(null);
+      void loadData(true);
+    });
+  }, [loadData]);
 
   const activePortfolio =
     portfolios.find((p) => p.id === activePortfolioId) ||

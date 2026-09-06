@@ -1,3 +1,4 @@
+import { rpc, clientLogger } from "../../rpc.js";
 export function fmtCurrency(amount: number | undefined, currency = "EUR", hideValues = false): string {
   if (amount === undefined || isNaN(amount)) return currency === "USD" ? "$0.00" : currency === "GBP" ? "£0.00" : currency === "CHF" ? "Fr 0.00" : "€0.00";
   const symbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "CHF" ? "Fr " : "€";
@@ -150,13 +151,37 @@ export function maskFinancialValues(text: string | undefined): string {
 
 /**
  * Reload the application page.
+ * Requests a native webview reload through Electrobun RPC.
+ * Falls back to local reset callback and window.location.reload() if RPC fails.
  */
-export function reloadPage(): void {
+export async function reloadPage(onFallbackReset?: () => void): Promise<void> {
+  clientLogger.log("info", "reload_page", "Reloading application page...");
+  try {
+    const reloadPromise = rpc.request.reloadApp({});
+    const timeoutPromise = new Promise<{ success: boolean }>((_, reject) =>
+      setTimeout(() => reject(new Error("reloadApp timeout")), 800)
+    );
+    const result = await Promise.race([reloadPromise, timeoutPromise]);
+    if (result?.success) {
+      return;
+    }
+  } catch (err) {
+    clientLogger.log("warning", "reload_page_rpc_failed", `RPC reload failed or timed out: ${err}`);
+  }
+
+  if (onFallbackReset) {
+    try {
+      onFallbackReset();
+    } catch {
+      // ignore
+    }
+  }
+
   if (typeof window !== "undefined") {
-    window.location.reload();
+    try {
+      window.location.reload();
+    } catch {
+      // ignore
+    }
   }
 }
-
-
-
-

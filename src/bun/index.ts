@@ -524,6 +524,23 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         }, 50);
         return { success: true };
       },
+
+      reloadApp: async () => {
+        const timer = appLogger.startTimer("rpc", "reloadApp", "RPC: reloadApp requested");
+        try {
+          if (mainWindow?.webview) {
+            const url = mainWindow.url || "views://main/index.html";
+            mainWindow.webview.loadURL(url);
+            timer.end("info", "Webview reload initiated", { url });
+            return { success: true };
+          }
+          timer.end("warning", "mainWindow or webview not available");
+          return { success: false };
+        } catch (err) {
+          timer.fail(err, "reloadApp failed");
+          return { success: false };
+        }
+      },
     },
 
     messages: {},

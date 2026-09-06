@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { PortfolioItem } from "../../types/portfolio";
+import { reloadPage } from "../portfolio/utils.js";
 import {
   FolderPlus,
   FileSpreadsheet,
@@ -222,8 +223,8 @@ export function AppMenuBar({
         closeMenu();
         if (onReload) {
           onReload();
-        } else if (typeof window !== "undefined") {
-          window.location.reload();
+        } else {
+          void reloadPage();
         }
       },
     },

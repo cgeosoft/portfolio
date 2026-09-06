@@ -28,6 +28,8 @@ declare module "electrobun/bun" {
   export class BrowserWindow {
     id: number;
     readonly ptr: any;
+    readonly webview: BrowserView;
+    url: string | null;
     constructor(options?: WindowOptionsType);
     focus(): void;
     activate(): void;
@@ -63,7 +65,12 @@ declare module "electrobun/bun" {
   }
 
   export class BrowserView {
+    id: number;
+    url: string | null;
     static defineRPC<Schema = any>(config: ElectrobunRPCConfig): any;
+    loadURL(url: string): void;
+    loadHTML(html: string): void;
+    executeJavascript(js: string): void;
   }
 
   export namespace Utils {

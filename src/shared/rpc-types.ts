@@ -283,6 +283,7 @@ export type PortfolioRPC = {
 
       // App lifecycle
       quitApp: { params: Record<string, never>; response: { success: boolean } };
+      reloadApp: { params: Record<string, never>; response: { success: boolean } };
     };
     messages: {
       // Bun -> Webview: push updates
