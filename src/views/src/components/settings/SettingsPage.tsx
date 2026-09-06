@@ -245,7 +245,7 @@ const SHORTCUTS = [
   { key: "Ctrl + E", desc: "Export Active Portfolio" },
   { key: "Ctrl + R", desc: "Refresh Market Quotes" },
   { key: "Ctrl + H", desc: "Toggle Privacy Mode (Mask Values)" },
-  { key: "Ctrl + ,", desc: "Open Preferences / Settings" },
+  { key: "Ctrl + ,", desc: "Open Preferences" },
   { key: "Ctrl + Q", desc: "Quit Application" },
 ];
 
@@ -423,75 +423,35 @@ export function SettingsPage({
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
 
       {/* Main Container: Left Sidebar + Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
         {/* Left Navigation Sidebar */}
-        <aside className="h-full">
-          <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col h-full justify-between">
-            <div className="space-y-4">
-              {/* Header matching content card */}
-              <div className="border-b border-slate-800/80 pb-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <Settings className="w-4 h-4 text-[#DD3C73]" />
-                  <span>Preferences</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1 truncate">
-                  Application preferences
-                </p>
-              </div>
-
-              <nav className="space-y-1.5">
-                {SECTIONS.map((sec) => {
-                  const isActive = activeSection === sec.id;
-                  const Icon = sec.icon;
-                  return (
-                    <button
-                      key={sec.id}
-                      onClick={() => setActiveSection(sec.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer font-mono border ${
-                        isActive
-                          ? "bg-[#DD3C73]/15 border-[#DD3C73]/50 text-white shadow-lg shadow-[#DD3C73]/10"
-                          : "bg-slate-950/40 border-slate-800/80 hover:bg-slate-800/50 hover:border-slate-700 text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isActive
-                              ? "bg-[#DD3C73] text-white"
-                              : "bg-slate-900 text-slate-400 border border-slate-800"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold uppercase tracking-wider truncate">
-                            {sec.label}
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                            {sec.description}
-                          </div>
-                        </div>
-                      </div>
-                      {isActive && (
-                        <div className="w-1.5 h-4 rounded-full bg-[#DD3C73] shrink-0 ml-2" />
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* Quick Context / Offline Ledger Card at bottom */}
-            <div className="mt-6 pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
-                <span>Offline Ledger</span>
-              </div>
-              <p className="leading-relaxed text-[10px] text-slate-500">
-                All settings and portfolio databases are stored directly on your disk in SQLite WAL format.
-              </p>
-            </div>
+        <aside className="w-full">
+          <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Settings className="w-3.5 h-3.5 text-[#DD3C73]" />
+            <span>Preferences</span>
           </div>
+
+          <nav className="space-y-1 mt-1">
+            {SECTIONS.map((sec) => {
+              const isActive = activeSection === sec.id;
+              const Icon = sec.icon;
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => setActiveSection(sec.id)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-mono transition-colors cursor-pointer ${
+                    isActive
+                      ? "bg-[#DD3C73]/15 text-[#DD3C73] font-semibold"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-400"}`} />
+                  <span>{sec.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </aside>
 
         {/* Right/Center Content Area */}

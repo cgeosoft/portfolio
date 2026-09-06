@@ -166,7 +166,7 @@ export function AppMenuBar({
     },
     { type: "separator" },
     {
-      label: "Preferences / Settings...",
+      label: "Preferences",
       shortcut: "Ctrl+,",
       icon: Settings,
       action: () => {

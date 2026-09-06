@@ -29,7 +29,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
     { key: "Ctrl + R", desc: "Reload Page" },
     { key: "Ctrl + J", desc: "Toggle Assistant Sidebar" },
     { key: "Ctrl + H", desc: "Toggle Privacy Mode (Mask Values)" },
-    { key: "Ctrl + ,", desc: "Open Preferences / Settings" },
+    { key: "Ctrl + ,", desc: "Open Preferences" },
     { key: "Ctrl + Q", desc: "Quit Application" },
   ];
 
