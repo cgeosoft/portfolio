@@ -22,20 +22,13 @@ export function buildPortfolioSystemPrompt(
   portfolio: PortfolioItem,
   data: FinancialPortfolioData,
 ): string {
-  const baseCurrency = portfolio.baseCurrency || data.summary?.baseCurrency || "EUR";
   const summary = data.summary;
   const holdings: PortfolioHolding[] = data.holdings || [];
   const transactions: PortfolioTransaction[] = data.transactions || [];
 
-  const totalValueStr = `${baseCurrency} ${(summary?.totalPortfolioValue ?? summary?.totalValue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const cashBalanceStr = `${baseCurrency} ${(summary?.cashBalance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const investedCapitalStr = `${baseCurrency} ${(summary?.totalCashInjected ?? summary?.totalCost ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const unrealizedPnLStr = `${(summary?.totalGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.totalGainLossPercent ?? 0).toFixed(2)}% (${baseCurrency} ${(summary?.totalGainLossDollar ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
-  const dayGainLossStr = `${(summary?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.dayGainLossPercent ?? 0).toFixed(2)}% (${baseCurrency} ${(summary?.dayGainLossDollar ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
-  const realizedPnLStr = `${(summary?.realizedPnL ?? 0) >= 0 ? "+" : ""}${baseCurrency} ${(summary?.realizedPnL ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const dividendsStr = `+${baseCurrency} ${((summary?.totalDividends ?? 0) + (summary?.totalInterest ?? 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const feesStr = `${baseCurrency} ${(summary?.totalFees ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const taxesStr = `${baseCurrency} ${(summary?.totalTaxes ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const unrealizedPnLPercentStr = `${(summary?.totalGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.totalGainLossPercent ?? 0).toFixed(2)}%`;
+  const dayGainLossPercentStr = `${(summary?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.dayGainLossPercent ?? 0).toFixed(2)}%`;
+  const cashWeightStr = `${(summary?.cashWeightPercent ?? 0).toFixed(2)}%`;
 
   // Holdings ledger
   let holdingsLedger = "No active holdings.";
@@ -48,8 +41,6 @@ export function buildPortfolioSystemPrompt(
         const sma50Formatted = h.sma50 !== undefined && !isNaN(h.sma50) ? h.sma50.toFixed(2) : "N/A";
         const sma200Formatted = h.sma200 !== undefined && !isNaN(h.sma200) ? h.sma200.toFixed(2) : "N/A";
         return `- **${h.symbol}** (${h.name}, Type: ${h.assetType}):
-  - Position: ${h.shares} units @ avg buy ${h.buyPrice} ${h.currency}
-  - Market Price: ${h.currentPrice} ${h.currency} | Position Value: ${baseCurrency} ${h.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
   - Portfolio Weight: ${h.weightPercent.toFixed(2)}%
   - Day Change: ${dayChangeFormatted} | Total Return: ${totalGainFormatted}
   - Technical Indicators: RSI(14): ${rsiFormatted}, SMA50: ${sma50Formatted}, SMA200: ${sma200Formatted}`;
@@ -64,7 +55,8 @@ export function buildPortfolioSystemPrompt(
     recentTxText = recent
       .map((tx) => {
         const dateStr = tx.date ? tx.date.slice(0, 10) : "Unknown date";
-        return `- ${dateStr} [${tx.type}] ${tx.shares} ${tx.symbol || ""} @ ${tx.price ?? 0} ${tx.currency || baseCurrency} (Total: ${tx.amount} ${tx.currency || baseCurrency})`;
+        const sharesText = tx.shares ? `${tx.shares} ` : "";
+        return `- ${dateStr} [${tx.type}] ${sharesText}${tx.symbol || ""}`.trim();
       })
       .join("\n");
   }
@@ -78,16 +70,9 @@ Answer questions objectively, clearly, and concisely. Ground your answers strict
 === CURRENT PORTFOLIO PROFILE ===
 Portfolio Name: ${portfolio.name}
 ${portfolio.description ? `Description: ${portfolio.description}` : ""}
-Base Currency: ${baseCurrency}
-Total Portfolio Valuation: ${totalValueStr}
-Total Invested Capital: ${investedCapitalStr}
-Cash Liquidity Buffer: ${cashBalanceStr} (${(summary?.cashWeightPercent ?? 0).toFixed(2)}% of total portfolio)
-Lifetime Unrealized Gain/Loss: ${unrealizedPnLStr}
-Today's Gain/Loss: ${dayGainLossStr}
-Cumulative Realized P&L: ${realizedPnLStr}
-Dividends and Interest Collected: ${dividendsStr}
-Total Broker Fees Paid: ${feesStr}
-Total Taxes Withheld: ${taxesStr}
+Cash Allocation: ${cashWeightStr} of total portfolio
+Lifetime Unrealized Return: ${unrealizedPnLPercentStr}
+Today's Return: ${dayGainLossPercentStr}
 
 === ASSET ALLOCATION BREAKDOWN ===
 - Stocks: ${(summary?.stockWeightPercent ?? 0).toFixed(2)}%

@@ -112,7 +112,7 @@ export class PortfolioReportService {
     const holdingsContext = holdings
       .map(
         (h) =>
-          `- **${h.symbol}** (${h.name}, ${h.assetType}): ${h.shares} units @ ${h.buyPrice} ${h.currency} | Current: ${h.currentPrice} ${h.currency} | Val: ${baseCurrency}${h.currentValue} (${h.weightPercent}% weight) | Day: ${h.dayChangePercent > 0 ? "+" : ""}${h.dayChangePercent}% | Total Gain: ${h.totalGainLossPercent > 0 ? "+" : ""}${h.totalGainLossPercent}% | SMA50: ${h.sma50 ?? "N/A"} | SMA200: ${h.sma200 ?? "N/A"} | RSI: ${h.rsi ?? "N/A"}`,
+          `- **${h.symbol}** (${h.name}, ${h.assetType}): ${h.weightPercent}% weight | Day: ${h.dayChangePercent > 0 ? "+" : ""}${h.dayChangePercent}% | Total Gain: ${h.totalGainLossPercent > 0 ? "+" : ""}${h.totalGainLossPercent}% | SMA50: ${h.sma50 ?? "N/A"} | SMA200: ${h.sma200 ?? "N/A"} | RSI: ${h.rsi ?? "N/A"}`,
       )
       .join("\n");
 
@@ -123,11 +123,9 @@ export class PortfolioReportService {
 Analyze the following investment portfolio state for portfolio **"${portfolio.name}"** for period **${period}** (${weekKey}):
 
 ## Portfolio Metrics
-- **Total Portfolio Value**: ${baseCurrency}${summary.totalPortfolioValue?.toLocaleString() ?? summary.totalValue.toLocaleString()}
-- **Cash Liquidity**: ${baseCurrency}${summary.cashBalance?.toLocaleString() ?? "0"} (${summary.cashWeightPercent}%)
-- **Total Invested Capital**: ${baseCurrency}${summary.totalCashInjected?.toLocaleString() ?? summary.totalCost.toLocaleString()}
-- **Lifetime Unrealized Gain**: ${summary.totalGainLossPercent >= 0 ? "+" : ""}${summary.totalGainLossPercent}% (${baseCurrency}${summary.totalGainLossDollar?.toLocaleString()})
-- **Day Change**: ${summary.dayGainLossPercent >= 0 ? "+" : ""}${summary.dayGainLossPercent}% (${baseCurrency}${summary.dayGainLossDollar?.toLocaleString()})
+- **Cash Liquidity**: ${summary.cashWeightPercent}%
+- **Lifetime Unrealized Gain**: ${summary.totalGainLossPercent >= 0 ? "+" : ""}${summary.totalGainLossPercent}%
+- **Day Change**: ${summary.dayGainLossPercent >= 0 ? "+" : ""}${summary.dayGainLossPercent}%
 - **Asset Breakdown**: Stocks ${summary.stockWeightPercent}%, ETFs ${summary.etfWeightPercent}%, Crypto ${summary.cryptoWeightPercent}%, Cash ${summary.cashWeightPercent}%
 
 ## Holdings Ledger

@@ -76,20 +76,33 @@ describe("PortfolioChatService & prompt builder", () => {
     individualCharts: {},
   };
 
-  it("constructs comprehensive system prompt with all financial indicators", () => {
+  it("constructs comprehensive system prompt without monetary values", () => {
     const prompt = buildPortfolioSystemPrompt(dummyPortfolio, dummyData);
 
     expect(prompt).toContain("Tactical Alpha Fund");
-    expect(prompt).toContain("Base Currency: USD");
-    expect(prompt).toContain("140,000.00");
     expect(prompt).toContain("AAPL");
     expect(prompt).toContain("Apple Inc.");
+    expect(prompt).toContain("Portfolio Weight: 15.71%");
+    expect(prompt).toContain("Day Change: +1.50%");
+    expect(prompt).toContain("Total Return: +46.67%");
     expect(prompt).toContain("RSI(14): 62.4");
     expect(prompt).toContain("SMA50: 210.50");
     expect(prompt).toContain("SMA200: 195.20");
-    expect(prompt).toContain("Cash Liquidity Buffer");
+    expect(prompt).toContain("Cash Allocation: 10.00%");
     expect(prompt).toContain("Stocks: 65.00%");
     expect(prompt).toContain("[BUY] 100 AAPL");
+
+    // Verify absence of monetary values and currencies
+    expect(prompt).not.toContain("140,000");
+    expect(prompt).not.toContain("125,000");
+    expect(prompt).not.toContain("22,000");
+    expect(prompt).not.toContain("15,000");
+    expect(prompt).not.toContain("USD");
+    expect(prompt).not.toContain("$");
+    expect(prompt).not.toContain("avg buy");
+    expect(prompt).not.toContain("Market Price");
+    expect(prompt).not.toContain("Position Value");
+
     // Ensure no long dashes are used per AGENTS.md rule
     expect(prompt.includes("\u2014")).toBe(false);
   });
