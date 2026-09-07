@@ -200,6 +200,7 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         return reportService.prepareReportPrompt(params.portfolioId, {
           provider: params.provider,
           model: params.model,
+          weekKey: params.weekKey,
         });
       },
 
@@ -231,6 +232,7 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
             model: params.model,
             apiKey: params.apiKey,
             baseUrl: params.baseUrl,
+            weekKey: params.weekKey,
           },
         );
         telemetry.capture("report_generated", { provider: params.provider });

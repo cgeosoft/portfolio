@@ -1,5 +1,7 @@
 import { rpc } from "../../rpc";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   AlertCircle,
   AlertTriangle,
@@ -8,8 +10,10 @@ import {
   BarChart3,
   Bot,
   Brain,
+  Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   Copy,
   CheckCheck,
   Database,
@@ -24,7 +28,7 @@ import {
 } from "lucide-react";
 import type { FinancialPortfolioData, PortfolioReport } from "../../types/portfolio";
 import type { PrepareReportPromptResponse } from "../../../../shared/rpc-types.js";
-import { fmtCurrency, maskFinancialValues } from "./utils";
+import { fmtCurrency } from "./utils";
 
 interface AnalyzePortfolioModalProps {
   isOpen: boolean;
@@ -33,17 +37,74 @@ interface AnalyzePortfolioModalProps {
   portfolioData: FinancialPortfolioData | null;
   portfolioId?: string;
   hideCurrencyValues?: boolean;
+  reports?: PortfolioReport[];
 }
 
-type WizardStep = "intro" | "context" | "processing" | "confirmation";
+type WizardStep = "period" | "prompt" | "process" | "result";
 type ConfirmationStatus = "success" | "fail" | "cancelled";
 
 const WIZARD_STEPS = [
-  { id: "intro", number: "01", label: "Intro" },
-  { id: "context", number: "02", label: "Context & Prompt" },
-  { id: "processing", number: "03", label: "AI Processing" },
-  { id: "confirmation", number: "04", label: "Confirmation" },
+  { id: "period", label: "Period" },
+  { id: "prompt", label: "Prompt" },
+  { id: "process", label: "Process" },
+  { id: "result", label: "Result" },
 ] as const;
+
+interface WeekOption {
+  key: string;
+  displayKey: string;
+  label: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  isPrevious: boolean;
+}
+
+function generateWeekOptions(count = 52): WeekOption[] {
+  const now = new Date();
+  const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  const currentDay = currentMonday.getDay();
+  const diffToMonday = (currentDay + 6) % 7;
+  currentMonday.setDate(currentMonday.getDate() - diffToMonday);
+
+  const options: WeekOption[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const monday = new Date(currentMonday);
+    monday.setDate(monday.getDate() - i * 7);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const thursday = new Date(monday);
+    thursday.setDate(monday.getDate() + 3);
+    const isoYear = thursday.getFullYear();
+    const jan4 = new Date(isoYear, 0, 4, 12, 0, 0);
+    const jan4Day = jan4.getDay() || 7;
+    const week1Monday = new Date(isoYear, 0, 4 - (jan4Day - 1), 12, 0, 0);
+    const weekNum = Math.round((monday.getTime() - week1Monday.getTime()) / (7 * 86400000)) + 1;
+
+    const padWeek = String(weekNum).padStart(2, "0");
+    const key = `${isoYear}-w${padWeek}`;
+    const displayKey = `${isoYear}-W${padWeek}`;
+
+    const startStr = monday.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const endStr = sunday.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const dateRange = `${startStr} - ${endStr}`;
+
+    options.push({
+      key,
+      displayKey,
+      label: `${displayKey} (${dateRange})`,
+      startDate: monday.toISOString().split("T")[0]!,
+      endDate: sunday.toISOString().split("T")[0]!,
+      isCurrent: i === 0,
+      isPrevious: i === 1,
+    });
+  }
+
+  return options;
+}
 
 export function AnalyzePortfolioModal({
   isOpen,
@@ -52,13 +113,20 @@ export function AnalyzePortfolioModal({
   portfolioData,
   portfolioId,
   hideCurrencyValues = false,
+  reports = [],
 }: AnalyzePortfolioModalProps) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>("intro");
-  const [skipIntroPreference, setSkipIntroPreference] = useState(false);
+  const weekOptions = useMemo(() => generateWeekOptions(52), []);
+  const defaultWeekKey = useMemo(() => {
+    const prev = weekOptions.find((w) => w.isPrevious);
+    return prev ? prev.key : weekOptions[0]?.key || "";
+  }, [weekOptions]);
+
+  const [currentStep, setCurrentStep] = useState<WizardStep>("period");
+  const [selectedWeekKey, setSelectedWeekKey] = useState<string>(defaultWeekKey);
+
   const [promptData, setPromptData] = useState<PrepareReportPromptResponse | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
-  const [promptTab, setPromptTab] = useState<"full" | "user" | "system">("full");
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   // Streaming state
@@ -75,6 +143,15 @@ export function AnalyzePortfolioModal({
   const summary = portfolioData?.summary;
   const holdingsCount = portfolioData?.holdings?.filter((h: any) => h.assetType !== "Cash").length ?? 0;
   const baseCurrency = summary?.baseCurrency || "EUR";
+
+  const selectedWeek = useMemo(
+    () => weekOptions.find((w) => w.key.toLowerCase() === selectedWeekKey.toLowerCase()),
+    [weekOptions, selectedWeekKey],
+  );
+
+  const hasExistingReport = useMemo(() => {
+    return reports.some((r) => r.weekKey?.toLowerCase() === selectedWeekKey.toLowerCase());
+  }, [reports, selectedWeekKey]);
 
   const clearPollTimer = () => {
     if (pollTimerRef.current) {
@@ -99,6 +176,8 @@ export function AnalyzePortfolioModal({
     }
 
     clearPollTimer();
+    setCurrentStep("period");
+    setSelectedWeekKey(defaultWeekKey);
     setPromptData(null);
     setPromptLoading(false);
     setPromptError(null);
@@ -107,64 +186,49 @@ export function AnalyzePortfolioModal({
     setChunkCount(0);
     setGeneratedReport(null);
     setErrorMessage(null);
+  }, [isOpen, defaultWeekKey]);
 
-    // Fetch config to check skipReportIntro preference
-    void (async () => {
+  // Load context prompt when entering Step 2 or changing week
+  const loadPromptContext = useCallback(
+    async (weekKeyToUse: string) => {
+      if (!portfolioId) return;
+      setPromptLoading(true);
+      setPromptError(null);
+
       try {
         const config = await rpc.request.getConfig({});
+        const res = await rpc.request.prepareReportPrompt({
+          portfolioId,
+          provider: config.llmProvider,
+          model: config.llmModel,
+          weekKey: weekKeyToUse,
+        });
+
         if (!isMountedRef.current) return;
-        const skip = Boolean(config.skipReportIntro);
-        setSkipIntroPreference(skip);
-        if (skip) {
-          setCurrentStep("context");
-        } else {
-          setCurrentStep("intro");
-        }
-      } catch {
+        setPromptData(res);
+      } catch (err: unknown) {
+        if (!isMountedRef.current) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setPromptError(msg || "Failed to compile portfolio context and prompt.");
+      } finally {
         if (isMountedRef.current) {
-          setCurrentStep("intro");
+          setPromptLoading(false);
         }
       }
-    })();
-  }, [isOpen]);
-
-  // Load context prompt when entering Step 2
-  const loadPromptContext = useCallback(async () => {
-    if (!portfolioId) return;
-    setPromptLoading(true);
-    setPromptError(null);
-
-    try {
-      const config = await rpc.request.getConfig({});
-      const res = await rpc.request.prepareReportPrompt({
-        portfolioId,
-        provider: config.llmProvider,
-        model: config.llmModel,
-      });
-
-      if (!isMountedRef.current) return;
-      setPromptData(res);
-    } catch (err: unknown) {
-      if (!isMountedRef.current) return;
-      const msg = err instanceof Error ? err.message : String(err);
-      setPromptError(msg || "Failed to compile portfolio context and prompt.");
-    } finally {
-      if (isMountedRef.current) {
-        setPromptLoading(false);
-      }
-    }
-  }, [portfolioId]);
+    },
+    [portfolioId],
+  );
 
   useEffect(() => {
-    if (isOpen && currentStep === "context" && !promptData && !promptLoading) {
-      void loadPromptContext();
+    if (isOpen && currentStep === "prompt" && (!promptData || promptData.weekKey !== selectedWeekKey) && !promptLoading) {
+      void loadPromptContext(selectedWeekKey);
     }
-  }, [isOpen, currentStep, promptData, promptLoading, loadPromptContext]);
+  }, [isOpen, currentStep, promptData, promptLoading, selectedWeekKey, loadPromptContext]);
 
   // Keyboard escape handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen && currentStep !== "processing") {
+      if (e.key === "Escape" && isOpen && currentStep !== "process") {
         onClose();
       }
     };
@@ -172,28 +236,11 @@ export function AnalyzePortfolioModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, currentStep, onClose]);
 
-  // Toggle skip intro preference
-  const handleToggleSkipIntro = useCallback(async (checked: boolean) => {
-    setSkipIntroPreference(checked);
-    try {
-      await rpc.request.saveConfig({ skipReportIntro: checked });
-    } catch (err) {
-      console.error("Failed to save skipReportIntro preference:", err);
-    }
-  }, []);
-
   // Copy prompt text to clipboard
   const handleCopyPrompt = useCallback(async () => {
-    if (!promptData) return;
-    const textToCopy =
-      promptTab === "system"
-        ? promptData.systemPrompt
-        : promptTab === "user"
-        ? promptData.userPrompt
-        : promptData.fullPrompt;
-
+    if (!promptData?.fullPrompt) return;
     try {
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(promptData.fullPrompt);
       setCopiedPrompt(true);
       setTimeout(() => {
         if (isMountedRef.current) setCopiedPrompt(false);
@@ -201,13 +248,13 @@ export function AnalyzePortfolioModal({
     } catch (err) {
       console.error("Failed to copy prompt to clipboard:", err);
     }
-  }, [promptData, promptTab]);
+  }, [promptData]);
 
   // Start LLM streaming generation (Step 3)
   const handleStartProcessing = useCallback(async () => {
     if (!portfolioId) return;
 
-    setCurrentStep("processing");
+    setCurrentStep("process");
     setLastWordsStream("");
     setChunkCount(0);
     setErrorMessage(null);
@@ -221,6 +268,7 @@ export function AnalyzePortfolioModal({
         model: config.llmModel,
         apiKey: config.llmApiKey,
         baseUrl: config.llmBaseUrl || config.llamacppServerUrl,
+        weekKey: selectedWeekKey,
       });
 
       if (!isMountedRef.current) return;
@@ -246,21 +294,21 @@ export function AnalyzePortfolioModal({
           } else if (statusRes.status === "success") {
             setGeneratedReport(statusRes.report ?? null);
             setConfirmationStatus("success");
-            setCurrentStep("confirmation");
+            setCurrentStep("result");
           } else if (statusRes.status === "cancelled") {
             setConfirmationStatus("cancelled");
-            setCurrentStep("confirmation");
+            setCurrentStep("result");
           } else {
             setErrorMessage(statusRes.error || "Report generation failed");
             setConfirmationStatus("fail");
-            setCurrentStep("confirmation");
+            setCurrentStep("result");
           }
         } catch (pollErr: unknown) {
           if (!isMountedRef.current) return;
           const msg = pollErr instanceof Error ? pollErr.message : String(pollErr);
           setErrorMessage(msg || "Failed to poll generation status");
           setConfirmationStatus("fail");
-          setCurrentStep("confirmation");
+          setCurrentStep("result");
         }
       };
 
@@ -270,9 +318,9 @@ export function AnalyzePortfolioModal({
       const msg = startErr instanceof Error ? startErr.message : String(startErr);
       setErrorMessage(msg || "Failed to initiate report generation stream");
       setConfirmationStatus("fail");
-      setCurrentStep("confirmation");
+      setCurrentStep("result");
     }
-  }, [portfolioId]);
+  }, [portfolioId, selectedWeekKey]);
 
   // Cancel LLM generation
   const handleCancelProcessing = useCallback(async () => {
@@ -285,7 +333,7 @@ export function AnalyzePortfolioModal({
       }
     }
     setConfirmationStatus("cancelled");
-    setCurrentStep("confirmation");
+    setCurrentStep("result");
   }, [activeSessionId]);
 
   // View finished report
@@ -299,11 +347,11 @@ export function AnalyzePortfolioModal({
   if (!isOpen) return null;
 
   const stepIndex =
-    currentStep === "intro"
+    currentStep === "period"
       ? 0
-      : currentStep === "context"
+      : currentStep === "prompt"
       ? 1
-      : currentStep === "processing"
+      : currentStep === "process"
       ? 2
       : 3;
 
@@ -323,7 +371,7 @@ export function AnalyzePortfolioModal({
 
           <button
             onClick={onClose}
-            disabled={currentStep === "processing"}
+            disabled={currentStep === "process"}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-30"
             title="Close wizard"
           >
@@ -331,17 +379,17 @@ export function AnalyzePortfolioModal({
           </button>
         </div>
 
-        {/* Wizard Step Progress Bar */}
-        <div className="bg-slate-950 border-b border-slate-800 px-3.5 sm:px-5 py-2 shrink-0">
-          <div className="flex items-center justify-between gap-1 sm:gap-2">
+        {/* Centered Single-Word Steps Progress Bar */}
+        <div className="bg-slate-950 border-b border-slate-800 px-3.5 sm:px-5 py-2.5 shrink-0 flex items-center justify-center">
+          <div className="flex items-center justify-center gap-2 sm:gap-4 max-w-lg w-full">
             {WIZARD_STEPS.map((step, idx) => {
               const isPassed = stepIndex > idx;
               const isCurrent = stepIndex === idx;
 
               return (
-                <div key={step.id} className="flex items-center gap-1.5 min-w-0 flex-1">
+                <React.Fragment key={step.id}>
                   <div
-                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors truncate ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
                       isCurrent
                         ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
                         : isPassed
@@ -350,20 +398,22 @@ export function AnalyzePortfolioModal({
                     }`}
                   >
                     {isPassed ? (
-                      <Check className="w-2.5 h-2.5 shrink-0 stroke-[3]" />
+                      <Check className="w-3 h-3 shrink-0 stroke-[3]" />
                     ) : (
-                      <span className="shrink-0">{step.number}</span>
+                      <span className="w-4 h-4 rounded-full bg-slate-800 text-[10px] flex items-center justify-center text-slate-400 font-mono">
+                        {idx + 1}
+                      </span>
                     )}
-                    <span className="hidden sm:inline truncate">{step.label}</span>
+                    <span>{step.label}</span>
                   </div>
                   {idx < WIZARD_STEPS.length - 1 && (
                     <div
-                      className={`h-0.5 flex-1 min-w-2 rounded-full ${
+                      className={`h-0.5 w-6 sm:w-10 rounded-full shrink-0 ${
                         isPassed ? "bg-[#A7E2C0]/40" : "bg-slate-800"
                       }`}
                     />
                   )}
-                </div>
+                </React.Fragment>
               );
             })}
           </div>
@@ -371,17 +421,65 @@ export function AnalyzePortfolioModal({
 
         {/* Modal Body */}
         <div className="p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
-          {/* STEP 1: EXPLAIN INTRO */}
-          {currentStep === "intro" && (
+          {/* STEP 1: PERIOD SELECTION */}
+          {currentStep === "period" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
                 <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
-                <span>Autonomous Quantitative Diagnostic & Strategic AI Assessment</span>
+                <span>Select Target Analysis Period</span>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                Generate an on-demand comprehensive investment briefing. The engine scans your multi-asset portfolio, calculates momentum indicators (SMA50, SMA200, RSI), evaluates asset allocations, and consults the AI advisor for objective rebalancing insights.
+                Choose the target weekly interval for performance attribution, technical momentum indicators (SMA50, SMA200, RSI), and AI-driven portfolio diagnostics.
               </p>
+
+              {/* Week Picker Dropdown */}
+              <div className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#DD3C73]" />
+                  <span>Target Week</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedWeekKey}
+                    onChange={(e) => setSelectedWeekKey(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 pr-9 text-xs font-mono text-slate-200 focus:border-[#DD3C73] focus:outline-none cursor-pointer"
+                  >
+                    {weekOptions.map((w) => {
+                      const hasReport = reports.some(
+                        (r) => r.weekKey?.toLowerCase() === w.key.toLowerCase(),
+                      );
+                      return (
+                        <option key={w.key} value={w.key}>
+                          {w.label}
+                          {w.isCurrent ? " [Current Week]" : ""}
+                          {w.isPrevious ? " [Default / Completed]" : ""}
+                          {hasReport ? " [Report Exists]" : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Current Running Week Warning */}
+                {selectedWeek?.isCurrent && (
+                  <div className="mt-1 p-2.5 rounded-lg border border-[#E3EACD]/40 bg-[#E3EACD]/10 flex items-center gap-2 text-xs text-[#E3EACD]">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#E3EACD]" />
+                    <span>Notice: This week is currently in progress. Market data and weekly metrics are partial.</span>
+                  </div>
+                )}
+
+                {/* Existing Report Replacement Alert */}
+                {hasExistingReport && (
+                  <div className="mt-1 p-2.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-center gap-2 text-xs text-[#DD3C73]">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-[#DD3C73]" />
+                    <span>Notice: A report already exists for this week. Running analysis will replace the existing report.</span>
+                  </div>
+                )}
+              </div>
 
               {/* Telemetry Preview Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -394,7 +492,7 @@ export function AnalyzePortfolioModal({
                     {fmtCurrency(
                       summary?.totalPortfolioValue ?? (summary?.totalValue ?? 0) + (summary?.cashBalance ?? 0),
                       baseCurrency,
-                      hideCurrencyValues
+                      hideCurrencyValues,
                     )}
                   </div>
                 </div>
@@ -445,29 +543,16 @@ export function AnalyzePortfolioModal({
                   </div>
                 </div>
               </div>
-
-              {/* Skip Intro Checkbox */}
-              <div className="pt-2 border-t border-slate-800/80">
-                <label className="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={skipIntroPreference}
-                    onChange={(e) => void handleToggleSkipIntro(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73] focus:ring-offset-slate-900 cursor-pointer accent-[#DD3C73]"
-                  />
-                  <span>Skip this introduction step in future report generations</span>
-                </label>
-              </div>
             </div>
           )}
 
-          {/* STEP 2: BUILD CONTEXT & INSPECT PROMPT */}
-          {currentStep === "context" && (
+          {/* STEP 2: BUILD CONTEXT & INSPECT FULL PROMPT (MARKDOWN) */}
+          {currentStep === "prompt" && (
             <div className="flex flex-col gap-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
                   <Database className="w-4 h-4 text-[#DD3C73] shrink-0" />
-                  <span>Context Compilation & Prompt Review</span>
+                  <span>Context Compilation & Full Prompt</span>
                 </div>
                 {promptData && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase">
@@ -495,7 +580,7 @@ export function AnalyzePortfolioModal({
                   <p className="text-xs text-[#DD3C73]/90 font-mono">{promptError}</p>
                   <button
                     type="button"
-                    onClick={() => void loadPromptContext()}
+                    onClick={() => void loadPromptContext(selectedWeekKey)}
                     className="self-start mt-1 px-3 py-1 rounded bg-[#DD3C73] text-white text-xs font-bold hover:bg-[#c82f63] cursor-pointer"
                   >
                     Retry Context Compilation
@@ -508,6 +593,7 @@ export function AnalyzePortfolioModal({
                     <div className="flex items-center gap-2 text-slate-300">
                       <span className="text-slate-500 uppercase text-[10px]">Period:</span>
                       <span className="font-bold text-slate-200">{promptData.period}</span>
+                      <span className="text-slate-500 font-mono text-[11px]">({promptData.weekKey})</span>
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-slate-400">
                       <span>{promptData.holdingsCount} assets evaluated</span>
@@ -519,50 +605,23 @@ export function AnalyzePortfolioModal({
                     </div>
                   </div>
 
-                  {/* Prompt Payload Viewer */}
+                  {/* Full Prompt Viewer Rendered as Markdown */}
                   <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/80 px-3 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setPromptTab("full")}
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase transition-colors cursor-pointer ${
-                            promptTab === "full"
-                              ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
-                              : "text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
+                    <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/80 px-3.5 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
                           Full Prompt
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPromptTab("user")}
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase transition-colors cursor-pointer ${
-                            promptTab === "user"
-                              ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
-                              : "text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
-                          User Instructions
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPromptTab("system")}
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase transition-colors cursor-pointer ${
-                            promptTab === "system"
-                              ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
-                              : "text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
-                          System Persona
-                        </button>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                          Markdown
+                        </span>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => void handleCopyPrompt()}
                         className="h-6 inline-flex items-center gap-1 px-2 rounded border border-slate-800 bg-slate-950 text-[10px] font-medium text-slate-300 hover:text-white hover:border-slate-700 transition-colors cursor-pointer"
-                        title="Copy prompt to clipboard"
+                        title="Copy full prompt to clipboard"
                       >
                         {copiedPrompt ? (
                           <>
@@ -578,12 +637,34 @@ export function AnalyzePortfolioModal({
                       </button>
                     </div>
 
-                    <div className="p-3 max-h-56 overflow-y-auto text-slate-300 text-xs font-mono leading-relaxed select-text whitespace-pre-wrap custom-scrollbar bg-black/40">
-                      {promptTab === "system"
-                        ? promptData.systemPrompt
-                        : promptTab === "user"
-                        ? promptData.userPrompt
-                        : promptData.fullPrompt}
+                    <div className="p-3.5 max-h-72 overflow-y-auto text-slate-300 text-xs font-mono leading-relaxed select-text custom-scrollbar bg-black/40">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({ node: _n, ...props }) => (
+                            <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
+                          ),
+                          h2: ({ node: _n, ...props }) => (
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-3 mb-1.5" {...props} />
+                          ),
+                          h3: ({ node: _n, ...props }) => (
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mt-2.5 mb-1" {...props} />
+                          ),
+                          p: ({ node: _n, ...props }) => <p className="mb-2 text-slate-300 leading-relaxed text-xs" {...props} />,
+                          ul: ({ node: _n, ...props }) => <ul className="list-disc list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
+                          ol: ({ node: _n, ...props }) => <ol className="list-decimal list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
+                          li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
+                          blockquote: ({ node: _n, ...props }) => (
+                            <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-2.5 py-1.5 my-2 text-slate-400 italic rounded-r text-xs" {...props} />
+                          ),
+                          strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
+                          code: ({ node: _n, ...props }) => (
+                            <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-[#E3EACD] font-mono text-[11px]" {...props} />
+                          ),
+                        }}
+                      >
+                        {promptData.fullPrompt}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -592,7 +673,7 @@ export function AnalyzePortfolioModal({
           )}
 
           {/* STEP 3: LLM PROCESSING & STREAMING */}
-          {currentStep === "processing" && (
+          {currentStep === "process" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -631,7 +712,7 @@ export function AnalyzePortfolioModal({
                   )}
                 </div>
 
-                <p className="text-[11px] text-slate-500 italic text-center">
+                <p className="text-[10px] text-slate-500 italic text-center">
                   Displaying trailing words from the real-time stream. The complete formatted report will be presented in the final view.
                 </p>
               </div>
@@ -639,7 +720,7 @@ export function AnalyzePortfolioModal({
           )}
 
           {/* STEP 4: CONFIRMATION (SUCCESS, FAIL, OR CANCEL) */}
-          {currentStep === "confirmation" && (
+          {currentStep === "result" && (
             <div className="flex flex-col gap-4">
               {/* SUCCESS STATE */}
               {confirmationStatus === "success" && (
@@ -670,13 +751,13 @@ export function AnalyzePortfolioModal({
                           {fmtCurrency(
                             generatedReport.metrics?.totalPortfolioValue,
                             generatedReport.metrics?.baseCurrency || baseCurrency,
-                            hideCurrencyValues
+                            hideCurrencyValues,
                           )}
                         </div>
                       </div>
 
                       <div className="text-xs text-slate-300 leading-relaxed line-clamp-3 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
-                        {(hideCurrencyValues ? maskFinancialValues(generatedReport.summary) : generatedReport.summary) ||
+                        {generatedReport.summary ||
                           "Quantitative strategic review and rebalancing tactical recommendations generated."}
                       </div>
                     </div>
@@ -727,65 +808,57 @@ export function AnalyzePortfolioModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/70 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0 gap-2">
-          <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
-            {currentStep === "intro" && <span>Step 1 of 4: Introduction</span>}
-            {currentStep === "context" && <span>Step 2 of 4: Context & Prompt Inspection</span>}
-            {currentStep === "processing" && <span className="text-[#DD3C73]">Step 3 of 4: Live Model Inference</span>}
-            {currentStep === "confirmation" && (
-              <span className={confirmationStatus === "success" ? "text-[#A7E2C0] font-bold" : "text-slate-400"}>
-                Step 4 of 4: Operation Status
-              </span>
+        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/70 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0">
+          {/* Left: Back button or secondary close */}
+          <div>
+            {currentStep === "prompt" && (
+              <button
+                type="button"
+                onClick={() => setCurrentStep("period")}
+                className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back</span>
+              </button>
+            )}
+
+            {currentStep === "result" && (confirmationStatus === "cancelled" || confirmationStatus === "fail") && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                Close
+              </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* STEP 1 FOOTER */}
-            {currentStep === "intro" && (
-              <>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep("context")}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
-                >
-                  <span>Build Context</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </>
+          {/* Right: Primary action button */}
+          <div className="flex items-center gap-2">
+            {currentStep === "period" && (
+              <button
+                type="button"
+                onClick={() => setCurrentStep("prompt")}
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
+              >
+                <span>Build Context</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             )}
 
-            {/* STEP 2 FOOTER */}
-            {currentStep === "context" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep("intro")}
-                  className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={promptLoading || Boolean(promptError)}
-                  onClick={() => void handleStartProcessing()}
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Run Analysis</span>
-                </button>
-              </>
+            {currentStep === "prompt" && (
+              <button
+                type="button"
+                disabled={promptLoading || Boolean(promptError)}
+                onClick={() => void handleStartProcessing()}
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Run Analysis</span>
+              </button>
             )}
 
-            {/* STEP 3 FOOTER */}
-            {currentStep === "processing" && (
+            {currentStep === "process" && (
               <button
                 type="button"
                 onClick={() => void handleCancelProcessing()}
@@ -796,14 +869,13 @@ export function AnalyzePortfolioModal({
               </button>
             )}
 
-            {/* STEP 4 FOOTER */}
-            {currentStep === "confirmation" && (
+            {currentStep === "result" && (
               <>
                 {confirmationStatus === "success" && (
                   <button
                     type="button"
                     onClick={() => void handleFinishAndSelect()}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#243C8F] hover:bg-[#341B83] text-white text-xs font-bold transition-all shadow-lg shadow-[#243C8F]/25 cursor-pointer uppercase tracking-wider"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
                   >
                     <span>View Report</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -811,42 +883,24 @@ export function AnalyzePortfolioModal({
                 )}
 
                 {confirmationStatus === "cancelled" && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer"
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep("context")}
-                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
-                    >
-                      <span>Restart Wizard</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep("period")}
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
+                  >
+                    <span>Restart Wizard</span>
+                  </button>
                 )}
 
                 {confirmationStatus === "fail" && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer"
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep("context")}
-                      className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Retry</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep("period")}
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Retry</span>
+                  </button>
                 )}
               </>
             )}
@@ -856,4 +910,3 @@ export function AnalyzePortfolioModal({
     </div>
   );
 }
-

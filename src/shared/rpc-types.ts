@@ -79,12 +79,14 @@ export interface GenerateReportRequest {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+  weekKey?: string;
 }
 
 export interface PrepareReportPromptRequest {
   portfolioId: string;
   provider?: string;
   model?: string;
+  weekKey?: string;
 }
 
 export interface PrepareReportPromptResponse {
@@ -110,6 +112,7 @@ export interface StartReportStreamRequest {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+  weekKey?: string;
 }
 
 export interface StartReportStreamResponse {

@@ -29,6 +29,22 @@ function getIsoWeekKey(date: Date): string {
   return `${year}-w${String(weekNo).padStart(2, "0")}`;
 }
 
+function parseIsoWeekKey(weekKey: string): { monday: Date; sunday: Date; weekKey: string } | null {
+  const match = weekKey.trim().match(/^(\d{4})-[wW](\d{1,2})$/);
+  if (!match) return null;
+  const year = parseInt(match[1]!, 10);
+  const weekNo = parseInt(match[2]!, 10);
+  if (weekNo < 1 || weekNo > 53) return null;
+
+  const jan4 = new Date(year, 0, 4, 12, 0, 0);
+  const dayNum = jan4.getDay() || 7;
+  const monday = new Date(year, 0, 4 - (dayNum - 1) + (weekNo - 1) * 7, 12, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const normalizedKey = `${year}-w${String(weekNo).padStart(2, "0")}`;
+  return { monday, sunday, weekKey: normalizedKey };
+}
+
 function formatDateRange(startDate: Date, endDate: Date): string {
   const startStr = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const endStr = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -74,7 +90,7 @@ export class PortfolioReportService {
     }, 60 * 1000).unref();
   }
 
-  public getReports(portfolioId: string) {
+  public getReports(portfolioId: string): { reports: PortfolioReport[]; latestReport?: PortfolioReport } {
     const reports = reportRepo.findByPortfolio(portfolioId).map((r) => ({
       ...r,
       content: sanitizeLlmResponse(r.content),
@@ -103,6 +119,7 @@ export class PortfolioReportService {
       provider?: string;
       model?: string;
       portfolioData?: FinancialPortfolioData;
+      weekKey?: string;
     } = {},
   ) {
     const portfolio = portfolioRepo.findById(portfolioId);
@@ -125,14 +142,25 @@ export class PortfolioReportService {
     const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
     const data = options.portfolioData || (await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency));
 
-    const now = new Date();
-    const weekKey = getIsoWeekKey(now);
-    const dayOfWeek = now.getDay();
-    const diffToMonday = (dayOfWeek + 6) % 7;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - diffToMonday);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    let weekKey: string;
+    let monday: Date;
+    let sunday: Date;
+
+    const parsed = options.weekKey ? parseIsoWeekKey(options.weekKey) : null;
+    if (parsed) {
+      weekKey = parsed.weekKey;
+      monday = parsed.monday;
+      sunday = parsed.sunday;
+    } else {
+      const now = new Date();
+      weekKey = getIsoWeekKey(now);
+      const dayOfWeek = now.getDay();
+      const diffToMonday = (dayOfWeek + 6) % 7;
+      monday = new Date(now);
+      monday.setDate(now.getDate() - diffToMonday);
+      sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+    }
 
     const weekStartDate = monday.toISOString().split("T")[0]!;
     const weekEndDate = sunday.toISOString().split("T")[0]!;
@@ -217,7 +245,7 @@ Please structure your report as follows:
    */
   public async prepareReportPrompt(
     portfolioId: string,
-    options: { provider?: string; model?: string } = {},
+    options: { provider?: string; model?: string; weekKey?: string } = {},
   ): Promise<PrepareReportPromptResponse> {
     const ctx = await this.buildReportContext(portfolioId, options);
     return {
@@ -266,6 +294,7 @@ Please structure your report as follows:
         const ctx = await this.buildReportContext(params.portfolioId, {
           provider: params.provider,
           model: params.model,
+          weekKey: params.weekKey,
         });
 
         const config = loadConfig();
@@ -400,6 +429,7 @@ Please structure your report as follows:
       apiKey?: string;
       baseUrl?: string;
       portfolioData?: FinancialPortfolioData;
+      weekKey?: string;
     } = {},
   ) {
     const ctx = await this.buildReportContext(portfolio.id, options);

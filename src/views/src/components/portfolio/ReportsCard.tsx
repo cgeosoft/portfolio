@@ -650,6 +650,7 @@ export function ReportsCard({
         portfolioData={portfolioData}
         portfolioId={portfolioId}
         hideCurrencyValues={hideValues}
+        reports={reports}
       />
 
       {/* Report Prompt Modal */}
