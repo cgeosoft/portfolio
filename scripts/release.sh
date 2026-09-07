@@ -15,10 +15,10 @@ if [[ "$(uname -s)" =~ MINGW|MSYS|CYGWIN ]]; then
   mkdir -p "${APP_DIR}/.bin"
   if [[ -f "/c/Windows/System32/tar.exe" ]]; then
     cp -f "/c/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
-    export PATH="${APP_DIR}/.bin:/c/Windows/System32:${PATH}"
+    export PATH="${APP_DIR}/.bin:${PATH}"
   elif [[ -f "C:/Windows/System32/tar.exe" ]]; then
     cp -f "C:/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
-    export PATH="${APP_DIR}/.bin:C:/Windows/System32:${PATH}"
+    export PATH="${APP_DIR}/.bin:${PATH}"
   fi
 fi
 
