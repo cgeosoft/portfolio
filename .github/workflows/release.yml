@@ -162,11 +162,13 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name || inputs.release_tag || github.ref_name }}
         run: |
           echo "Publishing artifacts for release tag: $TAG_NAME"
-          ls -lh release-artifacts/
+          mkdir -p release-files
+          find release-artifacts -type f -exec cp -v {} release-files/ \;
+          ls -lh release-files/
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             echo "Release $TAG_NAME exists, uploading/updating assets..."
-            gh release upload "$TAG_NAME" release-artifacts/* --clobber
+            gh release upload "$TAG_NAME" release-files/* --clobber
           else
             echo "Release $TAG_NAME not found, creating release..."
-            gh release create "$TAG_NAME" release-artifacts/* --title "$TAG_NAME" --generate-notes
+            gh release create "$TAG_NAME" release-files/* --title "$TAG_NAME" --generate-notes
           fi
