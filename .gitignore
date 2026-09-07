@@ -11,6 +11,7 @@ coverage/
 .cottontail-tmp/
 .hutch/
 .scratch/
+.bin/
 
 # Runtime data
 data/

@@ -68,6 +68,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prioritize Windows native tar
+        run: |
+          echo "C:\Windows\System32" >> "$GITHUB_PATH"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -80,6 +84,7 @@ jobs:
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
         run: |
+          export PATH="/c/Windows/System32:$PATH"
           VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
           if [ -z "$VERSION" ]; then

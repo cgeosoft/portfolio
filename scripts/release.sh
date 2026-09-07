@@ -9,6 +9,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 
+# Ensure Windows native tar (bsdtar in System32) takes precedence over Git GNU tar
+# Git GNU tar treats drive letters (such as D:\...) as remote hostnames and fails
+if [[ "$(uname -s)" =~ MINGW|MSYS|CYGWIN ]]; then
+  mkdir -p "${APP_DIR}/.bin"
+  if [[ -f "/c/Windows/System32/tar.exe" ]]; then
+    cp -f "/c/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
+    export PATH="${APP_DIR}/.bin:/c/Windows/System32:${PATH}"
+  elif [[ -f "C:/Windows/System32/tar.exe" ]]; then
+    cp -f "C:/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
+    export PATH="${APP_DIR}/.bin:C:/Windows/System32:${PATH}"
+  fi
+fi
+
 CLEAN=false
 SKIP_BUILD=false
 DRY_RUN=false
