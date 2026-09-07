@@ -7,7 +7,7 @@
 import { PostHog } from "posthog-node";
 import { loadConfig } from "../config.js";
 
-const POSTHOG_API_KEY = "phc_PLACEHOLDER"; // Set at build time
+const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || "phc_PLACEHOLDER";
 const POSTHOG_HOST = "https://eu.i.posthog.com";
 
 export class TelemetryService {
@@ -19,7 +19,7 @@ export class TelemetryService {
     const config = loadConfig();
     this.deviceId = config.deviceId;
 
-    if (config.telemetryEnabled) {
+    if (config.telemetryEnabled && POSTHOG_API_KEY && POSTHOG_API_KEY !== "phc_PLACEHOLDER") {
       this.client = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_HOST });
       console.log("[Telemetry] Anonymous analytics enabled");
     }

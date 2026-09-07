@@ -8,6 +8,16 @@ export default {
     version: packageJson.version,
   },
   build: {
+    bun: {
+      define: {
+        "process.env.POSTHOG_API_KEY": JSON.stringify(process.env.POSTHOG_API_KEY || ""),
+      },
+    },
+    cottontail: {
+      define: {
+        "process.env.POSTHOG_API_KEY": JSON.stringify(process.env.POSTHOG_API_KEY || ""),
+      },
+    },
     views: {
       main: {
         entrypoint: "src/views/main.ts",
