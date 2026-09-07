@@ -407,8 +407,14 @@ export default function App() {
   );
 
   // App Info & Quotes Sync State
+  const defaultWebpageFallback =
+    (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
+    (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
+      ? "https://portfolio.cgeosoft.com"
+      : "http://localhost:3000");
+
   const [appVersion, setAppVersion] = useState("0.1.0");
-  const [webpageUrl, setWebpageUrl] = useState("http://localhost:3000");
+  const [webpageUrl, setWebpageUrl] = useState(defaultWebpageFallback);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);

@@ -37,6 +37,7 @@ jobs:
       - name: Build and package Debian
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
+          WEBPAGE_URL: ${{ secrets.WEBPAGE_URL || '' }}
         run: |
           VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
@@ -79,6 +80,7 @@ jobs:
       - name: Build and package Windows
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
+          WEBPAGE_URL: ${{ secrets.WEBPAGE_URL || '' }}
         run: |
           VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
@@ -118,6 +120,7 @@ jobs:
       - name: Build and package macOS
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
+          WEBPAGE_URL: ${{ secrets.WEBPAGE_URL || '' }}
         run: |
           VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"

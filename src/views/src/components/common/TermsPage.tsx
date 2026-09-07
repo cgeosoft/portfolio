@@ -14,13 +14,20 @@ export interface TermsPageProps {
   webpageUrl?: string;
 }
 
-export function TermsPage({ onBack, webpageUrl = "http://localhost:3000" }: TermsPageProps) {
+const DEFAULT_TERMS_BASE_URL =
+  (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
+  (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
+    ? "https://portfolio.cgeosoft.com"
+    : "http://localhost:3000");
+
+export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const cleanBaseUrl = (webpageUrl || "http://localhost:3000").replace(/\/+$/, "");
-  const termsUrl = `${cleanBaseUrl}/terms`;
+  const cleanBaseUrl = (webpageUrl || DEFAULT_TERMS_BASE_URL).replace(/\/+$/, "");
+  const termsUrl = `${cleanBaseUrl}/terms/`;
+  const isLocalhost = cleanBaseUrl.includes("localhost") || cleanBaseUrl.includes("127.0.0.1");
 
   const handleReload = useCallback(() => {
     setIsLoading(true);
@@ -94,7 +101,10 @@ export function TermsPage({ onBack, webpageUrl = "http://localhost:3000" }: Term
                 Unable to Load Terms Page
               </h3>
               <p className="text-xs text-slate-400">
-                Could not connect to <code className="text-[#DD3C73]">{termsUrl}</code>. Ensure your local dev server or website is reachable.
+                Could not connect to <code className="text-[#DD3C73]">{termsUrl}</code>.{" "}
+                {isLocalhost
+                  ? "Ensure your local dev server or website is reachable."
+                  : "Ensure your internet connection or website is reachable."}
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">

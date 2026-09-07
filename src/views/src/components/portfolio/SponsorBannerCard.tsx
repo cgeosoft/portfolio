@@ -7,15 +7,21 @@ export interface SponsorBannerCardProps {
   webpageUrl?: string;
 }
 
-export function SponsorBannerCard({ webpageUrl = "http://localhost:3000" }: SponsorBannerCardProps) {
+const DEFAULT_SPONSOR_BASE_URL =
+  (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
+  (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
+    ? "https://portfolio.cgeosoft.com"
+    : "http://localhost:3000");
+
+export function SponsorBannerCard({ webpageUrl }: SponsorBannerCardProps) {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [bannerHeight, setBannerHeight] = useState(90);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const cleanBase = (webpageUrl || "http://localhost:3000").replace(/\/+$/, "");
-  const sponsorUrl = `${cleanBase}/sponsor`;
+  const cleanBase = (webpageUrl || DEFAULT_SPONSOR_BASE_URL).replace(/\/+$/, "");
+  const sponsorUrl = `${cleanBase}/sponsor/`;
 
   const fetchBanner = useCallback(async () => {
     setIsLoading(true);

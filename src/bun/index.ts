@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import type { PortfolioRPC } from "../shared/rpc-types.js";
 import { loadConfig, updateConfig } from "./config.js";
+import { getAppVersion, isDev, getEnvironmentName, resolveWebpageUrl } from "./environment.js";
 import { appLogger } from "./logger.js";
 import { getDatabase, closeDatabase } from "./db/database.js";
 import * as portfolioRepo from "./db/portfolio.repo.js";
@@ -346,23 +347,16 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
       },
 
       getAppInfo: async () => {
-        let version = "0.1.0";
-        try {
-          const pkgPath = new URL("../../package.json", import.meta.url).pathname;
-          if (existsSync(pkgPath)) {
-            const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version?: string };
-            if (pkg.version) version = pkg.version;
-          }
-        } catch {
-          // Keep default version
-        }
+        const version = getAppVersion();
         const majorMinor = version.split(".").slice(0, 2).join(".");
         const cfg = loadConfig();
-        const webpageUrl = process.env["WEBPAGE_URL"] || cfg.webpageUrl || "http://localhost:3000";
+        const webpageUrl = resolveWebpageUrl(cfg.webpageUrl);
         return {
           version,
           majorMinor,
           webpageUrl,
+          isDev: isDev(),
+          channel: getEnvironmentName(),
           lastQuotesSync: cfg.lastQuotesSync,
         };
       },
@@ -426,8 +420,10 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
 
       getSponsorBanner: async (params) => {
         const cfg = loadConfig();
-        const base = (params.url || cfg.webpageUrl || "http://localhost:3000").replace(/\/+$/, "");
-        const targetUrl = base.endsWith("/sponsor") ? base : `${base}/sponsor`;
+        const base = resolveWebpageUrl(params.url || cfg.webpageUrl);
+        const targetUrl = base.endsWith("/sponsor")
+          ? `${base}/`
+          : (base.endsWith("/sponsor/") ? base : `${base}/sponsor/`);
 
         // 1. Try fetching from remote/local website server
         try {
@@ -445,11 +441,18 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
           appLogger.log("info", `Remote sponsor fetch failed, checking local file fallback: ${err}`);
         }
 
-        // 2. Fallback to local workspace sponsor HTML template if available
+        // 2. Fallback to local workspace or packaged sponsor HTML template if available
         try {
           const projectRoot = new URL("../..", import.meta.url).pathname;
+          const binDir = process.execPath ? dirname(process.execPath) : "";
           const candidatePaths = [
             join(projectRoot, "extras/website/sponsor/index.html"),
+            join(projectRoot, "views/sponsor/index.html"),
+            join(projectRoot, "../Resources/app/views/sponsor/index.html"),
+            join(projectRoot, "../Resources/views/sponsor/index.html"),
+            join(binDir, "../Resources/app/views/sponsor/index.html"),
+            join(binDir, "../Resources/views/sponsor/index.html"),
+            join(process.cwd(), "extras/website/sponsor/index.html"),
           ];
           for (const filePath of candidatePaths) {
             if (existsSync(filePath)) {

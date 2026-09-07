@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { appLogger } from "../logger.js";
 import { loadConfig, updateConfig } from "../config.js";
+import { getAppVersion } from "../environment.js";
 import type { AppUpdateInfo } from "../../shared/rpc-types.js";
 
 export interface ParsedSemver {
@@ -78,18 +79,9 @@ export class AppUpdateService {
     };
   }
 
-  /** Read current app version from package.json */
+  /** Read current app version from package.json or runtime version metadata */
   public readAppVersion(): string {
-    try {
-      const pkgPath = new URL("../../../package.json", import.meta.url).pathname;
-      if (existsSync(pkgPath)) {
-        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version?: string };
-        if (pkg.version) return pkg.version;
-      }
-    } catch {
-      // Keep default version
-    }
-    return "0.1.0";
+    return getAppVersion();
   }
 
   /** Get cached update information */
