@@ -3,6 +3,8 @@ import { RefreshCw, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { rpc } from "../../rpc";
 import { formatTimeAgo } from "../portfolio/utils";
 
+import type { AppUpdateInfo } from "../../../../shared/rpc-types";
+
 export { formatTimeAgo };
 
 export interface BottomBarProps {
@@ -13,6 +15,8 @@ export interface BottomBarProps {
   isSyncingQuotes?: boolean;
   hideCurrencyValues?: boolean;
   onToggleHideCurrency?: () => void;
+  updateInfo?: AppUpdateInfo | null;
+  onOpenUpdate?: () => void;
 }
 
 export function BottomBar({
@@ -23,6 +27,8 @@ export function BottomBar({
   isSyncingQuotes = false,
   hideCurrencyValues = false,
   onToggleHideCurrency,
+  updateInfo,
+  onOpenUpdate,
 }: BottomBarProps) {
   const [relativeTime, setRelativeTime] = useState<string>(() => formatTimeAgo(lastQuotesSync));
 
@@ -56,6 +62,23 @@ export function BottomBar({
         <span className="text-slate-300">
           portfolio v{version}
         </span>
+        {updateInfo?.hasUpdate && (
+          <button
+            type="button"
+            onClick={
+              onOpenUpdate ||
+              (() => {
+                if (updateInfo.releaseUrl) {
+                  rpc.request.openExternalUrl({ url: updateInfo.releaseUrl }).catch(() => {});
+                }
+              })
+            }
+            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/40 hover:bg-[#DD3C73]/30 transition-colors cursor-pointer inline-flex items-center gap-1"
+            title={`New version v${updateInfo.latestVersion} available on GitHub`}
+          >
+            <span>v{updateInfo.latestVersion} available</span>
+          </button>
+        )}
         <span className="text-slate-600">-</span>
         <button
           type="button"

@@ -124,7 +124,7 @@ export interface PortfolioReport {
   model: string;
   provider: string;
   status?: "success" | "fallback" | "error";
-  error?: string;
+  error?: string | null;
   isFallback?: boolean;
 }
 

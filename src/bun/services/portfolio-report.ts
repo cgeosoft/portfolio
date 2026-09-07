@@ -79,6 +79,7 @@ export class PortfolioReportService {
       ...r,
       content: sanitizeLlmResponse(r.content),
       prompt: r.prompt ?? null,
+      error: r.error ?? undefined,
       metrics: JSON.parse(r.metrics) as ReportMetrics,
       isFallback: Boolean(r.isFallback),
     }));
@@ -334,6 +335,7 @@ Please structure your report as follows:
         session.report = {
           ...savedReport,
           prompt: savedReport.prompt ?? null,
+          error: savedReport.error ?? undefined,
           metrics: JSON.parse(savedReport.metrics) as ReportMetrics,
           isFallback: Boolean(savedReport.isFallback),
         };
@@ -457,6 +459,7 @@ Please structure your report as follows:
     return {
       ...report,
       prompt: report.prompt ?? null,
+      error: report.error ?? undefined,
       metrics: JSON.parse(report.metrics) as ReportMetrics,
       isFallback: Boolean(report.isFallback),
     };

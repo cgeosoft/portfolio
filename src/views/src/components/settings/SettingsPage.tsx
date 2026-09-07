@@ -34,9 +34,11 @@ import {
   FolderOpen,
   Copy,
   Check,
+  ExternalLink,
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "../../types/portfolio";
+import type { AppUpdateInfo } from "../../../../shared/rpc-types";
 import { CreatePortfolioModal } from "../portfolio/CreatePortfolioModal";
 import { EditPortfolioModal } from "../portfolio/EditPortfolioModal";
 import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
@@ -287,6 +289,10 @@ export function SettingsPage({
   const [telemetryEnabled, setTelemetryEnabled] = useState(false);
   const [quotesInterval, setQuotesInterval] = useState<number>(15);
   const [startWithBoot, setStartWithBoot] = useState(false);
+  const [checkForUpdates, setCheckForUpdates] = useState(true);
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [appVersion, setAppVersion] = useState("0.1.0");
 
   // Support ticket state
   const [ticketSubject, setTicketSubject] = useState("");
@@ -368,12 +374,33 @@ export function SettingsPage({
       setTelemetryEnabled(config.telemetryEnabled ?? false);
       if (config.marketQuotesInterval !== undefined) setQuotesInterval(config.marketQuotesInterval);
       if (config.startWithBoot !== undefined) setStartWithBoot(config.startWithBoot);
+      if (config.checkForUpdates !== undefined) setCheckForUpdates(config.checkForUpdates);
 
       if (provider === "ollama" || provider === "llamacpp-server") {
         fetchModelsForProvider(provider, url || preset?.defaultBaseUrl, config.llmApiKey);
       }
     });
+
+    rpc.request.getAppInfo({}).then((info: any) => {
+      if (info?.version) setAppVersion(info.version);
+    }).catch(() => {});
+
+    rpc.request.getUpdateInfo({}).then((res: any) => {
+      if (res) setUpdateInfo(res);
+    }).catch(() => {});
   }, []);
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdates(true);
+    try {
+      const res = await rpc.request.checkForUpdates({ force: true });
+      setUpdateInfo(res);
+    } catch (err) {
+      console.warn("Manual update check failed:", err);
+    } finally {
+      setIsCheckingUpdates(false);
+    }
+  };
 
   const saveConfig = async (updates: any) => {
     await rpc.request.saveConfig(updates);
@@ -664,6 +691,46 @@ export function SettingsPage({
                     aria-hidden="true"
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
                       telemetryEnabled ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* 4. Check for Application Updates Toggle */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0 pr-2">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <RefreshCw className="w-4 h-4 text-[#DD3C73]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      Check for Application Updates
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                      Automatically check GitHub releases on startup and every hour for new versions.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={checkForUpdates}
+                  onClick={() => {
+                    const next = !checkForUpdates;
+                    setCheckForUpdates(next);
+                    saveConfig({ checkForUpdates: next });
+                  }}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
+                    checkForUpdates ? "bg-[#DD3C73]" : "bg-slate-800"
+                  }`}
+                  title={checkForUpdates ? "Disable update checks" : "Enable update checks"}
+                >
+                  <span className="sr-only">Check for Application Updates</span>
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      checkForUpdates ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
                 </button>
@@ -1232,12 +1299,71 @@ export function SettingsPage({
                         Portfolio Desktop
                       </h2>
                       <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
-                        v0.1.0
+                        v{appVersion}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
                       Tactical Cyberpunk Personal Investment & Asset Terminal
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Version and Updates Card */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    <span>Version and Updates</span>
+                  </div>
+                  {updateInfo?.lastChecked && (
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Last checked: {new Date(updateInfo.lastChecked).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-200 font-semibold">
+                        {updateInfo?.hasUpdate
+                          ? `New version available: v${updateInfo.latestVersion}`
+                          : !checkForUpdates
+                          ? "Automatic update checks are disabled"
+                          : "Portfolio Desktop is up to date"}
+                      </span>
+                      {updateInfo?.hasUpdate && (
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#A7E2C0]/15 text-[#A7E2C0] border border-[#A7E2C0]/30">
+                          Update Available
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Current version: v{appVersion}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {updateInfo?.hasUpdate && updateInfo.releaseUrl && (
+                      <button
+                        type="button"
+                        onClick={() => rpc.request.openExternalUrl({ url: updateInfo.releaseUrl })}
+                        className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>View Release</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={isCheckingUpdates}
+                      onClick={handleCheckForUpdates}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? "animate-spin text-[#DD3C73]" : ""}`} />
+                      <span>{isCheckingUpdates ? "Checking..." : "Check Now"}</span>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -5,9 +5,11 @@ interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenShortcuts?: () => void;
+  version?: string;
+  updateInfo?: { hasUpdate: boolean; latestVersion: string; releaseUrl?: string } | null;
 }
 
-export function AboutModal({ isOpen, onClose }: AboutModalProps) {
+export function AboutModal({ isOpen, onClose, version = "0.1.0", updateInfo }: AboutModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,8 +57,13 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                   Portfolio Desktop
                 </h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
-                  v0.1.0
+                  v{version}
                 </span>
+                {updateInfo?.hasUpdate && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#A7E2C0]/15 text-[#A7E2C0] border border-[#A7E2C0]/30">
+                    v{updateInfo.latestVersion} available
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">Local-First Wealth & Asset Analytics</p>
             </div>

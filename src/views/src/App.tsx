@@ -33,6 +33,7 @@ import type {
   GetAppInfoResponse,
   PortfolioChatMessage,
   AssistantConversation,
+  AppUpdateInfo,
 } from "../../shared/rpc-types";
 import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge } from "./rpc";
 import {
@@ -352,9 +353,11 @@ export default function App() {
   );
 
   // App Info & Quotes Sync State
-  const [appVersion, setAppVersion] = useState("0.1");
+  const [appVersion, setAppVersion] = useState("0.1.0");
   const [webpageUrl, setWebpageUrl] = useState("http://localhost:3000");
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
+  const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
 
   const toggleHideCurrencyValues = () => {
     setHideCurrencyValues((prev) => {
@@ -363,6 +366,16 @@ export default function App() {
       return next;
     });
   };
+
+  const handleDismissUpdate = useCallback((ver: string) => {
+    setDismissedUpdateVersion(ver);
+    rpc.request.saveConfig({ dismissedUpdateVersion: ver }).catch(() => {});
+  }, []);
+
+  const handleViewRelease = useCallback((url?: string) => {
+    const targetUrl = url || updateInfo?.releaseUrl || "https://github.com/cgeosoft/portfolio/releases";
+    rpc.request.openExternalUrl({ url: targetUrl }).catch(() => {});
+  }, [updateInfo]);
 
   // Modals state
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
@@ -450,6 +463,9 @@ export default function App() {
         if (!config.setupCompleted) {
           setIsSetupWizardOpen(true);
         }
+        if (config.dismissedUpdateVersion) {
+          setDismissedUpdateVersion(config.dismissedUpdateVersion);
+        }
       } catch (e) {
         clientLogger.log("error", "initApp:config_error", `Failed to load initial config: ${e}`);
         console.error("Failed to load initial config:", e);
@@ -457,15 +473,33 @@ export default function App() {
 
       try {
         const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", () => rpc.request.getAppInfo({}), 3, 200, 3000);
-        if (appInfo.majorMinor) setAppVersion(appInfo.majorMinor);
+        if (appInfo.version) setAppVersion(appInfo.version);
+        else if (appInfo.majorMinor) setAppVersion(appInfo.majorMinor);
         if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
         if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
       } catch (e) {
         clientLogger.log("error", "initApp:appInfo_error", `Failed to load app info: ${e}`);
         console.error("Failed to load app info:", e);
       }
+
+      try {
+        const uInfo = await rpc.request.getUpdateInfo({});
+        if (uInfo) setUpdateInfo(uInfo);
+      } catch (e) {
+        clientLogger.log("warning", "initApp:updateInfo_warning", `Could not retrieve update info: ${e}`);
+      }
     };
     initApp();
+  }, []);
+
+  // Periodic update check every 1 hour in webview
+  useEffect(() => {
+    const updateTimer = setInterval(() => {
+      rpc.request.getUpdateInfo({}).then((uInfo) => {
+        if (uInfo) setUpdateInfo(uInfo);
+      }).catch(() => {});
+    }, 60 * 60 * 1000);
+    return () => clearInterval(updateTimer);
   }, []);
 
   // Load portfolios list

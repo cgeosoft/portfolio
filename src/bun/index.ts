@@ -327,10 +327,21 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         if ("telemetryEnabled" in params) {
           telemetry.reinitialize();
         }
+        if (params.checkForUpdates === true) {
+          appUpdateService.checkForUpdates().catch(() => {});
+        }
         return updated;
       },
 
-      // -- App Info and External Links --
+      // -- App Info, Updates, and External Links --
+      checkForUpdates: async (params) => {
+        appLogger.log("info", `RPC: checkForUpdates requested (force: ${Boolean(params?.force)})`);
+        return await appUpdateService.checkForUpdates(Boolean(params?.force));
+      },
+
+      getUpdateInfo: async () => {
+        return appUpdateService.getUpdateInfo();
+      },
 
       getAppInfo: async () => {
         let version = "0.1.0";
@@ -694,10 +705,14 @@ setTimeout(() => {
   });
 }, 10000);
 
+// Start background update check on launch and hourly interval
+appUpdateService.startPeriodicChecks();
+
 // ── Graceful Shutdown ───────────────────────────────────────────────────────
 
 async function shutdown(): Promise<void> {
   appLogger.log("info", "Shutting down...");
+  appUpdateService.stopPeriodicChecks();
   try {
     if (mainWindow) {
       windowStateManager.updateFromWindow(mainWindow);

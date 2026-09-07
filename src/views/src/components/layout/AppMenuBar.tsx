@@ -47,6 +47,8 @@ export interface AppMenuBarProps {
   onQuit: () => void;
   isAssistantOpen?: boolean;
   onToggleAssistant?: () => void;
+  updateInfo?: { hasUpdate: boolean; latestVersion: string } | null;
+  onCheckForUpdates?: () => void;
 }
 
 type MenuKey = "file" | "edit" | "view" | "portfolio" | "help" | null;
@@ -84,6 +86,8 @@ export function AppMenuBar({
   onQuit,
   isAssistantOpen,
   onToggleAssistant,
+  updateInfo,
+  onCheckForUpdates,
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -297,6 +301,20 @@ export function AppMenuBar({
       action: () => {
         closeMenu();
         onOpenSettings("support");
+      },
+    },
+    {
+      label: updateInfo?.hasUpdate
+        ? `Update Available (v${updateInfo.latestVersion})...`
+        : "Check for Updates...",
+      icon: RefreshCw,
+      action: () => {
+        closeMenu();
+        if (onCheckForUpdates) {
+          onCheckForUpdates();
+        } else {
+          onOpenSettings("about");
+        }
       },
     },
     { type: "separator" },
