@@ -8,9 +8,13 @@
 
   // ===========================================================================
   // Download Configuration
-  // Modify these URLs when publishing new releases
+  // Modify these URLs when publishing new releases or let fetchLatestRelease auto-update
   // ===========================================================================
   const GITHUB_REPO_URL = "https://github.com/cgeosoft/portfolio";
+  const GITHUB_RELEASES_URL = `${GITHUB_REPO_URL}/releases`;
+  const GITHUB_API_LATEST_RELEASE = "https://api.github.com/repos/cgeosoft/portfolio/releases/latest";
+  const CACHE_KEY = "portfolio_latest_release_v1";
+  const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache to prevent GitHub API rate limits
   const APP_VERSION = "0.1.0";
   const RELEASE_BASE = `${GITHUB_REPO_URL}/releases/download/v${APP_VERSION}`;
 
@@ -243,6 +247,157 @@
   // ===========================================================================
   // Year & Initialization
   // ===========================================================================
+  // ===========================================================================
+  // Dynamic GitHub Release Resolution
+  // Ensures download links always point to the latest release assets
+  // ===========================================================================
+  function matchReleaseAssets(assets) {
+    const result = {};
+    if (!Array.isArray(assets)) return result;
+
+    for (const asset of assets) {
+      const name = (asset.name || '').toLowerCase();
+      const url = asset.browser_download_url;
+      if (!url) continue;
+
+      // Linux Debian (.deb)
+      if (name.endsWith('.deb')) {
+        result.linuxDeb = { url, name: asset.name };
+      }
+      // Linux tarball (.tar.gz)
+      else if (name.endsWith('.tar.gz') && (name.includes('linux') || name.includes('setup'))) {
+        result.linuxTar = { url, name: asset.name };
+      }
+      // Windows Installer (.exe)
+      else if (name.endsWith('.exe')) {
+        result.winInstaller = { url, name: asset.name };
+      }
+      // Windows Portable (.zip)
+      else if (name.endsWith('.zip') && (name.includes('win') || name.includes('windows'))) {
+        result.winPortable = { url, name: asset.name };
+      }
+      // macOS Disk Image (.dmg)
+      else if (name.endsWith('.dmg')) {
+        result.macDmg = { url, name: asset.name };
+      }
+      // macOS zip archive (.zip)
+      else if (name.endsWith('.zip') && (name.includes('mac') || name.includes('macos') || name.includes('darwin'))) {
+        result.macZip = { url, name: asset.name };
+      }
+    }
+    return result;
+  }
+
+  function applyReleaseData(releaseData) {
+    if (!releaseData) return;
+
+    const rawTag = releaseData.tag_name || '';
+    const cleanVersion = rawTag.replace(/^v/, '') || DOWNLOAD_CONFIG.version;
+    const releaseBase = `${GITHUB_REPO_URL}/releases/download/${rawTag || ('v' + cleanVersion)}`;
+
+    DOWNLOAD_CONFIG.version = cleanVersion;
+    DOWNLOAD_CONFIG.releaseBase = releaseBase;
+
+    const matched = matchReleaseAssets(releaseData.assets || []);
+
+    if (matched.winInstaller) {
+      DOWNLOAD_CONFIG.windows.installerUrl = matched.winInstaller.url;
+      DOWNLOAD_CONFIG.windows.installerFile = matched.winInstaller.name;
+    } else {
+      DOWNLOAD_CONFIG.windows.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_x64_setup.exe`;
+    }
+
+    if (matched.winPortable) {
+      DOWNLOAD_CONFIG.windows.portableUrl = matched.winPortable.url;
+    } else {
+      DOWNLOAD_CONFIG.windows.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_windows-x64_portable.zip`;
+    }
+
+    if (matched.macDmg) {
+      DOWNLOAD_CONFIG.macos.installerUrl = matched.macDmg.url;
+      DOWNLOAD_CONFIG.macos.installerFile = matched.macDmg.name;
+    } else {
+      DOWNLOAD_CONFIG.macos.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_universal.dmg`;
+    }
+
+    if (matched.macZip) {
+      DOWNLOAD_CONFIG.macos.portableUrl = matched.macZip.url;
+    } else {
+      DOWNLOAD_CONFIG.macos.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_macos-universal.zip`;
+    }
+
+    if (matched.linuxDeb) {
+      DOWNLOAD_CONFIG.linux.installerUrl = matched.linuxDeb.url;
+      DOWNLOAD_CONFIG.linux.installerFile = matched.linuxDeb.name;
+      DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i ${matched.linuxDeb.name}`;
+    } else {
+      DOWNLOAD_CONFIG.linux.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_amd64.deb`;
+      DOWNLOAD_CONFIG.linux.installerFile = `portfolio_${cleanVersion}_amd64.deb`;
+      DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i portfolio_${cleanVersion}_amd64.deb`;
+    }
+
+    if (matched.linuxTar) {
+      DOWNLOAD_CONFIG.linux.portableUrl = matched.linuxTar.url;
+    } else {
+      DOWNLOAD_CONFIG.linux.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_linux-x64.tar.gz`;
+    }
+
+    // Update version badge and meta labels in DOM
+    document.querySelectorAll('.latest-version-text').forEach(el => {
+      el.textContent = `v${cleanVersion}`;
+    });
+
+    const metaVersionEl = document.getElementById('meta-version-text');
+    if (metaVersionEl) {
+      metaVersionEl.textContent = `• Version ${cleanVersion} Latest`;
+    }
+
+    // Update active hero button & matrix links
+    renderHeroDownload(activeOS);
+    bindAllDownloadLinks();
+  }
+
+  async function fetchLatestRelease() {
+    // 1. Try reading valid cache first
+    try {
+      const cachedItem = localStorage.getItem(CACHE_KEY);
+      if (cachedItem) {
+        const parsed = JSON.parse(cachedItem);
+        if (parsed && typeof parsed.timestamp === 'number' && (Date.now() - parsed.timestamp < CACHE_TTL_MS)) {
+          if (parsed.data) {
+            applyReleaseData(parsed.data);
+          }
+        }
+      }
+    } catch (err) {
+      // Ignore cache access error
+    }
+
+    // 2. Fetch latest release from GitHub API
+    try {
+      const response = await fetch(GITHUB_API_LATEST_RELEASE, {
+        headers: { Accept: 'application/vnd.github.v3+json' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        applyReleaseData(data);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            data: data
+          }));
+        } catch (e) {
+          // Ignore cache write error
+        }
+      }
+    } catch (err) {
+      console.warn('Could not retrieve latest release from GitHub API. Using fallback configuration.', err);
+    }
+  }
+
+  // ===========================================================================
+  // Year & Initialization
+  // ===========================================================================
   function initYear() {
     const yearEl = document.getElementById('current-year');
     if (yearEl) {
@@ -258,5 +413,6 @@
     initCopyButton();
     initMockupTabs();
     initYear();
+    fetchLatestRelease();
   });
 })();

@@ -11,10 +11,11 @@ import type {
   PortfolioHistoricalPoint,
   PortfolioTransaction,
   PortfolioReport,
+  ReportMetrics,
   FinancialPortfolioData,
 } from "../types/portfolio.js";
 import type { DesktopConfig } from "../bun/config.js";
-export type { DesktopConfig };
+export type { DesktopConfig, ReportMetrics };
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
 
@@ -78,6 +79,62 @@ export interface GenerateReportRequest {
   model?: string;
   apiKey?: string;
   baseUrl?: string;
+}
+
+export interface PrepareReportPromptRequest {
+  portfolioId: string;
+  provider?: string;
+  model?: string;
+}
+
+export interface PrepareReportPromptResponse {
+  portfolioId: string;
+  portfolioName: string;
+  baseCurrency: string;
+  period: string;
+  weekKey: string;
+  weekStartDate: string;
+  weekEndDate: string;
+  systemPrompt: string;
+  userPrompt: string;
+  fullPrompt: string;
+  provider: string;
+  model: string;
+  holdingsCount: number;
+  metrics: ReportMetrics;
+}
+
+export interface StartReportStreamRequest {
+  portfolioId: string;
+  provider?: string;
+  model?: string;
+  apiKey?: string;
+  baseUrl?: string;
+}
+
+export interface StartReportStreamResponse {
+  sessionId: string;
+}
+
+export interface PollReportStreamRequest {
+  sessionId: string;
+}
+
+export interface PollReportStreamResponse {
+  sessionId: string;
+  status: "running" | "success" | "fail" | "cancelled";
+  lastWords: string;
+  chunkCount: number;
+  report?: PortfolioReport;
+  error?: string;
+}
+
+export interface CancelReportStreamRequest {
+  sessionId: string;
+}
+
+export interface CancelReportStreamResponse {
+  success: boolean;
 }
 
 export interface GetReportsRequest {
@@ -199,6 +256,23 @@ export interface GetAppInfoResponse {
   lastQuotesSync?: string;
 }
 
+export interface AppUpdateInfo {
+  enabled: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+  releaseName: string;
+  releaseUrl: string;
+  publishedAt?: string;
+  releaseNotes?: string;
+  lastChecked?: string;
+  error?: string;
+}
+
+export interface CheckForUpdatesRequest {
+  force?: boolean;
+}
+
 export interface OpenExternalUrlRequest {
   url: string;
 }
@@ -277,6 +351,10 @@ export type PortfolioRPC = {
       // Reports
       getReports: { params: GetReportsRequest; response: { reports: PortfolioReport[]; latestReport?: PortfolioReport } };
       generateReport: { params: GenerateReportRequest; response: PortfolioReport };
+      prepareReportPrompt: { params: PrepareReportPromptRequest; response: PrepareReportPromptResponse };
+      startReportStream: { params: StartReportStreamRequest; response: StartReportStreamResponse };
+      pollReportStream: { params: PollReportStreamRequest; response: PollReportStreamResponse };
+      cancelReportStream: { params: CancelReportStreamRequest; response: CancelReportStreamResponse };
       deleteReport: { params: DeleteReportRequest; response: { success: boolean } };
 
       // LLM & Assistant
@@ -293,6 +371,8 @@ export type PortfolioRPC = {
 
       // App info, external browser links, support, and sync
       getAppInfo: { params: Record<string, never>; response: GetAppInfoResponse };
+      checkForUpdates: { params: CheckForUpdatesRequest; response: AppUpdateInfo };
+      getUpdateInfo: { params: Record<string, never>; response: AppUpdateInfo };
       openExternalUrl: { params: OpenExternalUrlRequest; response: { success: boolean } };
       openSupportTicket: { params: OpenSupportTicketRequest; response: OpenSupportTicketResponse };
       revealFile: { params: RevealFileRequest; response: RevealFileResponse };

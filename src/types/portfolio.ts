@@ -108,6 +108,7 @@ export interface PortfolioReport {
   title: string;
   summary: string;
   content: string;
+  prompt?: string | null;
   metrics: {
     totalPortfolioValue: number;
     periodGainLossDollar?: number;
@@ -126,6 +127,8 @@ export interface PortfolioReport {
   error?: string;
   isFallback?: boolean;
 }
+
+export type ReportMetrics = PortfolioReport["metrics"];
 
 export interface FinancialPortfolioData {
   summary: PortfolioSummary;

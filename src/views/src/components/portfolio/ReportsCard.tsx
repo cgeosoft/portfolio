@@ -24,8 +24,10 @@ import {
   Info,
   Copy,
   CheckCheck,
+  Terminal,
 } from "lucide-react";
 import { AnalyzePortfolioModal } from "./AnalyzePortfolioModal";
+import { ReportPromptModal } from "./ReportPromptModal";
 
 interface ReportsCardProps {
   reports: PortfolioReport[];
@@ -82,6 +84,7 @@ export function ReportsCard({
   const [selectedReportId, setSelectedReportId] = useState<string | null>(() => (reports[0] ? reports[0].id : null));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -352,6 +355,17 @@ export function ReportsCard({
                 </span>
               )}
 
+              {/* View prompt button */}
+              <button
+                type="button"
+                onClick={() => setIsPromptModalOpen(true)}
+                className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-300 hover:text-white hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-colors cursor-pointer"
+                title="View prompt sent to LLM for this report"
+              >
+                <Terminal className="w-3.5 h-3.5 text-[#DD3C73]" />
+                <span>Prompt</span>
+              </button>
+
               {/* Copy markdown button */}
               <button
                 type="button"
@@ -608,6 +622,20 @@ export function ReportsCard({
                     )}
                   </div>
                 </div>
+
+                <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Terminal className="w-3 h-3 text-[#DD3C73] shrink-0" />
+                    <span>Inference Prompt</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsPromptModalOpen(true)}
+                    className="inline-flex items-center gap-1 text-[11px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer text-left font-semibold"
+                  >
+                    <span>Inspect LLM Prompt &rarr;</span>
+                  </button>
+                </div>
               </div>
             </aside>
           </div>
@@ -622,6 +650,14 @@ export function ReportsCard({
         portfolioData={portfolioData}
         portfolioId={portfolioId}
         hideCurrencyValues={hideValues}
+      />
+
+      {/* Report Prompt Modal */}
+      <ReportPromptModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        report={activeReport}
+        hideValues={hideValues}
       />
     </div>
   );

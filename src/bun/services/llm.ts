@@ -18,6 +18,7 @@ export interface LlmChatOptions {
   apiKey?: string;
   baseUrl?: string;
   isReport?: boolean;
+  signal?: AbortSignal;
 }
 
 export function sanitizeLlmResponse(text: string, isReport = false): string {
@@ -88,6 +89,69 @@ export class LlmService {
       rawResponse = await this.chatWithOllama(messages, options.model, temperature, apiKey, baseUrl);
     } else {
       rawResponse = await this.chatWithLlamaCpp(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
+    }
+
+    return sanitizeLlmResponse(rawResponse, options.isReport);
+  }
+
+  public async chatStream(
+    messages: LlmMessage[],
+    onChunk: (chunk: string) => void,
+    options: LlmChatOptions = {},
+  ): Promise<string> {
+    const provider = (options.provider || "llamacpp-server").toLowerCase().trim();
+    const temperature = options.temperature ?? 0.3;
+    const maxTokens = options.maxTokens ?? 3000;
+    const { apiKey, baseUrl, signal } = options;
+
+    console.log(`[LLM] Executing chatStream with provider: ${provider}, model: ${options.model || "default"}`);
+
+    let rawResponse = "";
+    if (provider === "groq") {
+      if (!apiKey) throw new Error("Groq API key is required. Configure it in Settings.");
+      const url = baseUrl || "https://api.groq.com/openai/v1/chat/completions";
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "llama-3.3-70b-versatile", url, apiKey, temperature, maxTokens, "Groq", onChunk, undefined, signal,
+      );
+    } else if (provider === "openai") {
+      if (!apiKey) throw new Error("OpenAI API key is required. Configure it in Settings.");
+      const targetUrl = baseUrl || "https://api.openai.com";
+      const url = targetUrl.endsWith("/chat/completions") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/v1/chat/completions`;
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "gpt-4o-mini", url, apiKey, temperature, maxTokens, "OpenAI", onChunk, undefined, signal,
+      );
+    } else if (provider === "anthropic") {
+      rawResponse = await this.chatWithAnthropicStream(
+        messages, options.model, temperature, maxTokens, apiKey, baseUrl, onChunk, signal,
+      );
+    } else if (provider === "openrouter") {
+      if (!apiKey) throw new Error("OpenRouter API key is required. Configure it in Settings.");
+      const url = baseUrl || "https://openrouter.ai/api/v1/chat/completions";
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "meta-llama/llama-3.3-70b-instruct", url, apiKey, temperature, maxTokens, "OpenRouter", onChunk,
+        { "HTTP-Referer": "https://portfolio.local", "X-Title": "Financial Portfolio" }, signal,
+      );
+    } else if (provider === "deepseek") {
+      if (!apiKey) throw new Error("DeepSeek API key is required. Configure it in Settings.");
+      const targetUrl = baseUrl || "https://api.deepseek.com";
+      const url = targetUrl.endsWith("/chat/completions") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/chat/completions`;
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "deepseek-chat", url, apiKey, temperature, maxTokens, "DeepSeek", onChunk, undefined, signal,
+      );
+    } else if (provider === "gemini") {
+      if (!apiKey) throw new Error("Gemini API key is required. Configure it in Settings.");
+      const url = baseUrl || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "gemini-2.5-flash", url, apiKey, temperature, maxTokens, "Gemini", onChunk, undefined, signal,
+      );
+    } else if (provider === "ollama") {
+      rawResponse = await this.chatWithOllamaStream(
+        messages, options.model, temperature, apiKey, baseUrl, onChunk, signal,
+      );
+    } else {
+      rawResponse = await this.chatWithLlamaCppStream(
+        messages, options.model, temperature, maxTokens, apiKey, baseUrl, onChunk, signal,
+      );
     }
 
     return sanitizeLlmResponse(rawResponse, options.isReport);
@@ -206,6 +270,295 @@ export class LlmService {
     const content = choices?.[0]?.message?.content;
     if (!content) throw new Error(`No completion content returned from ${providerName}`);
     return content;
+  }
+
+  private async chatOpenAICompatibleStream(
+    messages: LlmMessage[],
+    model: string,
+    url: string,
+    apiKey: string | undefined,
+    temperature: number,
+    maxTokens: number,
+    providerName: string,
+    onChunk: (chunk: string) => void,
+    extraHeaders?: Record<string, string>,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    };
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens, stream: true }),
+      signal: signal || AbortSignal.timeout(120_000),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "");
+      throw new Error(`${providerName} API request failed with status ${res.status}: ${errorText}`);
+    }
+
+    if (!res.body) {
+      throw new Error(`No response body returned from ${providerName}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let fullResponse = "";
+
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data:")) continue;
+          const dataStr = trimmed.replace(/^data:\s*/, "");
+          if (dataStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(dataStr);
+            const delta = parsed.choices?.[0]?.delta?.content ?? parsed.choices?.[0]?.text ?? "";
+            if (delta) {
+              fullResponse += delta;
+              onChunk(delta);
+            }
+          } catch {
+            // Ignore incomplete SSE chunk
+          }
+        }
+      }
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch {
+        // Best effort
+      }
+    }
+
+    return fullResponse;
+  }
+
+  private async chatWithLlamaCppStream(
+    messages: LlmMessage[],
+    model: string | undefined,
+    temperature: number,
+    maxTokens: number,
+    apiKey?: string,
+    baseUrl?: string,
+    onChunk?: (chunk: string) => void,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const config = loadConfig();
+    const targetUrl =
+      baseUrl?.trim() ||
+      config.llmBaseUrls?.["llamacpp-server"]?.trim() ||
+      config.llmBaseUrls?.["llamacpp"]?.trim() ||
+      config.llamacppServerUrl?.trim() ||
+      config.llmBaseUrl?.trim() ||
+      "http://127.0.0.1:9100";
+    const url = targetUrl.endsWith("/chat/completions")
+      ? targetUrl
+      : `${targetUrl.replace(/\/$/, "")}/v1/chat/completions`;
+
+    return this.chatOpenAICompatibleStream(
+      messages,
+      model || "qwen3-abliterated-14b-q4_k_m",
+      url,
+      apiKey,
+      temperature,
+      maxTokens,
+      "llamacpp-server",
+      onChunk || (() => {}),
+      undefined,
+      signal,
+    );
+  }
+
+  private async chatWithOllamaStream(
+    messages: LlmMessage[],
+    model: string | undefined,
+    temperature: number,
+    apiKey: string | undefined,
+    baseUrl: string | undefined,
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const config = loadConfig();
+    const targetUrl =
+      baseUrl?.trim() ||
+      config.llmBaseUrls?.["ollama"]?.trim() ||
+      config.llmBaseUrl?.trim() ||
+      "http://127.0.0.1:11434";
+    const url = targetUrl.endsWith("/api/chat") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/api/chat`;
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: model || "llama3.2:latest",
+        messages,
+        stream: true,
+        options: { temperature },
+      }),
+      signal: signal || AbortSignal.timeout(120_000),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "");
+      throw new Error(`Ollama responded with status ${res.status}: ${errorText}`);
+    }
+
+    if (!res.body) {
+      throw new Error("No response body returned from Ollama");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let fullResponse = "";
+
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const parsed = JSON.parse(trimmed);
+            const delta = parsed.message?.content;
+            if (delta) {
+              fullResponse += delta;
+              onChunk(delta);
+            }
+          } catch {
+            // Ignore incomplete line
+          }
+        }
+      }
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch {
+        // Best effort
+      }
+    }
+
+    return fullResponse;
+  }
+
+  private async chatWithAnthropicStream(
+    messages: LlmMessage[],
+    model: string | undefined,
+    temperature: number,
+    maxTokens: number,
+    apiKey: string | undefined,
+    baseUrl: string | undefined,
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    if (!apiKey) throw new Error("Anthropic API key is required. Configure it in Settings.");
+    const targetUrl = baseUrl || "https://api.anthropic.com";
+    const url = targetUrl.endsWith("/messages") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/v1/messages`;
+    const selectedModel = model || "claude-3-5-sonnet-20241022";
+
+    const systemMessage = messages.find((m) => m.role === "system")?.content;
+    const anthropicMessages = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: m.content,
+      }));
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        max_tokens: maxTokens,
+        temperature,
+        stream: true,
+        ...(systemMessage ? { system: systemMessage } : {}),
+        messages: anthropicMessages,
+      }),
+      signal: signal || AbortSignal.timeout(120_000),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "");
+      throw new Error(`Anthropic API request failed with status ${res.status}: ${errorText}`);
+    }
+
+    if (!res.body) {
+      throw new Error("No response body returned from Anthropic");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let fullResponse = "";
+
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const dataStr = trimmed.replace(/^data:\s*/, "");
+          try {
+            const parsed = JSON.parse(dataStr);
+            if (parsed.type === "content_block_delta" && parsed.delta?.text) {
+              fullResponse += parsed.delta.text;
+              onChunk(parsed.delta.text);
+            }
+          } catch {
+            // Ignore non-json
+          }
+        }
+      }
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch {
+        // Best effort
+      }
+    }
+
+    return fullResponse;
   }
 
   private async chatWithGroq(

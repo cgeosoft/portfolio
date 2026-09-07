@@ -48,6 +48,14 @@ export interface DesktopConfig {
   marketQuotesInterval: number;
   /** Whether to start Portfolio Desktop on system boot */
   startWithBoot: boolean;
+  /** Whether to skip the introduction step in the report wizard */
+  skipReportIntro?: boolean;
+  /** Whether to automatically check for new application versions on startup and periodically */
+  checkForUpdates: boolean;
+  /** ISO timestamp of the last check for updates */
+  lastUpdateCheck?: string;
+  /** Version string dismissed by user to avoid repetitive alerts */
+  dismissedUpdateVersion?: string;
   /** Stored window position, dimensions, and state */
   windowState?: WindowStateConfig;
 }
@@ -89,6 +97,10 @@ const DEFAULT_CONFIG: DesktopConfig = {
   webpageUrl: process.env["WEBPAGE_URL"] || "http://localhost:3000",
   marketQuotesInterval: 15,
   startWithBoot: false,
+  skipReportIntro: false,
+  checkForUpdates: true,
+  lastUpdateCheck: undefined,
+  dismissedUpdateVersion: undefined,
   windowState: undefined,
 };
 

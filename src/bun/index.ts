@@ -24,6 +24,7 @@ import { telemetry } from "./services/telemetry.js";
 import { setupLinuxDesktop, setNativeWindowIcon } from "./services/linux-desktop.js";
 import { WindowStateManager, normalizeWindowState } from "./services/window-state.js";
 import { supportTicketService } from "./services/support-ticket.js";
+import { appUpdateService } from "./services/app-update.js";
 
 // ── Initialize ──────────────────────────────────────────────────────────────
 
@@ -193,6 +194,27 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
 
       getReports: async (params) => {
         return reportService.getReports(params.portfolioId);
+      },
+
+      prepareReportPrompt: async (params) => {
+        return reportService.prepareReportPrompt(params.portfolioId, {
+          provider: params.provider,
+          model: params.model,
+        });
+      },
+
+      startReportStream: async (params) => {
+        const res = await reportService.startReportStream(params);
+        telemetry.capture("report_generated", { provider: params.provider, streaming: true });
+        return res;
+      },
+
+      pollReportStream: async (params) => {
+        return reportService.pollReportStream(params.sessionId);
+      },
+
+      cancelReportStream: async (params) => {
+        return reportService.cancelReportStream(params.sessionId);
       },
 
       generateReport: async (params) => {

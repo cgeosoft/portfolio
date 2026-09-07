@@ -552,6 +552,29 @@ body {
   color: var(--text-dim);
 }
 
+.hero-releases-notice {
+  margin-block-start: 0.875rem;
+  padding-block-start: 0.875rem;
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.hero-releases-notice a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+
+.hero-releases-notice a:hover {
+  color: var(--accent);
+  opacity: 0.85;
+}
+
 /* Stats Strip */
 .hero-stats-strip {
   display: flex;
@@ -1259,6 +1282,84 @@ body {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--text-dim);
+}
+
+/* Releases Callout Card */
+.releases-callout-card {
+  margin-block-start: 2.5rem;
+  background: var(--background-widget);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: border-color var(--transition-normal);
+}
+
+.releases-callout-card:hover {
+  border-color: rgba(221, 60, 115, 0.4);
+}
+
+.releases-callout-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: rgba(221, 60, 115, 0.1);
+  border: 1px solid rgba(221, 60, 115, 0.25);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.releases-callout-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.releases-callout-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-block-end: 0.25rem;
+  color: var(--text-main);
+}
+
+.releases-callout-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.releases-callout-cta {
+  flex-shrink: 0;
+}
+
+.releases-github-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .releases-callout-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .releases-callout-cta {
+    width: 100%;
+  }
+
+  .releases-callout-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* =============================================================================

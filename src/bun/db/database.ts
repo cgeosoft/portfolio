@@ -77,6 +77,7 @@ function initializeSchema(database: Database): void {
       title TEXT NOT NULL,
       summary TEXT NOT NULL,
       content TEXT NOT NULL,
+      prompt TEXT,
       metrics TEXT NOT NULL,
       model TEXT NOT NULL,
       provider TEXT NOT NULL,
@@ -85,6 +86,11 @@ function initializeSchema(database: Database): void {
       isFallback INTEGER NOT NULL DEFAULT 0
     )
   `);
+
+  const reportColumns = database.query("PRAGMA table_info(reports)").all() as { name: string }[];
+  if (!reportColumns.some((col) => col.name === "prompt")) {
+    database.run("ALTER TABLE reports ADD COLUMN prompt TEXT");
+  }
 
   database.run(`CREATE INDEX IF NOT EXISTS idx_reports_portfolio ON reports(portfolioId)`);
 

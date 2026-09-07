@@ -1,14 +1,23 @@
 /**
  * Portfolio report generation service.
- * Ported from the NestJS service, removing DI decorators.
+ * Handles report preparation, LLM streaming, and report persistence.
  */
 
+import { randomUUID } from "node:crypto";
 import { loadConfig } from "../config.js";
 import { sanitizeLlmResponse, type LlmService } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
+import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
-import type { PortfolioItem, FinancialPortfolioData } from "../../types/portfolio.js";
+import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "../../types/portfolio.js";
+import type {
+  PrepareReportPromptResponse,
+  StartReportStreamRequest,
+  StartReportStreamResponse,
+  PollReportStreamResponse,
+  CancelReportStreamResponse,
+} from "../../shared/rpc-types.js";
 
 function getIsoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -26,16 +35,50 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   return `${startStr} - ${endStr}`;
 }
 
+function extractLastWords(text: string, count = 50): string {
+  if (!text) return "";
+  const cleaned = sanitizeLlmResponse(text);
+  const words = cleaned.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= count) return words.join(" ");
+  return words.slice(-count).join(" ");
+}
+
+interface ReportStreamSession {
+  sessionId: string;
+  portfolioId: string;
+  abortController: AbortController;
+  status: "running" | "success" | "fail" | "cancelled";
+  accumulatedText: string;
+  lastWords: string;
+  chunkCount: number;
+  report?: PortfolioReport;
+  error?: string;
+  createdAt: number;
+}
+
 export class PortfolioReportService {
+  private readonly streamSessions = new Map<string, ReportStreamSession>();
+
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
-  ) {}
+  ) {
+    // Periodically clean up stale sessions (older than 15 minutes)
+    setInterval(() => {
+      const now = Date.now();
+      for (const [id, session] of this.streamSessions.entries()) {
+        if (now - session.createdAt > 15 * 60 * 1000) {
+          this.streamSessions.delete(id);
+        }
+      }
+    }, 60 * 1000).unref();
+  }
 
   public getReports(portfolioId: string) {
     const reports = reportRepo.findByPortfolio(portfolioId).map((r) => ({
       ...r,
       content: sanitizeLlmResponse(r.content),
+      prompt: r.prompt ?? null,
       metrics: JSON.parse(r.metrics) as ReportMetrics,
       isFallback: Boolean(r.isFallback),
     }));
@@ -50,18 +93,21 @@ export class PortfolioReportService {
     return reportRepo.deleteById(id, portfolioId);
   }
 
-  public async generateReport(
-    portfolio: PortfolioItem,
+  /**
+   * Internal helper to build prompts and context from portfolio data.
+   */
+  public async buildReportContext(
+    portfolioId: string,
     options: {
       provider?: string;
       model?: string;
-      apiKey?: string;
-      baseUrl?: string;
       portfolioData?: FinancialPortfolioData;
     } = {},
   ) {
-    const config = loadConfig();
+    const portfolio = portfolioRepo.findById(portfolioId);
+    if (!portfolio) throw new Error("Portfolio not found");
 
+    const config = loadConfig();
     const provider = options.provider || config.llmProvider || "llamacpp-server";
 
     const defaultModel =
@@ -75,14 +121,6 @@ export class PortfolioReportService {
         : "qwen3-abliterated-14b-q4_k_m";
 
     const model = options.model || config.llmModel || defaultModel;
-    const apiKey = options.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
-    const configuredBaseUrl =
-      options.baseUrl ||
-      config.llmBaseUrls?.[provider] ||
-      config.llmBaseUrl ||
-      (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
-    const baseUrl = configuredBaseUrl;
-
     const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
     const data = options.portfolioData || (await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency));
 
@@ -144,31 +182,6 @@ Please structure your report as follows:
 4. Do not use long dash characters
 `;
 
-    let content = "";
-    let reportStatus: "success" | "fallback" | "error" = "success";
-    let isFallback = false;
-    let errorMessage: string | undefined;
-
-    try {
-      content = await this.llm.chat(
-        [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        { provider, model, apiKey, baseUrl, isReport: true },
-      );
-      content = sanitizeLlmResponse(content, true);
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[PortfolioReport] Failed to generate LLM report: ${errMsg}`);
-      reportStatus = "fallback";
-      isFallback = true;
-      errorMessage = errMsg;
-      content = `### Automated Portfolio Briefing (${period})\n\n**Market Overview**: Total portfolio valuation stands at ${baseCurrency}${(summary.totalPortfolioValue || summary.totalValue).toLocaleString()} with ${summary.totalGainLossPercent >= 0 ? "+" : ""}${summary.totalGainLossPercent}% overall return.\n\n*Note: Detailed LLM report model was temporarily unreachable (${errMsg}). Technical metrics and ledger values remain verified.*`;
-    }
-
-    const reportId = `${portfolio.id}_${weekKey}`;
-
     const metrics: ReportMetrics = {
       totalPortfolioValue: summary.totalPortfolioValue || summary.totalValue,
       weeklyGainLossDollar: summary.dayGainLossDollar,
@@ -180,17 +193,260 @@ Please structure your report as follows:
       topLoser,
     };
 
+    return {
+      portfolio,
+      provider,
+      model,
+      baseCurrency,
+      period,
+      weekKey,
+      weekStartDate,
+      weekEndDate,
+      summary,
+      holdings,
+      systemPrompt,
+      userPrompt,
+      fullPrompt: `### System Prompt\n${systemPrompt}\n\n### User Prompt\n${userPrompt.trim()}`,
+      metrics,
+    };
+  }
+
+  /**
+   * Prepare report context and return the exact prompt payload for user inspection.
+   */
+  public async prepareReportPrompt(
+    portfolioId: string,
+    options: { provider?: string; model?: string } = {},
+  ): Promise<PrepareReportPromptResponse> {
+    const ctx = await this.buildReportContext(portfolioId, options);
+    return {
+      portfolioId: ctx.portfolio.id,
+      portfolioName: ctx.portfolio.name,
+      baseCurrency: ctx.baseCurrency,
+      period: ctx.period,
+      weekKey: ctx.weekKey,
+      weekStartDate: ctx.weekStartDate,
+      weekEndDate: ctx.weekEndDate,
+      systemPrompt: ctx.systemPrompt,
+      userPrompt: ctx.userPrompt,
+      fullPrompt: ctx.fullPrompt,
+      provider: ctx.provider,
+      model: ctx.model,
+      holdingsCount: ctx.holdings.length,
+      metrics: ctx.metrics,
+    };
+  }
+
+  /**
+   * Start streaming report generation in the background.
+   */
+  public async startReportStream(
+    params: StartReportStreamRequest,
+  ): Promise<StartReportStreamResponse> {
+    const sessionId = randomUUID();
+    const abortController = new AbortController();
+
+    const session: ReportStreamSession = {
+      sessionId,
+      portfolioId: params.portfolioId,
+      abortController,
+      status: "running",
+      accumulatedText: "",
+      lastWords: "",
+      chunkCount: 0,
+      createdAt: Date.now(),
+    };
+
+    this.streamSessions.set(sessionId, session);
+
+    // Asynchronously execute generation
+    (async () => {
+      try {
+        const ctx = await this.buildReportContext(params.portfolioId, {
+          provider: params.provider,
+          model: params.model,
+        });
+
+        const config = loadConfig();
+        const provider = params.provider || ctx.provider;
+        const model = params.model || ctx.model;
+        const apiKey = params.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
+        const baseUrl =
+          params.baseUrl ||
+          config.llmBaseUrls?.[provider] ||
+          config.llmBaseUrl ||
+          (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
+
+        let content = "";
+        try {
+          content = await this.llm.chatStream(
+            [
+              { role: "system", content: ctx.systemPrompt },
+              { role: "user", content: ctx.userPrompt },
+            ],
+            (chunk) => {
+              if (session.status !== "running") return;
+              session.accumulatedText += chunk;
+              session.chunkCount++;
+              session.lastWords = extractLastWords(session.accumulatedText, 50);
+            },
+            {
+              provider,
+              model,
+              apiKey,
+              baseUrl,
+              isReport: true,
+              signal: abortController.signal,
+            },
+          );
+        } catch (err: unknown) {
+          if (abortController.signal.aborted) {
+            session.status = "cancelled";
+            return;
+          }
+          throw err;
+        }
+
+        if (abortController.signal.aborted) {
+          session.status = "cancelled";
+          return;
+        }
+
+        const reportId = `${ctx.portfolio.id}_${ctx.weekKey}`;
+        const savedReport = reportRepo.upsert({
+          id: reportId,
+          portfolioId: ctx.portfolio.id,
+          period: ctx.period,
+          weekStartDate: ctx.weekStartDate,
+          weekEndDate: ctx.weekEndDate,
+          weekKey: ctx.weekKey,
+          title: `${ctx.portfolio.name} - Weekly Briefing (${ctx.period})`,
+          summary: `Valuation ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% cumulative return across ${ctx.holdings.length} assets.`,
+          content,
+          prompt: ctx.fullPrompt,
+          metrics: ctx.metrics,
+          model,
+          provider,
+          status: "success",
+          isFallback: false,
+        });
+
+        session.report = {
+          ...savedReport,
+          prompt: savedReport.prompt ?? null,
+          metrics: JSON.parse(savedReport.metrics) as ReportMetrics,
+          isFallback: Boolean(savedReport.isFallback),
+        };
+        session.status = "success";
+      } catch (err: unknown) {
+        if (abortController.signal.aborted) {
+          session.status = "cancelled";
+        } else {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          session.status = "fail";
+          session.error = errMsg;
+        }
+      }
+    })();
+
+    return { sessionId };
+  }
+
+  /**
+   * Poll active stream session for latest chunks and status.
+   */
+  public pollReportStream(sessionId: string): PollReportStreamResponse {
+    const session = this.streamSessions.get(sessionId);
+    if (!session) {
+      return {
+        sessionId,
+        status: "fail",
+        lastWords: "",
+        chunkCount: 0,
+        error: "Session expired or not found",
+      };
+    }
+
+    return {
+      sessionId,
+      status: session.status,
+      lastWords: session.lastWords,
+      chunkCount: session.chunkCount,
+      report: session.report,
+      error: session.error,
+    };
+  }
+
+  /**
+   * Cancel an active streaming session.
+   */
+  public cancelReportStream(sessionId: string): CancelReportStreamResponse {
+    const session = this.streamSessions.get(sessionId);
+    if (session) {
+      session.abortController.abort();
+      session.status = "cancelled";
+      return { success: true };
+    }
+    return { success: false };
+  }
+
+  public async generateReport(
+    portfolio: PortfolioItem,
+    options: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      baseUrl?: string;
+      portfolioData?: FinancialPortfolioData;
+    } = {},
+  ) {
+    const ctx = await this.buildReportContext(portfolio.id, options);
+    const config = loadConfig();
+    const provider = options.provider || ctx.provider;
+    const model = options.model || ctx.model;
+    const apiKey = options.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
+    const baseUrl =
+      options.baseUrl ||
+      config.llmBaseUrls?.[provider] ||
+      config.llmBaseUrl ||
+      (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
+
+    let content = "";
+    let reportStatus: "success" | "fallback" | "error" = "success";
+    let isFallback = false;
+    let errorMessage: string | undefined;
+
+    try {
+      content = await this.llm.chat(
+        [
+          { role: "system", content: ctx.systemPrompt },
+          { role: "user", content: ctx.userPrompt },
+        ],
+        { provider, model, apiKey, baseUrl, isReport: true },
+      );
+      content = sanitizeLlmResponse(content, true);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`[PortfolioReport] Failed to generate LLM report: ${errMsg}`);
+      reportStatus = "fallback";
+      isFallback = true;
+      errorMessage = errMsg;
+      content = `### Automated Portfolio Briefing (${ctx.period})\n\n**Market Overview**: Total portfolio valuation stands at ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% overall return.\n\n*Note: Detailed LLM report model was temporarily unreachable (${errMsg}). Technical metrics and ledger values remain verified.*`;
+    }
+
+    const reportId = `${portfolio.id}_${ctx.weekKey}`;
     const report = reportRepo.upsert({
       id: reportId,
       portfolioId: portfolio.id,
-      period,
-      weekStartDate,
-      weekEndDate,
-      weekKey,
-      title: `${portfolio.name} - Weekly Briefing (${period})`,
-      summary: `Valuation ${baseCurrency}${(summary.totalPortfolioValue || summary.totalValue).toLocaleString()} with ${summary.totalGainLossPercent >= 0 ? "+" : ""}${summary.totalGainLossPercent}% cumulative return across ${holdings.length} assets.`,
+      period: ctx.period,
+      weekStartDate: ctx.weekStartDate,
+      weekEndDate: ctx.weekEndDate,
+      weekKey: ctx.weekKey,
+      title: `${portfolio.name} - Weekly Briefing (${ctx.period})`,
+      summary: `Valuation ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% cumulative return across ${ctx.holdings.length} assets.`,
       content,
-      metrics,
+      prompt: ctx.fullPrompt,
+      metrics: ctx.metrics,
       model,
       provider,
       status: reportStatus,
@@ -200,6 +456,7 @@ Please structure your report as follows:
 
     return {
       ...report,
+      prompt: report.prompt ?? null,
       metrics: JSON.parse(report.metrics) as ReportMetrics,
       isFallback: Boolean(report.isFallback),
     };

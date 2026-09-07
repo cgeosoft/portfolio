@@ -11,6 +11,7 @@ export interface ReportRow {
   title: string;
   summary: string;
   content: string;
+  prompt?: string | null;
   metrics: string; // JSON string
   model: string;
   provider: string;
@@ -54,6 +55,7 @@ export function upsert(data: {
   title: string;
   summary: string;
   content: string;
+  prompt?: string | null;
   metrics: ReportMetrics;
   model: string;
   provider: string;
@@ -66,15 +68,15 @@ export function upsert(data: {
   const now = new Date().toISOString();
 
   db.run(
-    `INSERT INTO reports (id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, metrics, model, provider, status, error, isFallback)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO reports (id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, prompt, metrics, model, provider, status, error, isFallback)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
-       title = excluded.title, summary = excluded.summary, content = excluded.content,
+       title = excluded.title, summary = excluded.summary, content = excluded.content, prompt = excluded.prompt,
        metrics = excluded.metrics, model = excluded.model, provider = excluded.provider,
        status = excluded.status, error = excluded.error, isFallback = excluded.isFallback`,
     [
       data.id, data.portfolioId, now, data.period, data.weekStartDate, data.weekEndDate,
-      data.weekKey, data.title, data.summary, data.content, metricsJson,
+      data.weekKey, data.title, data.summary, data.content, data.prompt ?? null, metricsJson,
       data.model, data.provider, data.status ?? "success", data.error ?? null,
       data.isFallback ? 1 : 0,
     ],
