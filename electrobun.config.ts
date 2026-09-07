@@ -35,7 +35,7 @@ export default {
     },
     win: {
       bundleCEF: false,
-      icon: "src/assets/app-icon.png",
+      icon: "src/assets/app-icon-256x256.png",
     },
     linux: {
       bundleCEF: false,
