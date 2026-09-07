@@ -1,6 +1,9 @@
 name: Release Packages
 
 on:
+  push:
+    tags:
+      - 'v*'
   release:
     types: [published]
   workflow_dispatch:
@@ -35,7 +38,7 @@ jobs:
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
         run: |
-          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
           if [ -z "$VERSION" ]; then
             VERSION="$(bun -e "console.log(require('./package.json').version)")"
@@ -77,7 +80,7 @@ jobs:
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
         run: |
-          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
           if [ -z "$VERSION" ]; then
             VERSION="$(bun -e "console.log(require('./package.json').version)")"
@@ -116,7 +119,7 @@ jobs:
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || '' }}
         run: |
-          VERSION="${{ github.event.release.tag_name || inputs.release_tag || '' }}"
+          VERSION="${{ github.event.release.tag_name || inputs.release_tag || github.ref_name || '' }}"
           VERSION="${VERSION#v}"
           if [ -z "$VERSION" ]; then
             VERSION="$(bun -e "console.log(require('./package.json').version)")"
@@ -140,7 +143,7 @@ jobs:
     name: Publish Release Assets
     needs: [build-debian, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    if: github.event_name == 'release' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     permissions:
       contents: write
     steps:
@@ -156,7 +159,7 @@ jobs:
       - name: Attach artifacts to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.event.release.tag_name || inputs.release_tag }}
+          TAG_NAME: ${{ github.event.release.tag_name || inputs.release_tag || github.ref_name }}
         run: |
           echo "Publishing artifacts for release tag: $TAG_NAME"
           ls -lh release-artifacts/

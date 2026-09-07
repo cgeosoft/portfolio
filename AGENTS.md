@@ -63,10 +63,26 @@ git add -A && git commit -m "<feature description>" && git push
 bun run build
 ```
 
-### Package Application
+### Package Application Locally
+Build Debian package or stage current host package locally:
 ```bash
 bun run package:deb
+bun run release:local
+```
+
+### Automated Release and GitHub Actions Builds
+Create a release tag and push it to trigger GitHub Actions builds for Debian, Windows, and macOS:
+```bash
+# Release current version or next patch
 bun run release
+
+# Release specific bump type or version
+bash scripts/release.sh tag patch
+bash scripts/release.sh tag minor
+bash scripts/release.sh tag 0.2.0
+
+# Preview release actions without changes or pushes
+bash scripts/release.sh tag --dry-run
 ```
 
 ## 4. Key Architecture Rules
