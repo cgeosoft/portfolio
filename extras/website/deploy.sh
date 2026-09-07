@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Portfolio Desktop — Cloudflare Pages Deployment Script
+# Portfolio Desktop - Cloudflare Pages Deployment Script
 # Deploys extras/website directly to Cloudflare Pages via Wrangler
 # =============================================================================
 

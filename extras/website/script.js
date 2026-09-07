@@ -1,5 +1,5 @@
 /**
- * Portfolio Desktop — Marketing Website Logic
+ * Portfolio Desktop - Marketing Website Logic
  * Handles OS Detection, Download Links, App UI Preview Tabs, and Clipboard Utility
  */
 
