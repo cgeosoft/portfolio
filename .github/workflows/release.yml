@@ -51,6 +51,7 @@ jobs:
           name: debian-package
           path: |
             dist/*.deb
+            dist/*.tar.gz
             artifacts/*-Setup.tar.gz
           if-no-files-found: error
 

@@ -132,6 +132,12 @@ for target in "${TARGETS[@]}"; do
         --skip-build \
         --version="${VERSION}" \
         --dist-dir="${DIST_DIR}"
+      for f in "${APP_DIR}/artifacts"/*-Portfolio-Setup.tar.gz "${APP_DIR}/artifacts"/*-Setup.tar.gz; do
+        if [[ -f "$f" ]]; then
+          cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_linux-x64.tar.gz"
+          break
+        fi
+      done
       ;;
     windows|win)
       echo "[// RELEASE] Packaging Windows artifacts..."
@@ -139,6 +145,7 @@ for target in "${TARGETS[@]}"; do
       for f in "${APP_DIR}/artifacts"/*Setup*.exe "${APP_DIR}/artifacts"/*.exe; do
         if [[ -f "$f" ]]; then
           cp -v "$f" "${DIST_DIR}/"
+          cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_x64_setup.exe"
         fi
       done
       for f in "${APP_DIR}/artifacts"/*.zip; do
@@ -160,6 +167,7 @@ for target in "${TARGETS[@]}"; do
       for f in "${APP_DIR}/artifacts"/*.dmg; do
         if [[ -f "$f" ]]; then
           cp -v "$f" "${DIST_DIR}/"
+          cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_universal.dmg"
         fi
       done
       APP_BUNDLE="$(find "${APP_DIR}/build" -maxdepth 3 -name "*.app" -type d 2>/dev/null | head -n 1)"
@@ -169,8 +177,10 @@ for target in "${TARGETS[@]}"; do
         ARCH_NAME="$(uname -m)"
         if command -v ditto >/dev/null 2>&1; then
           (cd "${APP_PARENT}" && ditto -c -k --keepParent "${APP_NAME}" "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip")
+          cp -v "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${DIST_DIR}/portfolio_${VERSION}_macos-universal.zip"
         elif command -v zip >/dev/null 2>&1; then
           (cd "${APP_PARENT}" && zip -r "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${APP_NAME}")
+          cp -v "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${DIST_DIR}/portfolio_${VERSION}_macos-universal.zip"
         fi
       fi
       ;;
