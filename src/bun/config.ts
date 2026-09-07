@@ -58,6 +58,8 @@ export interface DesktopConfig {
   dismissedUpdateVersion?: string;
   /** Stored window position, dimensions, and state */
   windowState?: WindowStateConfig;
+  /** UI zoom scaling factor (1.0 = 100%) */
+  zoomLevel?: number;
 }
 
 /** Returns the standard configuration directory */
@@ -102,6 +104,7 @@ const DEFAULT_CONFIG: DesktopConfig = {
   lastUpdateCheck: undefined,
   dismissedUpdateVersion: undefined,
   windowState: undefined,
+  zoomLevel: 1.0,
 };
 
 /** Synchronize Linux autostart desktop entry */
@@ -153,6 +156,14 @@ export function loadConfig(): DesktopConfig {
     }
     if (process.env["WEBPAGE_URL"]) {
       cfg.webpageUrl = process.env["WEBPAGE_URL"];
+    }
+    if (
+      typeof cfg.zoomLevel !== "number" ||
+      !Number.isFinite(cfg.zoomLevel) ||
+      cfg.zoomLevel < 0.25 ||
+      cfg.zoomLevel > 5.0
+    ) {
+      cfg.zoomLevel = 1.0;
     }
     return cfg;
   } catch {

@@ -206,6 +206,60 @@ export default function App() {
   // Privacy Mode Toggle State
   const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(false);
 
+  // Zoom State & Persistence (50% to 250%)
+  const [zoomLevel, setZoomLevel] = useState<number>(() => {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_zoom_level");
+      if (saved) {
+        const val = parseFloat(saved);
+        if (Number.isFinite(val) && val >= 0.5 && val <= 2.5) {
+          return Math.round(val * 100) / 100;
+        }
+      }
+    }
+    return 1.0;
+  });
+
+  const applyZoom = useCallback((zoom: number) => {
+    const clamped = Math.min(2.5, Math.max(0.5, Math.round(zoom * 100) / 100));
+    if (typeof document !== "undefined") {
+      document.documentElement.style.zoom = String(clamped);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("resize"));
+      }
+    }
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_zoom_level", String(clamped));
+    }
+    rpc.request.saveConfig({ zoomLevel: clamped }).catch(() => {});
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
+    setZoomLevel((prev) => {
+      const next = zoomSteps.find((lvl) => lvl > prev + 0.01) ?? 2.5;
+      const target = Math.min(2.5, Math.round(next * 100) / 100);
+      applyZoom(target);
+      return target;
+    });
+  }, [applyZoom]);
+
+  const handleZoomOut = useCallback(() => {
+    const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
+    setZoomLevel((prev) => {
+      const smaller = zoomSteps.filter((lvl) => lvl < prev - 0.01);
+      const next = smaller.length > 0 ? smaller[smaller.length - 1]! : 0.5;
+      const target = Math.max(0.5, Math.round(next * 100) / 100);
+      applyZoom(target);
+      return target;
+    });
+  }, [applyZoom]);
+
+  const handleZoomReset = useCallback(() => {
+    setZoomLevel(1.0);
+    applyZoom(1.0);
+  }, [applyZoom]);
+
   // Assistant Chat & Conversations State
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
@@ -459,6 +513,16 @@ export default function App() {
         if (config.hideCurrencyValues !== undefined) setHideCurrencyValues(config.hideCurrencyValues);
         if (config.llmProvider) setAssistantProvider(config.llmProvider);
         if (config.llmModel) setAssistantModel(config.llmModel);
+        if (config.zoomLevel !== undefined && Number.isFinite(config.zoomLevel)) {
+          const clamped = Math.min(2.5, Math.max(0.5, Math.round(config.zoomLevel * 100) / 100));
+          setZoomLevel(clamped);
+          if (typeof document !== "undefined") {
+            document.documentElement.style.zoom = String(clamped);
+          }
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem("portfolio_zoom_level", String(clamped));
+          }
+        }
 
         if (!config.setupCompleted) {
           setIsSetupWizardOpen(true);
@@ -789,6 +853,25 @@ export default function App() {
         return;
       }
 
+      // Zoom Shortcuts: Ctrl++ / Cmd++, Ctrl+- / Cmd+-, Ctrl+0 / Cmd+0
+      if (isCmdOrCtrl) {
+        if (e.key === "+" || e.key === "=" || e.code === "NumpadAdd") {
+          e.preventDefault();
+          handleZoomIn();
+          return;
+        }
+        if (e.key === "-" || e.key === "_" || e.code === "NumpadSubtract" || (e.code === "Minus" && !e.shiftKey)) {
+          e.preventDefault();
+          handleZoomOut();
+          return;
+        }
+        if (e.key === "0" || e.code === "Digit0" || e.code === "Numpad0") {
+          e.preventDefault();
+          handleZoomReset();
+          return;
+        }
+      }
+
       if (isInput) return;
 
       if (isCmdOrCtrl) {
@@ -821,7 +904,23 @@ export default function App() {
 
     window.addEventListener("keydown", handleGlobalShortcuts);
     return () => window.removeEventListener("keydown", handleGlobalShortcuts);
-  }, [handleOpenSettings, handleQuitApp, handleReload, loadData]);
+  }, [handleOpenSettings, handleQuitApp, handleReload, loadData, handleZoomIn, handleZoomOut, handleZoomReset]);
+
+  // Mouse Wheel Zoom (Ctrl + Wheel)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          handleZoomIn();
+        } else if (e.deltaY > 0) {
+          handleZoomOut();
+        }
+      }
+    };
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [handleZoomIn, handleZoomOut]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -866,6 +965,10 @@ export default function App() {
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
           onOpenAbout={() => setIsAboutModalOpen(true)}
           onQuit={handleQuitApp}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onZoomReset={handleZoomReset}
         />
         <Header
           currency={currency}
@@ -945,6 +1048,10 @@ export default function App() {
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
           onOpenAbout={() => setIsAboutModalOpen(true)}
           onQuit={handleQuitApp}
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onZoomReset={handleZoomReset}
         />
         <Header
           currency={currency}
@@ -1044,6 +1151,10 @@ export default function App() {
         onToggleAssistant={handleToggleAssistant}
         updateInfo={updateInfo}
         onCheckForUpdates={() => handleOpenSettings("about")}
+        zoomLevel={zoomLevel}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onZoomReset={handleZoomReset}
       />
 
       {/* Main Content Area & Assistant Sidebar */}
@@ -1344,6 +1455,7 @@ export default function App() {
                 portfolioData={portfolioData}
                 currency={currency}
                 portfolioId={activePortfolioId || undefined}
+                portfolioName={activePortfolio?.name}
                 onRefreshReports={loadReports}
                 onDeleteReport={handleDeleteReport}
                 hideValues={hideCurrencyValues}

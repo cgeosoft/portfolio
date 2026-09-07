@@ -22,6 +22,9 @@ import {
   Check,
   Keyboard,
   LifeBuoy,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 
 export interface AppMenuBarProps {
@@ -49,6 +52,10 @@ export interface AppMenuBarProps {
   onToggleAssistant?: () => void;
   updateInfo?: { hasUpdate: boolean; latestVersion: string } | null;
   onCheckForUpdates?: () => void;
+  zoomLevel?: number;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onZoomReset?: () => void;
 }
 
 type MenuKey = "file" | "edit" | "view" | "portfolio" | "help" | null;
@@ -88,6 +95,10 @@ export function AppMenuBar({
   onToggleAssistant,
   updateInfo,
   onCheckForUpdates,
+  zoomLevel = 1.0,
+  onZoomIn,
+  onZoomOut,
+  onZoomReset,
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -218,6 +229,37 @@ export function AppMenuBar({
         closeMenu();
         onToggleAssistant?.();
       },
+    },
+    { type: "separator" },
+    {
+      label: "Zoom In",
+      shortcut: "Ctrl++",
+      icon: ZoomIn,
+      action: () => {
+        closeMenu();
+        onZoomIn?.();
+      },
+      disabled: (zoomLevel ?? 1) >= 2.5,
+    },
+    {
+      label: "Zoom Out",
+      shortcut: "Ctrl+-",
+      icon: ZoomOut,
+      action: () => {
+        closeMenu();
+        onZoomOut?.();
+      },
+      disabled: (zoomLevel ?? 1) <= 0.5,
+    },
+    {
+      label: `Reset Zoom (${Math.round((zoomLevel ?? 1) * 100)}%)`,
+      shortcut: "Ctrl+0",
+      icon: RotateCcw,
+      action: () => {
+        closeMenu();
+        onZoomReset?.();
+      },
+      disabled: Math.abs((zoomLevel ?? 1) - 1.0) < 0.01,
     },
     { type: "separator" },
     {

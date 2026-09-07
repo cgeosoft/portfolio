@@ -8,6 +8,19 @@ import App from "./src/App.js";
 export const electroview = new Electroview({ rpc });
 setElectroviewInstance(electroview);
 
+// Restore persisted zoom level immediately to prevent layout shifts
+if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+  try {
+    const savedZoom = localStorage.getItem("portfolio_zoom_level");
+    if (savedZoom) {
+      const parsed = parseFloat(savedZoom);
+      if (Number.isFinite(parsed) && parsed >= 0.5 && parsed <= 2.5) {
+        document.documentElement.style.zoom = String(parsed);
+      }
+    }
+  } catch {}
+}
+
 clientLogger.log("info", "webview_entrypoint", "Webview script loaded, mounting React root", undefined, {
   url: typeof window !== "undefined" ? window.location.href : "",
   readyState: typeof document !== "undefined" ? document.readyState : "",
