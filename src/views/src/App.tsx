@@ -495,7 +495,7 @@ export default function App() {
   // Periodic update check every 1 hour in webview
   useEffect(() => {
     const updateTimer = setInterval(() => {
-      rpc.request.getUpdateInfo({}).then((uInfo) => {
+      rpc.request.getUpdateInfo({}).then((uInfo: AppUpdateInfo) => {
         if (uInfo) setUpdateInfo(uInfo);
       }).catch(() => {});
     }, 60 * 60 * 1000);
@@ -1042,6 +1042,8 @@ export default function App() {
         onQuit={handleQuitApp}
         isAssistantOpen={isAssistantOpen}
         onToggleAssistant={handleToggleAssistant}
+        updateInfo={updateInfo}
+        onCheckForUpdates={() => handleOpenSettings("about")}
       />
 
       {/* Main Content Area & Assistant Sidebar */}
@@ -1068,6 +1070,44 @@ export default function App() {
             isAssistantOpen={isAssistantOpen}
             onToggleAssistant={handleToggleAssistant}
           />
+
+          {/* Update Available Banner */}
+          {updateInfo?.hasUpdate && dismissedUpdateVersion !== updateInfo.latestVersion && (
+            <div className="w-full max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 mb-2 shrink-0 animate-in fade-in duration-200">
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-[#DD3C73]/40 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center shrink-0">
+                    <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
+                  </div>
+                  <div className="min-w-0 truncate">
+                    <span className="font-bold text-slate-100">
+                      Portfolio Desktop v{updateInfo.latestVersion} is available
+                    </span>
+                    <span className="text-slate-400 ml-1.5 hidden md:inline">
+                      (current: v{appVersion})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleViewRelease(updateInfo.releaseUrl)}
+                    className="px-2.5 py-1 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <span>View Release</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDismissUpdate(updateInfo.latestVersion)}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main View Router */}
           {view === "settings" && (
@@ -1366,6 +1406,8 @@ export default function App() {
         isSyncingQuotes={isRefreshing}
         hideCurrencyValues={hideCurrencyValues}
         onToggleHideCurrency={toggleHideCurrencyValues}
+        updateInfo={updateInfo}
+        onOpenUpdate={() => handleViewRelease()}
       />
 
       {/* Modals */}
@@ -1430,6 +1472,8 @@ export default function App() {
       <AboutModal
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
+        version={appVersion}
+        updateInfo={updateInfo}
       />
     </div>
   );

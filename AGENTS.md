@@ -119,7 +119,7 @@ bash scripts/release.sh tag --dry-run
 Follow these rules when you modify the repository:
 
 1. **Verify Types**: Run `bun run typecheck` after every TypeScript edit. Ensure zero errors.
-2. **Commit and Push**: Run `git add -A && git commit -m "<message>" && git push` after each feature change.
+2. **Commit and Push**: Run `git add -A && git commit -m "<message>" && git push` after each feature change. Do not compete with othe
 3. **Protect Privacy**: Never log or send balances, tickers, quantities, or personal data.
 4. **Compile CSS**: Run `bun run build:css` when you add or change Tailwind CSS classes.
 5. **Keep RPC Handlers Lean**: Put business logic in `src/bun/services/`, not in `src/bun/index.ts`.
