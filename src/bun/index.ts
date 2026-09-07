@@ -4,7 +4,7 @@
  */
 
 import { BrowserWindow, BrowserView, Utils } from "electrobun/bun";
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import type { PortfolioRPC } from "../shared/rpc-types.js";
@@ -536,6 +536,59 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         } catch (err) {
           appLogger.log("error", `pickFile failed: ${err}`);
           return { path: null, content: undefined };
+        }
+      },
+
+      pickDirectory: async (params) => {
+        try {
+          const cfg = loadConfig();
+          let startingFolder = params.startingFolder || cfg.lastImportDirectory;
+          if (startingFolder) {
+            try {
+              if (!existsSync(startingFolder) || !statSync(startingFolder).isDirectory()) {
+                startingFolder = homedir();
+              }
+            } catch {
+              startingFolder = homedir();
+            }
+          } else {
+            startingFolder = homedir();
+          }
+
+          const selected = await Utils.openFileDialog({
+            startingFolder,
+            canChooseFiles: false,
+            canChooseDirectory: true,
+            directory: true,
+            allowsMultipleSelection: false,
+            title: params.title || "Select Destination Directory",
+          });
+          const path = Array.isArray(selected) ? selected[0] : (typeof selected === "string" ? selected : null);
+          return { path };
+        } catch (err) {
+          appLogger.log("error", `pickDirectory failed: ${err}`);
+          return { path: null };
+        }
+      },
+
+      saveFile: async (params) => {
+        try {
+          if (!params.filePath) {
+            return { success: false, error: "File path is required" };
+          }
+          if (params.base64Data) {
+            const buf = Buffer.from(params.base64Data, "base64");
+            writeFileSync(params.filePath, buf);
+          } else if (params.content !== undefined) {
+            writeFileSync(params.filePath, params.content, "utf-8");
+          } else {
+            return { success: false, error: "No content provided to save" };
+          }
+          return { success: true, filePath: params.filePath };
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          appLogger.log("error", `saveFile failed: ${msg}`);
+          return { success: false, error: msg };
         }
       },
 

@@ -1,4 +1,3 @@
-import { rpc, clientLogger } from "../../rpc.js";
 export function fmtCurrency(amount: number | undefined, currency = "EUR", hideValues = false): string {
   if (amount === undefined || isNaN(amount)) return currency === "USD" ? "$0.00" : currency === "GBP" ? "£0.00" : currency === "CHF" ? "Fr 0.00" : "€0.00";
   const symbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "CHF" ? "Fr " : "€";
@@ -155,8 +154,9 @@ export function maskFinancialValues(text: string | undefined): string {
  * Falls back to local reset callback and window.location.reload() if RPC fails.
  */
 export async function reloadPage(onFallbackReset?: () => void): Promise<void> {
-  clientLogger.log("info", "reload_page", "Reloading application page...");
   try {
+    const { rpc, clientLogger } = await import("../../rpc.js");
+    clientLogger.log("info", "reload_page", "Reloading application page...");
     const reloadPromise = rpc.request.reloadApp({});
     const timeoutPromise = new Promise<{ success: boolean }>((_, reject) =>
       setTimeout(() => reject(new Error("reloadApp timeout")), 800)
@@ -166,7 +166,7 @@ export async function reloadPage(onFallbackReset?: () => void): Promise<void> {
       return;
     }
   } catch (err) {
-    clientLogger.log("warning", "reload_page_rpc_failed", `RPC reload failed or timed out: ${err}`);
+    console.warn("[utils] reloadApp RPC failed:", err);
   }
 
   if (onFallbackReset) {

@@ -329,6 +329,27 @@ export interface LogClientEventRequest {
   data?: Record<string, unknown>;
 }
 
+export interface PickDirectoryRequest {
+  startingFolder?: string;
+  title?: string;
+}
+
+export interface PickDirectoryResponse {
+  path: string | null;
+}
+
+export interface SaveFileRequest {
+  filePath: string;
+  content?: string;
+  base64Data?: string;
+}
+
+export interface SaveFileResponse {
+  success: boolean;
+  filePath?: string;
+  error?: string;
+}
+
 // -- RPC Schema ---------------------------------------------------------------
 
 export type PortfolioRPC = {
@@ -387,6 +408,8 @@ export type PortfolioRPC = {
 
       // File system
       pickFile: { params: PickFileRequest; response: PickFileResponse };
+      pickDirectory: { params: PickDirectoryRequest; response: PickDirectoryResponse };
+      saveFile: { params: SaveFileRequest; response: SaveFileResponse };
       readFile: { params: { path: string }; response: { content: string } };
       setLastImportDirectory: { params: SetLastImportDirectoryRequest; response: SetLastImportDirectoryResponse };
 

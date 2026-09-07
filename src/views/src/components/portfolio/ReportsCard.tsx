@@ -25,15 +25,18 @@ import {
   Copy,
   CheckCheck,
   Terminal,
+  Download,
 } from "lucide-react";
 import { AnalyzePortfolioModal } from "./AnalyzePortfolioModal";
 import { ReportPromptModal } from "./ReportPromptModal";
+import { DownloadReportModal } from "./DownloadReportModal";
 
 interface ReportsCardProps {
   reports: PortfolioReport[];
   portfolioData: FinancialPortfolioData | null;
   currency?: string;
   portfolioId?: string;
+  portfolioName?: string;
   loadingReports?: boolean;
   onRefreshReports: () => Promise<void>;
   onDeleteReport: (id: string) => void;
@@ -76,6 +79,7 @@ export function ReportsCard({
   portfolioData,
   currency = "EUR",
   portfolioId,
+  portfolioName,
   loadingReports = false,
   onRefreshReports,
   onDeleteReport,
@@ -85,6 +89,7 @@ export function ReportsCard({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -314,90 +319,6 @@ export function ReportsCard({
         </div>
       ) : (
         <div className="cx-card flex-1 flex flex-col min-h-0 overflow-hidden">
-          {/* Integrated Container Header */}
-          <div className="px-4 sm:px-5 py-3 border-b border-slate-800 bg-slate-950/70 flex flex-wrap items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
-                <Bot className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs sm:text-sm font-bold text-slate-100 uppercase tracking-wide truncate">
-                  {activeReport.title || "Weekly Tactical Portfolio Briefing"}
-                </div>
-                <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-[#DD3C73]" />
-                    <span>{activeReport.period || activeReport.weekKey}</span>
-                  </span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-slate-400">
-                    Model: <span className="text-slate-200 font-semibold">{activeReport.model}</span>
-                  </span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-slate-400">
-                    Provider: <span className="text-slate-200 uppercase font-semibold">{activeReport.provider || "Local"}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Status indicator badge */}
-              {isReportFallback ? (
-                <span className="text-[10px] px-2 py-0.5 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD] font-bold uppercase flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  <span>Fallback Mode</span>
-                </span>
-              ) : (
-                <span className="text-[10px] px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] font-bold uppercase flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  <span>Synthesized</span>
-                </span>
-              )}
-
-              {/* View prompt button */}
-              <button
-                type="button"
-                onClick={() => setIsPromptModalOpen(true)}
-                className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-300 hover:text-white hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-colors cursor-pointer"
-                title="View prompt sent to LLM for this report"
-              >
-                <Terminal className="w-3.5 h-3.5 text-[#DD3C73]" />
-                <span>Prompt</span>
-              </button>
-
-              {/* Copy markdown button */}
-              <button
-                type="button"
-                onClick={handleCopyMarkdown}
-                className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-300 hover:text-white hover:border-slate-700 transition-colors cursor-pointer"
-                title="Copy markdown report to clipboard"
-              >
-                {copied ? (
-                  <>
-                    <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
-                    <span className="text-[#A7E2C0]">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-
-              {/* Delete button */}
-              <button
-                type="button"
-                onClick={() => onDeleteReport(activeReport.id)}
-                className="h-7 inline-flex items-center justify-center gap-1 px-2.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-medium text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-colors cursor-pointer"
-                title="Delete active report"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
-            </div>
-          </div>
 
           {/* Degraded Inference Banner */}
           {isReportFallback && (
@@ -637,6 +558,67 @@ export function ReportsCard({
                   </button>
                 </div>
               </div>
+
+              {/* Commands Box */}
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2.5 shrink-0">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
+                  <Terminal className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="truncate">Commands</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {/* Copy Markdown Command */}
+                  <button
+                    type="button"
+                    onClick={handleCopyMarkdown}
+                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    title="Copy markdown report to clipboard"
+                  >
+                    <div className="flex items-center gap-2">
+                      {copied ? (
+                        <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-slate-400" />
+                      )}
+                      <span>{copied ? "Copied" : "Copy Markdown"}</span>
+                    </div>
+                    {copied && (
+                      <span className="text-[10px] text-[#A7E2C0] font-bold uppercase tracking-wider">
+                        Copied
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Download Command */}
+                  <button
+                    type="button"
+                    onClick={() => setIsDownloadModalOpen(true)}
+                    className="h-8 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 hover:bg-[#DD3C73]/20 hover:border-[#DD3C73]/60 text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    title="Download report as Markdown or PDF"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Download className="w-3.5 h-3.5 text-[#DD3C73]" />
+                      <span>Download</span>
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#DD3C73]/80">
+                      MD / PDF
+                    </span>
+                  </button>
+
+                  {/* Delete Report Command */}
+                  <button
+                    type="button"
+                    onClick={() => onDeleteReport(activeReport.id)}
+                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-[#DD3C73]/10 hover:border-[#DD3C73]/40 text-slate-400 hover:text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    title="Delete active report"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
+                      <span>Delete Report</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
             </aside>
           </div>
         </div>
@@ -658,6 +640,15 @@ export function ReportsCard({
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
         report={activeReport}
+        hideValues={hideValues}
+      />
+
+      {/* Download Report Modal */}
+      <DownloadReportModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        report={activeReport}
+        portfolioName={portfolioName}
         hideValues={hideValues}
       />
     </div>
