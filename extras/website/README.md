@@ -1,6 +1,6 @@
 # Portfolio Desktop Marketing Website
 
-A modern, marketing landing page for [Portfolio Desktop](https://github.com/your-username/portfolio).
+A modern, marketing landing page for [Portfolio Desktop](https://github.com/cgeosoft/portfolio).
 
 ## Features
 
@@ -33,7 +33,7 @@ Download links and release filenames are centralized in `script.js`:
 ```javascript
 const DOWNLOAD_CONFIG = {
   version: "0.1.0",
-  releaseBase: "https://github.com/your-username/portfolio/releases/download/v0.1.0",
+  releaseBase: "https://github.com/cgeosoft/portfolio/releases/download/v0.1.0",
   windows: { ... },
   macos: { ... },
   linux: { ... }
