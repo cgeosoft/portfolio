@@ -296,11 +296,21 @@ run_tag_release() {
   if [[ "${target_version}" != "${pkg_version}" ]]; then
     if [[ "${DRY_RUN}" == "true" ]]; then
       echo "[DRY RUN] Would update package.json to version ${target_version}"
-      echo "[DRY RUN] Would run: git commit -am \"chore(release): ${tag_name}\""
+      echo "[DRY RUN] Would generate changelog entry and commit: \"chore(release): ${tag_name}\""
     else
       echo "[// RELEASE] Updating package.json to version ${target_version}..."
       bun -e "const fs=require('fs');const p=require('${APP_DIR}/package.json');p.version='${target_version}';fs.writeFileSync('${APP_DIR}/package.json',JSON.stringify(p,null,2)+'\n');"
       git add "${APP_DIR}/package.json"
+
+      # Generate a changelog entry from the diff vs the previous release using
+      # the OPENAI_* compatible model env vars read from .env.
+      echo "[// RELEASE] Generating changelog entry with release notes generator..."
+      if (cd "${APP_DIR}" && bun scripts/gen-changelog.ts --version="${target_version}" >/dev/null); then
+        git add "${APP_DIR}/CHANGELOG.md"
+      else
+        echo "[// RELEASE] WARNING: changelog entry not generated; continuing release."
+      fi
+
       git commit -m "chore(release): ${tag_name}"
     fi
   fi
