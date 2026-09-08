@@ -38,3 +38,5 @@ Thumbs.db
 *.swo
 *~
 
+# generated style
+src/views/style.css

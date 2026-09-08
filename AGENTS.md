@@ -27,6 +27,20 @@ Portfolio Desktop is an offline personal investment portfolio tracker for Linux,
 - `src/views/`: Webview process code (React user interface).
 - `src/shared/`: Shared RPC definitions (`rpc-types.ts`).
 - `src/types/`: Domain models and type definitions.
+- `.agents/skills/`: Contextual agent skills for this repository.
+
+## 2b. Skills
+
+Load the matching skill before you change that area. Each skill contains concrete file paths, conventions, and commands for its domain.
+
+| Skill | Use for |
+|---|---|
+| [`bun-main-process-engineer`](.agents/skills/bun-main-process-engineer/SKILL.md) | Electrobun main process, RPC bridge, `bun:sqlite` database layer, config manager, and service wiring. |
+| [`financial-engineer`](.agents/skills/financial-engineer/SKILL.md) | Portfolio calculations, Yahoo Finance market data, FX conversion, and technical indicators. |
+| [`ai-analyst-engineer`](.agents/skills/ai-analyst-engineer/SKILL.md) | LLM performance reports, assistant chat, model providers, and output cleanup. |
+| [`react-view-engineer`](.agents/skills/react-view-engineer/SKILL.md) | React 19 webview UI, components, Chart.js visualizations, and the Electroview RPC client. |
+| [`ui-style-engineer`](.agents/skills/ui-style-engineer/SKILL.md) | Tailwind CSS styling, the tactical cyberpunk design system, and the compiled stylesheet. |
+| [`devops-build-release`](.agents/skills/devops-build-release/SKILL.md) | Building, packaging, release tags, tests, and the GitHub Actions CI pipeline. |
 
 ## 3. Commands and Workflows
 
