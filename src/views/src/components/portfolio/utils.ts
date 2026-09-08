@@ -61,46 +61,91 @@ export function getRsiZone(rsi?: number): { label: string; color: string; bgClas
   return { label: "NEUTRAL", color: "text-[#E3EACD]", bgClass: "bg-[#E3EACD]/10", textClass: "text-[#E3EACD]", borderClass: "border-[#E3EACD]/20" };
 }
 
+/**
+ * Strip LLM thinking blocks without backtracking regex.
+ * Uses a single-pass state machine that scans for `<think` open tags
+ * and ` response` close tags, tracking nesting depth.
+ * This avoids catastrophic backtracking on unbalanced or very long inputs.
+ */
 export function cleanThinkTags(text: string | undefined, isReport = false): string {
   if (!text) return "";
 
-  let cleaned = text;
+  const cleaned = stripThinkTags(text);
+  let result = cleaned.trim();
 
-  // 1. Remove all complete <think>...</think> blocks
-  cleaned = cleaned.replace(/<think\b[^>]*>[\s\S]*?<\/think\b[^>]*>/gi, "");
-
-  // 2. If an orphaned closing </think> tag exists, everything up to and including </think> is thinking content
-  if (/<\/think\b[^>]*>/i.test(cleaned)) {
-    cleaned = cleaned.replace(/^[\s\S]*?<\/think\b[^>]*>\s*/i, "");
-  }
-
-  // 3. If an unclosed <think> tag remains:
-  if (/<think\b[^>]*>/i.test(cleaned)) {
-    const match = cleaned.match(/<think\b[^>]*>[\s\S]*?(?=(?:^|\n)(?:#+|1\.\s+\*\*))/i);
-    if (match) {
-      cleaned = cleaned.replace(/<think\b[^>]*>[\s\S]*?(?=(?:^|\n)(?:#+|1\.\s+\*\*))/i, "");
-    } else {
-      cleaned = cleaned.replace(/<think\b[^>]*>/gi, "");
-    }
-  }
-
-  // 4. Remove any remaining isolated <think> or </think> tags
-  cleaned = cleaned.replace(/<\/?think\b[^>]*>/gi, "");
-
-  cleaned = cleaned.trim();
-
-  // 5. If leading garbage/CJK artifact exists before the first header "#" or "1." in reports, strip it
-  if (isReport && !cleaned.startsWith("#") && !cleaned.startsWith("1.")) {
-    const headerIdx = cleaned.search(/(?:^|\n)(?:#+|1\.\s+\*\*)/);
+  // If leading garbage/CJK artifact exists before the first header "#" or "1." in reports, strip it
+  if (isReport && !result.startsWith("#") && !result.startsWith("1.")) {
+    const headerIdx = result.search(/(?:^|\n)(?:#+|1\.\s+\*\*)/);
     if (headerIdx > 0) {
-      const prefix = cleaned.slice(0, headerIdx).trim();
+      const prefix = result.slice(0, headerIdx).trim();
       if (prefix.length < 100 && !prefix.includes("\n\n")) {
-        cleaned = cleaned.slice(headerIdx).trim();
+        result = result.slice(headerIdx).trim();
       }
     }
   }
 
-  return cleaned.trim();
+  return result.trim();
+}
+
+/**
+ * Single-pass state machine to strip ` thinking... response` blocks.
+ * Tracks nesting depth so that orphaned tags are handled correctly
+ * without catastrophic backtracking via regex.
+ */
+function stripThinkTags(input: string): string {
+  let depth = 0;
+  let output = "";
+  let i = 0;
+  const len = input.length;
+
+  while (i < len) {
+    // Check for open tag: `<think` followed by `>` or space/attr then `>`
+    if (input[i] === "<" &&
+        i + 6 <= len &&
+        (input[i + 1] === "t" || input[i + 1] === "T") &&
+        (input[i + 2] === "h" || input[i + 2] === "H") &&
+        (input[i + 3] === "i" || input[i + 3] === "I") &&
+        (input[i + 4] === "n" || input[i + 4] === "N") &&
+        (input[i + 5] === "k" || input[i + 5] === "K")) {
+      // Found `<think`
+      // Fast-forward past the opening tag to find `>`
+      i += 6;
+      while (i < len && input[i] !== ">") i++;
+      if (i < len) i++; // skip `>`
+      depth++;
+      continue;
+    }
+
+    // Check for close tag: ` response` followed by `>`
+    if (input[i] === "<" &&
+        i + 8 <= len &&
+        input[i + 1] === "/" &&
+        (input[i + 2] === "t" || input[i + 2] === "T") &&
+        (input[i + 3] === "h" || input[i + 3] === "H") &&
+        (input[i + 4] === "i" || input[i + 4] === "I") &&
+        (input[i + 5] === "n" || input[i + 5] === "N") &&
+        (input[i + 6] === "k" || input[i + 6] === "K")) {
+      // Found ` response`
+      // Fast-forward to `>`
+      i += 8;
+      while (i < len && input[i] !== ">") i++;
+      if (i < len) i++; // skip `>`
+      if (depth > 0) depth--;
+      continue;
+    }
+
+    // If we are inside a thinking block (depth > 0), skip this character
+    if (depth > 0) {
+      i++;
+      continue;
+    }
+
+    // Otherwise, copy to output
+    output += input[i];
+    i++;
+  }
+
+  return output;
 }
 
 /** Format ISO timestamp to relative time string ("x ago") */
