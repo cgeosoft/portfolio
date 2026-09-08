@@ -346,6 +346,11 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         return appUpdateService.getUpdateInfo();
       },
 
+      downloadUpdate: async (params) => {
+        appLogger.log("info", `RPC: downloadUpdate requested (version: ${params.version})`);
+        return await appUpdateService.downloadUpdate(params.version);
+      },
+
       getAppInfo: async () => {
         const version = getAppVersion();
         const majorMinor = version.split(".").slice(0, 2).join(".");
@@ -663,6 +668,16 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
 
     messages: {},
   },
+});
+
+// Register the update-available push callback so scheduled checks
+// automatically notify the webview when a new version is detected.
+appUpdateService.setOnUpdateAvailable((info) => {
+  try {
+    rpc.sendMessage.updateAvailable(info);
+  } catch {
+    // Webview may not be ready yet; the next polling cycle will surface it
+  }
 });
 
 // ── Window ──────────────────────────────────────────────────────────────────

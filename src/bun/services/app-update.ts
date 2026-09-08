@@ -3,11 +3,13 @@
  * Checks GitHub releases for new versions of Portfolio Desktop.
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { appLogger } from "../logger.js";
 import { loadConfig, updateConfig } from "../config.js";
 import { getAppVersion } from "../environment.js";
-import type { AppUpdateInfo } from "../../shared/rpc-types.js";
+import type { AppUpdateInfo, DownloadUpdateResponse } from "../../shared/rpc-types.js";
 
 export interface ParsedSemver {
   major: number;
@@ -56,6 +58,7 @@ const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 export class AppUpdateService {
   private currentVersion = "0.1.0";
   private intervalTimer: ReturnType<typeof setInterval> | null = null;
+  private onUpdateAvailable: ((info: AppUpdateInfo) => void) | null = null;
   private cachedInfo: AppUpdateInfo = {
     enabled: true,
     currentVersion: "0.1.0",
@@ -82,6 +85,11 @@ export class AppUpdateService {
   /** Read current app version from package.json or runtime version metadata */
   public readAppVersion(): string {
     return getAppVersion();
+  }
+
+  /** Set a callback invoked when a new update is detected */
+  public setOnUpdateAvailable(cb: (info: AppUpdateInfo) => void): void {
+    this.onUpdateAvailable = cb;
   }
 
   /** Get cached update information */
@@ -163,6 +171,14 @@ export class AppUpdateService {
 
       if (hasUpdate) {
         appLogger.log("success", `New version available: ${latestVersion} (current: ${this.currentVersion})`);
+        const cfg2 = loadConfig();
+        if (cfg2.dismissedUpdateVersion !== latestVersion && this.onUpdateAvailable) {
+          try {
+            this.onUpdateAvailable(this.cachedInfo);
+          } catch {
+            // best effort
+          }
+        }
       } else {
         appLogger.log("info", `Portfolio is up to date (${this.currentVersion})`);
       }
@@ -213,6 +229,97 @@ export class AppUpdateService {
       clearInterval(this.intervalTimer);
       this.intervalTimer = null;
     }
+  }
+
+  /**
+   * Download the latest release asset for the current platform
+   * and save it to the user's Downloads folder.
+   */
+  public async downloadUpdate(version: string): Promise<DownloadUpdateResponse> {
+    try {
+      const platformMap: Record<string, string> = {
+        linux: ".deb",
+        win32: "-Setup.exe",
+        darwin: "-arm64.dmg",
+      };
+      const suffix = platformMap[process.platform] || ".deb";
+      const tag = version.startsWith("v") ? version : `v${version}`;
+      const cleanVersion = version.replace(/^v/, "");
+
+      // Construct the asset download URL
+      let assetUrl = `https://github.com/${GITHUB_REPO}/releases/download/${tag}/Portfolio-Desktop-${cleanVersion}${suffix}`;
+
+      // Try to find the actual asset name from the GitHub release API
+      try {
+        const releaseUrl = `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${encodeURIComponent(tag)}`;
+        const res = await fetch(releaseUrl, {
+          headers: {
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": `Portfolio-Desktop/${this.currentVersion}`,
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { assets?: { name: string; browser_download_url: string }[] };
+          const assets = data.assets || [];
+          // Match platform-specific asset
+          const platformPatterns: Record<string, string[]> = {
+            linux: [".deb"],
+            win32: ["-Setup.exe", ".exe"],
+            darwin: ["-arm64.dmg", ".dmg"],
+          };
+          const patterns = platformPatterns[process.platform] || [".deb"];
+          const matched = assets.find((a) => patterns.some((p) => a.name.endsWith(p)));
+          if (matched) {
+            assetUrl = matched.browser_download_url;
+          }
+        }
+      } catch {
+        // Fall back to the constructed URL
+        appLogger.log("warning", "Could not resolve release assets; using constructed URL");
+      }
+
+      // Determine download folder
+      const downloadsDir = join(homedir(), "Downloads");
+      try {
+        mkdirSync(downloadsDir, { recursive: true });
+      } catch {
+        // directory exists
+      }
+
+      const fileName = assetUrl.split("/").pop() || `Portfolio-Desktop-${cleanVersion}${suffix}`;
+      const filePath = join(downloadsDir, fileName);
+
+      appLogger.log("info", `Downloading update from ${assetUrl} to ${filePath}`);
+
+      const downloadRes = await fetch(assetUrl, {
+        headers: {
+          "User-Agent": `Portfolio-Desktop/${this.currentVersion}`,
+        },
+        signal: AbortSignal.timeout(300_000), // 5 min for large downloads
+      });
+
+      if (!downloadRes.ok) {
+        const msg = `Download failed: HTTP ${downloadRes.status}`;
+        appLogger.log("error", msg);
+        return { success: false, error: msg };
+      }
+
+      const arrayBuffer = await downloadRes.arrayBuffer();
+      writeFileSync(filePath, new Uint8Array(arrayBuffer));
+
+      appLogger.log("success", `Update downloaded to ${filePath}`);
+      return { success: true, filePath };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      appLogger.log("error", `Download update failed: ${msg}`);
+      return { success: false, error: msg };
+    }
+  }
+
+  /** Returns the latest cached update info (used by message push) */
+  public getCachedInfo(): AppUpdateInfo {
+    return this.cachedInfo;
   }
 }
 

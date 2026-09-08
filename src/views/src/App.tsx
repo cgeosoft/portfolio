@@ -21,6 +21,8 @@ import { ImportCsvModal } from "./components/portfolio/ImportCsvModal";
 import { AnalyzePortfolioModal } from "./components/portfolio/AnalyzePortfolioModal";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SetupWizardModal } from "./components/common/SetupWizardModal";
+import { UpdatePopover } from "./components/common/UpdatePopover";
+import { ChangelogModal } from "./components/common/ChangelogModal";
 import { SettingsPage, type SettingsSection } from "./components/settings/SettingsPage";
 import { TermsPage } from "./components/common/TermsPage";
 import { BottomBar } from "./components/layout/BottomBar";
@@ -35,7 +37,7 @@ import type {
   AssistantConversation,
   AppUpdateInfo,
 } from "../../shared/rpc-types";
-import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge } from "./rpc";
+import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge, onUpdateAvailable } from "./rpc";
 import {
   Wallet,
   TrendingUp,
@@ -430,12 +432,11 @@ export default function App() {
   const handleDismissUpdate = useCallback((ver: string) => {
     setDismissedUpdateVersion(ver);
     rpc.request.saveConfig({ dismissedUpdateVersion: ver }).catch(() => {});
+    setIsChangelogModalOpen(false);
   }, []);
 
-  const handleViewRelease = useCallback((url?: string) => {
-    const targetUrl = url || updateInfo?.releaseUrl || "https://github.com/cgeosoft/portfolio/releases";
-    rpc.request.openExternalUrl({ url: targetUrl }).catch(() => {});
-  }, [updateInfo]);
+  // Popover visibility: show when update is available and not dismissed
+  const showUpdatePopover = updateInfo?.hasUpdate && dismissedUpdateVersion !== updateInfo.latestVersion;
 
   // Modals state
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
@@ -443,6 +444,7 @@ export default function App() {
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
+  const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -553,7 +555,8 @@ export default function App() {
       }
 
       try {
-        const uInfo = await rpc.request.getUpdateInfo({});
+        // Trigger a fresh update check on startup, not just read cached info
+        const uInfo = await rpc.request.checkForUpdates({ force: false });
         if (uInfo) setUpdateInfo(uInfo);
       } catch (e) {
         clientLogger.log("warning", "initApp:updateInfo_warning", `Could not retrieve update info: ${e}`);
@@ -570,6 +573,13 @@ export default function App() {
       }).catch(() => {});
     }, 60 * 60 * 1000);
     return () => clearInterval(updateTimer);
+  }, []);
+
+  // Listen for push messages from Bun when a new update is detected
+  useEffect(() => {
+    onUpdateAvailable((info: AppUpdateInfo) => {
+      setUpdateInfo(info);
+    });
   }, []);
 
   // Load portfolios list
@@ -1188,43 +1198,29 @@ export default function App() {
             onToggleAssistant={handleToggleAssistant}
           />
 
-          {/* Update Available Banner */}
-          {updateInfo?.hasUpdate && dismissedUpdateVersion !== updateInfo.latestVersion && (
-            <div className="w-full max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 mb-2 shrink-0 animate-in fade-in duration-200">
-              <div className="p-3 rounded-xl bg-slate-900/90 border border-[#DD3C73]/40 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center shrink-0">
-                    <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  </div>
-                  <div className="min-w-0 truncate">
-                    <span className="font-bold text-slate-100">
-                      Portfolio Desktop v{updateInfo.latestVersion} is available
-                    </span>
-                    <span className="text-slate-400 ml-1.5 hidden md:inline">
-                      (current: v{appVersion})
-                    </span>
-                  </div>
-                </div>
+          {/* Update Available Popover (bottom-right corner) */}
+          <UpdatePopover
+            isVisible={Boolean(showUpdatePopover)}
+            latestVersion={updateInfo?.latestVersion || ""}
+            currentVersion={appVersion}
+            onShowChangelog={() => setIsChangelogModalOpen(true)}
+            onDismiss={() => {
+              if (updateInfo?.latestVersion) {
+                handleDismissUpdate(updateInfo.latestVersion);
+              }
+            }}
+          />
 
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleViewRelease(updateInfo.releaseUrl)}
-                    className="px-2.5 py-1 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <span>View Release</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDismissUpdate(updateInfo.latestVersion)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors cursor-pointer"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Changelog Modal */}
+          <ChangelogModal
+            isOpen={isChangelogModalOpen && Boolean(updateInfo?.hasUpdate)}
+            onClose={() => setIsChangelogModalOpen(false)}
+            latestVersion={updateInfo?.latestVersion || ""}
+            currentVersion={appVersion}
+            releaseName={updateInfo?.releaseName || `v${updateInfo?.latestVersion || ""}`}
+            releaseUrl={updateInfo?.releaseUrl || `https://github.com/cgeosoft/portfolio/releases`}
+            releaseNotes={updateInfo?.releaseNotes || ""}
+          />
 
           {/* Main View Router */}
           {view === "settings" && (
@@ -1525,7 +1521,7 @@ export default function App() {
         hideCurrencyValues={hideCurrencyValues}
         onToggleHideCurrency={toggleHideCurrencyValues}
         updateInfo={updateInfo}
-        onOpenUpdate={() => handleViewRelease()}
+        onOpenUpdate={() => setIsChangelogModalOpen(true)}
       />
 
       {/* Modals */}

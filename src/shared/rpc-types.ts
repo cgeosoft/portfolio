@@ -278,6 +278,17 @@ export interface CheckForUpdatesRequest {
   force?: boolean;
 }
 
+export interface DownloadUpdateRequest {
+  /** Version tag to download (e.g. "v0.3.0") */
+  version: string;
+}
+
+export interface DownloadUpdateResponse {
+  success: boolean;
+  filePath?: string;
+  error?: string;
+}
+
 export interface OpenExternalUrlRequest {
   url: string;
 }
@@ -418,9 +429,13 @@ export type PortfolioRPC = {
       // App lifecycle
       quitApp: { params: Record<string, never>; response: { success: boolean } };
       reloadApp: { params: Record<string, never>; response: { success: boolean } };
+
+      // Update download
+      downloadUpdate: { params: DownloadUpdateRequest; response: DownloadUpdateResponse };
     };
     messages: {
-      // Bun -> Webview: push updates
+      // Bun -> Webview: push an update notification when a new version is detected
+      updateAvailable: AppUpdateInfo;
     };
   }>;
   webview: RPCSchema<{

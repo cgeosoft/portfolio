@@ -1,11 +1,23 @@
 import { Electroview } from 'electrobun/view';
-import type { PortfolioRPC, LogClientEventRequest } from '../../shared/rpc-types.js';
+import type { PortfolioRPC, LogClientEventRequest, AppUpdateInfo } from '../../shared/rpc-types.js';
+
+let updateAvailableHandler: ((info: AppUpdateInfo) => void) | null = null;
+
+export function onUpdateAvailable(handler: (info: AppUpdateInfo) => void) {
+  updateAvailableHandler = handler;
+}
 
 export const rpc = Electroview.defineRPC<PortfolioRPC>({
     maxRequestTime: 120_000,
     handlers: {
         requests: {},
-        messages: {}
+        messages: {
+            updateAvailable: (info: AppUpdateInfo) => {
+                if (updateAvailableHandler) {
+                    updateAvailableHandler(info);
+                }
+            },
+        },
     }
 });
 
