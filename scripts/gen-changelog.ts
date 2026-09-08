@@ -164,12 +164,16 @@ function buildEntry(version: string, body: string): string {
 }
 
 function prependToChangelog(entry: string): void {
-  let existing = "";
-  if (existsSync(CHANGELOG)) existing = readFileSync(CHANGELOG, "utf8");
-
   const header = "# Changelog\n\nAll notable changes to Portfolio Desktop are documented in this file.\n\n";
-  const body = existing.trim();
-  const content = body.length > 0 ? `${body}\n\n${entry}` : `${header}${entry}`;
+  let content = `${header}${entry}`;
+  if (existsSync(CHANGELOG)) {
+    // Drop any existing header so the new entry sits directly beneath it,
+    // with the previous entries below.
+    const rest = readFileSync(CHANGELOG, "utf8")
+      .replace(/^\s*#\s*Changelog\s*\n(?:\s*\n)?/, "")
+      .trim();
+    if (rest.length > 0) content = `${header}${entry}\n\n${rest}\n`;
+  }
   writeFileSync(CHANGELOG, content);
 }
 
