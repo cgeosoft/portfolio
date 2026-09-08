@@ -62,8 +62,13 @@ Or pass custom parameters:
 For automated CI/CD deployments, set the following repository secrets:
 - `CLOUDFLARE_API_TOKEN`: Cloudflare API token with `Cloudflare Pages: Edit` permissions.
 - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
+- `POSTHOG_API_KEY`: Your PostHog project API key (`phc_...`). This is injected into the
+  deployed site's analytics snippet at deploy time.
 
 Then run:
 ```bash
-CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... ./extras/website/deploy.sh
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... POSTHOG_API_KEY=phc_... ./extras/website/deploy.sh
 ```
+
+You can also set `POSTHOG_API_KEY` in the repository root `.env` (or `extras/website/.env`);
+`deploy.sh` loads it automatically.

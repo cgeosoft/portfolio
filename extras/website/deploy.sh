@@ -60,6 +60,7 @@ Environment Variables:
   CLOUDFLARE_API_TOKEN     (Optional) Cloudflare API Token for CI/CD
   CLOUDFLARE_ACCOUNT_ID    (Optional) Cloudflare Account ID
   CLOUDFLARE_PAGES_PROJECT Override default project name
+  POSTHOG_API_KEY          PostHog project API key injected into the deployed site
 
 Examples:
   ./deploy.sh
@@ -105,6 +106,20 @@ if [[ ! -f "${SCRIPT_DIR}/index.html" ]]; then
   exit 1
 fi
 
+# 1.5. Stage a deploy copy and inject environment variables (PostHog API key)
+# Browsers cannot read server envvars at runtime, so we substitute them here.
+# Uses the same POSTHOG_API_KEY that the desktop app reads.
+POSTHOG_API_KEY="${POSTHOG_API_KEY:-phc_PLACEHOLDER}"
+STAGING_DIR="$(mktemp -d)"
+trap 'rm -rf "${STAGING_DIR}"' EXIT
+cp -R "${SCRIPT_DIR}/." "${STAGING_DIR}/"
+rm -rf "${STAGING_DIR}/.wrangler" \
+       "${STAGING_DIR}/.env" \
+       "${STAGING_DIR}/deploy.sh" \
+       "${STAGING_DIR}/README.md" \
+       "${STAGING_DIR}/package.json"
+find "${STAGING_DIR}" -type f -name '*.html' -exec sed -i "s|YOUR_POSTHOG_PROJECT_API_KEY|${POSTHOG_API_KEY}|g" {} +
+
 # 2. Determine runner (bunx, npx, or global wrangler)
 WRANGLER_BIN=""
 if command -v wrangler >/dev/null 2>&1; then
@@ -133,7 +148,7 @@ fi
 echo -e "${YELLOW}[3/3]${NC} Deploying directory to Cloudflare Pages..."
 echo "-----------------------------------------------------------------"
 
-DEPLOY_CMD=(${WRANGLER_BIN} pages deploy "${SCRIPT_DIR}" --project-name="${PROJECT_NAME}" --branch="${BRANCH}" --commit-dirty=true)
+DEPLOY_CMD=(${WRANGLER_BIN} pages deploy "${STAGING_DIR}" --project-name="${PROJECT_NAME}" --branch="${BRANCH}" --commit-dirty=true)
 
 # Run deployment
 if ${DEPLOY_CMD[@]}; then

@@ -10,6 +10,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+
+  <!-- PostHog Analytics (consent-gated: no tracking until the visitor opts in) -->
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing has_opted_in_capturing reset addFeatureFlag getFeatureFlag getFeatureFlagPayload getFeatureFlagBoolean reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onFeatureFlags callback getSurveys getNextSurveyStep onSurveysLoaded onSessionId onSurveysLiked uh_hooks identify_psq set_session_recording_id".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('YOUR_POSTHOG_PROJECT_API_KEY', {
+      api_host: 'https://eu.i.posthog.com',
+      opt_out_capturing_by_default: true,
+      capture_pageview: true,
+      disable_session_recording: true
+    });
+  </script>
 </head>
 <body>
   <!-- Ambient background glow and grid -->
@@ -150,7 +161,8 @@
             <li><a href="#section-8">8. Disclaimer of Warranties</a></li>
             <li><a href="#section-9">9. Limitation of Liability</a></li>
             <li><a href="#section-10">10. Modifications</a></li>
-            <li><a href="#section-11">11. Contact Information</a></li>
+            <li><a href="#section-11">11. Cookie Policy</a></li>
+            <li><a href="#section-12">12. Contact Information</a></li>
           </ul>
         </aside>
 
@@ -318,7 +330,33 @@
           </section>
 
           <!-- Section 11 -->
-          <section class="legal-section" id="section-11">
+          <section class="legal-section" id="cookie-policy">
+            <div class="legal-section-header">
+              <span class="legal-section-number">11</span>
+              <h2>Cookie Policy</h2>
+            </div>
+            <p>
+              This website uses PostHog to collect anonymous, aggregated analytics so we can understand how visitors use the
+              site (for example page views and download clicks). This helps us improve the website and the software.
+            </p>
+            <p>
+              <strong>Analytics are opt-in.</strong> When you first visit, a cookie notice appears. If you decline, no analytics
+              cookies are set and no events are sent. If you accept, PostHog sets a small cookie to recognize your choice and
+              to associate anonymous events with your visit. You can change your choice at any time by clearing cookies for
+              this site.
+            </p>
+            <p>
+              PostHog does not receive your name, your portfolios, your balances, your transactions, or any personal financial
+              data. Events are identified only by an anonymous identifier, not by your personal information.
+            </p>
+            <p>
+              Note that the desktop application itself remains fully offline and does not send analytics unless you separately
+              opt in to anonymous telemetry from inside the application.
+            </p>
+          </section>
+
+          <!-- Section 12 -->
+          <section class="legal-section" id="section-12">
             <div class="legal-section-header">
               <span class="legal-section-number">11</span>
               <h2>Contact Information</h2>
@@ -366,6 +404,7 @@
         <div class="footer-col">
           <h4>Legal</h4>
           <a href="/terms" class="text-accent">Terms of Service</a>
+          <a href="/terms#cookie-policy">Cookie Policy</a>
         </div>
       </div>
     </div>

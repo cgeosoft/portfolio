@@ -405,6 +405,104 @@
     }
   }
 
+  // ===========================================================================
+  // Analytics & Cookie Consent
+  // PostHog tracking is opt-in. Nothing is captured until the visitor accepts.
+  // ===========================================================================
+  const CONSENT_KEY = 'portfolio_cookie_consent_v1';
+
+  function readConsent() {
+    try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; }
+  }
+
+  function writeConsent(value) {
+    try { localStorage.setItem(CONSENT_KEY, value); } catch (e) { /* storage unavailable */ }
+  }
+
+  function trackEvent(name, properties) {
+    try {
+      if (window.posthog) {
+        window.posthog.capture(name, properties || {});
+      }
+    } catch (e) { /* ignore tracking errors */ }
+  }
+
+  function enableAnalytics() {
+    writeConsent('accepted');
+    try {
+      if (window.posthog) {
+        window.posthog.opt_in_capturing();
+        window.posthog.capture('$pageview');
+      }
+    } catch (e) {
+      // Ignore; consent is still recorded locally
+    }
+  }
+
+  function disableAnalytics() {
+    writeConsent('declined');
+    try {
+      if (window.posthog) window.posthog.opt_out_capturing();
+    } catch (e) { /* ignore */ }
+  }
+
+  function initCookieBanner() {
+    const consent = readConsent();
+
+    // Already decided: apply the stored choice without showing the banner.
+    if (consent === 'accepted') {
+      enableAnalytics();
+      return;
+    }
+    if (consent === 'declined') {
+      disableAnalytics();
+      return;
+    }
+
+    const banner = document.createElement('div');
+    banner.className = 'cookie-banner';
+    banner.setAttribute('role', 'dialog');
+    banner.setAttribute('aria-live', 'polite');
+    banner.setAttribute('aria-label', 'Cookie consent');
+    banner.innerHTML =
+      '<div class="cookie-banner-inner">' +
+        '<div class="cookie-banner-copy">' +
+          '<div class="cookie-banner-title">Your privacy</div>' +
+          '<p>This site uses PostHog for anonymous, aggregated analytics ' +
+          '(for example page views and download clicks) to improve the website. ' +
+          'No financial or personal data is collected. ' +
+          '<a href="/terms#cookie-policy">Read the Cookie Policy</a>.</p>' +
+        '</div>' +
+        '<div class="cookie-banner-actions">' +
+          '<button type="button" class="btn btn-ghost cookie-decline">Decline</button>' +
+          '<button type="button" class="btn btn-primary cookie-accept">Accept</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => banner.classList.add('visible'));
+
+    banner.querySelector('.cookie-accept').addEventListener('click', () => {
+      enableAnalytics();
+      dismissBanner(banner);
+    });
+    banner.querySelector('.cookie-decline').addEventListener('click', () => {
+      disableAnalytics();
+      dismissBanner(banner);
+    });
+  }
+
+  function dismissBanner(banner) {
+    banner.classList.remove('visible');
+    setTimeout(() => banner.remove(), 300);
+  }
+
+  function trackDownloadClick(el) {
+    const os = el.getAttribute('data-os') || activeOS;
+    const type = el.getAttribute('data-type') || 'installer';
+    trackEvent('download_clicked', { os: os, type: type });
+  }
+
   // DOM Content Loaded Handler
   document.addEventListener('DOMContentLoaded', () => {
     renderHeroDownload(activeOS);
@@ -413,6 +511,12 @@
     initCopyButton();
     initMockupTabs();
     initYear();
+    initCookieBanner();
     fetchLatestRelease();
+
+    // Track download link clicks (respects the visitor's consent choice)
+    document.querySelectorAll('.download-link-win, .download-link-mac, .download-link-linux').forEach(el => {
+      el.addEventListener('click', () => trackDownloadClick(el));
+    });
   });
 })();
