@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import type { PortfolioItem, FinancialPortfolioData } from "../../types/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "../../../../shared/rpc-types";
 import { cleanThinkTags, formatTimeAgo } from "./utils";
@@ -399,6 +400,7 @@ export function AssistantSidebar({
                     <div className="prose prose-invert prose-xs max-w-none space-y-2 text-xs">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeSanitize]}
                         components={{
                           h1: ({ children }) => (
                             <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
@@ -432,6 +434,16 @@ export function AssistantSidebar({
                           ),
                           li: ({ children }) => (
                             <li className="text-slate-300 text-xs">{children}</li>
+                          ),
+                          a: ({ href, children }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                            >
+                              {children}
+                            </a>
                           ),
                           strong: ({ children }) => (
                             <strong className="font-bold text-slate-100">{children}</strong>

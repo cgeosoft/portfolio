@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import type { PortfolioReport, FinancialPortfolioData } from "../../types/portfolio";
 import { fmtCurrency, fmtPercent, cleanThinkTags, formatTimeAgo, maskFinancialValues } from "./utils";
 import {
@@ -353,6 +354,7 @@ export function ReportsCard({
 
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeSanitize]}
                 components={{
                   h1: ({ node: _n, ...props }) => (
                     <h1 className="text-sm font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1.5 mt-4 mb-2" {...props} />
@@ -369,6 +371,17 @@ export function ReportsCard({
                   li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
                   blockquote: ({ node: _n, ...props }) => (
                     <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-3 py-2 my-3 text-slate-400 italic rounded-r" {...props} />
+                  ),
+                  a: ({ node: _n, href, children, ...props }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                      {...props}
+                    >
+                      {children}
+                    </a>
                   ),
                   table: ({ node: _n, ...props }) => (
                     <div className="my-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950">
