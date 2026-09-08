@@ -16,3 +16,9 @@ All notable changes to Portfolio Desktop are documented in this file.
 - b2a70e5 fix: replace ReDoS-vulnerable think-tag regex with O(n) state machine
 - c4c9fe8 fix(settings): remove hardcoded model lists for local server providers
 - 25aff9f fix(settings): list llama.cpp and ollama models from server endpoint
+
+## [0.1.4] - 2026-09-08
+
+## Added
+- Added an update popover in the bottom right corner of the app. It shows a changelog modal and provides download support for new versions.
+- Added opt-in analytics to the website using PostHog. Users can choose to enable analytics.
