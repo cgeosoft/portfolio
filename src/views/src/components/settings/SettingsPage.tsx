@@ -63,9 +63,9 @@ interface ProviderPreset {
 }
 
 const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
-  "llamacpp-server": {
-    id: "llamacpp-server",
-    name: "Portfolio AI",
+  "llamacpp": {
+    id: "llamacpp",
+    name: "llama.cpp",
     badge: "Local llamacpp server",
     defaultModel: "qwen3-abliterated-14b-q4_k_m",
     models: [
@@ -410,6 +410,7 @@ export function SettingsPage({
   };
 
   const handleProviderSelect = (newProvider: string) => {
+    const isLlamaCpp = newProvider === "llamacpp" || newProvider === "llamacpp-server";
     setReportProvider(newProvider);
     const preset = PROVIDER_PRESETS[newProvider];
     if (preset) {
@@ -422,13 +423,13 @@ export function SettingsPage({
       if (preset.supportsBaseUrl) {
         if (
           !effectiveBaseUrl ||
-          (newProvider === "llamacpp-server" && effectiveBaseUrl.includes("11434")) ||
+          (isLlamaCpp && effectiveBaseUrl.includes("11434")) ||
           (newProvider === "ollama" && effectiveBaseUrl.includes("9100"))
         ) {
           effectiveBaseUrl = preset.defaultBaseUrl || "";
           setReportBaseUrl(effectiveBaseUrl);
           updates.llmBaseUrl = effectiveBaseUrl;
-          if (newProvider === "llamacpp-server") updates.llamacppServerUrl = effectiveBaseUrl;
+          if (isLlamaCpp) updates.llamacppServerUrl = effectiveBaseUrl;
         }
       }
       saveConfig(updates);
@@ -511,10 +512,21 @@ export function SettingsPage({
     );
   });
 
-  const currentPreset = PROVIDER_PRESETS[reportProvider];
+  // Resolve the preset even when the provider value still uses the legacy
+  // "llamacpp-server" key used by the backend.
+  const currentPreset =
+    PROVIDER_PRESETS[reportProvider] ||
+    (reportProvider === "llamacpp-server" ? PROVIDER_PRESETS["llamacpp"] : undefined);
   const dynamicList = serverModels[reportProvider] || [];
   const presetList = currentPreset?.models || [];
-  const availableModels = Array.from(new Set([...dynamicList, ...presetList]));
+  // Local server providers (llamacpp-server and ollama) list models from the
+  // live server endpoint. Fall back to the bundled preset list only when the
+  // endpoint is unreachable so the dropdown is never empty.
+  const isEndpointProvider =
+    reportProvider === "ollama" || reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
+  const isLlamaCpp = reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
+  const baseList = isEndpointProvider && dynamicList.length > 0 ? dynamicList : presetList;
+  const availableModels = Array.from(new Set(baseList));
   if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
     availableModels.unshift(reportModel);
   }
@@ -1067,8 +1079,13 @@ export function SettingsPage({
                         setReportBaseUrl(e.target.value);
                         saveConfig({
                           llmBaseUrl: e.target.value,
-                          ...(reportProvider === "llamacpp-server" ? { llamacppServerUrl: e.target.value } : {}),
+                          ...(isLlamaCpp ? { llamacppServerUrl: e.target.value } : {}),
                         });
+                      }}
+                      onBlur={(e) => {
+                        if (isEndpointProvider) {
+                          fetchModelsForProvider(reportProvider, e.target.value.trim(), reportApiKey);
+                        }
                       }}
                       placeholder={
                         PROVIDER_PRESETS[reportProvider]?.baseUrlPlaceholder ||
