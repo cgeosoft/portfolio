@@ -121,6 +121,27 @@ export class YahooFinanceService {
   private static readonly chartCache = new Map<string, { data: YahooChartData; expiresAt: number }>();
   private static readonly inFlightCharts = new Map<string, Promise<YahooChartData>>();
 
+  // Periodic eviction of expired in-memory cache entries to prevent unbounded growth.
+  // Runs every 5 minutes and sweeps entries older than their TTL.
+  private static cacheSweepHandle: ReturnType<typeof setInterval>;
+
+  static {
+    YahooFinanceService.cacheSweepHandle = setInterval(() => {
+      const now = Date.now();
+      for (const [key, entry] of YahooFinanceService.fxCache) {
+        if (now >= entry.expiresAt) YahooFinanceService.fxCache.delete(key);
+      }
+      for (const [key, entry] of YahooFinanceService.chartCache) {
+        if (now >= entry.expiresAt) YahooFinanceService.chartCache.delete(key);
+      }
+    }, 5 * 60 * 1000).unref();
+  }
+
+  /** Stop the periodic cache sweep timer (called during app shutdown). */
+  public static destroy(): void {
+    clearInterval(YahooFinanceService.cacheSweepHandle);
+  }
+
   public async searchSymbols(query: string): Promise<YahooSymbolSearchResult[]> {
     if (!query || !query.trim()) return [];
 
