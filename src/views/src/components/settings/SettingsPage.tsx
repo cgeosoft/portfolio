@@ -52,7 +52,8 @@ interface ProviderPreset {
   name: string;
   badge: string;
   defaultModel: string;
-  models: string[];
+  /** Bundled model names. Omitted for local server providers whose models come from the endpoint. */
+  models?: string[];
   description: string;
   requiresKey: boolean;
   keyOptional?: boolean;
@@ -68,18 +69,6 @@ const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
     name: "llama.cpp",
     badge: "Local llamacpp server",
     defaultModel: "qwen3-abliterated-14b-q4_k_m",
-    models: [
-      "qwen3-abliterated-14b-q4_k_m",
-      "qwen2.5-7b-instruct",
-      "qwen2.5-14b-instruct",
-      "qwen2.5-32b-instruct",
-      "llama-3.1-8b-instruct",
-      "llama-3.3-70b-instruct",
-      "mistral-7b-instruct-v0.3",
-      "phi-3.5-mini-instruct",
-      "deepseek-r1-distill-qwen-14b",
-      "deepseek-r1-distill-llama-8b",
-    ],
     description: "Connect to local OpenAI-compatible inference server daemon.",
     requiresKey: false,
     keyOptional: true,
@@ -93,21 +82,6 @@ const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
     name: "Ollama Server",
     badge: "Local Daemon",
     defaultModel: "llama3.2:latest",
-    models: [
-      "llama3.2:latest",
-      "llama3.3:latest",
-      "llama3.1:latest",
-      "qwen2.5:latest",
-      "qwen2.5:7b",
-      "qwen2.5:14b",
-      "qwen2.5:32b",
-      "mistral:latest",
-      "deepseek-r1:latest",
-      "deepseek-r1:8b",
-      "deepseek-r1:14b",
-      "gemma2:latest",
-      "phi4:latest",
-    ],
     description: "Run models locally via native Ollama daemon endpoint.",
     requiresKey: false,
     keyOptional: true,
@@ -362,7 +336,7 @@ export function SettingsPage({
       const savedModel = config.llmModel || preset?.defaultModel || "qwen3-abliterated-14b-q4_k_m";
       setReportModel(savedModel);
 
-      if (preset && !preset.models.includes(savedModel)) {
+      if (preset && preset.models && !preset.models.includes(savedModel)) {
         setIsCustomModel(true);
         setCustomModelInput(savedModel);
       }
@@ -519,13 +493,14 @@ export function SettingsPage({
     (reportProvider === "llamacpp-server" ? PROVIDER_PRESETS["llamacpp"] : undefined);
   const dynamicList = serverModels[reportProvider] || [];
   const presetList = currentPreset?.models || [];
-  // Local server providers (llamacpp-server and ollama) list models from the
-  // live server endpoint. Fall back to the bundled preset list only when the
-  // endpoint is unreachable so the dropdown is never empty.
+  // Local server providers (llamacpp-server and ollama) list models only from
+  // the live server endpoint. Models are never hardcoded for them. Cloud
+  // providers keep the bundled preset list because they expose no accessible
+  // model listing.
   const isEndpointProvider =
     reportProvider === "ollama" || reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
   const isLlamaCpp = reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
-  const baseList = isEndpointProvider && dynamicList.length > 0 ? dynamicList : presetList;
+  const baseList = isEndpointProvider ? dynamicList : presetList;
   const availableModels = Array.from(new Set(baseList));
   if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
     availableModels.unshift(reportModel);
