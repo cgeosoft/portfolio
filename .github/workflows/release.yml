@@ -168,10 +168,26 @@ jobs:
           mkdir -p release-files
           find release-artifacts -type f -exec cp -v {} release-files/ \;
           ls -lh release-files/
+
+          # Use the changelog entry for this version as the release description.
+          VERSION="${TAG_NAME#v}"
+          NOTES_FILE="release-files/release_notes.md"
+          if [ -f CHANGELOG.md ]; then
+            awk -v v="$VERSION" '
+              $0 ~ "^## \\[" v "\\]" { found=1; next }
+              found && /^## \[/ { exit }
+              found { print }
+            ' CHANGELOG.md > "$NOTES_FILE"
+          fi
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "Release $TAG_NAME" > "$NOTES_FILE"
+          fi
+
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             echo "Release $TAG_NAME exists, uploading/updating assets..."
             gh release upload "$TAG_NAME" release-files/* --clobber
+            gh release edit "$TAG_NAME" --notes-file "$NOTES_FILE"
           else
             echo "Release $TAG_NAME not found, creating release..."
-            gh release create "$TAG_NAME" release-files/* --title "$TAG_NAME" --generate-notes
+            gh release create "$TAG_NAME" release-files/* --title "$TAG_NAME" --notes-file "$NOTES_FILE"
           fi
