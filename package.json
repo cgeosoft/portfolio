@@ -1,6 +1,6 @@
 {
   "name": "portfolio",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": "Christos Georgiou <christos@cgeosoft.com>",
   "private": true,
   "type": "module",
