@@ -362,9 +362,25 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
       },
 
       openExternalUrl: async (params) => {
+        const rawUrl = String(params.url || "").trim();
+        if (!rawUrl) {
+          appLogger.log("warning", "openExternalUrl called with empty URL");
+          return { success: false };
+        }
+
+        // Only allow http: and https: URLs to prevent file://, javascript:,
+        // data:, and other dangerous scheme-based attacks through the RPC bridge.
+        const allowedSchemes = ["http:", "https:"];
+        const lowerUrl = rawUrl.toLowerCase();
+        const allowed = allowedSchemes.some((scheme) => lowerUrl.startsWith(scheme));
+        if (!allowed) {
+          appLogger.log("warning", `openExternalUrl blocked non-HTTP URL scheme: ${rawUrl.slice(0, 80)}`);
+          return { success: false };
+        }
+
         try {
           if (typeof Utils !== "undefined" && typeof Utils.openExternal === "function") {
-            await Utils.openExternal(params.url);
+            await Utils.openExternal(rawUrl);
             return { success: true };
           }
         } catch (err) {
@@ -372,10 +388,10 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         }
         try {
           const opener = process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-          Bun.spawn([opener, params.url]);
+          Bun.spawn([opener, rawUrl]);
           return { success: true };
         } catch (err) {
-          appLogger.log("error", `Failed to open external URL ${params.url}: ${err}`);
+          appLogger.log("error", `Failed to open external URL ${rawUrl}: ${err}`);
           return { success: false };
         }
       },
