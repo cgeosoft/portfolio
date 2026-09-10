@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Portfolio Desktop - Cloudflare Pages Deployment Script
+# Portfolio - Cloudflare Pages Deployment Script
 # Deploys extras/website directly to Cloudflare Pages via Wrangler
 # =============================================================================
 
@@ -48,7 +48,7 @@ show_help() {
   cat << EOF
 Usage: ./deploy.sh [options]
 
-Deploy the Portfolio Desktop marketing website to Cloudflare Pages.
+Deploy the Portfolio marketing website to Cloudflare Pages.
 
 Options:
   --project-name=<name>   Cloudflare Pages project name (default: portfolio-desktop)

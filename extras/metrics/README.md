@@ -6,7 +6,7 @@ This directory is the metric repository. Every metric here is reviewed by pull r
 
 ## Why WebAssembly
 
-Portfolio Desktop is an offline-first application that holds a private financial ledger. A metric module is instantiated with no I/O imports: it cannot read the SQLite file, touch the filesystem, open a socket, or read the clock. It receives a copy of the data its manifest requests, returns a number and a label, and nothing else. Each run gets fresh memory with a hard ceiling, a time budget enforced by killing the engine process, and an integrity check of the module bytes before instantiation.
+Portfolio is an offline-first application that holds a private financial ledger. A metric module is instantiated with no I/O imports: it cannot read the SQLite file, touch the filesystem, open a socket, or read the clock. It receives a copy of the data its manifest requests, returns a number and a label, and nothing else. Each run gets fresh memory with a hard ceiling, a time budget enforced by killing the engine process, and an integrity check of the module bytes before instantiation.
 
 ## Layout
 

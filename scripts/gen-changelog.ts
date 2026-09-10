@@ -125,7 +125,7 @@ async function generateNotes(diffText: string, prevTag: string, version: string)
   const url = buildCompletionsUrl(baseUrl);
 
   const prompt = [
-    "You write release notes for the Portfolio Desktop application.",
+    "You write release notes for the Portfolio application.",
     "Describe the changes of version " + version + " in Simplified English.",
     "The changes are the git diff from tag " + prevTag + " to HEAD.",
     "",

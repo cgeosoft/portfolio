@@ -623,7 +623,7 @@ export function SettingsPage({
                       Start at System Boot
                     </div>
                     <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                      Automatically launch Portfolio Desktop in the background when your computer boots up.
+                      Automatically launch Portfolio in the background when your computer boots up.
                     </p>
                   </div>
                 </div>
@@ -736,7 +736,7 @@ export function SettingsPage({
               <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 text-xs flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <span className="font-bold">Strict Privacy Guarantee:</span> Portfolio Desktop runs completely on local disk. Your holdings, trade histories, and cash balances remain strictly offline.
+                  <span className="font-bold">Strict Privacy Guarantee:</span> Portfolio runs completely on local disk. Your holdings, trade histories, and cash balances remain strictly offline.
                 </div>
               </div>
             </div>
@@ -1293,7 +1293,7 @@ export function SettingsPage({
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-base font-bold tracking-wide text-slate-100">
-                        Portfolio Desktop
+                        Portfolio
                       </h2>
                       <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
                         v{appVersion}
@@ -1328,7 +1328,7 @@ export function SettingsPage({
                           ? `New version available: v${updateInfo.latestVersion}`
                           : !checkForUpdates
                           ? "Automatic update checks are disabled"
-                          : "Portfolio Desktop is up to date"}
+                          : "Portfolio is up to date"}
                       </span>
                       {updateInfo?.hasUpdate && (
                         <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#A7E2C0]/15 text-[#A7E2C0] border border-[#A7E2C0]/30">

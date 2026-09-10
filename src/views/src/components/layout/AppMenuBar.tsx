@@ -369,7 +369,7 @@ export function AppMenuBar({
     },
     { type: "separator" },
     {
-      label: "About Portfolio Desktop",
+      label: "About Portfolio",
       icon: Info,
       action: () => {
         closeMenu();

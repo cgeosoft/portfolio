@@ -1,6 +1,6 @@
-# Portfolio Desktop Marketing Website
+# Portfolio Marketing Website
 
-A modern, marketing landing page for [Portfolio Desktop](https://github.com/cgeosoft/portfolio).
+A modern, marketing landing page for [Portfolio](https://github.com/cgeosoft/portfolio).
 
 ## Features
 

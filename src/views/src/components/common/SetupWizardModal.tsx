@@ -104,7 +104,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-100 mb-1">Welcome to Portfolio Desktop</h3>
+                <h3 className="text-lg font-bold text-slate-100 mb-1">Welcome to Portfolio</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   A high-performance, offline-first personal portfolio tracker built for Linux. Your financial
                   data never leaves your machine.

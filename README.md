@@ -1,4 +1,4 @@
-# Portfolio Desktop
+# Portfolio
 
 An offline-first, private personal investment portfolio tracker for Linux (Debian) built with **Electrobun**, **Bun:SQLite**, and **React 19**.
 
@@ -6,7 +6,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 
 <p align="center">
   <img src="extras/website/assets/screenshot.png" width="900"
-       alt="Portfolio Desktop overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+       alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
 </p>
 
 <p align="center">

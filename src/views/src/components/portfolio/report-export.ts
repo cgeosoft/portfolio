@@ -262,7 +262,7 @@ export async function generateReportPdf(
     doc.setDrawColor(226, 232, 240);
     doc.line(margin, pageHeight - 9, pageWidth - margin, pageHeight - 9);
 
-    doc.text("Portfolio Desktop - Tactical Report", margin, pageHeight - 5.5);
+    doc.text("Portfolio - Tactical Report", margin, pageHeight - 5.5);
     doc.text(`Page ${p} of ${totalPages}`, pageWidth - margin - 15, pageHeight - 5.5);
   }
 

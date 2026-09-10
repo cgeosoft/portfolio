@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Portfolio Desktop - Release and Build Automation Orchestrator
+# Portfolio - Release and Build Automation Orchestrator
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,7 +62,7 @@ bump_semver() {
 
 show_help() {
   cat << 'EOF'
-Portfolio Desktop Release Script
+Portfolio Release Script
 
 Usage:
   ./release.sh [command|targets...] [options]
@@ -281,7 +281,7 @@ run_tag_release() {
   local tag_message="${CUSTOM_MSG:-Release ${tag_name}}"
 
   echo "================================================================="
-  echo " Portfolio Desktop Release Tag Automation"
+  echo " Portfolio Release Tag Automation"
   echo " Current Version:  ${pkg_version}"
   echo " Release Version:  ${target_version}"
   echo " Tag Name:         ${tag_name}"
@@ -368,7 +368,7 @@ run_build_packages() {
   fi
 
   echo "================================================================="
-  echo " Portfolio Desktop Build Orchestrator"
+  echo " Portfolio Build Orchestrator"
   echo " Version:  ${VERSION}"
   echo " Targets:  ${TARGETS[*]}"
   echo " Output:   ${DIST_DIR}"

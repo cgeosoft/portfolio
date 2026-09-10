@@ -1,8 +1,8 @@
-# Portfolio Desktop Theme & Design System Specification
+# Portfolio Theme & Design System Specification
 
 ## Overview
 
-Portfolio Desktop uses a **Tactical Cyberpunk / Dark Mode Financial Terminal** design system. The interface balances high data density with visual hierarchy, using a dark navy canvas (`#0b0f19`), a high-contrast Cyber Pink primary accent (`#DD3C73`), and semantic status colors anchored by Mint (`#A7E2C0`) and Royal Blue (`#243C8F`).
+Portfolio uses a **Tactical Cyberpunk / Dark Mode Financial Terminal** design system. The interface balances high data density with visual hierarchy, using a dark navy canvas (`#0b0f19`), a high-contrast Cyber Pink primary accent (`#DD3C73`), and semantic status colors anchored by Mint (`#A7E2C0`) and Royal Blue (`#243C8F`).
 
 This document defines the canonical color tokens, semantic usage, asset category palettes, typography, and chart rendering guidelines across the desktop application (`src/views/`) and the marketing website (`extras/website/`).
 

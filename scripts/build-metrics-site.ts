@@ -102,7 +102,7 @@ function main(): void {
     .replace(/<title>[\s\S]*?<\/title>/, "<title>Metrics Marketplace - Portfolio</title>")
     .replace(
       /<meta name="description" content="[^"]*">/,
-      '<meta name="description" content="Catalog of sandboxed WebAssembly metric modules for Portfolio Desktop. Every metric declares the data it reads before you add it.">',
+      '<meta name="description" content="Catalog of sandboxed WebAssembly metric modules for Portfolio. Every metric declares the data it reads before you add it.">',
     );
   const header = slice(template, "<!-- Header / Navigation -->", "</header>", "header");
   const footer = slice(template, '<footer class="site-footer">', "</footer>", "footer");

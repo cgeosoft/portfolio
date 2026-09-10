@@ -48,7 +48,7 @@ export interface DesktopConfig {
   webpageUrl?: string;
   /** Interval in minutes for automatically refreshing market quotes (0 = manual only) */
   marketQuotesInterval: number;
-  /** Whether to start Portfolio Desktop on system boot */
+  /** Whether to start Portfolio on system boot */
   startWithBoot: boolean;
   /** Whether to skip the introduction step in the report wizard */
   skipReportIntro?: boolean;
@@ -121,7 +121,7 @@ export function syncAutostart(enabled: boolean): void {
       const execCommand = process.env["APPIMAGE"] || process.execPath || "portfolio";
       const content = `[Desktop Entry]
 Type=Application
-Name=Portfolio Desktop
+Name=Portfolio
 Comment=Personal Investment Portfolio Tracker
 Exec=${execCommand}
 Icon=portfolio

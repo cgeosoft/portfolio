@@ -1,6 +1,6 @@
 /**
  * Version Update Service.
- * Checks GitHub releases for new versions of Portfolio Desktop.
+ * Checks GitHub releases for new versions of Portfolio.
  */
 
 import { writeFileSync, existsSync, mkdirSync } from "node:fs";

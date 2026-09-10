@@ -139,7 +139,7 @@ describe("SupportTicketService", () => {
     const systemInfoFile = zip.file("system_info.json");
     expect(systemInfoFile).not.toBeNull();
     const systemInfo = JSON.parse(await systemInfoFile!.async("text"));
-    expect(systemInfo.application).toBe("Portfolio Desktop");
+    expect(systemInfo.application).toBe("Portfolio");
     expect(systemInfo.anonymized).toBe(true);
 
     const readmeFile = zip.file("README.txt");

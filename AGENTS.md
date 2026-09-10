@@ -1,10 +1,10 @@
-# AGENTS.md: Developer and AI Agent Guide for Portfolio Desktop
+# AGENTS.md: Developer and AI Agent Guide for Portfolio
 
 This guide gives developers and AI agents the context, architecture, commands, and rules for this repository.
 
 ## 1. Project Overview
 
-Portfolio Desktop is an offline personal investment portfolio tracker for Linux, Windows, and macOS.
+Portfolio is an offline personal investment portfolio tracker for Linux, Windows, and macOS.
 
 ### Technology Stack
 - **Desktop Shell**: Electrobun (v2.0.1)

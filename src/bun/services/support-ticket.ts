@@ -237,7 +237,7 @@ export class SupportTicketService {
     } catch {}
 
     const systemInfo = {
-      application: "Portfolio Desktop",
+      application: "Portfolio",
       version: appVersion,
       platform: process.platform,
       arch: process.arch,
@@ -251,7 +251,7 @@ export class SupportTicketService {
 
     // 4. README note in Simplified English
     const readmeText = [
-      "# Portfolio Desktop Diagnostic Logs Archive",
+      "# Portfolio Diagnostic Logs Archive",
       "",
       `Generated: ${new Date().toISOString()}`,
       `Support Recipient: ${SUPPORT_EMAIL_RECIPIENT}`,
@@ -290,7 +290,7 @@ export class SupportTicketService {
    */
   public async openSupportTicket(options: CreateSupportTicketOptions): Promise<CreateSupportTicketResult> {
     const recipient = SUPPORT_EMAIL_RECIPIENT;
-    const ticketSubject = options.subject?.trim() || "Portfolio Desktop Support Request";
+    const ticketSubject = options.subject?.trim() || "Portfolio Support Request";
     const userMessage = options.message?.trim() || "";
 
     let zipPath: string | undefined;
@@ -323,7 +323,7 @@ export class SupportTicketService {
     }
 
     bodySections.push(
-      `\n---\nSystem Information:\n- Application: Portfolio Desktop v${appVersion}\n- OS: ${process.platform} (${process.arch})\n- Bun: ${process.versions.bun || "unknown"}\n- Timestamp: ${new Date().toISOString()}`
+      `\n---\nSystem Information:\n- Application: Portfolio v${appVersion}\n- OS: ${process.platform} (${process.arch})\n- Bun: ${process.versions.bun || "unknown"}\n- Timestamp: ${new Date().toISOString()}`
     );
 
     if (zipPath) {

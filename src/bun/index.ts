@@ -1,5 +1,5 @@
 /**
- * Portfolio Desktop - Bun main process entry point.
+ * Portfolio - Bun main process entry point.
  * Initializes the database, services, RPC handlers, and window.
  */
 
@@ -31,7 +31,7 @@ import { MetricsService } from "./services/metrics/index.js";
 
 // ── Initialize ──────────────────────────────────────────────────────────────
 
-appLogger.logStep("info", "main", "process_start", "Starting Portfolio Desktop process", undefined, {
+appLogger.logStep("info", "main", "process_start", "Starting Portfolio process", undefined, {
   pid: process.pid,
   platform: process.platform,
   arch: process.arch,
@@ -878,4 +878,4 @@ async function shutdown(): Promise<void> {
 process.on("SIGINT", () => shutdown());
 process.on("SIGTERM", () => shutdown());
 
-appLogger.log("success", "Portfolio Desktop started");
+appLogger.log("success", "Portfolio started");

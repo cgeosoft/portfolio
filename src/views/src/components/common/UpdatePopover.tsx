@@ -30,7 +30,7 @@ export function UpdatePopover({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-xs font-bold text-slate-100 leading-snug">
-                Portfolio Desktop v{latestVersion} is available
+                Portfolio v{latestVersion} is available
               </h3>
               <button
                 type="button"
