@@ -195,6 +195,19 @@ export interface PrepareReportPromptResponse {
   model: string;
   holdingsCount: number;
   metrics: ReportMetrics;
+  /** Whether a Finnhub API key is configured and was queried for this prompt */
+  finnhubConfigured?: boolean;
+  /** Total Finnhub market and company news headlines gathered for this prompt */
+  finnhubNewsCount?: number;
+}
+
+export interface TestFinnhubConnectionRequest {
+  apiKey?: string;
+}
+
+export interface TestFinnhubConnectionResponse {
+  success: boolean;
+  error?: string;
 }
 
 export interface StartReportStreamRequest {
@@ -512,6 +525,7 @@ export type PortfolioRPC = {
       testLlm: { params: TestLlmRequest; response: { success: boolean; message: string } };
       testLlmStep: { params: TestLlmStepRequest; response: TestLlmStepResponse };
       getProviderModels: { params: GetProviderModelsRequest; response: GetProviderModelsResponse };
+      testFinnhubConnection: { params: TestFinnhubConnectionRequest; response: TestFinnhubConnectionResponse };
 
       // Config
       getConfig: { params: Record<string, never>; response: DesktopConfig };

@@ -11,6 +11,7 @@ import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
+import { FinnhubService, type FinnhubReportIntelligence } from "./finnhub.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "../../types/portfolio.js";
 import type {
   PrepareReportPromptResponse,
@@ -80,6 +81,7 @@ export class PortfolioReportService {
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
+    private readonly finnhub: FinnhubService = new FinnhubService(),
   ) {
     // Periodically clean up stale sessions (older than 15 minutes)
     setInterval(() => {
@@ -186,6 +188,94 @@ export class PortfolioReportService {
       )
       .join("\n");
 
+    // Retrieve real-time market news and holding intelligence from Finnhub if configured
+    const isFinnhubConfigured = this.finnhub.isConfigured();
+    let finnhubIntelligence: FinnhubReportIntelligence | null = null;
+
+    if (isFinnhubConfigured) {
+      const targetSymbols = nonCashHoldings
+        .slice()
+        .sort((a, b) => b.weightPercent - a.weightPercent)
+        .map((h) => h.symbol);
+
+      try {
+        finnhubIntelligence = await this.finnhub.getReportMarketIntelligence({
+          symbols: targetSymbols,
+          fromDate: weekStartDate,
+          toDate: weekEndDate,
+          maxSymbols: 5,
+        });
+      } catch (finnhubErr) {
+        appLogger.logStep("warning", "report", "finnhub_enrichment_failed", "Failed to enrich report with Finnhub data", undefined, {
+          error: finnhubErr instanceof Error ? finnhubErr.message : String(finnhubErr),
+        });
+      }
+    }
+
+    let finnhubContext = "";
+    if (finnhubIntelligence && finnhubIntelligence.configured) {
+      const sections: string[] = [];
+
+      if (finnhubIntelligence.marketNews.length > 0) {
+        const newsLines = finnhubIntelligence.marketNews
+          .map((n) => `- **${n.headline}** (${n.source}): ${n.summary}`)
+          .join("\n");
+        sections.push(`### Financial Market & Macroeconomic News (Finnhub API)\n${newsLines}`);
+      }
+
+      const holdingSymbols = Object.keys(finnhubIntelligence.holdings);
+      if (holdingSymbols.length > 0) {
+        const holdingLines: string[] = [];
+        for (const sym of holdingSymbols) {
+          const intel = finnhubIntelligence.holdings[sym]!;
+          const parts: string[] = [];
+          if (intel.profile?.name && intel.profile?.industry) {
+            parts.push(`${intel.profile.name} (${intel.profile.industry})`);
+          }
+          if (intel.recommendation) {
+            const r = intel.recommendation;
+            parts.push(
+              `Analyst Consensus: ${r.strongBuy} Strong Buy, ${r.buy} Buy, ${r.hold} Hold, ${r.sell} Sell, ${r.strongSell} Strong Sell`,
+            );
+          }
+          if (intel.metrics) {
+            const m = intel.metrics;
+            const metricList: string[] = [];
+            if (m.peRatio !== undefined) metricList.push(`P/E: ${m.peRatio}`);
+            if (m.beta !== undefined) metricList.push(`Beta: ${m.beta}`);
+            if (m.fiftyTwoWeekHigh !== undefined && m.fiftyTwoWeekLow !== undefined) {
+              metricList.push(`52W: ${m.fiftyTwoWeekLow} - ${m.fiftyTwoWeekHigh}`);
+            }
+            if (m.dividendYield !== undefined) metricList.push(`Div Yield: ${m.dividendYield}%`);
+            if (metricList.length > 0) parts.push(metricList.join(" | "));
+          }
+          if (intel.news.length > 0) {
+            const newsList = intel.news.map((n) => `  * "${n.headline}" (${n.source})`).join("\n");
+            parts.push(`Recent Headlines:\n${newsList}`);
+          }
+
+          holdingLines.push(`- **${sym}**:\n  ${parts.join("\n  ")}`);
+        }
+        sections.push(`### Key Asset Intelligence & Analyst Consensus (Finnhub API)\n${holdingLines.join("\n")}`);
+      }
+
+      if (sections.length > 0) {
+        finnhubContext = `\n## Real-Time Market Intelligence (Finnhub API)\n${sections.join("\n\n")}\n`;
+      }
+    }
+
+    const structureInstructions = finnhubIntelligence?.configured
+      ? `Please structure your report as follows:
+1. **Executive Summary & Macro Overview** (2-3 concise paragraphs. Synthesize portfolio movement with the provided macroeconomic and financial market news.)
+2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI, incorporating relevant company headlines and analyst recommendations)
+3. **Risk Exposure & Allocation Assessment** (Sector/asset concentration, valuation multiples/beta, and cash buffer)
+4. **Tactical Action Items & Strategic Rebalancing** (Clear, bulleted recommendations)`
+      : `Please structure your report as follows:
+1. **Executive Summary & Macro Overview** (2-3 concise paragraphs)
+2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI)
+3. **Risk Exposure & Allocation Assessment** (Sector/asset concentration, cash buffer)
+4. **Tactical Action Items & Strategic Rebalancing** (Clear, bulleted recommendations)`;
+
     const systemPrompt =
       "You are a sophisticated, analytical quantitative investment portfolio analyst. You provide objective, concise, actionable commentary on portfolio performance, asset allocation, technical market trends, risk concentrations, and strategic rebalancing recommendations in clean markdown format. Maintain a professional, cyberpunk-tactical yet measured tone.";
 
@@ -200,12 +290,8 @@ Analyze the following investment portfolio state for portfolio **"${portfolio.na
 
 ## Holdings Ledger
 ${holdingsContext}
-
-Please structure your report as follows:
-1. **Executive Summary & Macro Overview** (2-3 concise paragraphs)
-2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI)
-3. **Risk Exposure & Allocation Assessment** (Sector/asset concentration, cash buffer)
-4. **Tactical Action Items & Strategic Rebalancing** (Clear, bulleted recommendations)
+${finnhubContext}
+${structureInstructions}
 
 ## General Rules
 1. Use ASD-STE100 simplified english text
@@ -223,6 +309,8 @@ Please structure your report as follows:
       holdingsCount: holdings.length,
       topWinner,
       topLoser,
+      finnhubEnriched: Boolean(finnhubIntelligence && finnhubIntelligence.configured),
+      finnhubNewsCount: finnhubIntelligence ? finnhubIntelligence.summaryStats.totalNewsArticles : 0,
     };
 
     return {
@@ -240,6 +328,7 @@ Please structure your report as follows:
       userPrompt,
       fullPrompt: `### System Prompt\n${systemPrompt}\n\n### User Prompt\n${userPrompt.trim()}`,
       metrics,
+      finnhubIntelligence,
     };
   }
 
@@ -266,6 +355,8 @@ Please structure your report as follows:
       model: ctx.model,
       holdingsCount: ctx.holdings.length,
       metrics: ctx.metrics,
+      finnhubConfigured: Boolean(ctx.finnhubIntelligence?.configured),
+      finnhubNewsCount: ctx.finnhubIntelligence ? ctx.finnhubIntelligence.summaryStats.totalNewsArticles : 0,
     };
   }
 

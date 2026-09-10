@@ -536,6 +536,10 @@ export function AnalyzePortfolioModal({
                     <Database className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">Weekly snapshot archival</span>
                   </div>
+                  <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
+                    <Sparkles className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
+                    <span className="truncate">Finnhub market news & ratings</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -550,9 +554,21 @@ export function AnalyzePortfolioModal({
                   <span>Context Compilation & Full Prompt</span>
                 </div>
                 {promptData && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase">
-                    Context Ready
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {promptData.finnhubConfigured ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Finnhub Enriched ({promptData.finnhubNewsCount || 0} news)</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 px-2 py-0.5 rounded border border-slate-800 bg-slate-950 font-mono">
+                        Finnhub: Off
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase">
+                      Context Ready
+                    </span>
+                  </div>
                 )}
               </div>
 

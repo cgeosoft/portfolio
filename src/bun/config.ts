@@ -40,6 +40,8 @@ export interface DesktopConfig {
   llmApiKeys: Record<string, string>;
   /** Per-provider base URLs */
   llmBaseUrls: Record<string, string>;
+  /** Optional Finnhub API key for market intelligence in AI reports */
+  finnhubApiKey?: string;
   /** Last opened directory for CSV import file picker */
   lastImportDirectory?: string;
   /** ISO timestamp of the last market quotes synchronization with Yahoo Finance */
@@ -96,6 +98,7 @@ const DEFAULT_CONFIG: DesktopConfig = {
   llamacppServerUrl: DEFAULT_LLAMACPP_URL,
   llmApiKeys: {},
   llmBaseUrls: {},
+  finnhubApiKey: "",
   lastImportDirectory: "",
   lastQuotesSync: undefined,
   webpageUrl: resolveWebpageUrl(),

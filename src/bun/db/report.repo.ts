@@ -31,6 +31,8 @@ export interface ReportMetrics {
   holdingsCount: number;
   topWinner?: { symbol: string; changePercent: number };
   topLoser?: { symbol: string; changePercent: number };
+  finnhubEnriched?: boolean;
+  finnhubNewsCount?: number;
 }
 
 export function findByPortfolio(portfolioId: string, limit = 52): ReportRow[] {

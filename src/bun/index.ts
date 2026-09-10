@@ -16,6 +16,7 @@ import * as portfolioRepo from "./db/portfolio.repo.js";
 import * as txRepo from "./db/transaction.repo.js";
 import * as marketCache from "./db/market-cache.repo.js";
 import { YahooFinanceService } from "./services/yahoo-finance.js";
+import { FinnhubService } from "./services/finnhub.js";
 import { LlmService } from "./services/llm.js";
 import { PortfolioService } from "./services/portfolio.js";
 import { PortfolioReportService } from "./services/portfolio-report.js";
@@ -48,9 +49,10 @@ dbTimer.end("success", `Database initialized (${portfolioCount} portfolios, ${tx
 
 // Initialize services
 const yahoo = new YahooFinanceService();
+const finnhub = new FinnhubService();
 const llm = new LlmService();
 const portfolioService = new PortfolioService(yahoo);
-const reportService = new PortfolioReportService(llm, portfolioService);
+const reportService = new PortfolioReportService(llm, portfolioService, finnhub);
 const chatService = new PortfolioChatService(llm, portfolioService);
 const metricsService = new MetricsService(portfolioService);
 
@@ -368,6 +370,10 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         } catch {
           return { models: [] };
         }
+      },
+
+      testFinnhubConnection: async (params) => {
+        return finnhub.testConnection(params.apiKey);
       },
 
       // ── Config ──

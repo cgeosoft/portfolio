@@ -310,6 +310,12 @@ export function SettingsPage({
   const [serverModels, setServerModels] = useState<Record<string, string[]>>({});
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
+  // Finnhub settings state
+  const [finnhubApiKey, setFinnhubApiKey] = useState("");
+  const [showFinnhubApiKey, setShowFinnhubApiKey] = useState(false);
+  const [isTestingFinnhub, setIsTestingFinnhub] = useState(false);
+  const [finnhubTestResult, setFinnhubTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
   // Portfolios management state
   const [portfolioSearch, setPortfolioSearch] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -365,6 +371,7 @@ export function SettingsPage({
       }
 
       if (config.llmApiKey) setReportApiKey(config.llmApiKey);
+      if (config.finnhubApiKey) setFinnhubApiKey(config.finnhubApiKey);
       const url = config.llmBaseUrl || config.llamacppServerUrl || preset?.defaultBaseUrl || "";
       if (url) {
         setReportBaseUrl(url);
@@ -525,6 +532,24 @@ export function SettingsPage({
   if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
     availableModels.unshift(reportModel);
   }
+
+  const handleTestFinnhub = async () => {
+    setIsTestingFinnhub(true);
+    setFinnhubTestResult(null);
+    try {
+      const res = await rpc.request.testFinnhubConnection({ apiKey: finnhubApiKey });
+      if (res.success) {
+        setFinnhubTestResult({ success: true, message: "Finnhub connection verified" });
+      } else {
+        setFinnhubTestResult({ success: false, message: res.error || "Finnhub authentication failed" });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFinnhubTestResult({ success: false, message: msg || "Failed to reach Finnhub" });
+    } finally {
+      setIsTestingFinnhub(false);
+    }
+  };
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
@@ -1122,6 +1147,93 @@ export function SettingsPage({
                   <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Test LLM Provider</span>
                 </button>
+              </div>
+
+              {/* Finnhub Market Intelligence for Reports */}
+              <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    <span>Finnhub Market Intelligence (Reports)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    Connect a free API key from Finnhub to enrich AI reports with macroeconomic news headlines, company catalysts, analyst recommendation trends, and fundamental metrics.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
+                      <span>Finnhub API Key</span>
+                      <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => rpc.request.openExternalUrl({ url: "https://finnhub.io/register" })}
+                      className="text-[10px] text-[#DD3C73] hover:underline flex items-center gap-1 font-mono cursor-pointer"
+                    >
+                      <span>Get free key (60 calls/min)</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showFinnhubApiKey ? "text" : "password"}
+                      value={finnhubApiKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFinnhubApiKey(val);
+                        setFinnhubTestResult(null);
+                        saveConfig({ finnhubApiKey: val.trim() });
+                      }}
+                      placeholder="Enter Finnhub API Key (e.g. c8...)"
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowFinnhubApiKey(!showFinnhubApiKey)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      {showFinnhubApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    disabled={isTestingFinnhub || !finnhubApiKey.trim()}
+                    onClick={handleTestFinnhub}
+                    className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-slate-100 transition-colors cursor-pointer"
+                  >
+                    {isTestingFinnhub ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
+                    ) : (
+                      <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    )}
+                    <span>{isTestingFinnhub ? "Verifying Key..." : "Test Finnhub Connection"}</span>
+                  </button>
+
+                  {finnhubTestResult && (
+                    <div
+                      className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
+                        finnhubTestResult.success
+                          ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
+                          : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
+                      }`}
+                    >
+                      {finnhubTestResult.success ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      )}
+                      <span>{finnhubTestResult.message}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

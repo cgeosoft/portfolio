@@ -3,6 +3,7 @@ import { getDatabase } from "../../db/database.js";
 import * as reportRepo from "../../db/report.repo.js";
 import * as portfolioRepo from "../../db/portfolio.repo.js";
 import { PortfolioReportService } from "../portfolio-report.js";
+import { FinnhubService } from "../finnhub.js";
 import type { LlmService } from "../llm.js";
 import type { PortfolioService } from "../portfolio.js";
 import type { PortfolioItem, FinancialPortfolioData } from "../../../types/portfolio.js";
@@ -153,4 +154,145 @@ describe("Portfolio Report Prompt Persistence", () => {
     expect(reports.length).toBe(1);
     expect(reports[0]!.prompt).toBe(result.prompt);
   });
+
+  it("PortfolioReportService integrates Finnhub market intelligence into prompt when configured", async () => {
+    let capturedPrompt: string | undefined;
+
+    const mockLlmService = {
+      chat: async (messages: { role: string; content: string }[]) => {
+        const sysMsg = messages.find((m) => m.role === "system")?.content;
+        const userMsg = messages.find((m) => m.role === "user")?.content;
+        capturedPrompt = `### System Prompt\n${sysMsg}\n\n### User Prompt\n${userMsg}`;
+        return "Tactical report generated with Finnhub data";
+      },
+    } as unknown as LlmService;
+
+    const mockPortfolioData: FinancialPortfolioData = {
+      summary: {
+        totalValue: 50000,
+        totalCost: 40000,
+        totalGainLossDollar: 10000,
+        totalGainLossPercent: 25,
+        dayGainLossDollar: 500,
+        dayGainLossPercent: 1.0,
+        totalGainSinceStartDollar: 10000,
+        totalGainSinceStartPercent: 25,
+        totalCashInjected: 40000,
+        cashBalance: 10000,
+        totalPortfolioValue: 60000,
+        realizedPnL: 0,
+        totalDividends: 0,
+        totalInterest: 0,
+        totalFees: 0,
+        totalTaxes: 0,
+        stockWeightPercent: 100,
+        etfWeightPercent: 0,
+        cryptoWeightPercent: 0,
+        cashWeightPercent: 0,
+        baseCurrency: "USD",
+        lastUpdated: new Date().toISOString(),
+      },
+      holdings: [
+        {
+          symbol: "AAPL",
+          name: "Apple Inc.",
+          assetType: "Stock",
+          shares: 100,
+          buyPrice: 150,
+          currentPrice: 220,
+          previousClose: 218,
+          totalCost: 15000,
+          currentValue: 22000,
+          dayChangeDollar: 200,
+          dayChangePercent: 0.9,
+          totalGainLossDollar: 7000,
+          totalGainLossPercent: 46.7,
+          weightPercent: 44,
+          currency: "USD",
+        },
+      ],
+      chartHistory: [],
+      individualCharts: {},
+    };
+
+    const mockPortfolioService = {
+      getPortfolioData: async () => mockPortfolioData,
+    } as unknown as PortfolioService;
+
+    const mockFinnhub = {
+      isConfigured: () => true,
+      getReportMarketIntelligence: async () => ({
+        configured: true,
+        marketNews: [
+          {
+            headline: "Fed Signals Steady Policy",
+            summary: "Central bank highlights economic resiliency",
+            source: "Financial Times",
+            datetime: 1700000000,
+          },
+        ],
+        holdings: {
+          AAPL: {
+            symbol: "AAPL",
+            profile: { name: "Apple Inc", industry: "Technology" },
+            news: [
+              {
+                headline: "Apple Expands AI Services",
+                summary: "New intelligence platform released",
+                source: "Bloomberg",
+                datetime: 1700000000,
+              },
+            ],
+            recommendation: {
+              strongBuy: 18,
+              buy: 22,
+              hold: 6,
+              sell: 1,
+              strongSell: 0,
+              period: "2026-09-01",
+            },
+            metrics: {
+              peRatio: 31.2,
+              beta: 1.05,
+              fiftyTwoWeekHigh: 235,
+              fiftyTwoWeekLow: 165,
+            },
+          },
+        },
+        summaryStats: {
+          totalNewsArticles: 2,
+          enrichedSymbolsCount: 1,
+        },
+      }),
+    } as unknown as FinnhubService;
+
+    const service = new PortfolioReportService(mockLlmService, mockPortfolioService, mockFinnhub);
+
+    const portfolio: PortfolioItem = {
+      id: testPortfolioId,
+      name: "Finnhub Test Portfolio",
+      baseCurrency: "USD",
+    };
+
+    const res = await service.prepareReportPrompt(testPortfolioId, {
+      provider: "openai",
+      model: "gpt-4o-mini",
+    });
+
+    expect(res.finnhubConfigured).toBe(true);
+    expect(res.finnhubNewsCount).toBe(2);
+    expect(res.fullPrompt).toContain("Financial Market & Macroeconomic News (Finnhub API)");
+    expect(res.fullPrompt).toContain("Fed Signals Steady Policy");
+    expect(res.fullPrompt).toContain("Apple Expands AI Services");
+    expect(res.fullPrompt).toContain("Analyst Consensus: 18 Strong Buy, 22 Buy");
+    expect(res.fullPrompt).toContain("P/E: 31.2");
+
+    const generated = await service.generateReport(portfolio, {
+      portfolioData: mockPortfolioData,
+    });
+
+    expect(generated.metrics.finnhubEnriched).toBe(true);
+    expect(generated.metrics.finnhubNewsCount).toBe(2);
+  });
 });
+
