@@ -18,7 +18,8 @@ description: Maintain the Electrobun Bun main process, the type-safe RPC bridge,
 - `src/bun/index.ts` - Entry point. Initializes the database, services, RPC handlers, window, and menu. This is the single place RPC methods are bound.
 - `src/bun/config.ts` - Loads and saves `~/.config/portfolio/config.json` (`DesktopConfig`). Defines `getStorageDir()`, `loadConfig()`, `saveConfig()`, `updateConfig()`, and cross-platform autostart sync.
 - `src/bun/environment.ts` - Environment helpers: production detection, webpage URL resolution, and app version.
-- `src/bun/logger.ts` - Rotating file logger exposing `appLogger`.
+- `src/bun/logger.ts` - Rotating file logger exposing `appLogger`. Use `logStep(level, source, step, message, durationMs?, data?)` or `startTimer(source, step)`; pass metadata through `data` instead of interpolating it into the message, and never call `console.log` directly.
+- `src/bun/log-console.ts` + `src/shared/log-format.ts` - Terminal and devtools rendering for log records (aligned columns, colour, `key=value` metadata). Colour follows `NO_COLOR`/`FORCE_COLOR`, TTY detection, and dev mode.
 - `src/bun/db/` - The `bun:sqlite` layer:
   - `database.ts` - Connection pool and schema migration (WAL mode, foreign keys, busy timeout).
   - `portfolio.repo.ts`, `transaction.repo.ts`, `report.repo.ts`, `snapshot.repo.ts`, `market-cache.repo.ts`, `conversation.repo.ts` - Repository modules that query and mutate tables.

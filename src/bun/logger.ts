@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, appendFileSync, readFileSync, statSync, renameSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
+import { writeConsoleLog } from "./log-console.js";
 
 const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -157,7 +158,7 @@ export class AppLogger {
       type,
       message,
     };
-    console.log(`[Portfolio:${type.toUpperCase()}] ${message}`);
+    writeConsoleLog({ timestamp, level: type, source: "main", message });
     this.append(entry);
     this.appendJsonl({
       timestamp,
@@ -180,7 +181,7 @@ export class AppLogger {
     const timestamp = new Date().toISOString();
     const durStr = durationMs !== undefined ? ` (${durationMs}ms)` : "";
     const dataStr = data ? ` ${JSON.stringify(data)}` : "";
-    console.log(`[${source.toUpperCase()}:${step}] [${level.toUpperCase()}] ${message}${durStr}${dataStr}`);
+    writeConsoleLog({ timestamp, level, source, step, message, durationMs, data });
 
     // Also write to traditional log if not debug
     if (level !== "debug") {
@@ -212,13 +213,13 @@ export class AppLogger {
     return {
       end: (level: StructuredLogRecord["level"] = "info", endMessage = "completed", data?: Record<string, unknown>) => {
         const durationMs = Math.round(performance.now() - startTime);
-        this.logStep(level, source, step, `${endMessage} in ${durationMs}ms`, durationMs, data);
+        this.logStep(level, source, step, endMessage, durationMs, data);
         return durationMs;
       },
       fail: (error: unknown, failMessage = "failed", data?: Record<string, unknown>) => {
         const durationMs = Math.round(performance.now() - startTime);
         const errMsg = error instanceof Error ? error.message : String(error);
-        this.logStep("error", source, step, `${failMessage}: ${errMsg} (after ${durationMs}ms)`, durationMs, {
+        this.logStep("error", source, step, `${failMessage}: ${errMsg}`, durationMs, {
           ...data,
           error: errMsg,
         });

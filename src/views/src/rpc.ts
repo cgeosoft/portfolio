@@ -1,5 +1,6 @@
 import { Electroview } from 'electrobun/view';
 import type { PortfolioRPC, LogClientEventRequest, AppUpdateInfo } from '../../shared/rpc-types.js';
+import { buildConsoleLogLine, CONTINUATION_INDENT, type ConsoleLogLevel } from '../../shared/log-format.js';
 
 let updateAvailableHandler: ((info: AppUpdateInfo) => void) | null = null;
 
@@ -47,6 +48,53 @@ export function setElectroviewInstance(inst: unknown): void {
     }
 }
 
+/** Devtools console styling that mirrors the main process terminal layout. */
+const LEVEL_STYLES: Record<ConsoleLogLevel, string> = {
+    debug: "color:#8b949e",
+    info: "color:#58a6ff",
+    success: "color:#3fb950",
+    warning: "color:#d29922",
+    error: "color:#f85149",
+};
+
+const DIM_STYLE = "color:#8b949e";
+
+function writeWebviewConsoleLog(record: {
+    level: ConsoleLogLevel;
+    source: string;
+    step?: string;
+    message: string;
+    durationMs?: number;
+    data?: Record<string, unknown>;
+}): void {
+    const parts = buildConsoleLogLine(record);
+    const [headline = "", ...rest] = parts.messageLines;
+    const scope = parts.step ? `${parts.source}:${parts.step}` : parts.source;
+
+    let format = `%c${parts.time}  %c${parts.levelLabel}  %c${scope}${parts.scopePadding}  %c${headline}`;
+    const styles: string[] = [
+        DIM_STYLE,
+        `${LEVEL_STYLES[parts.level]};font-weight:bold`,
+        DIM_STYLE,
+        parts.level === "error" || parts.level === "warning" ? LEVEL_STYLES[parts.level] : "color:inherit",
+    ];
+
+    if (parts.duration) {
+        format += `  %c${parts.duration}`;
+        styles.push(DIM_STYLE);
+    }
+    if (parts.data) {
+        format += `  %c${parts.data}`;
+        styles.push(DIM_STYLE);
+    }
+    for (const line of rest) {
+        format += `\n%c${CONTINUATION_INDENT}${line}`;
+        styles.push(DIM_STYLE);
+    }
+
+    console.log(format, ...styles);
+}
+
 class ClientLogger {
     private buffer: ClientLogEntry[] = [];
     private isFlushing = false;
@@ -58,9 +106,7 @@ class ClientLogger {
         durationMs?: number,
         data?: Record<string, unknown>,
     ): void {
-        const durStr = durationMs !== undefined ? ` (${durationMs}ms)` : "";
-        const dataStr = data ? ` ${JSON.stringify(data)}` : "";
-        console.log(`[Webview:${step}] [${level.toUpperCase()}] ${message}${durStr}${dataStr}`);
+        writeWebviewConsoleLog({ level, source: "webview", step, message, durationMs, data });
 
         if (this.buffer.length >= 200) {
             this.buffer.shift();
