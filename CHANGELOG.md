@@ -1,39 +1,27 @@
 # Changelog
 
-All notable changes to Portfolio Desktop are documented in this file.
-
 ## [0.1.6] - 2026-09-10
-
-## Release Notes for Version 0.1.6
 
 ### Changed
 - Sponsor banner now uses the contact email from the WEBPAGE_EMAIL environment variable.
 - The About dialog has been integrated into the Settings About section.
-- Build and release scripts now require WEBPAGE_URL, WEB
-
-
-All notable changes to Portfolio Desktop are documented in this file.
+- Build and release scripts now require WEBPAGE_URL, WEBPAGE_EMAIL and POSTHOG_API_KEY.
 
 ## [0.1.5] - 2026-09-10
 
-# Release Notes for Portfolio Desktop v0.1.5
-
-## Added
+### Added
 - Added a metrics marketplace for each portfolio on the overview page.
 
-## Changed
+### Changed
 - Improved the display of metric importance as a plain paragraph.
 
-## Fixed
+### Fixed
 - Calmed the metrics marketplace cards.
 - Fixed changelog generation to prepend new entries.
 
-
-All notable changes to Portfolio Desktop are documented in this file.
-
 ## [0.1.4] - 2026-09-08
 
-## Added
+### Added
 - Added an update popover in the bottom right corner of the app. It shows a changelog modal and provides download support for new versions.
 - Added opt-in analytics to the website using PostHog. Users can choose to enable analytics.
 

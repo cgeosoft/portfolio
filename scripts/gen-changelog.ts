@@ -11,9 +11,14 @@
  * Usage:
  *   bun scripts/gen-changelog.ts --version=<v> [--prev-tag=<tag>] [--only-print]
  *
+ * The model answers with JSON; the markdown is rendered here so the changelog
+ * keeps one heading hierarchy ("## [<version>]" per release, "### Added" and
+ * friends inside it).
+ *
  * The script prepends a "## [<version>] - <date>" section to CHANGELOG.md and
- * prints the notes body to stdout. If no token is configured, it falls back to
- * a plain git log based entry and continues without failing the release.
+ * prints the notes body to stdout. If no token is configured or the answer is
+ * unusable, it falls back to a plain git log based entry and continues without
+ * failing the release.
  */
 
 import { execSync } from "node:child_process";
@@ -88,7 +93,21 @@ function buildCompletionsUrl(baseUrl: string): string {
 
 // ---------------------------------------------------------------------------
 // LLM call (OpenAI-compatible chat completions)
+//
+// The model returns JSON, never markdown: heading levels, ordering and bullet
+// syntax are decided here so a chatty model cannot break the file structure.
 // ---------------------------------------------------------------------------
+const SECTIONS = [
+  ["added", "Added"],
+  ["changed", "Changed"],
+  ["fixed", "Fixed"],
+  ["removed", "Removed"],
+  ["security", "Security"],
+] as const;
+
+type SectionKey = (typeof SECTIONS)[number][0];
+type ReleaseNotes = Partial<Record<SectionKey, string[]>>;
+
 async function generateNotes(diffText: string, prevTag: string, version: string): Promise<{ ok: boolean; body: string; reason?: string }> {
   const token =
     process.env.OPENAI_API_TOKEN ||
@@ -107,9 +126,13 @@ async function generateNotes(diffText: string, prevTag: string, version: string)
 
   const prompt = [
     "You write release notes for the Portfolio Desktop application.",
-    "Write concise release notes in Simplified English for version " + version + ".",
+    "Describe the changes of version " + version + " in Simplified English.",
     "The changes are the git diff from tag " + prevTag + " to HEAD.",
-    "Use bullet points grouped by heading when applicable: Added, Changed, Fixed, Removed.",
+    "",
+    "Answer with a single JSON object and nothing else. Use this shape:",
+    '{"added": ["..."], "changed": ["..."], "fixed": ["..."], "removed": ["..."], "security": ["..."]}',
+    "Every value is an array of short plain sentences, one user visible change each.",
+    "Leave out a key when it has no entries. Do not write markdown, headings or bullet markers.",
     "Do not include private data, balances, tickers, or personal identifiers.",
     "Do not use long dashes. Do not use emojis.",
     "",
@@ -117,20 +140,24 @@ async function generateNotes(diffText: string, prevTag: string, version: string)
     diffText,
   ].join("\n");
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      max_tokens: 800,
-      messages: [
-        { role: "system", content: "You are a helpful release note writer." },
-        { role: "user", content: prompt },
-      ],
-    }),
-    signal: AbortSignal.timeout(90_000),
-  });
+  const payload: Record<string, unknown> = {
+    model,
+    temperature: 0.2,
+    max_tokens: 1200,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "You are a helpful release note writer that answers with JSON only." },
+      { role: "user", content: prompt },
+    ],
+  };
+
+  let res = await postCompletion(url, token, payload);
+  if (!res.ok && (res.status === 400 || res.status === 404 || res.status === 422)) {
+    // Not every OpenAI-compatible server knows response_format; the prompt
+    // alone still asks for JSON, so retry once without it.
+    delete payload.response_format;
+    res = await postCompletion(url, token, payload);
+  }
 
   if (!res.ok) {
     const detail = (await res.text().catch(() => "")).slice(0, 300);
@@ -142,8 +169,69 @@ async function generateNotes(diffText: string, prevTag: string, version: string)
   if (!content.trim()) return { ok: false, body: "", reason: "API returned empty content" };
 
   // Remove reasoning blocks if the model emits thinking sections.
-  const cleaned = sanitize(content);
-  return { ok: true, body: cleaned };
+  const parsed = parseNotes(sanitize(content));
+  if (!parsed) return { ok: false, body: "", reason: "API returned no JSON object" };
+
+  const body = renderNotes(parsed);
+  if (!body) return { ok: false, body: "", reason: "API returned no usable release note items" };
+  return { ok: true, body };
+}
+
+function postCompletion(url: string, token: string, payload: unknown): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(90_000),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// JSON parsing and local markdown rendering
+// ---------------------------------------------------------------------------
+function parseNotes(content: string): ReleaseNotes | null {
+  // Models like to wrap JSON in a fence or add a sentence around it, so fall
+  // back to the outermost braces before giving up.
+  const candidates = [content, content.replace(/^```(?:json)?\s*|\s*```$/g, "")];
+  const first = content.indexOf("{");
+  const last = content.lastIndexOf("}");
+  if (first !== -1 && last > first) candidates.push(content.slice(first, last + 1));
+
+  for (const candidate of candidates) {
+    try {
+      const value = JSON.parse(candidate.trim()) as unknown;
+      if (value && typeof value === "object" && !Array.isArray(value)) return value as ReleaseNotes;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  return null;
+}
+
+function renderNotes(notes: ReleaseNotes): string {
+  const blocks: string[] = [];
+  for (const [key, heading] of SECTIONS) {
+    const items = toItems(notes[key]);
+    if (items.length === 0) continue;
+    blocks.push([`### ${heading}`, ...items.map((item) => `- ${item}`)].join("\n"));
+  }
+  return blocks.join("\n\n");
+}
+
+function toItems(value: unknown): string[] {
+  const raw = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+  const items: string[] = [];
+  for (const entry of raw) {
+    if (typeof entry !== "string") continue;
+    // Flatten to one line and drop any markdown the model added anyway.
+    const item = entry
+      .replace(/\s+/g, " ")
+      .replace(/^[-*+]\s+/, "")
+      .replace(/^#{1,6}\s+/, "")
+      .trim();
+    if (item) items.push(item);
+  }
+  return items;
 }
 
 function sanitize(text: string): string {
@@ -164,7 +252,7 @@ function buildEntry(version: string, body: string): string {
 }
 
 function prependToChangelog(entry: string): void {
-  const header = "# Changelog\n\nAll notable changes to Portfolio Desktop are documented in this file.\n\n";
+  const header = "# Changelog\n\n";
   let content = `${header}${entry}`;
   if (existsSync(CHANGELOG)) {
     // Drop any existing header so the new entry sits directly beneath it,
