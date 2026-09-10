@@ -245,7 +245,7 @@ run_tag_release() {
   fi
 
   if [[ -n "${remote}" ]]; then
-    echo "[// RELEASE] Fetching tags from remote '${remote}'..."
+    echo "[RELEASE] Fetching tags from remote '${remote}'..."
     git fetch "${remote}" --tags --quiet 2>/dev/null || true
   fi
 
@@ -260,7 +260,7 @@ run_tag_release() {
   else
     if git rev-parse "v${pkg_version}" >/dev/null 2>&1; then
       target_version="$(bump_semver "${pkg_version}" "patch")"
-      echo "[// RELEASE] Tag v${pkg_version} already exists. Incrementing patch to ${target_version}."
+      echo "[RELEASE] Tag v${pkg_version} already exists. Incrementing patch to ${target_version}."
     else
       target_version="${pkg_version}"
     fi
@@ -298,17 +298,17 @@ run_tag_release() {
       echo "[DRY RUN] Would update package.json to version ${target_version}"
       echo "[DRY RUN] Would generate changelog entry and commit: \"chore(release): ${tag_name}\""
     else
-      echo "[// RELEASE] Updating package.json to version ${target_version}..."
+      echo "[RELEASE] Updating package.json to version ${target_version}..."
       bun -e "const fs=require('fs');const p=require('${APP_DIR}/package.json');p.version='${target_version}';fs.writeFileSync('${APP_DIR}/package.json',JSON.stringify(p,null,2)+'\n');"
       git add "${APP_DIR}/package.json"
 
       # Generate a changelog entry from the diff vs the previous release using
       # the OPENAI_* compatible model env vars read from .env.
-      echo "[// RELEASE] Generating changelog entry with release notes generator..."
+      echo "[RELEASE] Generating changelog entry with release notes generator..."
       if (cd "${APP_DIR}" && bun scripts/gen-changelog.ts --version="${target_version}" >/dev/null); then
         git add "${APP_DIR}/CHANGELOG.md"
       else
-        echo "[// RELEASE] WARNING: changelog entry not generated; continuing release."
+        echo "[RELEASE] WARNING: changelog entry not generated; continuing release."
       fi
 
       git commit -m "chore(release): ${tag_name}"
@@ -319,7 +319,7 @@ run_tag_release() {
   if [[ "${DRY_RUN}" == "true" ]]; then
     echo "[DRY RUN] Would run: git tag -a \"${tag_name}\" -m \"${tag_message}\""
   else
-    echo "[// RELEASE] Creating annotated tag ${tag_name}..."
+    echo "[RELEASE] Creating annotated tag ${tag_name}..."
     git tag -a "${tag_name}" -m "${tag_message}"
   fi
 
@@ -332,14 +332,14 @@ run_tag_release() {
       echo "[DRY RUN] Would run: git push origin \"${tag_name}\""
     fi
   elif [[ "${NO_PUSH}" == "true" ]]; then
-    echo "[// RELEASE] Tag ${tag_name} created locally (--no-push specified)."
+    echo "[RELEASE] Tag ${tag_name} created locally (--no-push specified)."
   else
-    echo "[// RELEASE] Pushing branch and tag to remote '${remote}'..."
+    echo "[RELEASE] Pushing branch and tag to remote '${remote}'..."
     git push "${remote}" "${current_branch}"
     git push "${remote}" "${tag_name}"
 
     if [[ "${remote}" != "origin" ]] && git remote | grep -qx "origin"; then
-      echo "[// RELEASE] Syncing release branch and tag with origin..."
+      echo "[RELEASE] Syncing release branch and tag with origin..."
       git push origin "${current_branch}" 2>/dev/null || true
       git push origin "${tag_name}" 2>/dev/null || true
     fi
@@ -375,26 +375,26 @@ run_build_packages() {
   echo "================================================================="
 
   if [[ "${CLEAN}" == "true" ]]; then
-    echo "[// RELEASE] Cleaning ${DIST_DIR}..."
+    echo "[RELEASE] Cleaning ${DIST_DIR}..."
     rm -rf "${DIST_DIR}"
   fi
   mkdir -p "${DIST_DIR}"
 
   # 1. Electrobun Compilation (stable production build)
   if [[ "${SKIP_BUILD}" != "true" ]]; then
-    echo "[// RELEASE] Building Tailwind CSS..."
+    echo "[RELEASE] Building Tailwind CSS..."
     (cd "${APP_DIR}" && bun run build:css)
-    echo "[// RELEASE] Compiling Electrobun application (--env=stable)..."
+    echo "[RELEASE] Compiling Electrobun application (--env=stable)..."
     (cd "${APP_DIR}" && bunx electrobun build --env=stable)
   else
-    echo "[// RELEASE] Skipping compilation (--skip-build specified)."
+    echo "[RELEASE] Skipping compilation (--skip-build specified)."
   fi
 
   # 2. Execute target packagers
   for target in "${TARGETS[@]}"; do
     case "${target}" in
       debian|deb)
-        echo "[// RELEASE] Dispatching Debian packager..."
+        echo "[RELEASE] Dispatching Debian packager..."
         bash "${SCRIPT_DIR}/build-deb.sh" \
           --skip-build \
           --version="${VERSION}" \
@@ -411,7 +411,7 @@ run_build_packages() {
         done
         ;;
       windows|win)
-        echo "[// RELEASE] Packaging Windows artifacts..."
+        echo "[RELEASE] Packaging Windows artifacts..."
         mkdir -p "${DIST_DIR}"
         for f in "${APP_DIR}/artifacts"/*Setup*.exe "${APP_DIR}/artifacts"/*.exe; do
           if [[ -f "$f" ]]; then
@@ -437,7 +437,7 @@ run_build_packages() {
         fi
         ;;
       macos|mac)
-        echo "[// RELEASE] Packaging macOS artifacts..."
+        echo "[RELEASE] Packaging macOS artifacts..."
         mkdir -p "${DIST_DIR}"
         for f in "${APP_DIR}/artifacts"/*.dmg; do
           if [[ -f "$f" ]]; then

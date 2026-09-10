@@ -66,7 +66,7 @@ case "${UNAME_M}" in
     ;;
 esac
 
-echo "[// DEB BUILD] Packaging Portfolio v${VERSION} (${DEB_ARCH})..."
+echo "[DEB BUILD] Packaging Portfolio v${VERSION} (${DEB_ARCH})..."
 
 # Check required tools
 if ! command -v dpkg-deb >/dev/null 2>&1; then
@@ -78,9 +78,9 @@ TAR_ZST="${APP_DIR}/artifacts/stable-${ELECTROBUN_ARCH}-Portfolio.tar.zst"
 
 # Build if requested or if artifacts missing
 if [[ "${SKIP_BUILD}" != "true" || ! -f "${TAR_ZST}" ]]; then
-  echo "[// DEB BUILD] Building Tailwind CSS..."
+  echo "[DEB BUILD] Building Tailwind CSS..."
   (cd "${APP_DIR}" && bun run build:css)
-  echo "[// DEB BUILD] Running electrobun build..."
+  echo "[DEB BUILD] Running electrobun build..."
   (cd "${APP_DIR}" && bunx electrobun build --env=stable)
 fi
 
@@ -93,7 +93,7 @@ fi
 STAGE_DIR="$(mktemp -d -t portfolio-deb-staging.XXXXXX)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
 
-echo "[// DEB BUILD] Staging tree: ${STAGE_DIR}"
+echo "[DEB BUILD] Staging tree: ${STAGE_DIR}"
 
 mkdir -p "${STAGE_DIR}/opt/portfolio"
 mkdir -p "${STAGE_DIR}/usr/bin"
@@ -104,7 +104,7 @@ mkdir -p "${STAGE_DIR}/usr/share/icons/hicolor/48x48/apps"
 mkdir -p "${STAGE_DIR}/usr/share/pixmaps"
 mkdir -p "${STAGE_DIR}/DEBIAN"
 
-echo "[// DEB BUILD] Extracting desktop bundle to staging tree..."
+echo "[DEB BUILD] Extracting desktop bundle to staging tree..."
 tar --zstd -xf "${TAR_ZST}" -C "${STAGE_DIR}/opt/portfolio" --strip-components=1
 
 # Clean up redundant root desktop file inside /opt/portfolio
@@ -198,10 +198,10 @@ chmod 644 "${STAGE_DIR}/DEBIAN/control"
 mkdir -p "${DIST_DIR}"
 OUTPUT_DEB="${DIST_DIR}/portfolio_${VERSION}_${DEB_ARCH}.deb"
 
-echo "[// DEB BUILD] Building package: ${OUTPUT_DEB}..."
+echo "[DEB BUILD] Building package: ${OUTPUT_DEB}..."
 dpkg-deb --build --root-owner-group "${STAGE_DIR}" "${OUTPUT_DEB}"
 
-echo "[// DEB BUILD] Verifying package contents..."
+echo "[DEB BUILD] Verifying package contents..."
 dpkg-deb --info "${OUTPUT_DEB}"
 
 echo "================================================================="
