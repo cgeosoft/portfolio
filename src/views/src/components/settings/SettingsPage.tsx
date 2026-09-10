@@ -1119,36 +1119,51 @@ export function SettingsPage({
                           return (
                             <div
                               key={entry.key}
-                              className={`p-4 rounded-xl border transition-colors ${
-                                isEnabled
-                                  ? "border-[#DD3C73]/40 bg-[#DD3C73]/[0.06]"
-                                  : "border-slate-800/80 bg-slate-950/40"
-                              }`}
+                              className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 transition-colors"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-2.5 min-w-0">
-                                  <MetricIcon className={`w-4 h-4 mt-0.5 shrink-0 ${entry.iconClass}`} />
+                                <div className="flex items-start gap-3 min-w-0 pr-2">
+                                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                                    <MetricIcon
+                                      className={`w-4 h-4 ${isEnabled ? entry.iconClass : "text-slate-500"}`}
+                                    />
+                                  </div>
                                   <div className="min-w-0">
-                                    <div className="text-xs font-bold text-slate-100 truncate">{entry.title}</div>
+                                    <div
+                                      className={`text-xs font-bold uppercase tracking-wider truncate ${
+                                        isEnabled ? "text-slate-200" : "text-slate-400"
+                                      }`}
+                                    >
+                                      {entry.title}
+                                    </div>
                                     <div className="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">
-                                      {entry.category}
+                                      {isEnabled ? "On overview" : "Not shown"}
                                     </div>
                                   </div>
                                 </div>
 
                                 <button
                                   type="button"
+                                  role="switch"
+                                  aria-checked={isEnabled}
                                   disabled={isSavingMetrics}
                                   onClick={() => handleToggleMetric(metricsPortfolioId, entry.key)}
-                                  className={`h-7 inline-flex items-center gap-1.5 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 font-mono disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    isEnabled
-                                      ? "border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-[#DD3C73] hover:bg-[#DD3C73]/25"
-                                      : "border border-slate-700 text-slate-300 hover:bg-slate-800/60"
+                                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mt-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    isEnabled ? "bg-[#DD3C73]" : "bg-slate-800"
                                   }`}
-                                  aria-pressed={isEnabled}
+                                  title={
+                                    isEnabled
+                                      ? `Remove ${entry.title} from the overview`
+                                      : `Show ${entry.title} on the overview`
+                                  }
                                 >
-                                  {isEnabled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                  <span>{isEnabled ? "Added" : "Add"}</span>
+                                  <span className="sr-only">{entry.title}</span>
+                                  <span
+                                    aria-hidden="true"
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                      isEnabled ? "translate-x-5" : "translate-x-0"
+                                    }`}
+                                  />
                                 </button>
                               </div>
 
@@ -1166,7 +1181,7 @@ export function SettingsPage({
                                   <span className="text-[10px] uppercase tracking-wider text-slate-500">
                                     Display size
                                   </span>
-                                  <div className="flex items-center gap-1">
+                                  <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-900 border border-slate-800">
                                     {([
                                       { id: "large" as MetricCardSize, label: "Large card", icon: Maximize2 },
                                       { id: "compact" as MetricCardSize, label: "Compact", icon: Minimize2 },
@@ -1179,10 +1194,10 @@ export function SettingsPage({
                                           type="button"
                                           disabled={isSavingMetrics}
                                           onClick={() => handleSetMetricSize(metricsPortfolioId, entry.key, option.id)}
-                                          className={`h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer font-mono disabled:opacity-50 disabled:cursor-not-allowed ${
+                                          className={`h-6 inline-flex items-center gap-1.5 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer font-mono disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isSelected
-                                              ? "border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-[#DD3C73]"
-                                              : "border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                                              ? "bg-slate-800 text-slate-100"
+                                              : "text-slate-500 hover:text-slate-300"
                                           }`}
                                           aria-pressed={isSelected}
                                         >
