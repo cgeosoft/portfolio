@@ -1,5 +1,29 @@
 import { describe, it, expect } from "bun:test";
-import { LlmService } from "../llm.js";
+import { LlmService, sanitizeLlmResponse } from "../llm.js";
+
+describe("sanitizeLlmResponse: reasoning models", () => {
+  it("keeps the answer that follows a closed thinking block", () => {
+    const raw = "<think>\nWeighing the options.\n</think>\n\nLLM connection verified";
+    expect(sanitizeLlmResponse(raw)).toBe("LLM connection verified");
+  });
+
+  it("keeps an answer that contains no further angle bracket", () => {
+    expect(sanitizeLlmResponse("<think>reasoning</think> plain answer")).toBe("plain answer");
+  });
+
+  it("keeps an answer that itself contains angle brackets", () => {
+    expect(sanitizeLlmResponse("<think>reasoning</think>a < b > c")).toBe("a < b > c");
+  });
+
+  it("strips nested thinking blocks", () => {
+    const raw = "<think>outer<think>inner</think>still outer</think>answer";
+    expect(sanitizeLlmResponse(raw)).toBe("answer");
+  });
+
+  it("returns empty when the thinking block was truncated", () => {
+    expect(sanitizeLlmResponse("<think>cut off mid-thought")).toBe("");
+  });
+});
 
 describe("LlmService diagnostic and configuration", () => {
   const service = new LlmService();
@@ -69,6 +93,74 @@ describe("LlmService diagnostic and configuration", () => {
       });
       expect(res.success).toBe(false);
       expect(res.message).toContain("Invalid server URL format");
+    });
+  });
+
+  describe("testStep: inference phase", () => {
+    it("fails with a reasoning-specific message when the model only thinks", async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "<think>Still reasoning when the budget ran out" } }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )) as unknown as typeof fetch;
+      try {
+        const res = await service.testStep("inference", {
+          provider: "llamacpp-server",
+          model: "qwen3",
+          baseUrl: "http://127.0.0.1:8080",
+        });
+        expect(res.success).toBe(false);
+        expect(res.message).toContain("reasoning but no answer");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("passes the answer on when the thinking block closes", async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "<think>reasoning</think>\n\nLLM connection verified" } }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )) as unknown as typeof fetch;
+      try {
+        const res = await service.testStep("inference", {
+          provider: "llamacpp-server",
+          model: "qwen3",
+          baseUrl: "http://127.0.0.1:8080",
+        });
+        expect(res.success).toBe(true);
+        expect(res.output).toBe("LLM connection verified");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("recovers the reply from reasoning_content when content is empty", async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "", reasoning_content: "thinking out loud" } }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )) as unknown as typeof fetch;
+      try {
+        const res = await service.testStep("inference", {
+          provider: "llamacpp-server",
+          model: "qwen3",
+          baseUrl: "http://127.0.0.1:8080",
+        });
+        expect(res.success).toBe(false);
+        expect(res.message).toContain("reasoning but no answer");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 

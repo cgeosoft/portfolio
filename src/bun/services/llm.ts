@@ -24,7 +24,17 @@ export interface LlmChatOptions {
   baseUrl?: string;
   isReport?: boolean;
   signal?: AbortSignal;
+  /** Return the model output untouched, keeping `<think>` blocks intact. */
+  skipSanitize?: boolean;
 }
+
+/**
+ * Token budget for the diagnostic inference step. Reasoning models such as
+ * Qwen3 spend their first few hundred tokens inside `<think>`, so a tight
+ * budget truncates the reply before the block closes and leaves nothing once
+ * the thinking is stripped.
+ */
+const TEST_INFERENCE_MAX_TOKENS = 512;
 
 /** How long an auto-detected llama.cpp model name stays valid. */
 const LLAMACPP_MODEL_CACHE_MS = 60_000;
@@ -85,7 +95,7 @@ function stripThinkTags(input: string): string {
       continue;
     }
 
-    // Check for close tag: ` response` followed by `>`
+    // Check for close tag: `</think` followed by `>`
     if (input[i] === "<" &&
         i + 8 <= len &&
         input[i + 1] === "/" &&
@@ -94,9 +104,10 @@ function stripThinkTags(input: string): string {
         (input[i + 4] === "i" || input[i + 4] === "I") &&
         (input[i + 5] === "n" || input[i + 5] === "N") &&
         (input[i + 6] === "k" || input[i + 6] === "K")) {
-      // Found ` response`
-      // Fast-forward to `>`
-      i += 8;
+      // Found `</think`. Advance past the tag name only: consuming the `>` here
+      // as well would make the scan below swallow everything up to the *next*
+      // `>` in the document, discarding the answer that follows the block.
+      i += 7;
       while (i < len && input[i] !== ">") i++;
       if (i < len) i++; // skip `>`
       if (depth > 0) depth--;
@@ -150,6 +161,7 @@ export class LlmService {
       rawResponse = await this.chatWithLlamaCpp(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
     }
 
+    if (options.skipSanitize) return rawResponse;
     return sanitizeLlmResponse(rawResponse, options.isReport);
   }
 
@@ -303,10 +315,20 @@ export class LlmService {
     }
 
     const json = (await res.json()) as Record<string, unknown>;
-    const choices = json.choices as Array<{ message?: { content?: string } }> | undefined;
-    const content = choices?.[0]?.message?.content;
-    if (!content) throw new Error("No completion content returned from llamacpp-server");
-    return content;
+    const choices = json.choices as
+      | Array<{ message?: { content?: string; reasoning_content?: string } }>
+      | undefined;
+    const message = choices?.[0]?.message;
+    const content = message?.content;
+    if (content?.trim()) return content;
+
+    // Servers started with `--reasoning-format deepseek` return the thinking in
+    // a separate field and leave `content` empty. Re-wrap it so callers see the
+    // same shape as inline `<think>` output instead of a blank string.
+    const reasoning = message?.reasoning_content?.trim();
+    if (reasoning) return `<think>${reasoning}</think>`;
+
+    throw new Error("No completion content returned from llamacpp-server");
   }
 
   private async chatWithOllama(
@@ -922,14 +944,28 @@ export class LlmService {
             model,
             apiKey: apiKey || undefined,
             baseUrl: baseUrl || undefined,
-            maxTokens: 50,
+            maxTokens: TEST_INFERENCE_MAX_TOKENS,
+            skipSanitize: true,
           }
         );
         const latencyMs = Date.now() - startTime;
+        const answer = sanitizeLlmResponse(result);
+        if (!answer) {
+          // The model replied, but everything it produced was reasoning: the
+          // `<think>` block never closed within the token budget.
+          return {
+            success: false,
+            message:
+              `Model produced ${result.trim().length} characters of reasoning but no answer ` +
+              `within ${TEST_INFERENCE_MAX_TOKENS} tokens. Raise the token budget or turn off ` +
+              `thinking for this model.`,
+            latencyMs,
+          };
+        }
         return {
           success: true,
           message: `Inference response generated in ${latencyMs}ms.`,
-          output: result.slice(0, 300),
+          output: answer.slice(0, 300),
           latencyMs,
         };
       } catch (err: unknown) {
