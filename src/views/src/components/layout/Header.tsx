@@ -105,6 +105,94 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 px-3 sm:px-6 py-1.5 flex items-center justify-center font-mono select-none gap-1.5 shrink-0 w-full bg-transparent">
+      {portfolios && portfolios.length > 1 && (
+        <>
+          <div className="relative shrink-0" ref={portfolioMenuRef}>
+            <button
+              onClick={() => setIsPortfolioDropdownOpen((prev) => !prev)}
+              aria-haspopup="listbox"
+              aria-expanded={isPortfolioDropdownOpen}
+              data-open={isPortfolioDropdownOpen}
+              className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
+              title="Switch Portfolio"
+            >
+              {activePortfolio?.isShared ? (
+                <Users className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
+              ) : (
+                <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
+              )}
+              <span className="truncate">
+                {activePortfolio?.name || "Main Portfolio"}
+              </span>
+              <ChevronDown className="cx-menu-chevron w-3 h-3 text-slate-400" />
+            </button>
+
+            {isPortfolioDropdownOpen && (
+              <div className="cx-menu absolute left-0 mt-1.5 w-64 z-50 font-mono">
+                <div className="cx-menu-label">
+                  <span>Portfolios ({portfolios.length})</span>
+                  {onOpenManagePortfolios && (
+                    <button
+                      onClick={() => {
+                        setIsPortfolioDropdownOpen(false);
+                        onOpenManagePortfolios();
+                      }}
+                      className="text-[10px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer font-bold tracking-wider hover:underline"
+                    >
+                      Manage
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-56 overflow-y-auto custom-scrollbar">
+                  {portfolios.map((p) => {
+                    const isActive = activePortfolio?.id === p.id;
+                    const Icon = p.isShared ? Users : TrendingUp;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          onChangePortfolio(p.id);
+                          setIsPortfolioDropdownOpen(false);
+                          if (
+                            activeView !== "dashboard" &&
+                            onNavigateDashboard
+                          ) {
+                            onNavigateDashboard();
+                          }
+                        }}
+                        data-active={isActive}
+                        className="cx-menu-item justify-between"
+                      >
+                        <div className="flex items-center gap-2 truncate min-w-0 flex-1">
+                          <Icon
+                            className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`}
+                          />
+                          <span className="truncate">{p.name}</span>
+                          {p.isShared && (
+                            <span className="text-[10px] text-slate-500 font-normal shrink-0">
+                              (shared)
+                            </span>
+                          )}
+                        </div>
+                        {isActive && (
+                          <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            className="h-4 w-px bg-slate-800 shrink-0 mx-0.5"
+            aria-hidden="true"
+          />
+        </>
+      )}
+
       <nav aria-label="Page navigation" className="flex items-center gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -151,87 +239,6 @@ export function Header({
           </button>
         )}
       </nav>
-
-      {portfolios && portfolios.length > 1 && (
-        <div className="relative shrink-0" ref={portfolioMenuRef}>
-          <button
-            onClick={() => setIsPortfolioDropdownOpen((prev) => !prev)}
-            aria-haspopup="listbox"
-            aria-expanded={isPortfolioDropdownOpen}
-            data-open={isPortfolioDropdownOpen}
-            className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
-            title="Switch Portfolio"
-          >
-            {activePortfolio?.isShared ? (
-              <Users className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-            ) : (
-              <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-            )}
-            <span className="truncate">
-              {activePortfolio?.name || "Main Portfolio"}
-            </span>
-            <ChevronDown className="cx-menu-chevron w-3 h-3 text-slate-400" />
-          </button>
-
-          {isPortfolioDropdownOpen && (
-            <div className="cx-menu absolute left-0 mt-1.5 w-64 z-50 font-mono">
-              <div className="cx-menu-label">
-                <span>Portfolios ({portfolios.length})</span>
-                {onOpenManagePortfolios && (
-                  <button
-                    onClick={() => {
-                      setIsPortfolioDropdownOpen(false);
-                      onOpenManagePortfolios();
-                    }}
-                    className="text-[10px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer font-bold tracking-wider hover:underline"
-                  >
-                    Manage
-                  </button>
-                )}
-              </div>
-
-              <div className="max-h-56 overflow-y-auto custom-scrollbar">
-                {portfolios.map((p) => {
-                  const isActive = activePortfolio?.id === p.id;
-                  const Icon = p.isShared ? Users : TrendingUp;
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => {
-                        onChangePortfolio(p.id);
-                        setIsPortfolioDropdownOpen(false);
-                        if (
-                          activeView !== "dashboard" &&
-                          onNavigateDashboard
-                        ) {
-                          onNavigateDashboard();
-                        }
-                      }}
-                      data-active={isActive}
-                      className="cx-menu-item justify-between"
-                    >
-                      <div className="flex items-center gap-2 truncate min-w-0 flex-1">
-                        <Icon
-                          className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`}
-                        />
-                        <span className="truncate">{p.name}</span>
-                        {p.isShared && (
-                          <span className="text-[10px] text-slate-500 font-normal shrink-0">
-                            (shared)
-                          </span>
-                        )}
-                      </div>
-                      {isActive && (
-                        <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </header>
   );
 }
