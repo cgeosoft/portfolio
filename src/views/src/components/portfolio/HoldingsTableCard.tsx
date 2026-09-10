@@ -168,7 +168,7 @@ export function HoldingsTableCard({
             <span className="text-slate-500">—</span>
           ) : (
             <div className={dayColor}>
-              <div className="font-bold">{isDayUp ? "+" : ""}{fmtPercent(h.dayChangePercent)}</div>
+              <div className="font-bold">{fmtPercent(h.dayChangePercent)}</div>
               <div className="text-[11px] opacity-80">{isDayUp ? "+" : ""}{fmtCurrency(h.dayChangeDollar, h.currency || currency, hideValues)}</div>
             </div>
           )}
@@ -180,7 +180,7 @@ export function HoldingsTableCard({
             <span className="text-slate-500">—</span>
           ) : (
             <div className={totalColor}>
-              <div className="font-bold">{isTotalUp ? "+" : ""}{fmtPercent(h.totalGainLossPercent)}</div>
+              <div className="font-bold">{fmtPercent(h.totalGainLossPercent)}</div>
               <div className="text-[11px] opacity-80">{isTotalUp ? "+" : ""}{fmtCurrency(h.totalGainLossDollar, h.currency || currency, hideValues)}</div>
             </div>
           )}
