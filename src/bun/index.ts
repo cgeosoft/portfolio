@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import type { PortfolioRPC } from "../shared/rpc-types.js";
 import { loadConfig, updateConfig } from "./config.js";
-import { getAppVersion, isDev, getEnvironmentName, resolveWebpageUrl } from "./environment.js";
+import { getAppVersion, isDev, getEnvironmentName, resolveWebpageUrl, resolveDevEmail } from "./environment.js";
 import { appLogger } from "./logger.js";
 import { getDatabase, closeDatabase } from "./db/database.js";
 import * as portfolioRepo from "./db/portfolio.repo.js";
@@ -375,6 +375,7 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
           version,
           majorMinor,
           webpageUrl,
+          devEmail: resolveDevEmail(),
           isDev: isDev(),
           channel: getEnvironmentName(),
           lastQuotesSync: cfg.lastQuotesSync,

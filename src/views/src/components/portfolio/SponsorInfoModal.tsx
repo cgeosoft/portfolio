@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, HelpCircle, ShieldCheck, Mail, Check, HeartHandshake } from "lucide-react";
 import { rpc } from "../../rpc";
+import { WEBPAGE_EMAIL } from "../../environment";
 
 export interface SponsorInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Developer contact address, resolved from WEBPAGE_EMAIL by the bun process. */
+  devEmail?: string;
 }
 
-const DEV_EMAIL = "dev@portfoliodesktop.com";
-
-export function SponsorInfoModal({ isOpen, onClose }: SponsorInfoModalProps) {
+export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModalProps) {
   const [copied, setCopied] = useState(false);
+  const contactEmail = devEmail && devEmail.trim().length > 0 ? devEmail.trim() : WEBPAGE_EMAIL;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -26,25 +28,30 @@ export function SponsorInfoModal({ isOpen, onClose }: SponsorInfoModalProps) {
   const handleCopyEmail = useCallback(async () => {
     try {
       if (navigator.clipboard) {
-        await navigator.clipboard.writeText(DEV_EMAIL);
+        await navigator.clipboard.writeText(contactEmail);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
     } catch {
       // Best-effort clipboard copy
     }
-  }, []);
+  }, [contactEmail]);
 
   const handleSendEmail = useCallback(async () => {
-    const mailtoUrl = `mailto:${DEV_EMAIL}?subject=Portfolio%20Desktop%20Sponsorship%20Inquiry`;
+    const mailtoUrl = `mailto:${contactEmail}?subject=Portfolio%20Desktop%20Sponsorship%20Inquiry`;
+    let opened = false;
     try {
-      await rpc.request.openExternalUrl({ url: mailtoUrl });
+      // openExternalUrl only permits http(s), so a mailto: hand-off reports failure
+      // rather than throwing; fall back to the webview in that case too.
+      const result = await rpc.request.openExternalUrl({ url: mailtoUrl });
+      opened = Boolean(result?.success);
     } catch {
-      if (typeof window !== "undefined") {
-        window.open(mailtoUrl, "_blank");
-      }
+      opened = false;
     }
-  }, []);
+    if (!opened && typeof window !== "undefined") {
+      window.open(mailtoUrl, "_blank");
+    }
+  }, [contactEmail]);
 
   if (!isOpen) return null;
 
@@ -108,7 +115,7 @@ export function SponsorInfoModal({ isOpen, onClose }: SponsorInfoModalProps) {
               Want to showcase your platform or financial service? You can reach out directly to the developer email:
             </p>
             <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800">
-              <code className="text-[#A7E2C0] text-[11px] select-all truncate">{DEV_EMAIL}</code>
+              <code className="text-[#A7E2C0] text-[11px] select-all truncate">{contactEmail}</code>
               <button
                 type="button"
                 onClick={handleCopyEmail}

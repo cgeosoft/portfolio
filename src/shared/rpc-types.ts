@@ -273,6 +273,7 @@ export interface GetAppInfoResponse {
   version: string;
   majorMinor: string;
   webpageUrl: string;
+  devEmail: string;
   isDev: boolean;
   channel?: string;
   lastQuotesSync?: string;

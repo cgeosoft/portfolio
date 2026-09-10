@@ -6,9 +6,10 @@ import { SponsorInfoModal } from "./SponsorInfoModal";
 
 export interface SponsorBannerCardProps {
   webpageUrl?: string;
+  devEmail?: string;
 }
 
-export function SponsorBannerCard({ webpageUrl }: SponsorBannerCardProps) {
+export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardProps) {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -154,6 +155,7 @@ export function SponsorBannerCard({ webpageUrl }: SponsorBannerCardProps) {
       <SponsorInfoModal
         isOpen={isInfoModalOpen}
         onClose={() => setIsInfoModalOpen(false)}
+        devEmail={devEmail}
       />
     </>
   );

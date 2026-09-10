@@ -401,6 +401,7 @@ export default function App() {
   // App Info & Quotes Sync State
   const [appVersion, setAppVersion] = useState("0.1.0");
   const [webpageUrl, setWebpageUrl] = useState(WEBPAGE_URL);
+  const [devEmail, setDevEmail] = useState<string | undefined>(undefined);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
@@ -567,6 +568,7 @@ export default function App() {
         if (appInfo.version) setAppVersion(appInfo.version);
         else if (appInfo.majorMinor) setAppVersion(appInfo.majorMinor);
         if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
+        if (appInfo.devEmail) setDevEmail(appInfo.devEmail);
         if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
       } catch (e) {
         clientLogger.log("error", "initApp:appInfo_error", `Failed to load app info: ${e}`);
@@ -1371,7 +1373,7 @@ export default function App() {
               )}
 
               {/* Sponsor Banner Box */}
-              <SponsorBannerCard webpageUrl={webpageUrl} />
+              <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} />
 
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
