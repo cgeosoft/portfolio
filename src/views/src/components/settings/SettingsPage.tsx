@@ -1168,13 +1168,7 @@ export function SettingsPage({
                               </div>
 
                               <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">{entry.description}</p>
-
-                              <div className="mt-2.5 pl-2.5 border-l-2 border-slate-800">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                  Why it matters
-                                </div>
-                                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{entry.importance}</p>
-                              </div>
+                              <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">{entry.importance}</p>
 
                               {isEnabled && (
                                 <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
