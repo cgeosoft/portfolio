@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: holdings-cost
+name: Current Holdings Cost
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Principal
+icon: calculator
+accent: blue
+summary: Acquisition cost of the positions you hold today.
+description: >
+  Acquisition cost of the positions you hold today, in base currency, without
+  closed positions and without cash.
+importance: >
+  Compare it against the market value of your holdings to read the unrealized gain
+  directly. It is also the cost basis that a future sale will use.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: valuation
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

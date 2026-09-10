@@ -26,7 +26,9 @@ import { SettingsPage, type SettingsSection } from "./components/settings/Settin
 import { TermsPage } from "./components/common/TermsPage";
 import { BottomBar } from "./components/layout/BottomBar";
 import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
-import { METRIC_CATALOG_BY_KEY, type MetricContext } from "./components/portfolio/metrics-catalog";
+import { MetricDashboard } from "./components/metrics/MetricDashboard";
+import { MetricsTab } from "./components/metrics/MetricsTab";
+import { MetricDetailsModal } from "./components/metrics/MetricDetailsModal";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
 import { reloadPage } from "./components/portfolio/utils";
 import { WEBPAGE_URL } from "./environment";
@@ -37,19 +39,34 @@ import type {
   PortfolioChatMessage,
   AssistantConversation,
   AppUpdateInfo,
+  MetricEvaluation,
+  MetricListing,
+  MetricRepositoryListing,
 } from "../../shared/rpc-types";
 import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge, onUpdateAvailable } from "./rpc";
 import {
   getDefaultMetricPreferences,
   type PortfolioMetricPreference,
 } from "../../shared/metrics";
-import { RefreshCw, Info, Sliders, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 
-const VALID_TABS: readonly string[] = ["overview", "reports", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "metrics", "reports", "transactions"];
+const INFO_MODAL_KEYS: readonly string[] = [
+  "totalGain",
+  "valuation",
+  "todayReturn",
+  "realizedIncome",
+  "cashReserves",
+  "capitalInjected",
+  "dividends",
+  "topPerformer",
+];
+const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "assistant", "support", "about"];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
   if (cleanHash === "charts" || cleanHash === "holdings") return "overview";
+  if (cleanHash === "settings/metrics") return "metrics";
   if (cleanHash === "logs") return "transactions";
   if (VALID_TABS.includes(cleanHash)) {
     return cleanHash as PortfolioTabKey;
@@ -62,6 +79,8 @@ export default function App() {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#portfolios") return "settings";
+      // The metrics page moved from Preferences to a top-level tab; keep old links working.
+      if (hash === "#settings/metrics") return "dashboard";
       if (hash.startsWith("#settings")) return "settings";
       if (hash === "#terms") return "terms";
     }
@@ -73,7 +92,7 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
         const sec = hash.replace("#settings/", "") as SettingsSection;
-        if (["general", "portfolios", "metrics", "assistant", "support", "about"].includes(sec)) {
+        if (SETTINGS_SECTIONS.includes(sec)) {
           return sec;
         }
       }
@@ -144,9 +163,13 @@ export default function App() {
       if (hash === "#portfolios") {
         setSettingsSection("portfolios");
         setView("settings");
+      } else if (hash === "#settings/metrics") {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#metrics`);
+        setView("dashboard");
+        setActiveTab("metrics");
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
-        if (parts[1] && ["general", "portfolios", "metrics", "assistant", "support", "about"].includes(parts[1])) {
+        if (parts[1] && SETTINGS_SECTIONS.includes(parts[1])) {
           setSettingsSection(parts[1] as SettingsSection);
         } else {
           setSettingsSection("general");
@@ -467,13 +490,136 @@ export default function App() {
     };
   }, [activePortfolioId]);
 
-  const handleMetricsSaved = useCallback(
-    (portfolioId: string, metrics: PortfolioMetricPreference[]) => {
-      if (portfolioId === activePortfolioId) {
-        setMetricPreferences(metrics);
+  // Metric modules: installed listings, marketplace repository, and live sandbox results
+  const [metricListings, setMetricListings] = useState<MetricListing[]>([]);
+  const [metricRepository, setMetricRepository] = useState<MetricRepositoryListing[]>([]);
+  const [metricEvaluations, setMetricEvaluations] = useState<Record<string, MetricEvaluation>>({});
+  const [isSavingMetrics, setIsSavingMetrics] = useState(false);
+  const [metricDetails, setMetricDetails] = useState<MetricListing | null>(null);
+  const [metricRetryNonce, setMetricRetryNonce] = useState(0);
+  const [metricRetryIds, setMetricRetryIds] = useState<string[]>([]);
+
+  const loadMetricCatalog = useCallback(async () => {
+    try {
+      await ensureRpcReady();
+      const res = await rpc.request.getMetricCatalog({});
+      setMetricListings(res.installed);
+      setMetricRepository(res.repository);
+    } catch (err) {
+      clientLogger.log("warning", "metrics_catalog", `Failed to load the metric catalog: ${String(err)}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadMetricCatalog();
+  }, [loadMetricCatalog]);
+
+  const addedMetricIds = metricPreferences.filter((pref) => pref.added).map((pref) => pref.id).join(",");
+  const portfolioDataStamp = portfolioData?.summary?.lastUpdated ?? "";
+
+  // Re-run the modules whenever the data, the selection, or the currency changes.
+  // Results are cached in the main process, so unchanged inputs cost nothing.
+  useEffect(() => {
+    if (!activePortfolioId || !portfolioData?.summary || !addedMetricIds) {
+      setMetricEvaluations({});
+      return;
+    }
+    let cancelled = false;
+    const retry = metricRetryIds;
+    void (async () => {
+      try {
+        const res = await rpc.request.evaluatePortfolioMetrics({
+          portfolioId: activePortfolioId,
+          baseCurrency: currency,
+          retry: retry.length > 0 ? retry : undefined,
+        });
+        if (cancelled) return;
+        const next: Record<string, MetricEvaluation> = {};
+        for (const result of res.results) next[result.id] = result;
+        setMetricEvaluations(next);
+        if (retry.length > 0) {
+          setMetricRetryIds([]);
+          void loadMetricCatalog();
+        }
+      } catch (err) {
+        if (!cancelled) clientLogger.log("warning", "metrics_evaluate", `Failed to evaluate metrics: ${String(err)}`);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePortfolioId, portfolioDataStamp, addedMetricIds, currency, metricRetryNonce]);
+
+  const handleSaveMetrics = useCallback(
+    async (next: PortfolioMetricPreference[]) => {
+      if (!activePortfolioId) return;
+      const previous = metricPreferences;
+      setMetricPreferences(next);
+      setIsSavingMetrics(true);
+      try {
+        const res = await rpc.request.savePortfolioMetrics({ portfolioId: activePortfolioId, metrics: next });
+        setMetricPreferences(res.metrics);
+      } catch (err) {
+        setMetricPreferences(previous);
+        clientLogger.log("warning", "metrics_save", `Failed to save the metric selection: ${String(err)}`);
+      } finally {
+        setIsSavingMetrics(false);
       }
     },
-    [activePortfolioId],
+    [activePortfolioId, metricPreferences],
+  );
+
+  const handleResetMetrics = useCallback(async () => {
+    if (!activePortfolioId) return;
+    setIsSavingMetrics(true);
+    try {
+      const res = await rpc.request.savePortfolioMetrics({ portfolioId: activePortfolioId, reset: true });
+      setMetricPreferences(res.metrics);
+    } catch (err) {
+      clientLogger.log("warning", "metrics_save", `Failed to reset the metric selection: ${String(err)}`);
+    } finally {
+      setIsSavingMetrics(false);
+    }
+  }, [activePortfolioId]);
+
+  const handleMetricInstalled = useCallback(
+    (metric: MetricListing) => {
+      setMetricListings((prev) => [...prev.filter((l) => l.id !== metric.id), metric]);
+      void loadMetricCatalog();
+    },
+    [loadMetricCatalog],
+  );
+
+  const handleMetricUninstall = useCallback(
+    async (id: string) => {
+      try {
+        await rpc.request.uninstallMetric({ id });
+        setMetricPreferences((prev) => prev.filter((pref) => pref.id !== id));
+        await loadMetricCatalog();
+      } catch (err) {
+        clientLogger.log("warning", "metrics_uninstall", `Failed to uninstall metric: ${String(err)}`);
+      }
+    },
+    [loadMetricCatalog],
+  );
+
+  const handleMetricRetry = useCallback((id: string) => {
+    setMetricRetryIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setMetricRetryNonce((n) => n + 1);
+  }, []);
+
+  /** Built-in metrics open the illustrated explanation; everything else opens its manifest. */
+  const handleMetricInfo = useCallback(
+    (listing: MetricListing) => {
+      const info = listing.manifest.info;
+      if (listing.source === "builtin" && info && INFO_MODAL_KEYS.includes(info)) {
+        handleOpenMetricModal(info as MetricKey);
+      } else {
+        setMetricDetails(listing);
+      }
+    },
+    [handleOpenMetricModal],
   );
 
   const handleQuitApp = useCallback(async () => {
@@ -1152,12 +1298,6 @@ export default function App() {
   const chartHistory = portfolioData?.chartHistory || [];
   const transactions = portfolioData?.transactions || [];
 
-  const metricContext: MetricContext = { summary, currency, hideValues: hideCurrencyValues };
-  const selectedMetrics = metricPreferences
-    .filter((pref) => pref.enabled && METRIC_CATALOG_BY_KEY[pref.key])
-    .map((pref) => ({ ...METRIC_CATALOG_BY_KEY[pref.key], size: pref.size }));
-  const largeMetrics = selectedMetrics.filter((entry) => entry.size === "large");
-  const compactMetrics = selectedMetrics.filter((entry) => entry.size === "compact");
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full min-w-0">
@@ -1256,7 +1396,6 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
-            onMetricsSaved={handleMetricsSaved}
           />
         </main>
       )}
@@ -1272,7 +1411,6 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
-            onMetricsSaved={handleMetricsSaved}
           />
         </main>
       )}
@@ -1294,83 +1432,16 @@ export default function App() {
           {/* TAB: OVERVIEW (Charts & Holdings) */}
           {activeTab === "overview" && (
             <>
-              {/* Selected Metrics (configured in Settings > Metrics) */}
-              <div className="flex items-center justify-between gap-3 min-w-0">
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-mono truncate">
-                  Portfolio Metrics
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleOpenSettings("metrics")}
-                  className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-all cursor-pointer shrink-0"
-                  title="Choose the metrics of this portfolio"
-                >
-                  <Sliders className="w-3 h-3" />
-                  <span>Customize Metrics</span>
-                </button>
-              </div>
-
-              {largeMetrics.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {largeMetrics.map((entry) => {
-                    const MetricIcon = entry.icon;
-                    return (
-                      <StatCard
-                        key={entry.key}
-                        title={entry.title}
-                        value={entry.getValue(metricContext)}
-                        subValue={entry.getSubValue?.(metricContext)}
-                        icon={<MetricIcon className={`w-5 h-5 ${entry.iconClass}`} />}
-                        onInfo={() => handleOpenMetricModal(entry.infoKey)}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {compactMetrics.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-xs">
-                  {compactMetrics.map((entry) => (
-                    <div key={entry.key} className="min-w-0">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                        <span className="truncate whitespace-nowrap" title={entry.title}>
-                          {entry.compactTitle}
-                        </span>
-                        <button
-                          onClick={() => handleOpenMetricModal(entry.infoKey)}
-                          className="hover:text-slate-300 shrink-0"
-                          aria-label={`Explanation for ${entry.title}`}
-                        >
-                          <Info className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                      <div
-                        className={`font-bold mt-0.5 truncate ${
-                          entry.getCompactValueClass?.(metricContext) || "text-slate-200"
-                        }`}
-                      >
-                        {entry.getValue(metricContext)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {largeMetrics.length === 0 && compactMetrics.length === 0 && (
-                <div className="p-6 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-center space-y-3">
-                  <div className="text-xs text-slate-400 font-mono">
-                    No metrics are selected for this portfolio.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSettings("metrics")}
-                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>Open Metrics Marketplace</span>
-                  </button>
-                </div>
-              )}
+              {/* Dashboard metrics, chosen on the Metrics tab */}
+              <MetricDashboard
+                prefs={metricPreferences}
+                listings={metricListings}
+                evaluations={metricEvaluations}
+                currency={currency}
+                hideValues={hideCurrencyValues}
+                onInfo={handleMetricInfo}
+                onOpenMetricsTab={() => handleTabChange("metrics")}
+              />
 
               {/* Sponsor Banner Box */}
               <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} />
@@ -1419,6 +1490,26 @@ export default function App() {
                 summary={summary}
               />
             </>
+          )}
+
+          {/* TAB: METRICS */}
+          {activeTab === "metrics" && (
+            <MetricsTab
+              hasPortfolio={Boolean(activePortfolioId)}
+              prefs={metricPreferences}
+              listings={metricListings}
+              repository={metricRepository}
+              evaluations={metricEvaluations}
+              currency={currency}
+              hideValues={hideCurrencyValues}
+              isSaving={isSavingMetrics}
+              onSave={(next) => void handleSaveMetrics(next)}
+              onReset={() => void handleResetMetrics()}
+              onInfo={handleMetricInfo}
+              onInstalled={handleMetricInstalled}
+              onUninstall={handleMetricUninstall}
+              onRetry={handleMetricRetry}
+            />
           )}
 
           {/* TAB: REPORTS */}
@@ -1542,6 +1633,8 @@ export default function App() {
         currency={currency}
         hideCurrencyValues={hideCurrencyValues}
       />
+
+      <MetricDetailsModal listing={metricDetails} onClose={() => setMetricDetails(null)} />
 
       <CreatePortfolioModal
         isOpen={isCreateModalOpen}

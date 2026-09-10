@@ -1,0 +1,30 @@
+# Copy this directory to extras/metrics/<your-metric-id>/ and edit every field.
+# See ../manifest.example.yml for what each field means and accepts.
+schema: 1
+abi: 1
+id: my-metric
+name: My Metric
+shortName: My Metric
+version: 1.0.0
+developer:
+  name: Your Name
+  url: https://github.com/your-handle
+license: MIT
+category: Performance
+icon: gauge
+accent: pink
+summary: One sentence shown in the marketplace card.
+description: >
+  What the metric shows, in one or two sentences.
+importance: >
+  Why an investor should follow it.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

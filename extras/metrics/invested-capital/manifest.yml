@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: invested-capital
+name: Invested Capital
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Principal
+icon: layers
+accent: blue
+summary: Deposits minus withdrawals, the principal you moved in.
+description: >
+  Total principal you moved into the portfolio, that is all deposits minus all
+  capital withdrawals.
+importance: >
+  Separates your own savings from market growth. It is the denominator of your return,
+  so it tells you if the portfolio grew because of performance or because of new money.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: capitalInjected
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

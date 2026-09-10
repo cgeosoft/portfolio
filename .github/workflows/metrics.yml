@@ -1,0 +1,58 @@
+name: Metrics
+
+# Every metric is a WebAssembly module whose binary is never in the diff, so a
+# pull request that touches extras/metrics is validated end to end: manifests
+# are checked, modules are compiled, each one runs against a fixture portfolio
+# inside the sandbox, and the generated SDK and website page must be current.
+
+on:
+  pull_request:
+    paths:
+      - "extras/metrics/**"
+      - "scripts/build-metrics.ts"
+      - "scripts/build-metrics-site.ts"
+      - "src/shared/metric-*.ts"
+      - "src/bun/services/metrics/**"
+      - ".github/workflows/metrics.yml"
+  push:
+    branches: [main]
+    paths:
+      - "extras/metrics/**"
+
+jobs:
+  validate:
+    name: Validate and build metric modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate manifests, compile modules, check the generated SDK
+        run: bun run scripts/build-metrics.ts --check --force
+
+      - name: Build the bundle
+        run: bun run build:metrics
+
+      - name: Run every module in the sandbox against a fixture portfolio
+        run: bun test src/bun/services/__tests__/metric-runtime.test.ts src/bun/services/__tests__/portfolio-metrics.test.ts
+
+      - name: Check the website catalog page is current
+        run: bun run scripts/build-metrics-site.ts --check
+
+      - name: Report module sizes
+        run: |
+          echo "## Metric modules" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Module | Size | SHA-256 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for f in build/metrics/*.wasm; do
+            id=$(basename "$f" .wasm)
+            size=$(stat -c %s "$f")
+            hash=$(sha256sum "$f" | cut -c1-16)
+            echo "| $id | $size B | $hash... |" >> "$GITHUB_STEP_SUMMARY"
+          done

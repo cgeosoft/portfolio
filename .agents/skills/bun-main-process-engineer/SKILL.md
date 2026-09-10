@@ -23,6 +23,7 @@ description: Maintain the Electrobun Bun main process, the type-safe RPC bridge,
   - `database.ts` - Connection pool and schema migration (WAL mode, foreign keys, busy timeout).
   - `portfolio.repo.ts`, `transaction.repo.ts`, `report.repo.ts`, `snapshot.repo.ts`, `market-cache.repo.ts`, `conversation.repo.ts` - Repository modules that query and mutate tables.
 - `src/bun/services/` - Business logic and external integrations (see the `financial-engineer` and `ai-analyst-engineer` skills).
+- `src/bun/services/metrics/` - Sandboxed metric modules. `runtime.ts` spawns the engine process (`engine-source.ts`, written to the storage dir and run with `process.execPath`), `payload.ts` encodes the scoped input, `evaluator.ts` runs and caches, `registry.ts` merges built-ins (`builtin-modules.generated.ts`, produced by `bun run build:metrics`) with URL installs (`db/installed-metrics.repo.ts`), `installer.ts` fetches, hashes, and validates URL installs. `index.ts` is the facade the RPC layer calls.
 - `src/shared/rpc-types.ts` - The single source of truth for the `PortfolioRPC` schema.
 
 ## Adding an RPC method
@@ -39,6 +40,12 @@ description: Maintain the Electrobun Bun main process, the type-safe RPC bridge,
 - WAL mode and foreign keys are enabled in `database.ts`.
 - Repositories return domain types from `src/types/portfolio.ts`.
 - The `reports` table has a nullable `prompt` column added via migration. Follow the same pattern of `PRAGMA table_info` checks for additive migrations.
+
+## Metric modules
+
+- Never instantiate WebAssembly in the main process. `MetricRuntime` runs modules in a child process because a WASM loop cannot be interrupted in-thread (`Worker.terminate()` leaves it spinning); a process can be killed.
+- `bun run build:metrics` must run before `tsc`, `bun test`, or `electrobun` (the scripts chain it). The generated bundle is gitignored.
+- Tests for the sandbox live in `src/bun/services/__tests__/metric-runtime.test.ts` and compile fixtures with `assemblyscript/asc` at test time.
 
 ## Gotchas and pitfalls
 

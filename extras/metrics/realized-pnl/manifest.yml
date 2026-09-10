@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: realized-pnl
+name: Realized P&L
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Income & Yield
+icon: piggy-bank
+accent: mint
+summary: Profit or loss locked in by executed sells.
+description: >
+  Profit or loss locked in by executed sells, calculated against the cost basis
+  of each sold position.
+importance: >
+  Realized results cannot be taken back by a later market drop, and they usually drive
+  your tax bill. Watch it to judge your exit decisions, not only your open positions.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: realizedIncome
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

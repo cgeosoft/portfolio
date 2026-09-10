@@ -1,0 +1,41 @@
+# Registry of every metric module in this repository.
+#
+# Add a metric by opening a pull request that adds an entry here and a
+# directory with `manifest.yml` and `assembly/index.ts`. See README.md.
+#
+# id       must equal the `id` in the manifest and the directory name
+# path     directory under extras/metrics that holds the manifest and source
+# bundled  true when the module ships inside the application
+
+schema: 1
+metrics:
+  - id: total-portfolio-value
+    path: total-portfolio-value
+    bundled: true
+  - id: day-gain-loss
+    path: day-gain-loss
+    bundled: true
+  - id: lifetime-gain
+    path: lifetime-gain
+    bundled: true
+  - id: cash-liquidity
+    path: cash-liquidity
+    bundled: true
+  - id: invested-capital
+    path: invested-capital
+    bundled: true
+  - id: holdings-cost
+    path: holdings-cost
+    bundled: true
+  - id: realized-pnl
+    path: realized-pnl
+    bundled: true
+  - id: dividends-interest
+    path: dividends-interest
+    bundled: true
+  - id: broker-fees
+    path: broker-fees
+    bundled: true
+  - id: taxes-withheld
+    path: taxes-withheld
+    bundled: true

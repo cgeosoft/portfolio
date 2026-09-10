@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: day-gain-loss
+name: Day Gain / Loss
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Performance
+icon: trending-up
+accent: mint
+summary: Value change of your open positions during the current session.
+description: >
+  Value change of your open positions during the current trading session,
+  measured against the previous official close of each holding.
+importance: >
+  Shows how today's market moves hit your capital. It separates short-term noise
+  from your long-term result and tells you if a market event touched your holdings.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: large
+  valueFormat: currency
+info: todayReturn
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

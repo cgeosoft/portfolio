@@ -142,6 +142,21 @@ function initializeSchema(database: Database): void {
   database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_portfolio ON assistant_conversations(portfolioId)`);
   database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_updated ON assistant_conversations(updatedAt)`);
 
+  // Metric modules installed from a URL. Built-in modules are embedded in the bundle.
+  database.run(`
+    CREATE TABLE IF NOT EXISTS installed_metrics (
+      id TEXT PRIMARY KEY,
+      version TEXT NOT NULL,
+      source TEXT NOT NULL,
+      sourceUrl TEXT,
+      sha256 TEXT NOT NULL,
+      manifestYaml TEXT NOT NULL,
+      scopesGranted TEXT NOT NULL,
+      verified INTEGER NOT NULL DEFAULT 0,
+      installedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   // Schema version tracking for future migrations
   database.run(`
     CREATE TABLE IF NOT EXISTS schema_version (

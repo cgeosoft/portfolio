@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: cash-liquidity
+name: Cash Liquidity
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Liquidity
+icon: circle-dollar-sign
+accent: navy
+summary: Uninvested cash held in the portfolio.
+description: >
+  Uninvested cash held in the portfolio, calculated from deposits, withdrawals,
+  buys, sells, dividends, and fees.
+importance: >
+  Free cash is your reaction capacity. It shows the money available for a new position
+  or a market drop, and how much of your portfolio currently earns no market return.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: large
+  valueFormat: currency
+info: cashReserves
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

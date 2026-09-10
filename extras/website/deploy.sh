@@ -106,6 +106,13 @@ if [[ ! -f "${SCRIPT_DIR}/index.html" ]]; then
   exit 1
 fi
 
+# 1.2. Regenerate the metrics catalog page from extras/metrics before staging
+if command -v bun >/dev/null 2>&1; then
+  (cd "${SCRIPT_DIR}/../.." && bun run scripts/build-metrics-site.ts)
+else
+  echo -e "${YELLOW}[WARN] bun not found; deploying the committed metrics/index.html as is.${NC}" >&2
+fi
+
 # 1.5. Stage a deploy copy and inject environment variables (PostHog API key)
 # Browsers cannot read server envvars at runtime, so we substitute them here.
 # Uses the same POSTHOG_API_KEY that the desktop app reads.

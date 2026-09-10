@@ -1,0 +1,31 @@
+schema: 1
+abi: 1
+id: total-portfolio-value
+name: Total Portfolio Value
+shortName: Portfolio Value
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Valuation
+icon: wallet
+accent: pink
+summary: Live net worth of the portfolio, positions plus cash.
+description: >
+  Live net worth of the portfolio. It adds the market value of every open position
+  to the uninvested cash balance, with foreign assets converted into your base currency.
+importance: >
+  This is the single number that answers 'what is my portfolio worth right now'.
+  Use it as the headline figure and as the baseline for allocation and risk decisions.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: large
+  valueFormat: currency
+info: valuation
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

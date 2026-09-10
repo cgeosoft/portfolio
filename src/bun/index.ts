@@ -27,6 +27,7 @@ import { WindowStateManager, normalizeWindowState } from "./services/window-stat
 import { supportTicketService } from "./services/support-ticket.js";
 import { appUpdateService } from "./services/app-update.js";
 import * as portfolioMetrics from "./services/portfolio-metrics.js";
+import { MetricsService } from "./services/metrics/index.js";
 
 // ── Initialize ──────────────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ const llm = new LlmService();
 const portfolioService = new PortfolioService(yahoo);
 const reportService = new PortfolioReportService(llm, portfolioService);
 const chatService = new PortfolioChatService(llm, portfolioService);
+const metricsService = new MetricsService(portfolioService);
 
 // Initialize telemetry
 telemetry.initialize();
@@ -177,6 +179,33 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
           : portfolioMetrics.savePortfolioMetrics(params.portfolioId, params.metrics ?? []);
         return { portfolioId: params.portfolioId, metrics };
       },
+
+      getMetricCatalog: async () => metricsService.getCatalog(),
+
+      evaluatePortfolioMetrics: async (params) => {
+        const timer = appLogger.startTimer("rpc", "evaluatePortfolioMetrics", "RPC: evaluatePortfolioMetrics requested");
+        try {
+          const results = await metricsService.evaluateForPortfolio(params);
+          timer.end("info", `Evaluated ${results.length} metric(s)`, {
+            count: results.length,
+            failed: results.filter((r) => r.status !== "ok").length,
+          });
+          return { portfolioId: params.portfolioId, results };
+        } catch (err) {
+          timer.fail(err, "evaluatePortfolioMetrics failed");
+          throw err;
+        }
+      },
+
+      previewMetricInstall: async (params) => metricsService.previewInstall(params.url),
+
+      installMetric: async (params) => {
+        const metric = await metricsService.install(params.url, params.grantedScopes);
+        telemetry.capture("metric_installed");
+        return { metric };
+      },
+
+      uninstallMetric: async (params) => ({ success: await metricsService.uninstall(params.id) }),
 
       // ── Transactions ──
 
@@ -824,6 +853,9 @@ setTimeout(() => {
 // Start background update check on launch and hourly interval
 appUpdateService.startPeriodicChecks();
 
+// Compile the metric modules in the sandbox while the UI loads.
+void metricsService.warmUp();
+
 // ── Graceful Shutdown ───────────────────────────────────────────────────────
 
 async function shutdown(): Promise<void> {
@@ -837,6 +869,7 @@ async function shutdown(): Promise<void> {
   } catch {
     // Best effort
   }
+  metricsService.shutdown();
   await telemetry.shutdown();
   closeDatabase();
   Utils.quit(0);

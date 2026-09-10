@@ -41,4 +41,7 @@ Thumbs.db
 # generated style
 src/views/style.css
 
+# generated metric module bundle (bun run build:metrics)
+src/bun/services/metrics/builtin-modules.generated.ts
+
 tmp/

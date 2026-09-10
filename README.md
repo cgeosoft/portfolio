@@ -21,7 +21,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 - **Local SQLite Engine (`bun:sqlite`)**: High-performance WAL-mode SQLite database with indexed tables and instant queries.
 - **Live Market Valuation & Multi-Currency FX**: Real-time quotes, intraday P&L, historical charts, and foreign exchange conversions powered by Yahoo Finance.
 - **Progressive Financial Analytics**: Automatic calculation of total invested capital, realized gains, uninvested cash liquidity balance, dividend income, broker fees, and tax withholdings.
-- **Metrics Marketplace**: A catalog page in Preferences that describes every overview metric, explains why it matters, and lets you select the metrics of the portfolio overview. The selection and the card size (large card or compact tile) are stored per portfolio.
+- **Sandboxed Metric Modules**: Every metric is a WebAssembly module with a YAML manifest that declares its developer, version, and the data scopes it reads. Modules run in a separate engine process with no file, network, or system access, a memory ceiling, and a time budget. The Metrics tab lists the metrics of a portfolio, a bounded dashboard (4 large cards, 6 compact tiles) that feeds the Overview, and a marketplace built from [`extras/metrics/repository.yml`](extras/metrics/README.md). Third-party modules can be installed from a URL after a scope consent dialog and stay marked UNVERIFIED.
 - **Technical Indicators**: 50-day and 200-day Simple Moving Averages (SMA 50, SMA 200), 14-day Relative Strength Index (RSI), and 52-week ranges.
 - **Broker CSV Importer**: Intelligent CSV import wizard with automatic template detection (Trade Republic, Scalable Capital, Interactive Brokers, Degiro) with dry-run diff preview and duplicate protection.
 - **On-Demand AI Analyst**: Generate tactical markdown portfolio performance briefings via local or cloud LLMs.
@@ -55,9 +55,14 @@ portfolio/
 │   │       ├── demo-portfolio.ts   # 100-transaction demo portfolio generator
 │   │       ├── yahoo-finance.ts    # Market quotes, FX rates, chart histories
 │   │       ├── llm.ts              # 8-provider LLM interface
-│   │       └── telemetry.ts        # PostHog anonymous analytics client
+│   │       ├── telemetry.ts        # PostHog anonymous analytics client
+│   │       └── metrics/            # Sandboxed metric modules: engine process, registry, installer
 │   ├── shared/                # Shared contracts
-│   │   └── rpc-types.ts       # Type-safe RPC schema (PortfolioRPC)
+│   │   ├── rpc-types.ts       # Type-safe RPC schema (PortfolioRPC)
+│   │   ├── metrics.ts         # Per-portfolio metric selection and dashboard slots
+│   │   ├── metric-abi.ts      # Guest ABI v1: payload layout and data scopes
+│   │   ├── metric-manifest.ts # Manifest schema and validation
+│   │   └── metric-output.ts   # Result schema and host-side formatting
 │   ├── types/                 # Unified domain types
 │   │   ├── portfolio.ts       # FinancialPortfolioData, Holding, Transaction, Report
 │   │   └── electrobun.d.ts    # Electrobun type definitions
@@ -71,8 +76,13 @@ portfolio/
 │           ├── App.tsx        # Dashboard application router
 │           ├── rpc.ts         # Electroview RPC client bridge
 │           └── components/    # Reusable cards, modals, and navigation views
+├── extras/
+│   ├── metrics/               # Metric module repository (manifests + AssemblyScript sources)
+│   └── website/               # Marketing site, including the generated metrics catalog page
 └── scripts/
     ├── build-deb.sh           # Debian (.deb) package builder
+    ├── build-metrics.ts       # Compiles metric modules and embeds the bundled ones
+    ├── build-metrics-site.ts  # Renders extras/website/metrics/index.html from the repository
     └── release.sh             # Release orchestrator script
 ```
 
@@ -106,13 +116,25 @@ bun run typecheck
 bun run dev
 ```
 
-> Note: `bun run dev` automatically compiles Tailwind CSS before starting the application. To watch CSS changes continuously during styling work, run `bun run watch:css` in a separate terminal.
+> Note: `bun run dev` automatically compiles the metric modules and Tailwind CSS before starting the application. To watch CSS changes continuously during styling work, run `bun run watch:css` in a separate terminal.
 
 ### Build Tailwind CSS
 
 ```bash
 bun run build:css
 ```
+
+### Build Metric Modules
+
+Compiles every metric in `extras/metrics/` with AssemblyScript and embeds the bundled ones in `src/bun/services/metrics/builtin-modules.generated.ts` (generated, not committed). `typecheck`, `test`, `dev`, and `build` run it first.
+
+```bash
+bun run build:metrics          # incremental
+bun run build:metrics -- --force
+bun run build:metrics-site     # regenerate the website catalog page
+```
+
+See [`extras/metrics/README.md`](extras/metrics/README.md) to write and submit a metric.
 
 ### Build Desktop Application
 

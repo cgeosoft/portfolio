@@ -24,6 +24,7 @@ description: Maintain the React 19 webview UI, its components, the Electroview R
   - `layout/` - `Header`, `AppMenuBar`, `BottomBar`.
   - `common/` - `AboutModal`, `SetupWizardModal`, `TermsPage`, shared utilities.
   - `portfolio/` - `StatCard`, `PortfolioChartCard`, `AllocationCard`, `HoldingsTableCard`, `TransactionsCard`, `ReportsCard`, `TransactionModal`, `ImportCsvModal`, `ExportPortfolioModal`, `AnalyzePortfolioModal`, `AssistantSidebar`, `MetricInfoModal`, and helpers in `utils.ts` and `report-export.ts`.
+  - `metrics/` - The Metrics tab (`MetricsTab`), the Overview dashboard (`MetricDashboard`), `MetricCard`, `InstallMetricDialog`, `MetricDetailsModal`, `ScopeBadges`, and `metric-view.ts` (formats sandbox results with `renderMetricOutput` and the privacy mask). Icons and accents come from `portfolio/metrics-catalog.ts`.
   - `settings/` - `SettingsPage` and sections.
 - `src/views/src/types/portfolio.ts` - View-level type re-exports.
 - `src/shared/rpc-types.ts` - The RPC schema. Read it before adding a new UI-to-backend call.
@@ -34,6 +35,12 @@ description: Maintain the React 19 webview UI, its components, the Electroview R
 - Use the `cx-card` styling surface and the design tokens from `input.css` (see the `ui-style-engineer` skill).
 - Check the RPC bridge is ready with `ensureRpcReady()` before issuing initial requests to avoid dropped packets.
 - Use `clientLogger` for webview logging and measured steps.
+
+## Metrics
+
+- The webview never formats a metric itself; it calls `evaluatePortfolioMetrics` and renders the structured result through `displayMetric()`. Keep `fmtCurrency`/`hideValues` as the only place the privacy mask is applied.
+- Selection edits go through the pure helpers in `src/shared/metrics.ts` (`withMetricAdded`, `withMetricSlot`, ...) and are saved with `savePortfolioMetrics`; capacity (4 large, 6 compact) is enforced by `normalizeMetricPreferences`.
+- `#settings/metrics` forwards to `#metrics`; the Preferences page has no metrics section anymore.
 
 ## Gotchas and pitfalls
 

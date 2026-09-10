@@ -15,8 +15,10 @@ Core lifecycle:
 bun install                       # install dependencies (bun.lock)
 bun run typecheck                 # typecheck main process and webview
 bun test                          # run bun test suite
+bun run build:metrics             # compile extras/metrics/* with asc, embed bundled modules
+bun run build:metrics-site        # regenerate extras/website/metrics/index.html
 bun run build:css                 # compile src/views/src/input.css -> src/views/style.css
-bun run build                     # build:css then electrobun build
+bun run build                     # build:metrics, build:css, then electrobun build
 bun run dev                       # setup dev icon, build CSS, start Electrobun dev
 ```
 
@@ -54,6 +56,7 @@ bash scripts/release.sh tag --dry-run    # preview without changes or pushes
 ## GitHub Actions
 
 - `.github/workflows/release.yml` builds Debian, Windows, and macOS packages on a tag push (`v*`) and attaches artifacts to the release.
+- `.github/workflows/metrics.yml` runs on pull requests that touch `extras/metrics/**` or the metric runtime: it validates manifests (`build-metrics.ts --check --force`), compiles every module, runs the sandbox tests, checks the generated SDK and website page are committed, and prints module sizes.
 - Environment secrets used by CI are `POSTHOG_API_KEY` and `WEBPAGE_URL`. They are passed as empty by default in the workflow.
 - Workflow jobs install system dependencies (for example `libwebkit2gtk-4.1-dev`, `dpkg`, `zstd`) before building.
 

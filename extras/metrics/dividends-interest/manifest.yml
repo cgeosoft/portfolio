@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: dividends-interest
+name: Dividends & Interest
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Income & Yield
+icon: coins
+accent: mint
+summary: All dividends, interest, and coupons credited to the portfolio.
+description: >
+  All cash distributions credited to the portfolio: dividends from equities and
+  funds, plus interest and coupon payments.
+importance: >
+  Income arrives independently of price moves and keeps compounding when reinvested.
+  It shows the cash yield of your holdings during flat or falling markets.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: dividends
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

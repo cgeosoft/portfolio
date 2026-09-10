@@ -25,7 +25,9 @@ Portfolio Desktop is an offline personal investment portfolio tracker for Linux,
   - `src/bun/db/`: Database layer using `bun:sqlite`.
   - `src/bun/services/`: Financial calculations and external services.
 - `src/views/`: Webview process code (React user interface).
-- `src/shared/`: Shared RPC definitions (`rpc-types.ts`).
+- `src/shared/`: Shared RPC definitions (`rpc-types.ts`) and the metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
+- `src/bun/services/metrics/`: Sandboxed metric modules: engine process, registry, evaluator, URL installer.
+- `extras/metrics/`: Metric module repository. Each metric is a `manifest.yml` plus AssemblyScript source, compiled by `bun run build:metrics`. Read `extras/metrics/README.md` before you add or change a metric.
 - `src/types/`: Domain models and type definitions.
 - `.agents/skills/`: Contextual agent skills for this repository.
 
@@ -59,6 +61,13 @@ bun run typecheck
 Run this command after you add or modify Tailwind classes:
 ```bash
 bun run build:css
+```
+
+### Compile Metric Modules
+Run this command after you add or modify a metric in `extras/metrics/`. `typecheck`, `test`, `dev`, and `build` run it first. The generated bundle `src/bun/services/metrics/builtin-modules.generated.ts` is not committed; the generated SDK `extras/metrics/_sdk/portfolio.ts` and the website page `extras/website/metrics/index.html` are.
+```bash
+bun run build:metrics
+bun run build:metrics-site
 ```
 
 ### Start Development Mode
@@ -119,6 +128,11 @@ bash scripts/release.sh tag --dry-run
 
 ### LLM Reports
 - Filter model reasoning blocks with `cleanThinkTags()` before you display report text.
+
+### Metric Modules
+- A metric never runs in the main process or the webview. `MetricRuntime` spawns a separate engine process from the application binary; a module gets fresh memory per run, no imports except the AssemblyScript runtime hooks, and is killed on timeout.
+- The host builds the payload from the granted scopes only (`encodeMetricPayload`). Formatting, currency, and the privacy mask stay in the webview (`renderMetricOutput`).
+- Change the ABI tables in `src/shared/metric-abi.ts` only with a new ABI version; the AssemblyScript SDK is generated from them.
 
 ## 5. Design System
 

@@ -1,0 +1,59 @@
+# Annotated metric manifest. Every field is validated by
+# src/shared/metric-manifest.ts; the error names the field that failed.
+
+schema: 1                       # manifest schema version, must be 1
+abi: 1                          # guest ABI the module targets, must be 1
+
+id: broker-fees                 # unique, kebab-case, 3-64 chars, equals the directory name
+name: Broker Fees               # card title, at most 60 chars
+shortName: Fees                 # optional, compact tile label, at most 40 chars
+version: 1.0.0                  # semver; bump it whenever the module changes
+
+developer:
+  name: Christos Georgiou       # shown on the card
+  url: https://github.com/cgeosoft   # optional, http(s)
+
+license: MIT                    # SPDX identifier or short license name
+category: Costs                 # marketplace group, free text, at most 32 chars
+icon: receipt                   # lucide icon name (kebab-case); unknown names show a gauge.
+                                # Supported: see METRIC_ICONS in
+                                # src/views/src/components/portfolio/metrics-catalog.ts
+accent: cream                   # icon color token: pink | mint | cream | blue | navy | slate
+
+summary: Lifetime commissions and order fees.     # one line, at most 160 chars
+description: >                  # what the metric shows
+  Sum of all commissions and order fees charged on your transactions since inception.
+importance: >                   # why it matters
+  Fees are a certain loss while returns are not. Tracking the total exposes expensive
+  trading habits before they erode your performance.
+
+# Data the module receives. The user sees this list before installing.
+#   portfolio.summary       aggregate totals only, no symbols
+#   portfolio.holdings      every open position with symbol, shares, prices, indicators
+#   portfolio.transactions  the full ledger
+#   portfolio.history       the equity curve
+scopes:
+  - portfolio.summary
+
+display:
+  defaultSize: compact          # slot taken when the user adds the metric: large | compact
+  valueFormat: currency         # hint for the marketplace card: currency | percent | number
+
+# Optional: key of a built-in explanation modal (built-in metrics only).
+# info: realizedIncome
+
+# Repository metrics declare their source. The build script compiles it.
+source:
+  entry: assembly/index.ts
+
+# Metrics installed from a URL declare the module instead of the source.
+# The URL may be relative to the manifest URL. Quote the hash so YAML keeps
+# it a string.
+# module:
+#   url: https://example.com/broker-fees-1.0.0.wasm
+#   sha256: "9f2c..."
+#   size: 12501
+
+runtime:
+  memoryPages: 16               # 64 KiB pages; the host caps this at 64 (4 MiB)
+  timeoutMs: 50                 # per-run budget; the host caps this at 2000

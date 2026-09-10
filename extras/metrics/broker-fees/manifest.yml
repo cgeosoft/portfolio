@@ -1,0 +1,29 @@
+schema: 1
+abi: 1
+id: broker-fees
+name: Broker Fees
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Costs
+icon: receipt
+accent: cream
+summary: Lifetime commissions and order fees.
+description: >
+  Sum of all commissions and order fees charged on your transactions since inception.
+importance: >
+  Fees are a certain loss while returns are not. Tracking the total exposes expensive
+  trading habits or an expensive broker before they erode your performance.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: realizedIncome
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

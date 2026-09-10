@@ -1,0 +1,31 @@
+schema: 1
+abi: 1
+id: lifetime-gain
+name: Lifetime Total Gain
+shortName: Lifetime Gain
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Performance
+icon: flame
+accent: pink
+summary: All-time net result since the first transaction.
+description: >
+  All-time net result since the first transaction. It combines unrealized gains,
+  realized profits from closed positions, dividends, and interest, minus broker fees.
+importance: >
+  The honest measure of the wealth your portfolio created. Daily and monthly swings
+  cancel out, so you see if your strategy works over the full holding period.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: large
+  valueFormat: currency
+info: totalGain
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

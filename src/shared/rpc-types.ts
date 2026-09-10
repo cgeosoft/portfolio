@@ -16,6 +16,9 @@ import type {
 } from "../types/portfolio.js";
 import type { DesktopConfig } from "../bun/config.js";
 import type { PortfolioMetricPreference } from "./metrics.js";
+import type { MetricManifest } from "./metric-manifest.js";
+import type { MetricScope } from "./metric-abi.js";
+import type { MetricOutput } from "./metric-output.js";
 export type { DesktopConfig, ReportMetrics };
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
@@ -57,6 +60,77 @@ export interface SavePortfolioMetricsRequest {
   /** Full preference list. Omit to restore the defaults. */
   metrics?: PortfolioMetricPreference[];
   reset?: boolean;
+}
+
+/** A metric module the application can run, as shown in the Metrics tab. */
+export interface MetricListing {
+  id: string;
+  manifest: MetricManifest;
+  source: "builtin" | "url";
+  sourceUrl?: string;
+  sha256: string;
+  /** Built-in modules are reviewed in the repository; URL installs never are. */
+  verified: boolean;
+  installedAt?: string;
+  scopesGranted: MetricScope[];
+  status: "ready" | "quarantined";
+  statusReason?: string;
+}
+
+export interface MetricRepositoryListing {
+  id: string;
+  bundled: boolean;
+  manifest: MetricManifest;
+}
+
+export interface GetMetricCatalogResponse {
+  installed: MetricListing[];
+  repository: MetricRepositoryListing[];
+}
+
+export type MetricEvaluation =
+  | { id: string; status: "ok"; output: MetricOutput; elapsedMs: number; cached: boolean }
+  | { id: string; status: "error" | "quarantined" | "missing"; error: string };
+
+export interface EvaluatePortfolioMetricsRequest {
+  portfolioId: string;
+  baseCurrency?: string;
+  /** Subset of metric ids to evaluate. Defaults to every metric added to the portfolio. */
+  ids?: string[];
+  /** Quarantined metric ids to give another chance. */
+  retry?: string[];
+}
+
+export interface EvaluatePortfolioMetricsResponse {
+  portfolioId: string;
+  results: MetricEvaluation[];
+}
+
+export interface PreviewMetricInstallRequest {
+  url: string;
+}
+
+export interface PreviewMetricInstallResponse {
+  url: string;
+  manifest: MetricManifest;
+  sha256: string;
+  size: number;
+  /** Set when the id is already taken. */
+  conflict?: "builtin" | "installed";
+  installedVersion?: string;
+}
+
+export interface InstallMetricRequest {
+  url: string;
+  grantedScopes: MetricScope[];
+}
+
+export interface InstallMetricResponse {
+  metric: MetricListing;
+}
+
+export interface UninstallMetricRequest {
+  id: string;
 }
 
 export interface ManageTransactionRequest {
@@ -405,9 +479,14 @@ export type PortfolioRPC = {
       updatePortfolio: { params: UpdatePortfolioRequest; response: PortfolioItem };
       deletePortfolio: { params: { portfolioId: string }; response: { success: boolean } };
 
-      // Overview metric selection (metrics marketplace)
+      // Metrics tab: per-portfolio selection, module catalog, sandboxed evaluation, installs
       getPortfolioMetrics: { params: GetPortfolioMetricsRequest; response: GetPortfolioMetricsResponse };
       savePortfolioMetrics: { params: SavePortfolioMetricsRequest; response: GetPortfolioMetricsResponse };
+      getMetricCatalog: { params: Record<string, never>; response: GetMetricCatalogResponse };
+      evaluatePortfolioMetrics: { params: EvaluatePortfolioMetricsRequest; response: EvaluatePortfolioMetricsResponse };
+      previewMetricInstall: { params: PreviewMetricInstallRequest; response: PreviewMetricInstallResponse };
+      installMetric: { params: InstallMetricRequest; response: InstallMetricResponse };
+      uninstallMetric: { params: UninstallMetricRequest; response: { success: boolean } };
 
       // Transaction management
       manageTransactions: { params: ManageTransactionRequest; response: ManageTransactionResponse };

@@ -1,0 +1,30 @@
+schema: 1
+abi: 1
+id: taxes-withheld
+name: Taxes Withheld
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Costs
+icon: landmark
+accent: cream
+summary: Tax already deducted at the source on your transactions.
+description: >
+  Tax amounts already deducted at the source on your transactions and distributions,
+  for example withholding tax on dividends.
+importance: >
+  Your net result is what remains after tax. The total helps you prepare a tax
+  declaration and compare accounts or jurisdictions on an after-tax basis.
+scopes:
+  - portfolio.summary
+display:
+  defaultSize: compact
+  valueFormat: currency
+info: realizedIncome
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50
