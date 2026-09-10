@@ -27,8 +27,9 @@ import { SettingsPage, type SettingsSection } from "./components/settings/Settin
 import { TermsPage } from "./components/common/TermsPage";
 import { BottomBar } from "./components/layout/BottomBar";
 import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
+import { METRIC_CATALOG_BY_KEY, type MetricContext } from "./components/portfolio/metrics-catalog";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
-import { fmtCurrency, fmtPercent, reloadPage } from "./components/portfolio/utils";
+import { reloadPage } from "./components/portfolio/utils";
 import type {
   DesktopConfig,
   GetPortfoliosResponse,
@@ -39,21 +40,10 @@ import type {
 } from "../../shared/rpc-types";
 import { rpc, ensureRpcReady, clientLogger, forceFallbackToNativeBridge, onUpdateAvailable } from "./rpc";
 import {
-  Wallet,
-  TrendingUp,
-  DollarSign,
-  PiggyBank,
-  RefreshCw,
-  PieChart,
-  FileText,
-  History,
-  Coins,
-  Layers,
-  CircleDollarSign,
-  Flame,
-  Info,
-  AlertTriangle,
-} from "lucide-react";
+  getDefaultMetricPreferences,
+  type PortfolioMetricPreference,
+} from "../../shared/metrics";
+import { RefreshCw, Info, Sliders, AlertTriangle } from "lucide-react";
 
 const VALID_TABS: readonly string[] = ["overview", "reports", "transactions"];
 
@@ -83,7 +73,7 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
         const sec = hash.replace("#settings/", "") as SettingsSection;
-        if (["general", "portfolios", "assistant", "support", "about"].includes(sec)) {
+        if (["general", "portfolios", "metrics", "assistant", "support", "about"].includes(sec)) {
           return sec;
         }
       }
@@ -156,7 +146,7 @@ export default function App() {
         setView("settings");
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
-        if (parts[1] && ["general", "portfolios", "assistant", "support", "about"].includes(parts[1])) {
+        if (parts[1] && ["general", "portfolios", "metrics", "assistant", "support", "about"].includes(parts[1])) {
           setSettingsSection(parts[1] as SettingsSection);
         } else {
           setSettingsSection("general");
@@ -455,6 +445,42 @@ export default function App() {
     setSelectedMetricKey(metricKey);
     setIsMetricModalOpen(true);
   }, []);
+
+  // Overview metric selection of the active portfolio (metrics marketplace)
+  const [metricPreferences, setMetricPreferences] = useState<PortfolioMetricPreference[]>(
+    getDefaultMetricPreferences,
+  );
+
+  useEffect(() => {
+    if (!activePortfolioId) {
+      setMetricPreferences(getDefaultMetricPreferences());
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        await ensureRpcReady();
+        const res = await rpc.request.getPortfolioMetrics({ portfolioId: activePortfolioId });
+        if (!cancelled && res?.metrics) {
+          setMetricPreferences(res.metrics);
+        }
+      } catch (err) {
+        clientLogger.log("warning", "metrics_load", `Failed to load metric selection: ${String(err)}`);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activePortfolioId]);
+
+  const handleMetricsSaved = useCallback(
+    (portfolioId: string, metrics: PortfolioMetricPreference[]) => {
+      if (portfolioId === activePortfolioId) {
+        setMetricPreferences(metrics);
+      }
+    },
+    [activePortfolioId],
+  );
 
   const handleQuitApp = useCallback(async () => {
     try {
@@ -1133,8 +1159,12 @@ export default function App() {
   const chartHistory = portfolioData?.chartHistory || [];
   const transactions = portfolioData?.transactions || [];
 
-  const isStartUp = (summary?.totalGainSinceStartDollar ?? 0) >= 0;
-  const isDayUp = (summary?.dayGainLossDollar ?? 0) >= 0;
+  const metricContext: MetricContext = { summary, currency, hideValues: hideCurrencyValues };
+  const selectedMetrics = metricPreferences
+    .filter((pref) => pref.enabled && METRIC_CATALOG_BY_KEY[pref.key])
+    .map((pref) => ({ ...METRIC_CATALOG_BY_KEY[pref.key], size: pref.size }));
+  const largeMetrics = selectedMetrics.filter((entry) => entry.size === "large");
+  const compactMetrics = selectedMetrics.filter((entry) => entry.size === "compact");
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[#0b0f19] text-slate-100 flex flex-col font-mono w-full max-w-full min-w-0">
@@ -1234,6 +1264,7 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
+            onMetricsSaved={handleMetricsSaved}
           />
         </main>
       )}
@@ -1249,6 +1280,7 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
+            onMetricsSaved={handleMetricsSaved}
           />
         </main>
       )}
@@ -1270,135 +1302,83 @@ export default function App() {
           {/* TAB: OVERVIEW (Charts & Holdings) */}
           {activeTab === "overview" && (
             <>
-              {/* Primary Stat Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="Total Portfolio Value"
-                  value={fmtCurrency(summary?.totalPortfolioValue, currency, hideCurrencyValues)}
-                  subValue={
-                    summary?.totalGainSinceStartDollar !== undefined
-                      ? `${isStartUp ? "+" : ""}${fmtCurrency(
-                          summary.totalGainSinceStartDollar,
-                          currency,
-                          hideCurrencyValues,
-                        )} (${isStartUp ? "+" : ""}${fmtPercent(summary.totalGainSinceStartPercent)})`
-                      : undefined
-                  }
-                  icon={<Wallet className="w-5 h-5 text-[#DD3C73]" />}
-                  onInfo={() => handleOpenMetricModal("valuation")}
-                />
-                <StatCard
-                  title="Day Gain / Loss"
-                  value={`${isDayUp ? "+" : ""}${fmtCurrency(
-                    summary?.dayGainLossDollar,
-                    currency,
-                    hideCurrencyValues,
-                  )}`}
-                  subValue={`${isDayUp ? "+" : ""}${fmtPercent(summary?.dayGainLossPercent)} today`}
-                  icon={<TrendingUp className="w-5 h-5 text-[#A7E2C0]" />}
-                  onInfo={() => handleOpenMetricModal("todayReturn")}
-                />
-                <StatCard
-                  title="Lifetime Total Gain"
-                  value={`${isStartUp ? "+" : ""}${fmtCurrency(
-                    summary?.totalGainSinceStartDollar,
-                    currency,
-                    hideCurrencyValues,
-                  )}`}
-                  subValue={`${isStartUp ? "+" : ""}${fmtPercent(
-                    summary?.totalGainSinceStartPercent,
-                  )} all-time return`}
-                  icon={<Flame className="w-5 h-5 text-[#DD3C73]" />}
-                  onInfo={() => handleOpenMetricModal("totalGain")}
-                />
-                <StatCard
-                  title="Cash Liquidity"
-                  value={fmtCurrency(summary?.cashBalance, currency, hideCurrencyValues)}
-                  subValue={`${fmtPercent(summary?.cashWeightPercent)} portfolio allocation`}
-                  icon={<CircleDollarSign className="w-5 h-5 text-[#243C8F]" />}
-                  onInfo={() => handleOpenMetricModal("cashReserves")}
-                />
+              {/* Selected Metrics (configured in Settings > Metrics) */}
+              <div className="flex items-center justify-between gap-3 min-w-0">
+                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-mono truncate">
+                  Portfolio Metrics
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenSettings("metrics")}
+                  className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-all cursor-pointer shrink-0"
+                  title="Choose the metrics of this portfolio"
+                >
+                  <Sliders className="w-3 h-3" />
+                  <span>Customize Metrics</span>
+                </button>
               </div>
 
-              {/* Secondary Capital Metrics Panel */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-xs">
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Invested Capital">Invested Capital</span>
-                    <button onClick={() => handleOpenMetricModal("capitalInjected")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                  <div className="font-bold text-slate-200 mt-0.5 truncate">
-                    {fmtCurrency(summary?.totalCashInjected, currency, hideCurrencyValues)}
-                  </div>
+              {largeMetrics.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {largeMetrics.map((entry) => {
+                    const MetricIcon = entry.icon;
+                    return (
+                      <StatCard
+                        key={entry.key}
+                        title={entry.title}
+                        value={entry.getValue(metricContext)}
+                        subValue={entry.getSubValue?.(metricContext)}
+                        icon={<MetricIcon className={`w-5 h-5 ${entry.iconClass}`} />}
+                        onInfo={() => handleOpenMetricModal(entry.infoKey)}
+                      />
+                    );
+                  })}
                 </div>
+              )}
 
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Current Holdings Cost">Current Holdings Cost</span>
-                    <button onClick={() => handleOpenMetricModal("valuation")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                  <div className="font-bold text-slate-200 mt-0.5 truncate">
-                    {fmtCurrency(summary?.totalCost, currency, hideCurrencyValues)}
-                  </div>
+              {compactMetrics.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-xs">
+                  {compactMetrics.map((entry) => (
+                    <div key={entry.key} className="min-w-0">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
+                        <span className="truncate whitespace-nowrap" title={entry.title}>
+                          {entry.compactTitle}
+                        </span>
+                        <button
+                          onClick={() => handleOpenMetricModal(entry.infoKey)}
+                          className="hover:text-slate-300 shrink-0"
+                          aria-label={`Explanation for ${entry.title}`}
+                        >
+                          <Info className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                      <div
+                        className={`font-bold mt-0.5 truncate ${
+                          entry.getCompactValueClass?.(metricContext) || "text-slate-200"
+                        }`}
+                      >
+                        {entry.getValue(metricContext)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              )}
 
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Realized P&L">Realized P&amp;L</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
+              {largeMetrics.length === 0 && compactMetrics.length === 0 && (
+                <div className="p-6 rounded-2xl bg-[#111726]/60 border border-[#1e293b] text-center space-y-3">
+                  <div className="text-xs text-slate-400 font-mono">
+                    No metrics are selected for this portfolio.
                   </div>
-                  <div
-                    className={`font-bold mt-0.5 truncate ${
-                      (summary?.realizedPnL ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSettings("metrics")}
+                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
                   >
-                    {(summary?.realizedPnL ?? 0) >= 0 ? "+" : ""}
-                    {fmtCurrency(summary?.realizedPnL, currency, hideCurrencyValues)}
-                  </div>
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>Open Metrics Marketplace</span>
+                  </button>
                 </div>
-
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Dividends & Interest">Dividends &amp; Interest</span>
-                    <button onClick={() => handleOpenMetricModal("dividends")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                  <div className="font-bold text-emerald-400 mt-0.5 truncate">
-                    +{fmtCurrency((summary?.totalDividends ?? 0) + (summary?.totalInterest ?? 0), currency, hideCurrencyValues)}
-                  </div>
-                </div>
-
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Broker Fees">Broker Fees</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                  <div className="font-bold text-slate-400 mt-0.5 truncate">
-                    {fmtCurrency(summary?.totalFees, currency, hideCurrencyValues)}
-                  </div>
-                </div>
-
-                <div className="min-w-0">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
-                    <span className="truncate whitespace-nowrap" title="Taxes Withheld">Taxes Withheld</span>
-                    <button onClick={() => handleOpenMetricModal("realizedIncome")} className="hover:text-slate-300 shrink-0">
-                      <Info className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                  <div className="font-bold text-slate-400 mt-0.5 truncate">
-                    {fmtCurrency(summary?.totalTaxes, currency, hideCurrencyValues)}
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Sponsor Banner Box */}
               <SponsorBannerCard webpageUrl={webpageUrl} />

@@ -39,6 +39,12 @@ function initializeSchema(database: Database): void {
     )
   `);
 
+  // Per-portfolio overview metric selection (metrics marketplace)
+  const portfolioColumns = database.query("PRAGMA table_info(portfolios)").all() as { name: string }[];
+  if (!portfolioColumns.some((col) => col.name === "metricsJson")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN metricsJson TEXT");
+  }
+
   database.run(`
     CREATE TABLE IF NOT EXISTS transactions (
       id TEXT PRIMARY KEY,

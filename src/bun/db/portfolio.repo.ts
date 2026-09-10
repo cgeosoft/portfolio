@@ -6,6 +6,7 @@ export interface PortfolioRow {
   name: string;
   description: string | null;
   baseCurrency: string;
+  metricsJson: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +59,26 @@ export function deleteById(id: string): boolean {
   const db = getDatabase();
   // Cascade deletes handle transactions, reports, and snapshots
   const result = db.run("DELETE FROM portfolios WHERE id = ?", [id]);
+  return result.changes > 0;
+}
+
+/** Read the stored overview metric selection of a portfolio. */
+export function findMetricsJson(id: string): string | null {
+  const db = getDatabase();
+  const row = db.query("SELECT metricsJson FROM portfolios WHERE id = ?").get(id) as
+    | { metricsJson: string | null }
+    | null;
+  return row?.metricsJson ?? null;
+}
+
+/** Store the overview metric selection of a portfolio. */
+export function updateMetricsJson(id: string, metricsJson: string): boolean {
+  const db = getDatabase();
+  const result = db.run("UPDATE portfolios SET metricsJson = ?, updatedAt = ? WHERE id = ?", [
+    metricsJson,
+    new Date().toISOString(),
+    id,
+  ]);
   return result.changes > 0;
 }
 

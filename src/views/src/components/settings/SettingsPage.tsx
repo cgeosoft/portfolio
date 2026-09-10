@@ -35,17 +35,32 @@ import {
   Copy,
   Check,
   ExternalLink,
+  LayoutGrid,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "../../types/portfolio";
-import type { AppUpdateInfo } from "../../../../shared/rpc-types";
+import type { AppUpdateInfo, GetPortfolioMetricsResponse } from "../../../../shared/rpc-types";
 import { CreatePortfolioModal } from "../portfolio/CreatePortfolioModal";
 import { EditPortfolioModal } from "../portfolio/EditPortfolioModal";
 import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
 import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
+import {
+  METRIC_CATALOG,
+  METRIC_CATALOG_BY_KEY,
+  METRIC_CATEGORIES,
+} from "../portfolio/metrics-catalog";
+import {
+  getDefaultMetricPreferences,
+  type MetricCardSize,
+  type OverviewMetricKey,
+  type PortfolioMetricPreference,
+} from "../../../../shared/metrics";
 
-export type SettingsSection = "general" | "portfolios" | "assistant" | "support" | "about";
+export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "support" | "about";
 
 interface ProviderPreset {
   id: string;
@@ -206,6 +221,12 @@ const SECTIONS = [
     icon: TrendingUp,
   },
   {
+    id: "metrics" as const,
+    label: "Metrics",
+    description: "Overview metric marketplace",
+    icon: LayoutGrid,
+  },
+  {
     id: "assistant" as const,
     label: "Assistant",
     description: "AI & LLM inference model",
@@ -248,6 +269,7 @@ interface SettingsPageProps {
   onPortfolioCreated?: (newPortfolio: PortfolioItem) => void;
   onPortfolioUpdated?: (updated: PortfolioItem) => void;
   onPortfolioDeleted?: (id: string) => void;
+  onMetricsSaved?: (portfolioId: string, metrics: PortfolioMetricPreference[]) => void;
 }
 
 export function SettingsPage({
@@ -259,6 +281,7 @@ export function SettingsPage({
   onPortfolioCreated,
   onPortfolioUpdated,
   onPortfolioDeleted,
+  onMetricsSaved,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
@@ -294,6 +317,45 @@ export function SettingsPage({
   const [customModelInput, setCustomModelInput] = useState("");
   const [serverModels, setServerModels] = useState<Record<string, string[]>>({});
   const [isFetchingModels, setIsFetchingModels] = useState(false);
+
+  // Metrics marketplace state
+  const [metricsPortfolioOverride, setMetricsPortfolioOverride] = useState<string | null>(null);
+  const [metricPrefs, setMetricPrefs] = useState<PortfolioMetricPreference[]>(getDefaultMetricPreferences);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const [isSavingMetrics, setIsSavingMetrics] = useState(false);
+  const [metricsStatusMsg, setMetricsStatusMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  /** Portfolio whose metric selection is being edited. */
+  const metricsPortfolioId = metricsPortfolioOverride || activePortfolio?.id || portfolios[0]?.id || null;
+
+  useEffect(() => {
+    if (!metricsPortfolioId) {
+      setMetricPrefs(getDefaultMetricPreferences());
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingMetrics(true);
+    setMetricsStatusMsg(null);
+    rpc.request
+      .getPortfolioMetrics({ portfolioId: metricsPortfolioId })
+      .then((res: GetPortfolioMetricsResponse) => {
+        if (!cancelled && res?.metrics) setMetricPrefs(res.metrics);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMetricsStatusMsg({ type: "error", text: "Failed to load the metric selection." });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingMetrics(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [metricsPortfolioId]);
 
   // Portfolios management state
   const [portfolioSearch, setPortfolioSearch] = useState("");
@@ -413,6 +475,49 @@ export function SettingsPage({
     }
   };
 
+  const persistMetricPreferences = async (
+    portfolioId: string,
+    next: PortfolioMetricPreference[],
+    options: { reset?: boolean } = {},
+  ) => {
+    const previous = metricPrefs;
+    setMetricPrefs(next);
+    setIsSavingMetrics(true);
+    setMetricsStatusMsg(null);
+    try {
+      const res = await rpc.request.savePortfolioMetrics({
+        portfolioId,
+        metrics: options.reset ? undefined : next,
+        reset: options.reset,
+      });
+      setMetricPrefs(res.metrics);
+      onMetricsSaved?.(portfolioId, res.metrics);
+    } catch {
+      setMetricPrefs(previous);
+      setMetricsStatusMsg({ type: "error", text: "Failed to save the metric selection." });
+    } finally {
+      setIsSavingMetrics(false);
+    }
+  };
+
+  const handleToggleMetric = (portfolioId: string, key: OverviewMetricKey) => {
+    void persistMetricPreferences(
+      portfolioId,
+      metricPrefs.map((pref) => (pref.key === key ? { ...pref, enabled: !pref.enabled } : pref)),
+    );
+  };
+
+  const handleSetMetricSize = (portfolioId: string, key: OverviewMetricKey, size: MetricCardSize) => {
+    void persistMetricPreferences(
+      portfolioId,
+      metricPrefs.map((pref) => (pref.key === key ? { ...pref, size } : pref)),
+    );
+  };
+
+  const handleResetMetrics = (portfolioId: string) => {
+    void persistMetricPreferences(portfolioId, getDefaultMetricPreferences(), { reset: true });
+  };
+
   const handleConfirmDeletePortfolio = async (p: PortfolioItem) => {
     setPortfolioStatusMsg(null);
     const data = await rpc.request.deletePortfolio({ portfolioId: p.id });
@@ -476,6 +581,11 @@ export function SettingsPage({
       setTimeout(() => setCopiedZipPath(false), 2000);
     }
   };
+
+  const metricPrefByKey = new Map(metricPrefs.map((pref) => [pref.key, pref]));
+  const selectedMetricCount = metricPrefs.filter(
+    (pref) => pref.enabled && METRIC_CATALOG_BY_KEY[pref.key],
+  ).length;
 
   const filteredPortfolios = (portfolios || []).filter((p) => {
     const term = portfolioSearch.toLowerCase();
@@ -927,6 +1037,174 @@ export function SettingsPage({
           )}
 
           {/* SECTION 3: ASSISTANT */}
+          {/* SECTION: METRICS MARKETPLACE */}
+          {activeSection === "metrics" && (
+            <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
+                    <LayoutGrid className="w-4 h-4 text-[#DD3C73] shrink-0" />
+                    <span>Metrics Marketplace ({selectedMetricCount}/{METRIC_CATALOG.length})</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Choose the metrics of the portfolio overview. The selection is stored per portfolio.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {portfolios.length > 1 && (
+                    <select
+                      value={metricsPortfolioId || ""}
+                      onChange={(e) => setMetricsPortfolioOverride(e.target.value)}
+                      className="h-8 bg-slate-950/70 border border-slate-800 rounded-lg px-2.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]/50 font-mono cursor-pointer max-w-[190px]"
+                      title="Portfolio to configure"
+                    >
+                      {portfolios.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={!metricsPortfolioId || isSavingMetrics}
+                    onClick={() => metricsPortfolioId && handleResetMetrics(metricsPortfolioId)}
+                    className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 text-xs font-bold text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer uppercase tracking-wider font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Restore the default metric selection"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Defaults</span>
+                  </button>
+                </div>
+              </div>
+
+              {metricsStatusMsg && (
+                <div
+                  className={`p-3 text-xs rounded-xl flex items-center gap-2 ${
+                    metricsStatusMsg.type === "success"
+                      ? "text-emerald-400 bg-emerald-950/40 border border-emerald-800/50"
+                      : "text-rose-400 bg-rose-950/40 border border-rose-800/50"
+                  }`}
+                >
+                  {metricsStatusMsg.type === "success" ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                  )}
+                  <span>{metricsStatusMsg.text}</span>
+                </div>
+              )}
+
+              {!metricsPortfolioId ? (
+                <div className="py-12 text-center text-slate-500 font-mono text-xs">
+                  Create a portfolio first to configure its metrics.
+                </div>
+              ) : (
+                <div className={`space-y-6 ${isLoadingMetrics ? "opacity-60" : ""}`}>
+                  {METRIC_CATEGORIES.map((category) => (
+                    <div key={category} className="space-y-3">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        {category}
+                      </div>
+
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        {METRIC_CATALOG.filter((entry) => entry.category === category).map((entry) => {
+                          const pref = metricPrefByKey.get(entry.key);
+                          const isEnabled = Boolean(pref?.enabled);
+                          const size: MetricCardSize = pref?.size || "large";
+                          const MetricIcon = entry.icon;
+
+                          return (
+                            <div
+                              key={entry.key}
+                              className={`p-4 rounded-xl border transition-colors ${
+                                isEnabled
+                                  ? "border-[#DD3C73]/40 bg-[#DD3C73]/[0.06]"
+                                  : "border-slate-800/80 bg-slate-950/40"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2.5 min-w-0">
+                                  <MetricIcon className={`w-4 h-4 mt-0.5 shrink-0 ${entry.iconClass}`} />
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold text-slate-100 truncate">{entry.title}</div>
+                                    <div className="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">
+                                      {entry.category}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={isSavingMetrics}
+                                  onClick={() => handleToggleMetric(metricsPortfolioId, entry.key)}
+                                  className={`h-7 inline-flex items-center gap-1.5 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 font-mono disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    isEnabled
+                                      ? "border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-[#DD3C73] hover:bg-[#DD3C73]/25"
+                                      : "border border-slate-700 text-slate-300 hover:bg-slate-800/60"
+                                  }`}
+                                  aria-pressed={isEnabled}
+                                >
+                                  {isEnabled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                  <span>{isEnabled ? "Added" : "Add"}</span>
+                                </button>
+                              </div>
+
+                              <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">{entry.description}</p>
+
+                              <div className="mt-2.5 pl-2.5 border-l-2 border-slate-800">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                  Why it matters
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{entry.importance}</p>
+                              </div>
+
+                              {isEnabled && (
+                                <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                                    Display size
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    {([
+                                      { id: "large" as MetricCardSize, label: "Large card", icon: Maximize2 },
+                                      { id: "compact" as MetricCardSize, label: "Compact", icon: Minimize2 },
+                                    ]).map((option) => {
+                                      const OptionIcon = option.icon;
+                                      const isSelected = size === option.id;
+                                      return (
+                                        <button
+                                          key={option.id}
+                                          type="button"
+                                          disabled={isSavingMetrics}
+                                          onClick={() => handleSetMetricSize(metricsPortfolioId, entry.key, option.id)}
+                                          className={`h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer font-mono disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            isSelected
+                                              ? "border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-[#DD3C73]"
+                                              : "border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                                          }`}
+                                          aria-pressed={isSelected}
+                                        >
+                                          <OptionIcon className="w-3 h-3" />
+                                          <span>{option.label}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeSection === "assistant" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
               <div className="border-b border-slate-800/80 pb-4">

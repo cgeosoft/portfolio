@@ -12,6 +12,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 - **Local SQLite Engine (`bun:sqlite`)**: High-performance WAL-mode SQLite database with indexed tables and instant queries.
 - **Live Market Valuation & Multi-Currency FX**: Real-time quotes, intraday P&L, historical charts, and foreign exchange conversions powered by Yahoo Finance.
 - **Progressive Financial Analytics**: Automatic calculation of total invested capital, realized gains, uninvested cash liquidity balance, dividend income, broker fees, and tax withholdings.
+- **Metrics Marketplace**: A catalog page in Preferences that describes every overview metric, explains why it matters, and lets you select the metrics of the portfolio overview. The selection and the card size (large card or compact tile) are stored per portfolio.
 - **Technical Indicators**: 50-day and 200-day Simple Moving Averages (SMA 50, SMA 200), 14-day Relative Strength Index (RSI), and 52-week ranges.
 - **Broker CSV Importer**: Intelligent CSV import wizard with automatic template detection (Trade Republic, Scalable Capital, Interactive Brokers, Degiro) with dry-run diff preview and duplicate protection.
 - **On-Demand AI Analyst**: Generate tactical markdown portfolio performance briefings via local or cloud LLMs.

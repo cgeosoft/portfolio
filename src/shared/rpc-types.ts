@@ -15,6 +15,7 @@ import type {
   FinancialPortfolioData,
 } from "../types/portfolio.js";
 import type { DesktopConfig } from "../bun/config.js";
+import type { PortfolioMetricPreference } from "./metrics.js";
 export type { DesktopConfig, ReportMetrics };
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
@@ -40,6 +41,22 @@ export interface UpdatePortfolioRequest {
   name?: string;
   description?: string;
   baseCurrency?: string;
+}
+
+export interface GetPortfolioMetricsRequest {
+  portfolioId: string;
+}
+
+export interface GetPortfolioMetricsResponse {
+  portfolioId: string;
+  metrics: PortfolioMetricPreference[];
+}
+
+export interface SavePortfolioMetricsRequest {
+  portfolioId: string;
+  /** Full preference list. Omit to restore the defaults. */
+  metrics?: PortfolioMetricPreference[];
+  reset?: boolean;
 }
 
 export interface ManageTransactionRequest {
@@ -377,6 +394,10 @@ export type PortfolioRPC = {
       createPortfolio: { params: CreatePortfolioRequest; response: PortfolioItem };
       updatePortfolio: { params: UpdatePortfolioRequest; response: PortfolioItem };
       deletePortfolio: { params: { portfolioId: string }; response: { success: boolean } };
+
+      // Overview metric selection (metrics marketplace)
+      getPortfolioMetrics: { params: GetPortfolioMetricsRequest; response: GetPortfolioMetricsResponse };
+      savePortfolioMetrics: { params: SavePortfolioMetricsRequest; response: GetPortfolioMetricsResponse };
 
       // Transaction management
       manageTransactions: { params: ManageTransactionRequest; response: ManageTransactionResponse };

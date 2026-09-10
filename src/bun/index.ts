@@ -26,6 +26,7 @@ import { setupLinuxDesktop, setNativeWindowIcon } from "./services/linux-desktop
 import { WindowStateManager, normalizeWindowState } from "./services/window-state.js";
 import { supportTicketService } from "./services/support-ticket.js";
 import { appUpdateService } from "./services/app-update.js";
+import * as portfolioMetrics from "./services/portfolio-metrics.js";
 
 // ── Initialize ──────────────────────────────────────────────────────────────
 
@@ -161,6 +162,20 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
       deletePortfolio: async (params) => {
         const success = portfolioService.deletePortfolio(params.portfolioId);
         return { success };
+      },
+
+      // ── Overview Metrics ──
+
+      getPortfolioMetrics: async (params) => {
+        const metrics = portfolioMetrics.getPortfolioMetrics(params.portfolioId);
+        return { portfolioId: params.portfolioId, metrics };
+      },
+
+      savePortfolioMetrics: async (params) => {
+        const metrics = params.reset
+          ? portfolioMetrics.resetPortfolioMetrics(params.portfolioId)
+          : portfolioMetrics.savePortfolioMetrics(params.portfolioId, params.metrics ?? []);
+        return { portfolioId: params.portfolioId, metrics };
       },
 
       // ── Transactions ──
