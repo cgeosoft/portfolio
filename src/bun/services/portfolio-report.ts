@@ -18,6 +18,7 @@ import type {
   PollReportStreamResponse,
   CancelReportStreamResponse,
 } from "../../shared/rpc-types.js";
+import { DEFAULT_OLLAMA_MODEL } from "../../shared/llm-defaults.js";
 
 function getIsoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -135,8 +136,9 @@ export class PortfolioReportService {
         : provider === "openrouter" ? "meta-llama/llama-3.3-70b-instruct"
         : provider === "deepseek" ? "deepseek-chat"
         : provider === "gemini" ? "gemini-2.5-flash"
-        : provider === "ollama" ? "llama3.2:latest"
-        : "qwen3-abliterated-14b-q4_k_m";
+        : provider === "ollama" ? DEFAULT_OLLAMA_MODEL
+        // llama.cpp answers with the model it was started with.
+        : "";
 
     const model = options.model || config.llmModel || defaultModel;
     const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";

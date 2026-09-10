@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { resolveWebpageUrl } from "./environment.js";
+import { DEFAULT_LLAMACPP_URL } from "../shared/llm-defaults.js";
 
 export interface WindowStateConfig {
   x?: number;
@@ -92,7 +93,7 @@ const DEFAULT_CONFIG: DesktopConfig = {
   llmApiKey: "",
   llmBaseUrl: "",
   llmTemperature: 0.3,
-  llamacppServerUrl: "http://127.0.0.1:9100",
+  llamacppServerUrl: DEFAULT_LLAMACPP_URL,
   llmApiKeys: {},
   llmBaseUrls: {},
   lastImportDirectory: "",

@@ -4,6 +4,11 @@
  */
 
 import { loadConfig } from "../config.js";
+import {
+  DEFAULT_LLAMACPP_URL,
+  DEFAULT_OLLAMA_MODEL,
+  DEFAULT_OLLAMA_URL,
+} from "../../shared/llm-defaults.js";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
@@ -20,6 +25,9 @@ export interface LlmChatOptions {
   isReport?: boolean;
   signal?: AbortSignal;
 }
+
+/** How long an auto-detected llama.cpp model name stays valid. */
+const LLAMACPP_MODEL_CACHE_MS = 60_000;
 
 /**
  * Strip LLM thinking blocks without backtracking regex.
@@ -112,6 +120,9 @@ function stripThinkTags(input: string): string {
 }
 
 export class LlmService {
+  /** Model auto-detected per llama.cpp base URL, see resolveLlamaCppModel(). */
+  private static llamaCppModelCache = new Map<string, { model: string; at: number }>();
+
   public async chat(messages: LlmMessage[], options: LlmChatOptions = {}): Promise<string> {
     const provider = (options.provider || "llamacpp-server").toLowerCase().trim();
     const temperature = options.temperature ?? 0.3;
@@ -215,6 +226,46 @@ export class LlmService {
     );
   }
 
+  /**
+   * Resolve which model name to send to a llama.cpp server.
+   *
+   * A single-model `llama-server` ignores the field, but a router serving
+   * several models rejects requests without one ("model name is missing from
+   * the request"). When the user has not pinned a model we ask `/v1/models`
+   * and prefer one already loaded, so a router does not have to swap a cold
+   * model in. Servers that cannot answer fall back to sending no model at all.
+   */
+  private async resolveLlamaCppModel(
+    model: string | undefined, targetUrl: string, apiKey?: string,
+  ): Promise<string | undefined> {
+    const pinned = model?.trim();
+    if (pinned) return pinned;
+
+    const cacheKey = targetUrl.replace(/\/$/, "");
+    const cached = LlmService.llamaCppModelCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < LLAMACPP_MODEL_CACHE_MS) return cached.model;
+
+    try {
+      const headers: Record<string, string> = {};
+      if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+      const res = await fetch(`${cacheKey}/v1/models`, { headers, signal: AbortSignal.timeout(4000) });
+      if (!res.ok) return undefined;
+      const data = (await res.json()) as {
+        data?: Array<{ id?: string; status?: { value?: string } }>;
+      };
+      const entries = data.data?.filter((m): m is { id: string; status?: { value?: string } } =>
+        Boolean(m.id)
+      ) || [];
+      if (entries.length === 0) return undefined;
+      const resolved = (entries.find((m) => m.status?.value === "loaded") || entries[0]).id;
+      LlmService.llamaCppModelCache.set(cacheKey, { model: resolved, at: Date.now() });
+      return resolved;
+    } catch {
+      // Server offline or not a router: let the request go out without a model.
+      return undefined;
+    }
+  }
+
   private async chatWithLlamaCpp(
     messages: LlmMessage[], model: string | undefined, temperature: number,
     maxTokens: number, apiKey?: string, baseUrl?: string,
@@ -226,7 +277,7 @@ export class LlmService {
       config.llmBaseUrls?.["llamacpp"]?.trim() ||
       config.llamacppServerUrl?.trim() ||
       config.llmBaseUrl?.trim() ||
-      "http://127.0.0.1:9100";
+      DEFAULT_LLAMACPP_URL;
     const url = targetUrl.endsWith("/chat/completions")
       ? targetUrl
       : `${targetUrl.replace(/\/$/, "")}/v1/chat/completions`;
@@ -234,11 +285,13 @@ export class LlmService {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
+    const resolvedModel = await this.resolveLlamaCppModel(model, targetUrl, apiKey);
+
     const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: model || "qwen3-abliterated-14b-q4_k_m",
+        ...(resolvedModel ? { model: resolvedModel } : {}),
         messages, temperature, max_tokens: maxTokens,
       }),
       signal: AbortSignal.timeout(120_000),
@@ -265,7 +318,7 @@ export class LlmService {
       baseUrl?.trim() ||
       config.llmBaseUrls?.["ollama"]?.trim() ||
       config.llmBaseUrl?.trim() ||
-      "http://127.0.0.1:11434";
+      DEFAULT_OLLAMA_URL;
     const url = targetUrl.endsWith("/api/chat") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/api/chat`;
 
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -275,7 +328,7 @@ export class LlmService {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: model || "llama3.2:latest",
+        model: model || DEFAULT_OLLAMA_MODEL,
         messages, stream: false, options: { temperature },
       }),
       signal: AbortSignal.timeout(120_000),
@@ -341,7 +394,10 @@ export class LlmService {
     const res = await fetch(url, {
       method: "POST",
       headers,
-      body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens, stream: true }),
+      body: JSON.stringify({
+        ...(model ? { model } : {}),
+        messages, temperature, max_tokens: maxTokens, stream: true,
+      }),
       signal: signal || AbortSignal.timeout(120_000),
     });
 
@@ -415,14 +471,16 @@ export class LlmService {
       config.llmBaseUrls?.["llamacpp"]?.trim() ||
       config.llamacppServerUrl?.trim() ||
       config.llmBaseUrl?.trim() ||
-      "http://127.0.0.1:9100";
+      DEFAULT_LLAMACPP_URL;
     const url = targetUrl.endsWith("/chat/completions")
       ? targetUrl
       : `${targetUrl.replace(/\/$/, "")}/v1/chat/completions`;
 
+    const resolvedModel = await this.resolveLlamaCppModel(model, targetUrl, apiKey);
+
     return this.chatOpenAICompatibleStream(
       messages,
-      model || "qwen3-abliterated-14b-q4_k_m",
+      resolvedModel || "",
       url,
       apiKey,
       temperature,
@@ -448,7 +506,7 @@ export class LlmService {
       baseUrl?.trim() ||
       config.llmBaseUrls?.["ollama"]?.trim() ||
       config.llmBaseUrl?.trim() ||
-      "http://127.0.0.1:11434";
+      DEFAULT_OLLAMA_URL;
     const url = targetUrl.endsWith("/api/chat") ? targetUrl : `${targetUrl.replace(/\/$/, "")}/api/chat`;
 
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -458,7 +516,7 @@ export class LlmService {
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: model || "llama3.2:latest",
+        model: model || DEFAULT_OLLAMA_MODEL,
         messages,
         stream: true,
         options: { temperature },
@@ -711,7 +769,7 @@ export class LlmService {
   public async getAvailableModels(provider: string, baseUrl?: string, apiKey?: string): Promise<string[]> {
     const p = (provider || "").toLowerCase().trim();
     if (p === "ollama") {
-      const targetUrl = baseUrl?.trim() || "http://127.0.0.1:11434";
+      const targetUrl = baseUrl?.trim() || DEFAULT_OLLAMA_URL;
       const endpoint = `${targetUrl.replace(/\/$/, "")}/api/tags`;
       try {
         const res = await fetch(endpoint, { signal: AbortSignal.timeout(3000) });
@@ -724,7 +782,7 @@ export class LlmService {
         // Fall back if server is offline
       }
     } else if (p === "llamacpp-server" || p === "llamacpp") {
-      const targetUrl = baseUrl?.trim() || "http://127.0.0.1:9100";
+      const targetUrl = baseUrl?.trim() || DEFAULT_LLAMACPP_URL;
       const endpoint = `${targetUrl.replace(/\/$/, "")}/v1/models`;
       try {
         const headers: Record<string, string> = {};
@@ -759,7 +817,10 @@ export class LlmService {
     const baseUrl = (options.baseUrl || "").trim();
 
     if (step === "config") {
-      if (!model) {
+      // llama.cpp serves the model it was launched with, so an unset model is
+      // valid there; every other provider addresses a model by name.
+      const modelOptional = provider === "llamacpp-server" || provider === "llamacpp";
+      if (!model && !modelOptional) {
         return { success: false, message: "Model identifier cannot be empty." };
       }
       const cloudProviders = ["groq", "openai", "anthropic", "gemini", "openrouter", "deepseek"];
@@ -768,7 +829,7 @@ export class LlmService {
         return { success: false, message: `${name} requires an API key.` };
       }
       if (provider === "llamacpp-server" || provider === "llamacpp" || provider === "ollama") {
-        const urlToTest = baseUrl || (provider === "ollama" ? "http://127.0.0.1:11434" : "http://127.0.0.1:9100");
+        const urlToTest = baseUrl || (provider === "ollama" ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL);
         try {
           new URL(urlToTest);
         } catch {
@@ -782,7 +843,7 @@ export class LlmService {
       const startTime = Date.now();
       try {
         if (provider === "ollama") {
-          const targetUrl = baseUrl || "http://127.0.0.1:11434";
+          const targetUrl = baseUrl || DEFAULT_OLLAMA_URL;
           const pingUrl = `${targetUrl.replace(/\/$/, "")}/api/tags`;
           const res = await fetch(pingUrl, { signal: AbortSignal.timeout(4000) });
           const latencyMs = Date.now() - startTime;
@@ -791,7 +852,7 @@ export class LlmService {
           }
           return { success: true, message: `Connected to Ollama daemon at ${targetUrl} (${latencyMs}ms).`, latencyMs };
         } else if (provider === "llamacpp-server" || provider === "llamacpp") {
-          const targetUrl = baseUrl || "http://127.0.0.1:9100";
+          const targetUrl = baseUrl || DEFAULT_LLAMACPP_URL;
           const pingUrl = `${targetUrl.replace(/\/$/, "")}/v1/models`;
           const headers: Record<string, string> = {};
           if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
@@ -840,7 +901,7 @@ export class LlmService {
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        const defaultHost = provider === "ollama" ? "127.0.0.1:11434" : (provider === "llamacpp-server" || provider === "llamacpp" ? "127.0.0.1:9100" : `${provider} host`);
+        const defaultHost = provider === "ollama" ? DEFAULT_OLLAMA_URL : (provider === "llamacpp-server" || provider === "llamacpp" ? DEFAULT_LLAMACPP_URL : `${provider} host`);
         return {
           success: false,
           message: `Unable to connect to ${baseUrl || defaultHost}: ${msg}`,

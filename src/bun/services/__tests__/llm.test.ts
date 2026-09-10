@@ -36,10 +36,29 @@ describe("LlmService diagnostic and configuration", () => {
     it("succeeds for local provider without API key", async () => {
       const res = await service.testStep("config", {
         provider: "llamacpp-server",
-        model: "qwen3-abliterated-14b-q4_k_m",
-        baseUrl: "http://127.0.0.1:9100",
+        model: "local-model",
+        baseUrl: "http://127.0.0.1:8080",
       });
       expect(res.success).toBe(true);
+    });
+
+    it("succeeds for llamacpp without a model identifier", async () => {
+      const res = await service.testStep("config", {
+        provider: "llamacpp-server",
+        model: "",
+        baseUrl: "http://192.168.1.50:9000",
+      });
+      expect(res.success).toBe(true);
+    });
+
+    it("fails when a named-model provider has no model identifier", async () => {
+      const res = await service.testStep("config", {
+        provider: "ollama",
+        model: "",
+        baseUrl: "http://127.0.0.1:11434",
+      });
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("Model identifier cannot be empty");
     });
 
     it("fails when local provider has invalid URL format", async () => {
@@ -50,6 +69,68 @@ describe("LlmService diagnostic and configuration", () => {
       });
       expect(res.success).toBe(false);
       expect(res.message).toContain("Invalid server URL format");
+    });
+  });
+
+  describe("llama.cpp model resolution", () => {
+    it("sends the loaded model when the user pinned none", async () => {
+      const originalFetch = globalThis.fetch;
+      let chatBody: Record<string, unknown> | undefined;
+      globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+        const target = String(input);
+        if (target.endsWith("/v1/models")) {
+          return new Response(
+            JSON.stringify({
+              data: [
+                { id: "gemma3-1b", status: { value: "unloaded" } },
+                { id: "qwen3-14b", status: { value: "loaded" } },
+              ],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        chatBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: "LLM connection verified" } }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }) as unknown as typeof fetch;
+      try {
+        const res = await service.testStep("inference", {
+          provider: "llamacpp-server",
+          model: "",
+          baseUrl: "http://127.0.0.1:19101",
+        });
+        expect(res.success).toBe(true);
+        expect(chatBody?.model).toBe("qwen3-14b");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("omits the model when the server cannot list any", async () => {
+      const originalFetch = globalThis.fetch;
+      let chatBody: Record<string, unknown> | undefined;
+      globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+        const target = String(input);
+        if (target.endsWith("/v1/models")) throw new Error("connection refused");
+        chatBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: "LLM connection verified" } }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }) as unknown as typeof fetch;
+      try {
+        const res = await service.testStep("inference", {
+          provider: "llamacpp-server",
+          model: "",
+          baseUrl: "http://127.0.0.1:19102",
+        });
+        expect(res.success).toBe(true);
+        expect(chatBody && "model" in chatBody).toBe(false);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 

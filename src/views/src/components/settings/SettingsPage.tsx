@@ -54,6 +54,11 @@ import {
   METRIC_CATEGORIES,
 } from "../portfolio/metrics-catalog";
 import {
+  DEFAULT_LLAMACPP_URL,
+  DEFAULT_OLLAMA_MODEL,
+  DEFAULT_OLLAMA_URL,
+} from "../../../../shared/llm-defaults";
+import {
   getDefaultMetricPreferences,
   type MetricCardSize,
   type OverviewMetricKey,
@@ -81,29 +86,31 @@ interface ProviderPreset {
 const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
   "llamacpp": {
     id: "llamacpp",
-    name: "llama.cpp",
-    badge: "Local llamacpp server",
-    defaultModel: "qwen3-abliterated-14b-q4_k_m",
+    name: "Llama.cpp Server",
+    badge: "Local Daemon",
+    // The server answers with whichever model it was started with, so there is
+    // no meaningful default to preselect; the list comes from /v1/models.
+    defaultModel: "",
     description: "Connect to local OpenAI-compatible inference server daemon.",
     requiresKey: false,
     keyOptional: true,
     keyPlaceholder: "Optional Bearer Token",
     supportsBaseUrl: true,
-    baseUrlPlaceholder: "http://127.0.0.1:9100",
-    defaultBaseUrl: "http://127.0.0.1:9100",
+    baseUrlPlaceholder: DEFAULT_LLAMACPP_URL,
+    defaultBaseUrl: DEFAULT_LLAMACPP_URL,
   },
   ollama: {
     id: "ollama",
     name: "Ollama Server",
     badge: "Local Daemon",
-    defaultModel: "llama3.2:latest",
+    defaultModel: DEFAULT_OLLAMA_MODEL,
     description: "Run models locally via native Ollama daemon endpoint.",
     requiresKey: false,
     keyOptional: true,
     keyPlaceholder: "Optional API Token",
     supportsBaseUrl: true,
-    baseUrlPlaceholder: "http://127.0.0.1:11434",
-    defaultBaseUrl: "http://127.0.0.1:11434",
+    baseUrlPlaceholder: DEFAULT_OLLAMA_URL,
+    defaultBaseUrl: DEFAULT_OLLAMA_URL,
   },
   groq: {
     id: "groq",
@@ -207,6 +214,14 @@ const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
   },
 };
 
+/**
+ * Resolve a preset from a stored provider id, tolerating the legacy
+ * "llamacpp-server" key the backend still persists for llama.cpp.
+ */
+const resolveProviderPreset = (provider: string): ProviderPreset | undefined =>
+  PROVIDER_PRESETS[provider] ||
+  (provider === "llamacpp-server" ? PROVIDER_PRESETS["llamacpp"] : undefined);
+
 const SECTIONS = [
   {
     id: "general" as const,
@@ -308,10 +323,10 @@ export function SettingsPage({
 
   // Assistant settings state
   const [reportProvider, setReportProvider] = useState("llamacpp-server");
-  const [reportModel, setReportModel] = useState("qwen3-abliterated-14b-q4_k_m");
+  const [reportModel, setReportModel] = useState("");
   const [reportApiKey, setReportApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [reportBaseUrl, setReportBaseUrl] = useState("http://127.0.0.1:9100");
+  const [reportBaseUrl, setReportBaseUrl] = useState(DEFAULT_LLAMACPP_URL);
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [customModelInput, setCustomModelInput] = useState("");
@@ -375,6 +390,14 @@ export function SettingsPage({
       const res = await rpc.request.getProviderModels({ provider, baseUrl: url, apiKey: key });
       if (res.models && res.models.length > 0) {
         setServerModels((prev) => ({ ...prev, [provider]: res.models }));
+        // llama.cpp ships no default model, so adopt what the server reports
+        // rather than leaving the dropdown on an empty selection.
+        setReportModel((current) => {
+          if (current) return current;
+          const [first] = res.models;
+          saveConfig({ llmModel: first });
+          return first;
+        });
       }
     } catch {
       // Server offline or not responding
@@ -394,11 +417,11 @@ export function SettingsPage({
       const provider = config.llmProvider || "llamacpp-server";
       setReportProvider(provider);
 
-      const preset = PROVIDER_PRESETS[provider];
-      const savedModel = config.llmModel || preset?.defaultModel || "qwen3-abliterated-14b-q4_k_m";
+      const preset = resolveProviderPreset(provider);
+      const savedModel = config.llmModel || preset?.defaultModel || "";
       setReportModel(savedModel);
 
-      if (preset && preset.models && !preset.models.includes(savedModel)) {
+      if (savedModel && preset?.models && !preset.models.includes(savedModel)) {
         setIsCustomModel(true);
         setCustomModelInput(savedModel);
       }
@@ -415,7 +438,7 @@ export function SettingsPage({
       if (config.startWithBoot !== undefined) setStartWithBoot(config.startWithBoot);
       if (config.checkForUpdates !== undefined) setCheckForUpdates(config.checkForUpdates);
 
-      if (provider === "ollama" || provider === "llamacpp-server") {
+      if (preset?.supportsBaseUrl) {
         fetchModelsForProvider(provider, url || preset?.defaultBaseUrl, config.llmApiKey);
       }
     });
@@ -448,7 +471,7 @@ export function SettingsPage({
   const handleProviderSelect = (newProvider: string) => {
     const isLlamaCpp = newProvider === "llamacpp" || newProvider === "llamacpp-server";
     setReportProvider(newProvider);
-    const preset = PROVIDER_PRESETS[newProvider];
+    const preset = resolveProviderPreset(newProvider);
     if (preset) {
       setReportModel(preset.defaultModel);
       setIsCustomModel(false);
@@ -457,11 +480,10 @@ export function SettingsPage({
       const updates: any = { llmProvider: newProvider, llmModel: preset.defaultModel };
       let effectiveBaseUrl = reportBaseUrl;
       if (preset.supportsBaseUrl) {
-        if (
-          !effectiveBaseUrl ||
-          (isLlamaCpp && effectiveBaseUrl.includes("11434")) ||
-          (newProvider === "ollama" && effectiveBaseUrl.includes("9100"))
-        ) {
+        // Carry a custom URL across a provider switch, but replace the other
+        // local daemon's default rather than pointing llama.cpp at Ollama.
+        const otherDefault = isLlamaCpp ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL;
+        if (!effectiveBaseUrl || effectiveBaseUrl === otherDefault) {
           effectiveBaseUrl = preset.defaultBaseUrl || "";
           setReportBaseUrl(effectiveBaseUrl);
           updates.llmBaseUrl = effectiveBaseUrl;
@@ -598,9 +620,7 @@ export function SettingsPage({
 
   // Resolve the preset even when the provider value still uses the legacy
   // "llamacpp-server" key used by the backend.
-  const currentPreset =
-    PROVIDER_PRESETS[reportProvider] ||
-    (reportProvider === "llamacpp-server" ? PROVIDER_PRESETS["llamacpp"] : undefined);
+  const currentPreset = resolveProviderPreset(reportProvider);
   const dynamicList = serverModels[reportProvider] || [];
   const presetList = currentPreset?.models || [];
   // Local server providers (llamacpp-server and ollama) list models only from
@@ -1261,7 +1281,7 @@ export function SettingsPage({
                     <Cpu className="w-3.5 h-3.5 text-slate-400" />
                     <span>Model Identifier</span>
                   </label>
-                  {PROVIDER_PRESETS[reportProvider]?.supportsBaseUrl && (
+                  {currentPreset?.supportsBaseUrl && (
                     <button
                       type="button"
                       onClick={() => fetchModelsForProvider(reportProvider, reportBaseUrl, reportApiKey)}
@@ -1326,7 +1346,7 @@ export function SettingsPage({
               </div>
 
               {/* Server Base URL: Only rendered for local server daemons */}
-              {PROVIDER_PRESETS[reportProvider]?.supportsBaseUrl && (
+              {currentPreset?.supportsBaseUrl && (
                 <div className="space-y-2 pt-2 border-t border-slate-800/80">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -1350,16 +1370,16 @@ export function SettingsPage({
                         }
                       }}
                       placeholder={
-                        PROVIDER_PRESETS[reportProvider]?.baseUrlPlaceholder ||
-                        (reportProvider === "ollama" ? "http://127.0.0.1:11434" : "http://127.0.0.1:9100")
+                        currentPreset?.baseUrlPlaceholder ||
+                        (reportProvider === "ollama" ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL)
                       }
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">
                     {reportProvider === "ollama"
-                      ? "Default Ollama daemon endpoint: http://127.0.0.1:11434"
-                      : "Default llamacpp server daemon endpoint: http://127.0.0.1:9100"}
+                      ? `Default Ollama daemon endpoint: ${DEFAULT_OLLAMA_URL}`
+                      : `Default llama.cpp server endpoint: ${DEFAULT_LLAMACPP_URL}`}
                   </p>
                 </div>
               )}
@@ -1369,7 +1389,7 @@ export function SettingsPage({
                 <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Provider API Key</span>
-                  {PROVIDER_PRESETS[reportProvider]?.keyOptional && (
+                  {currentPreset?.keyOptional && (
                     <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional)</span>
                   )}
                 </label>
@@ -1383,7 +1403,7 @@ export function SettingsPage({
                       saveConfig({ llmApiKey: e.target.value });
                     }}
                     placeholder={
-                      PROVIDER_PRESETS[reportProvider]?.keyPlaceholder || "Enter API Key"
+                      currentPreset?.keyPlaceholder || "Enter API Key"
                     }
                     className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                   />
@@ -1804,7 +1824,7 @@ export function SettingsPage({
         isOpen={isTestModalOpen}
         onClose={() => setIsTestModalOpen(false)}
         provider={reportProvider}
-        providerName={PROVIDER_PRESETS[reportProvider]?.name || reportProvider}
+        providerName={currentPreset?.name || reportProvider}
         model={reportModel}
         apiKey={reportApiKey}
         baseUrl={reportBaseUrl}

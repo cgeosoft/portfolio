@@ -45,7 +45,7 @@ describe("Environment Detection & Required Configuration", () => {
       expect(isLocalhostUrl("http://localhost:3000")).toBe(true);
       expect(isLocalhostUrl("http://localhost:3000/terms")).toBe(true);
       expect(isLocalhostUrl("http://127.0.0.1:3000")).toBe(true);
-      expect(isLocalhostUrl("http://127.0.0.1:9100")).toBe(true);
+      expect(isLocalhostUrl("http://127.0.0.1:8080")).toBe(true);
       expect(isLocalhostUrl("localhost:3000")).toBe(true);
       expect(isLocalhostUrl("http://[::1]:3000")).toBe(true);
     });

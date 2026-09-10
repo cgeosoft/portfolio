@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { LlmTestStepId } from "../../../../shared/rpc-types";
+import { DEFAULT_LLAMACPP_URL, DEFAULT_OLLAMA_URL } from "../../../../shared/llm-defaults";
 
 export interface TestLlmModalProps {
   isOpen: boolean;
@@ -213,9 +214,9 @@ export function TestLlmModal({
   const displayEndpoint =
     baseUrl?.trim() ||
     (provider === "ollama"
-      ? "http://127.0.0.1:11434"
+      ? DEFAULT_OLLAMA_URL
       : provider === "llamacpp-server" || provider === "llamacpp"
-      ? "http://127.0.0.1:9100"
+      ? DEFAULT_LLAMACPP_URL
       : "Predefined Cloud Endpoint");
 
   return (
@@ -230,11 +231,8 @@ export function TestLlmModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-100">
-                  Inference Provider Diagnostics
+                  Inference Diagnostics
                 </h3>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#243C8F]/30 text-blue-300 border border-[#243C8F]/60">
-                  {providerName}
-                </span>
               </div>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Verifying configuration, connectivity, and model execution

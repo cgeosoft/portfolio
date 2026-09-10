@@ -17,6 +17,7 @@ import type {
   PortfolioTransaction,
 } from "../../types/portfolio.js";
 import type { PortfolioChatMessage, AssistantConversation } from "../../shared/rpc-types.js";
+import { DEFAULT_OLLAMA_MODEL } from "../../shared/llm-defaults.js";
 
 export function buildPortfolioSystemPrompt(
   portfolio: PortfolioItem,
@@ -161,8 +162,9 @@ export class PortfolioChatService {
                 : provider === "gemini"
                   ? "gemini-2.5-flash"
                   : provider === "ollama"
-                    ? "llama3.2:latest"
-                    : "qwen3-abliterated-14b-q4_k_m";
+                    ? DEFAULT_OLLAMA_MODEL
+                    // llama.cpp answers with the model it was started with.
+                    : "";
 
     const model = options.model || config.llmModel || defaultModel;
     const apiKey = config.llmApiKeys?.[provider] || config.llmApiKey;
