@@ -46,7 +46,6 @@ export interface AppMenuBarProps {
   onReload?: () => void;
   onAnalyzePortfolio: () => void;
   onOpenSetupWizard: () => void;
-  onOpenAbout: () => void;
   onQuit: () => void;
   isAssistantOpen?: boolean;
   onToggleAssistant?: () => void;
@@ -89,7 +88,6 @@ export function AppMenuBar({
   onReload,
   onAnalyzePortfolio,
   onOpenSetupWizard,
-  onOpenAbout,
   onQuit,
   isAssistantOpen,
   onToggleAssistant,
@@ -334,7 +332,7 @@ export function AppMenuBar({
       icon: Keyboard,
       action: () => {
         closeMenu();
-        onOpenAbout();
+        onOpenSettings("about");
       },
     },
     {
@@ -365,7 +363,7 @@ export function AppMenuBar({
       icon: Info,
       action: () => {
         closeMenu();
-        onOpenAbout();
+        onOpenSettings("about");
       },
     },
   ];

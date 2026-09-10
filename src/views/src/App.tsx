@@ -7,7 +7,6 @@ import type {
 } from "../../types/portfolio";
 import { Header, type PortfolioTabKey } from "./components/layout/Header";
 import { AppMenuBar } from "./components/layout/AppMenuBar";
-import { AboutModal } from "./components/common/AboutModal";
 import { CreatePortfolioModal } from "./components/portfolio/CreatePortfolioModal";
 import { ExportPortfolioModal } from "./components/portfolio/ExportPortfolioModal";
 import { StatCard } from "./components/portfolio/StatCard";
@@ -435,7 +434,6 @@ export default function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
   const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
-  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
@@ -1005,7 +1003,6 @@ export default function App() {
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
-          onOpenAbout={() => setIsAboutModalOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -1088,7 +1085,6 @@ export default function App() {
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
-          onOpenAbout={() => setIsAboutModalOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -1191,7 +1187,6 @@ export default function App() {
         onReload={handleReload}
         onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
         onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
-        onOpenAbout={() => setIsAboutModalOpen(true)}
         onQuit={handleQuitApp}
         isAssistantOpen={isAssistantOpen}
         onToggleAssistant={handleToggleAssistant}
@@ -1561,13 +1556,6 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         portfolio={activePortfolio}
-      />
-
-      <AboutModal
-        isOpen={isAboutModalOpen}
-        onClose={() => setIsAboutModalOpen(false)}
-        version={appVersion}
-        updateInfo={updateInfo}
       />
     </div>
   );
