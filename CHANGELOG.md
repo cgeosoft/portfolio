@@ -2,6 +2,18 @@
 
 All notable changes to Portfolio Desktop are documented in this file.
 
+## [0.1.6] - 2026-09-10
+
+## Release Notes for Version 0.1.6
+
+### Changed
+- Sponsor banner now uses the contact email from the WEBPAGE_EMAIL environment variable.
+- The About dialog has been integrated into the Settings About section.
+- Build and release scripts now require WEBPAGE_URL, WEB
+
+
+All notable changes to Portfolio Desktop are documented in this file.
+
 ## [0.1.5] - 2026-09-10
 
 # Release Notes for Portfolio Desktop v0.1.5
