@@ -279,6 +279,15 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         return { conversations };
       },
 
+      getAssistantSystemPrompt: async (params) => {
+        const portfolio = portfolioRepo.findById(params.portfolioId);
+        const systemPrompt = await chatService.getSystemPrompt(params.portfolioId);
+        return {
+          systemPrompt,
+          portfolioName: portfolio?.name ?? "",
+        };
+      },
+
       deleteAssistantConversation: async (params) => {
         const success = chatService.deleteConversation(params.portfolioId, params.conversationId);
         return { success };

@@ -210,6 +210,15 @@ export interface ChatWithPortfolioResponse {
   model: string;
 }
 
+export interface GetAssistantSystemPromptRequest {
+  portfolioId: string;
+}
+
+export interface GetAssistantSystemPromptResponse {
+  systemPrompt: string;
+  portfolioName: string;
+}
+
 export interface CompleteSetupRequest {
   populateDemo: boolean;
   enableTelemetry: boolean;
@@ -418,6 +427,7 @@ export type PortfolioRPC = {
 
       // LLM & Assistant
       chatWithPortfolio: { params: ChatWithPortfolioRequest; response: ChatWithPortfolioResponse };
+      getAssistantSystemPrompt: { params: GetAssistantSystemPromptRequest; response: GetAssistantSystemPromptResponse };
       getAssistantConversations: { params: GetAssistantConversationsRequest; response: GetAssistantConversationsResponse };
       deleteAssistantConversation: { params: DeleteAssistantConversationRequest; response: { success: boolean } };
       testLlm: { params: TestLlmRequest; response: { success: boolean; message: string } };

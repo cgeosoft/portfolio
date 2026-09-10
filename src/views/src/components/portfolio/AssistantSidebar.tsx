@@ -5,6 +5,8 @@ import rehypeSanitize from "rehype-sanitize";
 import type { PortfolioItem, FinancialPortfolioData } from "../../types/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "../../../../shared/rpc-types";
 import { cleanThinkTags, formatTimeAgo } from "./utils";
+import { rpc } from "../../rpc";
+import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
 import {
   Sparkles,
   Bot,
@@ -22,6 +24,8 @@ import {
   MessageSquare,
   Plus,
   ChevronDown,
+  FileText,
+  Loader2,
 } from "lucide-react";
 
 interface AssistantSidebarProps {
@@ -89,6 +93,10 @@ export function AssistantSidebar({
   const [inputText, setInputText] = useState("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isConvDropdownOpen, setIsConvDropdownOpen] = useState(false);
+  const [isSystemPromptOpen, setIsSystemPromptOpen] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [systemPromptLoading, setSystemPromptLoading] = useState(false);
+  const [systemPromptError, setSystemPromptError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const convDropdownRef = useRef<HTMLDivElement>(null);
@@ -155,6 +163,21 @@ export function AssistantSidebar({
       // Ignore clipboard error
     }
   };
+
+  const handleOpenSystemPrompt = useCallback(async () => {
+    if (!portfolio?.id) return;
+    setIsSystemPromptOpen(true);
+    setSystemPromptLoading(true);
+    setSystemPromptError(null);
+    try {
+      const res = await rpc.request.getAssistantSystemPrompt({ portfolioId: portfolio.id });
+      setSystemPrompt(res.systemPrompt);
+    } catch (err) {
+      setSystemPromptError(err instanceof Error ? err.message : "Failed to load the system prompt.");
+    } finally {
+      setSystemPromptLoading(false);
+    }
+  }, [portfolio?.id]);
 
   const activeConversation = conversations.find((c) => c.id === currentConversationId);
   const conversationTitle = activeConversation ? activeConversation.title : "New Conversation";
@@ -327,9 +350,21 @@ export function AssistantSidebar({
           <span className="uppercase text-slate-500 font-semibold">Model:</span>
           <span className="text-slate-300 truncate">{activeModel || activeProvider}</span>
         </div>
-        <div className="text-[9.5px] text-slate-500 uppercase tracking-wider shrink-0 pl-1">
-          {portfolioData?.holdings ? `${portfolioData.holdings.length} Assets` : "0 Assets"}
-        </div>
+        <button
+          type="button"
+          onClick={handleOpenSystemPrompt}
+          className="text-[9.5px] text-slate-400 uppercase tracking-wider shrink-0 pl-1 hover:text-[#DD3C73] transition-colors cursor-pointer inline-flex items-center gap-1"
+          title="View the full system prompt for a new conversation"
+        >
+          {systemPromptLoading ? (
+            <Loader2 className="w-3 h-3 text-[#DD3C73] animate-spin" />
+          ) : (
+            <FileText className="w-3 h-3" />
+          )}
+          <span>
+            {portfolioData?.holdings ? `${portfolioData.holdings.length} Assets` : "0 Assets"}
+          </span>
+        </button>
       </div>
 
       {/* Message List */}
@@ -578,6 +613,15 @@ export function AssistantSidebar({
           )}
         </div>
       </div>
+
+      <AssistantSystemPromptModal
+        isOpen={isSystemPromptOpen}
+        onClose={() => setIsSystemPromptOpen(false)}
+        systemPrompt={systemPrompt}
+        portfolioName={portfolio?.name || ""}
+        isLoading={systemPromptLoading}
+        error={systemPromptError}
+      />
     </aside>
   );
 }

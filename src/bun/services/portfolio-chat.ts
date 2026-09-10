@@ -100,6 +100,21 @@ export class PortfolioChatService {
     private readonly portfolioService: PortfolioService,
   ) {}
 
+  /**
+   * Build a fresh copy of the system prompt for the given portfolio so the UI
+   * can show the user exactly what the assistant will receive in a new chat.
+   */
+  public async getSystemPrompt(portfolioId: string): Promise<string> {
+    const portfolio = portfolioRepo.findById(portfolioId);
+    if (!portfolio) {
+      throw new Error(`Portfolio with ID "${portfolioId}" not found`);
+    }
+    const config = loadConfig();
+    const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
+    const data = await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency);
+    return buildPortfolioSystemPrompt(portfolio, data);
+  }
+
   public getConversations(portfolioId: string): AssistantConversation[] {
     const rows = conversationRepo.findByPortfolio(portfolioId);
     return rows.map((r) => {
