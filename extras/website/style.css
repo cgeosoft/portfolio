@@ -119,6 +119,18 @@ body {
 .font-mono { font-family: var(--font-mono); }
 .font-bold { font-weight: 700; }
 .text-accent { color: var(--accent); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .text-mint { color: var(--status-success); }
 .text-cream { color: var(--status-warning); }
 .text-blue { color: #6d8bf7; }
@@ -652,6 +664,463 @@ body {
 .preview-section {
   padding-block: 5rem;
   background: radial-gradient(circle at 50% 50%, rgba(52, 27, 131, 0.12) 0%, transparent 80%);
+}
+
+/* =============================================================================
+   Real Screenshot Showcase (annotated hotspots + full-size lightbox)
+   ============================================================================= */
+.shot-stage {
+  margin: 0 0 3.5rem;
+}
+
+.shot-frame {
+  position: relative;
+  background-color: var(--background-widget);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  opacity: 0;
+  transform: perspective(1600px) rotateX(7deg) translateY(28px) scale(0.985);
+  transform-origin: top center;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shot-frame.is-revealed {
+  opacity: 1;
+  transform: perspective(1600px) rotateX(0deg) translateY(0) scale(1);
+}
+
+/* Accent glow hugging the frame */
+.shot-frame::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 60px -30px var(--accent-glow);
+}
+
+.shot-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: #0b0f19;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.25rem;
+}
+
+.shot-chrome .window-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shot-chrome-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.shot-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.shot-action:hover,
+.shot-action:focus-visible {
+  color: var(--text-main);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.shot-action.is-on {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background: var(--accent-glow-subtle);
+}
+
+.shot-canvas {
+  position: relative;
+  line-height: 0;
+}
+
+.shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+/* --- Hotspot overlay --- */
+.shot-hotspots {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.shot-hotspot {
+  position: static;
+}
+
+.hotspot-pin {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(var(--accent-rgb), 0.7);
+  border-radius: 50%;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--accent);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2;
+  transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Radar ping so the markers read as interactive */
+.hotspot-pin::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  animation: hotspot-ping 2.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.shot-hotspot:nth-child(2) .hotspot-pin::before { animation-delay: 0.3s; }
+.shot-hotspot:nth-child(3) .hotspot-pin::before { animation-delay: 0.6s; }
+.shot-hotspot:nth-child(4) .hotspot-pin::before { animation-delay: 0.9s; }
+.shot-hotspot:nth-child(5) .hotspot-pin::before { animation-delay: 1.2s; }
+.shot-hotspot:nth-child(6) .hotspot-pin::before { animation-delay: 1.5s; }
+
+@keyframes hotspot-ping {
+  0%   { opacity: 0.9; transform: scale(1); }
+  70%  { opacity: 0;   transform: scale(1.9); }
+  100% { opacity: 0;   transform: scale(1.9); }
+}
+
+.pin-num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hotspot-pin:hover,
+.hotspot-pin:focus-visible,
+.hotspot-pin[aria-expanded="true"] {
+  background: var(--accent);
+  color: #fff;
+  transform: translate(-50%, -50%) scale(1.18);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.22), 0 0 24px var(--accent-glow);
+  z-index: 4;
+}
+
+.hotspot-pin[aria-expanded="true"]::before {
+  animation: none;
+  opacity: 0;
+}
+
+/* --- Hotspot tooltip card --- */
+.hotspot-tip {
+  --tx: 1.75rem;
+  --ty: -50%;
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  z-index: 3;
+  width: min(19rem, 42%);
+  padding: 0.95rem 1.05rem;
+  background: rgba(21, 29, 48, 0.97);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  border-radius: var(--radius-md);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(var(--tx), var(--ty)) scale(0.97);
+  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
+}
+
+.hs-left  .hotspot-tip { --tx: calc(-100% - 1.75rem); }
+.hs-below .hotspot-tip { --tx: -50%; --ty: 1.75rem; }
+.hs-end   .hotspot-tip { --ty: calc(-100% + 1.4rem); }
+
+/* Caret on the bubble edge that faces its marker */
+.hotspot-tip::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border: 0 solid rgba(var(--accent-rgb), 0.35);
+  transform: rotate(45deg);
+}
+
+.hs-right .hotspot-tip::before {
+  left: -7px;
+  top: 50%;
+  margin-top: -6px;
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+
+.hs-left .hotspot-tip::before {
+  right: -7px;
+  top: 50%;
+  margin-top: -6px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.hs-below .hotspot-tip::before {
+  top: -7px;
+  left: 50%;
+  margin-left: -6px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+/* Bottom-anchored bubbles keep the caret level with the marker */
+.hs-end .hotspot-tip::before {
+  top: auto;
+  bottom: calc(1.4rem - 6px);
+  margin-top: 0;
+}
+
+.shot-hotspot.is-open .hotspot-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(var(--tx), var(--ty)) scale(1);
+}
+
+.tip-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+.tip-title {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.3rem;
+}
+
+.tip-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* --- Caption --- */
+.shot-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.shot-caption-compact {
+  display: none;
+}
+
+.shot-caption-badge {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--status-success);
+  border: 1px solid rgba(var(--status-success-rgb), 0.35);
+  background: rgba(var(--status-success-rgb), 0.08);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+}
+
+/* --- Divider before the interactive mockup --- */
+.preview-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  color: var(--text-dim);
+}
+
+.preview-divider::before,
+.preview-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.preview-divider-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* --- Full-size lightbox --- */
+.shot-lightbox {
+  width: fit-content;
+  height: fit-content;
+  max-width: none;
+  max-height: none;
+  /* The global reset zeroes margins, which would strip the dialog's centering. */
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  overflow: visible;
+  cursor: zoom-out;
+}
+
+.shot-lightbox::backdrop {
+  background: rgba(4, 6, 12, 0.86);
+  backdrop-filter: blur(6px);
+}
+
+.shot-lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 94vw;
+  max-height: 90vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+
+.shot-lightbox-close {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--background-card);
+  color: var(--text-main);
+  cursor: pointer;
+  z-index: 1;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.shot-lightbox-close:hover,
+.shot-lightbox-close:focus-visible {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* --- Small screens: markers become a readable list under the screenshot --- */
+@media (max-width: 860px) {
+  .shot-frame {
+    transform: none;
+  }
+  .shot-action-label,
+  .shot-chrome .window-title,
+  .shot-caption-wide {
+    display: none;
+  }
+  .shot-caption-compact {
+    display: inline;
+  }
+  .shot-hotspots {
+    position: static;
+    display: grid;
+    gap: 0.85rem;
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+    background: #0e1422;
+    pointer-events: auto;
+  }
+  .shot-hotspot {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .hotspot-pin {
+    position: static;
+    transform: none;
+    flex-shrink: 0;
+    cursor: default;
+  }
+  .hotspot-pin::before {
+    display: none;
+  }
+  .hotspot-pin:hover,
+  .hotspot-pin:focus-visible,
+  .hotspot-pin[aria-expanded="true"] {
+    transform: none;
+  }
+  .hotspot-tip {
+    position: static;
+    width: auto;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+  .hotspot-tip::before {
+    display: none;
+  }
+  .shot-hotspot.is-open .hotspot-tip {
+    transform: none;
+  }
+  .shot-lightbox-close {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
 }
 
 .mockup-window {

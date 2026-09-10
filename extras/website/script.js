@@ -245,8 +245,158 @@
   }
 
   // ===========================================================================
-  // Year & Initialization
+  // Real Screenshot Showcase
+  // Scroll reveal, annotated hotspots (hover / focus / click to pin), and a
+  // full-size lightbox. Everything degrades to a plain screenshot without JS.
   // ===========================================================================
+  function initScreenshotShowcase() {
+    const frame = document.getElementById('shot-frame');
+    if (!frame) return;
+
+    const list = document.getElementById('shot-hotspots');
+    const img = document.getElementById('shot-img');
+    const tourToggle = document.getElementById('shot-tour-toggle');
+    const zoomBtn = document.getElementById('shot-zoom-btn');
+    const lightbox = document.getElementById('shot-lightbox');
+    const lightboxClose = document.getElementById('shot-lightbox-close');
+
+    // --- Reveal the frame as it scrolls into view ---
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.12 });
+      observer.observe(frame);
+    } else {
+      frame.classList.add('is-revealed');
+    }
+
+    // --- Annotated hotspots ---
+    const compact = window.matchMedia('(max-width: 860px)');
+    const hotspots = list ? Array.from(list.querySelectorAll('.shot-hotspot')) : [];
+    let pinnedSpot = null;
+
+    function setOpen(spot, open) {
+      spot.classList.toggle('is-open', open);
+      const pin = spot.querySelector('.hotspot-pin');
+      if (pin) pin.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function openOnly(spot) {
+      hotspots.forEach((other) => setOpen(other, other === spot));
+    }
+
+    function closeAll() {
+      hotspots.forEach((spot) => setOpen(spot, false));
+      pinnedSpot = null;
+    }
+
+    // Below the breakpoint every annotation is rendered as a plain list, so the
+    // markers become decorative labels instead of interactive controls.
+    function syncCompactState() {
+      const isCompact = compact.matches;
+      if (isCompact) closeAll();
+      hotspots.forEach((spot) => {
+        const pin = spot.querySelector('.hotspot-pin');
+        if (!pin) return;
+        if (isCompact) {
+          pin.setAttribute('tabindex', '-1');
+          pin.setAttribute('aria-hidden', 'true');
+          pin.removeAttribute('aria-expanded');
+        } else {
+          pin.removeAttribute('tabindex');
+          pin.removeAttribute('aria-hidden');
+          pin.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    hotspots.forEach((spot, index) => {
+      const pin = spot.querySelector('.hotspot-pin');
+      if (!pin) return;
+
+      spot.addEventListener('mouseenter', () => {
+        if (!compact.matches && !pinnedSpot) openOnly(spot);
+      });
+      spot.addEventListener('mouseleave', () => {
+        if (!compact.matches && !pinnedSpot) setOpen(spot, false);
+      });
+      pin.addEventListener('focus', () => {
+        if (!compact.matches) openOnly(spot);
+      });
+      pin.addEventListener('blur', () => {
+        if (!compact.matches && pinnedSpot !== spot) setOpen(spot, false);
+      });
+      pin.addEventListener('click', (event) => {
+        if (compact.matches) return;
+        event.stopPropagation();
+        if (pinnedSpot === spot) {
+          closeAll();
+          return;
+        }
+        pinnedSpot = spot;
+        openOnly(spot);
+        trackEvent('screenshot_hotspot_opened', { hotspot: index + 1 });
+      });
+    });
+
+    if (hotspots.length) {
+      syncCompactState();
+      if (typeof compact.addEventListener === 'function') {
+        compact.addEventListener('change', syncCompactState);
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!pinnedSpot) return;
+        const target = event.target;
+        if (target instanceof Element && target.closest('.shot-hotspot')) return;
+        closeAll();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && pinnedSpot) closeAll();
+      });
+    }
+
+    if (tourToggle && list) {
+      tourToggle.addEventListener('click', () => {
+        const showing = tourToggle.getAttribute('aria-pressed') === 'true';
+        const next = !showing;
+        tourToggle.setAttribute('aria-pressed', next ? 'true' : 'false');
+        tourToggle.classList.toggle('is-on', next);
+        list.hidden = !next;
+        if (!next) closeAll();
+      });
+    }
+
+    // --- Full-size lightbox ---
+    function openLightbox() {
+      if (lightbox && typeof lightbox.showModal === 'function') {
+        lightbox.showModal();
+        trackEvent('screenshot_zoomed', {});
+        return;
+      }
+      window.open('assets/screenshot.png', '_blank', 'noopener');
+    }
+
+    if (img) {
+      img.addEventListener('click', openLightbox);
+    }
+    if (zoomBtn) {
+      zoomBtn.addEventListener('click', openLightbox);
+    }
+    if (lightbox) {
+      if (lightboxClose) {
+        lightboxClose.addEventListener('click', () => lightbox.close());
+      }
+      // Clicking anywhere, image or backdrop, dismisses the full-size view.
+      lightbox.addEventListener('click', () => lightbox.close());
+    }
+  }
+
   // ===========================================================================
   // Dynamic GitHub Release Resolution
   // Ensures download links always point to the latest release assets
@@ -510,6 +660,7 @@
     initPlatformSwitcher();
     initCopyButton();
     initMockupTabs();
+    initScreenshotShowcase();
     initYear();
     initCookieBanner();
     fetchLatestRelease();

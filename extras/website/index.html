@@ -132,13 +132,6 @@
             </button>
           </div>
 
-          <div class="download-meta-row">
-            <span id="meta-version-text">&bull; Version 0.1.0 Latest</span>
-            <span>&bull; SHA-256 Verified</span>
-            <span>&bull; 100% Free & Open Source</span>
-            <span>&bull; Ultra-Fast Native Performance</span>
-          </div>
-
           <div class="hero-releases-notice">
             <span>Downloads always deliver the latest version. More versions, portable builds, and release notes are available on the <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer">GitHub Releases page</a>.</span>
           </div>
@@ -175,7 +168,128 @@
         <div class="section-header text-center">
           <span class="section-pill">LIVE EXPERIENCE</span>
           <h2 class="section-title">Engineered for Precision & Speed</h2>
-          <p class="section-subtitle">Take a look inside the dashboard built for modern investors.</p>
+          <p class="section-subtitle">A real screenshot of the running app, annotated. Explore the markers to see what every part of the dashboard does.</p>
+        </div>
+
+        <!-- Real Application Screenshot with Guided Hotspots -->
+        <figure class="shot-stage" id="app-screenshot">
+          <div class="shot-frame" id="shot-frame">
+            <div class="shot-chrome">
+              <div class="window-controls">
+                <span class="dot dot-close"></span>
+                <span class="dot dot-min"></span>
+                <span class="dot dot-max"></span>
+              </div>
+              <div class="window-title">
+                <span class="status-indicator" aria-hidden="true"></span>
+                <span>portfolio :: overview &mdash; unretouched screenshot, demo portfolio</span>
+              </div>
+              <div class="shot-chrome-actions">
+                <button type="button" class="shot-action is-on" id="shot-tour-toggle" aria-pressed="true" aria-controls="shot-hotspots">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  <span class="shot-action-label">Highlights</span>
+                </button>
+                <button type="button" class="shot-action" id="shot-zoom-btn" aria-haspopup="dialog">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                  </svg>
+                  <span class="shot-action-label">Expand</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="shot-canvas">
+              <img class="shot-img" id="shot-img" src="assets/screenshot.png" width="1600" height="1104"
+                   loading="lazy" decoding="async"
+                   alt="Portfolio Desktop overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+
+              <ul class="shot-hotspots" id="shot-hotspots">
+                <li class="shot-hotspot hs-below" style="--x: 60.6%; --y: 4.4%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-1">
+                    <span class="pin-num" aria-hidden="true">1</span>
+                    <span class="sr-only">On-demand AI assistant</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-1" role="tooltip">
+                    <span class="tip-kicker">AI Assistant</span>
+                    <span class="tip-title">Briefings on demand</span>
+                    <p class="tip-desc">Generate a markdown analysis of your portfolio with a local model (Ollama, llama.cpp) or a cloud provider. You choose which, and you can read the exact prompt first.</p>
+                  </div>
+                </li>
+
+                <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 17%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-2">
+                    <span class="pin-num" aria-hidden="true">2</span>
+                    <span class="sr-only">Customizable overview metrics</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-2" role="tooltip">
+                    <span class="tip-kicker">Overview Metrics</span>
+                    <span class="tip-title">Only the numbers you track</span>
+                    <p class="tip-desc">Every card comes from the Metrics Marketplace. Pick which ones appear, per portfolio, and whether each is a large card or a compact tile.</p>
+                  </div>
+                </li>
+
+                <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 27.6%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-3">
+                    <span class="pin-num" aria-hidden="true">3</span>
+                    <span class="sr-only">Full cost and income breakdown</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-3" role="tooltip">
+                    <span class="tip-kicker">Cost Basis</span>
+                    <span class="tip-title">Nothing swept under the rug</span>
+                    <p class="tip-desc">Invested capital, realized P&amp;L, dividends and interest, broker fees and withheld taxes, all derived locally from your own transactions.</p>
+                  </div>
+                </li>
+
+                <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 50.7%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-4">
+                    <span class="pin-num" aria-hidden="true">4</span>
+                    <span class="sr-only">Portfolio performance history chart</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-4" role="tooltip">
+                    <span class="tip-kicker">Performance History</span>
+                    <span class="tip-title">Value against what you paid</span>
+                    <p class="tip-desc">Total value including cash, invested value, cost basis and return %, plotted from 1M to all-time out of local daily snapshots.</p>
+                  </div>
+                </li>
+
+                <li class="shot-hotspot hs-left" style="--x: 97.9%; --y: 50.7%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-5">
+                    <span class="pin-num" aria-hidden="true">5</span>
+                    <span class="sr-only">Asset allocation and weight donut</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-5" role="tooltip">
+                    <span class="tip-kicker">Allocation &amp; Weight</span>
+                    <span class="tip-title">Two rings, one glance</span>
+                    <p class="tip-desc">The inner ring splits your portfolio by asset class, the outer ring by individual holding weight, so concentration is impossible to miss.</p>
+                  </div>
+                </li>
+
+                <li class="shot-hotspot hs-left hs-end" style="--x: 97.9%; --y: 83.8%;">
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-6">
+                    <span class="pin-num" aria-hidden="true">6</span>
+                    <span class="sr-only">Live positions with technical indicators</span>
+                  </button>
+                  <div class="hotspot-tip" id="hs-tip-6" role="tooltip">
+                    <span class="tip-kicker">Active Positions</span>
+                    <span class="tip-title">Live quotes with context</span>
+                    <p class="tip-desc">Every holding with its live price, 24h move, total return, 52-week range and RSI, plus SMA 50/200 trend, refreshed from Yahoo Finance.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <figcaption class="shot-caption">
+            <span class="shot-caption-badge">Not a mockup</span>
+            <span class="shot-caption-wide">Hover a marker to see what each part of the dashboard does &bull; click the screenshot to view it full size.</span>
+            <span class="shot-caption-compact">Tap the screenshot to view it full size.</span>
+          </figcaption>
+        </figure>
+
+        <div class="preview-divider">
+          <span class="preview-divider-label">Explore the other views</span>
         </div>
 
         <!-- Terminal Window Mockup -->
@@ -765,6 +879,16 @@
       </div>
     </div>
   </footer>
+
+  <!-- Full-size Screenshot Lightbox -->
+  <dialog class="shot-lightbox" id="shot-lightbox" aria-label="Application screenshot, full size">
+    <button type="button" class="shot-lightbox-close" id="shot-lightbox-close" aria-label="Close full size screenshot">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <img class="shot-lightbox-img" id="shot-lightbox-img" src="assets/screenshot.png" alt="Portfolio Desktop overview tab shown at full size.">
+  </dialog>
 
   <script src="script.js"></script>
 </body>

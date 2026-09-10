@@ -4,6 +4,15 @@ An offline-first, private personal investment portfolio tracker for Linux (Debia
 
 Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and AI analytical briefings can be generated on-demand using local (Ollama, llamacpp-server) or cloud (Groq, OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek) LLMs.
 
+<p align="center">
+  <img src="extras/website/assets/screenshot.png" width="900"
+       alt="Portfolio Desktop overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+</p>
+
+<p align="center">
+  <sub>The overview dashboard on the built-in demo portfolio &mdash; customizable metric cards, performance history against invested capital, asset allocation by class and weight, and live positions with technical gauges.</sub>
+</p>
+
 ---
 
 ## Key Features
