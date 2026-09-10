@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   Clock,
   Power,
-  ChevronDown,
   Plus,
   Edit3,
   Trash2,
@@ -40,6 +39,7 @@ import {
   Minimize2,
   RotateCcw,
 } from "lucide-react";
+import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "../../types/portfolio";
 import type { AppUpdateInfo, GetPortfolioMetricsResponse } from "../../../../shared/rpc-types";
@@ -698,38 +698,24 @@ export function SettingsPage({
                   </span>
                 </div>
 
-                <div className="relative">
-                  <Clock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={quotesInterval}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setQuotesInterval(val);
-                      saveConfig({ marketQuotesInterval: val });
-                    }}
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono appearance-none cursor-pointer"
-                  >
-                    <option value={0} className="bg-slate-900 text-slate-100">
-                      Manual Only (Off)
-                    </option>
-                    <option value={5} className="bg-slate-900 text-slate-100">
-                      Every 5 Minutes (Active Trading)
-                    </option>
-                    <option value={15} className="bg-slate-900 text-slate-100">
-                      Every 15 Minutes (Recommended)
-                    </option>
-                    <option value={30} className="bg-slate-900 text-slate-100">
-                      Every 30 Minutes
-                    </option>
-                    <option value={60} className="bg-slate-900 text-slate-100">
-                      Every 1 Hour
-                    </option>
-                    <option value={240} className="bg-slate-900 text-slate-100">
-                      Every 4 Hours
-                    </option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={quotesInterval}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setQuotesInterval(val);
+                    saveConfig({ marketQuotesInterval: val });
+                  }}
+                  selectSize="lg"
+                  icon={<Clock className="w-4 h-4" />}
+                  aria-label="Market quotes auto-fetch interval"
+                >
+                  <option value={0}>Manual Only (Off)</option>
+                  <option value={5}>Every 5 Minutes (Active Trading)</option>
+                  <option value={15}>Every 15 Minutes (Recommended)</option>
+                  <option value={30}>Every 30 Minutes</option>
+                  <option value={60}>Every 1 Hour</option>
+                  <option value={240}>Every 4 Hours</option>
+                </Select>
 
                 <p className="text-[11px] text-slate-400 leading-relaxed">
                   Automatically pulls live quotes and foreign exchange rates from Yahoo Finance in the background to update portfolio equity valuations.
@@ -1073,18 +1059,21 @@ export function SettingsPage({
 
                 <div className="flex items-center gap-2 shrink-0">
                   {portfolios.length > 1 && (
-                    <select
+                    <Select
                       value={metricsPortfolioId || ""}
                       onChange={(e) => setMetricsPortfolioOverride(e.target.value)}
-                      className="h-8 bg-slate-950/70 border border-slate-800 rounded-lg px-2.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]/50 font-mono cursor-pointer max-w-[190px]"
+                      selectSize="sm"
+                      className="h-8"
+                      wrapperClassName="max-w-[190px] shrink-0"
                       title="Portfolio to configure"
+                      aria-label="Portfolio to configure"
                     >
                       {portfolios.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   )}
 
                   <button
@@ -1252,24 +1241,22 @@ export function SettingsPage({
                   <Bot className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Inference Provider</span>
                 </label>
-                <div className="relative">
-                  <Bot className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={reportProvider}
-                    onChange={(e) => handleProviderSelect(e.target.value)}
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono appearance-none cursor-pointer"
-                  >
-                    {Object.values(PROVIDER_PRESETS).map((p) => (
-                      <option key={p.id} value={p.id} className="bg-slate-900 text-slate-100">
-                        {p.name} ({p.badge})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-                {PROVIDER_PRESETS[reportProvider] && (
+                <Select
+                  value={currentPreset?.id || reportProvider}
+                  onChange={(e) => handleProviderSelect(e.target.value)}
+                  selectSize="lg"
+                  icon={<Bot className="w-4 h-4" />}
+                  aria-label="Inference provider"
+                >
+                  {Object.values(PROVIDER_PRESETS).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.badge})
+                    </option>
+                  ))}
+                </Select>
+                {currentPreset && (
                   <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                    {PROVIDER_PRESETS[reportProvider].description}
+                    {currentPreset.description}
                   </p>
                 )}
               </div>
@@ -1295,34 +1282,32 @@ export function SettingsPage({
                   )}
                 </div>
 
-                <div className="relative">
-                  <Cpu className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={isCustomModel ? "__custom__" : reportModel}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "__custom__") {
-                        setIsCustomModel(true);
-                        setCustomModelInput(reportModel);
-                      } else {
-                        setIsCustomModel(false);
-                        setReportModel(val);
-                        saveConfig({ llmModel: val });
-                      }
-                    }}
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono appearance-none cursor-pointer"
-                  >
-                    {availableModels.map((m) => (
-                      <option key={m} value={m} className="bg-slate-900 text-slate-100">
-                        {m}
-                      </option>
-                    ))}
-                    <option value="__custom__" className="bg-slate-900 text-[#DD3C73] font-semibold">
-                      Custom Model (Manual Entry)...
+                <Select
+                  value={isCustomModel ? "__custom__" : reportModel}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "__custom__") {
+                      setIsCustomModel(true);
+                      setCustomModelInput(reportModel);
+                    } else {
+                      setIsCustomModel(false);
+                      setReportModel(val);
+                      saveConfig({ llmModel: val });
+                    }
+                  }}
+                  selectSize="lg"
+                  icon={<Cpu className="w-4 h-4" />}
+                  aria-label="Model identifier"
+                >
+                  {availableModels.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
                     </option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                  ))}
+                  <option value="__custom__">
+                    Custom Model (Manual Entry)...
+                  </option>
+                </Select>
 
                 {isCustomModel && (
                   <div className="pt-2 animate-fade-in">

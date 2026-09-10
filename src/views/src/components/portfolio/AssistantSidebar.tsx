@@ -233,12 +233,14 @@ export function AssistantSidebar({
         <button
           type="button"
           onClick={() => setIsConvDropdownOpen((prev) => !prev)}
-          className="flex items-center gap-1.5 text-[11px] font-medium text-slate-300 hover:text-white px-2 py-1 rounded bg-[#0f1627] hover:bg-[#141d34] border border-slate-800 transition-colors cursor-pointer truncate flex-1 min-w-0 text-left"
+          data-open={isConvDropdownOpen}
+          data-variant="outlined"
+          className="cx-menu-trigger text-[11px] font-medium text-slate-300 hover:text-white px-2 py-1 flex-1 text-left"
           title="Select conversation"
         >
           <MessageSquare className="w-3 h-3 text-[#DD3C73] shrink-0" />
           <span className="truncate flex-1">{conversationTitle}</span>
-          <ChevronDown className={`w-3 h-3 text-slate-500 shrink-0 transition-transform ${isConvDropdownOpen ? "rotate-180" : ""}`} />
+          <ChevronDown className="cx-menu-chevron w-3 h-3 text-slate-500" />
         </button>
 
         {onNewChat && (
@@ -258,12 +260,12 @@ export function AssistantSidebar({
 
         {/* Conversations Dropdown Menu */}
         {isConvDropdownOpen && (
-          <div className="absolute left-3 right-3 top-full mt-1 bg-[#101728] border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-mono">
-            <div className="px-3 py-1 text-[9.5px] uppercase font-bold text-slate-500 tracking-wider flex items-center justify-between border-b border-slate-800/80">
+          <div className="cx-menu absolute left-3 right-3 top-full mt-1 z-50 font-mono">
+            <div className="cx-menu-label">
               <span>Saved Conversations ({conversations.length})</span>
             </div>
 
-            <div className="max-h-60 overflow-y-auto custom-scrollbar my-1">
+            <div className="max-h-60 overflow-y-auto custom-scrollbar">
               {conversations.length === 0 ? (
                 <div className="px-3 py-4 text-center text-xs text-slate-500">
                   No saved conversations yet.
@@ -278,9 +280,8 @@ export function AssistantSidebar({
                         onSelectConversation?.(c.id);
                         setIsConvDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 hover:bg-slate-800/60 transition-colors cursor-pointer group ${
-                        isActive ? "bg-[#DD3C73]/10 text-[#DD3C73] font-semibold" : "text-slate-300"
-                      }`}
+                      data-active={isActive}
+                      className="cx-menu-item justify-between group"
                     >
                       <div className="flex items-center gap-2 truncate min-w-0 flex-1">
                         <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`} />
