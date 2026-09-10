@@ -1,13 +1,32 @@
 /**
- * Environment detection, version resolution, and webpage URL configuration.
- * Distinguishes between development and production runtime contexts.
+ * Environment detection, version resolution, and required app configuration.
+ *
+ * The application reads exactly three env vars at build time:
+ *   WEBPAGE_URL      base URL for terms and the sponsor/marketing pages
+ *   WEBPAGE_EMAIL    developer contact address shown in the sponsorship dialog
+ *   POSTHOG_API_KEY  PostHog key for anonymous telemetry
+ *
+ * electrobun.config.ts bakes these into the bundle as constants. They are
+ * always provided (from .env locally and from GitHub secrets in CI), so a
+ * missing value fails the build or run instead of substituting a default.
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-export const PROD_WEBPAGE_URL = "https://portfolio.cgeosoft.com";
-export const DEV_WEBPAGE_URL = "http://localhost:3000";
+/**
+ * Read a required baked-in env var, failing loudly when it is missing.
+ *
+ * The value is passed in rather than looked up by name: electrobun substitutes
+ * literal `process.env.NAME` expressions at build time, and leaves a dynamic
+ * `process.env[name]` lookup untouched, which finds nothing in a packaged app.
+ */
+function requiredEnv(name: string, value: string | undefined): string {
+  if (value && value.trim().length > 0) {
+    return value.trim().replace(/\/+$/, "");
+  }
+  throw new Error(`Missing required environment variable ${name}`);
+}
 
 let cachedIsProduction: boolean | null = null;
 let cachedVersion: string | null = null;
@@ -81,39 +100,14 @@ export function isLocalhostUrl(url?: string): boolean {
   );
 }
 
-/**
- * Resolve the appropriate base webpage URL based on environment.
- * - In production: defaults to PROD_WEBPAGE_URL. If configuredUrl is localhost, it is ignored.
- * - In development: defaults to DEV_WEBPAGE_URL or process.env.WEBPAGE_URL.
- */
-export function resolveWebpageUrl(configuredUrl?: string): string {
-  const prod = isProduction();
+/** Base URL for terms and the external marketing site. */
+export function resolveWebpageUrl(): string {
+  return requiredEnv("WEBPAGE_URL", process.env.WEBPAGE_URL);
+}
 
-  // In production mode
-  if (prod) {
-    // If an explicit override is passed, verify it is not localhost
-    if (configuredUrl && configuredUrl.trim().length > 0) {
-      if (!isLocalhostUrl(configuredUrl)) {
-        return configuredUrl.trim().replace(/\/+$/, "");
-      }
-    }
-    // Check environment variable WEBPAGE_URL, ignoring localhost in production
-    const envUrl = process.env["WEBPAGE_URL"];
-    if (envUrl && envUrl.trim().length > 0 && !isLocalhostUrl(envUrl)) {
-      return envUrl.trim().replace(/\/+$/, "");
-    }
-    return PROD_WEBPAGE_URL;
-  }
-
-  // In development mode
-  if (configuredUrl && configuredUrl.trim().length > 0) {
-    return configuredUrl.trim().replace(/\/+$/, "");
-  }
-  const envUrl = process.env["WEBPAGE_URL"];
-  if (envUrl && envUrl.trim().length > 0) {
-    return envUrl.trim().replace(/\/+$/, "");
-  }
-  return DEV_WEBPAGE_URL;
+/** Developer contact address shown in the sponsorship dialog. */
+export function resolveDevEmail(): string {
+  return requiredEnv("WEBPAGE_EMAIL", process.env.WEBPAGE_EMAIL);
 }
 
 interface VersionJsonShape {

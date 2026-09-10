@@ -5,19 +5,20 @@ import {
   getEnvironmentName,
   isLocalhostUrl,
   resolveWebpageUrl,
+  resolveDevEmail,
   getAppVersion,
-  PROD_WEBPAGE_URL,
-  DEV_WEBPAGE_URL,
   _resetEnvironmentCache,
 } from "../../environment.js";
 
-describe("Environment Detection & URL Resolution", () => {
+describe("Environment Detection & Required Configuration", () => {
   const originalNodeEnv = process.env["NODE_ENV"];
   const originalWebpageUrl = process.env["WEBPAGE_URL"];
+  const originalWebpageEmail = process.env["WEBPAGE_EMAIL"];
 
   beforeEach(() => {
     _resetEnvironmentCache();
     delete process.env["WEBPAGE_URL"];
+    delete process.env["WEBPAGE_EMAIL"];
   });
 
   afterEach(() => {
@@ -31,6 +32,11 @@ describe("Environment Detection & URL Resolution", () => {
       process.env["WEBPAGE_URL"] = originalWebpageUrl;
     } else {
       delete process.env["WEBPAGE_URL"];
+    }
+    if (originalWebpageEmail !== undefined) {
+      process.env["WEBPAGE_EMAIL"] = originalWebpageEmail;
+    } else {
+      delete process.env["WEBPAGE_EMAIL"];
     }
   });
 
@@ -53,56 +59,45 @@ describe("Environment Detection & URL Resolution", () => {
     });
   });
 
-  describe("resolveWebpageUrl", () => {
-    it("defaults to DEV_WEBPAGE_URL when running in development", () => {
+  describe("environment detection", () => {
+    it("detects development, production, and names them correctly", () => {
       process.env["NODE_ENV"] = "development";
       _resetEnvironmentCache();
-
       expect(isDev()).toBe(true);
       expect(isProduction()).toBe(false);
       expect(getEnvironmentName()).toBe("development");
-      expect(resolveWebpageUrl()).toBe(DEV_WEBPAGE_URL);
-    });
 
-    it("honors custom URL or environment variable in development", () => {
-      process.env["NODE_ENV"] = "development";
-      _resetEnvironmentCache();
-
-      expect(resolveWebpageUrl("http://localhost:8080")).toBe("http://localhost:8080");
-
-      process.env["WEBPAGE_URL"] = "http://localhost:4000";
-      expect(resolveWebpageUrl()).toBe("http://localhost:4000");
-    });
-
-    it("defaults to PROD_WEBPAGE_URL when running in production", () => {
       process.env["NODE_ENV"] = "production";
       _resetEnvironmentCache();
-
       expect(isProduction()).toBe(true);
       expect(isDev()).toBe(false);
       expect(getEnvironmentName()).toBe("production");
-      expect(resolveWebpageUrl()).toBe(PROD_WEBPAGE_URL);
+    });
+  });
+
+  describe("resolveWebpageUrl", () => {
+    it("returns the required WEBPAGE_URL when set", () => {
+      process.env["WEBPAGE_URL"] = "  https://portfolio.cgeosoft.com/  ";
+      expect(resolveWebpageUrl()).toBe("https://portfolio.cgeosoft.com");
     });
 
-    it("rejects localhost URLs in production and falls back to PROD_WEBPAGE_URL", () => {
-      process.env["NODE_ENV"] = "production";
-      _resetEnvironmentCache();
+    it("fails when WEBPAGE_URL is missing or blank", () => {
+      expect(() => resolveWebpageUrl()).toThrow();
+      process.env["WEBPAGE_URL"] = "   ";
+      expect(() => resolveWebpageUrl()).toThrow();
+    });
+  });
 
-      // Configured localhost URL should be ignored in production
-      expect(resolveWebpageUrl("http://localhost:3000")).toBe(PROD_WEBPAGE_URL);
-      expect(resolveWebpageUrl("http://127.0.0.1:3000")).toBe(PROD_WEBPAGE_URL);
-
-      // Environment variable pointing to localhost should also be ignored in production
-      process.env["WEBPAGE_URL"] = "http://localhost:3000";
-      expect(resolveWebpageUrl()).toBe(PROD_WEBPAGE_URL);
+  describe("resolveDevEmail", () => {
+    it("returns the required WEBPAGE_EMAIL when set", () => {
+      process.env["WEBPAGE_EMAIL"] = "  sponsors@example.com  ";
+      expect(resolveDevEmail()).toBe("sponsors@example.com");
     });
 
-    it("allows valid external production overrides", () => {
-      process.env["NODE_ENV"] = "production";
-      _resetEnvironmentCache();
-
-      expect(resolveWebpageUrl("https://custom-site.example.com")).toBe("https://custom-site.example.com");
-      expect(resolveWebpageUrl("https://custom-site.example.com/")).toBe("https://custom-site.example.com");
+    it("fails when WEBPAGE_EMAIL is missing or blank", () => {
+      expect(() => resolveDevEmail()).toThrow();
+      process.env["WEBPAGE_EMAIL"] = "   ";
+      expect(() => resolveDevEmail()).toThrow();
     });
   });
 
@@ -115,15 +110,12 @@ describe("Environment Detection & URL Resolution", () => {
     });
   });
 
-  describe("loadConfig migration", () => {
-    it("migrates stale localhost webpageUrl in production", async () => {
+  describe("config integration", () => {
+    it("loads the baked WEBPAGE_URL into the persisted config", async () => {
+      process.env["WEBPAGE_URL"] = "https://portfolio.cgeosoft.com";
       const { loadConfig } = await import("../../config.js");
-      process.env["NODE_ENV"] = "production";
-      _resetEnvironmentCache();
-
       const config = loadConfig();
-      expect(config.webpageUrl).toBe(PROD_WEBPAGE_URL);
+      expect(config.webpageUrl).toBe("https://portfolio.cgeosoft.com");
     });
   });
 });
-

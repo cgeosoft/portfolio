@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from "
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { resolveWebpageUrl, isProduction, PROD_WEBPAGE_URL, isLocalhostUrl } from "./environment.js";
+import { resolveWebpageUrl } from "./environment.js";
 
 export interface WindowStateConfig {
   x?: number;
@@ -154,21 +154,6 @@ export function loadConfig(): DesktopConfig {
     const cfg = { ...DEFAULT_CONFIG, ...parsed };
     if (!cfg.llamacppServerUrl && cfg.llmBaseUrl && (!cfg.llmProvider || cfg.llmProvider === "llamacpp-server" || cfg.llmProvider === "llamacpp")) {
       cfg.llamacppServerUrl = cfg.llmBaseUrl;
-    }
-    // In production, migrate stale localhost configurations to production webpage URL
-    if (isProduction()) {
-      if (!cfg.webpageUrl || isLocalhostUrl(cfg.webpageUrl)) {
-        cfg.webpageUrl = PROD_WEBPAGE_URL;
-        if (parsed.webpageUrl && isLocalhostUrl(parsed.webpageUrl)) {
-          saveConfig(cfg);
-        }
-      }
-    } else {
-      if (process.env["WEBPAGE_URL"]) {
-        cfg.webpageUrl = process.env["WEBPAGE_URL"];
-      } else if (!cfg.webpageUrl) {
-        cfg.webpageUrl = resolveWebpageUrl();
-      }
     }
     if (
       typeof cfg.zoomLevel !== "number" ||

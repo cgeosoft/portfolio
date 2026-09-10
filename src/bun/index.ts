@@ -370,7 +370,7 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
         const version = getAppVersion();
         const majorMinor = version.split(".").slice(0, 2).join(".");
         const cfg = loadConfig();
-        const webpageUrl = resolveWebpageUrl(cfg.webpageUrl);
+        const webpageUrl = resolveWebpageUrl();
         return {
           version,
           majorMinor,
@@ -456,7 +456,9 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
 
       getSponsorBanner: async (params) => {
         const cfg = loadConfig();
-        const base = resolveWebpageUrl(params.url || cfg.webpageUrl);
+        // An explicit request URL, then the stored config, then the baked-in default.
+        const override = (params.url || cfg.webpageUrl || "").trim().replace(/\/+$/, "");
+        const base = override || resolveWebpageUrl();
         const targetUrl = base.endsWith("/sponsor")
           ? `${base}/`
           : (base.endsWith("/sponsor/") ? base : `${base}/sponsor/`);
