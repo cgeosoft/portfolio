@@ -159,15 +159,24 @@ export class PortfolioService {
           quotesMapInBase.set(asset.symbol, rawPrice * mult);
         }
       } catch (err: any) {
-        console.warn(`Could not fetch live quotes for demo portfolio generation (${err.message}). Using reference prices.`);
+        appLogger.logStep(
+          "warning",
+          "portfolio",
+          "demo_quotes",
+          `Could not fetch live quotes for the demo portfolio (${err.message}); using reference prices`,
+        );
       }
 
       const transactions = generateDemoTransactions(saved.id, baseCurrency, quotesMapInBase);
       txRepo.bulkCreate(transactions as any);
       this.clearPortfolioCache(saved.id);
-      console.log(`Created demo portfolio ${saved.id} with 100 transactions in ${baseCurrency}`);
+      appLogger.logStep("success", "portfolio", "create_demo", "Created demo portfolio", undefined, {
+        portfolioId: saved.id,
+        transactions: transactions.length,
+        baseCurrency,
+      });
     } catch (err: any) {
-      console.warn(`Failed to generate demo portfolio transactions: ${err.message}`);
+      appLogger.logStep("warning", "portfolio", "create_demo", `Failed to generate demo transactions: ${err.message}`);
     }
 
     return saved;
@@ -219,7 +228,9 @@ export class PortfolioService {
     }
 
     portfolioRepo.deleteById(portfolioId);
-    console.log(`Deleted portfolio ${portfolioId} and all associated data.`);
+    appLogger.logStep("success", "portfolio", "delete", "Deleted portfolio and all associated data", undefined, {
+      portfolioId,
+    });
     this.clearPortfolioCache(portfolioId);
     return true;
   }

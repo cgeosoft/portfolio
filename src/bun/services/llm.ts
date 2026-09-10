@@ -4,6 +4,7 @@
  */
 
 import { loadConfig } from "../config.js";
+import { appLogger } from "../logger.js";
 import {
   DEFAULT_LLAMACPP_URL,
   DEFAULT_OLLAMA_MODEL,
@@ -140,7 +141,10 @@ export class LlmService {
     const maxTokens = options.maxTokens ?? 3000;
     const { apiKey, baseUrl } = options;
 
-    console.log(`[LLM] Executing chat with provider: ${provider}, model: ${options.model || "default"}`);
+    appLogger.logStep("info", "llm", "chat", "Executing chat request", undefined, {
+      provider,
+      model: options.model || "default",
+    });
 
     let rawResponse = "";
     if (provider === "groq") {
@@ -175,7 +179,10 @@ export class LlmService {
     const maxTokens = options.maxTokens ?? 3000;
     const { apiKey, baseUrl, signal } = options;
 
-    console.log(`[LLM] Executing chatStream with provider: ${provider}, model: ${options.model || "default"}`);
+    appLogger.logStep("info", "llm", "chat_stream", "Executing streaming chat request", undefined, {
+      provider,
+      model: options.model || "default",
+    });
 
     let rawResponse = "";
     if (provider === "groq") {

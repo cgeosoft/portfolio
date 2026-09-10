@@ -186,7 +186,9 @@ export class YahooFinanceService {
           }));
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.warn(`[YahooFinance] Failed search on ${baseUrl} for "${query}": ${msg}`);
+        appLogger.logStep("warning", "yahoo", "search", `Search failed on ${baseUrl}: ${msg}`, undefined, {
+          query,
+        });
       }
     }
     return [];
@@ -355,7 +357,7 @@ export class YahooFinanceService {
           return;
         }
         const msg = e instanceof Error ? e.message : String(e);
-        console.warn(`[YahooFinance] Failed to fetch quote for ${sym}: ${msg}`);
+        appLogger.logStep("warning", "yahoo", "get_quote", `Failed to fetch quote for ${sym}: ${msg}`);
       }
     });
 
@@ -442,8 +444,11 @@ export class YahooFinanceService {
           if (staleDisk && staleDisk.data) {
             multiplier = staleDisk.data;
           } else {
-            console.warn(
-              `[YahooFinance] Could not resolve FX pair ${item.pairSymbol} for base currency ${base}, falling back to 1`,
+            appLogger.logStep(
+              "warning",
+              "yahoo",
+              "fx_rates",
+              `Could not resolve FX pair ${item.pairSymbol} for base ${base}, falling back to 1`,
             );
           }
         }

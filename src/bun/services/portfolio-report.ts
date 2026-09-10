@@ -5,6 +5,7 @@
 
 import { randomUUID } from "node:crypto";
 import { loadConfig } from "../config.js";
+import { appLogger } from "../logger.js";
 import { sanitizeLlmResponse, type LlmService } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
@@ -461,7 +462,7 @@ Please structure your report as follows:
       content = sanitizeLlmResponse(content, true);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[PortfolioReport] Failed to generate LLM report: ${errMsg}`);
+      appLogger.logStep("error", "report", "generate_llm_report", `Failed to generate LLM report: ${errMsg}`);
       reportStatus = "fallback";
       isFallback = true;
       errorMessage = errMsg;

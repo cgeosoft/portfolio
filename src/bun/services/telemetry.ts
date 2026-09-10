@@ -6,6 +6,7 @@
 
 import { PostHog } from "posthog-node";
 import { loadConfig } from "../config.js";
+import { appLogger } from "../logger.js";
 
 const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY ?? "";
 const POSTHOG_HOST = "https://eu.i.posthog.com";
@@ -21,7 +22,7 @@ export class TelemetryService {
 
     if (config.telemetryEnabled && POSTHOG_API_KEY) {
       this.client = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_HOST });
-      console.log("[Telemetry] Anonymous analytics enabled");
+      appLogger.logStep("info", "telemetry", "initialize", "Anonymous analytics enabled");
     }
   }
 

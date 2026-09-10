@@ -1,4 +1,5 @@
 import { getDatabase } from "./database.js";
+import { appLogger } from "../logger.js";
 
 export interface CacheEntry<T = unknown> {
   key: string;
@@ -52,7 +53,9 @@ export function set<T = unknown>(key: string, data: T, ttlMs: number): void {
       [key, serialized, now, expiresAt],
     );
   } catch (err) {
-    console.warn(`[MarketCache] Failed to set key "${key}":`, err);
+    appLogger.logStep("warning", "db", "market_cache_set", `Failed to cache key "${key}"`, undefined, {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
