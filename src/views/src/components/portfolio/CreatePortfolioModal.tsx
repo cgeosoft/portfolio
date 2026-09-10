@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import type { PortfolioItem } from "../../types/portfolio";
 import { rpc } from "../../rpc";
-import { X, Plus, Loader2, AlertCircle, TrendingUp, Sparkles, ChevronDown } from "lucide-react";
+import { X, Plus, Loader2, AlertCircle, TrendingUp, Sparkles } from "lucide-react";
+import { Select } from "../common/Select";
 
 interface CreatePortfolioModalProps {
   isOpen: boolean;
@@ -153,19 +154,16 @@ export function CreatePortfolioModal({
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                   Base Currency
                 </label>
-                <div className="relative">
-                  <select
-                    value={baseCurrency}
-                    onChange={(e) => setBaseCurrency(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
-                  >
-                    <option value="EUR" className="bg-slate-900 text-slate-100">EUR (€) - Euro</option>
-                    <option value="USD" className="bg-slate-900 text-slate-100">USD ($) - US Dollar</option>
-                    <option value="GBP" className="bg-slate-900 text-slate-100">GBP (£) - British Pound</option>
-                    <option value="CHF" className="bg-slate-900 text-slate-100">CHF (Fr) - Swiss Franc</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={baseCurrency}
+                  onChange={(e) => setBaseCurrency(e.target.value)}
+                  selectSize="sm"
+                >
+                  <option value="EUR">EUR (€) - Euro</option>
+                  <option value="USD">USD ($) - US Dollar</option>
+                  <option value="GBP">GBP (£) - British Pound</option>
+                  <option value="CHF">CHF (Fr) - Swiss Franc</option>
+                </Select>
                 <p className="text-[10px] text-slate-500 mt-1 font-mono">
                   Note: The base currency is fixed after creation for valuation consistency.
                 </p>

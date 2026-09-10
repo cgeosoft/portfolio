@@ -156,7 +156,8 @@ export function Header({
             onClick={() => setIsPortfolioDropdownOpen((prev) => !prev)}
             aria-haspopup="listbox"
             aria-expanded={isPortfolioDropdownOpen}
-            className="h-7 flex items-center gap-1.5 px-2.5 rounded-md text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 border border-transparent transition-all cursor-pointer min-w-0 max-w-[170px]"
+            data-open={isPortfolioDropdownOpen}
+            className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
             title="Switch Portfolio"
           >
             {activePortfolio?.isShared ? (
@@ -167,14 +168,12 @@ export function Header({
             <span className="truncate">
               {activePortfolio?.name || "Main Portfolio"}
             </span>
-            <ChevronDown
-              className={`w-3 h-3 text-slate-400 transition-transform shrink-0 ${isPortfolioDropdownOpen ? "rotate-180" : ""}`}
-            />
+            <ChevronDown className="cx-menu-chevron w-3 h-3 text-slate-400" />
           </button>
 
           {isPortfolioDropdownOpen && (
-            <div className="absolute left-0 mt-1.5 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-mono">
-              <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center justify-between border-b border-slate-800/80">
+            <div className="cx-menu absolute left-0 mt-1.5 w-64 z-50 font-mono">
+              <div className="cx-menu-label">
                 <span>Portfolios ({portfolios.length})</span>
                 {onOpenManagePortfolios && (
                   <button
@@ -189,7 +188,7 @@ export function Header({
                 )}
               </div>
 
-              <div className="max-h-56 overflow-y-auto custom-scrollbar my-1">
+              <div className="max-h-56 overflow-y-auto custom-scrollbar">
                 {portfolios.map((p) => {
                   const isActive = activePortfolio?.id === p.id;
                   const Icon = p.isShared ? Users : TrendingUp;
@@ -206,11 +205,8 @@ export function Header({
                           onNavigateDashboard();
                         }
                       }}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-[#DD3C73]/10 text-[#DD3C73] font-bold"
-                          : "text-slate-300"
-                      }`}
+                      data-active={isActive}
+                      className="cx-menu-item justify-between"
                     >
                       <div className="flex items-center gap-2 truncate min-w-0 flex-1">
                         <Icon

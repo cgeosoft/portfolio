@@ -11,8 +11,8 @@ import {
   Layers,
   Percent,
   AlertCircle,
-  ChevronDown,
 } from "lucide-react";
+import { Select } from "../common/Select";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -273,21 +273,18 @@ export function TransactionModal({
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                   Transaction Type
                 </label>
-                <div className="relative">
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
-                  >
-                    <option value="BUY" className="bg-slate-900 text-slate-100">BUY (Asset Purchase)</option>
-                    <option value="SELL" className="bg-slate-900 text-slate-100">SELL (Asset Sale)</option>
-                    <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND (Cash Payout)</option>
-                    <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST (Fixed Yield)</option>
-                    <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT (Cash Inflow)</option>
-                    <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL (Cash Outflow)</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <Select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  selectSize="sm"
+                >
+                  <option value="BUY">BUY (Asset Purchase)</option>
+                  <option value="SELL">SELL (Asset Sale)</option>
+                  <option value="DIVIDEND">DIVIDEND (Cash Payout)</option>
+                  <option value="INTEREST_PAYMENT">INTEREST (Fixed Yield)</option>
+                  <option value="CUSTOMER_INBOUND">DEPOSIT (Cash Inflow)</option>
+                  <option value="CUSTOMER_OUTBOUND">WITHDRAWAL (Cash Outflow)</option>
+                </Select>
               </div>
             </div>
 
@@ -361,19 +358,16 @@ export function TransactionModal({
                   <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                     Asset Class
                   </label>
-                  <div className="relative">
-                    <select
-                      value={assetClass}
-                      onChange={(e) => setAssetClass(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] appearance-none cursor-pointer"
-                    >
-                      <option value="EQUITY" className="bg-slate-900 text-slate-100">Stock / Equity</option>
-                      <option value="FUND" className="bg-slate-900 text-slate-100">ETF / Fund</option>
-                      <option value="CRYPTO" className="bg-slate-900 text-slate-100">Crypto Asset</option>
-                      <option value="PRIVATE_FUND" className="bg-slate-900 text-slate-100">Private Investment / Fund</option>
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
+                  <Select
+                    value={assetClass}
+                    onChange={(e) => setAssetClass(e.target.value)}
+                    selectSize="sm"
+                  >
+                    <option value="EQUITY">Stock / Equity</option>
+                    <option value="FUND">ETF / Fund</option>
+                    <option value="CRYPTO">Crypto Asset</option>
+                    <option value="PRIVATE_FUND">Private Investment / Fund</option>
+                  </Select>
                 </div>
               </div>
             </div>

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { PortfolioHolding, PortfolioSummary } from "../../types/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
-import { Search, ArrowUpDown, Layers, ChevronDown } from "lucide-react";
+import { Search, ArrowUpDown, Layers } from "lucide-react";
+import { Select } from "../common/Select";
 
 interface HoldingsTableCardProps {
   holdings: PortfolioHolding[];
@@ -258,21 +259,21 @@ export function HoldingsTableCard({
           </div>
 
           {/* Type filter */}
-          <div className="relative">
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer appearance-none transition-colors"
-            >
-              <option value="ALL" className="bg-slate-900 text-slate-100">All Asset Types</option>
-              <option value="Stock" className="bg-slate-900 text-slate-100">Stocks</option>
-              <option value="ETF" className="bg-slate-900 text-slate-100">ETFs</option>
-              <option value="Crypto" className="bg-slate-900 text-slate-100">Crypto</option>
-              <option value="Cash" className="bg-slate-900 text-slate-100">Cash Liquidity</option>
-              <option value="Other" className="bg-slate-900 text-slate-100">Other / Funds</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            selectSize="sm"
+            className="h-8"
+            wrapperClassName="shrink-0"
+            aria-label="Filter by asset type"
+          >
+            <option value="ALL">All Asset Types</option>
+            <option value="Stock">Stocks</option>
+            <option value="ETF">ETFs</option>
+            <option value="Crypto">Crypto</option>
+            <option value="Cash">Cash Liquidity</option>
+            <option value="Other">Other / Funds</option>
+          </Select>
         </div>
       </div>
 

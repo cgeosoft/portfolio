@@ -13,7 +13,6 @@ import {
   Calendar,
   Check,
   CheckCircle2,
-  ChevronDown,
   Copy,
   CheckCheck,
   Database,
@@ -26,6 +25,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { Select } from "../common/Select";
 import type { FinancialPortfolioData, PortfolioReport } from "../../types/portfolio";
 import type { PrepareReportPromptResponse } from "../../../../shared/rpc-types.js";
 import { fmtCurrency } from "./utils";
@@ -439,30 +439,25 @@ export function AnalyzePortfolioModal({
                   <Calendar className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Target Week</span>
                 </label>
-                <div className="relative">
-                  <select
-                    value={selectedWeekKey}
-                    onChange={(e) => setSelectedWeekKey(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 pr-9 text-xs font-mono text-slate-200 focus:border-[#DD3C73] focus:outline-none cursor-pointer"
-                  >
-                    {weekOptions.map((w) => {
-                      const hasReport = reports.some(
-                        (r) => r.weekKey?.toLowerCase() === w.key.toLowerCase(),
-                      );
-                      return (
-                        <option key={w.key} value={w.key}>
-                          {w.label}
-                          {w.isCurrent ? " [Current Week]" : ""}
-                          {w.isPrevious ? " [Default / Completed]" : ""}
-                          {hasReport ? " [Report Exists]" : ""}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                </div>
+                <Select
+                  value={selectedWeekKey}
+                  onChange={(e) => setSelectedWeekKey(e.target.value)}
+                  aria-label="Target week"
+                >
+                  {weekOptions.map((w) => {
+                    const hasReport = reports.some(
+                      (r) => r.weekKey?.toLowerCase() === w.key.toLowerCase(),
+                    );
+                    return (
+                      <option key={w.key} value={w.key}>
+                        {w.label}
+                        {w.isCurrent ? " [Current Week]" : ""}
+                        {w.isPrevious ? " [Default / Completed]" : ""}
+                        {hasReport ? " [Report Exists]" : ""}
+                      </option>
+                    );
+                  })}
+                </Select>
 
                 {/* Current Running Week Warning */}
                 {selectedWeek?.isCurrent && (

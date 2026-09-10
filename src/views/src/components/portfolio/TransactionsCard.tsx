@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { PortfolioTransaction } from "../../types/portfolio";
 import { formatMoney, fmtCurrency } from "./utils";
-import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft, ChevronDown } from "lucide-react";
+import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft } from "lucide-react";
+import { Select } from "../common/Select";
 
 interface TransactionsCardProps {
   transactions: PortfolioTransaction[];
@@ -90,22 +91,22 @@ export function TransactionsCard({
             />
           </div>
 
-          <div className="relative">
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-lg pl-2.5 pr-8 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-[#DD3C73]/50 cursor-pointer appearance-none transition-colors"
-            >
-              <option value="ALL" className="bg-slate-900 text-slate-100">All Types</option>
-              <option value="BUY" className="bg-slate-900 text-slate-100">BUY</option>
-              <option value="SELL" className="bg-slate-900 text-slate-100">SELL</option>
-              <option value="DIVIDEND" className="bg-slate-900 text-slate-100">DIVIDEND</option>
-              <option value="INTEREST_PAYMENT" className="bg-slate-900 text-slate-100">INTEREST</option>
-              <option value="CUSTOMER_INBOUND" className="bg-slate-900 text-slate-100">DEPOSIT</option>
-              <option value="CUSTOMER_OUTBOUND" className="bg-slate-900 text-slate-100">WITHDRAWAL</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            selectSize="sm"
+            className="h-8"
+            wrapperClassName="shrink-0"
+            aria-label="Filter by transaction type"
+          >
+            <option value="ALL">All Types</option>
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+            <option value="DIVIDEND">DIVIDEND</option>
+            <option value="INTEREST_PAYMENT">INTEREST</option>
+            <option value="CUSTOMER_INBOUND">DEPOSIT</option>
+            <option value="CUSTOMER_OUTBOUND">WITHDRAWAL</option>
+          </Select>
 
           <button
             onClick={onOpenImportModal}

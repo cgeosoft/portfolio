@@ -196,31 +196,25 @@ export function ReportsCard({
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
                 aria-haspopup="listbox"
                 aria-expanded={isDropdownOpen}
-                className={`h-8 inline-flex items-center justify-between gap-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                  isDropdownOpen
-                    ? "border-[#DD3C73] bg-[#DD3C73]/15 text-[#DD3C73] shadow-lg shadow-[#DD3C73]/10"
-                    : "border-slate-800 bg-slate-900 text-[#DD3C73] hover:border-[#DD3C73]/50 hover:bg-slate-800"
-                }`}
+                data-open={isDropdownOpen}
+                data-variant="outlined"
+                className="cx-menu-trigger h-8 justify-between px-3 text-xs font-bold uppercase tracking-wider text-[#DD3C73]"
               >
                 <Calendar className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                 <span className="truncate max-w-[170px] sm:max-w-[240px] md:max-w-[300px] text-left">
                   {formatReportDropdownLabel(activeReport)}
                 </span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-[#DD3C73] transition-transform duration-200 shrink-0 ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronDown className="cx-menu-chevron w-3.5 h-3.5 text-[#DD3C73]" />
               </button>
 
               {/* Dropdown Menu Popover */}
               {isDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[280px] sm:min-w-[340px] max-w-[90vw] rounded-xl border border-slate-800 bg-slate-950 shadow-2xl p-1.5 flex flex-col gap-0.5 overflow-hidden">
-                  <div className="px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 mb-1 flex items-center gap-1.5 min-w-0">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="cx-menu absolute right-0 top-full mt-1.5 z-50 min-w-[280px] sm:min-w-[340px] max-w-[90vw] flex flex-col overflow-hidden">
+                  <div className="cx-menu-label" data-align="start">
+                    <FileText className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">Historical Briefings ({reports.length})</span>
                   </div>
-                  <div className="max-h-60 overflow-y-auto font-mono text-xs flex flex-col gap-0.5 custom-scrollbar">
+                  <div className="max-h-60 overflow-y-auto font-mono text-xs flex flex-col custom-scrollbar">
                     {reports.map((rep) => {
                       const isSelected = rep.id === activeReport.id;
                       const isRepFallback =
@@ -235,11 +229,8 @@ export function ReportsCard({
                             setSelectedReportId(rep.id);
                             setIsDropdownOpen(false);
                           }}
-                          className={`w-full px-2.5 py-2 rounded-lg cursor-pointer flex items-center justify-between gap-3 text-left transition-colors text-xs ${
-                            isSelected
-                              ? "bg-[#DD3C73]/15 text-[#DD3C73] font-bold"
-                              : "text-slate-300 hover:bg-slate-900 hover:text-[#DD3C73]"
-                          }`}
+                          data-active={isSelected}
+                          className="cx-menu-item justify-between"
                         >
                           <div className="flex items-center gap-2 min-w-0 truncate">
                             {isRepFallback ? (

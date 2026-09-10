@@ -504,19 +504,20 @@ export function AppMenuBar({
               {/* Dropdown Menu */}
               {isOpen && (
                 <div
-                  className="absolute left-0 top-full mt-0.5 w-60 sm:w-64 bg-[#111726] border border-[#1e293b] rounded-lg shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-md"
+                  className="cx-menu absolute left-0 top-full mt-0.5 w-60 sm:w-64 z-50"
+                  data-density="compact"
                   role="menu"
                 >
                   {menu.items.map((item, idx) => {
                     if (item.type === "separator") {
-                      return <div key={`sep-${idx}`} className="my-1 border-t border-slate-800/90" />;
+                      return <div key={`sep-${idx}`} className="cx-menu-separator" />;
                     }
 
                     if (item.type === "header") {
                       return (
                         <div
                           key={`hdr-${idx}`}
-                          className="px-3 py-1 text-[9.5px] uppercase font-bold tracking-wider text-slate-500"
+                          className="cx-menu-label"
                         >
                           {item.label}
                         </div>
@@ -534,11 +535,8 @@ export function AppMenuBar({
                         disabled={item.disabled}
                         onClick={item.action}
                         onMouseEnter={() => setHighlightedIndex(actionIndex)}
-                        className={`w-full px-3 py-1.5 flex items-center justify-between text-left text-xs transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed group ${
-                          isHighlighted
-                            ? "bg-[#DD3C73]/20 text-white font-medium"
-                            : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-                        }`}
+                        data-highlighted={isHighlighted}
+                        className="cx-menu-item justify-between group"
                         role="menuitem"
                       >
                         <div className="flex items-center gap-2.5 min-w-0 pr-2">

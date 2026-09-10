@@ -26,6 +26,12 @@
     --palette-cream: #E3EACD;
     --palette-mint: #A7E2C0;
     --palette-blue: #243C8F;
+
+    /* Dropdown chevrons, drawn as background images so every select
+       renders the same indicator without extra markup. */
+    --cx-chevron: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    --cx-chevron-bright: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f8fafc' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    --cx-chevron-accent: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DD3C73' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   }
 
   html,
@@ -51,16 +57,32 @@
   select {
     background-color: var(--background-widget);
     color: var(--text-main);
+    font-family: inherit;
   }
 
   option {
     background-color: #0f172a;
     color: #f8fafc;
+    padding: 0.375rem 0.5rem;
+  }
+
+  option:checked,
+  option[selected] {
+    background-color: rgba(var(--accent-rgb), 0.18);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  option:disabled {
+    color: #64748b;
   }
 
   optgroup {
     background-color: #0b0f19;
     color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   /* Tactical Cyberpunk Grid & Scrollbar */
@@ -116,4 +138,306 @@
 
 .animate-popover-in {
   animation: popover-slide-in 0.3s ease-out forwards;
+}
+
+/* ==========================================================================
+   Dropdowns
+   Shared surfaces for native selects (.cx-select) and custom popover menus
+   (.cx-menu). Size and tone are set with data attributes so the markup stays
+   free of per-instance colour and spacing classes.
+   ========================================================================== */
+
+.cx-select-wrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.cx-select {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--text-main);
+  background-color: rgba(11, 15, 25, 0.85);
+  background-image: var(--cx-chevron);
+  background-repeat: no-repeat;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.cx-select:hover:not(:disabled) {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background-color: rgba(21, 29, 48, 0.9);
+  background-image: var(--cx-chevron-bright);
+}
+
+.cx-select:focus,
+.cx-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background-color: rgba(21, 29, 48, 0.95);
+  background-image: var(--cx-chevron-accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+}
+
+.cx-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.cx-select[data-size="sm"] {
+  padding: 0.375rem 1.875rem 0.375rem 0.625rem;
+  background-position: right 0.625rem center;
+  background-size: 0.8125rem;
+}
+
+.cx-select[data-size="md"] {
+  padding: 0.5rem 2.125rem 0.5rem 0.75rem;
+  background-position: right 0.75rem center;
+  background-size: 0.875rem;
+}
+
+.cx-select[data-size="lg"] {
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}
+
+/* Leading icon slot */
+.cx-select[data-has-icon="true"][data-size="sm"] {
+  padding-left: 1.875rem;
+}
+
+.cx-select[data-has-icon="true"][data-size="md"] {
+  padding-left: 2.125rem;
+}
+
+.cx-select[data-has-icon="true"][data-size="lg"] {
+  padding-left: 2.5rem;
+}
+
+.cx-select-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.18s ease;
+}
+
+.cx-select-wrap[data-size="sm"] .cx-select-icon {
+  left: 0.625rem;
+}
+
+.cx-select-wrap[data-size="md"] .cx-select-icon {
+  left: 0.75rem;
+}
+
+.cx-select-wrap[data-size="lg"] .cx-select-icon {
+  left: 0.875rem;
+}
+
+.cx-select-wrap:hover .cx-select-icon,
+.cx-select-wrap:focus-within .cx-select-icon {
+  color: var(--accent);
+}
+
+/* Accent tone for emphasised pickers */
+.cx-select[data-tone="accent"] {
+  color: var(--accent);
+  font-weight: 700;
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background-color: rgba(var(--accent-rgb), 0.08);
+  background-image: var(--cx-chevron-accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.12);
+}
+
+.cx-select[data-tone="accent"]:hover:not(:disabled) {
+  border-color: var(--accent);
+  background-color: rgba(var(--accent-rgb), 0.14);
+  background-image: var(--cx-chevron-accent);
+}
+
+.cx-select-wrap[data-tone="accent"] .cx-select-icon {
+  color: var(--accent);
+}
+
+/* Muted tone for unset values */
+.cx-select[data-tone="muted"] {
+  color: var(--text-muted);
+  background-color: rgba(11, 15, 25, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Custom popover menus
+   -------------------------------------------------------------------------- */
+
+@keyframes cx-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cx-menu {
+  background-color: rgba(17, 23, 38, 0.98);
+  background-image: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(11, 15, 25, 0.35));
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.375rem;
+  box-shadow:
+    0 24px 48px -16px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(var(--accent-rgb), 0.06);
+  backdrop-filter: blur(12px);
+  transform-origin: top;
+  animation: cx-menu-in 0.14s ease-out;
+}
+
+.cx-menu-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cx-menu-label[data-align="start"] {
+  justify-content: flex-start;
+}
+
+.cx-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-align: left;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.cx-menu-item:hover {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: var(--text-main);
+}
+
+.cx-menu-item[data-active="true"] {
+  background-color: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font-weight: 700;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.cx-menu-item[data-active="true"]:hover {
+  background-color: rgba(var(--accent-rgb), 0.18);
+  color: var(--accent);
+}
+
+.cx-menu-item[data-highlighted="true"] {
+  background-color: rgba(var(--accent-rgb), 0.2);
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.cx-menu-item:disabled,
+.cx-menu-item[data-disabled="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Compact density for the application menu bar */
+.cx-menu[data-density="compact"] {
+  padding: 0.25rem;
+}
+
+.cx-menu[data-density="compact"] .cx-menu-item {
+  padding: 0.3125rem 0.5rem;
+}
+
+.cx-menu[data-density="compact"] .cx-menu-label {
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.cx-menu-separator {
+  height: 1px;
+  margin: 0.25rem 0.25rem;
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+/* Trigger button shared by the custom dropdowns */
+.cx-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.cx-menu-trigger[data-variant="outlined"] {
+  border-color: var(--border);
+  background-color: rgba(11, 15, 25, 0.85);
+}
+
+.cx-menu-trigger[data-variant="outlined"]:hover {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background-color: rgba(21, 29, 48, 0.9);
+}
+
+.cx-menu-trigger[data-open="true"],
+.cx-menu-trigger[data-variant="outlined"][data-open="true"] {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background-color: rgba(var(--accent-rgb), 0.12);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.12);
+}
+
+.cx-menu-chevron {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.cx-menu-trigger[data-open="true"] .cx-menu-chevron {
+  transform: rotate(180deg);
 }
