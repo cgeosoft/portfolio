@@ -29,6 +29,7 @@ import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricIn
 import { METRIC_CATALOG_BY_KEY, type MetricContext } from "./components/portfolio/metrics-catalog";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
 import { reloadPage } from "./components/portfolio/utils";
+import { WEBPAGE_URL } from "./environment";
 import type {
   DesktopConfig,
   GetPortfoliosResponse,
@@ -398,14 +399,8 @@ export default function App() {
   );
 
   // App Info & Quotes Sync State
-  const defaultWebpageFallback =
-    (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
-    (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
-      ? "https://portfolio.cgeosoft.com"
-      : "http://localhost:3000");
-
   const [appVersion, setAppVersion] = useState("0.1.0");
-  const [webpageUrl, setWebpageUrl] = useState(defaultWebpageFallback);
+  const [webpageUrl, setWebpageUrl] = useState(WEBPAGE_URL);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);

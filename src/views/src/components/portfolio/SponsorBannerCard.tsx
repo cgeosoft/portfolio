@@ -1,17 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { HelpCircle } from "lucide-react";
 import { rpc, ensureRpcReady } from "../../rpc";
+import { WEBPAGE_URL } from "../../environment";
 import { SponsorInfoModal } from "./SponsorInfoModal";
 
 export interface SponsorBannerCardProps {
   webpageUrl?: string;
 }
-
-const DEFAULT_SPONSOR_BASE_URL =
-  (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
-  (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
-    ? "https://portfolio.cgeosoft.com"
-    : "http://localhost:3000");
 
 export function SponsorBannerCard({ webpageUrl }: SponsorBannerCardProps) {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
@@ -20,7 +15,7 @@ export function SponsorBannerCard({ webpageUrl }: SponsorBannerCardProps) {
   const [bannerHeight, setBannerHeight] = useState(90);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const cleanBase = (webpageUrl || DEFAULT_SPONSOR_BASE_URL).replace(/\/+$/, "");
+  const cleanBase = (webpageUrl || WEBPAGE_URL).replace(/\/+$/, "");
   const sponsorUrl = `${cleanBase}/sponsor/`;
 
   const fetchBanner = useCallback(async () => {

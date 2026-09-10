@@ -8,24 +8,19 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { rpc } from "../../rpc";
+import { WEBPAGE_URL } from "../../environment";
 
 export interface TermsPageProps {
   onBack: () => void;
   webpageUrl?: string;
 }
 
-const DEFAULT_TERMS_BASE_URL =
-  (typeof process !== "undefined" && process.env?.["DEFAULT_WEBPAGE_URL"]) ||
-  (typeof process !== "undefined" && process.env?.["NODE_ENV"] === "production"
-    ? "https://portfolio.cgeosoft.com"
-    : "http://localhost:3000");
-
 export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const cleanBaseUrl = (webpageUrl || DEFAULT_TERMS_BASE_URL).replace(/\/+$/, "");
+  const cleanBaseUrl = (webpageUrl || WEBPAGE_URL).replace(/\/+$/, "");
   const termsUrl = `${cleanBaseUrl}/terms/`;
   const isLocalhost = cleanBaseUrl.includes("localhost") || cleanBaseUrl.includes("127.0.0.1");
 
