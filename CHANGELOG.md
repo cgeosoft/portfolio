@@ -2,6 +2,23 @@
 
 All notable changes to Portfolio Desktop are documented in this file.
 
+## [0.1.5] - 2026-09-10
+
+# Release Notes for Portfolio Desktop v0.1.5
+
+## Added
+- Added a metrics marketplace for each portfolio on the overview page.
+
+## Changed
+- Improved the display of metric importance as a plain paragraph.
+
+## Fixed
+- Calmed the metrics marketplace cards.
+- Fixed changelog generation to prepend new entries.
+
+
+All notable changes to Portfolio Desktop are documented in this file.
+
 ## [0.1.4] - 2026-09-08
 
 ## Added
