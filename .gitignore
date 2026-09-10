@@ -40,3 +40,5 @@ Thumbs.db
 
 # generated style
 src/views/style.css
+
+tmp/
