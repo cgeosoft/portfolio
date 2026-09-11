@@ -142,6 +142,80 @@ export class YahooFinanceService {
     clearInterval(YahooFinanceService.cacheSweepHandle);
   }
 
+  /** Test connection to Yahoo Finance API endpoints */
+  public async testConnection(): Promise<{ success: boolean; latencyMs?: number; error?: string }> {
+    const start = performance.now();
+    let lastError = "No response from Yahoo Finance";
+    for (const baseUrl of BASE_QUERY_URLS) {
+      try {
+        const url = `${baseUrl}/v1/finance/search?q=AAPL&quotesCount=1&newsCount=0`;
+        const res = await fetch(url, {
+          headers: DEFAULT_HEADERS,
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (res.ok) {
+          const latencyMs = Math.round(performance.now() - start);
+          return { success: true, latencyMs };
+        }
+        lastError = `HTTP ${res.status}`;
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err.message : String(err);
+      }
+    }
+    return { success: false, error: lastError };
+  }
+
+  /** Fetch general market news headlines from Yahoo Finance */
+  public async getMarketNews(limit = 5): Promise<Array<{ headline: string; summary: string; source: string; datetime: number; url?: string }>> {
+    const cached = marketCache.get<Array<{ headline: string; summary: string; source: string; datetime: number; url?: string }>>("yahoo:market_news");
+    if (cached && !cached.isExpired) {
+      return cached.data;
+    }
+
+    for (const baseUrl of BASE_QUERY_URLS) {
+      try {
+        const url = `${baseUrl}/v1/finance/search?q=market&quotesCount=0&newsCount=${Math.min(limit, 10)}`;
+        const res = await fetch(url, {
+          headers: DEFAULT_HEADERS,
+          signal: AbortSignal.timeout(6_000),
+        });
+        if (!res.ok) continue;
+
+        const data = (await res.json()) as {
+          news?: Array<{
+            uuid?: string;
+            title?: string;
+            publisher?: string;
+            link?: string;
+            providerPublishTime?: number;
+          }>;
+        };
+
+        const news = (data.news ?? [])
+          .filter((item) => item.title && item.title.trim().length > 0)
+          .slice(0, limit)
+          .map((item) => ({
+            headline: item.title!.trim(),
+            summary: item.title!.trim(),
+            source: item.publisher || "Yahoo Finance",
+            datetime: item.providerPublishTime || Math.floor(Date.now() / 1000),
+            url: item.link,
+          }));
+
+        if (news.length > 0) {
+          marketCache.set("yahoo:market_news", news, 30 * 60 * 1000);
+          return news;
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        appLogger.logStep("warning", "yahoo", "market_news", `Failed to fetch market news from ${baseUrl}: ${msg}`);
+      }
+    }
+
+    if (cached) return cached.data;
+    return [];
+  }
+
   public async searchSymbols(query: string): Promise<YahooSymbolSearchResult[]> {
     if (!query || !query.trim()) return [];
 

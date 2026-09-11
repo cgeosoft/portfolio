@@ -14,12 +14,12 @@ import type {
   ReportMetrics,
   FinancialPortfolioData,
 } from "../types/portfolio.js";
-import type { DesktopConfig } from "../bun/config.js";
+import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "../bun/config.js";
 import type { PortfolioMetricPreference } from "./metrics.js";
 import type { MetricManifest } from "./metric-manifest.js";
 import type { MetricScope } from "./metric-abi.js";
 import type { MetricOutput } from "./metric-output.js";
-export type { DesktopConfig, ReportMetrics };
+export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, ReportMetrics };
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
 
@@ -208,6 +208,18 @@ export interface TestFinnhubConnectionRequest {
 export interface TestFinnhubConnectionResponse {
   success: boolean;
   error?: string;
+  latencyMs?: number;
+}
+
+export interface TestYahooConnectionResponse {
+  success: boolean;
+  latencyMs?: number;
+  error?: string;
+}
+
+export interface ClearMarketCacheResponse {
+  success: boolean;
+  clearedEntries?: number;
 }
 
 export interface StartReportStreamRequest {
@@ -526,6 +538,8 @@ export type PortfolioRPC = {
       testLlmStep: { params: TestLlmStepRequest; response: TestLlmStepResponse };
       getProviderModels: { params: GetProviderModelsRequest; response: GetProviderModelsResponse };
       testFinnhubConnection: { params: TestFinnhubConnectionRequest; response: TestFinnhubConnectionResponse };
+      testYahooConnection: { params: Record<string, never>; response: TestYahooConnectionResponse };
+      clearMarketCache: { params: Record<string, never>; response: ClearMarketCacheResponse };
 
       // Config
       getConfig: { params: Record<string, never>; response: DesktopConfig };

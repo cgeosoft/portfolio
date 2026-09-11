@@ -12,6 +12,7 @@ import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
 import { FinnhubService, type FinnhubReportIntelligence } from "./finnhub.js";
+import type { YahooFinanceService } from "./yahoo-finance.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "../../types/portfolio.js";
 import type {
   PrepareReportPromptResponse,
@@ -82,6 +83,7 @@ export class PortfolioReportService {
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
     private readonly finnhub: FinnhubService = new FinnhubService(),
+    private readonly yahoo?: YahooFinanceService,
   ) {
     // Periodically clean up stale sessions (older than 15 minutes)
     setInterval(() => {
@@ -91,7 +93,7 @@ export class PortfolioReportService {
           this.streamSessions.delete(id);
         }
       }
-    }, 60 * 1000).unref();
+    }, 5 * 60 * 1000).unref?.();
   }
 
   public getReports(portfolioId: string): { reports: PortfolioReport[]; latestReport?: PortfolioReport } {
@@ -213,55 +215,73 @@ export class PortfolioReportService {
     }
 
     let finnhubContext = "";
-    if (finnhubIntelligence && finnhubIntelligence.configured) {
-      const sections: string[] = [];
+    const sections: string[] = [];
+    const routing = config.dataProviderRouting;
 
-      if (finnhubIntelligence.marketNews.length > 0) {
+    // Check if Yahoo market news is requested or needed as fallback
+    if ((routing?.news === "yahoo" || !finnhubIntelligence?.marketNews?.length) && this.yahoo) {
+      try {
+        const yahooNews = await this.yahoo.getMarketNews(4);
+        if (yahooNews.length > 0) {
+          const newsLines = yahooNews
+            .map((n) => `- **${n.headline}** (${n.source}): ${n.summary}`)
+            .join("\n");
+          sections.push(`### Financial Market & Macroeconomic News (Yahoo Finance)\n${newsLines}`);
+        }
+      } catch {
+        // Safe fallback, one provider does not affect the other
+      }
+    }
+
+    if (finnhubIntelligence && finnhubIntelligence.configured) {
+      if ((!routing || routing.news === "finnhub" || sections.length === 0) && finnhubIntelligence.marketNews.length > 0) {
         const newsLines = finnhubIntelligence.marketNews
           .map((n) => `- **${n.headline}** (${n.source}): ${n.summary}`)
           .join("\n");
         sections.push(`### Financial Market & Macroeconomic News (Finnhub API)\n${newsLines}`);
       }
 
-      const holdingSymbols = Object.keys(finnhubIntelligence.holdings);
-      if (holdingSymbols.length > 0) {
-        const holdingLines: string[] = [];
-        for (const sym of holdingSymbols) {
-          const intel = finnhubIntelligence.holdings[sym]!;
-          const parts: string[] = [];
-          if (intel.profile?.name && intel.profile?.industry) {
-            parts.push(`${intel.profile.name} (${intel.profile.industry})`);
-          }
-          if (intel.recommendation) {
-            const r = intel.recommendation;
-            parts.push(
-              `Analyst Consensus: ${r.strongBuy} Strong Buy, ${r.buy} Buy, ${r.hold} Hold, ${r.sell} Sell, ${r.strongSell} Strong Sell`,
-            );
-          }
-          if (intel.metrics) {
-            const m = intel.metrics;
-            const metricList: string[] = [];
-            if (m.peRatio !== undefined) metricList.push(`P/E: ${m.peRatio}`);
-            if (m.beta !== undefined) metricList.push(`Beta: ${m.beta}`);
-            if (m.fiftyTwoWeekHigh !== undefined && m.fiftyTwoWeekLow !== undefined) {
-              metricList.push(`52W: ${m.fiftyTwoWeekLow} - ${m.fiftyTwoWeekHigh}`);
+      if (!routing || routing.fundamentals === "finnhub") {
+        const holdingSymbols = Object.keys(finnhubIntelligence.holdings);
+        if (holdingSymbols.length > 0) {
+          const holdingLines: string[] = [];
+          for (const sym of holdingSymbols) {
+            const intel = finnhubIntelligence.holdings[sym]!;
+            const parts: string[] = [];
+            if (intel.profile?.name && intel.profile?.industry) {
+              parts.push(`${intel.profile.name} (${intel.profile.industry})`);
             }
-            if (m.dividendYield !== undefined) metricList.push(`Div Yield: ${m.dividendYield}%`);
-            if (metricList.length > 0) parts.push(metricList.join(" | "));
-          }
-          if (intel.news.length > 0) {
-            const newsList = intel.news.map((n) => `  * "${n.headline}" (${n.source})`).join("\n");
-            parts.push(`Recent Headlines:\n${newsList}`);
-          }
+            if (intel.recommendation) {
+              const r = intel.recommendation;
+              parts.push(
+                `Analyst Consensus: ${r.strongBuy} Strong Buy, ${r.buy} Buy, ${r.hold} Hold, ${r.sell} Sell, ${r.strongSell} Strong Sell`,
+              );
+            }
+            if (intel.metrics) {
+              const m = intel.metrics;
+              const metricList: string[] = [];
+              if (m.peRatio !== undefined) metricList.push(`P/E: ${m.peRatio}`);
+              if (m.beta !== undefined) metricList.push(`Beta: ${m.beta}`);
+              if (m.fiftyTwoWeekHigh !== undefined && m.fiftyTwoWeekLow !== undefined) {
+                metricList.push(`52W: ${m.fiftyTwoWeekLow} - ${m.fiftyTwoWeekHigh}`);
+              }
+              if (m.dividendYield !== undefined) metricList.push(`Div Yield: ${m.dividendYield}%`);
+              if (metricList.length > 0) parts.push(metricList.join(" | "));
+            }
+            if (intel.news.length > 0) {
+              const newsList = intel.news.map((n) => `  * "${n.headline}" (${n.source})`).join("\n");
+              parts.push(`Recent Headlines:\n${newsList}`);
+            }
 
-          holdingLines.push(`- **${sym}**:\n  ${parts.join("\n  ")}`);
+            holdingLines.push(`- **${sym}**:\n  ${parts.join("\n  ")}`);
+          }
+          sections.push(`### Key Asset Intelligence & Analyst Consensus (Finnhub API)\n${holdingLines.join("\n")}`);
         }
-        sections.push(`### Key Asset Intelligence & Analyst Consensus (Finnhub API)\n${holdingLines.join("\n")}`);
       }
+    }
 
-      if (sections.length > 0) {
-        finnhubContext = `\n## Real-Time Market Intelligence (Finnhub API)\n${sections.join("\n\n")}\n`;
-      }
+    if (sections.length > 0) {
+      finnhubContext = `\n## Real-Time Market Intelligence\n${sections.join("\n\n")}\n`;
     }
 
     const structureInstructions = finnhubIntelligence?.configured

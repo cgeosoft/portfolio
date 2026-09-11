@@ -17,6 +17,7 @@ import * as txRepo from "./db/transaction.repo.js";
 import * as marketCache from "./db/market-cache.repo.js";
 import { YahooFinanceService } from "./services/yahoo-finance.js";
 import { FinnhubService } from "./services/finnhub.js";
+import { MarketDataCoordinator } from "./services/market-data.js";
 import { LlmService } from "./services/llm.js";
 import { PortfolioService } from "./services/portfolio.js";
 import { PortfolioReportService } from "./services/portfolio-report.js";
@@ -50,9 +51,10 @@ dbTimer.end("success", `Database initialized (${portfolioCount} portfolios, ${tx
 // Initialize services
 const yahoo = new YahooFinanceService();
 const finnhub = new FinnhubService();
+const marketData = new MarketDataCoordinator(yahoo, finnhub);
 const llm = new LlmService();
-const portfolioService = new PortfolioService(yahoo);
-const reportService = new PortfolioReportService(llm, portfolioService, finnhub);
+const portfolioService = new PortfolioService(marketData);
+const reportService = new PortfolioReportService(llm, portfolioService, finnhub, yahoo);
 const chatService = new PortfolioChatService(llm, portfolioService);
 const metricsService = new MetricsService(portfolioService);
 
@@ -233,7 +235,7 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
       // ── Symbol Search ──
 
       searchSymbol: async (params) => {
-        const results = await yahoo.searchSymbols(params.query);
+        const results = await marketData.searchSymbols(params.query);
         return { results };
       },
 
@@ -374,6 +376,16 @@ const rpc = BrowserView.defineRPC<PortfolioRPC>({
 
       testFinnhubConnection: async (params) => {
         return finnhub.testConnection(params.apiKey);
+      },
+
+      testYahooConnection: async () => {
+        return yahoo.testConnection();
+      },
+
+      clearMarketCache: async () => {
+        const res = marketData.clearMarketCache();
+        portfolioService.clearPortfolioCache();
+        return res;
       },
 
       // ── Config ──

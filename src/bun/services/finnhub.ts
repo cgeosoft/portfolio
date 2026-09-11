@@ -7,6 +7,11 @@
 import * as marketCache from "../db/market-cache.repo.js";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
+import {
+  mapWithConcurrencyLimit,
+  type YahooQuote,
+  type YahooSymbolSearchResult,
+} from "./yahoo-finance.js";
 
 export interface FinnhubNewsItem {
   category: string;
@@ -156,12 +161,13 @@ export class FinnhubService {
   /**
    * Test connection to Finnhub API using the provided or stored key.
    */
-  public async testConnection(apiKey?: string): Promise<{ success: boolean; error?: string }> {
+  public async testConnection(apiKey?: string): Promise<{ success: boolean; latencyMs?: number; error?: string }> {
     const key = this.getApiKey(apiKey);
     if (!key) {
       return { success: false, error: "Finnhub API key is not configured" };
     }
 
+    const start = performance.now();
     try {
       const url = `${this.baseUrl}/news?category=general&minId=0`;
       const res = await fetch(url, {
@@ -187,11 +193,152 @@ export class FinnhubService {
         return { success: false, error: "Unexpected response format from Finnhub" };
       }
 
-      return { success: true };
+      const latencyMs = Math.round(performance.now() - start);
+      return { success: true, latencyMs };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return { success: false, error: `Connection failed: ${msg}` };
     }
+  }
+
+  /**
+   * Fetch quotes for multiple symbols via Finnhub /quote endpoint and return as YahooQuote map.
+   */
+  public async getQuotes(symbols: string[], forceFresh = false): Promise<Map<string, YahooQuote>> {
+    const results = new Map<string, YahooQuote>();
+    if (symbols.length === 0 || !this.isConfigured()) return results;
+
+    const uniqueSymbols = Array.from(new Set(symbols.map((s) => s.trim().toUpperCase())));
+
+    await mapWithConcurrencyLimit(uniqueSymbols, 4, async (sym) => {
+      const cacheKey = `quote:${sym}`;
+      const diskQuote = marketCache.get<YahooQuote>(cacheKey);
+      if (!forceFresh && diskQuote && !diskQuote.isExpired) {
+        results.set(sym, diskQuote.data);
+        return;
+      }
+
+      try {
+        const q = await this.getQuote(sym);
+        if (q && typeof q.c === "number" && q.c > 0) {
+          const prevClose = q.pc || q.c;
+          const change = q.d ?? Number((q.c - prevClose).toFixed(2));
+          const changePercent = q.dp ?? (prevClose > 0 ? Number(((change / prevClose) * 100).toFixed(2)) : 0);
+
+          const quote: YahooQuote = {
+            symbol: sym,
+            regularMarketPrice: q.c,
+            regularMarketChange: change,
+            regularMarketChangePercent: changePercent,
+            regularMarketDayHigh: q.h || undefined,
+            regularMarketDayLow: q.l || undefined,
+            previousClose: prevClose,
+            currency: "USD",
+            updatedAt: new Date(q.t ? q.t * 1000 : Date.now()).toISOString(),
+          };
+
+          results.set(sym, quote);
+          marketCache.set(cacheKey, quote, TTL_QUOTE_MS);
+        } else if (diskQuote && diskQuote.data) {
+          results.set(sym, diskQuote.data);
+        }
+      } catch (err: unknown) {
+        if (diskQuote && diskQuote.data) {
+          results.set(sym, diskQuote.data);
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        appLogger.logStep("warning", "finnhub", "get_quotes_error", `Finnhub quote fetch failed for ${sym}: ${msg}`);
+      }
+    });
+
+    return results;
+  }
+
+  /**
+   * Search symbols using Finnhub /search endpoint.
+   */
+  public async searchSymbols(query: string): Promise<YahooSymbolSearchResult[]> {
+    if (!query || !query.trim() || !this.isConfigured()) return [];
+
+    try {
+      const data = await this.request<{
+        count: number;
+        result: Array<{
+          description?: string;
+          displaySymbol?: string;
+          symbol?: string;
+          type?: string;
+        }>;
+      }>("/search", { q: query.trim() }, 60 * 60 * 1000);
+
+      if (!data || !Array.isArray(data.result)) return [];
+
+      return data.result
+        .filter((r) => r.symbol && r.symbol.trim())
+        .slice(0, 10)
+        .map((r) => ({
+          symbol: r.symbol!,
+          name: r.description || r.displaySymbol || r.symbol!,
+          exchange: "Finnhub",
+          quoteType: (r.type || "EQUITY").toUpperCase(),
+          typeDisp: r.type || "Equity",
+        }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      appLogger.logStep("warning", "finnhub", "search_symbols", `Finnhub search failed: ${msg}`);
+      return [];
+    }
+  }
+
+  /**
+   * Retrieve forex exchange rates against a base currency using Finnhub /forex/rates endpoint.
+   */
+  public async getExchangeRates(
+    baseCurrency: string,
+    targetCurrencies: string[],
+    forceFresh = false,
+  ): Promise<Map<string, number>> {
+    const base = (baseCurrency || "EUR").trim().toUpperCase();
+    const result = new Map<string, number>();
+
+    for (const rawCurr of targetCurrencies) {
+      const curr = (rawCurr || base).trim();
+      if (curr.toUpperCase() === base) {
+        result.set(curr, 1);
+      }
+    }
+
+    if (!this.isConfigured()) return result;
+
+    const cacheKey = `finnhub:forex_rates:${base}`;
+    const cached = marketCache.get<{ quote: Record<string, number> }>(cacheKey);
+
+    let ratesData: { quote: Record<string, number> } | null = null;
+    if (!forceFresh && cached && !cached.isExpired) {
+      ratesData = cached.data;
+    } else {
+      ratesData = await this.request<{ quote: Record<string, number> }>(
+        "/forex/rates",
+        { base },
+        60 * 60 * 1000,
+      );
+    }
+
+    if (ratesData && ratesData.quote) {
+      for (const rawCurr of targetCurrencies) {
+        const curr = (rawCurr || base).trim();
+        const upper = curr.toUpperCase();
+        if (upper === base) continue;
+
+        if (ratesData.quote[upper] !== undefined && ratesData.quote[upper] > 0) {
+          const rate = ratesData.quote[upper]!;
+          const multiplier = 1 / rate;
+          result.set(curr, multiplier);
+        }
+      }
+    }
+
+    return result;
   }
 
   /**

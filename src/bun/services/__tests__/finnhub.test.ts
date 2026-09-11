@@ -227,4 +227,76 @@ describe("FinnhubService", () => {
     expect(intel.holdings["AAPL"]!.metrics?.peRatio).toBe(28.5);
     expect(intel.holdings["BTC-USD"]).toBeUndefined();
   });
+
+  it("getQuotes retrieves and maps quotes for symbols", async () => {
+    globalThis.fetch = mock(async (url: string | URL | Request) => {
+      const urlStr = String(url);
+      if (urlStr.includes("AAPL")) {
+        return new Response(
+          JSON.stringify({ c: 180.5, d: 2.5, dp: 1.4, h: 182, l: 179, o: 179.5, pc: 178, t: 1700000000 }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    }) as any;
+
+    const service = new FinnhubService();
+    const quotes = await service.getQuotes(["AAPL"]);
+    expect(quotes.has("AAPL")).toBe(true);
+    const q = quotes.get("AAPL")!;
+    expect(q.regularMarketPrice).toBe(180.5);
+    expect(q.regularMarketChange).toBe(2.5);
+    expect(q.regularMarketChangePercent).toBe(1.4);
+    expect(q.regularMarketDayHigh).toBe(182);
+    expect(q.previousClose).toBe(178);
+  });
+
+  it("searchSymbols retrieves matching tickers from Finnhub search endpoint", async () => {
+    globalThis.fetch = mock(async () => {
+      return new Response(
+        JSON.stringify({
+          count: 1,
+          result: [
+            {
+              description: "APPLE INC",
+              displaySymbol: "AAPL",
+              symbol: "AAPL",
+              type: "Common Stock",
+            },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }) as any;
+
+    const service = new FinnhubService();
+    const results = await service.searchSymbols("AAPL");
+    expect(results.length).toBe(1);
+    expect(results[0]!.symbol).toBe("AAPL");
+    expect(results[0]!.name).toBe("APPLE INC");
+    expect(results[0]!.exchange).toBe("Finnhub");
+  });
+
+  it("getExchangeRates retrieves currency rates from Finnhub forex endpoint", async () => {
+    globalThis.fetch = mock(async () => {
+      return new Response(
+        JSON.stringify({
+          base: "EUR",
+          quote: {
+            USD: 1.10,
+            GBP: 0.85,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }) as any;
+
+    const service = new FinnhubService();
+    const rates = await service.getExchangeRates("EUR", ["USD", "GBP", "EUR"]);
+    expect(rates.get("EUR")).toBe(1);
+    // 1 / 1.10 = ~0.909
+    expect(rates.get("USD")).toBeCloseTo(1 / 1.10, 2);
+    // 1 / 0.85 = ~1.176
+    expect(rates.get("GBP")).toBeCloseTo(1 / 0.85, 2);
+  });
 });

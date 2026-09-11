@@ -8,7 +8,14 @@ import {
   mapWithConcurrencyLimit,
   extractQuoteFromChart,
   type YahooQuote,
+  type YahooChartData,
 } from "./yahoo-finance.js";
+
+export interface IMarketDataProvider {
+  getQuotes(symbols: string[], forceFresh?: boolean): Promise<Map<string, YahooQuote>>;
+  getExchangeRates(baseCurrency: string, targetCurrencies: string[], forceFresh?: boolean): Promise<Map<string, number>>;
+  getChart(symbol: string, range?: string, interval?: string, forceFresh?: boolean): Promise<YahooChartData>;
+}
 import { generateDemoTransactions, DEMO_ASSETS } from "./demo-portfolio.js";
 import type {
   FinancialPortfolioData,
@@ -80,7 +87,7 @@ export class PortfolioService {
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
   private cacheSweepHandle?: Timer;
 
-  constructor(private readonly yahoo: YahooFinanceService) {
+  constructor(private readonly yahoo: IMarketDataProvider) {
     this.cacheSweepHandle = setInterval(() => this.sweepExpiredCacheEntries(), CACHE_TTL_MS);
     this.cacheSweepHandle.unref?.();
   }

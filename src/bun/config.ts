@@ -13,6 +13,26 @@ export interface WindowStateConfig {
   isMaximized?: boolean;
 }
 
+export type DataProviderId = "yahoo" | "finnhub";
+
+export interface DataProviderCategoryRouting {
+  quotes: DataProviderId;
+  news: DataProviderId;
+  charts: DataProviderId;
+  fx: DataProviderId;
+  fundamentals: DataProviderId;
+  search: DataProviderId;
+}
+
+export const DEFAULT_DATA_PROVIDER_ROUTING: DataProviderCategoryRouting = {
+  quotes: "yahoo",
+  news: "finnhub",
+  charts: "yahoo",
+  fx: "yahoo",
+  fundamentals: "finnhub",
+  search: "yahoo",
+};
+
 export interface DesktopConfig {
   /** Whether the first-launch setup wizard has been completed */
   setupCompleted: boolean;
@@ -42,6 +62,8 @@ export interface DesktopConfig {
   llmBaseUrls: Record<string, string>;
   /** Optional Finnhub API key for market intelligence in AI reports */
   finnhubApiKey?: string;
+  /** Provider assignments for each data category */
+  dataProviderRouting: DataProviderCategoryRouting;
   /** Last opened directory for CSV import file picker */
   lastImportDirectory?: string;
   /** ISO timestamp of the last market quotes synchronization with Yahoo Finance */
@@ -99,6 +121,7 @@ const DEFAULT_CONFIG: DesktopConfig = {
   llmApiKeys: {},
   llmBaseUrls: {},
   finnhubApiKey: "",
+  dataProviderRouting: { ...DEFAULT_DATA_PROVIDER_ROUTING },
   lastImportDirectory: "",
   lastQuotesSync: undefined,
   webpageUrl: resolveWebpageUrl(),
@@ -156,6 +179,10 @@ export function loadConfig(): DesktopConfig {
     const raw = readFileSync(CONFIG_PATH, "utf-8");
     const parsed = JSON.parse(raw) as Partial<DesktopConfig>;
     const cfg = { ...DEFAULT_CONFIG, ...parsed };
+    cfg.dataProviderRouting = {
+      ...DEFAULT_DATA_PROVIDER_ROUTING,
+      ...(parsed.dataProviderRouting || {}),
+    };
     if (!cfg.llamacppServerUrl && cfg.llmBaseUrl && (!cfg.llmProvider || cfg.llmProvider === "llamacpp-server" || cfg.llmProvider === "llamacpp")) {
       cfg.llamacppServerUrl = cfg.llmBaseUrl;
     }
@@ -183,6 +210,12 @@ export function saveConfig(config: DesktopConfig): void {
 export function updateConfig(updates: Partial<DesktopConfig>): DesktopConfig {
   const current = loadConfig();
   const updated = { ...current, ...updates };
+  if (updates.dataProviderRouting) {
+    updated.dataProviderRouting = {
+      ...current.dataProviderRouting,
+      ...updates.dataProviderRouting,
+    };
+  }
   if (
     updates.llmBaseUrl !== undefined &&
     (!updated.llamacppServerUrl || updated.llmProvider === "llamacpp-server" || updated.llmProvider === "llamacpp")
