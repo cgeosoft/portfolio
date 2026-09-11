@@ -21,3 +21,9 @@ export const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434";
  * the model is left unset for that provider.
  */
 export const DEFAULT_OLLAMA_MODEL = "llama3.2:latest";
+
+/** Default endpoint for Nebius Token Factory OpenAI-compatible API. */
+export const DEFAULT_NEBIUS_URL = "https://api.tokenfactory.nebius.com/v1";
+
+/** Default endpoint for custom OpenAI-compatible server. */
+export const DEFAULT_OPENAI_COMPATIBLE_URL = "http://127.0.0.1:1234/v1";

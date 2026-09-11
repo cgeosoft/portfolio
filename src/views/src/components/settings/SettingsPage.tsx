@@ -47,8 +47,10 @@ import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import {
   DEFAULT_LLAMACPP_URL,
+  DEFAULT_NEBIUS_URL,
   DEFAULT_OLLAMA_MODEL,
   DEFAULT_OLLAMA_URL,
+  DEFAULT_OPENAI_COMPATIBLE_URL,
 } from "../../../../shared/llm-defaults";
 
 export type SettingsSection = "general" | "portfolios" | "providers" | "assistant" | "support" | "about";
@@ -197,6 +199,40 @@ const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
     requiresKey: true,
     keyPlaceholder: "sk-...",
     supportsBaseUrl: false,
+  },
+  nebius: {
+    id: "nebius",
+    name: "Nebius Token Factory",
+    badge: "Cloud API",
+    defaultModel: "meta-llama/Llama-3.3-70B-Instruct",
+    models: [
+      "meta-llama/Llama-3.3-70B-Instruct",
+      "meta-llama/Meta-Llama-3.1-70B-Instruct",
+      "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "deepseek-ai/DeepSeek-R1",
+      "deepseek-ai/DeepSeek-V3",
+      "Qwen/Qwen2.5-72B-Instruct",
+      "mistralai/Mistral-Large-2407",
+    ],
+    description: "Nebius Token Factory OpenAI-compatible API for open-source foundation models.",
+    requiresKey: true,
+    keyPlaceholder: "Enter Nebius API Key",
+    supportsBaseUrl: true,
+    baseUrlPlaceholder: DEFAULT_NEBIUS_URL,
+    defaultBaseUrl: DEFAULT_NEBIUS_URL,
+  },
+  "openai-compatible": {
+    id: "openai-compatible",
+    name: "OpenAI Compatible",
+    badge: "Custom Endpoint",
+    defaultModel: "",
+    description: "Connect to any OpenAI-compatible inference server (LM Studio, vLLM, LocalAI, etc.).",
+    requiresKey: false,
+    keyOptional: true,
+    keyPlaceholder: "Optional API Key / Bearer Token",
+    supportsBaseUrl: true,
+    baseUrlPlaceholder: DEFAULT_OPENAI_COMPATIBLE_URL,
+    defaultBaseUrl: DEFAULT_OPENAI_COMPATIBLE_URL,
   },
 };
 
@@ -428,16 +464,22 @@ export function SettingsPage({
     const preset = resolveProviderPreset(newProvider);
     if (preset) {
       setReportModel(preset.defaultModel);
-      setIsCustomModel(false);
+      const isCustomDefault = newProvider === "openai-compatible" && !preset.defaultModel;
+      setIsCustomModel(isCustomDefault);
       setCustomModelInput("");
 
       const updates: any = { llmProvider: newProvider, llmModel: preset.defaultModel };
       let effectiveBaseUrl = reportBaseUrl;
       if (preset.supportsBaseUrl) {
-        // Carry a custom URL across a provider switch, but replace the other
-        // local daemon's default rather than pointing llama.cpp at Ollama.
-        const otherDefault = isLlamaCpp ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL;
-        if (!effectiveBaseUrl || effectiveBaseUrl === otherDefault) {
+        // Carry a custom URL across a provider switch, but replace another
+        // provider's default rather than pointing at an incompatible endpoint.
+        const knownDefaults = [
+          DEFAULT_OLLAMA_URL,
+          DEFAULT_LLAMACPP_URL,
+          DEFAULT_NEBIUS_URL,
+          DEFAULT_OPENAI_COMPATIBLE_URL,
+        ];
+        if (!effectiveBaseUrl || knownDefaults.includes(effectiveBaseUrl)) {
           effectiveBaseUrl = preset.defaultBaseUrl || "";
           setReportBaseUrl(effectiveBaseUrl);
           updates.llmBaseUrl = effectiveBaseUrl;
@@ -534,9 +576,15 @@ export function SettingsPage({
   // providers keep the bundled preset list because they expose no accessible
   // model listing.
   const isEndpointProvider =
-    reportProvider === "ollama" || reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
+    reportProvider === "ollama" ||
+    reportProvider === "llamacpp-server" ||
+    reportProvider === "llamacpp" ||
+    reportProvider === "openai-compatible" ||
+    reportProvider === "nebius";
   const isLlamaCpp = reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
-  const baseList = isEndpointProvider ? dynamicList : presetList;
+  const baseList = isEndpointProvider
+    ? (dynamicList.length > 0 ? dynamicList : presetList)
+    : presetList;
   const availableModels = Array.from(new Set(baseList));
   if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
     availableModels.unshift(reportModel);
@@ -991,10 +1039,10 @@ export function SettingsPage({
                       onClick={() => fetchModelsForProvider(reportProvider, reportBaseUrl, reportApiKey)}
                       disabled={isFetchingModels}
                       className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                      title="Fetch installed models from local server"
+                      title="Fetch available models from endpoint"
                     >
                       <RefreshCw className={`w-3 h-3 ${isFetchingModels ? "animate-spin" : ""}`} />
-                      <span>{isFetchingModels ? "Scanning Server..." : "Detect Local Models"}</span>
+                      <span>{isFetchingModels ? "Scanning Server..." : "Detect Models"}</span>
                     </button>
                   )}
                 </div>
@@ -1026,28 +1074,28 @@ export function SettingsPage({
                   </option>
                 </Select>
 
-                {isCustomModel && (
+                {(isCustomModel || (reportProvider === "openai-compatible" && availableModels.length === 0)) && (
                   <div className="pt-2 animate-fade-in">
                     <input
                       type="text"
-                      value={customModelInput}
+                      value={isCustomModel ? customModelInput : reportModel}
                       onChange={(e) => {
                         const val = e.target.value;
                         setCustomModelInput(val);
                         setReportModel(val);
                         saveConfig({ llmModel: val });
                       }}
-                      placeholder="e.g. mistral-7b-custom:latest"
+                      placeholder="e.g. meta-llama/Llama-3.3-70B-Instruct or model identifier"
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
-                      Enter an unlisted model identifier or custom fine-tune tag.
+                      Enter the model identifier expected by your inference endpoint.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Server Base URL: Only rendered for local server daemons */}
+              {/* Server Base URL: Only rendered for local server daemons or custom endpoints */}
               {currentPreset?.supportsBaseUrl && (
                 <div className="space-y-2 pt-2 border-t border-slate-800/80">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
@@ -1081,6 +1129,10 @@ export function SettingsPage({
                   <p className="text-[10px] text-slate-500">
                     {reportProvider === "ollama"
                       ? `Default Ollama daemon endpoint: ${DEFAULT_OLLAMA_URL}`
+                      : reportProvider === "nebius"
+                      ? `Default Nebius Token Factory endpoint: ${DEFAULT_NEBIUS_URL}`
+                      : reportProvider === "openai-compatible"
+                      ? `Default OpenAI-compatible endpoint: ${DEFAULT_OPENAI_COMPATIBLE_URL}`
                       : `Default llama.cpp server endpoint: ${DEFAULT_LLAMACPP_URL}`}
                   </p>
                 </div>

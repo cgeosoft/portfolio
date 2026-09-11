@@ -7,8 +7,10 @@ import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import {
   DEFAULT_LLAMACPP_URL,
+  DEFAULT_NEBIUS_URL,
   DEFAULT_OLLAMA_MODEL,
   DEFAULT_OLLAMA_URL,
+  DEFAULT_OPENAI_COMPATIBLE_URL,
 } from "../../shared/llm-defaults.js";
 
 export interface LlmMessage {
@@ -39,6 +41,26 @@ const TEST_INFERENCE_MAX_TOKENS = 512;
 
 /** How long an auto-detected llama.cpp model name stays valid. */
 const LLAMACPP_MODEL_CACHE_MS = 60_000;
+
+/**
+ * Safely construct an OpenAI-compatible endpoint URL for chat completions or model listing.
+ * Handles trailing slashes, existing `/v1` segments, or full paths gracefully.
+ */
+export function buildOpenAIUrl(rawBaseUrl: string, endpointPath: "chat/completions" | "models"): string {
+  let base = (rawBaseUrl || "").trim().replace(/\/+$/, "");
+  if (base.endsWith("/chat/completions")) {
+    if (endpointPath === "chat/completions") return base;
+    base = base.replace(/\/chat\/completions$/, "");
+  } else if (base.endsWith("/models")) {
+    if (endpointPath === "models") return base;
+    base = base.replace(/\/models$/, "");
+  }
+
+  if (base.endsWith("/v1")) {
+    return `${base}/${endpointPath}`;
+  }
+  return `${base}/v1/${endpointPath}`;
+}
 
 /**
  * Strip LLM thinking blocks without backtracking regex.
@@ -159,6 +181,10 @@ export class LlmService {
       rawResponse = await this.chatWithDeepSeek(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
     } else if (provider === "gemini") {
       rawResponse = await this.chatWithGemini(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
+    } else if (provider === "nebius") {
+      rawResponse = await this.chatWithNebius(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
+    } else if (provider === "openai-compatible") {
+      rawResponse = await this.chatWithOpenAICompatible(messages, options.model, temperature, maxTokens, apiKey, baseUrl);
     } else if (provider === "ollama") {
       rawResponse = await this.chatWithOllama(messages, options.model, temperature, apiKey, baseUrl);
     } else {
@@ -221,6 +247,21 @@ export class LlmService {
       const url = baseUrl || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
       rawResponse = await this.chatOpenAICompatibleStream(
         messages, options.model || "gemini-2.5-flash", url, apiKey, temperature, maxTokens, "Gemini", onChunk, undefined, signal,
+      );
+    } else if (provider === "nebius") {
+      if (!apiKey) throw new Error("Nebius API key is required. Configure it in Settings.");
+      const config = loadConfig();
+      const targetUrl = baseUrl || config.llmBaseUrls?.["nebius"] || DEFAULT_NEBIUS_URL;
+      const url = buildOpenAIUrl(targetUrl, "chat/completions");
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "meta-llama/Llama-3.3-70B-Instruct", url, apiKey, temperature, maxTokens, "Nebius", onChunk, undefined, signal,
+      );
+    } else if (provider === "openai-compatible") {
+      const config = loadConfig();
+      const targetUrl = baseUrl || config.llmBaseUrls?.["openai-compatible"] || config.llmBaseUrl || DEFAULT_OPENAI_COMPATIBLE_URL;
+      const url = buildOpenAIUrl(targetUrl, "chat/completions");
+      rawResponse = await this.chatOpenAICompatibleStream(
+        messages, options.model || "", url, apiKey, temperature, maxTokens, "OpenAI Compatible", onChunk, undefined, signal,
       );
     } else if (provider === "ollama") {
       rawResponse = await this.chatWithOllamaStream(
@@ -379,14 +420,21 @@ export class LlmService {
     temperature: number, maxTokens: number, providerName: string,
     extraHeaders?: Record<string, string>,
   ): Promise<string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    };
+    if (apiKey?.trim()) headers.Authorization = `Bearer ${apiKey.trim()}`;
+
     const res = await fetch(url, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        ...extraHeaders,
-      },
-      body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens }),
+      headers,
+      body: JSON.stringify({
+        ...(model ? { model } : {}),
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+      }),
       signal: AbortSignal.timeout(60_000),
     });
 
@@ -794,7 +842,28 @@ export class LlmService {
     return this.chatOpenAICompatible(messages, model || "gemini-2.5-flash", url, apiKey, temperature, maxTokens, "Gemini");
   }
 
-  /** Fetch available models from server when supported (e.g. Ollama or llama.cpp) */
+  private async chatWithNebius(
+    messages: LlmMessage[], model: string | undefined, temperature: number,
+    maxTokens: number, apiKey?: string, baseUrl?: string,
+  ): Promise<string> {
+    if (!apiKey) throw new Error("Nebius API key is required. Configure it in Settings.");
+    const config = loadConfig();
+    const targetUrl = baseUrl || config.llmBaseUrls?.["nebius"] || DEFAULT_NEBIUS_URL;
+    const url = buildOpenAIUrl(targetUrl, "chat/completions");
+    return this.chatOpenAICompatible(messages, model || "meta-llama/Llama-3.3-70B-Instruct", url, apiKey, temperature, maxTokens, "Nebius");
+  }
+
+  private async chatWithOpenAICompatible(
+    messages: LlmMessage[], model: string | undefined, temperature: number,
+    maxTokens: number, apiKey?: string, baseUrl?: string,
+  ): Promise<string> {
+    const config = loadConfig();
+    const targetUrl = baseUrl || config.llmBaseUrls?.["openai-compatible"] || config.llmBaseUrl || DEFAULT_OPENAI_COMPATIBLE_URL;
+    const url = buildOpenAIUrl(targetUrl, "chat/completions");
+    return this.chatOpenAICompatible(messages, model || "", url, apiKey || "", temperature, maxTokens, "OpenAI Compatible");
+  }
+
+  /** Fetch available models from server when supported (e.g. Ollama, llama.cpp, Nebius, or custom OpenAI-compatible) */
   public async getAvailableModels(provider: string, baseUrl?: string, apiKey?: string): Promise<string[]> {
     const p = (provider || "").toLowerCase().trim();
     if (p === "ollama") {
@@ -810,12 +879,18 @@ export class LlmService {
       } catch {
         // Fall back if server is offline
       }
-    } else if (p === "llamacpp-server" || p === "llamacpp") {
-      const targetUrl = baseUrl?.trim() || DEFAULT_LLAMACPP_URL;
-      const endpoint = `${targetUrl.replace(/\/$/, "")}/v1/models`;
+    } else if (p === "llamacpp-server" || p === "llamacpp" || p === "openai-compatible" || p === "nebius") {
+      const defaultUrl =
+        p === "nebius"
+          ? DEFAULT_NEBIUS_URL
+          : p === "openai-compatible"
+          ? DEFAULT_OPENAI_COMPATIBLE_URL
+          : DEFAULT_LLAMACPP_URL;
+      const targetUrl = baseUrl?.trim() || defaultUrl;
+      const endpoint = buildOpenAIUrl(targetUrl, "models");
       try {
         const headers: Record<string, string> = {};
-        if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+        if (apiKey?.trim()) headers.Authorization = `Bearer ${apiKey.trim()}`;
         const res = await fetch(endpoint, { headers, signal: AbortSignal.timeout(3000) });
         if (res.ok) {
           const data = (await res.json()) as { data?: Array<{ id?: string }> };
@@ -852,13 +927,27 @@ export class LlmService {
       if (!model && !modelOptional) {
         return { success: false, message: "Model identifier cannot be empty." };
       }
-      const cloudProviders = ["groq", "openai", "anthropic", "gemini", "openrouter", "deepseek"];
+      const cloudProviders = ["groq", "openai", "anthropic", "gemini", "openrouter", "deepseek", "nebius"];
       if (cloudProviders.includes(provider) && !apiKey) {
-        const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+        const name = provider === "nebius" ? "Nebius" : provider.charAt(0).toUpperCase() + provider.slice(1);
         return { success: false, message: `${name} requires an API key.` };
       }
-      if (provider === "llamacpp-server" || provider === "llamacpp" || provider === "ollama") {
-        const urlToTest = baseUrl || (provider === "ollama" ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL);
+      if (
+        provider === "llamacpp-server" ||
+        provider === "llamacpp" ||
+        provider === "ollama" ||
+        provider === "openai-compatible" ||
+        provider === "nebius"
+      ) {
+        const urlToTest =
+          baseUrl ||
+          (provider === "ollama"
+            ? DEFAULT_OLLAMA_URL
+            : provider === "nebius"
+            ? DEFAULT_NEBIUS_URL
+            : provider === "openai-compatible"
+            ? DEFAULT_OPENAI_COMPATIBLE_URL
+            : DEFAULT_LLAMACPP_URL);
         try {
           new URL(urlToTest);
         } catch {
@@ -900,6 +989,37 @@ export class LlmService {
             return { success: false, message: `llama.cpp server error with status ${res.status}.` };
           }
           return { success: true, message: `Connected to llamacpp server at ${targetUrl} (${latencyMs}ms).`, latencyMs };
+        } else if (provider === "openai-compatible" || provider === "nebius") {
+          const defaultUrl = provider === "nebius" ? DEFAULT_NEBIUS_URL : DEFAULT_OPENAI_COMPATIBLE_URL;
+          const targetUrl = baseUrl || defaultUrl;
+          const pingUrl = buildOpenAIUrl(targetUrl, "models");
+          const headers: Record<string, string> = {};
+          if (apiKey?.trim()) headers.Authorization = `Bearer ${apiKey.trim()}`;
+          let res: Response | null = null;
+          try {
+            res = await fetch(pingUrl, { headers, signal: AbortSignal.timeout(4000) });
+          } catch {
+            try {
+              res = await fetch(`${targetUrl.replace(/\/+$/, "")}/health`, { headers, signal: AbortSignal.timeout(3000) });
+            } catch {
+              res = await fetch(targetUrl, { headers, signal: AbortSignal.timeout(3000) });
+            }
+          }
+          const latencyMs = Date.now() - startTime;
+          if (res && !res.ok && res.status >= 500) {
+            return {
+              success: false,
+              message: `${provider === "nebius" ? "Nebius" : "OpenAI-compatible"} server error with status ${res.status}.`,
+            };
+          }
+          if (res && res.status === 401) {
+            return { success: false, message: "Authentication failed. Please check your API key." };
+          }
+          return {
+            success: true,
+            message: `Connected to ${provider === "nebius" ? "Nebius API" : "OpenAI-compatible"} endpoint at ${targetUrl} (${latencyMs}ms).`,
+            latencyMs,
+          };
         } else {
           // Cloud providers: verify host reachability
           const hostMap: Record<string, string> = {
@@ -930,7 +1050,16 @@ export class LlmService {
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        const defaultHost = provider === "ollama" ? DEFAULT_OLLAMA_URL : (provider === "llamacpp-server" || provider === "llamacpp" ? DEFAULT_LLAMACPP_URL : `${provider} host`);
+        const defaultHost =
+          provider === "ollama"
+            ? DEFAULT_OLLAMA_URL
+            : provider === "nebius"
+            ? DEFAULT_NEBIUS_URL
+            : provider === "openai-compatible"
+            ? DEFAULT_OPENAI_COMPATIBLE_URL
+            : provider === "llamacpp-server" || provider === "llamacpp"
+            ? DEFAULT_LLAMACPP_URL
+            : `${provider} host`;
         return {
           success: false,
           message: `Unable to connect to ${baseUrl || defaultHost}: ${msg}`,

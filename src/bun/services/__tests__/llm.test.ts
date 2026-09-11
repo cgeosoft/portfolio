@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { LlmService, sanitizeLlmResponse } from "../llm.js";
+import { LlmService, sanitizeLlmResponse, buildOpenAIUrl } from "../llm.js";
 
 describe("sanitizeLlmResponse: reasoning models", () => {
   it("keeps the answer that follows a closed thinking block", () => {
@@ -93,6 +93,56 @@ describe("LlmService diagnostic and configuration", () => {
       });
       expect(res.success).toBe(false);
       expect(res.message).toContain("Invalid server URL format");
+    });
+
+    it("validates Nebius requires an API key and model", async () => {
+      const resNoKey = await service.testStep("config", {
+        provider: "nebius",
+        model: "meta-llama/Llama-3.3-70B-Instruct",
+        apiKey: "",
+      });
+      expect(resNoKey.success).toBe(false);
+      expect(resNoKey.message).toContain("Nebius requires an API key");
+
+      const resNoModel = await service.testStep("config", {
+        provider: "nebius",
+        model: "",
+        apiKey: "test-token",
+      });
+      expect(resNoModel.success).toBe(false);
+      expect(resNoModel.message).toContain("Model identifier cannot be empty");
+
+      const resOk = await service.testStep("config", {
+        provider: "nebius",
+        model: "meta-llama/Llama-3.3-70B-Instruct",
+        apiKey: "test-token",
+      });
+      expect(resOk.success).toBe(true);
+    });
+
+    it("validates OpenAI-compatible provider allows optional key but requires model and valid URL", async () => {
+      const resNoModel = await service.testStep("config", {
+        provider: "openai-compatible",
+        model: "",
+        baseUrl: "http://127.0.0.1:1234/v1",
+      });
+      expect(resNoModel.success).toBe(false);
+      expect(resNoModel.message).toContain("Model identifier cannot be empty");
+
+      const resBadUrl = await service.testStep("config", {
+        provider: "openai-compatible",
+        model: "local-model",
+        baseUrl: "bad url with spaces",
+      });
+      expect(resBadUrl.success).toBe(false);
+      expect(resBadUrl.message).toContain("Invalid server URL format");
+
+      const resOk = await service.testStep("config", {
+        provider: "openai-compatible",
+        model: "qwen2.5-coder-7b",
+        baseUrl: "http://localhost:8000/v1",
+      });
+      expect(resOk.success).toBe(true);
     });
   });
 
@@ -245,6 +295,86 @@ describe("LlmService diagnostic and configuration", () => {
       });
       expect(res.success).toBe(true);
       expect(res.output).toBe("LLM connection verified");
+    });
+  });
+
+  describe("buildOpenAIUrl", () => {
+    it("normalizes base URLs correctly for chat and models endpoints", () => {
+      expect(buildOpenAIUrl("http://localhost:1234", "chat/completions")).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+      expect(buildOpenAIUrl("http://localhost:1234/v1", "chat/completions")).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+      expect(buildOpenAIUrl("http://localhost:1234/v1/", "chat/completions")).toBe(
+        "http://localhost:1234/v1/chat/completions"
+      );
+      expect(buildOpenAIUrl("https://api.tokenfactory.nebius.com/v1", "models")).toBe(
+        "https://api.tokenfactory.nebius.com/v1/models"
+      );
+      expect(buildOpenAIUrl("https://api.tokenfactory.nebius.com/v1/chat/completions", "models")).toBe(
+        "https://api.tokenfactory.nebius.com/v1/models"
+      );
+    });
+  });
+
+  describe("OpenAI-compatible & Nebius endpoint operations", () => {
+    it("fetches available models from OpenAI-compatible endpoint with Bearer auth", async () => {
+      const originalFetch = globalThis.fetch;
+      let capturedUrl = "";
+      let capturedHeaders: HeadersInit | undefined;
+
+      globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+        capturedUrl = String(input);
+        capturedHeaders = init?.headers;
+        return new Response(
+          JSON.stringify({
+            data: [
+              { id: "meta-llama/Llama-3.3-70B-Instruct" },
+              { id: "deepseek-ai/DeepSeek-R1" },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }) as unknown as typeof fetch;
+
+      try {
+        const models = await service.getAvailableModels(
+          "nebius",
+          "https://api.tokenfactory.nebius.com/v1",
+          "test-nebius-token"
+        );
+        expect(models).toEqual([
+          "meta-llama/Llama-3.3-70B-Instruct",
+          "deepseek-ai/DeepSeek-R1",
+        ]);
+        expect(capturedUrl).toBe("https://api.tokenfactory.nebius.com/v1/models");
+        expect((capturedHeaders as Record<string, string>)?.Authorization).toBe("Bearer test-nebius-token");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("verifies connection step for OpenAI-compatible endpoint", async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async () => {
+        return new Response(
+          JSON.stringify({ data: [{ id: "custom-model" }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }) as unknown as typeof fetch;
+
+      try {
+        const res = await service.testStep("connection", {
+          provider: "openai-compatible",
+          model: "custom-model",
+          baseUrl: "http://127.0.0.1:1234/v1",
+        });
+        expect(res.success).toBe(true);
+        expect(res.message).toContain("Connected to OpenAI-compatible endpoint");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 });

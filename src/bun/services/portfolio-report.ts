@@ -21,7 +21,11 @@ import type {
   PollReportStreamResponse,
   CancelReportStreamResponse,
 } from "../../shared/rpc-types.js";
-import { DEFAULT_OLLAMA_MODEL } from "../../shared/llm-defaults.js";
+import {
+  DEFAULT_NEBIUS_URL,
+  DEFAULT_OLLAMA_MODEL,
+  DEFAULT_OPENAI_COMPATIBLE_URL,
+} from "../../shared/llm-defaults.js";
 
 function getIsoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -141,8 +145,9 @@ export class PortfolioReportService {
         : provider === "openrouter" ? "meta-llama/llama-3.3-70b-instruct"
         : provider === "deepseek" ? "deepseek-chat"
         : provider === "gemini" ? "gemini-2.5-flash"
+        : provider === "nebius" ? "meta-llama/Llama-3.3-70B-Instruct"
         : provider === "ollama" ? DEFAULT_OLLAMA_MODEL
-        // llama.cpp answers with the model it was started with.
+        // llama.cpp and custom openai-compatible have no fixed default.
         : "";
 
     const model = options.model || config.llmModel || defaultModel;
@@ -419,6 +424,8 @@ ${structureInstructions}
           params.baseUrl ||
           config.llmBaseUrls?.[provider] ||
           config.llmBaseUrl ||
+          (provider === "nebius" ? DEFAULT_NEBIUS_URL : undefined) ||
+          (provider === "openai-compatible" ? DEFAULT_OPENAI_COMPATIBLE_URL : undefined) ||
           (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
 
         let content = "";

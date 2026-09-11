@@ -17,7 +17,11 @@ import type {
   PortfolioTransaction,
 } from "../../types/portfolio.js";
 import type { PortfolioChatMessage, AssistantConversation } from "../../shared/rpc-types.js";
-import { DEFAULT_OLLAMA_MODEL } from "../../shared/llm-defaults.js";
+import {
+  DEFAULT_NEBIUS_URL,
+  DEFAULT_OLLAMA_MODEL,
+  DEFAULT_OPENAI_COMPATIBLE_URL,
+} from "../../shared/llm-defaults.js";
 
 export function buildPortfolioSystemPrompt(
   portfolio: PortfolioItem,
@@ -176,23 +180,27 @@ export class PortfolioChatService {
                 ? "deepseek-chat"
                 : provider === "gemini"
                   ? "gemini-2.5-flash"
-                  : provider === "ollama"
-                    ? DEFAULT_OLLAMA_MODEL
-                    // llama.cpp answers with the model it was started with.
-                    : "";
+                  : provider === "nebius"
+                    ? "meta-llama/Llama-3.3-70B-Instruct"
+                    : provider === "ollama"
+                      ? DEFAULT_OLLAMA_MODEL
+                      // llama.cpp and custom openai-compatible have no fixed default.
+                      : "";
 
     const model = options.model || config.llmModel || defaultModel;
     const apiKey = config.llmApiKeys?.[provider] || config.llmApiKey;
     const configuredBaseUrl =
       config.llmBaseUrls?.[provider] ||
       config.llmBaseUrl ||
+      (provider === "nebius" ? DEFAULT_NEBIUS_URL : undefined) ||
+      (provider === "openai-compatible" ? DEFAULT_OPENAI_COMPATIBLE_URL : undefined) ||
       (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
     const baseUrl = configuredBaseUrl;
 
     // Validate cloud provider API keys before network call
-    const cloudProviders = ["groq", "openai", "anthropic", "openrouter", "deepseek", "gemini"];
+    const cloudProviders = ["groq", "openai", "anthropic", "openrouter", "deepseek", "gemini", "nebius"];
     if (cloudProviders.includes(provider) && !apiKey?.trim()) {
-      const capitalized = provider.charAt(0).toUpperCase() + provider.slice(1);
+      const capitalized = provider === "nebius" ? "Nebius" : provider.charAt(0).toUpperCase() + provider.slice(1);
       throw new Error(
         `${capitalized} API key is not configured. Please open Settings > Assistant and configure your API key.`,
       );

@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { LlmTestStepId } from "../../../../shared/rpc-types";
-import { DEFAULT_LLAMACPP_URL, DEFAULT_OLLAMA_URL } from "../../../../shared/llm-defaults";
+import {
+  DEFAULT_LLAMACPP_URL,
+  DEFAULT_NEBIUS_URL,
+  DEFAULT_OLLAMA_URL,
+  DEFAULT_OPENAI_COMPATIBLE_URL,
+} from "../../../../shared/llm-defaults";
 
 export interface TestLlmModalProps {
   isOpen: boolean;
@@ -217,6 +222,10 @@ export function TestLlmModal({
       ? DEFAULT_OLLAMA_URL
       : provider === "llamacpp-server" || provider === "llamacpp"
       ? DEFAULT_LLAMACPP_URL
+      : provider === "nebius"
+      ? DEFAULT_NEBIUS_URL
+      : provider === "openai-compatible"
+      ? DEFAULT_OPENAI_COMPATIBLE_URL
       : "Predefined Cloud Endpoint");
 
   return (
