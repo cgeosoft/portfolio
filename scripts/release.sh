@@ -382,6 +382,8 @@ run_build_packages() {
 
   # 1. Electrobun Compilation (stable production build)
   if [[ "${SKIP_BUILD}" != "true" ]]; then
+    echo "[RELEASE] Building metric modules..."
+    (cd "${APP_DIR}" && bun run build:metrics)
     echo "[RELEASE] Building Tailwind CSS..."
     (cd "${APP_DIR}" && bun run build:css)
     echo "[RELEASE] Compiling Electrobun application (--env=stable)..."
