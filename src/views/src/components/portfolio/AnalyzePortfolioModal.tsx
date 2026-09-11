@@ -724,7 +724,7 @@ export function AnalyzePortfolioModal({
                 </div>
 
                 <p className="text-[10px] text-slate-500 italic text-center">
-                  Displaying trailing words from the real-time stream. The complete formatted report will be presented in the final view.
+                  Displaying trailing words from the real-time stream.
                 </p>
               </div>
             </div>
