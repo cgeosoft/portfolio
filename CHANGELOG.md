@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0] - 2026-09-11
+
+### Added
+- Added metric modules to the release build.
+
+
 ## [0.1.7] - 2026-09-11
 
 - 9656fd1 Simplify stream footer text
