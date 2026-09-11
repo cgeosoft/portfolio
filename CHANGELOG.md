@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.7] - 2026-09-11
+
+- 9656fd1 Simplify stream footer text
+- 016946e Isolate per-provider base URLs, API keys, and models in settings
+- a81f6f7 Add OpenAI-compatible and Nebius Token Factory inference providers
+- ce853fb feat(providers): add data providers settings tab and category routing
+- 96ad112 Fix assistant sidebar left padding and transition alignment
+- a510801 refactor(ui): remove nested boxes in settings general, support, and about
+- dd1b2b7 feat: implement Finnhub API for report market intelligence
+- 31df2b0 Redesign assistant panel with in-place history and contextual grounding
+- a27397d feat(ui): move portfolio select to front of main menu with separator
+- c08ff03 Rename Portfolio Desktop to Portfolio
+- 4e40f97 chore(website): add the screenshot asset referenced by the README and website
+- 2fd0b55 fix(ui): drop the doubled plus sign on holdings gain percentages
+- 6a06db3 refactor(logging): route service console output through appLogger
+- 1b83efb feat(logging): render console logs with aligned columns, colour and key=value metadata
+- cbf8d91 feat(metrics): run metrics as sandboxed WASM modules with a Metrics tab and marketplace
+- 0914a2a Add annotated app screenshot to website and README
+- 3bf4e3b feat(assistant): let the user inspect the portfolio system prompt
+- 751b7b4 feat(ui): render dropdowns as a custom listbox instead of a native select
+- 1093cd1 fix(llm): keep the answer that follows a model's thinking block
+- 72a5c83 refactor(llm): share local inference defaults and detect the llama.cpp model
+- ad2d3a4 chore(gitignore): ignore the local tmp/ scratch directory
+- 548869e feat(ui): unify all dropdowns with a shared design system
+- 3e04061 Replace changelog renderer with ReactMarkdown
+- e72051a Refactor changelog generation to render JSON notes
+
+
 ## [Unreleased]
 
 ### Added
