@@ -638,11 +638,9 @@ export function SettingsPage({
               </div>
 
               {/* 2. Start with Boot Toggle */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <Power className="w-4 h-4 text-[#DD3C73]" />
-                  </div>
+                  <Power className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Start at System Boot
@@ -678,11 +676,9 @@ export function SettingsPage({
               </div>
 
               {/* 3. Telemetry Configuration */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <Activity className="w-4 h-4 text-[#A7E2C0]" />
-                  </div>
+                  <Activity className="w-4 h-4 text-[#A7E2C0] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Enable Anonymous Analytics (Telemetry)
@@ -718,11 +714,9 @@ export function SettingsPage({
               </div>
 
               {/* 4. Check for Application Updates Toggle */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <RefreshCw className="w-4 h-4 text-[#DD3C73]" />
-                  </div>
+                  <RefreshCw className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Check for Application Updates
@@ -1265,7 +1259,7 @@ export function SettingsPage({
               </div>
 
               {/* Ticket Form */}
-              <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+              <div className="space-y-4 pt-1">
                 {/* Recipient */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
@@ -1309,7 +1303,7 @@ export function SettingsPage({
                 </div>
 
                 {/* Checkbox for 24h logs */}
-                <div className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800/70 flex items-start gap-3">
+                <div className="flex items-start gap-3 pt-1">
                   <input
                     type="checkbox"
                     id="ticket-include-logs"
@@ -1418,8 +1412,8 @@ export function SettingsPage({
                 </div>
               </div>
 
-              {/* Version and Updates Card */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+              {/* Version and Updates */}
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
@@ -1432,7 +1426,7 @@ export function SettingsPage({
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-200 font-semibold">
@@ -1520,25 +1514,25 @@ export function SettingsPage({
               </div>
 
               {/* Storage Locations */}
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+              <div className="space-y-2.5">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Local Data Paths</span>
                 </div>
                 <div className="space-y-1.5 text-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
                     <span className="text-slate-400 text-[11px]">Database Ledger:</span>
                     <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                       ~/.config/portfolio/data/portfolio.sqlite
                     </code>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
                     <span className="text-slate-400 text-[11px]">User Preferences:</span>
                     <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                       ~/.config/portfolio/config.json
                     </code>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 rounded-lg bg-slate-900/60 border border-slate-800/60">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
                     <span className="text-slate-400 text-[11px]">Application Logs:</span>
                     <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                       ~/.config/portfolio/logs/portfolio.log
