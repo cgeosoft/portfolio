@@ -38,19 +38,20 @@ import {
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "../../types/portfolio";
-import type { AppUpdateInfo } from "../../../../shared/rpc-types";
+import type { AppUpdateInfo, DesktopConfig } from "../../../../shared/rpc-types";
 import { CreatePortfolioModal } from "../portfolio/CreatePortfolioModal";
 import { EditPortfolioModal } from "../portfolio/EditPortfolioModal";
 import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
 import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
+import { DataProvidersSection } from "./DataProvidersSection";
 import {
   DEFAULT_LLAMACPP_URL,
   DEFAULT_OLLAMA_MODEL,
   DEFAULT_OLLAMA_URL,
 } from "../../../../shared/llm-defaults";
 
-export type SettingsSection = "general" | "portfolios" | "assistant" | "support" | "about";
+export type SettingsSection = "general" | "portfolios" | "providers" | "assistant" | "support" | "about";
 
 interface ProviderPreset {
   id: string;
@@ -221,6 +222,12 @@ const SECTIONS = [
     icon: TrendingUp,
   },
   {
+    id: "providers" as const,
+    label: "Data Providers",
+    description: "Market quotes, news & FX",
+    icon: Database,
+  },
+  {
     id: "assistant" as const,
     label: "Assistant",
     description: "AI & LLM inference model",
@@ -310,11 +317,13 @@ export function SettingsPage({
   const [serverModels, setServerModels] = useState<Record<string, string[]>>({});
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
-  // Finnhub settings state
-  const [finnhubApiKey, setFinnhubApiKey] = useState("");
-  const [showFinnhubApiKey, setShowFinnhubApiKey] = useState(false);
-  const [isTestingFinnhub, setIsTestingFinnhub] = useState(false);
-  const [finnhubTestResult, setFinnhubTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  // Full desktop config state for data providers and general settings
+  const [fullConfig, setFullConfig] = useState<DesktopConfig | null>(null);
+
+  const handleUpdateConfig = (updates: Partial<DesktopConfig>) => {
+    saveConfig(updates);
+    setFullConfig((prev) => (prev ? ({ ...prev, ...updates } as DesktopConfig) : null));
+  };
 
   // Portfolios management state
   const [portfolioSearch, setPortfolioSearch] = useState("");
@@ -358,6 +367,7 @@ export function SettingsPage({
 
   useEffect(() => {
     rpc.request.getConfig({}).then((config: any) => {
+      setFullConfig(config as DesktopConfig);
       const provider = config.llmProvider || "llamacpp-server";
       setReportProvider(provider);
 
@@ -371,7 +381,6 @@ export function SettingsPage({
       }
 
       if (config.llmApiKey) setReportApiKey(config.llmApiKey);
-      if (config.finnhubApiKey) setFinnhubApiKey(config.finnhubApiKey);
       const url = config.llmBaseUrl || config.llamacppServerUrl || preset?.defaultBaseUrl || "";
       if (url) {
         setReportBaseUrl(url);
@@ -532,24 +541,6 @@ export function SettingsPage({
   if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
     availableModels.unshift(reportModel);
   }
-
-  const handleTestFinnhub = async () => {
-    setIsTestingFinnhub(true);
-    setFinnhubTestResult(null);
-    try {
-      const res = await rpc.request.testFinnhubConnection({ apiKey: finnhubApiKey });
-      if (res.success) {
-        setFinnhubTestResult({ success: true, message: "Finnhub connection verified" });
-      } else {
-        setFinnhubTestResult({ success: false, message: res.error || "Finnhub authentication failed" });
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setFinnhubTestResult({ success: false, message: msg || "Failed to reach Finnhub" });
-    } finally {
-      setIsTestingFinnhub(false);
-    }
-  };
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
@@ -750,14 +741,6 @@ export function SettingsPage({
                   />
                 </button>
               </div>
-
-              {/* Privacy Guarantee Note */}
-              <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 text-xs flex items-start gap-2.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div className="leading-relaxed">
-                  <span className="font-bold">Strict Privacy Guarantee:</span> Portfolio runs completely on local disk. Your holdings, trade histories, and cash balances remain strictly offline.
-                </div>
-              </div>
             </div>
           )}
 
@@ -949,6 +932,11 @@ export function SettingsPage({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* SECTION: DATA PROVIDERS */}
+          {activeSection === "providers" && fullConfig && (
+            <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
           )}
 
           {/* SECTION 3: ASSISTANT */}
@@ -1143,90 +1131,26 @@ export function SettingsPage({
                 </button>
               </div>
 
-              {/* Finnhub Market Intelligence for Reports */}
+              {/* Market Data & Intelligence Providers Reference */}
               <div className="pt-4 border-t border-slate-800/80 space-y-3">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Finnhub Market Intelligence (Reports)</span>
+                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
+                      <span>Market Data & News Intelligence</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Configure Finnhub API keys, Yahoo Finance connectivity, and category routing in the dedicated Data Providers tab.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    Connect a free API key from Finnhub to enrich AI reports with macroeconomic news headlines, company catalysts, analyst recommendation trends, and fundamental metrics.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                      <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span>Finnhub API Key</span>
-                      <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional)</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => rpc.request.openExternalUrl({ url: "https://finnhub.io/register" })}
-                      className="text-[10px] text-[#DD3C73] hover:underline flex items-center gap-1 font-mono cursor-pointer"
-                    >
-                      <span>Get free key (60 calls/min)</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <div className="relative">
-                    <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type={showFinnhubApiKey ? "text" : "password"}
-                      value={finnhubApiKey}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFinnhubApiKey(val);
-                        setFinnhubTestResult(null);
-                        saveConfig({ finnhubApiKey: val.trim() });
-                      }}
-                      placeholder="Enter Finnhub API Key (e.g. c8...)"
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowFinnhubApiKey(!showFinnhubApiKey)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                    >
-                      {showFinnhubApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 pt-1">
                   <button
                     type="button"
-                    disabled={isTestingFinnhub || !finnhubApiKey.trim()}
-                    onClick={handleTestFinnhub}
-                    className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-slate-100 transition-colors cursor-pointer"
+                    onClick={() => setActiveSection("providers")}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-[#DD3C73] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                   >
-                    {isTestingFinnhub ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
-                    ) : (
-                      <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    )}
-                    <span>{isTestingFinnhub ? "Verifying Key..." : "Test Finnhub Connection"}</span>
+                    <span>Manage Data Providers</span>
+                    <ArrowLeft className="w-3 h-3 rotate-180" />
                   </button>
-
-                  {finnhubTestResult && (
-                    <div
-                      className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
-                        finnhubTestResult.success
-                          ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
-                          : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
-                      }`}
-                    >
-                      {finnhubTestResult.success ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                      ) : (
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      )}
-                      <span>{finnhubTestResult.message}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
