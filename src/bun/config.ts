@@ -60,6 +60,8 @@ export interface DesktopConfig {
   llmApiKeys: Record<string, string>;
   /** Per-provider base URLs */
   llmBaseUrls: Record<string, string>;
+  /** Per-provider selected models */
+  llmModels?: Record<string, string>;
   /** Optional Finnhub API key for market intelligence in AI reports */
   finnhubApiKey?: string;
   /** Provider assignments for each data category */
@@ -120,6 +122,7 @@ const DEFAULT_CONFIG: DesktopConfig = {
   llamacppServerUrl: DEFAULT_LLAMACPP_URL,
   llmApiKeys: {},
   llmBaseUrls: {},
+  llmModels: {},
   finnhubApiKey: "",
   dataProviderRouting: { ...DEFAULT_DATA_PROVIDER_ROUTING },
   lastImportDirectory: "",
@@ -214,6 +217,24 @@ export function updateConfig(updates: Partial<DesktopConfig>): DesktopConfig {
     updated.dataProviderRouting = {
       ...current.dataProviderRouting,
       ...updates.dataProviderRouting,
+    };
+  }
+  if (updates.llmApiKeys) {
+    updated.llmApiKeys = {
+      ...(current.llmApiKeys || {}),
+      ...updates.llmApiKeys,
+    };
+  }
+  if (updates.llmBaseUrls) {
+    updated.llmBaseUrls = {
+      ...(current.llmBaseUrls || {}),
+      ...updates.llmBaseUrls,
+    };
+  }
+  if (updates.llmModels) {
+    updated.llmModels = {
+      ...(current.llmModels || {}),
+      ...updates.llmModels,
     };
   }
   if (

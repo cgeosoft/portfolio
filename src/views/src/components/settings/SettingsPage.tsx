@@ -373,19 +373,33 @@ export function SettingsPage({
   } | null>(null);
 
   const fetchModelsForProvider = async (provider: string, url?: string, key?: string) => {
-    if (provider !== "ollama" && provider !== "llamacpp-server" && provider !== "llamacpp") return;
+    const isEndpoint =
+      provider === "ollama" ||
+      provider === "llamacpp-server" ||
+      provider === "llamacpp" ||
+      provider === "nebius" ||
+      provider === "openai-compatible";
+    if (!isEndpoint) return;
     setIsFetchingModels(true);
     try {
       const res = await rpc.request.getProviderModels({ provider, baseUrl: url, apiKey: key });
       if (res.models && res.models.length > 0) {
         setServerModels((prev) => ({ ...prev, [provider]: res.models }));
-        // llama.cpp ships no default model, so adopt what the server reports
-        // rather than leaving the dropdown on an empty selection.
         setReportModel((current) => {
-          if (current) return current;
-          const [first] = res.models;
-          saveConfig({ llmModel: first });
-          return first;
+          if (current && res.models.includes(current)) return current;
+          const preset = resolveProviderPreset(provider);
+          const preferred =
+            preset?.defaultModel && res.models.includes(preset.defaultModel)
+              ? preset.defaultModel
+              : res.models[0];
+          const providerKey = preset?.id || provider;
+          const updatedModels = {
+            ...(fullConfig?.llmModels || {}),
+            [providerKey]: preferred,
+          };
+          setFullConfig((prev) => (prev ? { ...prev, llmModel: preferred, llmModels: updatedModels } : prev));
+          saveConfig({ llmModel: preferred, llmModels: updatedModels });
+          return preferred;
         });
       }
     } catch {
@@ -403,12 +417,20 @@ export function SettingsPage({
 
   useEffect(() => {
     rpc.request.getConfig({}).then((config: any) => {
-      setFullConfig(config as DesktopConfig);
-      const provider = config.llmProvider || "llamacpp-server";
+      const desktopConfig = config as DesktopConfig;
+      setFullConfig(desktopConfig);
+      const provider = desktopConfig.llmProvider || "llamacpp-server";
       setReportProvider(provider);
 
       const preset = resolveProviderPreset(provider);
-      const savedModel = config.llmModel || preset?.defaultModel || "";
+      const providerKey = preset?.id || provider;
+      const isLlama = providerKey === "llamacpp" || providerKey === "llamacpp-server";
+
+      const savedModel =
+        desktopConfig.llmModels?.[providerKey] ||
+        desktopConfig.llmModel ||
+        preset?.defaultModel ||
+        "";
       setReportModel(savedModel);
 
       if (savedModel && preset?.models && !preset.models.includes(savedModel)) {
@@ -416,20 +438,27 @@ export function SettingsPage({
         setCustomModelInput(savedModel);
       }
 
-      if (config.llmApiKey) setReportApiKey(config.llmApiKey);
-      const url = config.llmBaseUrl || config.llamacppServerUrl || preset?.defaultBaseUrl || "";
-      if (url) {
-        setReportBaseUrl(url);
-      } else if (preset?.defaultBaseUrl) {
-        setReportBaseUrl(preset.defaultBaseUrl);
-      }
-      setTelemetryEnabled(config.telemetryEnabled ?? false);
-      if (config.marketQuotesInterval !== undefined) setQuotesInterval(config.marketQuotesInterval);
-      if (config.startWithBoot !== undefined) setStartWithBoot(config.startWithBoot);
-      if (config.checkForUpdates !== undefined) setCheckForUpdates(config.checkForUpdates);
+      const savedKey =
+        desktopConfig.llmApiKeys?.[providerKey] ||
+        (provider === desktopConfig.llmProvider ? desktopConfig.llmApiKey : "") ||
+        "";
+      setReportApiKey(savedKey);
+
+      const savedUrl =
+        desktopConfig.llmBaseUrls?.[providerKey] ||
+        (isLlama ? desktopConfig.llamacppServerUrl : undefined) ||
+        (provider === desktopConfig.llmProvider ? desktopConfig.llmBaseUrl : undefined) ||
+        preset?.defaultBaseUrl ||
+        "";
+      setReportBaseUrl(savedUrl);
+
+      setTelemetryEnabled(desktopConfig.telemetryEnabled ?? false);
+      if (desktopConfig.marketQuotesInterval !== undefined) setQuotesInterval(desktopConfig.marketQuotesInterval);
+      if (desktopConfig.startWithBoot !== undefined) setStartWithBoot(desktopConfig.startWithBoot);
+      if (desktopConfig.checkForUpdates !== undefined) setCheckForUpdates(desktopConfig.checkForUpdates);
 
       if (preset?.supportsBaseUrl) {
-        fetchModelsForProvider(provider, url || preset?.defaultBaseUrl, config.llmApiKey);
+        fetchModelsForProvider(provider, savedUrl || preset?.defaultBaseUrl, savedKey);
       }
     });
 
@@ -455,6 +484,7 @@ export function SettingsPage({
   };
 
   const saveConfig = async (updates: any) => {
+    setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
     await rpc.request.saveConfig(updates);
   };
 
@@ -462,32 +492,62 @@ export function SettingsPage({
     const isLlamaCpp = newProvider === "llamacpp" || newProvider === "llamacpp-server";
     setReportProvider(newProvider);
     const preset = resolveProviderPreset(newProvider);
-    if (preset) {
-      setReportModel(preset.defaultModel);
-      const isCustomDefault = newProvider === "openai-compatible" && !preset.defaultModel;
-      setIsCustomModel(isCustomDefault);
-      setCustomModelInput("");
+    const providerKey = preset?.id || newProvider;
 
-      const updates: any = { llmProvider: newProvider, llmModel: preset.defaultModel };
-      let effectiveBaseUrl = reportBaseUrl;
+    if (preset) {
+      // 1. Model for selected provider
+      const nextModel =
+        fullConfig?.llmModels?.[providerKey] ||
+        preset.defaultModel ||
+        "";
+      setReportModel(nextModel);
+      const isCustom = Boolean(
+        (newProvider === "openai-compatible" && !nextModel) ||
+        (nextModel && preset?.models && !preset.models.includes(nextModel))
+      );
+      setIsCustomModel(isCustom);
+      setCustomModelInput(isCustom ? nextModel : "");
+
+      // 2. Base URL for selected provider: isolated per provider!
+      let nextBaseUrl = "";
       if (preset.supportsBaseUrl) {
-        // Carry a custom URL across a provider switch, but replace another
-        // provider's default rather than pointing at an incompatible endpoint.
-        const knownDefaults = [
-          DEFAULT_OLLAMA_URL,
-          DEFAULT_LLAMACPP_URL,
-          DEFAULT_NEBIUS_URL,
-          DEFAULT_OPENAI_COMPATIBLE_URL,
-        ];
-        if (!effectiveBaseUrl || knownDefaults.includes(effectiveBaseUrl)) {
-          effectiveBaseUrl = preset.defaultBaseUrl || "";
-          setReportBaseUrl(effectiveBaseUrl);
-          updates.llmBaseUrl = effectiveBaseUrl;
-          if (isLlamaCpp) updates.llamacppServerUrl = effectiveBaseUrl;
-        }
+        nextBaseUrl =
+          fullConfig?.llmBaseUrls?.[providerKey] ||
+          (providerKey === "llamacpp" ? fullConfig?.llamacppServerUrl : undefined) ||
+          preset.defaultBaseUrl ||
+          "";
       }
+      setReportBaseUrl(nextBaseUrl);
+
+      // 3. API Key for selected provider: isolated per provider!
+      const nextApiKey = fullConfig?.llmApiKeys?.[providerKey] || "";
+      setReportApiKey(nextApiKey);
+
+      const updates: any = {
+        llmProvider: newProvider,
+        llmModel: nextModel,
+        llmBaseUrl: nextBaseUrl,
+        llmApiKey: nextApiKey,
+        ...(isLlamaCpp && nextBaseUrl ? { llamacppServerUrl: nextBaseUrl } : {}),
+        llmBaseUrls: {
+          ...(fullConfig?.llmBaseUrls || {}),
+          [providerKey]: nextBaseUrl,
+        },
+        llmApiKeys: {
+          ...(fullConfig?.llmApiKeys || {}),
+          [providerKey]: nextApiKey,
+        },
+        llmModels: {
+          ...(fullConfig?.llmModels || {}),
+          [providerKey]: nextModel,
+        },
+      };
+
+      setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
       saveConfig(updates);
-      fetchModelsForProvider(newProvider, effectiveBaseUrl, reportApiKey);
+      if (preset.supportsBaseUrl) {
+        fetchModelsForProvider(newProvider, nextBaseUrl, nextApiKey);
+      }
     } else {
       saveConfig({ llmProvider: newProvider });
     }
@@ -1051,13 +1111,18 @@ export function SettingsPage({
                   value={isCustomModel ? "__custom__" : reportModel}
                   onChange={(e) => {
                     const val = e.target.value;
+                    const providerKey = currentPreset?.id || reportProvider;
                     if (val === "__custom__") {
                       setIsCustomModel(true);
                       setCustomModelInput(reportModel);
                     } else {
                       setIsCustomModel(false);
                       setReportModel(val);
-                      saveConfig({ llmModel: val });
+                      const updatedModels = {
+                        ...(fullConfig?.llmModels || {}),
+                        [providerKey]: val,
+                      };
+                      saveConfig({ llmModel: val, llmModels: updatedModels });
                     }
                   }}
                   selectSize="lg"
@@ -1081,9 +1146,14 @@ export function SettingsPage({
                       value={isCustomModel ? customModelInput : reportModel}
                       onChange={(e) => {
                         const val = e.target.value;
+                        const providerKey = currentPreset?.id || reportProvider;
                         setCustomModelInput(val);
                         setReportModel(val);
-                        saveConfig({ llmModel: val });
+                        const updatedModels = {
+                          ...(fullConfig?.llmModels || {}),
+                          [providerKey]: val,
+                        };
+                        saveConfig({ llmModel: val, llmModels: updatedModels });
                       }}
                       placeholder="e.g. meta-llama/Llama-3.3-70B-Instruct or model identifier"
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
@@ -1108,10 +1178,18 @@ export function SettingsPage({
                       type="text"
                       value={reportBaseUrl}
                       onChange={(e) => {
-                        setReportBaseUrl(e.target.value);
+                        const val = e.target.value;
+                        setReportBaseUrl(val);
+                        const providerKey = currentPreset?.id || reportProvider;
+                        const isLlama = providerKey === "llamacpp" || providerKey === "llamacpp-server";
+                        const updatedUrls = {
+                          ...(fullConfig?.llmBaseUrls || {}),
+                          [providerKey]: val,
+                        };
                         saveConfig({
-                          llmBaseUrl: e.target.value,
-                          ...(isLlamaCpp ? { llamacppServerUrl: e.target.value } : {}),
+                          llmBaseUrl: val,
+                          llmBaseUrls: updatedUrls,
+                          ...(isLlama ? { llamacppServerUrl: val } : {}),
                         });
                       }}
                       onBlur={(e) => {
@@ -1153,8 +1231,17 @@ export function SettingsPage({
                     type={showApiKey ? "text" : "password"}
                     value={reportApiKey}
                     onChange={(e) => {
-                      setReportApiKey(e.target.value);
-                      saveConfig({ llmApiKey: e.target.value });
+                      const val = e.target.value;
+                      setReportApiKey(val);
+                      const providerKey = currentPreset?.id || reportProvider;
+                      const updatedKeys = {
+                        ...(fullConfig?.llmApiKeys || {}),
+                        [providerKey]: val,
+                      };
+                      saveConfig({
+                        llmApiKey: val,
+                        llmApiKeys: updatedKeys,
+                      });
                     }}
                     placeholder={
                       currentPreset?.keyPlaceholder || "Enter API Key"

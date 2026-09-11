@@ -880,17 +880,27 @@ export class LlmService {
         // Fall back if server is offline
       }
     } else if (p === "llamacpp-server" || p === "llamacpp" || p === "openai-compatible" || p === "nebius") {
+      const config = loadConfig();
       const defaultUrl =
         p === "nebius"
           ? DEFAULT_NEBIUS_URL
           : p === "openai-compatible"
           ? DEFAULT_OPENAI_COMPATIBLE_URL
           : DEFAULT_LLAMACPP_URL;
-      const targetUrl = baseUrl?.trim() || defaultUrl;
+      const targetUrl =
+        baseUrl?.trim() ||
+        config.llmBaseUrls?.[p]?.trim() ||
+        (p === "llamacpp-server" || p === "llamacpp" ? config.llamacppServerUrl?.trim() : undefined) ||
+        (p === config.llmProvider ? config.llmBaseUrl?.trim() : undefined) ||
+        defaultUrl;
       const endpoint = buildOpenAIUrl(targetUrl, "models");
+      const effectiveKey =
+        apiKey?.trim() ||
+        config.llmApiKeys?.[p]?.trim() ||
+        (p === config.llmProvider ? config.llmApiKey?.trim() : undefined);
       try {
         const headers: Record<string, string> = {};
-        if (apiKey?.trim()) headers.Authorization = `Bearer ${apiKey.trim()}`;
+        if (effectiveKey) headers.Authorization = `Bearer ${effectiveKey}`;
         const res = await fetch(endpoint, { headers, signal: AbortSignal.timeout(3000) });
         if (res.ok) {
           const data = (await res.json()) as { data?: Array<{ id?: string }> };
