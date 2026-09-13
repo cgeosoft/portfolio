@@ -12,24 +12,46 @@
   // ===========================================================================
   const GITHUB_REPO_URL = "https://github.com/cgeosoft/portfolio";
   const GITHUB_RELEASES_URL = `${GITHUB_REPO_URL}/releases`;
+  const GITHUB_LATEST_RELEASE_URL = `${GITHUB_RELEASES_URL}/latest`;
   const GITHUB_API_LATEST_RELEASE = "https://api.github.com/repos/cgeosoft/portfolio/releases/latest";
   const CACHE_KEY = "portfolio_latest_release_v1";
   const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache to prevent GitHub API rate limits
-  const APP_VERSION = "0.1.0";
-  const RELEASE_BASE = `${GITHUB_REPO_URL}/releases/download/v${APP_VERSION}`;
 
+  // Release assets follow a fixed naming scheme: portfolio_<version>_<platform>.<ext>
+  // The version is resolved at runtime from the latest GitHub release tag, so the
+  // site never needs redeploying for a new release.
+  function buildAssetFilenames(version) {
+    return {
+      windows: {
+        installer: `portfolio_${version}_x64_setup.exe`,
+        portable: `portfolio_${version}_windows-x64_portable.zip`
+      },
+      macos: {
+        installer: `portfolio_${version}_universal.dmg`,
+        portable: `portfolio_${version}_macos-universal.zip`
+      },
+      linux: {
+        installer: `portfolio_${version}_amd64.deb`,
+        portable: `portfolio_${version}_linux-x64.tar.gz`
+      }
+    };
+  }
+
+  // Until the release version is known (or if the GitHub API is unreachable),
+  // every download points to the GitHub releases page so visitors always land
+  // somewhere valid.
   const DOWNLOAD_CONFIG = {
-    version: APP_VERSION,
-    releaseBase: RELEASE_BASE,
+    version: null,
+    releaseBase: GITHUB_LATEST_RELEASE_URL,
     windows: {
       key: "windows",
       name: "Windows",
       title: "Download for Windows (.exe)",
       caption: "Recommended for Windows (64-bit)",
       badge: "Windows 10, 11 (64-bit)",
-      installerFile: `portfolio_${APP_VERSION}_x64_setup.exe`,
-      installerUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_x64_setup.exe`,
-      portableUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_windows-x64_portable.zip`,
+      installerFile: null,
+      installerUrl: GITHUB_LATEST_RELEASE_URL,
+      portableUrl: GITHUB_LATEST_RELEASE_URL,
       terminalCmd: "winget install --id Portfolio.Desktop -s winget",
       iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
         <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/>
@@ -41,9 +63,9 @@
       title: "Download for macOS (.dmg)",
       caption: "Recommended for macOS (Universal)",
       badge: "Apple Silicon & Intel (macOS 12+)",
-      installerFile: `portfolio_${APP_VERSION}_universal.dmg`,
-      installerUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_universal.dmg`,
-      portableUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_macos-universal.zip`,
+      installerFile: null,
+      installerUrl: GITHUB_LATEST_RELEASE_URL,
+      portableUrl: GITHUB_LATEST_RELEASE_URL,
       terminalCmd: "brew install --cask portfolio-desktop",
       iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/>
@@ -55,10 +77,10 @@
       title: "Download for Linux (.deb)",
       caption: "Recommended for Debian / Ubuntu (x64)",
       badge: "Debian, Ubuntu, Mint & distros",
-      installerFile: `portfolio_${APP_VERSION}_amd64.deb`,
-      installerUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_amd64.deb`,
-      portableUrl: `${RELEASE_BASE}/portfolio_${APP_VERSION}_linux-x64.tar.gz`,
-      terminalCmd: `sudo dpkg -i portfolio_${APP_VERSION}_amd64.deb`,
+      installerFile: null,
+      installerUrl: GITHUB_LATEST_RELEASE_URL,
+      portableUrl: GITHUB_LATEST_RELEASE_URL,
+      terminalCmd: "sudo dpkg -i portfolio_<version>_amd64.deb",
       iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
         <path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/>
       </svg>`
@@ -399,98 +421,30 @@
 
   // ===========================================================================
   // Dynamic GitHub Release Resolution
-  // Ensures download links always point to the latest release assets
   // ===========================================================================
-  function matchReleaseAssets(assets) {
-    const result = {};
-    if (!Array.isArray(assets)) return result;
-
-    for (const asset of assets) {
-      const name = (asset.name || '').toLowerCase();
-      const url = asset.browser_download_url;
-      if (!url) continue;
-
-      // Linux Debian (.deb)
-      if (name.endsWith('.deb')) {
-        result.linuxDeb = { url, name: asset.name };
-      }
-      // Linux tarball (.tar.gz)
-      else if (name.endsWith('.tar.gz') && (name.includes('linux') || name.includes('setup'))) {
-        result.linuxTar = { url, name: asset.name };
-      }
-      // Windows Installer (.exe)
-      else if (name.endsWith('.exe')) {
-        result.winInstaller = { url, name: asset.name };
-      }
-      // Windows Portable (.zip)
-      else if (name.endsWith('.zip') && (name.includes('win') || name.includes('windows'))) {
-        result.winPortable = { url, name: asset.name };
-      }
-      // macOS Disk Image (.dmg)
-      else if (name.endsWith('.dmg')) {
-        result.macDmg = { url, name: asset.name };
-      }
-      // macOS zip archive (.zip)
-      else if (name.endsWith('.zip') && (name.includes('mac') || name.includes('macos') || name.includes('darwin'))) {
-        result.macZip = { url, name: asset.name };
-      }
-    }
-    return result;
-  }
-
   function applyReleaseData(releaseData) {
-    if (!releaseData) return;
+    if (!releaseData || !releaseData.tag_name) return;
 
-    const rawTag = releaseData.tag_name || '';
-    const cleanVersion = rawTag.replace(/^v/, '') || DOWNLOAD_CONFIG.version;
-    const releaseBase = `${GITHUB_REPO_URL}/releases/download/${rawTag || ('v' + cleanVersion)}`;
+    const rawTag = releaseData.tag_name;
+    const cleanVersion = rawTag.replace(/^v/, '');
+    const releaseBase = `${GITHUB_REPO_URL}/releases/download/${rawTag}`;
+    const files = buildAssetFilenames(cleanVersion);
 
     DOWNLOAD_CONFIG.version = cleanVersion;
     DOWNLOAD_CONFIG.releaseBase = releaseBase;
 
-    const matched = matchReleaseAssets(releaseData.assets || []);
+    DOWNLOAD_CONFIG.windows.installerFile = files.windows.installer;
+    DOWNLOAD_CONFIG.windows.installerUrl = `${releaseBase}/${files.windows.installer}`;
+    DOWNLOAD_CONFIG.windows.portableUrl = `${releaseBase}/${files.windows.portable}`;
 
-    if (matched.winInstaller) {
-      DOWNLOAD_CONFIG.windows.installerUrl = matched.winInstaller.url;
-      DOWNLOAD_CONFIG.windows.installerFile = matched.winInstaller.name;
-    } else {
-      DOWNLOAD_CONFIG.windows.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_x64_setup.exe`;
-    }
+    DOWNLOAD_CONFIG.macos.installerFile = files.macos.installer;
+    DOWNLOAD_CONFIG.macos.installerUrl = `${releaseBase}/${files.macos.installer}`;
+    DOWNLOAD_CONFIG.macos.portableUrl = `${releaseBase}/${files.macos.portable}`;
 
-    if (matched.winPortable) {
-      DOWNLOAD_CONFIG.windows.portableUrl = matched.winPortable.url;
-    } else {
-      DOWNLOAD_CONFIG.windows.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_windows-x64_portable.zip`;
-    }
-
-    if (matched.macDmg) {
-      DOWNLOAD_CONFIG.macos.installerUrl = matched.macDmg.url;
-      DOWNLOAD_CONFIG.macos.installerFile = matched.macDmg.name;
-    } else {
-      DOWNLOAD_CONFIG.macos.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_universal.dmg`;
-    }
-
-    if (matched.macZip) {
-      DOWNLOAD_CONFIG.macos.portableUrl = matched.macZip.url;
-    } else {
-      DOWNLOAD_CONFIG.macos.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_macos-universal.zip`;
-    }
-
-    if (matched.linuxDeb) {
-      DOWNLOAD_CONFIG.linux.installerUrl = matched.linuxDeb.url;
-      DOWNLOAD_CONFIG.linux.installerFile = matched.linuxDeb.name;
-      DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i ${matched.linuxDeb.name}`;
-    } else {
-      DOWNLOAD_CONFIG.linux.installerUrl = `${releaseBase}/portfolio_${cleanVersion}_amd64.deb`;
-      DOWNLOAD_CONFIG.linux.installerFile = `portfolio_${cleanVersion}_amd64.deb`;
-      DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i portfolio_${cleanVersion}_amd64.deb`;
-    }
-
-    if (matched.linuxTar) {
-      DOWNLOAD_CONFIG.linux.portableUrl = matched.linuxTar.url;
-    } else {
-      DOWNLOAD_CONFIG.linux.portableUrl = `${releaseBase}/portfolio_${cleanVersion}_linux-x64.tar.gz`;
-    }
+    DOWNLOAD_CONFIG.linux.installerFile = files.linux.installer;
+    DOWNLOAD_CONFIG.linux.installerUrl = `${releaseBase}/${files.linux.installer}`;
+    DOWNLOAD_CONFIG.linux.portableUrl = `${releaseBase}/${files.linux.portable}`;
+    DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i ${files.linux.installer}`;
 
     // Update version badge and meta labels in DOM
     document.querySelectorAll('.latest-version-text').forEach(el => {

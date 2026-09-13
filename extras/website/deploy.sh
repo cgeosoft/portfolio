@@ -162,7 +162,7 @@ if ${DEPLOY_CMD[@]}; then
   echo "-----------------------------------------------------------------"
   echo -e "${GREEN}${BOLD}✓ Deployment completed successfully!${NC}"
   echo -e "Visit your Cloudflare Pages dashboard or project domain at:"
-  echo -e "${CYAN}https://${PROJECT_NAME}.pages.dev${NC}"
+  echo -e "${CYAN}https://${PROJECT_NAME}.cgeosoft.com${NC}"
   echo "================================================================="
 else
   DEPLOY_STATUS=$?
