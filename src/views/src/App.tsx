@@ -369,14 +369,15 @@ export default function App() {
     }
   }, [currentConversationId, activePortfolioId, handleDeleteConversation]);
 
-  const handleSendChatMessage = useCallback(
-    async (userText: string) => {
+  // Sends the given history to the assistant and appends the reply. The
+  // backend persists the full history it receives plus the reply, so this
+  // serves both new messages and regeneration (history truncated first).
+  const submitChatMessages = useCallback(
+    async (updatedMessages: PortfolioChatMessage[]): Promise<boolean> => {
       if (!activePortfolioId) {
         setChatError("Please select or create a portfolio first.");
-        return;
+        return false;
       }
-      const userMsg: PortfolioChatMessage = { role: "user", content: userText };
-      const updatedMessages = [...chatMessages, userMsg];
       setChatMessages(updatedMessages);
       setIsChatLoading(true);
       setChatError(null);
@@ -411,15 +412,34 @@ export default function App() {
           }
           return [updatedConv, ...prev];
         });
+        return true;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         setChatError(msg);
+        return false;
       } finally {
         setIsChatLoading(false);
       }
     },
-    [activePortfolioId, chatMessages, currentConversationId],
+    [activePortfolioId, currentConversationId],
   );
+
+  const handleSendChatMessage = useCallback(
+    async (userText: string) => {
+      const userMsg: PortfolioChatMessage = { role: "user", content: userText };
+      await submitChatMessages([...chatMessages, userMsg]);
+    },
+    [chatMessages, submitChatMessages],
+  );
+
+  // Drops the trailing assistant reply and asks the model again. The old
+  // reply is restored if the request fails so nothing is lost.
+  const handleRegenerateChatMessage = useCallback(async () => {
+    const last = chatMessages[chatMessages.length - 1];
+    if (!last || last.role !== "assistant") return;
+    const ok = await submitChatMessages(chatMessages.slice(0, -1));
+    if (!ok) setChatMessages(chatMessages);
+  }, [chatMessages, submitChatMessages]);
 
   // App Info & Quotes Sync State
   const [appVersion, setAppVersion] = useState("0.1.0");
@@ -1566,6 +1586,7 @@ export default function App() {
           onDeleteConversation={handleDeleteConversation}
           messages={chatMessages}
           onSendMessage={handleSendChatMessage}
+          onRegenerateMessage={handleRegenerateChatMessage}
           onClearMessages={handleClearChat}
           isLoading={isChatLoading}
           error={chatError}

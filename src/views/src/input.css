@@ -134,6 +134,36 @@
   animation: popover-slide-in 0.3s ease-out forwards;
 }
 
+/* Three-dot "thinking" indicator: each dot pulses in turn */
+@keyframes cx-typing-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cx-typing-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--accent);
+  animation: cx-typing-pulse 1.2s ease-in-out infinite;
+}
+
+.cx-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.cx-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
 /* ==========================================================================
    Dropdowns
    Shared surfaces for the custom listbox (.cx-select) and the popover menus

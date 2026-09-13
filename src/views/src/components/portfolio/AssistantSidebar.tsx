@@ -30,6 +30,7 @@ import {
   Search,
   MessageSquareDashed,
   Cpu,
+  RefreshCw,
 } from "lucide-react";
 
 interface AssistantSidebarProps {
@@ -45,6 +46,7 @@ interface AssistantSidebarProps {
   onDeleteConversation?: (id: string) => void;
   messages: PortfolioChatMessage[];
   onSendMessage: (text: string) => Promise<void>;
+  onRegenerateMessage?: () => Promise<void>;
   onClearMessages: () => void;
   isLoading: boolean;
   error?: string | null;
@@ -88,6 +90,7 @@ export function AssistantSidebar({
   onDeleteConversation,
   messages,
   onSendMessage,
+  onRegenerateMessage,
   onClearMessages,
   isLoading,
   error,
@@ -261,6 +264,10 @@ export function AssistantSidebar({
         )}
 
         <div className="flex items-center gap-1">
+          <div
+            className="h-4 w-px bg-slate-800 shrink-0 mx-0.5"
+            aria-hidden="true"
+          />
           {currentView === "chat" ? (
             <>
               <button
@@ -460,6 +467,8 @@ export function AssistantSidebar({
                 {messages.map((msg, index) => {
                   const isUser = msg.role === "user";
                   const cleanedContent = cleanThinkTags(msg.content, false);
+                  const canRegenerate =
+                    !isUser && index === messages.length - 1 && !isLoading && !!onRegenerateMessage;
 
                   return (
                     <div
@@ -556,6 +565,19 @@ export function AssistantSidebar({
                               {cleanedContent}
                             </ReactMarkdown>
 
+                            {/* Regenerate: absolutely positioned below the bubble so the timeline never shifts */}
+                            {canRegenerate && (
+                              <button
+                                onClick={() => onRegenerateMessage()}
+                                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
+                                title="Regenerate response"
+                                type="button"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                <span>Regenerate</span>
+                              </button>
+                            )}
+
                             {/* Copy message button */}
                             <div className="flex justify-end pt-1">
                               <button
@@ -593,10 +615,10 @@ export function AssistantSidebar({
                   Analyst
                 </span>
                 <div className="rounded-xl px-3.5 py-3 bg-[#111728] border border-slate-800 text-slate-300 text-xs flex items-center gap-2.5 shadow-md">
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#DD3C73] animate-ping" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#DD3C73] animate-pulse" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#DD3C73]" />
+                  <div className="flex items-center gap-1" aria-hidden="true">
+                    <span className="cx-typing-dot" />
+                    <span className="cx-typing-dot" />
+                    <span className="cx-typing-dot" />
                   </div>
                   <span className="text-slate-400 text-xs">Analyzing portfolio metrics...</span>
                 </div>

@@ -61,7 +61,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-[#111726] border border-[#DD3C73]/60 rounded-2xl shadow-2xl p-6 text-slate-100 font-mono flex flex-col space-y-4"
+        className="relative w-full max-w-md bg-[#111726] border border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-100 font-mono flex flex-col space-y-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="sponsor-info-title"
