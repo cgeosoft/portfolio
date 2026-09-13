@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.3] - 2026-09-13
+
+### Added
+- Added a button to regenerate the assistant's response in the chat.
+
+
 ## [0.2.2] - 2026-09-13
 
 - 37a8301 Update package descriptions and asset naming
