@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.2] - 2026-09-13
+
+- 37a8301 Update package descriptions and asset naming
+- 35a4780 Resolve download links from latest GitHub release
+
+
 ## [0.2.1] - 2026-09-13
 
 ### Fixed
