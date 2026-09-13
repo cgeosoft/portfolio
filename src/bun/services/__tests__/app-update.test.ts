@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { parseSemver, isNewerVersion, AppUpdateService } from "../app-update.js";
+import { parseSemver, isNewerVersion, getReleaseAssetName, AppUpdateService } from "../app-update.js";
 
 describe("Semver parsing and comparison", () => {
   it("parses valid semver versions correctly", () => {
@@ -30,6 +30,18 @@ describe("Semver parsing and comparison", () => {
 
     // Prerelease comparison: stable is newer than prerelease
     expect(isNewerVersion("0.2.0-beta", "0.2.0")).toBe(true);
+  });
+});
+
+describe("Release asset naming", () => {
+  it("resolves the versioned asset filename per platform", () => {
+    expect(getReleaseAssetName("0.2.1", "linux")).toBe("portfolio_0.2.1_amd64.deb");
+    expect(getReleaseAssetName("0.2.1", "win32")).toBe("portfolio_0.2.1_x64_setup.exe");
+    expect(getReleaseAssetName("0.2.1", "darwin")).toBe("portfolio_0.2.1_universal.dmg");
+  });
+
+  it("strips a leading v from the version", () => {
+    expect(getReleaseAssetName("v0.2.1", "linux")).toBe("portfolio_0.2.1_amd64.deb");
   });
 });
 

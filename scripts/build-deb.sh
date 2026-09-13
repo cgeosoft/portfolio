@@ -125,7 +125,7 @@ Version=1.0
 Type=Application
 Name=Portfolio
 GenericName=Portfolio Tracker
-Comment=Offline-first financial portfolio tracker with SQLite and LLM analysis
+Comment=Track your stocks, ETFs and crypto privately. Your data never leaves your computer
 Exec=portfolio %U
 Icon=portfolio
 Terminal=false
@@ -143,10 +143,40 @@ cat << EOF > "${STAGE_DIR}/usr/share/metainfo/portfolio.appdata.xml"
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <name>Portfolio</name>
-  <summary>Offline-first financial portfolio tracker</summary>
+  <summary>Private investment tracker that keeps your data on your computer</summary>
   <description>
-    <p>Portfolio is a high-performance, offline-first personal portfolio tracker built with Electrobun and SQLite.</p>
+    <p>
+      Portfolio is a free, open source desktop app for keeping track of your investments
+      without handing your net worth to a website. Everything you enter is stored in a
+      single file on your own computer. There is no account to create, no cloud sync and
+      no subscription.
+    </p>
+    <p>
+      Import your transaction history from your broker, see what your holdings are worth
+      right now with live market prices, and understand where your money actually is: how
+      much you have invested, what you have realised, what you have earned in dividends and
+      what you have paid in fees and taxes.
+    </p>
+    <ul>
+      <li>Live prices and currency conversion for stocks, ETFs and crypto, updated from Yahoo Finance</li>
+      <li>Import exported statements from Trade Republic, Scalable Capital, Interactive Brokers and Degiro, with automatic format detection and a preview before anything is saved</li>
+      <li>Performance history, asset allocation breakdown, 52-week ranges and simple trend indicators for every holding</li>
+      <li>A dashboard you build yourself from a catalogue of metric cards, arranged per portfolio</li>
+      <li>Optional AI-written portfolio briefings, using a model running on your own machine or a cloud provider with your own key. Nothing is generated unless you ask for it</li>
+      <li>Multiple portfolios, multiple currencies, and a demo portfolio to explore before adding your own data</li>
+    </ul>
+    <p>
+      Portfolio does not phone home. Anonymous usage statistics are off by default and only
+      ever switched on by you. Your holdings, balances and transactions are never sent
+      anywhere.
+    </p>
   </description>
+  <developer id="com.cgeosoft">
+    <name>Christos Georgiou</name>
+  </developer>
+  <url type="homepage">https://github.com/cgeosoft/portfolio</url>
+  <url type="bugtracker">https://github.com/cgeosoft/portfolio/issues</url>
+  <content_rating type="oars-1.1" />
   <launchable type="desktop-id">portfolio.desktop</launchable>
   <provides>
     <binary>portfolio</binary>
@@ -189,9 +219,22 @@ Installed-Size: ${INSTALLED_SIZE}
 Depends: libc6, libstdc++6
 Recommends: libwebkit2gtk-4.1-0 | libwebkit2gtk-4.0-37
 Homepage: https://github.com/cgeosoft/portfolio
-Description: Offline-First Portfolio Tracker
- Portfolio is a high-performance personal portfolio tracker built with Electrobun,
- SQLite, and Bun. Supports CSV imports and on-demand LLM reporting.
+Description: private investment tracker that keeps your data on your PC
+ Portfolio is a free, open source desktop app for keeping track of your
+ stocks, ETFs and crypto without handing your net worth to a website.
+ Everything you enter is stored in a single file on your own computer.
+ There is no account to create, no cloud sync and no subscription.
+ .
+ Import your transaction history from Trade Republic, Scalable Capital,
+ Interactive Brokers or Degiro, see what your holdings are worth right now
+ with live prices from Yahoo Finance, and understand where your money
+ actually is: invested capital, realised gains, dividends, fees and taxes.
+ .
+ Build your own dashboard from a catalogue of metric cards, follow
+ performance history and asset allocation, and optionally ask for an
+ AI-written briefing using a model on your own machine or a cloud provider
+ with your own key. Anonymous usage statistics are off by default, and your
+ holdings and transactions are never sent anywhere.
 EOF
 chmod 644 "${STAGE_DIR}/DEBIAN/control"
 

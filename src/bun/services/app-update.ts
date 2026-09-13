@@ -55,6 +55,19 @@ export function isNewerVersion(current: string, candidate: string): boolean {
 const GITHUB_REPO = "cgeosoft/portfolio";
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
+/** Resolve the release asset filename for a version and platform */
+export function getReleaseAssetName(version: string, platform: NodeJS.Platform = process.platform): string {
+  const clean = version.replace(/^[vV]/, "");
+  switch (platform) {
+    case "win32":
+      return `portfolio_${clean}_x64_setup.exe`;
+    case "darwin":
+      return `portfolio_${clean}_universal.dmg`;
+    default:
+      return `portfolio_${clean}_amd64.deb`;
+  }
+}
+
 export class AppUpdateService {
   private currentVersion = "0.1.0";
   private intervalTimer: ReturnType<typeof setInterval> | null = null;
@@ -232,52 +245,17 @@ export class AppUpdateService {
   }
 
   /**
-   * Download the latest release asset for the current platform
+   * Download the release asset for the current platform
    * and save it to the user's Downloads folder.
    */
   public async downloadUpdate(version: string): Promise<DownloadUpdateResponse> {
     try {
-      const platformMap: Record<string, string> = {
-        linux: ".deb",
-        win32: "-Setup.exe",
-        darwin: "-arm64.dmg",
-      };
-      const suffix = platformMap[process.platform] || ".deb";
       const tag = version.startsWith("v") ? version : `v${version}`;
       const cleanVersion = version.replace(/^v/, "");
 
-      // Construct the asset download URL
-      let assetUrl = `https://github.com/${GITHUB_REPO}/releases/download/${tag}/Portfolio-Desktop-${cleanVersion}${suffix}`;
-
-      // Try to find the actual asset name from the GitHub release API
-      try {
-        const releaseUrl = `https://api.github.com/repos/${GITHUB_REPO}/releases/tags/${encodeURIComponent(tag)}`;
-        const res = await fetch(releaseUrl, {
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-            "User-Agent": `Portfolio-Desktop/${this.currentVersion}`,
-          },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { assets?: { name: string; browser_download_url: string }[] };
-          const assets = data.assets || [];
-          // Match platform-specific asset
-          const platformPatterns: Record<string, string[]> = {
-            linux: [".deb"],
-            win32: ["-Setup.exe", ".exe"],
-            darwin: ["-arm64.dmg", ".dmg"],
-          };
-          const patterns = platformPatterns[process.platform] || [".deb"];
-          const matched = assets.find((a) => patterns.some((p) => a.name.endsWith(p)));
-          if (matched) {
-            assetUrl = matched.browser_download_url;
-          }
-        }
-      } catch {
-        // Fall back to the constructed URL
-        appLogger.log("warning", "Could not resolve release assets; using constructed URL");
-      }
+      // Release assets follow a fixed naming scheme: portfolio_<version>_<platform>.<ext>
+      const fileName = getReleaseAssetName(cleanVersion, process.platform);
+      const assetUrl = `https://github.com/${GITHUB_REPO}/releases/download/${tag}/${fileName}`;
 
       // Determine download folder
       const downloadsDir = join(homedir(), "Downloads");
@@ -287,7 +265,6 @@ export class AppUpdateService {
         // directory exists
       }
 
-      const fileName = assetUrl.split("/").pop() || `Portfolio-Desktop-${cleanVersion}${suffix}`;
       const filePath = join(downloadsDir, fileName);
 
       appLogger.log("info", `Downloading update from ${assetUrl} to ${filePath}`);
