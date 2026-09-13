@@ -18,7 +18,7 @@
 
 import asc from "assemblyscript/asc";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import {
   HISTORY_FIELDS,
   HOLDING_ASSET_TYPES,
@@ -439,7 +439,8 @@ async function main(): Promise<void> {
     const dir = join(METRICS_DIR, entry.path);
     const manifest = readManifest(dir, entry.id);
     const entryFile = resolve(dir, manifest.source!.entry);
-    if (!entryFile.startsWith(dir + "/")) throw new Error(`${entry.id}: source.entry must stay inside the metric directory`);
+    const entryRel = relative(dir, entryFile);
+    if (!entryRel || entryRel.startsWith("..") || isAbsolute(entryRel)) throw new Error(`${entry.id}: source.entry must stay inside the metric directory`);
     if (!existsSync(entryFile)) throw new Error(`${entry.id}: ${relative(ROOT, entryFile)} is missing`);
 
     const outFile = join(OUT_DIR, `${entry.id}.wasm`);
