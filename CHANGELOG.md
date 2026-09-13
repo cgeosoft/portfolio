@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-09-13
+
+### Fixed
+- Improved validation of metric entry paths during build.
+
+
 ## [0.2.0] - 2026-09-11
 
 ### Added
