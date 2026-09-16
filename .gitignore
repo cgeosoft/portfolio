@@ -45,7 +45,7 @@ modules/gui/dist/
 # generated metric module bundle (bun run build:metrics)
 modules/service/src/services/metrics/builtin-modules.generated.ts
 
-tmp/
+.tmp/
 
 # Desktop app (Hutch/Electrobun): toolchain projection, staged inputs, build output
 modules/desktop/.hutch/
