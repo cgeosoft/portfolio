@@ -106,7 +106,18 @@ run_tag() {
   elif [[ -n "${BUMP}" ]]; then next="$(bump_semver "${current}" "${BUMP}")"
   else next="$(bump_semver "${current}" minor)"; fi
   [[ "${next}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "error: '${next}' is not a semver version" >&2; exit 1; }
-  git rev-parse "v${next}" >/dev/null 2>&1 && { echo "error: tag v${next} already exists" >&2; exit 1; }
+  if git rev-parse "v${next}" >/dev/null 2>&1; then
+    local tag_commit head_commit
+    tag_commit="$(git rev-list -n 1 "v${next}")"
+    head_commit="$(git rev-parse HEAD)"
+    if [[ "${tag_commit}" == "${head_commit}" ]]; then
+      log "tag v${next} already points to HEAD; skipping tag step"
+      return 0
+    else
+      echo "error: tag v${next} already exists" >&2
+      exit 1
+    fi
+  fi
   log "release: ${current} -> ${next}"
 
   for file in "${MANIFESTS[@]}"; do
@@ -175,9 +186,6 @@ docker_build() {
   docker build -q -t "${DOCKER_IMAGE}" -f "${SCRIPT_DIR}/docker/Dockerfile.linux" "${SCRIPT_DIR}/docker" >/dev/null
   mkdir -p "${out}"
   log "building ${APP_NAME} ${version} for [${targets[*]}] in Docker"
-  local uid gid
-  uid="$(id -u)"
-  gid="$(id -g)"
   docker run --rm \
     -v "${ROOT}:/work" \
     -v "${DOCKER_IMAGE}-hutch:/root/.hutch" \
@@ -185,7 +193,12 @@ docker_build() {
     -e HOME=/root \
     "${DOCKER_IMAGE}" \
     bash -c '
-      trap "chown -R '"${uid}:${gid}"' /work/dist /work/modules/desktop/build /work/modules/desktop/artifacts /work/modules/desktop/stage /work/modules/service/dist-bundle /work/modules/gui/dist /work/build /work/.cache 2>/dev/null || true" EXIT
+      cleanup() {
+        owner="$(stat -c "%u:%g" /work 2>/dev/null || echo "0:0")"
+        chown -R "${owner}" /work/dist /work/modules/desktop/build /work/modules/desktop/artifacts /work/modules/desktop/stage /work/modules/service/dist-bundle /work/modules/gui/dist /work/build /work/.cache 2>/dev/null || true
+        chmod -R u+rwX,g+rwX /work/dist 2>/dev/null || true
+      }
+      trap cleanup EXIT
       cd /work
       bash scripts/release.sh build '"${targets[*]}"' --native --version='"${version}"'
     '
@@ -285,9 +298,15 @@ run_publish_website() {
 run_release() {
   local current next
   current="$(current_version)"
-  if [[ -n "${CUSTOM_VERSION}" ]]; then next="${CUSTOM_VERSION}"
-  elif [[ -n "${BUMP}" ]]; then next="$(bump_semver "${current}" "${BUMP}")"
-  else next="$(bump_semver "${current}" minor)"; fi
+  if [[ -n "${CUSTOM_VERSION}" ]]; then
+    next="${CUSTOM_VERSION}"
+  elif git rev-parse "v${current}" >/dev/null 2>&1 && [[ "$(git rev-list -n 1 "v${current}")" == "$(git rev-parse HEAD)" ]]; then
+    next="${current}"
+  elif [[ -n "${BUMP}" ]]; then
+    next="$(bump_semver "${current}" "${BUMP}")"
+  else
+    next="$(bump_semver "${current}" minor)"
+  fi
   CUSTOM_VERSION="${next}"
   run_tag
   local out="${ROOT}/dist/${CUSTOM_VERSION}"
