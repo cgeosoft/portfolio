@@ -1,75 +1,50 @@
 # Portfolio Marketing Website
 
-A modern, marketing landing page for [Portfolio](https://github.com/cgeosoft/portfolio).
+Static landing page for Portfolio, deployed to Cloudflare Pages. Plain HTML, CSS and one script; no build step (the metrics catalog page is generated, see below).
 
-## Features
+The site shares its layout with the Assistant website (`assistant/extras/website`): `style.css` and `script.js` are the same files in both repositories except for the theme block at the top of the stylesheet (accent colours) and `SITE_SLUG` at the top of the script. Keep them in step: change the shared part in one repo and copy it to the other. `index.html` follows the same section order in both (hero, interface, features, how it works, downloads, FAQ); only the text, the screenshot and the accent differ.
 
-- **Automated OS Detection**: Dynamically inspects the client's operating system (Windows, macOS, Linux) and adapts the primary hero download CTA with the appropriate installer (`.exe`, `.dmg`, or `.deb`).
-- **Annotated Screenshot**: The real `assets/screenshot.png` of the overview dashboard, framed as an app window with numbered markers that reveal what each region does, a highlights toggle, and click-to-zoom full-size view. On narrow screens the markers collapse into a readable numbered list under the image.
-- **Interactive App Showcase**: Embedded terminal/UI mockup highlighting live portfolio analytics, holdings indicators, AI briefings, and broker CSV importer.
-- **3-Platform Download Matrix**: Direct installer and portable archive links for Windows, macOS, and Linux with verified checksum indicators.
-- **Aesthetic**: Monospace typography (`JetBrains Mono`), dark space palette (`#0b0f19`), cyber pink primary accent (`#DD3C73`), mint highlights (`#A7E2C0`), and responsive glassmorphic cards.
-- **Single-Script Cloudflare Pages Deployment**: Instant deployment using `./deploy.sh`.
+## Pages
 
-## Local Development & Preview
+- `index.html` - hero with OS-detected download button, annotated screenshot (numbered markers with tooltips; click or "Expand" opens it full size; on narrow screens the markers become a list under the image), features, how it works, download matrix, FAQ.
+- `terms/index.html` - Terms of Use, including the "Analytics and Cookies" section (`#cookie-policy`).
+- `metrics/index.html` - the Metrics Marketplace catalog. **Generated** by `bun run build:metrics-site` from `extras/metrics/repository.yml` and each `manifest.yml`; it copies the `<head>`, header and footer of `terms/index.html`. Do not edit by hand; `deploy.sh` regenerates it.
+- `sponsor/index.html` - self-contained sponsor page with its own inline styles.
+- `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x1104, the overview tab with the demo portfolio).
 
-You can serve the static site locally with Bun, Python, or any static server:
-
-```bash
-cd extras/website
-
-# Using Bun
-bun run dev
-
-# Or using Python
-python3 -m http.server 3000
-```
-
-Open `http://localhost:3000` in your browser.
-
-## Customizing Download URLs
-
-Download links and release filenames are centralized in `script.js`:
-
-```javascript
-const DOWNLOAD_CONFIG = {
-  version: "0.1.0",
-  releaseBase: "https://github.com/cgeosoft/portfolio/releases/download/v0.1.0",
-  windows: { ... },
-  macos: { ... },
-  linux: { ... }
-};
-```
-
-Simply update these values whenever you publish a new version.
-
-## Deploying to Cloudflare Pages
-
-To deploy the website to Cloudflare Pages in one command:
+## Local preview
 
 ```bash
 cd extras/website
-./deploy.sh
+bun run dev            # bunx serve .
+# or: python3 -m http.server 3000
 ```
 
-Or pass custom parameters:
+## Analytics
+
+PostHog is loaded with capturing opted out. `script.js` shows a cookie banner on the first visit and only calls `opt_in_capturing()` after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type), `screenshot_zoomed`, `screenshot_hotspot_opened`. The HTML carries the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`.
+
+## Download links
+
+`script.js` reads the latest release from `/releases/latest.json` (written by `scripts/release.sh publish`, cached 15 minutes in `localStorage`) and builds asset URLs from the version:
+
+```
+portfolio_<version>_x64_setup.exe        portfolio_<version>_windows-x64_portable.zip
+portfolio_<version>_universal.dmg        portfolio_<version>_macos-universal.zip
+portfolio_<version>_amd64.deb            portfolio_<version>_linux-x64.tar.gz
+```
+
+Until the manifest is read (or when it fails) every link points at the downloads section. If `scripts/release.sh` renames the artifacts, update `buildAssetFilenames()`.
+
+## Screenshot
+
+Capture the running app's overview tab at 1600x1104 with the demo portfolio and save it as `assets/screenshot.png`. The hotspot markers in `index.html` are positioned in percent (`--x`, `--y`); adjust them if the layout of the overview changes.
+
+## Deploy
 
 ```bash
-./deploy.sh --project-name=my-portfolio-site --branch=main
+./deploy.sh                       # wrangler pages deploy to project "portfolio-desktop"
+./deploy.sh --project-name=<name> --branch=<branch>
 ```
 
-### CI / CD Deployment (GitHub Actions)
-
-For automated CI/CD deployments, set the following repository secrets:
-- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with `Cloudflare Pages: Edit` permissions.
-- `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID.
-- `POSTHOG_API_KEY`: Your PostHog project API key (`phc_...`). This is injected into the
-  deployed site's analytics snippet at deploy time.
-
-Then run:
-```bash
-CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... POSTHOG_API_KEY=phc_... ./extras/website/deploy.sh
-```
-
-You can also set `POSTHOG_API_KEY` in the repository root `.env` (or `extras/website/.env`);
-`deploy.sh` loads it automatically.
+Reads `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_PAGES_PROJECT`, `CLOUDFLARE_PAGES_BRANCH` and `POSTHOG_API_KEY` from the repo `.env` or `extras/website/.env`. Without a token Wrangler falls back to its own login. The script regenerates `metrics/index.html`, then stages a copy without `deploy.sh`, `README.md`, `package.json` and `.env`.

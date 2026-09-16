@@ -2,7 +2,7 @@
  * Render the public metrics catalog page (extras/website/metrics/index.html)
  * from extras/metrics/repository.yml and each manifest.yml.
  *
- * The page reuses the website design system and copies the <head>, header,
+ * The page reuses the shared website stylesheet and copies the <head>, header
  * and footer of extras/website/terms/index.html verbatim, so one pull request
  * that adds a metric updates the application and the site together. Icons
  * are inlined from the lucide-react package the application already ships.
@@ -39,15 +39,19 @@ function slice(source: string, start: string, end: string, what: string): string
   return source.slice(from, to + end.length);
 }
 
-/** Inline SVG of a lucide icon, read from the icon data lucide-react ships. */
+/** Inline SVG of a lucide icon, read from the icon data lucide-react ships (a GUI dependency). */
 function lucideSvg(name: string, size = 24): string {
-  const path = join(ROOT, "node_modules", "lucide-react", "dist", "esm", "icons", `${name}.mjs`);
+  const path = join(ROOT, "modules", "gui", "node_modules", "lucide-react", "dist", "esm", "icons", `${name}.mjs`);
   let nodes: [string, Record<string, string>][] = [];
   if (existsSync(path)) {
-    const match = /const __iconNode = (\[[\s\S]*?\]);\n/.exec(readFileSync(path, "utf8"));
+    // lucide-react >= 1.46 exports `__iconData = { node: [...] }`; older builds `__iconNode = [...]`.
+    const match = /(?:node: |const __iconNode = )(\[[\s\S]*?\n {0,2}\]);?\n/.exec(readFileSync(path, "utf8"));
     if (match) nodes = new Function(`return ${match[1]}`)() as [string, Record<string, string>][];
   }
-  if (nodes.length === 0) return lucideSvg("gauge", size);
+  if (nodes.length === 0) {
+    if (name === "gauge") throw new Error(`lucide icon data not found at ${relative(ROOT, path)}; run bun install`);
+    return lucideSvg("gauge", size);
+  }
   const inner = nodes
     .map(([tag, attrs]) => {
       const attributes = Object.entries(attrs)
@@ -74,23 +78,23 @@ function renderCard({ manifest, bundled }: { manifest: MetricManifest; bundled: 
   const scopes = manifest.scopes
     .map((scope) => {
       const meta = METRIC_SCOPE_DESCRIPTIONS[scope];
-      return `<span class="legal-badge" title="${escapeHtml(meta.grants)}"><span>${escapeHtml(meta.label)}</span></span>`;
+      return `<span class="tag" title="${escapeHtml(meta.grants)}">${escapeHtml(meta.label)}</span>`;
     })
     .join("\n              ");
   const developer = manifest.developer.url
     ? `<a href="${escapeHtml(manifest.developer.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(manifest.developer.name)}</a>`
     : escapeHtml(manifest.developer.name);
   return `          <article class="feature-card metric-card" data-category="${escapeHtml(manifest.category)}">
-            <div class="card-icon-wrap">${lucideSvg(manifest.icon)}</div>
+            <div class="feature-icon">${lucideSvg(manifest.icon, 22)}</div>
             <h3 class="card-title">${escapeHtml(manifest.name)}</h3>
-            <p class="metric-meta">${escapeHtml(manifest.category)} &bull; v${escapeHtml(manifest.version)} &bull; ${escapeHtml(manifest.license)} &bull; by ${developer}</p>
+            <p class="card-meta">${escapeHtml(manifest.category)} &bull; v${escapeHtml(manifest.version)} &bull; ${escapeHtml(manifest.license)} &bull; by ${developer}</p>
             <p class="card-desc">${escapeHtml(manifest.description.trim())}</p>
-            <p class="card-desc metric-importance">${escapeHtml(manifest.importance.trim())}</p>
-            <div class="legal-badge-strip metric-scopes">
+            <p class="card-desc">${escapeHtml(manifest.importance.trim())}</p>
+            <div class="tag-row">
               ${scopes}
             </div>
-            <p class="metric-footer">
-              ${bundled ? '<span class="status-dot"></span><span>BUNDLED WITH THE APP</span>' : "<span>REPOSITORY</span>"}
+            <p class="card-footer">
+              ${bundled ? '<span class="status-dot"></span><span>Bundled with the app</span>' : "<span>Repository</span>"}
               &bull; <a href="${REPO_URL}/tree/main/extras/metrics/${escapeHtml(manifest.id)}" target="_blank" rel="noopener noreferrer">Source</a>
             </p>
           </article>`;
@@ -104,7 +108,7 @@ function main(): void {
       /<meta name="description" content="[^"]*">/,
       '<meta name="description" content="Catalog of sandboxed WebAssembly metric modules for Portfolio. Every metric declares the data it reads before you add it.">',
     );
-  const header = slice(template, "<!-- Header / Navigation -->", "</header>", "header");
+  const header = slice(template, '<header class="site-header">', "</header>", "header");
   const footer = slice(template, '<footer class="site-footer">', "</footer>", "footer");
   if (!header.includes('href="/metrics/"')) throw new Error("terms/index.html navigation has no Metrics link");
 
@@ -119,47 +123,40 @@ function main(): void {
 ${head}
 <body>
   <!-- Generated by scripts/build-metrics-site.ts from extras/metrics/repository.yml. Do not edit by hand. -->
-  <!-- Ambient background glow and grid -->
   <div class="ambient-glow" aria-hidden="true"></div>
-  <div class="cyber-grid" aria-hidden="true"></div>
+  <div class="dot-grid" aria-hidden="true"></div>
 
   ${header}
 
   <main>
-    <section class="legal-hero">
-      <div class="container">
-        <div class="hero-pill-badge">
+    <section class="hero-section">
+      <div class="container hero-container">
+        <div class="hero-pill">
           <span class="status-dot"></span>
-          <span class="pill-text">METRICS MARKETPLACE : SANDBOXED WEBASSEMBLY MODULES</span>
+          <span>METRICS MARKETPLACE &bull; SANDBOXED WEBASSEMBLY MODULES</span>
         </div>
-
-        <h1 class="hero-title" style="margin-block: 1rem 0.5rem;">
-          Metrics <span class="gradient-text">Marketplace</span>
-        </h1>
-        <p class="hero-subtitle" style="margin-bottom: 0;">
-          Every metric is a small WebAssembly module with a manifest that declares the data it reads. It runs in a sandbox with no file, network, or system access, against your portfolio only.
-        </p>
-
-        <div class="legal-badge-strip">
-          <div class="legal-badge"><span class="status-dot"></span><span>${entries.length} METRICS IN THE REPOSITORY</span></div>
-          <div class="legal-badge"><span>NO I/O IMPORTS</span></div>
-          <div class="legal-badge"><span>4 MiB MEMORY CEILING</span></div>
-          <div class="legal-badge"><span>MIT OPEN SOURCE LICENSE</span></div>
-        </div>
+        <h1 class="hero-title">Metrics <span class="gradient-text">Marketplace</span></h1>
+        <p class="hero-subtitle">Every metric is a small WebAssembly module with a manifest that declares the data it reads. It runs in a sandbox with no file, network or system access, against your portfolio only.</p>
+        <ul class="hero-stats" aria-label="Highlights">
+          <li><strong>${entries.length}</strong><span>metrics in the repository</span></li>
+          <li><strong>0</strong><span>I/O imports allowed</span></li>
+          <li><strong>4 MiB</strong><span>memory ceiling</span></li>
+          <li><strong>MIT</strong><span>open source license</span></li>
+        </ul>
       </div>
     </section>
 
     <section class="features-section" id="catalog">
       <div class="container">
-        <div class="section-header" style="text-align: center;">
-          <span class="section-pill">// CATALOG</span>
+        <div class="section-heading">
+          <span class="section-kicker">Catalog</span>
           <h2 class="section-title">Reviewed metrics</h2>
-          <p class="section-subtitle">Bundled with the application and reviewed by pull request. Add any of them to a portfolio from the Metrics tab.</p>
+          <p class="section-lead">Bundled with the application and reviewed by pull request. Add any of them to a portfolio from the Metrics tab.</p>
         </div>
 
-        <div class="chart-timeframe metric-filters" role="group" aria-label="Filter by category">
-          <button type="button" class="tf-btn active" data-category="">All</button>
-${categories.map((c) => `          <button type="button" class="tf-btn" data-category="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join("\n")}
+        <div class="chip-row metric-filters" role="group" aria-label="Filter by category">
+          <button type="button" class="chip-btn active" data-category="">All</button>
+${categories.map((c) => `          <button type="button" class="chip-btn" data-category="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join("\n")}
         </div>
 
         <div class="features-grid" id="metric-grid">
@@ -168,15 +165,15 @@ ${entries.map(renderCard).join("\n")}
       </div>
     </section>
 
-    <section class="features-section" id="scopes">
+    <section class="how-section" id="scopes">
       <div class="container">
-        <div class="section-header" style="text-align: center;">
-          <span class="section-pill">// DATA SCOPES</span>
+        <div class="section-heading">
+          <span class="section-kicker">Data scopes</span>
           <h2 class="section-title">What a metric can see</h2>
-          <p class="section-subtitle">A module receives only the scopes its manifest requests. The application spells them out before a metric is added, and a module installed from a URL stays marked unverified.</p>
+          <p class="section-lead">A module receives only the scopes its manifest requests. The application spells them out before a metric is added, and a module installed from a URL stays marked unverified.</p>
         </div>
-        <div class="legal-content-card">
-          <table class="metric-scope-table">
+        <div class="panel">
+          <table class="data-table">
             <thead><tr><th>Scope</th><th>Grants</th><th>Shown to the user as</th></tr></thead>
             <tbody>
 ${scopeRows}
@@ -186,15 +183,15 @@ ${scopeRows}
       </div>
     </section>
 
-    <section class="features-section" id="contribute">
+    <section class="downloads-section" id="contribute">
       <div class="container">
-        <div class="section-header" style="text-align: center;">
-          <span class="section-pill">// CONTRIBUTE</span>
+        <div class="section-heading">
+          <span class="section-kicker">Contribute</span>
           <h2 class="section-title">Write your own</h2>
-          <p class="section-subtitle">A metric is a few lines of AssemblyScript. Copy the template, describe it in a manifest, open a pull request, and it ships with the next release.</p>
+          <p class="section-lead">A metric is a few lines of AssemblyScript. Copy the template, describe it in a manifest, open a pull request, and it ships with the next release.</p>
         </div>
-        <div class="legal-content-card">
-          <pre class="metric-code"><code>import { Summary, Result, Format } from "../../_sdk/portfolio";
+        <div class="panel">
+          <pre class="code-block"><code>import { Summary, Result, Format } from "../../_sdk/portfolio";
 export { metric_abi_version, metric_alloc } from "../../_sdk/portfolio";
 
 export function metric_run(ptr: i32, len: i32): i32 {
@@ -217,10 +214,10 @@ export function metric_run(ptr: i32, len: i32): i32 {
 
   ${footer}
 
-  <script src="/script.js"></script>
+  <script src="/script.js" defer></script>
   <script>
     (function () {
-      var buttons = document.querySelectorAll('.metric-filters .tf-btn');
+      var buttons = document.querySelectorAll('.metric-filters .chip-btn');
       var cards = document.querySelectorAll('#metric-grid .metric-card');
       buttons.forEach(function (btn) {
         btn.addEventListener('click', function () {

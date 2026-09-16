@@ -1,202 +1,129 @@
 /**
- * Portfolio - Marketing Website Logic
- * Handles OS Detection, Download Links, App UI Preview Tabs, and Clipboard Utility
+ * Marketing site script shared by the Assistant and Portfolio websites: OS
+ * detection, download links resolved from the release manifest, copy button,
+ * screenshot reveal / hotspots / lightbox, and opt-in PostHog analytics.
+ * The two copies differ only in SITE_SLUG; keep the rest identical.
  */
-
 (function () {
-  'use strict';
+  "use strict";
 
-  // ===========================================================================
-  // Download Configuration
-  // Modify these URLs when publishing new releases or let fetchLatestRelease auto-update
-  // ===========================================================================
-  const GITHUB_REPO_URL = "https://github.com/cgeosoft/portfolio";
+  const SITE_SLUG = "portfolio";
+
   // The release script publishes the packages under /releases/<version>/ and
   // describes them in /releases/latest.json (see scripts/release.sh).
   const RELEASE_MANIFEST_URL = "/releases/latest.json";
-  const GITHUB_LATEST_RELEASE_URL = "#downloads";
-  const CACHE_KEY = "portfolio_latest_release_v2";
-  const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache to prevent GitHub API rate limits
+  const FALLBACK_URL = "#downloads";
+  const CACHE_KEY = `${SITE_SLUG}_latest_release_v2`;
+  const CACHE_TTL_MS = 15 * 60 * 1000;
+  const CONSENT_KEY = `${SITE_SLUG}_cookie_consent_v1`;
 
-  // Release assets follow a fixed naming scheme: portfolio_<version>_<platform>.<ext>
-  // The version is resolved at runtime from the latest GitHub release tag, so the
-  // site never needs redeploying for a new release.
+  // Release assets follow <slug>_<version>_<platform>.<ext>. The version is
+  // read from the manifest at runtime, so a new release needs no redeploy of
+  // the site. Adjust here if scripts/release.sh renames artifacts.
   function buildAssetFilenames(version) {
+    const p = SITE_SLUG;
     return {
-      windows: {
-        installer: `portfolio_${version}_x64_setup.exe`,
-        portable: `portfolio_${version}_windows-x64_portable.zip`
-      },
-      macos: {
-        installer: `portfolio_${version}_universal.dmg`,
-        portable: `portfolio_${version}_macos-universal.zip`
-      },
-      linux: {
-        installer: `portfolio_${version}_amd64.deb`,
-        portable: `portfolio_${version}_linux-x64.tar.gz`
-      }
+      windows: { installer: `${p}_${version}_x64_setup.exe`, portable: `${p}_${version}_windows-x64_portable.zip` },
+      macos: { installer: `${p}_${version}_universal.dmg`, portable: `${p}_${version}_macos-universal.zip` },
+      linux: { installer: `${p}_${version}_amd64.deb`, portable: `${p}_${version}_linux-x64.tar.gz` },
     };
   }
 
-  // Until the release version is known (or if the GitHub API is unreachable),
-  // every download points to the GitHub releases page so visitors always land
-  // somewhere valid.
-  const DOWNLOAD_CONFIG = {
-    version: null,
-    releaseBase: GITHUB_LATEST_RELEASE_URL,
-    windows: {
-      key: "windows",
-      name: "Windows",
-      title: "Download for Windows (.exe)",
-      caption: "Recommended for Windows (64-bit)",
-      badge: "Windows 10, 11 (64-bit)",
-      installerFile: null,
-      installerUrl: GITHUB_LATEST_RELEASE_URL,
-      portableUrl: GITHUB_LATEST_RELEASE_URL,
-      terminalCmd: "winget install --id Portfolio.Desktop -s winget",
-      iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/>
-      </svg>`
-    },
-    macos: {
-      key: "macos",
-      name: "macOS",
-      title: "Download for macOS (.dmg)",
-      caption: "Recommended for macOS (Universal)",
-      badge: "Apple Silicon & Intel (macOS 12+)",
-      installerFile: null,
-      installerUrl: GITHUB_LATEST_RELEASE_URL,
-      portableUrl: GITHUB_LATEST_RELEASE_URL,
-      terminalCmd: "brew install --cask portfolio-desktop",
-      iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/>
-      </svg>`
-    },
-    linux: {
-      key: "linux",
-      name: "Linux",
-      title: "Download for Linux (.deb)",
-      caption: "Recommended for Debian / Ubuntu (x64)",
-      badge: "Debian, Ubuntu, Mint & distros",
-      installerFile: null,
-      installerUrl: GITHUB_LATEST_RELEASE_URL,
-      portableUrl: GITHUB_LATEST_RELEASE_URL,
-      terminalCmd: "sudo dpkg -i portfolio_<version>_amd64.deb",
-      iconSvg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/>
-      </svg>`
-    }
+  const ICONS = {
+    windows: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/></svg>',
+    macos: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/></svg>',
+    linux: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/></svg>',
   };
 
-  // ===========================================================================
-  // OS Detection Heuristics
-  // ===========================================================================
+  // Until the release is known (or when the manifest is unreachable) every
+  // link points at the downloads section so visitors always land somewhere valid.
+  const initialFiles = buildAssetFilenames("<version>");
+  const DOWNLOAD_CONFIG = {
+    version: null,
+    windows: {
+      title: "Download for Windows (.exe)",
+      caption: "Recommended for Windows 10 / 11 (64-bit)",
+      installerUrl: FALLBACK_URL,
+      portableUrl: FALLBACK_URL,
+      terminalCmd: initialFiles.windows.installer,
+    },
+    macos: {
+      title: "Download for macOS (.dmg)",
+      caption: "Recommended for macOS 12+ (Universal)",
+      installerUrl: FALLBACK_URL,
+      portableUrl: FALLBACK_URL,
+      terminalCmd: `open ${initialFiles.macos.installer}`,
+    },
+    linux: {
+      title: "Download for Linux (.deb)",
+      caption: "Recommended for Debian / Ubuntu (x64)",
+      installerUrl: FALLBACK_URL,
+      portableUrl: FALLBACK_URL,
+      terminalCmd: `sudo dpkg -i ${initialFiles.linux.installer}`,
+    },
+  };
+
   function detectOS() {
-    // 1. Try modern Client Hints (User-Agent Client Hints)
     const nav = window.navigator;
-    if (nav.userAgentData && nav.userAgentData.platform) {
-      const p = nav.userAgentData.platform.toLowerCase();
-      if (p.includes('win')) return 'windows';
-      if (p.includes('mac')) return 'macos';
-      if (p.includes('linux')) return 'linux';
-    }
-
-    // 2. Try platform string
-    const platform = (nav.platform || '').toLowerCase();
-    if (platform.includes('win')) return 'windows';
-    if (platform.includes('mac') || platform.includes('iphone') || platform.includes('ipad')) return 'macos';
-    if (platform.includes('linux') || platform.includes('x11')) return 'linux';
-
-    // 3. Fallback to userAgent string
-    const userAgent = (nav.userAgent || '').toLowerCase();
-    if (userAgent.includes('windows') || userAgent.includes('win32') || userAgent.includes('win64')) return 'windows';
-    if (userAgent.includes('macintosh') || userAgent.includes('mac os x')) return 'macos';
-    if (userAgent.includes('linux') || userAgent.includes('x11')) return 'linux';
-
-    // Default fallback: Linux (or could be Windows, defaults cleanly to Linux)
-    return 'linux';
+    const hints = nav.userAgentData && nav.userAgentData.platform ? nav.userAgentData.platform.toLowerCase() : "";
+    const platform = (nav.platform || "").toLowerCase();
+    const ua = (nav.userAgent || "").toLowerCase();
+    const probe = `${hints} ${platform} ${ua}`;
+    if (probe.includes("win")) return "windows";
+    if (probe.includes("mac") || probe.includes("iphone") || probe.includes("ipad")) return "macos";
+    return "linux";
   }
 
-  // ===========================================================================
-  // UI State & Binding
-  // ===========================================================================
   let activeOS = detectOS();
 
   function renderHeroDownload(osKey) {
     const config = DOWNLOAD_CONFIG[osKey];
     if (!config) return;
-
-    const primaryBtn = document.getElementById('primary-download-btn');
-    const osIcon = document.getElementById('primary-os-icon');
-    const titleEl = document.getElementById('download-title');
-    const captionEl = document.getElementById('download-caption');
-    const terminalEl = document.getElementById('terminal-command');
+    const primaryBtn = document.getElementById("primary-download-btn");
+    const osIcon = document.getElementById("primary-os-icon");
+    const titleEl = document.getElementById("download-title");
+    const captionEl = document.getElementById("download-caption");
+    const terminalEl = document.getElementById("terminal-command");
 
     if (primaryBtn) {
       primaryBtn.href = config.installerUrl;
-      primaryBtn.setAttribute('data-target-os', osKey);
+      primaryBtn.setAttribute("data-os", osKey);
     }
-    if (osIcon) {
-      osIcon.innerHTML = config.iconSvg;
-    }
-    if (titleEl) {
-      titleEl.textContent = config.title;
-    }
-    if (captionEl) {
-      captionEl.textContent = config.caption;
-    }
-    if (terminalEl) {
-      terminalEl.textContent = config.terminalCmd;
-    }
+    if (osIcon) osIcon.innerHTML = ICONS[osKey];
+    if (titleEl) titleEl.textContent = config.title;
+    if (captionEl) captionEl.textContent = config.caption;
+    if (terminalEl) terminalEl.textContent = config.terminalCmd;
 
-    // Update switcher chips active state
-    document.querySelectorAll('.chip-btn').forEach(chip => {
-      const target = chip.getAttribute('data-target-os');
-      chip.classList.toggle('active', target === osKey);
+    document.querySelectorAll(".chip-btn[data-target-os]").forEach((chip) => {
+      chip.classList.toggle("active", chip.getAttribute("data-target-os") === osKey);
     });
-
-    // Update matrix cards recommended highlighting
-    document.querySelectorAll('.platform-download-card').forEach(card => {
-      card.classList.remove('is-detected');
+    document.querySelectorAll(".platform-card").forEach((card) => {
+      card.classList.toggle("is-detected", card.id === `card-${osKey}`);
     });
-    const detectedCard = document.getElementById(`card-${osKey}`);
-    if (detectedCard) {
-      detectedCard.classList.add('is-detected');
-    }
   }
 
   function bindAllDownloadLinks() {
-    // Populate hrefs for Windows
-    document.querySelectorAll('.download-link-win').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.windows.installerUrl;
-    });
-    document.querySelectorAll('.download-link-win-portable').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.windows.portableUrl;
-    });
-
-    // Populate hrefs for macOS
-    document.querySelectorAll('.download-link-mac').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.macos.installerUrl;
-    });
-    document.querySelectorAll('.download-link-mac-zip').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.macos.portableUrl;
-    });
-
-    // Populate hrefs for Linux
-    document.querySelectorAll('.download-link-linux').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.linux.installerUrl;
-    });
-    document.querySelectorAll('.download-link-linux-tar').forEach(el => {
-      el.href = DOWNLOAD_CONFIG.linux.portableUrl;
+    const map = {
+      ".download-link-win": DOWNLOAD_CONFIG.windows.installerUrl,
+      ".download-link-win-portable": DOWNLOAD_CONFIG.windows.portableUrl,
+      ".download-link-mac": DOWNLOAD_CONFIG.macos.installerUrl,
+      ".download-link-mac-zip": DOWNLOAD_CONFIG.macos.portableUrl,
+      ".download-link-linux": DOWNLOAD_CONFIG.linux.installerUrl,
+      ".download-link-linux-tar": DOWNLOAD_CONFIG.linux.portableUrl,
+    };
+    Object.keys(map).forEach((selector) => {
+      document.querySelectorAll(selector).forEach((el) => {
+        el.href = map[selector];
+      });
     });
   }
 
   function initPlatformSwitcher() {
-    document.querySelectorAll('.chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetOs = btn.getAttribute('data-target-os');
-        if (targetOs && DOWNLOAD_CONFIG[targetOs]) {
-          activeOS = targetOs;
+    document.querySelectorAll(".chip-btn[data-target-os]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-target-os");
+        if (target && DOWNLOAD_CONFIG[target]) {
+          activeOS = target;
           renderHeroDownload(activeOS);
         }
       });
@@ -204,108 +131,70 @@
   }
 
   function initCopyButton() {
-    const copyBtn = document.getElementById('btn-copy-term');
-    const termCommand = document.getElementById('terminal-command');
-
-    if (copyBtn && termCommand) {
-      copyBtn.addEventListener('click', async () => {
-        const text = termCommand.textContent.trim();
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(text);
-          } else {
-            // Fallback for older browsers
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-          }
-
-          copyBtn.classList.add('copied');
-          const copyText = copyBtn.querySelector('.copy-text');
-          if (copyText) copyText.textContent = 'Copied!';
-
-          setTimeout(() => {
-            copyBtn.classList.remove('copied');
-            if (copyText) copyText.textContent = 'Copy';
-          }, 2000);
-        } catch (err) {
-          console.error('Failed to copy to clipboard:', err);
+    const copyBtn = document.getElementById("btn-copy-term");
+    const term = document.getElementById("terminal-command");
+    if (!copyBtn || !term) return;
+    copyBtn.addEventListener("click", async () => {
+      const text = term.textContent.trim();
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
         }
-      });
-    }
-  }
-
-  // ===========================================================================
-  // Interactive Mockup Tab Switching
-  // ===========================================================================
-  function initMockupTabs() {
-    const tabs = document.querySelectorAll('.mockup-tab');
-    const panels = document.querySelectorAll('.mockup-panel');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabTarget = tab.getAttribute('data-tab');
-
-        // Update tabs active class & aria-selected
-        tabs.forEach(t => {
-          const isActive = t === tab;
-          t.classList.toggle('active', isActive);
-          t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-
-        // Show target panel
-        panels.forEach(panel => {
-          const isTarget = panel.id === `tab-panel-${tabTarget}`;
-          panel.classList.toggle('active', isTarget);
-        });
-      });
+        copyBtn.classList.add("copied");
+        const label = copyBtn.querySelector(".copy-text");
+        if (label) label.textContent = "Copied";
+        setTimeout(() => {
+          copyBtn.classList.remove("copied");
+          if (label) label.textContent = "Copy";
+        }, 2000);
+      } catch (err) {
+        console.error("Copy failed", err);
+      }
     });
   }
 
-  // ===========================================================================
-  // Real Screenshot Showcase
-  // Scroll reveal, annotated hotspots (hover / focus / click to pin), and a
-  // full-size lightbox. Everything degrades to a plain screenshot without JS.
-  // ===========================================================================
-  function initScreenshotShowcase() {
-    const frame = document.getElementById('shot-frame');
+  // Reveal the screenshot as it scrolls into view, open the annotation
+  // tooltips on hover / focus / click, and show the image full size in a
+  // <dialog>. Everything degrades to a plain screenshot without JS.
+  function initScreenshot() {
+    const frame = document.getElementById("shot-frame");
     if (!frame) return;
 
-    const list = document.getElementById('shot-hotspots');
-    const img = document.getElementById('shot-img');
-    const tourToggle = document.getElementById('shot-tour-toggle');
-    const zoomBtn = document.getElementById('shot-zoom-btn');
-    const lightbox = document.getElementById('shot-lightbox');
-    const lightboxClose = document.getElementById('shot-lightbox-close');
-
-    // --- Reveal the frame as it scrolls into view ---
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-revealed');
-          observer.unobserve(entry.target);
-        });
-      }, { threshold: 0.12 });
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-revealed");
+            observer.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.12 }
+      );
       observer.observe(frame);
     } else {
-      frame.classList.add('is-revealed');
+      frame.classList.add("is-revealed");
     }
 
-    // --- Annotated hotspots ---
-    const compact = window.matchMedia('(max-width: 860px)');
-    const hotspots = list ? Array.from(list.querySelectorAll('.shot-hotspot')) : [];
+    // Hotspots. Below the breakpoint the list is laid out under the image and
+    // the pins are decorative labels instead of controls.
+    const compact = window.matchMedia("(max-width: 860px)");
+    const hotspots = Array.from(document.querySelectorAll("#shot-hotspots .shot-hotspot"));
     let pinnedSpot = null;
 
     function setOpen(spot, open) {
-      spot.classList.toggle('is-open', open);
-      const pin = spot.querySelector('.hotspot-pin');
-      if (pin) pin.setAttribute('aria-expanded', open ? 'true' : 'false');
+      spot.classList.toggle("is-open", open);
+      const pin = spot.querySelector(".hotspot-pin");
+      if (pin && !compact.matches) pin.setAttribute("aria-expanded", open ? "true" : "false");
     }
 
     function openOnly(spot) {
@@ -317,43 +206,40 @@
       pinnedSpot = null;
     }
 
-    // Below the breakpoint every annotation is rendered as a plain list, so the
-    // markers become decorative labels instead of interactive controls.
     function syncCompactState() {
       const isCompact = compact.matches;
       if (isCompact) closeAll();
       hotspots.forEach((spot) => {
-        const pin = spot.querySelector('.hotspot-pin');
+        const pin = spot.querySelector(".hotspot-pin");
         if (!pin) return;
         if (isCompact) {
-          pin.setAttribute('tabindex', '-1');
-          pin.setAttribute('aria-hidden', 'true');
-          pin.removeAttribute('aria-expanded');
+          pin.setAttribute("tabindex", "-1");
+          pin.setAttribute("aria-hidden", "true");
+          pin.removeAttribute("aria-expanded");
         } else {
-          pin.removeAttribute('tabindex');
-          pin.removeAttribute('aria-hidden');
-          pin.setAttribute('aria-expanded', 'false');
+          pin.removeAttribute("tabindex");
+          pin.removeAttribute("aria-hidden");
+          pin.setAttribute("aria-expanded", "false");
         }
       });
     }
 
     hotspots.forEach((spot, index) => {
-      const pin = spot.querySelector('.hotspot-pin');
+      const pin = spot.querySelector(".hotspot-pin");
       if (!pin) return;
-
-      spot.addEventListener('mouseenter', () => {
+      spot.addEventListener("mouseenter", () => {
         if (!compact.matches && !pinnedSpot) openOnly(spot);
       });
-      spot.addEventListener('mouseleave', () => {
+      spot.addEventListener("mouseleave", () => {
         if (!compact.matches && !pinnedSpot) setOpen(spot, false);
       });
-      pin.addEventListener('focus', () => {
+      pin.addEventListener("focus", () => {
         if (!compact.matches) openOnly(spot);
       });
-      pin.addEventListener('blur', () => {
+      pin.addEventListener("blur", () => {
         if (!compact.matches && pinnedSpot !== spot) setOpen(spot, false);
       });
-      pin.addEventListener('click', (event) => {
+      pin.addEventListener("click", (event) => {
         if (compact.matches) return;
         event.stopPropagation();
         if (pinnedSpot === spot) {
@@ -362,99 +248,70 @@
         }
         pinnedSpot = spot;
         openOnly(spot);
-        trackEvent('screenshot_hotspot_opened', { hotspot: index + 1 });
+        trackEvent("screenshot_hotspot_opened", { hotspot: index + 1 });
       });
     });
 
     if (hotspots.length) {
       syncCompactState();
-      if (typeof compact.addEventListener === 'function') {
-        compact.addEventListener('change', syncCompactState);
-      }
-
-      document.addEventListener('click', (event) => {
+      if (typeof compact.addEventListener === "function") compact.addEventListener("change", syncCompactState);
+      document.addEventListener("click", (event) => {
         if (!pinnedSpot) return;
-        const target = event.target;
-        if (target instanceof Element && target.closest('.shot-hotspot')) return;
+        if (event.target instanceof Element && event.target.closest(".shot-hotspot")) return;
         closeAll();
       });
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && pinnedSpot) closeAll();
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && pinnedSpot) closeAll();
       });
     }
 
-    if (tourToggle && list) {
-      tourToggle.addEventListener('click', () => {
-        const showing = tourToggle.getAttribute('aria-pressed') === 'true';
-        const next = !showing;
-        tourToggle.setAttribute('aria-pressed', next ? 'true' : 'false');
-        tourToggle.classList.toggle('is-on', next);
-        list.hidden = !next;
-        if (!next) closeAll();
-      });
-    }
+    // Lightbox
+    const img = document.getElementById("shot-img");
+    const zoomBtn = document.getElementById("shot-zoom-btn");
+    const lightbox = document.getElementById("shot-lightbox");
+    const lightboxClose = document.getElementById("shot-lightbox-close");
 
-    // --- Full-size lightbox ---
     function openLightbox() {
-      if (lightbox && typeof lightbox.showModal === 'function') {
+      if (lightbox && typeof lightbox.showModal === "function") {
         lightbox.showModal();
-        trackEvent('screenshot_zoomed', {});
+        trackEvent("screenshot_zoomed", {});
         return;
       }
-      window.open('assets/screenshot.png', '_blank', 'noopener');
+      if (img) window.open(img.currentSrc || img.src, "_blank", "noopener");
     }
 
-    if (img) {
-      img.addEventListener('click', openLightbox);
-    }
-    if (zoomBtn) {
-      zoomBtn.addEventListener('click', openLightbox);
-    }
+    if (img) img.addEventListener("click", openLightbox);
+    if (zoomBtn) zoomBtn.addEventListener("click", openLightbox);
     if (lightbox) {
-      if (lightboxClose) {
-        lightboxClose.addEventListener('click', () => lightbox.close());
-      }
+      if (lightboxClose) lightboxClose.addEventListener("click", () => lightbox.close());
       // Clicking anywhere, image or backdrop, dismisses the full-size view.
-      lightbox.addEventListener('click', () => lightbox.close());
+      lightbox.addEventListener("click", () => lightbox.close());
     }
   }
 
-  // ===========================================================================
-  // Dynamic GitHub Release Resolution
-  // ===========================================================================
   function applyReleaseData(manifest) {
     if (!manifest || !manifest.version || !manifest.files) return;
-
-    const cleanVersion = String(manifest.version).replace(/^v/, '');
-    const files = buildAssetFilenames(cleanVersion);
+    const version = String(manifest.version).replace(/^v/, "");
+    const files = buildAssetFilenames(version);
     const url = (platform, kind, fallbackName) => {
       const entry = manifest.files[platform] && manifest.files[platform][kind];
-      return entry && entry.url ? entry.url : `/releases/${cleanVersion}/${fallbackName}`;
+      return entry && entry.url ? entry.url : `/releases/${version}/${fallbackName}`;
     };
 
-    DOWNLOAD_CONFIG.version = cleanVersion;
-
-    DOWNLOAD_CONFIG.windows.installerFile = files.windows.installer;
-    DOWNLOAD_CONFIG.windows.installerUrl = url('windows', 'installer', files.windows.installer);
-    DOWNLOAD_CONFIG.windows.portableUrl = url('windows', 'portable', files.windows.portable);
-
-    DOWNLOAD_CONFIG.macos.installerFile = files.macos.installer;
-    DOWNLOAD_CONFIG.macos.installerUrl = url('macos', 'installer', files.macos.installer);
-    DOWNLOAD_CONFIG.macos.portableUrl = url('macos', 'portable', files.macos.portable);
-
-    DOWNLOAD_CONFIG.linux.installerFile = files.linux.installer;
-    DOWNLOAD_CONFIG.linux.installerUrl = url('linux', 'installer', files.linux.installer);
-    DOWNLOAD_CONFIG.linux.portableUrl = url('linux', 'portable', files.linux.portable);
+    DOWNLOAD_CONFIG.version = version;
+    DOWNLOAD_CONFIG.windows.installerUrl = url("windows", "installer", files.windows.installer);
+    DOWNLOAD_CONFIG.windows.portableUrl = url("windows", "portable", files.windows.portable);
+    DOWNLOAD_CONFIG.windows.terminalCmd = files.windows.installer;
+    DOWNLOAD_CONFIG.macos.installerUrl = url("macos", "installer", files.macos.installer);
+    DOWNLOAD_CONFIG.macos.portableUrl = url("macos", "portable", files.macos.portable);
+    DOWNLOAD_CONFIG.macos.terminalCmd = `open ${files.macos.installer}`;
+    DOWNLOAD_CONFIG.linux.installerUrl = url("linux", "installer", files.linux.installer);
+    DOWNLOAD_CONFIG.linux.portableUrl = url("linux", "portable", files.linux.portable);
     DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i ${files.linux.installer}`;
 
-    document.querySelectorAll('.latest-version-text').forEach(el => {
-      el.textContent = `v${cleanVersion}`;
+    document.querySelectorAll(".latest-version-text").forEach((el) => {
+      el.textContent = `Latest release v${version}`;
     });
-    const metaVersionEl = document.getElementById('meta-version-text');
-    if (metaVersionEl) {
-      metaVersionEl.textContent = `• Version ${cleanVersion} Latest`;
-    }
 
     renderHeroDownload(activeOS);
     bindAllDownloadLinks();
@@ -462,156 +319,155 @@
 
   async function fetchLatestRelease() {
     try {
-      const cachedItem = localStorage.getItem(CACHE_KEY);
-      if (cachedItem) {
-        const parsed = JSON.parse(cachedItem);
-        if (parsed && typeof parsed.timestamp === 'number' && (Date.now() - parsed.timestamp < CACHE_TTL_MS) && parsed.data) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed.timestamp === "number" && Date.now() - parsed.timestamp < CACHE_TTL_MS && parsed.data) {
           applyReleaseData(parsed.data);
+          return;
         }
       }
     } catch (err) {
-      // Ignore cache access error
+      // Cache unavailable; fall through to the network.
     }
-
     try {
-      const response = await fetch(RELEASE_MANIFEST_URL, { headers: { Accept: 'application/json' }, cache: 'no-cache' });
-      if (response.ok) {
-        const data = await response.json();
-        applyReleaseData(data);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
-        } catch (e) {
-          // Ignore cache write error
-        }
+      const response = await fetch(RELEASE_MANIFEST_URL, { headers: { Accept: "application/json" }, cache: "no-cache" });
+      if (!response.ok) return;
+      const data = await response.json();
+      applyReleaseData(data);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+      } catch (err) {
+        // Ignore storage errors.
       }
     } catch (err) {
-      console.warn('Could not read the release manifest. Download links point to the downloads section.', err);
+      console.warn("Latest release lookup failed; links point at the downloads section.", err);
     }
   }
 
-  // ===========================================================================
-  // Year & Initialization
-  // ===========================================================================
   function initYear() {
-    const yearEl = document.getElementById('current-year');
-    if (yearEl) {
-      yearEl.textContent = new Date().getFullYear();
-    }
+    document.querySelectorAll("#current-year").forEach((el) => {
+      el.textContent = String(new Date().getFullYear());
+    });
   }
 
-  // ===========================================================================
-  // Analytics & Cookie Consent
-  // PostHog tracking is opt-in. Nothing is captured until the visitor accepts.
-  // ===========================================================================
-  const CONSENT_KEY = 'portfolio_cookie_consent_v1';
-
+  // Analytics. PostHog is loaded by the page with capturing opted out; nothing
+  // is sent until the visitor accepts the banner.
   function readConsent() {
-    try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; }
+    try {
+      return localStorage.getItem(CONSENT_KEY);
+    } catch (err) {
+      return null;
+    }
   }
 
   function writeConsent(value) {
-    try { localStorage.setItem(CONSENT_KEY, value); } catch (e) { /* storage unavailable */ }
+    try {
+      localStorage.setItem(CONSENT_KEY, value);
+    } catch (err) {
+      // Storage unavailable; the banner shows again next visit.
+    }
   }
 
   function trackEvent(name, properties) {
     try {
-      if (window.posthog) {
-        window.posthog.capture(name, properties || {});
-      }
-    } catch (e) { /* ignore tracking errors */ }
+      if (window.posthog && readConsent() === "accepted") window.posthog.capture(name, properties || {});
+    } catch (err) {
+      // Ignore tracking errors.
+    }
   }
 
   function enableAnalytics() {
-    writeConsent('accepted');
+    writeConsent("accepted");
     try {
       if (window.posthog) {
         window.posthog.opt_in_capturing();
-        window.posthog.capture('$pageview');
+        window.posthog.capture("$pageview");
       }
-    } catch (e) {
-      // Ignore; consent is still recorded locally
+    } catch (err) {
+      // Consent is still recorded locally.
     }
   }
 
   function disableAnalytics() {
-    writeConsent('declined');
+    writeConsent("declined");
     try {
       if (window.posthog) window.posthog.opt_out_capturing();
-    } catch (e) { /* ignore */ }
+    } catch (err) {
+      // Ignore.
+    }
   }
 
   function initCookieBanner() {
     const consent = readConsent();
-
-    // Already decided: apply the stored choice without showing the banner.
-    if (consent === 'accepted') {
+    if (consent === "accepted") {
       enableAnalytics();
       return;
     }
-    if (consent === 'declined') {
+    if (consent === "declined") {
       disableAnalytics();
       return;
     }
 
-    const banner = document.createElement('div');
-    banner.className = 'cookie-banner';
-    banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-live', 'polite');
-    banner.setAttribute('aria-label', 'Cookie consent');
+    const banner = document.createElement("div");
+    banner.className = "cookie-banner";
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-live", "polite");
+    banner.setAttribute("aria-label", "Cookie consent");
     banner.innerHTML =
       '<div class="cookie-banner-inner">' +
-        '<div class="cookie-banner-copy">' +
-          '<div class="cookie-banner-title">Your privacy</div>' +
-          '<p>This site uses PostHog for anonymous, aggregated analytics ' +
-          '(for example page views and download clicks) to improve the website. ' +
-          'No financial or personal data is collected. ' +
-          '<a href="/terms#cookie-policy">Read the Cookie Policy</a>.</p>' +
-        '</div>' +
-        '<div class="cookie-banner-actions">' +
-          '<button type="button" class="btn btn-ghost cookie-decline">Decline</button>' +
-          '<button type="button" class="btn btn-primary cookie-accept">Accept</button>' +
-        '</div>' +
-      '</div>';
+      '<div class="cookie-banner-copy">' +
+      '<div class="cookie-banner-title">Your privacy</div>' +
+      "<p>This site uses PostHog for anonymous, aggregated analytics (page views and download clicks) to improve the website. " +
+      "No personal data is collected. " +
+      '<a href="/terms/#cookie-policy">Read the cookie policy</a>.</p>' +
+      "</div>" +
+      '<div class="cookie-banner-actions">' +
+      '<button type="button" class="btn btn-ghost cookie-decline">Decline</button>' +
+      '<button type="button" class="btn btn-primary cookie-accept">Accept</button>' +
+      "</div>" +
+      "</div>";
 
     document.body.appendChild(banner);
-    requestAnimationFrame(() => banner.classList.add('visible'));
+    requestAnimationFrame(() => banner.classList.add("visible"));
 
-    banner.querySelector('.cookie-accept').addEventListener('click', () => {
+    const dismiss = () => {
+      banner.classList.remove("visible");
+      setTimeout(() => banner.remove(), 300);
+    };
+    banner.querySelector(".cookie-accept").addEventListener("click", () => {
       enableAnalytics();
-      dismissBanner(banner);
+      dismiss();
     });
-    banner.querySelector('.cookie-decline').addEventListener('click', () => {
+    banner.querySelector(".cookie-decline").addEventListener("click", () => {
       disableAnalytics();
-      dismissBanner(banner);
+      dismiss();
     });
   }
 
-  function dismissBanner(banner) {
-    banner.classList.remove('visible');
-    setTimeout(() => banner.remove(), 300);
+  function initDownloadTracking() {
+    const selectors = "#primary-download-btn, .download-link-win, .download-link-win-portable, .download-link-mac, .download-link-mac-zip, .download-link-linux, .download-link-linux-tar";
+    document.querySelectorAll(selectors).forEach((el) => {
+      el.addEventListener("click", () => {
+        const os = el.getAttribute("data-os") || activeOS;
+        const type = el.getAttribute("data-type") || "installer";
+        trackEvent("download_clicked", { os, type });
+      });
+    });
   }
 
-  function trackDownloadClick(el) {
-    const os = el.getAttribute('data-os') || activeOS;
-    const type = el.getAttribute('data-type') || 'installer';
-    trackEvent('download_clicked', { os: os, type: type });
-  }
-
-  // DOM Content Loaded Handler
-  document.addEventListener('DOMContentLoaded', () => {
+  function init() {
     renderHeroDownload(activeOS);
     bindAllDownloadLinks();
     initPlatformSwitcher();
     initCopyButton();
-    initMockupTabs();
-    initScreenshotShowcase();
+    initScreenshot();
     initYear();
     initCookieBanner();
+    initDownloadTracking();
     fetchLatestRelease();
+  }
 
-    // Track download link clicks (respects the visitor's consent choice)
-    document.querySelectorAll('.download-link-win, .download-link-mac, .download-link-linux').forEach(el => {
-      el.addEventListener('click', () => trackDownloadClick(el));
-    });
-  });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
 })();

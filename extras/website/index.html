@@ -3,12 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portfolio - Private, Offline-First Personal Investment Tracker</title>
-  <meta name="description" content="An offline-first, private personal investment portfolio tracker for Windows, macOS, and Linux. Live Yahoo Finance quotes, and on-demand AI briefings.">
+  <title>Portfolio - Personal investment tracker on your own computer</title>
+  <meta name="description" content="A private, offline-first investment tracker that runs on your own computer. Live quotes, broker CSV import and on-demand AI briefings. Your data stays on your disk. No account, no cloud.">
   <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg">
+  <link rel="apple-touch-icon" href="assets/icon-512.png">
+  <meta property="og:title" content="Portfolio - Personal investment tracker on your own computer">
+  <meta property="og:description" content="An offline-first investment tracker that runs on your own computer. No account, no cloud, your data stays with you.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/screenshot.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
   <!-- PostHog Analytics (consent-gated: no tracking until the visitor opts in) -->
@@ -23,23 +28,20 @@
   </script>
 </head>
 <body>
-  <!-- Ambient background glow & grid -->
   <div class="ambient-glow" aria-hidden="true"></div>
-  <div class="cyber-grid" aria-hidden="true"></div>
+  <div class="dot-grid" aria-hidden="true"></div>
 
-  <!-- Header / Navigation -->
   <header class="site-header">
     <div class="container nav-container">
-      <a href="#" class="brand-link" aria-label="Portfolio Home">
-        <img src="assets/app-icon.svg" alt="Portfolio Icon" class="brand-icon" width="36" height="36">
-        <div class="brand-text">
-          <span class="brand-name">Portfolio</span>
-        </div>
+      <a href="#" class="brand-link" aria-label="Portfolio home">
+        <img src="assets/app-icon.svg" alt="" class="brand-icon" width="36" height="36">
+        <span class="brand-name">Portfolio</span>
       </a>
 
-      <nav class="main-nav" aria-label="Primary Navigation">
+      <nav class="main-nav" aria-label="Primary">
         <a href="#features">Features</a>
         <a href="#preview">Interface</a>
+        <a href="#how-it-works">How it works</a>
         <a href="#downloads">Downloads</a>
         <a href="/metrics/">Metrics</a>
         <a href="#faq">FAQ</a>
@@ -47,233 +49,142 @@
 
       <div class="nav-actions">
         <a href="https://github.com/cgeosoft/portfolio" target="_blank" rel="noopener noreferrer" class="btn btn-ghost github-btn">
-          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
           </svg>
           <span>GitHub</span>
         </a>
-        <a href="#downloads" class="btn btn-primary nav-download-btn">
-          <span>Download</span>
-        </a>
+        <a href="#downloads" class="btn btn-primary nav-download-btn">Download</a>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- Hero Section -->
+    <!-- Hero -->
     <section class="hero-section">
       <div class="container hero-container">
-        <div class="hero-pill-badge">
+        <div class="hero-pill">
           <span class="status-dot"></span>
-          <span class="pill-text">100% OFFLINE-FIRST &bull; ZERO CLOUD TRACKING</span>
+          <span>RUNS ON YOUR COMPUTER &bull; NO ACCOUNT &bull; NO CLOUD</span>
         </div>
 
         <h1 class="hero-title">
-          Your Portfolio.<br>
-          <span class="gradient-text">Your Machine.</span><br>
-          Zero Cloud.
+          Your portfolio.<br>
+          <span class="gradient-text">Your computer.</span><br>
+          Your data stays home.
         </h1>
 
         <p class="hero-subtitle">
-          The investment tracker that gives you complete sovereignty over your financial data. Real-time market valuation, instant broker CSV import, and on-demand AI briefings, all running privately on your computer.
+          Portfolio is a personal investment tracker that keeps your holdings, cash and transaction history in one file on your own disk. Live market valuation, broker CSV import and on-demand AI briefings, all running privately on your computer. No account to create, no cloud database, no one reading along.
         </p>
 
-        <!-- Dynamic OS Download Box -->
         <div class="download-card" id="download-hero-card">
-          <div class="download-main-action">
-            <a href="#" class="btn btn-download" id="primary-download-btn">
-              <span class="download-icon-wrapper" id="primary-os-icon">
-                <!-- Injected via JavaScript -->
-              </span>
-              <div class="download-text-group">
-                <span class="btn-caption" id="download-caption">Recommended for your system</span>
-                <span class="btn-title" id="download-title">Download for Linux (.deb)</span>
-              </div>
-              <svg class="download-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 5v14M19 12l-7 7-7-7"/>
-              </svg>
-            </a>
+          <a href="#downloads" class="btn btn-download" id="primary-download-btn">
+            <span class="download-icon" id="primary-os-icon"></span>
+            <span class="download-text">
+              <span class="btn-caption" id="download-caption">Recommended for your system</span>
+              <span class="btn-title" id="download-title">Download for Linux (.deb)</span>
+            </span>
+            <svg class="download-arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+          </a>
 
-            <!-- Platform Switcher Chips -->
-            <div class="platform-switcher" role="group" aria-label="Alternative Operating Systems">
-              <span class="switcher-label">Also available for:</span>
-              <button type="button" class="chip-btn" data-target-os="windows" id="chip-win">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/>
-                </svg>
-                <span>Windows</span>
-              </button>
-              <button type="button" class="chip-btn" data-target-os="macos" id="chip-mac">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/>
-                </svg>
-                <span>macOS</span>
-              </button>
-              <button type="button" class="chip-btn" data-target-os="linux" id="chip-linux">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/>
-                </svg>
-                <span>Linux</span>
-              </button>
-            </div>
+          <div class="platform-switcher" role="group" aria-label="Other operating systems">
+            <span class="switcher-label">Also for</span>
+            <button type="button" class="chip-btn" data-target-os="windows">Windows</button>
+            <button type="button" class="chip-btn" data-target-os="macos">macOS</button>
+            <button type="button" class="chip-btn" data-target-os="linux">Linux</button>
           </div>
 
-          <!-- Quick Terminal Install Command -->
-          <div class="terminal-install-box">
-            <div class="term-prompt">
-              <span class="term-icon">$</span>
-              <code id="terminal-command">sudo dpkg -i portfolio_&lt;version&gt;_amd64.deb</code>
-            </div>
-            <button type="button" class="btn-copy" id="btn-copy-term" aria-label="Copy terminal command">
-              <svg class="copy-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
+          <div class="terminal-hint">
+            <code id="terminal-command">sudo dpkg -i portfolio_&lt;version&gt;_amd64.deb</code>
+            <button type="button" class="btn-copy" id="btn-copy-term" aria-label="Copy install command">
               <span class="copy-text">Copy</span>
             </button>
           </div>
 
-          <div class="hero-releases-notice">
-            <span>Downloads always deliver the latest version. More versions, portable builds, and release notes are available on the <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer">GitHub Releases page</a>.</span>
-          </div>
+          <p class="hero-meta">
+            <span class="latest-version-text">Latest release</span> &bull; Free and open source &bull; Quotes come from <a href="https://finance.yahoo.com" target="_blank" rel="noopener noreferrer">Yahoo Finance</a>, no API key needed
+          </p>
         </div>
 
-        <!-- Metric highlights -->
-        <div class="hero-stats-strip">
-          <div class="stat-cell">
-            <div class="stat-num">100%</div>
-            <div class="stat-lbl">Offline Storage</div>
-          </div>
-          <div class="stat-separator" aria-hidden="true"></div>
-          <div class="stat-cell">
-            <div class="stat-num">&lt; 15ms</div>
-            <div class="stat-lbl">Instant Local Response</div>
-          </div>
-          <div class="stat-separator" aria-hidden="true"></div>
-          <div class="stat-cell">
-            <div class="stat-num">0 Cloud</div>
-            <div class="stat-lbl">Credentials Needed</div>
-          </div>
-          <div class="stat-separator" aria-hidden="true"></div>
-          <div class="stat-cell">
-            <div class="stat-num">8+</div>
-            <div class="stat-lbl">Local / Cloud LLMs</div>
-          </div>
-        </div>
+        <ul class="hero-stats" aria-label="Highlights">
+          <li><strong>0</strong><span>accounts to create</span></li>
+          <li><strong>1</strong><span>file holds everything</span></li>
+          <li><strong>4</strong><span>broker CSV formats</span></li>
+          <li><strong>3</strong><span>operating systems</span></li>
+        </ul>
       </div>
     </section>
 
-    <!-- Interactive App UI Showcase -->
+    <!-- Screenshot -->
     <section class="preview-section" id="preview">
       <div class="container">
-        <div class="section-header text-center">
-          <span class="section-pill">LIVE EXPERIENCE</span>
-          <h2 class="section-title">Engineered for Precision & Speed</h2>
-          <p class="section-subtitle">A real screenshot of the running app, annotated. Explore the markers to see what every part of the dashboard does.</p>
+        <div class="section-heading">
+          <span class="section-kicker">Interface</span>
+          <h2 class="section-title">A dashboard that shows the whole picture</h2>
+          <p class="section-lead">A real screenshot of the running app with a demo portfolio, not a mockup. Hover the markers to see what every part of the overview does.</p>
         </div>
 
-        <!-- Real Application Screenshot with Guided Hotspots -->
-        <figure class="shot-stage" id="app-screenshot">
+        <figure class="shot-stage">
           <div class="shot-frame" id="shot-frame">
-            <div class="shot-chrome">
-              <div class="window-controls">
-                <span class="dot dot-close"></span>
-                <span class="dot dot-min"></span>
-                <span class="dot dot-max"></span>
-              </div>
-              <div class="window-title">
-                <span class="status-indicator" aria-hidden="true"></span>
-                <span>portfolio :: overview &mdash; unretouched screenshot, demo portfolio</span>
-              </div>
-              <div class="shot-chrome-actions">
-                <button type="button" class="shot-action is-on" id="shot-tour-toggle" aria-pressed="true" aria-controls="shot-hotspots">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/>
-                  </svg>
-                  <span class="shot-action-label">Highlights</span>
-                </button>
-                <button type="button" class="shot-action" id="shot-zoom-btn" aria-haspopup="dialog">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-                  </svg>
-                  <span class="shot-action-label">Expand</span>
-                </button>
-              </div>
+            <div class="shot-titlebar" aria-hidden="true">
+              <span class="tl-dot"></span><span class="tl-dot"></span><span class="tl-dot"></span>
+              <span class="tl-title">Portfolio</span>
+              <button type="button" class="shot-zoom" id="shot-zoom-btn" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                <span>Expand</span>
+              </button>
             </div>
-
             <div class="shot-canvas">
-              <img class="shot-img" id="shot-img" src="assets/screenshot.png" width="1600" height="1104"
-                   loading="lazy" decoding="async"
-                   alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+              <img class="shot-img" id="shot-img" src="assets/screenshot.png" width="1600" height="1104" alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with technical indicators." loading="lazy" decoding="async">
 
               <ul class="shot-hotspots" id="shot-hotspots">
                 <li class="shot-hotspot hs-below" style="--x: 60.6%; --y: 4.4%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-1">
-                    <span class="pin-num" aria-hidden="true">1</span>
-                    <span class="sr-only">On-demand AI assistant</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-1">1<span class="sr-only"> On-demand AI assistant</span></button>
                   <div class="hotspot-tip" id="hs-tip-1" role="tooltip">
-                    <span class="tip-kicker">AI Assistant</span>
+                    <span class="tip-kicker">AI assistant</span>
                     <span class="tip-title">Briefings on demand</span>
                     <p class="tip-desc">Generate a markdown analysis of your portfolio with a local model (Ollama, llama.cpp) or a cloud provider. You choose which, and you can read the exact prompt first.</p>
                   </div>
                 </li>
-
                 <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 17%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-2">
-                    <span class="pin-num" aria-hidden="true">2</span>
-                    <span class="sr-only">Customizable overview metrics</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-2">2<span class="sr-only"> Customizable overview metrics</span></button>
                   <div class="hotspot-tip" id="hs-tip-2" role="tooltip">
-                    <span class="tip-kicker">Overview Metrics</span>
+                    <span class="tip-kicker">Overview metrics</span>
                     <span class="tip-title">Only the numbers you track</span>
                     <p class="tip-desc">Every card comes from the Metrics Marketplace. Pick which ones appear, per portfolio, and whether each is a large card or a compact tile.</p>
                   </div>
                 </li>
-
                 <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 27.6%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-3">
-                    <span class="pin-num" aria-hidden="true">3</span>
-                    <span class="sr-only">Full cost and income breakdown</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-3">3<span class="sr-only"> Full cost and income breakdown</span></button>
                   <div class="hotspot-tip" id="hs-tip-3" role="tooltip">
-                    <span class="tip-kicker">Cost Basis</span>
+                    <span class="tip-kicker">Cost basis</span>
                     <span class="tip-title">Nothing swept under the rug</span>
                     <p class="tip-desc">Invested capital, realized P&amp;L, dividends and interest, broker fees and withheld taxes, all derived locally from your own transactions.</p>
                   </div>
                 </li>
-
                 <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 50.7%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-4">
-                    <span class="pin-num" aria-hidden="true">4</span>
-                    <span class="sr-only">Portfolio performance history chart</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-4">4<span class="sr-only"> Portfolio performance history chart</span></button>
                   <div class="hotspot-tip" id="hs-tip-4" role="tooltip">
-                    <span class="tip-kicker">Performance History</span>
+                    <span class="tip-kicker">Performance history</span>
                     <span class="tip-title">Value against what you paid</span>
                     <p class="tip-desc">Total value including cash, invested value, cost basis and return %, plotted from 1M to all-time out of local daily snapshots.</p>
                   </div>
                 </li>
-
                 <li class="shot-hotspot hs-left" style="--x: 97.9%; --y: 50.7%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-5">
-                    <span class="pin-num" aria-hidden="true">5</span>
-                    <span class="sr-only">Asset allocation and weight donut</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-5">5<span class="sr-only"> Asset allocation and weight donut</span></button>
                   <div class="hotspot-tip" id="hs-tip-5" role="tooltip">
-                    <span class="tip-kicker">Allocation &amp; Weight</span>
+                    <span class="tip-kicker">Allocation &amp; weight</span>
                     <span class="tip-title">Two rings, one glance</span>
                     <p class="tip-desc">The inner ring splits your portfolio by asset class, the outer ring by individual holding weight, so concentration is impossible to miss.</p>
                   </div>
                 </li>
-
                 <li class="shot-hotspot hs-left hs-end" style="--x: 97.9%; --y: 83.8%;">
-                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-6">
-                    <span class="pin-num" aria-hidden="true">6</span>
-                    <span class="sr-only">Live positions with technical indicators</span>
-                  </button>
+                  <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-6">6<span class="sr-only"> Live positions with technical indicators</span></button>
                   <div class="hotspot-tip" id="hs-tip-6" role="tooltip">
-                    <span class="tip-kicker">Active Positions</span>
+                    <span class="tip-kicker">Active positions</span>
                     <span class="tip-title">Live quotes with context</span>
                     <p class="tip-desc">Every holding with its live price, 24h move, total return, 52-week range and RSI, plus SMA 50/200 trend, refreshed from Yahoo Finance.</p>
                   </div>
@@ -281,617 +192,235 @@
               </ul>
             </div>
           </div>
-
           <figcaption class="shot-caption">
-            <span class="shot-caption-badge">Not a mockup</span>
-            <span class="shot-caption-wide">Hover a marker to see what each part of the dashboard does &bull; click the screenshot to view it full size.</span>
-            <span class="shot-caption-compact">Tap the screenshot to view it full size.</span>
+            <p class="shot-hint">
+              <span class="shot-hint-wide">Hover a marker to see what each part of the dashboard does &bull; click the screenshot to view it full size.</span>
+              <span class="shot-hint-compact">Tap the screenshot to view it full size.</span>
+            </p>
           </figcaption>
         </figure>
-
-        <div class="preview-divider">
-          <span class="preview-divider-label">Explore the other views</span>
-        </div>
-
-        <!-- Terminal Window Mockup -->
-        <div class="mockup-window">
-          <!-- Window Header Bar -->
-          <div class="mockup-header">
-            <div class="window-controls">
-              <span class="dot dot-close"></span>
-              <span class="dot dot-min"></span>
-              <span class="dot dot-max"></span>
-            </div>
-            <div class="window-title">
-              <svg class="title-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 12h.01"/>
-                <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                <path d="M22 13a18.15 18.15 0 0 1-20 0"/>
-                <rect width="20" height="14" x="2" y="6" rx="2"/>
-              </svg>
-              <span>portfolio :: private local vault</span>
-            </div>
-            <div class="window-status">
-              <span class="status-indicator"></span>
-              <span>100% OFFLINE</span>
-            </div>
-          </div>
-
-          <!-- App Mockup Nav Tabs -->
-          <div class="mockup-tabs" role="tablist">
-            <button type="button" class="mockup-tab active" data-tab="overview" role="tab" aria-selected="true">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-              <span>Portfolio Overview</span>
-            </button>
-            <button type="button" class="mockup-tab" data-tab="holdings" role="tab" aria-selected="false">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              <span>Live Holdings & Indicators</span>
-            </button>
-            <button type="button" class="mockup-tab" data-tab="ai-brief" role="tab" aria-selected="false">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-              <span>AI Analyst</span>
-            </button>
-            <button type="button" class="mockup-tab" data-tab="csv-importer" role="tab" aria-selected="false">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span>Broker CSV Importer</span>
-            </button>
-          </div>
-
-          <!-- Tab 1: Overview Panel -->
-          <div class="mockup-panel active" id="tab-panel-overview">
-            <div class="panel-grid-top">
-              <div class="dash-stat-card">
-                <span class="dash-stat-label">TOTAL NET WORTH</span>
-                <div class="dash-stat-val">$148,920.50</div>
-                <div class="dash-stat-trend trend-up">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                  <span>+$29,120.50 (+24.31%) All-time</span>
-                </div>
-              </div>
-              <div class="dash-stat-card">
-                <span class="dash-stat-label">INVESTED CAPITAL</span>
-                <div class="dash-stat-val">$119,800.00</div>
-                <div class="dash-stat-meta">Deposits: 38 transactions</div>
-              </div>
-              <div class="dash-stat-card">
-                <span class="dash-stat-label">UNREALIZED P&L</span>
-                <div class="dash-stat-val text-mint">+$26,450.25</div>
-                <div class="dash-stat-meta">Realized: +$2,670.25</div>
-              </div>
-              <div class="dash-stat-card">
-                <span class="dash-stat-label">CASH LIQUIDITY</span>
-                <div class="dash-stat-val">$12,450.00</div>
-                <div class="dash-stat-meta">8.36% unallocated cash</div>
-              </div>
-            </div>
-
-            <!-- Graphic Chart Visual Matching PortfolioChartCard.tsx -->
-            <div class="dash-chart-card">
-              <div class="chart-top-bar">
-                <div class="chart-legend">
-                  <span class="legend-chip"><span class="legend-dot dot-total"></span> Total Value (inc. Cash)</span>
-                  <span class="legend-chip"><span class="legend-dot dot-invested"></span> Invested Value</span>
-                  <span class="legend-chip"><span class="legend-dot dot-cost"></span> Cost Basis</span>
-                </div>
-                <div class="chart-timeframe">
-                  <span class="tf-btn active">1M</span>
-                  <span class="tf-btn">6M</span>
-                  <span class="tf-btn">YTD</span>
-                  <span class="tf-btn">1Y</span>
-                  <span class="tf-btn">ALL</span>
-                </div>
-              </div>
-              <div class="chart-svg-container">
-                <svg viewBox="0 0 800 240" class="performance-chart" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#DD3C73" stop-opacity="0.25" />
-                      <stop offset="100%" stop-color="#DD3C73" stop-opacity="0.0" />
-                    </linearGradient>
-                  </defs>
-                  <!-- Horizontal Grid Lines -->
-                  <line x1="0" y1="40" x2="800" y2="40" stroke="#1e293b" stroke-dasharray="4" />
-                  <line x1="0" y1="100" x2="800" y2="100" stroke="#1e293b" stroke-dasharray="4" />
-                  <line x1="0" y1="160" x2="800" y2="160" stroke="#1e293b" stroke-dasharray="4" />
-                  <line x1="0" y1="220" x2="800" y2="220" stroke="#1e293b" stroke-dasharray="4" />
-
-                  <!-- Invested Capital Cost Basis Baseline (#64748b) -->
-                  <path d="M 0 170 L 160 165 L 320 162 L 480 155 L 640 150 L 800 148" fill="none" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 5" />
-
-                  <!-- Total Value (inc. Cash) Dashed Line (#A7E2C0 Mint) -->
-                  <path d="M 0 160 C 100 145, 180 130, 260 115 C 340 100, 420 118, 500 80 C 580 48, 680 38, 800 15" fill="none" stroke="#A7E2C0" stroke-width="2" stroke-dasharray="6 4" />
-
-                  <!-- Invested Value Area & Line (#DD3C73 Cyber Pink) -->
-                  <path d="M 0 175 C 100 160, 180 145, 260 130 C 340 115, 420 135, 500 95 C 580 60, 680 50, 800 25 L 800 240 L 0 240 Z" fill="url(#chartGradient)" />
-                  <path d="M 0 175 C 100 160, 180 145, 260 130 C 340 115, 420 135, 500 95 C 580 60, 680 50, 800 25" fill="none" stroke="#DD3C73" stroke-width="3" stroke-linecap="round" />
-
-                  <!-- Milestone Points -->
-                  <circle cx="500" cy="95" r="4.5" fill="#DD3C73" stroke="#0b0f19" stroke-width="2" />
-                  <circle cx="800" cy="25" r="5.5" fill="#DD3C73" stroke="#0b0f19" stroke-width="2.5" />
-                  <circle cx="800" cy="15" r="5" fill="#A7E2C0" stroke="#0b0f19" stroke-width="2" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 2: Holdings Panel -->
-          <div class="mockup-panel" id="tab-panel-holdings">
-            <div class="holdings-table-container">
-              <table class="mock-table">
-                <thead>
-                  <tr>
-                    <th>ASSET</th>
-                    <th>SHARES</th>
-                    <th>AVG PRICE</th>
-                    <th>LIVE QUOTE</th>
-                    <th>DAY CHANGE</th>
-                    <th>SMA 50/200</th>
-                    <th>TOTAL VALUE</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="cell-asset">
-                      <span class="ticker-badge">NVDA</span>
-                      <span class="ticker-name">NVIDIA Corp</span>
-                    </td>
-                    <td>145.00</td>
-                    <td>$98.20</td>
-                    <td class="font-mono">$128.45</td>
-                    <td class="text-mint font-mono">+3.82%</td>
-                    <td><span class="badge-bull">BULLISH</span></td>
-                    <td class="font-mono font-bold">$18,625.25</td>
-                  </tr>
-                  <tr>
-                    <td class="cell-asset">
-                      <span class="ticker-badge">VWCE.DE</span>
-                      <span class="ticker-name">Vanguard FTSE All-World</span>
-                    </td>
-                    <td>420.00</td>
-                    <td>€104.50</td>
-                    <td class="font-mono">€122.10</td>
-                    <td class="text-mint font-mono">+0.65%</td>
-                    <td><span class="badge-bull">ABOVE SMA</span></td>
-                    <td class="font-mono font-bold">€51,282.00</td>
-                  </tr>
-                  <tr>
-                    <td class="cell-asset">
-                      <span class="ticker-badge">AAPL</span>
-                      <span class="ticker-name">Apple Inc</span>
-                    </td>
-                    <td>90.00</td>
-                    <td>$182.30</td>
-                    <td class="font-mono">$224.15</td>
-                    <td class="text-muted font-mono">-0.41%</td>
-                    <td><span class="badge-neutral">NEUTRAL</span></td>
-                    <td class="font-mono font-bold">$20,173.50</td>
-                  </tr>
-                  <tr>
-                    <td class="cell-asset">
-                      <span class="ticker-badge">BTC-USD</span>
-                      <span class="ticker-name">Bitcoin</span>
-                    </td>
-                    <td>0.4500</td>
-                    <td>$48,500</td>
-                    <td class="font-mono">$64,210</td>
-                    <td class="text-accent font-mono">+2.15%</td>
-                    <td><span class="badge-crypto">RSI 58</span></td>
-                    <td class="font-mono font-bold">$28,894.50</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Tab 3: AI Briefing Panel -->
-          <div class="mockup-panel" id="tab-panel-ai-brief">
-            <div class="ai-report-box">
-              <div class="ai-report-header">
-                <div class="ai-model-tag">
-                  <span class="ai-pulse"></span>
-                  <span>LOCAL ANALYST (Ollama / deepseek-r1:8b)</span>
-                </div>
-                <div class="ai-time">Generated in 1.4s &bull; Completely on-device</div>
-              </div>
-              <div class="ai-markdown-content">
-                <h3>Executive Summary: High Health Factor (88/100)</h3>
-                <p>Your portfolio shows exceptional alpha driven by semiconductor overweight (+30.8% YTD). Cash reserves (8.36%) provide comfortable buffer for upcoming DCA schedules.</p>
-                <div class="ai-metric-grid">
-                  <div class="ai-metric-pill">
-                    <span class="label">Volatility (Beta):</span>
-                    <span class="val">1.14</span>
-                  </div>
-                  <div class="ai-metric-pill">
-                    <span class="label">Sharpe Ratio:</span>
-                    <span class="val">1.82</span>
-                  </div>
-                  <div class="ai-metric-pill">
-                    <span class="label">Max Drawdown (1Y):</span>
-                    <span class="val">-9.4%</span>
-                  </div>
-                </div>
-                <h4>Rebalancing Suggestions:</h4>
-                <ul>
-                  <li><strong>Concentration Alert:</strong> Tech equities comprise 38.4% of total equity weight. Consider allocating next monthly contribution to broad international ETF (VWCE).</li>
-                  <li><strong>FX Exposure:</strong> 65% USD denominated vs 35% EUR. Favorable FX tailwind over trailing 90 days.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 4: CSV Importer Panel -->
-          <div class="mockup-panel" id="tab-panel-csv-importer">
-            <div class="csv-mock-view">
-              <div class="csv-dropzone">
-                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--accent)" stroke-width="1.8">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                </svg>
-                <div class="drop-title">Drop your broker CSV file here</div>
-                <div class="drop-desc">Instant auto-detection for popular brokers with dry-run diff preview</div>
-                <div class="supported-brokers">
-                  <span class="broker-badge">Trade Republic</span>
-                  <span class="broker-badge">Scalable Capital</span>
-                  <span class="broker-badge">Interactive Brokers</span>
-                  <span class="broker-badge">Degiro</span>
-                  <span class="broker-badge">Generic CSV</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
       </div>
     </section>
 
-    <!-- Core Features Grid -->
+    <!-- Features -->
     <section class="features-section" id="features">
       <div class="container">
-        <div class="section-header text-center">
-          <span class="section-pill">UNCOMPROMISING ARCHITECTURE</span>
-          <h2 class="section-title">Built for Privacy. Designed for Power.</h2>
-          <p class="section-subtitle">Unlike web trackers that upload your net worth to remote databases, Portfolio puts you in total control.</p>
+        <div class="section-heading">
+          <span class="section-kicker">Features</span>
+          <h2 class="section-title">Everything a web tracker does, on a computer you own</h2>
         </div>
 
         <div class="features-grid">
-          <!-- Card 1 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
-            <h3 class="card-title">100% Offline-First Storage</h3>
-            <p class="card-desc">
-              Your holdings, cash reserves, and transaction histories stay safely on your computer in a private local database. No login, no cloud database, and zero third-party tracking of your assets.
-            </p>
-          </div>
+            <h3 class="card-title">Runs on your own computer</h3>
+            <p class="card-desc">Your holdings, cash reserves and transaction history stay on your computer in a private local database. No login, no cloud database and no third party tracking your assets.</p>
+          </article>
 
-          <!-- Card 2 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                <polyline points="16 7 22 7 22 13"></polyline>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
             </div>
-            <h3 class="card-title">Live Market Valuation & FX</h3>
-            <p class="card-desc">
-              Fetch real-time stock, ETF, and crypto quotes directly through Yahoo Finance. Automatic foreign currency exchange rates ensure accurate consolidated portfolio net worth in your base currency.
-            </p>
-          </div>
+            <h3 class="card-title">Live market valuation</h3>
+            <p class="card-desc">Stock, ETF and crypto quotes come straight from Yahoo Finance. Exchange rates are applied automatically so your whole portfolio is valued in your base currency.</p>
+          </article>
 
-          <!-- Card 3 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
             </div>
-            <h3 class="card-title">On-Demand AI</h3>
-            <p class="card-desc">
-              Generate insightful markdown analysis on risk, asset allocation, and rebalancing. Connect local LLMs (Ollama, llama.cpp) for 100% private processing, or cloud APIs (Groq, Anthropic, OpenAI, Gemini).
-            </p>
-          </div>
+            <h3 class="card-title">AI briefings on demand</h3>
+            <p class="card-desc">Ask for a written analysis of risk, allocation and rebalancing. Use a local model (Ollama, llama.cpp) for fully private processing, or your own API key for Groq, Anthropic, OpenAI or Gemini.</p>
+          </article>
 
-          <!-- Card 4 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             </div>
-            <h3 class="card-title">Smart Broker CSV Importer</h3>
-            <p class="card-desc">
-              Import hundreds of transactions in seconds. Built-in template detection for Trade Republic, Scalable Capital, Interactive Brokers, and Degiro with smart duplicate detection and dry-run diff preview.
-            </p>
-          </div>
+            <h3 class="card-title">Broker CSV import</h3>
+            <p class="card-desc">Import hundreds of transactions in seconds. Trade Republic, Scalable Capital, Interactive Brokers and Degiro exports are recognised automatically, with duplicate detection and a dry-run preview.</p>
+          </article>
 
-          <!-- Card 5 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </div>
-            <h3 class="card-title">Deep Technical Analytics</h3>
-            <p class="card-desc">
-              Track SMA 50 and SMA 200 moving averages, 14-day RSI oscillators, 52-week high/low bands, dividend income, withholding tax deductions, and transaction fee drag calculations.
-            </p>
-          </div>
+            <h3 class="card-title">Technical analytics</h3>
+            <p class="card-desc">SMA 50 and SMA 200 moving averages, 14-day RSI, 52-week high and low bands, dividend income, withheld taxes and the drag of transaction fees, all calculated on your computer.</p>
+          </article>
 
-          <!-- Card 6 -->
-          <div class="feature-card">
-            <div class="card-icon-wrap">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             </div>
-            <h3 class="card-title">Ultra-Fast &amp; Lightweight</h3>
-            <p class="card-desc">
-              Built as a native desktop application. It starts in milliseconds, uses minimal system memory, and runs smoothly on any computer.
-            </p>
-          </div>
+            <h3 class="card-title">Fast and lightweight</h3>
+            <p class="card-desc">A native desktop application that starts in a moment, uses little memory and runs smoothly on an ordinary computer. Metrics are small sandboxed modules you pick from the <a href="/metrics/">marketplace</a>.</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- Download Matrix Section -->
+    <!-- How it works -->
+    <section class="how-section" id="how-it-works">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">How it works</span>
+          <h2 class="section-title">Three steps to get going</h2>
+        </div>
+        <ol class="how-steps">
+          <li class="how-step">
+            <span class="how-index">1</span>
+            <h3>Install Portfolio</h3>
+            <p>One installer, nothing else to set up. On first launch the app creates its data file on your disk. No account, no sign-in, no API key for market data.</p>
+          </li>
+          <li class="how-step">
+            <span class="how-index">2</span>
+            <h3>Add your holdings</h3>
+            <p>Import the CSV export from your broker (Trade Republic, Scalable Capital, Interactive Brokers, Degiro or a generic file) or enter transactions by hand. Quotes and exchange rates are fetched from Yahoo Finance.</p>
+          </li>
+          <li class="how-step">
+            <span class="how-index">3</span>
+            <h3>Track, analyse, ask</h3>
+            <p>Watch value, cost basis and indicators update on the overview. Optionally point the app at a local model or your own API key and ask for a written briefing whenever you want one.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Downloads -->
     <section class="downloads-section" id="downloads">
       <div class="container">
-        <div class="section-header text-center">
-          <span class="section-pill">GET STARTED TODAY</span>
+        <div class="section-heading">
+          <span class="section-kicker">Downloads</span>
           <h2 class="section-title">Download Portfolio</h2>
-          <p class="section-subtitle">Available for all major operating systems. Free, open source, and ready in seconds.</p>
+          <p class="section-lead"><span class="latest-version-text">Latest release</span>. Every installer is built from the public source code on GitHub.</p>
         </div>
 
-        <div class="downloads-grid">
-          <!-- Windows Card -->
-          <div class="platform-download-card" id="card-windows">
-            <div class="platform-card-header">
-              <div class="platform-icon-box">
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                  <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/>
-                </svg>
-              </div>
-              <div class="platform-badge-recommended" id="rec-windows">RECOMMENDED FOR YOU</div>
+        <div class="platform-grid">
+          <article class="platform-card" id="card-windows">
+            <div class="platform-badge" id="rec-windows">Recommended for you</div>
+            <div class="platform-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.802"/></svg>
             </div>
             <h3 class="platform-name">Windows</h3>
-            <p class="platform-specs">Windows 10, 11 (64-bit)</p>
-            <div class="platform-action">
-              <a href="#" class="btn btn-primary btn-full download-link-win" data-os="windows" data-type="installer">
-                <span>Download Installer (.exe)</span>
-              </a>
-              <a href="#" class="btn-subtext-link download-link-win-portable" data-os="windows" data-type="portable">
-                Download Portable (.zip)
-              </a>
-            </div>
-            <div class="platform-footer-specs">
-              <span>Size: ~45 MB</span>
-              <span>SHA-256 Available</span>
-            </div>
-          </div>
+            <p class="platform-req">Windows 10 or 11, 64-bit</p>
+            <a href="#" class="btn btn-primary btn-block download-link-win" data-os="windows" data-type="installer">Installer (.exe)</a>
+            <a href="#" class="btn btn-ghost btn-block download-link-win-portable" data-os="windows" data-type="portable">Portable (.zip)</a>
+          </article>
 
-          <!-- macOS Card -->
-          <div class="platform-download-card" id="card-macos">
-            <div class="platform-card-header">
-              <div class="platform-icon-box">
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/>
-                </svg>
-              </div>
-              <div class="platform-badge-recommended" id="rec-macos">RECOMMENDED FOR YOU</div>
+          <article class="platform-card" id="card-macos">
+            <div class="platform-badge" id="rec-macos">Recommended for you</div>
+            <div class="platform-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z"/></svg>
             </div>
             <h3 class="platform-name">macOS</h3>
-            <p class="platform-specs">Apple Silicon & Intel (macOS 12+)</p>
-            <div class="platform-action">
-              <a href="#" class="btn btn-primary btn-full download-link-mac" data-os="macos" data-type="dmg">
-                <span>Download Disk Image (.dmg)</span>
-              </a>
-              <a href="#" class="btn-subtext-link download-link-mac-zip" data-os="macos" data-type="zip">
-                Download .app archive (.zip)
-              </a>
-            </div>
-            <div class="platform-footer-specs">
-              <span>Universal Binary</span>
-              <span>Gatekeeper Ready</span>
-            </div>
-          </div>
+            <p class="platform-req">Apple Silicon and Intel, macOS 12+</p>
+            <a href="#" class="btn btn-primary btn-block download-link-mac" data-os="macos" data-type="installer">Disk image (.dmg)</a>
+            <a href="#" class="btn btn-ghost btn-block download-link-mac-zip" data-os="macos" data-type="portable">Archive (.zip)</a>
+          </article>
 
-          <!-- Linux Card -->
-          <div class="platform-download-card" id="card-linux">
-            <div class="platform-card-header">
-              <div class="platform-icon-box">
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                  <path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/>
-                </svg>
-              </div>
-              <div class="platform-badge-recommended" id="rec-linux">RECOMMENDED FOR YOU</div>
+          <article class="platform-card" id="card-linux">
+            <div class="platform-badge" id="rec-linux">Recommended for you</div>
+            <div class="platform-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M12.003 2c-3.15 0-5.71 2.56-5.71 5.71 0 1.24.4 2.39 1.08 3.32-.4.76-.87 1.83-.87 3.03 0 1.21.36 2.32.97 3.24-1.03.62-1.74 1.74-1.74 3.03 0 .76.25 1.47.67 2.05.3.41.77.62 1.27.62h8.66c.5 0 .97-.21 1.27-.62.42-.58.67-1.29.67-2.05 0-1.29-.71-2.41-1.74-3.03.61-.92.97-2.03.97-3.24 0-1.2-.47-2.27-.87-3.03.68-.93 1.08-2.08 1.08-3.32 0-3.15-2.56-5.71-5.71-5.71z"/></svg>
             </div>
             <h3 class="platform-name">Linux</h3>
-            <p class="platform-specs">Ubuntu, Debian, Mint & distros (x64)</p>
-            <div class="platform-action">
-              <a href="#" class="btn btn-primary btn-full download-link-linux" data-os="linux" data-type="deb">
-                <span>Download Debian (.deb)</span>
-              </a>
-              <a href="#" class="btn-subtext-link download-link-linux-tar" data-os="linux" data-type="tar">
-                Download Tarball (.tar.gz)
-              </a>
-            </div>
-            <div class="platform-footer-specs">
-              <span>Native Performance</span>
-              <span>Debian Package</span>
-            </div>
-          </div>
+            <p class="platform-req">Debian, Ubuntu and derivatives, x64</p>
+            <a href="#" class="btn btn-primary btn-block download-link-linux" data-os="linux" data-type="installer">Package (.deb)</a>
+            <a href="#" class="btn btn-ghost btn-block download-link-linux-tar" data-os="linux" data-type="portable">Archive (.tar.gz)</a>
+          </article>
         </div>
 
-        <!-- More Releases Callout Banner -->
-        <div class="releases-callout-card">
-          <div class="releases-callout-icon">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
+        <div class="releases-callout">
+          <div>
+            <h3 class="releases-title">Older versions</h3>
+            <p>Every version is published on GitHub. Older versions stay available to download.</p>
           </div>
-          <div class="releases-callout-body">
-            <h3 class="releases-callout-title">More Versions and Release History</h3>
-            <p class="releases-callout-text">
-              The download buttons above always provide the latest release. All previous versions, pre-release builds, portable archives, and complete release notes are available on GitHub.
-            </p>
-          </div>
-          <div class="releases-callout-cta">
-            <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer" class="btn btn-secondary releases-page-link">
-              <span>View All Releases on GitHub</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </a>
-          </div>
+          <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">All releases</a>
         </div>
       </div>
     </section>
 
-    <!-- FAQ Section -->
+    <!-- FAQ -->
     <section class="faq-section" id="faq">
       <div class="container faq-container">
-        <div class="section-header text-center">
-          <span class="section-pill">QUESTIONS & ANSWERS</span>
-          <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="section-heading">
+          <span class="section-kicker">FAQ</span>
+          <h2 class="section-title">Questions people ask first</h2>
         </div>
 
-        <div class="faq-accordion">
+        <div class="faq-list">
           <details class="faq-item" open>
-            <summary class="faq-question">
-              <span>Where is my portfolio data stored?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Everything is stored exclusively on your local computer in a secure private database file. No external servers, no cloud databases, and no accounts are required.</p>
-            </div>
+            <summary>Where is my portfolio data stored?</summary>
+            <p>In one database file on your computer. There are no external servers, no cloud database and no account. Back it up by copying that file.</p>
           </details>
-
           <details class="faq-item">
-            <summary class="faq-question">
-              <span>How does live market valuation work without cloud syncing?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>The application communicates directly with Yahoo Finance from your computer to fetch current quotes, intraday movements, and currency exchange rates. Your holdings and portfolio values are never sent to Yahoo; the app requests only public ticker symbols.</p>
-            </div>
+            <summary>How do live quotes work without a cloud service?</summary>
+            <p>The app talks to Yahoo Finance directly from your computer to fetch current prices, intraday moves and exchange rates. Your holdings and portfolio values are never sent anywhere; only the ticker symbols you look up leave your machine.</p>
           </details>
-
           <details class="faq-item">
-            <summary class="faq-question">
-              <span>How does the AI Analyst work?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>You have full flexibility: run completely offline with local LLM runtimes like Ollama or llama.cpp, or supply your own private API key for cloud providers like Groq, OpenAI, Anthropic, Gemini, OpenRouter, or DeepSeek. Reports are generated strictly on demand.</p>
-            </div>
+            <summary>How do the AI briefings work?</summary>
+            <p>You choose the model. Run fully offline with a local runtime such as Ollama or llama.cpp, or supply your own API key for a cloud provider (Groq, OpenAI, Anthropic, Gemini, OpenRouter or DeepSeek). The app sends the request straight to the provider you picked; nothing goes through a server of ours.</p>
           </details>
-
           <details class="faq-item">
-            <summary class="faq-question">
-              <span>Which brokers can I import CSVs from?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>The CSV import wizard features automatic schema detection for Trade Republic, Scalable Capital, Interactive Brokers (Activity Statement CSV), and Degiro (Account CSV), plus support for standard generic transaction CSV format.</p>
-            </div>
+            <summary>Which brokers can I import CSVs from?</summary>
+            <p>The import wizard recognises Trade Republic, Scalable Capital, Interactive Brokers (Activity Statement CSV) and Degiro (Account CSV) exports automatically, and accepts a generic transaction CSV for anything else. Imports are previewed as a dry run before anything is written.</p>
           </details>
-
           <details class="faq-item">
-            <summary class="faq-question">
-              <span>Is Portfolio completely free?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Yes. Portfolio is 100% free and open source. You own your data forever, with zero subscription paywalls or artificial portfolio size caps.</p>
-            </div>
+            <summary>Is Portfolio free?</summary>
+            <p>Yes. Portfolio is free and open source under the MIT License. There is no subscription and no limit on the size of your portfolio.</p>
           </details>
-
           <details class="faq-item">
-            <summary class="faq-question">
-              <span>Where can I find older versions or all release packages?</span>
-              <svg class="chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </summary>
-            <div class="faq-answer">
-              <p>The download buttons on this website always deliver the latest stable release. If you need an older version, a portable package, or detailed release notes, all versions are permanently available on the <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">GitHub Releases</a> page.</p>
-            </div>
+            <summary>Where can I find older versions?</summary>
+            <p>The download buttons on this site always give you the latest release. Every earlier version, together with its release notes, stays available on the <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer">GitHub releases page</a>.</p>
           </details>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="site-footer">
     <div class="container footer-container">
       <div class="footer-brand">
-        <div class="brand-link">
-          <img src="assets/app-icon.svg" alt="Portfolio Icon" width="28" height="28">
-          <span class="brand-name">Portfolio</span>
-        </div>
-        <p class="footer-tagline">Private, offline-first personal portfolio tracking for the modern financial sovereign.</p>
+        <img src="assets/app-icon.svg" alt="" width="28" height="28">
+        <span>Portfolio</span>
+        <p>A personal investment tracker that runs on your own computer.</p>
       </div>
-
-      <div class="footer-links-group">
-        <div class="footer-col">
+      <div class="footer-links">
+        <div>
           <h4>Product</h4>
           <a href="#features">Features</a>
-          <a href="#preview">Interface</a>
           <a href="#downloads">Downloads</a>
           <a href="/metrics/">Metrics</a>
           <a href="#faq">FAQ</a>
         </div>
-        <div class="footer-col">
-          <h4>Platforms</h4>
-          <a href="#" class="download-link-win" data-os="windows" data-type="installer">Windows (.exe)</a>
-          <a href="#" class="download-link-mac" data-os="macos" data-type="dmg">macOS (.dmg)</a>
-          <a href="#" class="download-link-linux" data-os="linux" data-type="deb">Linux (.deb)</a>
+        <div>
+          <h4>Project</h4>
+          <a href="https://github.com/cgeosoft/portfolio" target="_blank" rel="noopener noreferrer">Source code</a>
+          <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+          <a href="https://github.com/cgeosoft/portfolio/issues" target="_blank" rel="noopener noreferrer">Issues</a>
         </div>
-        <div class="footer-col">
-          <h4>Ecosystem</h4>
-          <a href="https://github.com/cgeosoft/portfolio" target="_blank" rel="noopener noreferrer">Source Code</a>
-          <a href="https://github.com/cgeosoft/portfolio/releases" target="_blank" rel="noopener noreferrer">All Releases (GitHub)</a>
-          <a href="https://github.com/cgeosoft/portfolio/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a>
-        </div>
-        <div class="footer-col">
+        <div>
           <h4>Legal</h4>
-          <a href="/terms">Terms of Service</a>
-          <a href="/terms#cookie-policy">Cookie Policy</a>
+          <a href="/terms/">Terms of use</a>
+          <a href="/terms/#cookie-policy">Cookie policy</a>
         </div>
       </div>
     </div>
-
     <div class="container footer-bottom">
-      <p>&copy; <span id="current-year"></span> Portfolio. All rights reserved. Open-source under MIT License. &bull; <a href="/terms" style="color: var(--text-muted); text-decoration: underline;">Terms of Service</a></p>
-      <div class="footer-note">
-        <span class="status-dot"></span>
-        <span>LOCAL STORAGE ENGINE &bull; NO CLOUD DATABASE REQUIRED</span>
-      </div>
+      <p>&copy; <span id="current-year"></span> cgeosoft. Open source under the MIT License.</p>
     </div>
   </footer>
 
-  <!-- Full-size Screenshot Lightbox -->
-  <dialog class="shot-lightbox" id="shot-lightbox" aria-label="Application screenshot, full size">
-    <button type="button" class="shot-lightbox-close" id="shot-lightbox-close" aria-label="Close full size screenshot">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-        <path d="M18 6 6 18M6 6l12 12"/>
-      </svg>
+  <dialog class="shot-lightbox" id="shot-lightbox" aria-label="Screenshot, full size">
+    <button type="button" class="shot-lightbox-close" id="shot-lightbox-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
-    <img class="shot-lightbox-img" id="shot-lightbox-img" src="assets/screenshot.png" alt="Portfolio overview tab shown at full size.">
+    <img class="shot-lightbox-img" src="assets/screenshot.png" alt="Portfolio overview shown at full size.">
   </dialog>
 
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
