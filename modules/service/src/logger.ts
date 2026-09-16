@@ -3,7 +3,7 @@
  * terminal is attached or in development) and to one file per local day in
  * the log directory, `service-YYYY-MM-DD.log`. Every start on the same day
  * appends to that day's file; a new file begins at midnight. The file layout
- * is shared with Assistant (portfolio-shared/log-format.ts, `renderFileLogLine`).
+ * is defined in portfolio-shared/log-format.ts (`renderFileLogLine`).
  */
 import { mkdirSync, appendFileSync } from "node:fs";
 import { join } from "node:path";

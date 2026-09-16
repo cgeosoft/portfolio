@@ -8,8 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand pink ramp from docs/theme.md; the numbered shades replace the
-        // indigo-* utilities used by the Assistant look.
+        // Brand pink ramp from docs/theme.md.
         accent: {
           DEFAULT: "#DD3C73",
           rgb: "221, 60, 115",

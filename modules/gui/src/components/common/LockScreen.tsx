@@ -15,8 +15,7 @@ interface LockScreenProps {
 
 /**
  * Full-screen gate shown before the workspace: the PIN prompt when the app
- * lock is on, or a retry card when the service cannot be reached. Same layout
- * as the Assistant lock screen.
+ * lock is on, or a retry card when the service cannot be reached.
  */
 export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnlock, onRetry }) => {
   const step: "pin" | "error" = locked ? "pin" : "error";

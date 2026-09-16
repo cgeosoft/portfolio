@@ -31,4 +31,4 @@ Builds the React UI: components, hooks, state, navigation and the typed client t
 - Files: `App.tsx` (router: dashboard, settings, portfolios, terms), `components/` (`layout/`, `common/`, `portfolio/` with cards, modals, `AssistantSidebar`, `utils.ts`, `report-export.ts`; `metrics/` with `MetricsTab`, `MetricDashboard`, `metric-view.ts`; `settings/`).
 - Money and percent only through `fmtCurrency` / `fmtPercent` from `components/portfolio/utils.ts`; `fmtCurrency` / `hideValues` is the only place the privacy mask applies.
 - Metrics: the webview never formats a metric itself; call `evaluatePortfolioMetrics` and render through `displayMetric()`. Selection edits go through the helpers in `modules/shared/src/metrics.ts` (capacity 4 large, 6 compact).
-- Use the `cx-card` surface and the tokens in `index.css`; the lock screen, menu bar and footer mirror Assistant.
+- Use the `cx-card` surface and the tokens in `index.css` for consistent card, lock screen, menu bar and footer styling.

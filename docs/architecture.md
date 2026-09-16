@@ -1,6 +1,6 @@
 # Architecture
 
-Portfolio and Assistant share one shape: a Bun workspace with `modules/service`, `modules/gui`, `modules/desktop` and `modules/shared`. A user should recognise the same vendor in both apps: same menu bar, footer, lock screen, tokens and fonts, same log format, same release flow.
+Portfolio is structured as a Bun workspace with `modules/service`, `modules/gui`, `modules/desktop` and `modules/shared`.
 
 ## Modules
 
@@ -37,7 +37,7 @@ Everything the user can change lives in the `config` table: one row per key, JSO
 
 ## Logging
 
-Both apps write the same line layout (`renderFileLogLine` in `modules/shared/src/log-format.ts`):
+The service and desktop write a consistent line layout (`renderFileLogLine` in `modules/shared/src/log-format.ts`):
 
 ```
 2026-09-16T21:34:27.134Z  INFO   auth:pin                    PIN enabled

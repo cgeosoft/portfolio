@@ -19,7 +19,7 @@ export interface ServiceOptions {
 /**
  * The service as a child process of the same runtime binary that runs this
  * main process. Its stdout/stderr are kept in memory (last lines) so a
- * startup failure can be shown in the window. Same shape as Assistant.
+ * startup failure can be shown in the window.
  */
 export class ServiceProcess {
   private proc: Bun.Subprocess<"ignore", "pipe", "pipe"> | null = null;

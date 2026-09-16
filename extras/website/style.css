@@ -1,7 +1,4 @@
-/* Marketing site stylesheet shared by the Assistant and Portfolio websites.
-   The two copies differ only in the theme block below (accent colours); every
-   layout rule is identical so both sites keep the same container, sections and
-   components. Edit the rest here and copy it to the other repository. */
+/* Marketing site stylesheet. */
 
 /* Theme: Portfolio (pink accent, matches assets/app-icon.svg) */
 :root {

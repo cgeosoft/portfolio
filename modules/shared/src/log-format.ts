@@ -150,8 +150,7 @@ export function renderPlainLogLine(parts: ConsoleLogLineParts): string {
 /**
  * One line of the log file: full ISO timestamp, level, scope, message and the
  * duration / metadata tail. Multi-line messages are indented under the
- * message column. Both Assistant and Portfolio write this exact layout, so
- * the same tooling reads either `service.log`.
+ * message column.
  */
 export function renderFileLogLine(record: ConsoleLogRecord): string {
   const parts = buildConsoleLogLine(record);

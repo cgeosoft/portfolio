@@ -2,9 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens shared with Assistant: dark navy canvas, glass
- * panels. Portfolio keeps its own pink accent (#DD3C73) and its chart palette
- * (mint, cream, blue, purple); the rest of the chrome follows the vendor look. */
+/* Design tokens: dark navy canvas, glass panels, pink accent (#DD3C73) and
+ * chart palette (mint, cream, blue, purple). */
 @layer base {
   :root {
     color-scheme: dark;
@@ -116,7 +115,7 @@
   }
 }
 
-/* Glass panel helpers (same as Assistant). */
+/* Glass panel helpers. */
 .glass-panel {
   background: rgba(15, 19, 29, 0.75);
   backdrop-filter: blur(16px);
@@ -238,7 +237,7 @@
 /* ==========================================================================
    Desktop menu bar (components/layout/AppMenuBar.tsx). Plain fills, no
    backdrop-filter: the dropdown sits above scrolling content in a software-
-   rendered webview. Identical to Assistant.
+   rendered webview.
    ========================================================================== */
 .app-menubar {
   position: relative;

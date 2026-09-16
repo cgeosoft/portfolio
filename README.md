@@ -27,7 +27,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 - **On-Demand AI Analyst**: Generate tactical markdown portfolio performance briefings via local or cloud LLMs.
 - **Setup Wizard**: 3-step onboarding wizard describing the application, offering an optional 100-transaction demo portfolio, and an opt-in anonymous telemetry toggle.
 - **Anonymous Telemetry (Opt-in)**: Privacy-preserving telemetry using PostHog, completely optional (default off). No financial data, portfolio values, or personal identifiers are ever transmitted.
-- **Same look**: dark navy canvas, Portfolio's pink accent, `Plus Jakarta Sans` for text and `JetBrains Mono` for numbers, interactive Chart.js visualizations.
+- **Dark Terminal Aesthetic**: dark navy canvas, Portfolio's pink accent, `Plus Jakarta Sans` for text and `JetBrains Mono` for numbers, interactive Chart.js visualizations.
 - **App lock and LAN access**: an optional PIN locks the app; with a PIN set, phones and other devices on your network can open Portfolio in a browser.
 
 ---

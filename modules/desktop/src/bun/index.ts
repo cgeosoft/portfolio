@@ -4,7 +4,7 @@
  * It starts the bundled service as a child process, waits until /api/health
  * answers on loopback and points a single window at it. The service serves
  * the GUI itself and owns the "allow remote connections" switch (Settings →
- * Access), so nothing else lives here. Same design as the Assistant shell.
+ * Access), so nothing else lives here.
  */
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Utils } from "electrobun/bun";
 import { mkdirSync } from "node:fs";

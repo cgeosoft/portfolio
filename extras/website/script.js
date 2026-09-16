@@ -1,8 +1,7 @@
 /**
- * Marketing site script shared by the Assistant and Portfolio websites: OS
- * detection, download links resolved from the release manifest, copy button,
- * screenshot reveal / hotspots / lightbox, and opt-in PostHog analytics.
- * The two copies differ only in SITE_SLUG; keep the rest identical.
+ * Marketing site script: OS detection, download links resolved from the
+ * release manifest, copy button, screenshot reveal / hotspots / lightbox,
+ * and opt-in PostHog analytics.
  */
 (function () {
   "use strict";

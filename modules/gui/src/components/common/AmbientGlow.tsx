@@ -22,7 +22,7 @@ const gradient = (g: Glow, alpha = g.alpha) => `radial-gradient(circle ${g.radiu
 /**
  * Soft coloured glows drawn with radial gradients instead of `filter: blur()`:
  * WebKitGTK renders in software on Linux and a blurred element is rasterised
- * again whenever anything animates on top of it. Same component as Assistant.
+ * again whenever anything animates on top of it.
  */
 export function AmbientGlow({ glows, pulse = false, position = "absolute", className = "" }: AmbientGlowProps) {
   if (glows.length === 0) return null;

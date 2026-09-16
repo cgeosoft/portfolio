@@ -2,7 +2,7 @@
 
 Static landing page for Portfolio, deployed to Cloudflare Pages. Plain HTML, CSS and one script; no build step (the metrics catalog page is generated, see below).
 
-The site shares its layout with the Assistant website (`assistant/extras/website`): `style.css` and `script.js` are the same files in both repositories except for the theme block at the top of the stylesheet (accent colours) and `SITE_SLUG` at the top of the script. Keep them in step: change the shared part in one repo and copy it to the other. `index.html` follows the same section order in both (hero, interface, features, how it works, downloads, FAQ); only the text, the screenshot and the accent differ.
+The site uses vanilla HTML, `style.css` and `script.js`. `index.html` is structured into hero, interface screenshot with interactive hotspots, features, how it works, downloads matrix, and FAQ.
 
 ## Pages
 

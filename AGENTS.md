@@ -2,16 +2,16 @@
 
 ## What this repo is
 
-Portfolio is an offline personal investment tracker for Linux, Windows and macOS. Bun workspace with the same module layout as Assistant: a pure Bun service (`modules/service`, `Bun.serve` + `bun:sqlite`, no framework), a React 19 GUI built with Vite (`modules/gui`) and served by the service, a thin Electrobun shell (`modules/desktop`) that spawns the service and points one window at it, and `modules/shared` for the types both sides use. TypeScript strict throughout.
+Portfolio is an offline personal investment tracker for Linux, Windows and macOS. Bun workspace layout: a pure Bun service (`modules/service`, `Bun.serve` + `bun:sqlite`, no framework), a React 19 GUI built with Vite (`modules/gui`) and served by the service, a thin Electrobun shell (`modules/desktop`) that spawns the service and points one window at it, and `modules/shared` for the types both sides use. TypeScript strict throughout.
 
 Offline-first and private: no remote accounts or databases. Yahoo Finance and Finnhub provide quotes, news and FX. Local or cloud LLMs generate reports and answer in the assistant sidebar. PostHog telemetry is off by default and never sends balances, holdings or personal data. Metric modules are sandboxed AssemblyScript (`extras/metrics/`) run in a separate engine process.
 
-The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback; Settings → Access can lock the app with a PIN and, once a PIN is set, allow other devices on the network to open it (same switch as Assistant).
+The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback; Settings → Access can lock the app with a PIN and, once a PIN is set, allow other devices on the network to open it.
 
 ## Layout
 
 - `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `config` table), `paths.ts` (data and log directories), `logger.ts` (daily `service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
-- `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (tokens shared with Assistant).
+- `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (design tokens).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.
 - `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) including `releases/latest.json` and the packages.
