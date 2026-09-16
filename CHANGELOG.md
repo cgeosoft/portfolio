@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.0] - 2026-09-16
+
+- 9d65a78 Rework release pipeline for local builds
+
+
 ## [0.3.1] - 2026-09-16
 
 - 735c868 Remove cross-project references to Assistant across codebase and documentation
