@@ -13,8 +13,8 @@
   // release assets on GitHub Releases (see scripts/release.sh).
   const RELEASE_MANIFEST_URL = "/releases/latest.json";
   const FALLBACK_URL = "#downloads";
-  const CACHE_KEY = `${SITE_SLUG}_latest_release_v2`;
-  const CACHE_TTL_MS = 15 * 60 * 1000;
+  const CACHE_KEY = `${SITE_SLUG}_latest_release_v3`;
+  const CACHE_TTL_MS = 2 * 60 * 1000;
   const CONSENT_KEY = `${SITE_SLUG}_cookie_consent_v1`;
 
   // Release assets follow <slug>_<version>_<platform>.<ext>. The version is
