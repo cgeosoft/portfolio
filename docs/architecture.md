@@ -22,7 +22,7 @@ There is no `.env` file at runtime. The service reads only these environment var
 | `PORTFOLIO_PORT` | `5130` | Listen port |
 | `PORTFOLIO_HOST` | remote-access switch | Force a bind address (servers) |
 | `PORTFOLIO_DATA_DIR` | `~/.config/portfolio` (Linux), `%APPDATA%\portfolio`, `~/Library/Application Support/portfolio` | Database `data/portfolio.sqlite`, `host-settings.json` |
-| `PORTFOLIO_LOG_DIR` | per-user log dir | `service.log` (+ `service.log.1`) |
+| `PORTFOLIO_LOG_DIR` | `<workspace>/logs` in dev; `~/.local/state/portfolio/logs` (Linux), `%LOCALAPPDATA%\portfolio\logs`, `~/Library/Logs/portfolio` in production | One `service-YYYY-MM-DD.log` per day |
 | `PORTFOLIO_GUI_DIR` | unset | Built GUI to serve on `/` |
 | `PORTFOLIO_VERSION` | root `package.json` in dev | Baked into the bundle by `modules/desktop/scripts/stage.ts` |
 | `POSTHOG_API_KEY` | empty (telemetry off) | Baked into the bundle at build time |
@@ -44,7 +44,7 @@ Both apps write the same line layout (`renderFileLogLine` in `modules/shared/src
 2026-09-16T21:34:27.152Z  INFO   host:remote-access          Remote connections allowed; listening on 0.0.0.0:5130  12ms  key=value
 ```
 
-The service writes `service.log` in the log directory (rotated at 5 MB) and prints the same records to its console in an aligned, coloured layout. The desktop shell writes its own events to `desktop.log` in the same directory and keeps the last lines of the service output for the failure page. GUI events go to `POST /api/app/logs` and end up in `service.log` with source `gui`.
+The service writes one file per local day, `service-YYYY-MM-DD.log`, in the log directory (`modules/service/src/logger.ts`). Every start on the same day appends to that day's file; a new file begins at midnight; nothing is rotated by size or deleted. The same records are printed to the console in an aligned, coloured layout with the source, step, duration and `key=value` details (`log-console.ts`); colour is on when stdout is a terminal or in development, off with `NO_COLOR`. Debug records reach the file only in development. The desktop shell writes its own events to `desktop-YYYY-MM-DD.log` in the same directory and keeps the last lines of the service output (colour stripped) for the failure page. GUI events go to `POST /api/app/logs` and end up in the service file with source `gui`. Support tickets bundle the daily files modified in the last 24 hours.
 
 ## Release
 

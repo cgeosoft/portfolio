@@ -169,3 +169,19 @@ export function renderFileLogLine(record: ConsoleLogRecord): string {
 
 /** Matches the start of a file log line and captures its ISO timestamp. */
 export const FILE_LOG_LINE_PATTERN = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s{2}/;
+
+/** Local calendar date `YYYY-MM-DD`, the day part of a daily log file name. */
+export function formatLogDate(date = new Date()): string {
+  return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}`;
+}
+
+/**
+ * Name of the log file of one local day, e.g. `service-2026-09-17.log`. Every
+ * start on that day appends to the same file; a new file begins at midnight.
+ */
+export function dailyLogFileName(base: string, date = new Date()): string {
+  return `${base}-${formatLogDate(date)}.log`;
+}
+
+/** Matches a daily log file name and captures its base name and date. */
+export const DAILY_LOG_FILE_PATTERN = /^([a-z]+)-(\d{4}-\d{2}-\d{2})\.log$/;

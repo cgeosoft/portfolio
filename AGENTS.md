@@ -10,7 +10,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 
 ## Layout
 
-- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `config` table), `paths.ts` (data and log directories), `logger.ts` (`service.log`). Tests in `services/__tests__/`.
+- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `config` table), `paths.ts` (data and log directories), `logger.ts` (daily `service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
 - `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (tokens shared with Assistant).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.

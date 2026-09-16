@@ -4,13 +4,17 @@
  *
  *   PORTFOLIO_DATA_DIR   data directory; default is the per-user config dir
  *                        (~/.config/portfolio, %APPDATA%\portfolio, ...)
- *   PORTFOLIO_LOG_DIR    log directory; default is the per-user log dir
+ *   PORTFOLIO_LOG_DIR    log directory; default is `<workspace>/logs` in
+ *                        development and the per-user log dir in production
+ *                        (~/.local/state/portfolio/logs, ~/Library/Logs/portfolio,
+ *                        %LOCALAPPDATA%\portfolio\logs)
  *
  * Everything else the service needs (LLM providers, API keys, preferences)
  * lives in the `config` table of the SQLite database, never in a .env file.
  */
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { getWorkspaceRoot, isProduction } from "./environment";
 
 const APP_DIR_NAME = "portfolio";
 
@@ -39,10 +43,18 @@ export function getDatabaseFile(): string {
   return join(getStorageDir(), "data", "portfolio.sqlite");
 }
 
-/** Per-user log directory (`service.log` and its rotated copy). */
+/**
+ * Log directory (`service-YYYY-MM-DD.log`, `desktop-YYYY-MM-DD.log`). The
+ * desktop shell passes `PORTFOLIO_LOG_DIR`; a developer gets `<workspace>/logs`
+ * (ignored by git); a bare production process the per-user log directory.
+ */
 export function getLogDir(): string {
   const override = envDir("PORTFOLIO_LOG_DIR");
   if (override) return override;
+  if (!isProduction()) {
+    const root = getWorkspaceRoot();
+    if (root) return join(root, "logs");
+  }
   const dataOverride = envDir("PORTFOLIO_DATA_DIR");
   if (dataOverride) return join(dataOverride, "logs");
   const home = homedir() || process.env["HOME"] || "~";

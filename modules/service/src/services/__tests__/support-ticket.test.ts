@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, existsSync, utimesSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir, homedir } from "node:os";
 import JSZip from "jszip";
@@ -96,7 +96,13 @@ describe("SupportTicketService", () => {
     const home = homedir();
 
     const logContent = `${recentIso}  INFO   main  Reading config at ${home}/config.json (totalValue=54321.00)\n${recentIso}  OK     main  Test completed\n`;
-    writeFileSync(join(logDir, "service.log"), logContent, "utf-8");
+    const today = new Date();
+    const fileName = `service-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}.log`;
+    writeFileSync(join(logDir, fileName), logContent, "utf-8");
+    // A day-old file that nobody touched in the window is left out.
+    const stale = join(logDir, "service-2020-01-01.log");
+    writeFileSync(stale, `2020-01-01T10:00:00.000Z  INFO   main  old line\n`, "utf-8");
+    utimesSync(stale, new Date("2020-01-01T10:00:00Z"), new Date("2020-01-01T10:00:00Z"));
 
     const result = await service.packageRecentLogs();
     expect(result.fileName).toMatch(/^portfolio-support-logs-.*\.zip$/);
@@ -104,8 +110,9 @@ describe("SupportTicketService", () => {
 
     const zip = await JSZip.loadAsync(result.zip);
 
-    const logFile = zip.file("service.log");
+    const logFile = zip.file(fileName);
     expect(logFile).not.toBeNull();
+    expect(zip.file("service-2020-01-01.log")).toBeNull();
     const unzippedLog = await logFile!.async("text");
     expect(unzippedLog).not.toContain(home);
     expect(unzippedLog).not.toContain("54321.00");

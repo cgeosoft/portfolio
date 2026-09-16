@@ -70,7 +70,7 @@ async function main(): Promise<void> {
   const service = new ServiceProcess({
     serviceDir: join(appDir, "service"),
     port,
-    logFile: join(logDir, "desktop.log"),
+    logDir,
     echo: !build.isPackaged,
     env: {
       ...process.env,
@@ -105,7 +105,7 @@ async function main(): Promise<void> {
       windowStateManager.flushSave();
       Utils.quit(0);
     } else if (ready) {
-      mainWindow.webview.loadHTML(failedPage(join(logDir, "service.log"), service.tail()));
+      mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, service.tail()));
     }
   });
   service.log(`service starting on ${appUrl} (data ${userData}, logs ${logDir})`);
@@ -115,7 +115,7 @@ async function main(): Promise<void> {
     mainWindow.webview.loadURL(appUrl);
   } else {
     service.stop();
-    mainWindow.webview.loadHTML(failedPage(join(logDir, "service.log"), service.tail()));
+    mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, service.tail()));
   }
 }
 

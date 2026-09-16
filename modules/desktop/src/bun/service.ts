@@ -1,13 +1,17 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { join } from "node:path";
+import { dailyLogFileName } from "portfolio-shared/log-format";
+
+/** Removes ANSI colour codes from the service output kept for the failure page. */
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
 
 export interface ServiceOptions {
   /** Directory holding `main.js`; also the child's cwd. */
   serviceDir: string;
   env: Record<string, string | undefined>;
   port: number;
-  /** Shell log; the service keeps its own `service.log` in the same directory. */
-  logFile: string;
+  /** Directory of the shell log `desktop-YYYY-MM-DD.log`; the service writes `service-YYYY-MM-DD.log` next to it. */
+  logDir: string;
   /** Also echo the child's output to this process's stdout (dev). */
   echo: boolean;
 }
@@ -30,9 +34,11 @@ export class ServiceProcess {
   }
 
   start(onExit?: (code: number | null) => void): void {
-    const { serviceDir, env, logFile, echo } = this.options;
-    mkdirSync(dirname(logFile), { recursive: true });
-    const childEnv: Record<string, string> = { NO_COLOR: "1" };
+    const { serviceDir, env, logDir, echo } = this.options;
+    mkdirSync(logDir, { recursive: true });
+    // The service colours its console output in development (echoed here) and
+    // keeps it plain in production; its log file is always plain.
+    const childEnv: Record<string, string> = {};
     for (const [key, value] of Object.entries(env)) if (value !== undefined) childEnv[key] = value;
     this.proc = Bun.spawn([process.execPath, `${serviceDir}/main.js`], {
       cwd: serviceDir,
@@ -77,11 +83,21 @@ export class ServiceProcess {
     this.proc.kill();
   }
 
-  /** Shell-side event, written to desktop.log. */
+  /** Shell log of the current local day, `desktop-YYYY-MM-DD.log`. */
+  get logFile(): string {
+    return join(this.options.logDir, dailyLogFileName("desktop"));
+  }
+
+  /** Service log of the current local day, `service-YYYY-MM-DD.log`. */
+  get serviceLogFile(): string {
+    return join(this.options.logDir, dailyLogFileName("service"));
+  }
+
+  /** Shell-side event, appended to the shell log of the day. */
   log(message: string): void {
     const line = `${new Date().toISOString()}  INFO   desktop  ${message}\n`;
     try {
-      appendFileSync(this.options.logFile, line);
+      appendFileSync(this.logFile, line);
     } catch {
       // Logging must never take the app down.
     }
@@ -93,7 +109,7 @@ export class ServiceProcess {
     try {
       for await (const chunk of stream) {
         const text = decoder.decode(chunk, { stream: true });
-        this.recent.push(text);
+        this.recent.push(text.replace(ANSI_PATTERN, ""));
         if (this.recent.length > 200) this.recent.splice(0, this.recent.length - 200);
         if (echo) process.stdout.write(text);
       }

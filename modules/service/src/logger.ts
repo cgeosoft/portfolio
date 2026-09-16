@@ -1,19 +1,20 @@
 /**
  * Service logger. Every record goes to the console (aligned, coloured when a
- * terminal is attached) and to `<log dir>/service.log`, rotated to
- * `service.log.1` at 5 MB. The file layout is shared with Assistant
- * (portfolio-shared/log-format.ts, `renderFileLogLine`).
+ * terminal is attached or in development) and to one file per local day in
+ * the log directory, `service-YYYY-MM-DD.log`. Every start on the same day
+ * appends to that day's file; a new file begins at midnight. The file layout
+ * is shared with Assistant (portfolio-shared/log-format.ts, `renderFileLogLine`).
  */
-import { existsSync, mkdirSync, appendFileSync, statSync, renameSync, unlinkSync } from "node:fs";
+import { mkdirSync, appendFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderFileLogLine, type ConsoleLogLevel, type ConsoleLogRecord } from "portfolio-shared/log-format";
+import { dailyLogFileName, renderFileLogLine, type ConsoleLogLevel, type ConsoleLogRecord } from "portfolio-shared/log-format";
 import { writeConsoleLog } from "./log-console";
 import { getLogDir } from "./paths";
 
 export { getLogDir } from "./paths";
 
-const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024;
-export const LOG_FILE_NAME = "service.log";
+/** Base name of the service log files: `service-2026-09-17.log`. */
+export const LOG_FILE_BASE = "service";
 
 export type LogLevel = ConsoleLogLevel;
 
@@ -25,17 +26,16 @@ export interface LogEntry {
 
 export class AppLogger {
   private readonly logDir: string;
-  private readonly logFilePath: string;
   /** Records below this level are shown on the console only. */
   private fileLevel: LogLevel = "info";
 
   constructor(customLogDir?: string) {
     this.logDir = customLogDir ?? getLogDir();
-    this.logFilePath = join(this.logDir, LOG_FILE_NAME);
   }
 
-  getLogFilePath(): string {
-    return this.logFilePath;
+  /** File of the current day; changes at midnight. */
+  getLogFilePath(date = new Date()): string {
+    return join(this.logDir, dailyLogFileName(LOG_FILE_BASE, date));
   }
 
   getLogDir(): string {
@@ -47,25 +47,12 @@ export class AppLogger {
     this.fileLevel = level;
   }
 
-  private rotateIfNeeded(): void {
-    try {
-      if (!existsSync(this.logFilePath)) return;
-      if (statSync(this.logFilePath).size < MAX_LOG_SIZE_BYTES) return;
-      const backup = `${this.logFilePath}.1`;
-      if (existsSync(backup)) unlinkSync(backup);
-      renameSync(this.logFilePath, backup);
-    } catch {
-      // Rotation is best effort.
-    }
-  }
-
   private write(record: ConsoleLogRecord): void {
     writeConsoleLog(record);
     if (record.level === "debug" && this.fileLevel !== "debug") return;
     try {
       mkdirSync(this.logDir, { recursive: true });
-      this.rotateIfNeeded();
-      appendFileSync(this.logFilePath, renderFileLogLine(record) + "\n", "utf-8");
+      appendFileSync(this.getLogFilePath(), renderFileLogLine(record) + "\n", "utf-8");
     } catch {
       // Logging must never take the service down.
     }

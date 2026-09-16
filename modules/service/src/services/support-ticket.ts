@@ -1,10 +1,10 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import JSZip from "jszip";
-import { appLogger, getLogDir, LOG_FILE_NAME } from "../logger";
+import { appLogger, getLogDir, LOG_FILE_BASE } from "../logger";
 import { getAppVersion } from "../environment";
-import { FILE_LOG_LINE_PATTERN } from "portfolio-shared/log-format";
+import { DAILY_LOG_FILE_PATTERN, FILE_LOG_LINE_PATTERN } from "portfolio-shared/log-format";
 import { SUPPORT_EMAIL } from "portfolio-shared/brand";
 
 export const SUPPORT_EMAIL_RECIPIENT = SUPPORT_EMAIL;
@@ -136,40 +136,30 @@ export class SupportTicketService {
       }
     } catch {}
 
-    // 1. Process portfolio.log
-    const mainLogPath = join(logDir, LOG_FILE_NAME);
-    if (existsSync(mainLogPath)) {
+    // 1. The daily service files touched in the last 24 hours (today and, past
+    //    midnight, yesterday); older days cannot hold lines in the window.
+    const logFiles = existsSync(logDir)
+      ? readdirSync(logDir)
+          .filter((name) => DAILY_LOG_FILE_PATTERN.exec(name)?.[1] === LOG_FILE_BASE)
+          .sort()
+      : [];
+    for (const name of logFiles) {
+      const filePath = join(logDir, name);
       try {
-        const raw = readFileSync(mainLogPath, "utf-8");
+        if (statSync(filePath).mtimeMs < cutoffMs) continue;
+        const raw = readFileSync(filePath, "utf-8");
         const filtered = this.filterLogContent(raw, cutoffMs);
         const anonymized = this.anonymizeLogContent(filtered, knownPortfolioNames);
         if (anonymized.trim().length > 0) {
-          zipArchive.file(LOG_FILE_NAME, anonymized);
+          zipArchive.file(name, anonymized);
           totalLogsCount += anonymized.split("\n").length;
         }
       } catch (err) {
-        appLogger.log("warning", `Could not read main log file: ${err}`);
+        appLogger.log("warning", `Could not read log file ${name}: ${err}`);
       }
     }
 
-    // Process rotated portfolio.log.1 if it exists and modified within cutoff
-    const rotatedLogPath = join(logDir, `${LOG_FILE_NAME}.1`);
-    if (existsSync(rotatedLogPath)) {
-      try {
-        const stats = statSync(rotatedLogPath);
-        if (stats.mtimeMs >= cutoffMs) {
-          const raw = readFileSync(rotatedLogPath, "utf-8");
-          const filtered = this.filterLogContent(raw, cutoffMs);
-          const anonymized = this.anonymizeLogContent(filtered, knownPortfolioNames);
-          if (anonymized.trim().length > 0) {
-            zipArchive.file(`${LOG_FILE_NAME}.1`, anonymized);
-            totalLogsCount += anonymized.split("\n").length;
-          }
-        }
-      } catch {}
-    }
-
-    // 3. System info
+    // 2. System info
     const appVersion = getAppVersion();
 
     const systemInfo = {
@@ -185,7 +175,7 @@ export class SupportTicketService {
     };
     zipArchive.file("system_info.json", JSON.stringify(systemInfo, null, 2));
 
-    // 4. README note in Simplified English
+    // 3. README note in Simplified English
     const readmeText = [
       "# Portfolio Diagnostic Logs Archive",
       "",
