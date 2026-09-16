@@ -68,7 +68,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
         setError(null);
       }}
       placeholder={placeholder}
-      className="w-full sm:w-40 px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-sm text-slate-100 placeholder-slate-500 tracking-[0.3em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="w-full sm:w-40 px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-sm text-slate-100 placeholder-slate-500 tracking-[0.3em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-accent-500"
     />
   );
 
@@ -76,7 +76,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
     <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-3">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-300 shrink-0 mt-0.5">
+          <div className="p-2 rounded-lg bg-accent-500/10 text-accent-300 shrink-0 mt-0.5">
             <Lock className="h-4 w-4" />
           </div>
           <div className="flex flex-col gap-1">
@@ -85,7 +85,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
               Ask for a PIN before opening Portfolio. Applies to this computer and to any device that connects over the network. Without it the app opens straight away.
             </span>
             {pinEnabled && mode === "idle" && (
-              <button type="button" onClick={() => setMode("change")} className="self-start text-xs font-semibold text-indigo-400 hover:text-indigo-300 mt-1 cursor-pointer">
+              <button type="button" onClick={() => setMode("change")} className="self-start text-xs font-semibold text-accent-400 hover:text-accent-300 mt-1 cursor-pointer">
                 Change PIN
               </button>
             )}
@@ -98,7 +98,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           disabled={busy}
           onClick={() => (mode !== "idle" ? reset() : setMode(pinEnabled ? "disable" : "enable"))}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 ${
-            pinEnabled ? "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/25" : "bg-slate-800 border-white/10"
+            pinEnabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-white/10"
           }`}
         >
           <span className="sr-only">App lock</span>
@@ -115,7 +115,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           </div>
           {error && <p className="text-xs text-rose-400">{error}</p>}
           <div className="flex items-center gap-2">
-            <button type="submit" disabled={busy} className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
+            <button type="submit" disabled={busy} className="px-3 py-1.5 rounded-lg bg-accent-600 hover:bg-accent-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
               {mode === "disable" ? "Turn off" : mode === "change" ? "Change PIN" : "Turn on"}
             </button>
             <button type="button" onClick={reset} className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer">
@@ -168,7 +168,7 @@ export function AccessSection() {
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-2">
       <div className="border-b border-slate-800/80 pb-4 mb-2">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-          <ShieldCheck className="w-4 h-4 text-[#6366f1]" />
+          <ShieldCheck className="w-4 h-4 text-[#DD3C73]" />
           <span>Access</span>
         </div>
         <p className="text-[11px] text-slate-400 mt-1">Lock the app with a PIN and decide whether other devices on your network may open it.</p>
@@ -205,7 +205,7 @@ export function AccessSection() {
                 onClick={toggleRemote}
                 title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                  remote.enabled ? "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/25" : "bg-slate-800 border-white/10"
+                  remote.enabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-white/10"
                 }`}
               >
                 <span className="sr-only">Allow remote connections</span>

@@ -13,7 +13,7 @@ export function getAssetTypeBadgeClass(assetType: string): string {
     case "Fund":
       return "bg-[#341B83]/25 text-[#ab97f7] border-[#341B83]/50";
     case "Crypto":
-      return "bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30";
+      return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";
     case "Cash":
       return "bg-[#A7E2C0]/15 text-[#A7E2C0] border-[#A7E2C0]/30";
     case "Private":
@@ -29,7 +29,7 @@ export function getRsiZone(rsi?: number): { label: string; color: string; bgClas
     return { label: "N/A", color: "text-slate-500", bgClass: "bg-slate-500/10", textClass: "text-slate-400", borderClass: "border-slate-500/20" };
   }
   if (rsi >= 70) {
-    return { label: "OVERBOUGHT", color: "text-[#6366f1]", bgClass: "bg-[#6366f1]/10", textClass: "text-[#6366f1]", borderClass: "border-[#6366f1]/20" };
+    return { label: "OVERBOUGHT", color: "text-[#DD3C73]", bgClass: "bg-[#DD3C73]/10", textClass: "text-[#DD3C73]", borderClass: "border-[#DD3C73]/20" };
   }
   if (rsi <= 30) {
     return { label: "OVERSOLD", color: "text-[#A7E2C0]", bgClass: "bg-[#A7E2C0]/10", textClass: "text-[#A7E2C0]", borderClass: "border-[#A7E2C0]/20" };

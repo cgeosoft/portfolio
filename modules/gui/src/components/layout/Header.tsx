@@ -113,13 +113,13 @@ export function Header({
               aria-haspopup="listbox"
               aria-expanded={isPortfolioDropdownOpen}
               data-open={isPortfolioDropdownOpen}
-              className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#6366f1] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
+              className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
               title="Switch Portfolio"
             >
               {activePortfolio?.isShared ? (
-                <Users className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                <Users className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
               ) : (
-                <TrendingUp className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
               )}
               <span className="truncate">
                 {activePortfolio?.name || "Main Portfolio"}
@@ -137,7 +137,7 @@ export function Header({
                         setIsPortfolioDropdownOpen(false);
                         onOpenManagePortfolios();
                       }}
-                      className="text-[10px] text-[#6366f1] hover:text-[#e65f8e] transition-colors cursor-pointer font-bold tracking-wider hover:underline"
+                      className="text-[10px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer font-bold tracking-wider hover:underline"
                     >
                       Manage
                     </button>
@@ -166,7 +166,7 @@ export function Header({
                       >
                         <div className="flex items-center gap-2 truncate min-w-0 flex-1">
                           <Icon
-                            className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#6366f1]" : "text-slate-500"}`}
+                            className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-500"}`}
                           />
                           <span className="truncate">{p.name}</span>
                           {p.isShared && (
@@ -176,7 +176,7 @@ export function Header({
                           )}
                         </div>
                         {isActive && (
-                          <Check className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                          <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                         )}
                       </button>
                     );
@@ -203,7 +203,7 @@ export function Header({
               onClick={() => handlePageClick(tab.id)}
               className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 isActive
-                  ? "bg-[#6366f1]/15 text-[#6366f1] border border-[#6366f1]/40 shadow-sm"
+                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
               }`}
             >
@@ -224,7 +224,7 @@ export function Header({
             onClick={onToggleAssistant}
             className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
               isAssistantOpen
-                ? "bg-[#6366f1]/15 text-[#6366f1] border border-[#6366f1]/40 shadow-sm"
+                ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
             }`}
             title={

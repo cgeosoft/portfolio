@@ -98,7 +98,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
   if (isLoading && !htmlContent) {
     return (
       <div
-        className="w-full rounded-2xl bg-[#131722]/60 border border-[#6366f1] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#6366f1]/10"
+        className="w-full rounded-2xl bg-[#131722]/60 border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
         style={{ height: `${bannerHeight}px` }}
       >
         <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
       <div className="relative w-full">
         {/* Card containing the iframe with rounded corners and overflow hidden */}
         <div
-          className="w-full rounded-2xl overflow-hidden border border-[#6366f1] bg-[#07090e] shadow-sm shadow-[#6366f1]/10"
+          className="w-full rounded-2xl overflow-hidden border border-[#DD3C73] bg-[#07090e] shadow-sm shadow-[#DD3C73]/10"
           style={{ height: `${bannerHeight}px` }}
         >
           <iframe
@@ -144,7 +144,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
         <button
           type="button"
           onClick={() => setIsInfoModalOpen(true)}
-          className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-slate-900/95 hover:bg-[#6366f1]/20 border border-slate-700 hover:border-[#6366f1] text-slate-400 hover:text-[#6366f1] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
+          className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-slate-900/95 hover:bg-[#DD3C73]/20 border border-slate-700 hover:border-[#DD3C73] text-slate-400 hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
           title="About sponsorship"
           aria-label="About sponsorship"
         >

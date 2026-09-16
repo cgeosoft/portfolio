@@ -234,7 +234,7 @@ export function TestLlmModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#6366f1]/15 border border-[#6366f1]/30 flex items-center justify-center text-[#6366f1]">
+            <div className="w-9 h-9 rounded-xl bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73]">
               <Bot className="w-5 h-5" />
             </div>
             <div>
@@ -262,7 +262,7 @@ export function TestLlmModal({
         {/* Configuration Summary Pill */}
         <div className="px-6 py-3 bg-slate-950/70 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <Cpu className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+            <Cpu className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
             <span className="text-slate-400 text-[11px]">Model:</span>
             <span className="text-slate-200 font-bold text-[11px] truncate max-w-[220px]" title={model}>
               {model || "Not specified"}
@@ -286,7 +286,7 @@ export function TestLlmModal({
                 ? "bg-rose-500"
                 : overallResult === "passed"
                 ? "bg-[#A7E2C0]"
-                : "bg-[#6366f1]"
+                : "bg-[#DD3C73]"
             }`}
             style={{ width: `${progressPercent}%` }}
           />
@@ -307,7 +307,7 @@ export function TestLlmModal({
                     isPassed
                       ? "bg-slate-950/40 border-[#A7E2C0]/30 shadow-sm"
                       : isRunningStep
-                      ? "bg-[#6366f1]/10 border-[#6366f1]/50 shadow-md shadow-[#6366f1]/5"
+                      ? "bg-[#DD3C73]/10 border-[#DD3C73]/50 shadow-md shadow-[#DD3C73]/5"
                       : isFailed
                       ? "bg-rose-950/20 border-rose-800/60"
                       : "bg-slate-950/30 border-slate-800/60 opacity-60"
@@ -321,7 +321,7 @@ export function TestLlmModal({
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       ) : isRunningStep ? (
-                        <div className="w-5 h-5 rounded-full bg-[#6366f1]/20 border border-[#6366f1] flex items-center justify-center text-[#6366f1]">
+                        <div className="w-5 h-5 rounded-full bg-[#DD3C73]/20 border border-[#DD3C73] flex items-center justify-center text-[#DD3C73]">
                           <RefreshCw className="w-3 h-3 animate-spin" />
                         </div>
                       ) : isFailed ? (
@@ -344,7 +344,7 @@ export function TestLlmModal({
                               isPassed
                                 ? "text-[#A7E2C0] border-[#A7E2C0]/30 bg-[#A7E2C0]/10"
                                 : isRunningStep
-                                ? "text-[#6366f1] border-[#6366f1]/40 bg-[#6366f1]/20"
+                                ? "text-[#DD3C73] border-[#DD3C73]/40 bg-[#DD3C73]/20"
                                 : isFailed
                                 ? "text-rose-400 border-rose-800 bg-rose-950/30"
                                 : "text-slate-500 border-slate-800 bg-slate-900"
@@ -357,7 +357,7 @@ export function TestLlmModal({
                               isPassed
                                 ? "text-slate-200"
                                 : isRunningStep
-                                ? "text-[#6366f1]"
+                                ? "text-[#DD3C73]"
                                 : isFailed
                                 ? "text-rose-300"
                                 : "text-slate-500"
@@ -463,7 +463,7 @@ export function TestLlmModal({
                 disabled={isRunning}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
               >
-                <PlayCircle className="w-3.5 h-3.5 text-[#6366f1]" />
+                <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
                 <span>Retest</span>
               </button>
             )}

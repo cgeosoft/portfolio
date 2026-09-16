@@ -29,7 +29,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
         <button
           type="button"
           onClick={onOpenMetricsTab}
-          className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#6366f1] hover:border-[#6366f1]/40 hover:bg-[#6366f1]/10 transition-all cursor-pointer shrink-0"
+          className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-all cursor-pointer shrink-0"
           title="Choose the metrics of this portfolio"
         >
           <Sliders className="w-3 h-3" />
@@ -65,7 +65,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
           <button
             type="button"
             onClick={onOpenMetricsTab}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>Open Metrics</span>

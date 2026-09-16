@@ -36,7 +36,7 @@ export function StatCard({
               e.stopPropagation();
               onInfo();
             }}
-            className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800/90 hover:bg-[#6366f1]/20 text-slate-300 hover:text-[#6366f1] border border-slate-700/80 hover:border-[#6366f1]/50 transition-all cursor-pointer shrink-0 shadow-sm"
+            className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800/90 hover:bg-[#DD3C73]/20 text-slate-300 hover:text-[#DD3C73] border border-slate-700/80 hover:border-[#DD3C73]/50 transition-all cursor-pointer shrink-0 shadow-sm"
             title={`View calculation & explanation for ${title}`}
             aria-label={infoAriaLabel || `Explanation for ${title}`}
           >

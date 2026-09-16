@@ -222,8 +222,8 @@ export function AssistantSidebar({
       <div className="px-4 py-2.5 border-b border-slate-800/80 bg-[#090e1a] flex items-center justify-between shrink-0">
         {currentView === "chat" ? (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-[#6366f1]/15 border border-[#6366f1]/30 flex items-center justify-center shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-[#6366f1]" />
+            <div className="w-6 h-6 rounded-md bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-[#DD3C73]" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
@@ -246,7 +246,7 @@ export function AssistantSidebar({
             <button
               type="button"
               onClick={() => setCurrentView("chat")}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#6366f1] py-1 px-2 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#DD3C73] py-1 px-2 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
               title="Return to conversation"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ export function AssistantSidebar({
             <>
               <button
                 onClick={() => setCurrentView("history")}
-                className="p-1.5 rounded-md text-slate-400 hover:text-[#6366f1] hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
+                className="p-1.5 rounded-md text-slate-400 hover:text-[#DD3C73] hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
                 title="View Conversation History"
                 type="button"
               >
@@ -286,7 +286,7 @@ export function AssistantSidebar({
               {onNewChat && (
                 <button
                   onClick={handleStartNewChat}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-[#6366f1] hover:bg-slate-800/60 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-md text-slate-400 hover:text-[#DD3C73] hover:bg-slate-800/60 transition-colors cursor-pointer"
                   title="Start New Chat"
                   type="button"
                 >
@@ -319,7 +319,7 @@ export function AssistantSidebar({
               {onNewChat && (
                 <button
                   onClick={handleStartNewChat}
-                  className="px-2 py-1 text-[10.5px] font-bold tracking-wider rounded bg-[#6366f1]/15 hover:bg-[#6366f1]/25 text-[#6366f1] border border-[#6366f1]/40 transition-colors cursor-pointer flex items-center gap-1 uppercase"
+                  className="px-2 py-1 text-[10.5px] font-bold tracking-wider rounded bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1 uppercase"
                   title="Start New Chat"
                   type="button"
                 >
@@ -355,7 +355,7 @@ export function AssistantSidebar({
           <div className="px-4 py-2 bg-[#080c16] border-b border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
             <div className="flex items-center gap-2 truncate min-w-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-              <Bot className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+              <Bot className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
               <span className="uppercase text-slate-500 font-semibold text-[10px] tracking-wider">Model:</span>
               <span className="text-slate-300 truncate font-mono text-xs">{activeModel || activeProvider}</span>
             </div>
@@ -368,8 +368,8 @@ export function AssistantSidebar({
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4 min-h-0">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col justify-center items-center text-center py-4 px-2 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#6366f1]/10 border border-[#6366f1]/25 flex items-center justify-center">
-                  <Bot className="w-6 h-6 text-[#6366f1]" />
+                <div className="w-12 h-12 rounded-2xl bg-[#DD3C73]/10 border border-[#DD3C73]/25 flex items-center justify-center">
+                  <Bot className="w-6 h-6 text-[#DD3C73]" />
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
@@ -384,7 +384,7 @@ export function AssistantSidebar({
                 <div className="w-full rounded-xl bg-[#111827]/90 border border-slate-800 p-4 space-y-2.5 text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-200">
-                      <Cpu className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <Cpu className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span>Portfolio Context</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
@@ -401,13 +401,13 @@ export function AssistantSidebar({
                   <button
                     type="button"
                     onClick={handleOpenSystemPrompt}
-                    className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-[#6366f1]/40 text-[11px] font-medium text-slate-200 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-[#DD3C73]/40 text-[11px] font-medium text-slate-200 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     title="Inspect the quantitative system prompt sent to the model"
                   >
                     {systemPromptLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 text-[#6366f1] animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 text-[#DD3C73] animate-spin" />
                     ) : (
-                      <FileText className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <FileText className="w-3.5 h-3.5 text-[#DD3C73]" />
                     )}
                     <span>Inspect System Prompt & Context</span>
                   </button>
@@ -428,9 +428,9 @@ export function AssistantSidebar({
                           setInputText(item.prompt);
                           textareaRef.current?.focus();
                         }}
-                        className="w-full p-2.5 rounded-lg bg-[#111827]/80 hover:bg-[#151f33] border border-slate-800 hover:border-[#6366f1]/40 text-left transition-all cursor-pointer group flex items-center gap-2.5"
+                        className="w-full p-2.5 rounded-lg bg-[#111827]/80 hover:bg-[#151f33] border border-slate-800 hover:border-[#DD3C73]/40 text-left transition-all cursor-pointer group flex items-center gap-2.5"
                       >
-                        <Icon className="w-3.5 h-3.5 text-[#6366f1] shrink-0 group-hover:scale-110 transition-transform" />
+                        <Icon className="w-3.5 h-3.5 text-[#DD3C73] shrink-0 group-hover:scale-110 transition-transform" />
                         <span className="text-xs text-slate-300 group-hover:text-slate-100 font-medium">
                           {item.label}
                         </span>
@@ -444,7 +444,7 @@ export function AssistantSidebar({
                 {/* Active Conversation Context Banner */}
                 <div className="rounded-lg bg-slate-900/90 border border-slate-800/80 px-3.5 py-2 flex items-center justify-between gap-2 text-[10.5px] text-slate-400">
                   <div className="flex items-center gap-1.5 truncate min-w-0">
-                    <Cpu className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                    <Cpu className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                     <span className="truncate">
                       Grounded in <strong className="font-semibold text-slate-300">{portfolio?.name || "Portfolio"}</strong> ({holdingsCount} assets)
                     </span>
@@ -452,11 +452,11 @@ export function AssistantSidebar({
                   <button
                     type="button"
                     onClick={handleOpenSystemPrompt}
-                    className="shrink-0 text-[10px] text-slate-400 hover:text-[#6366f1] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                    className="shrink-0 text-[10px] text-slate-400 hover:text-[#DD3C73] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
                     title="Inspect the quantitative prompt sent to the model"
                   >
                     {systemPromptLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 text-[#6366f1] animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 text-[#DD3C73] animate-spin" />
                     ) : (
                       <FileText className="w-3.5 h-3.5" />
                     )}
@@ -482,7 +482,7 @@ export function AssistantSidebar({
                       <div
                         className={`relative rounded-xl text-xs leading-relaxed max-w-[92%] px-3.5 py-2.5 break-words ${
                           isUser
-                            ? "bg-[#6366f1]/15 border border-[#6366f1]/40 text-slate-100 font-mono shadow-sm"
+                            ? "bg-[#DD3C73]/15 border border-[#DD3C73]/40 text-slate-100 font-mono shadow-sm"
                             : "bg-[#111728] border border-slate-800 text-slate-200 shadow-md"
                         }`}
                       >
@@ -495,7 +495,7 @@ export function AssistantSidebar({
                               rehypePlugins={[rehypeSanitize]}
                               components={{
                                 h1: ({ children }) => (
-                                  <h1 className="text-sm font-bold text-[#6366f1] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
+                                  <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
                                     {children}
                                   </h1>
                                 ),
@@ -532,7 +532,7 @@ export function AssistantSidebar({
                                     href={href}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[#6366f1] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                                    className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
                                   >
                                     {children}
                                   </a>
@@ -569,7 +569,7 @@ export function AssistantSidebar({
                             {canRegenerate && (
                               <button
                                 onClick={() => onRegenerateMessage()}
-                                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#6366f1] flex items-center gap-1 cursor-pointer"
+                                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
                                 title="Regenerate response"
                                 type="button"
                               >
@@ -653,7 +653,7 @@ export function AssistantSidebar({
 
           {/* Input Area */}
           <div className="px-4 py-3 border-t border-slate-800/80 bg-[#090e1a] shrink-0">
-            <div className="relative flex items-end gap-2 bg-[#0e1526] border border-slate-700/80 focus-within:border-[#6366f1]/70 focus-within:ring-1 focus-within:ring-[#6366f1]/40 rounded-xl p-2 transition-all shadow-inner">
+            <div className="relative flex items-end gap-2 bg-[#0e1526] border border-slate-700/80 focus-within:border-[#DD3C73]/70 focus-within:ring-1 focus-within:ring-[#DD3C73]/40 rounded-xl p-2 transition-all shadow-inner">
               <textarea
                 ref={textareaRef}
                 value={inputText}
@@ -668,7 +668,7 @@ export function AssistantSidebar({
                 type="button"
                 onClick={handleSend}
                 disabled={!inputText.trim() || isLoading}
-                className="h-8 w-8 rounded-lg bg-[#6366f1] hover:bg-[#c93264] disabled:opacity-40 disabled:hover:bg-[#6366f1] disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer shadow-md"
+                className="h-8 w-8 rounded-lg bg-[#DD3C73] hover:bg-[#c93264] disabled:opacity-40 disabled:hover:bg-[#DD3C73] disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer shadow-md"
                 title="Send Message (Enter)"
               >
                 <Send className="w-3.5 h-3.5" />
@@ -702,7 +702,7 @@ export function AssistantSidebar({
                 value={searchHistoryQuery}
                 onChange={(e) => setSearchHistoryQuery(e.target.value)}
                 placeholder="Search saved conversations..."
-                className="w-full bg-[#0e1526] border border-slate-800 focus:border-[#6366f1]/60 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-colors font-mono"
+                className="w-full bg-[#0e1526] border border-slate-800 focus:border-[#DD3C73]/60 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-colors font-mono"
               />
               {searchHistoryQuery && (
                 <button
@@ -736,7 +736,7 @@ export function AssistantSidebar({
                   <button
                     type="button"
                     onClick={handleStartNewChat}
-                    className="mt-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#6366f1]/15 hover:bg-[#6366f1]/25 text-[#6366f1] border border-[#6366f1]/40 transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
+                    className="mt-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Start New Chat</span>
@@ -752,7 +752,7 @@ export function AssistantSidebar({
                     onClick={() => handleSelectConv(c.id)}
                     className={`group relative rounded-xl p-3 border transition-all cursor-pointer text-left ${
                       isActive
-                        ? "bg-[#6366f1]/10 border-[#6366f1]/40 shadow-sm"
+                        ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 shadow-sm"
                         : "bg-[#111728]/70 hover:bg-[#151f33] border-slate-800 hover:border-slate-700"
                     }`}
                   >
@@ -761,7 +761,7 @@ export function AssistantSidebar({
                         <div className="flex items-center gap-1.5">
                           <MessageSquare
                             className={`w-3.5 h-3.5 shrink-0 ${
-                              isActive ? "text-[#6366f1]" : "text-slate-500 group-hover:text-slate-400"
+                              isActive ? "text-[#DD3C73]" : "text-slate-500 group-hover:text-slate-400"
                             }`}
                           />
                           <span
@@ -781,7 +781,7 @@ export function AssistantSidebar({
 
                       <div className="flex items-center gap-1 shrink-0 pt-0.5">
                         {isActive && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30">
                             Active
                           </span>
                         )}

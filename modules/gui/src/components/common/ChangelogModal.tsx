@@ -85,9 +85,9 @@ export function ChangelogModal({
         {/* Header */}
         <div className="flex items-start justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#6366f1] p-[1.5px] shadow-lg shadow-[#6366f1]/20 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Download className="w-5 h-5 text-[#6366f1]" />
+                <Download className="w-5 h-5 text-[#DD3C73]" />
               </div>
             </div>
             <div>
@@ -119,10 +119,10 @@ export function ChangelogModal({
               rehypePlugins={[rehypeSanitize]}
               components={{
                 h1: ({ node: _n, ...props }) => (
-                  <h1 className="text-xs font-bold uppercase tracking-wider text-[#6366f1] border-b border-slate-800 pb-1 mt-3 mb-1.5 first:mt-0" {...props} />
+                  <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5 first:mt-0" {...props} />
                 ),
                 h2: ({ node: _n, ...props }) => (
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#6366f1] mt-3 mb-1.5 first:mt-0" {...props} />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-3 mb-1.5 first:mt-0" {...props} />
                 ),
                 h3: ({ node: _n, ...props }) => (
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-200 mt-3 mb-1 first:mt-0" {...props} />
@@ -139,7 +139,7 @@ export function ChangelogModal({
                 ),
                 li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
                 blockquote: ({ node: _n, ...props }) => (
-                  <blockquote className="border-l-2 border-[#6366f1] bg-[#6366f1]/5 px-2.5 py-1.5 my-2 text-[10px] text-slate-400 italic rounded-r" {...props} />
+                  <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-2.5 py-1.5 my-2 text-[10px] text-slate-400 italic rounded-r" {...props} />
                 ),
                 a: ({ node: _n, href, children, ...props }) => (
                   <a
@@ -148,7 +148,7 @@ export function ChangelogModal({
                       e.preventDefault();
                       if (href) openExternal(href);
                     }}
-                    className="text-[#6366f1] underline underline-offset-2 hover:text-[#e8558a] transition-colors cursor-pointer"
+                    className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors cursor-pointer"
                     {...props}
                   >
                     {children}
@@ -189,7 +189,7 @@ export function ChangelogModal({
               <button
                 type="button"
                 onClick={() => openExternal(releaseUrl)}
-                className="text-[#6366f1] hover:underline cursor-pointer"
+                className="text-[#DD3C73] hover:underline cursor-pointer"
               >
                 Release page
               </button>
@@ -206,7 +206,7 @@ export function ChangelogModal({
         )}
 
         {downloadState === "error" && (
-          <div className="mt-3 p-2.5 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/30 flex items-center gap-2 text-[10px] text-[#6366f1] shrink-0">
+          <div className="mt-3 p-2.5 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/30 flex items-center gap-2 text-[10px] text-[#DD3C73] shrink-0">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span>{downloadError}</span>
           </div>
@@ -235,7 +235,7 @@ export function ChangelogModal({
               type="button"
               onClick={handleDownload}
               disabled={downloadState === "downloading"}
-              className="px-3.5 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
             >
               {downloadState === "downloading" ? (
                 <>

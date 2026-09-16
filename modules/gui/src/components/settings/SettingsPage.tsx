@@ -677,7 +677,7 @@ export function SettingsPage({
         {/* Left Navigation Sidebar */}
         <aside className="w-full">
           <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Settings className="w-3.5 h-3.5 text-[#6366f1]" />
+            <Settings className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>Preferences</span>
           </div>
 
@@ -692,11 +692,11 @@ export function SettingsPage({
                   onClick={() => setActiveSection(sec.id)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-mono transition-colors cursor-pointer ${
                     isActive
-                      ? "bg-[#6366f1]/15 text-[#6366f1] font-semibold"
+                      ? "bg-[#DD3C73]/15 text-[#DD3C73] font-semibold"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#6366f1]" : "text-slate-400"}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-400"}`} />
                   <span>{sec.label}</span>
                 </button>
               );
@@ -713,7 +713,7 @@ export function SettingsPage({
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
               <div className="border-b border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <Sliders className="w-4 h-4 text-[#6366f1]" />
+                  <Sliders className="w-4 h-4 text-[#DD3C73]" />
                   <span>General Configuration</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -725,7 +725,7 @@ export function SettingsPage({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <Clock className="w-3.5 h-3.5 text-[#DD3C73]" />
                     <span>Market Quotes Auto-Fetch Interval</span>
                   </label>
                   <span className="text-[10px] text-slate-500 font-mono">
@@ -760,7 +760,7 @@ export function SettingsPage({
               {/* 2. Start with Boot Toggle */}
               <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <Power className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
+                  <Power className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Start at System Boot
@@ -781,7 +781,7 @@ export function SettingsPage({
                     saveConfig({ startWithBoot: next });
                   }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    startWithBoot ? "bg-[#6366f1]" : "bg-slate-800"
+                    startWithBoot ? "bg-[#DD3C73]" : "bg-slate-800"
                   }`}
                   title={startWithBoot ? "Disable boot startup" : "Enable boot startup"}
                 >
@@ -819,7 +819,7 @@ export function SettingsPage({
                     saveConfig({ telemetryEnabled: next });
                   }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    telemetryEnabled ? "bg-[#6366f1]" : "bg-slate-800"
+                    telemetryEnabled ? "bg-[#DD3C73]" : "bg-slate-800"
                   }`}
                   title={telemetryEnabled ? "Disable anonymous analytics" : "Enable anonymous analytics"}
                 >
@@ -836,7 +836,7 @@ export function SettingsPage({
               {/* 4. Check for Application Updates Toggle */}
               <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <RefreshCw className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
+                  <RefreshCw className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Check for Application Updates
@@ -857,7 +857,7 @@ export function SettingsPage({
                     saveConfig({ checkForUpdates: next });
                   }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    checkForUpdates ? "bg-[#6366f1]" : "bg-slate-800"
+                    checkForUpdates ? "bg-[#DD3C73]" : "bg-slate-800"
                   }`}
                   title={checkForUpdates ? "Disable update checks" : "Enable update checks"}
                 >
@@ -879,7 +879,7 @@ export function SettingsPage({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
-                    <TrendingUp className="w-4 h-4 text-[#6366f1] shrink-0" />
+                    <TrendingUp className="w-4 h-4 text-[#DD3C73] shrink-0" />
                     <span>Portfolio Ledgers ({portfolios.length})</span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5 truncate">
@@ -896,14 +896,14 @@ export function SettingsPage({
                         placeholder="Search portfolios..."
                         value={portfolioSearch}
                         onChange={(e) => setPortfolioSearch(e.target.value)}
-                        className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#6366f1]/50 font-mono"
+                        className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
                       />
                     </div>
                   )}
 
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#6366f1]/10 font-mono"
+                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>New Portfolio</span>
@@ -974,7 +974,7 @@ export function SettingsPage({
                                   <div className="pt-1 shrink-0">
                                     {isActive ? (
                                       <div
-                                        className="w-2 h-2 rounded-full bg-[#6366f1] ring-4 ring-[#6366f1]/20 shadow-sm shadow-[#6366f1]"
+                                        className="w-2 h-2 rounded-full bg-[#DD3C73] ring-4 ring-[#DD3C73]/20 shadow-sm shadow-[#DD3C73]"
                                         title="Active Portfolio"
                                       />
                                     ) : (
@@ -986,13 +986,13 @@ export function SettingsPage({
                                     <div className="flex items-center gap-2">
                                       <button
                                         onClick={() => onSelectPortfolio && onSelectPortfolio(p.id)}
-                                        className="font-bold text-slate-100 text-xs sm:text-sm hover:text-[#6366f1] transition-colors truncate text-left cursor-pointer"
+                                        className="font-bold text-slate-100 text-xs sm:text-sm hover:text-[#DD3C73] transition-colors truncate text-left cursor-pointer"
                                         title={p.name}
                                       >
                                         {p.name}
                                       </button>
                                       {isActive && (
-                                        <span className="text-[9px] uppercase tracking-wider font-bold text-[#6366f1] bg-[#6366f1]/10 border border-[#6366f1]/30 px-1.5 py-0.2 rounded">
+                                        <span className="text-[9px] uppercase tracking-wider font-bold text-[#DD3C73] bg-[#DD3C73]/10 border border-[#DD3C73]/30 px-1.5 py-0.2 rounded">
                                           Active
                                         </span>
                                       )}
@@ -1037,7 +1037,7 @@ export function SettingsPage({
 
                                   <button
                                     onClick={() => setEditingPortfolio(p)}
-                                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-[#6366f1] transition-colors cursor-pointer"
+                                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-[#DD3C73] transition-colors cursor-pointer"
                                     title="Edit portfolio name and details"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
@@ -1073,7 +1073,7 @@ export function SettingsPage({
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
               <div className="border-b border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <Bot className="w-4 h-4 text-[#6366f1]" />
+                  <Bot className="w-4 h-4 text-[#DD3C73]" />
                   <span>Assistant Engine</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -1084,7 +1084,7 @@ export function SettingsPage({
               {/* Provider Selection Dropdown: styled identically to inputs */}
               <div className="space-y-2">
                 <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Bot className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Inference Provider</span>
                 </label>
                 <Select
@@ -1119,7 +1119,7 @@ export function SettingsPage({
                       type="button"
                       onClick={() => fetchModelsForProvider(reportProvider, reportBaseUrl, reportApiKey)}
                       disabled={isFetchingModels}
-                      className="text-[10px] text-slate-400 hover:text-[#6366f1] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       title="Fetch available models from endpoint"
                     >
                       <RefreshCw className={`w-3 h-3 ${isFetchingModels ? "animate-spin" : ""}`} />
@@ -1177,7 +1177,7 @@ export function SettingsPage({
                         saveConfig({ llmModel: val, llmModels: updatedModels });
                       }}
                       placeholder="e.g. meta-llama/Llama-3.3-70B-Instruct or model identifier"
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
                       Enter the model identifier expected by your inference endpoint.
@@ -1222,7 +1222,7 @@ export function SettingsPage({
                         currentPreset?.baseUrlPlaceholder ||
                         (reportProvider === "ollama" ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL)
                       }
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">
@@ -1240,7 +1240,7 @@ export function SettingsPage({
               {/* Provider API Key */}
               <div className="space-y-2 pt-2 border-t border-slate-800/80">
                 <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Provider API Key</span>
                   {currentPreset?.keyOptional && (
                     <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional)</span>
@@ -1267,7 +1267,7 @@ export function SettingsPage({
                     placeholder={
                       currentPreset?.keyPlaceholder || "Enter API Key"
                     }
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                   />
                   <button
                     type="button"
@@ -1286,7 +1286,7 @@ export function SettingsPage({
                   onClick={() => setIsTestModalOpen(true)}
                   className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-100 transition-colors cursor-pointer"
                 >
-                  <PlayCircle className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Test LLM Provider</span>
                 </button>
               </div>
@@ -1296,7 +1296,7 @@ export function SettingsPage({
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      <Database className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span>Market Data & News Intelligence</span>
                     </div>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -1306,7 +1306,7 @@ export function SettingsPage({
                   <button
                     type="button"
                     onClick={() => setActiveSection("providers")}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-[#6366f1] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-[#DD3C73] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                   >
                     <span>Manage Data Providers</span>
                     <ArrowLeft className="w-3 h-3 rotate-180" />
@@ -1321,7 +1321,7 @@ export function SettingsPage({
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
               <div className="border-b border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <LifeBuoy className="w-4 h-4 text-[#6366f1]" />
+                  <LifeBuoy className="w-4 h-4 text-[#DD3C73]" />
                   <span>Support Ticket & Diagnostics</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -1347,7 +1347,7 @@ export function SettingsPage({
                 {/* Recipient */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <Mail className="w-3.5 h-3.5 text-[#DD3C73]" />
                     <span>Recipient Email</span>
                   </label>
                   <input
@@ -1368,7 +1368,7 @@ export function SettingsPage({
                     value={ticketSubject}
                     onChange={(e) => setTicketSubject(e.target.value)}
                     placeholder="e.g. Issue with transaction import or quote sync"
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
+                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
                   />
                 </div>
 
@@ -1382,7 +1382,7 @@ export function SettingsPage({
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
                     placeholder="Describe what happened or steps to reproduce..."
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
+                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
                   />
                 </div>
 
@@ -1393,7 +1393,7 @@ export function SettingsPage({
                     id="ticket-include-logs"
                     checked={ticketIncludeLogs}
                     onChange={(e) => setTicketIncludeLogs(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#6366f1] focus:ring-[#6366f1]/40 cursor-pointer accent-[#6366f1]"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
                   />
                   <label htmlFor="ticket-include-logs" className="cursor-pointer select-none space-y-0.5">
                     <div className="text-xs font-semibold text-slate-200">
@@ -1461,7 +1461,7 @@ export function SettingsPage({
                     type="button"
                     disabled={isSubmittingTicket}
                     onClick={handleOpenSupportTicket}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#6366f1] hover:bg-[#6366f1]/90 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-[#6366f1]/20"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-[#DD3C73]/20"
                   >
                     <LifeBuoy className={`w-3.5 h-3.5 ${isSubmittingTicket ? "animate-spin" : ""}`} />
                     <span>{isSubmittingTicket ? "Preparing Ticket..." : "Open Support Ticket"}</span>
@@ -1477,9 +1477,9 @@ export function SettingsPage({
               {/* App Identity Banner */}
               <div className="flex items-start justify-between border-b border-slate-800/80 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#6366f1] p-[1.5px] shadow-lg shadow-[#6366f1]/20 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
                     <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-[#6366f1]" />
+                      <TrendingUp className="w-6 h-6 text-[#DD3C73]" />
                     </div>
                   </div>
                   <div>
@@ -1487,12 +1487,12 @@ export function SettingsPage({
                       <h2 className="text-base font-bold tracking-wide text-slate-100">
                         Portfolio
                       </h2>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#6366f1]/15 text-[#6366f1] border border-[#6366f1]/30">
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
                         v{appVersion}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Tactical Cyberpunk Personal Investment & Asset Terminal
+                      Personal Investment Tracker
                     </p>
                   </div>
                 </div>
@@ -1502,7 +1502,7 @@ export function SettingsPage({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <RefreshCw className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
                     <span>Version and Updates</span>
                   </div>
                   {updateInfo?.lastChecked && (
@@ -1538,7 +1538,7 @@ export function SettingsPage({
                       <button
                         type="button"
                         onClick={() => openExternal(updateInfo.releaseUrl)}
-                        className="px-3 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         <span>View Release</span>
@@ -1550,51 +1550,9 @@ export function SettingsPage({
                       onClick={handleCheckForUpdates}
                       className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? "animate-spin text-[#6366f1]" : ""}`} />
+                      <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? "animate-spin text-[#DD3C73]" : ""}`} />
                       <span>{isCheckingUpdates ? "Checking..." : "Check Now"}</span>
                     </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Architecture & Highlights Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-                  <Cpu className="w-4 h-4 text-[#243C8F] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                      Runtime Engine
-                    </div>
-                    <div className="font-semibold text-slate-200 text-xs mt-0.5">
-                      Electrobun & Bun
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Native multi-process IPC</div>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-                  <Database className="w-4 h-4 text-[#A7E2C0] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                      Storage Engine
-                    </div>
-                    <div className="font-semibold text-slate-200 text-xs mt-0.5">
-                      SQLite 3 (WAL Mode)
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">100% Offline Local Disk</div>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                      Data Privacy
-                    </div>
-                    <div className="font-semibold text-slate-200 text-xs mt-0.5">
-                      Zero Asset Telemetry
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Strict local isolation</div>
                   </div>
                 </div>
               </div>
@@ -1602,7 +1560,7 @@ export function SettingsPage({
               {/* Storage Locations */}
               <div className="space-y-2.5">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Local Data Paths</span>
                 </div>
                 <div className="space-y-1.5 text-xs">
@@ -1630,7 +1588,7 @@ export function SettingsPage({
               {/* Keyboard Shortcuts Reference */}
               <div className="space-y-2.5">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Keyboard className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Keyboard className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Keyboard Shortcuts Reference</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1645,17 +1603,6 @@ export function SettingsPage({
                       </kbd>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Footer Notice */}
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#E3EACD]" />
-                  <span>Local-First Financial Computing</span>
-                </div>
-                <div className="text-[10px] uppercase font-mono tracking-wider text-slate-600">
-                  Debian / Linux / Cross-Platform
                 </div>
               </div>
             </div>

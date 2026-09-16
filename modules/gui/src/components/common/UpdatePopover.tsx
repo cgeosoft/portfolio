@@ -19,11 +19,11 @@ export function UpdatePopover({
 
   return (
     <div className="fixed bottom-6 right-6 z-50 max-w-sm animate-popover-in">
-      <div className="p-4 rounded-xl bg-[#131722] border border-[#6366f1]/40 shadow-2xl shadow-[#6366f1]/10 font-mono">
+      <div className="p-4 rounded-xl bg-[#131722] border border-[#DD3C73]/40 shadow-2xl shadow-[#DD3C73]/10 font-mono">
         <div className="flex items-start gap-3">
           {/* Icon */}
-          <div className="w-8 h-8 rounded-lg bg-[#6366f1]/15 border border-[#6366f1]/30 flex items-center justify-center shrink-0 mt-0.5">
-            <Download className="w-4 h-4 text-[#6366f1]" />
+          <div className="w-8 h-8 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center shrink-0 mt-0.5">
+            <Download className="w-4 h-4 text-[#DD3C73]" />
           </div>
 
           {/* Content */}
@@ -50,7 +50,7 @@ export function UpdatePopover({
               <button
                 type="button"
                 onClick={onShowChangelog}
-                className="flex-1 px-3 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer"
+                className="flex-1 px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer"
               >
                 What's New
               </button>

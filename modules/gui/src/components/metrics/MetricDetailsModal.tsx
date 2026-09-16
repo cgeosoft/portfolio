@@ -90,7 +90,7 @@ export function MetricDetailsModal({ listing, onClose }: MetricDetailsModalProps
                 <button
                   type="button"
                   onClick={() => void rpc.request.openExternalUrl({ url: manifest.developer.url! })}
-                  className="inline-flex items-center gap-1 text-[#6366f1] hover:underline cursor-pointer mt-0.5"
+                  className="inline-flex items-center gap-1 text-[#DD3C73] hover:underline cursor-pointer mt-0.5"
                 >
                   <span>{manifest.developer.name}</span>
                   <ExternalLink className="w-3 h-3" />

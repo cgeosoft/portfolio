@@ -361,7 +361,7 @@ export function AnalyzePortfolioModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-lg border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-6 h-6 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
               <Bot className="w-3.5 h-3.5" />
             </div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-300 truncate">
@@ -391,7 +391,7 @@ export function AnalyzePortfolioModal({
                   <div
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
                       isCurrent
-                        ? "bg-[#6366f1]/20 border border-[#6366f1]/40 text-[#6366f1]"
+                        ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
                         : isPassed
                         ? "bg-[#A7E2C0]/10 border border-[#A7E2C0]/30 text-[#A7E2C0]"
                         : "text-slate-500 border border-transparent"
@@ -425,7 +425,7 @@ export function AnalyzePortfolioModal({
           {currentStep === "period" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-[#6366f1] shrink-0" />
+                <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
                 <span>Select Target Analysis Period</span>
               </div>
 
@@ -436,7 +436,7 @@ export function AnalyzePortfolioModal({
               {/* Week Picker Dropdown */}
               <div className="flex flex-col gap-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Calendar className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Target Week</span>
                 </label>
                 <Select
@@ -469,8 +469,8 @@ export function AnalyzePortfolioModal({
 
                 {/* Existing Report Replacement Alert */}
                 {hasExistingReport && (
-                  <div className="mt-1 p-2.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/10 flex items-center gap-2 text-xs text-[#6366f1]">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-[#6366f1]" />
+                  <div className="mt-1 p-2.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-center gap-2 text-xs text-[#DD3C73]">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-[#DD3C73]" />
                     <span>Notice: A report already exists for this week. Running analysis will replace the existing report.</span>
                   </div>
                 )}
@@ -480,7 +480,7 @@ export function AnalyzePortfolioModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-0.5">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <Wallet className="w-3 h-3 text-[#6366f1]" />
+                    <Wallet className="w-3 h-3 text-[#DD3C73]" />
                     <span>Valuation</span>
                   </div>
                   <div className="font-bold text-slate-100 text-xs truncate">
@@ -516,7 +516,7 @@ export function AnalyzePortfolioModal({
               {/* Pipeline Overview */}
               <div className="flex flex-col gap-1.5 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
-                  <Brain className="w-3.5 h-3.5 text-[#6366f1]" />
+                  <Brain className="w-3.5 h-3.5 text-[#DD3C73]" />
                   <span>Pipeline Operations</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400">
@@ -529,7 +529,7 @@ export function AnalyzePortfolioModal({
                     <span className="truncate">SMA 50/200 & RSI momentum</span>
                   </div>
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
-                    <Bot className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                    <Bot className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                     <span className="truncate">Tactical rebalancing advice</span>
                   </div>
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
@@ -537,7 +537,7 @@ export function AnalyzePortfolioModal({
                     <span className="truncate">Weekly snapshot archival</span>
                   </div>
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
-                    <Sparkles className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                     <span className="truncate">Finnhub market news & ratings</span>
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export function AnalyzePortfolioModal({
             <div className="flex flex-col gap-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
-                  <Database className="w-4 h-4 text-[#6366f1] shrink-0" />
+                  <Database className="w-4 h-4 text-[#DD3C73] shrink-0" />
                   <span>Context Compilation & Full Prompt</span>
                 </div>
                 {promptData && (
@@ -574,7 +574,7 @@ export function AnalyzePortfolioModal({
 
               {promptLoading ? (
                 <div className="p-10 flex flex-col items-center justify-center text-center gap-2.5 border border-slate-800 rounded-xl bg-slate-950">
-                  <RefreshCw className="w-6 h-6 animate-spin text-[#6366f1]" />
+                  <RefreshCw className="w-6 h-6 animate-spin text-[#DD3C73]" />
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-300">
                     Extracting Ledger & Technical Context
                   </div>
@@ -583,16 +583,16 @@ export function AnalyzePortfolioModal({
                   </div>
                 </div>
               ) : promptError ? (
-                <div className="p-4 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#6366f1]">
+                <div className="p-4 rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#DD3C73]">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>Failed to Build Report Context</span>
                   </div>
-                  <p className="text-xs text-[#6366f1]/90 font-mono">{promptError}</p>
+                  <p className="text-xs text-[#DD3C73]/90 font-mono">{promptError}</p>
                   <button
                     type="button"
                     onClick={() => void loadPromptContext(selectedWeekKey)}
-                    className="self-start mt-1 px-3 py-1 rounded bg-[#6366f1] text-white text-xs font-bold hover:bg-[#c82f63] cursor-pointer"
+                    className="self-start mt-1 px-3 py-1 rounded bg-[#DD3C73] text-white text-xs font-bold hover:bg-[#c82f63] cursor-pointer"
                   >
                     Retry Context Compilation
                   </button>
@@ -653,10 +653,10 @@ export function AnalyzePortfolioModal({
                         remarkPlugins={[remarkGfm]}
                         components={{
                           h1: ({ node: _n, ...props }) => (
-                            <h1 className="text-xs font-bold uppercase tracking-wider text-[#6366f1] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
+                            <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
                           ),
                           h2: ({ node: _n, ...props }) => (
-                            <h2 className="text-xs font-bold uppercase tracking-wider text-[#6366f1] mt-3 mb-1.5" {...props} />
+                            <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-3 mb-1.5" {...props} />
                           ),
                           h3: ({ node: _n, ...props }) => (
                             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mt-2.5 mb-1" {...props} />
@@ -666,7 +666,7 @@ export function AnalyzePortfolioModal({
                           ol: ({ node: _n, ...props }) => <ol className="list-decimal list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
                           li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
                           blockquote: ({ node: _n, ...props }) => (
-                            <blockquote className="border-l-2 border-[#6366f1] bg-[#6366f1]/5 px-2.5 py-1.5 my-2 text-slate-400 italic rounded-r text-xs" {...props} />
+                            <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-2.5 py-1.5 my-2 text-slate-400 italic rounded-r text-xs" {...props} />
                           ),
                           strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
                           code: ({ node: _n, ...props }) => (
@@ -688,8 +688,8 @@ export function AnalyzePortfolioModal({
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse shadow-[0_0_8px_rgba(221,60,115,0.7)]" />
-                  <span className="text-xs font-bold text-[#6366f1] uppercase tracking-wider">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#DD3C73] animate-pulse shadow-[0_0_8px_rgba(221,60,115,0.7)]" />
+                  <span className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
                     Autonomous LLM Inference In Progress
                   </span>
                 </div>
@@ -699,10 +699,10 @@ export function AnalyzePortfolioModal({
               </div>
 
               {/* Streaming Monitor Card */}
-              <div className="rounded-xl border border-[#6366f1]/40 bg-slate-950 p-3.5 flex flex-col gap-2.5 shadow-lg shadow-[#6366f1]/5">
+              <div className="rounded-xl border border-[#DD3C73]/40 bg-slate-950 p-3.5 flex flex-col gap-2.5 shadow-lg shadow-[#DD3C73]/5">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300">
-                    <Sparkles className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#DD3C73]" />
                     <span>Real-Time Stream Window (Last 50 Words)</span>
                   </div>
                   <span className="text-[10px] uppercase font-bold text-slate-500">Live Window</span>
@@ -713,11 +713,11 @@ export function AnalyzePortfolioModal({
                     <div className="select-text">
                       <span className="text-slate-400">… </span>
                       <span>{lastWordsStream}</span>
-                      <span className="inline-block w-1.5 h-3.5 ml-1 bg-[#6366f1] animate-pulse align-middle" />
+                      <span className="inline-block w-1.5 h-3.5 ml-1 bg-[#DD3C73] animate-pulse align-middle" />
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-slate-500 italic">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#6366f1]" />
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
                       <span>Awaiting model inference stream tokens...</span>
                     </div>
                   )}
@@ -754,7 +754,7 @@ export function AnalyzePortfolioModal({
                     <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5 flex flex-col gap-2.5">
                       <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-[#6366f1] font-bold uppercase">{generatedReport.period}</span>
+                          <span className="text-[#DD3C73] font-bold uppercase">{generatedReport.period}</span>
                           <span className="text-slate-600">•</span>
                           <span className="text-slate-400">{generatedReport.metrics?.holdingsCount ?? 0} assets evaluated</span>
                         </div>
@@ -801,13 +801,13 @@ export function AnalyzePortfolioModal({
               {/* FAIL STATE */}
               {confirmationStatus === "fail" && (
                 <div className="flex flex-col gap-3.5">
-                  <div className="p-3.5 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-[#6366f1] shrink-0 mt-0.5" />
+                  <div className="p-3.5 rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-[#DD3C73] shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-[#6366f1] uppercase tracking-wider">
+                      <div className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
                         Report Generation Failed
                       </div>
-                      <div className="text-xs text-[#6366f1] font-mono break-words leading-relaxed mt-1.5 p-2 rounded-lg bg-black/40 border border-[#6366f1]/20">
+                      <div className="text-xs text-[#DD3C73] font-mono break-words leading-relaxed mt-1.5 p-2 rounded-lg bg-black/40 border border-[#DD3C73]/20">
                         {errorMessage || "Failed to communicate with the portfolio advisor engine."}
                       </div>
                     </div>
@@ -850,7 +850,7 @@ export function AnalyzePortfolioModal({
               <button
                 type="button"
                 onClick={() => setCurrentStep("prompt")}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
               >
                 <span>Build Context</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -862,7 +862,7 @@ export function AnalyzePortfolioModal({
                 type="button"
                 disabled={promptLoading || Boolean(promptError)}
                 onClick={() => void handleStartProcessing()}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Run Analysis</span>
@@ -873,7 +873,7 @@ export function AnalyzePortfolioModal({
               <button
                 type="button"
                 onClick={() => void handleCancelProcessing()}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border border-[#6366f1]/50 bg-[#6366f1]/15 text-[#6366f1] hover:bg-[#6366f1]/25 text-xs font-bold cursor-pointer uppercase tracking-wider transition-colors"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg border border-[#DD3C73]/50 bg-[#DD3C73]/15 text-[#DD3C73] hover:bg-[#DD3C73]/25 text-xs font-bold cursor-pointer uppercase tracking-wider transition-colors"
               >
                 <StopCircle className="w-3.5 h-3.5" />
                 <span>Cancel Generation</span>
@@ -886,7 +886,7 @@ export function AnalyzePortfolioModal({
                   <button
                     type="button"
                     onClick={() => void handleFinishAndSelect()}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
                   >
                     <span>View Report</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -897,7 +897,7 @@ export function AnalyzePortfolioModal({
                   <button
                     type="button"
                     onClick={() => setCurrentStep("period")}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
                   >
                     <span>Restart Wizard</span>
                   </button>
@@ -907,7 +907,7 @@ export function AnalyzePortfolioModal({
                   <button
                     type="button"
                     onClick={() => setCurrentStep("period")}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>Retry</span>

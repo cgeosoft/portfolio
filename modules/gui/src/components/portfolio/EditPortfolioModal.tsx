@@ -114,13 +114,13 @@ export function EditPortfolioModal({
 
             {/* Alerts */}
             {error && (
-              <div className="p-3.5 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-[#6366f1] uppercase tracking-wider">
+                  <div className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
                     Update Error
                   </div>
-                  <div className="text-xs text-[#6366f1] font-mono break-words leading-relaxed mt-1">
+                  <div className="text-xs text-[#DD3C73] font-mono break-words leading-relaxed mt-1">
                     {error}
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export function EditPortfolioModal({
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoFocus
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1]"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
                 />
               </div>
 
@@ -160,7 +160,7 @@ export function EditPortfolioModal({
                   placeholder="Short description of this portfolio's strategy"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1]"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export function EditPortfolioModal({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

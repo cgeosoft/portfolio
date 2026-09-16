@@ -60,7 +60,7 @@ export function AssistantSystemPromptModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-8 h-8 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -72,7 +72,7 @@ export function AssistantSystemPromptModal({
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                 <span className="flex items-center gap-1">
-                  <Bot className="w-3 h-3 text-[#6366f1]" />
+                  <Bot className="w-3 h-3 text-[#DD3C73]" />
                   <span className="truncate">{portfolioName || "Current Portfolio"}</span>
                 </span>
                 <span className="text-slate-600">•</span>
@@ -94,7 +94,7 @@ export function AssistantSystemPromptModal({
         {/* Toolbar */}
         <div className="px-4 sm:px-5 py-2.5 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-2.5 shrink-0 text-xs">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold uppercase tracking-wider">
-            <FileCode className="w-3.5 h-3.5 text-[#6366f1]" />
+            <FileCode className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>System Prompt Payload</span>
           </div>
 
@@ -113,7 +113,7 @@ export function AssistantSystemPromptModal({
         <div className="p-4 sm:p-5 flex-1 min-h-0 overflow-hidden flex flex-col">
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
-              <Loader2 className="w-7 h-7 text-[#6366f1] mb-3 animate-spin" />
+              <Loader2 className="w-7 h-7 text-[#DD3C73] mb-3 animate-spin" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200">
                 Building system prompt...
               </div>
@@ -168,7 +168,7 @@ export function AssistantSystemPromptModal({
                   rehypePlugins={[rehypeSanitize]}
                   components={{
                     h1: ({ children }) => (
-                      <h1 className="text-sm font-bold text-[#6366f1] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
+                      <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
                         {children}
                       </h1>
                     ),
@@ -203,7 +203,7 @@ export function AssistantSystemPromptModal({
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#6366f1] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                        className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
                       >
                         {children}
                       </a>

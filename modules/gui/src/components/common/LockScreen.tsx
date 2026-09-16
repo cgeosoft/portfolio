@@ -68,16 +68,16 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
 
       <div className="relative z-10 flex flex-col items-center mb-6 sm:mb-8">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 p-[1px] shadow-xl shadow-indigo-500/20 mb-3">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-accent-500 via-purple-500 to-cyan-400 p-[1px] shadow-xl shadow-accent-500/20 mb-3">
           <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center">
-            <AppIcon className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-400" />
+            <AppIcon className="w-6 h-6 sm:w-7 sm:h-7 text-accent-400" />
           </div>
         </div>
         <div className="flex items-baseline gap-2">
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent">Portfolio</h1>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-accent-200 bg-clip-text text-transparent">Portfolio</h1>
           {APP_VERSION && <span className="text-xs sm:text-sm font-mono text-slate-400 font-medium">v{APP_VERSION}</span>}
         </div>
-        <p className="text-xs font-mono text-indigo-400 mt-1">Offline investment tracker</p>
+        <p className="text-xs font-mono text-accent-400 mt-1">Personal investment tracker</p>
       </div>
 
       <div className="relative z-10 w-full max-w-md p-5 sm:p-8 bg-slate-900/90 border border-slate-800/80 rounded-3xl shadow-2xl">
@@ -110,13 +110,13 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
                   setError(null);
                 }}
                 placeholder="PIN"
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-white/10 bg-slate-950/60 text-base text-slate-100 placeholder-slate-500 tracking-[0.4em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-white/10 bg-slate-950/60 text-base text-slate-100 placeholder-slate-500 tracking-[0.4em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             </div>
             <button
               type="submit"
               disabled={loading || pin.length < 4}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-purple-500 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-accent-600 to-purple-600 text-white text-sm font-bold shadow-lg shadow-accent-500/25 hover:from-accent-500 hover:to-purple-500 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Unlocking…" : "Unlock"}
             </button>

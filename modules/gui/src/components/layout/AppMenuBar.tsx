@@ -487,7 +487,7 @@ export function AppMenuBar({
   return (
     <div ref={menuBarRef} className="app-menubar flex" role="menubar" aria-label="Application menu">
       <div className="flex items-center gap-1.5 pl-1 pr-2 text-slate-500 select-none" title="Portfolio">
-        <AppIcon className="w-3.5 h-3.5 text-indigo-400" />
+        <AppIcon className="w-3.5 h-3.5 text-accent-400" />
       </div>
       {menus.map((menu) => {
         const isOpen = activeMenu === menu.key;
@@ -531,9 +531,9 @@ export function AppMenuBar({
                     >
                       <span className="flex items-center gap-2.5 min-w-0 pr-3">
                         {item.checked !== undefined ? (
-                          <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">{item.checked && <Check className="w-3.5 h-3.5 text-indigo-400" />}</span>
+                          <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">{item.checked && <Check className="w-3.5 h-3.5 text-accent-400" />}</span>
                         ) : Icon ? (
-                          <Icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-300 shrink-0" />
+                          <Icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-accent-300 shrink-0" />
                         ) : (
                           <span className="w-3.5 h-3.5 shrink-0" />
                         )}

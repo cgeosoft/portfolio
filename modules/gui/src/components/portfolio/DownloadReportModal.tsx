@@ -126,7 +126,7 @@ export function DownloadReportModal({
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-8 h-8 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
               <Download className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -151,7 +151,7 @@ export function DownloadReportModal({
         {/* Modal Body */}
         <div className="p-5 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
           {error && (
-            <div className="p-3 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 flex items-start gap-2.5 text-xs text-[#6366f1]">
+            <div className="p-3 rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-2.5 text-xs text-[#DD3C73]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">{error}</div>
             </div>
@@ -176,14 +176,14 @@ export function DownloadReportModal({
                     onClick={handleRevealFile}
                     className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
                   >
-                    <FolderOpen className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <FolderOpen className="w-3.5 h-3.5 text-[#DD3C73]" />
                     <span>Open Folder</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={onClose}
-                  className="h-8 px-4 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
+                  className="h-8 px-4 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
                 >
                   Done
                 </button>
@@ -202,14 +202,14 @@ export function DownloadReportModal({
                 onClick={() => handleSelectFormat("markdown")}
                 className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-start gap-3 ${
                   format === "markdown"
-                    ? "border-[#6366f1] bg-[#6366f1]/10 shadow-lg shadow-[#6366f1]/10"
+                    ? "border-[#DD3C73] bg-[#DD3C73]/10 shadow-lg shadow-[#DD3C73]/10"
                     : "border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900"
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
                     format === "markdown"
-                      ? "border-[#6366f1]/50 bg-[#6366f1]/20 text-[#6366f1]"
+                      ? "border-[#DD3C73]/50 bg-[#DD3C73]/20 text-[#DD3C73]"
                       : "border-slate-800 bg-slate-900 text-slate-400"
                   }`}
                 >
@@ -225,7 +225,7 @@ export function DownloadReportModal({
                       Markdown Document (.md)
                     </span>
                     {format === "markdown" && (
-                      <span className="w-4 h-4 rounded-full bg-[#6366f1] text-white flex items-center justify-center">
+                      <span className="w-4 h-4 rounded-full bg-[#DD3C73] text-white flex items-center justify-center">
                         <Check className="w-3 h-3" />
                       </span>
                     )}
@@ -242,14 +242,14 @@ export function DownloadReportModal({
                 onClick={() => handleSelectFormat("pdf")}
                 className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex items-start gap-3 ${
                   format === "pdf"
-                    ? "border-[#6366f1] bg-[#6366f1]/10 shadow-lg shadow-[#6366f1]/10"
+                    ? "border-[#DD3C73] bg-[#DD3C73]/10 shadow-lg shadow-[#DD3C73]/10"
                     : "border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900"
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${
                     format === "pdf"
-                      ? "border-[#6366f1]/50 bg-[#6366f1]/20 text-[#6366f1]"
+                      ? "border-[#DD3C73]/50 bg-[#DD3C73]/20 text-[#DD3C73]"
                       : "border-slate-800 bg-slate-900 text-slate-400"
                   }`}
                 >
@@ -265,7 +265,7 @@ export function DownloadReportModal({
                       PDF Document (.pdf)
                     </span>
                     {format === "pdf" && (
-                      <span className="w-4 h-4 rounded-full bg-[#6366f1] text-white flex items-center justify-center">
+                      <span className="w-4 h-4 rounded-full bg-[#DD3C73] text-white flex items-center justify-center">
                         <Check className="w-3 h-3" />
                       </span>
                     )}
@@ -282,7 +282,7 @@ export function DownloadReportModal({
               {/* Format summary pill */}
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
                 <span className="text-slate-400">Selected Format:</span>
-                <span className="font-bold text-[#6366f1] uppercase tracking-wider flex items-center gap-1.5">
+                <span className="font-bold text-[#DD3C73] uppercase tracking-wider flex items-center gap-1.5">
                   {format === "markdown" ? (
                     <FileText className="w-3.5 h-3.5" />
                   ) : (
@@ -302,14 +302,14 @@ export function DownloadReportModal({
                   type="text"
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 text-xs focus:outline-none focus:border-[#6366f1] transition-colors"
+                  className="w-full h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 text-xs focus:outline-none focus:border-[#DD3C73] transition-colors"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Save Location</label>
                 <div className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 flex items-center text-xs text-slate-400 overflow-hidden">
-                  <Folder className="w-3.5 h-3.5 text-[#6366f1] mr-2 shrink-0" />
+                  <Folder className="w-3.5 h-3.5 text-[#DD3C73] mr-2 shrink-0" />
                   <span className="truncate">{isLocalClient ? "Downloads folder" : "Browser download"}</span>
                 </div>
               </div>
@@ -344,7 +344,7 @@ export function DownloadReportModal({
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="h-8 px-4 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shadow-lg shadow-[#6366f1]/20"
+                className="h-8 px-4 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shadow-lg shadow-[#DD3C73]/20"
               >
                 <span>Next</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -354,7 +354,7 @@ export function DownloadReportModal({
                 type="button"
                 onClick={handleExecuteDownload}
                 disabled={isProcessing}
-                className="h-8 px-4 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shadow-lg shadow-[#6366f1]/20"
+                className="h-8 px-4 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shadow-lg shadow-[#DD3C73]/20"
               >
                 {isProcessing ? (
                   <>

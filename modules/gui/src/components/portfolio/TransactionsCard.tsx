@@ -48,7 +48,7 @@ export function TransactionsCard({
       case "PRIVATE_MARKET_BUY":
         return "bg-[#243C8F]/20 text-[#7392fa] border-[#243C8F]/40";
       case "SELL":
-        return "bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30";
+        return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";
       case "DIVIDEND":
         return "bg-[#A7E2C0]/15 text-[#A7E2C0] border-[#A7E2C0]/30";
       case "INTEREST_PAYMENT":
@@ -58,7 +58,7 @@ export function TransactionsCard({
         return "bg-[#243C8F]/20 text-[#7392fa] border-[#243C8F]/40";
       case "CUSTOMER_OUTBOUND":
       case "WITHDRAWAL":
-        return "bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/30";
+        return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";
       default:
         return "bg-slate-500/10 text-slate-400 border-slate-500/20";
     }
@@ -87,7 +87,7 @@ export function TransactionsCard({
               placeholder="Search ledger..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#6366f1]/50 font-mono"
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
             />
           </div>
 
@@ -118,7 +118,7 @@ export function TransactionsCard({
 
           <button
             onClick={onOpenAddModal}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#6366f1]/10 font-mono"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Transaction</span>
@@ -181,14 +181,14 @@ export function TransactionsCard({
                       <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onOpenEditModal(tx)}
-                          className="p-1 hover:text-[#6366f1] text-slate-400 transition-colors cursor-pointer"
+                          className="p-1 hover:text-[#DD3C73] text-slate-400 transition-colors cursor-pointer"
                           title="Edit Transaction"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => onDeleteTransaction(tx.id)}
-                          className="p-1 hover:text-[#6366f1] text-slate-400 transition-colors cursor-pointer"
+                          className="p-1 hover:text-[#DD3C73] text-slate-400 transition-colors cursor-pointer"
                           title="Delete Transaction"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

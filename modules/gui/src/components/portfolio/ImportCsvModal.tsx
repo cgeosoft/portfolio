@@ -1004,7 +1004,7 @@ export function ImportCsvModal({
         {/* Modal Header & Wizard Stepper */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-[#07090e] px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/30 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73] shrink-0">
               <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -1017,20 +1017,20 @@ export function ImportCsvModal({
 
           {/* Stepper Indicator - Mobile Badge vs Desktop Breadcrumbs */}
           <div className="flex items-center gap-1.5">
-            <div className="sm:hidden text-[10px] font-bold uppercase tracking-wider text-[#6366f1] bg-[#6366f1]/15 px-2 py-0.5 rounded border border-[#6366f1]/30">
+            <div className="sm:hidden text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] bg-[#DD3C73]/15 px-2 py-0.5 rounded border border-[#DD3C73]/30">
               {stage === "upload" ? "1/4 Select" : stage === "mapping" ? "2/4 Map" : stage === "confirmation" ? "3/4 Review" : "4/4 Done"}
             </div>
 
             <div className="hidden sm:flex items-center gap-1.5 text-[11px] uppercase font-mono tracking-wider">
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "upload" ? "bg-[#6366f1]/20 text-[#6366f1] font-bold border border-[#6366f1]/40" : "text-slate-500"}`}>
+              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "upload" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
                 1. Select
               </span>
               <span className="text-slate-600">➔</span>
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "mapping" ? "bg-[#6366f1]/20 text-[#6366f1] font-bold border border-[#6366f1]/40" : "text-slate-500"}`}>
+              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "mapping" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
                 2. Map Columns
               </span>
               <span className="text-slate-600">➔</span>
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "confirmation" ? "bg-[#6366f1]/20 text-[#6366f1] font-bold border border-[#6366f1]/40" : "text-slate-500"}`}>
+              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "confirmation" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
                 3. Review
               </span>
               <span className="text-slate-600">➔</span>
@@ -1076,12 +1076,12 @@ export function ImportCsvModal({
                 onClick={handleBrowseClick}
                 className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 text-center cursor-pointer transition-all min-h-[200px] sm:min-h-[260px] ${
                   isDragging
-                    ? "border-[#6366f1] bg-[#6366f1]/10 shadow-[0_0_24px_rgba(221,60,115,0.2)]"
-                    : "border-slate-800 bg-[#07090e]/60 hover:border-[#6366f1]/50 hover:bg-[#181d2b]/60"
+                    ? "border-[#DD3C73] bg-[#DD3C73]/10 shadow-[0_0_24px_rgba(221,60,115,0.2)]"
+                    : "border-slate-800 bg-[#07090e]/60 hover:border-[#DD3C73]/50 hover:bg-[#181d2b]/60"
                 }`}
               >
                 
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shadow-lg shadow-[#6366f1]/10">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shadow-lg shadow-[#DD3C73]/10">
                   <UploadCloud className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
                 <div>
@@ -1100,7 +1100,7 @@ export function ImportCsvModal({
               {/* Supported Broker Templates List */}
               <div className="p-3.5 sm:p-4 rounded-xl border border-slate-800 bg-[#07090e]/60 flex flex-col gap-2.5">
                 <div className="text-xs uppercase font-bold text-slate-400 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#6366f1]" />
+                  <Layers className="w-4 h-4 text-[#DD3C73]" />
                   <span>Pre-Configured Broker Formats:</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
@@ -1112,7 +1112,7 @@ export function ImportCsvModal({
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs text-slate-200">{tpl.name}</span>
                         {tpl.badge && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#6366f1]/15 text-[#6366f1] border border-[#6366f1]/30">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
                             {tpl.badge}
                           </span>
                         )}
@@ -1133,7 +1133,7 @@ export function ImportCsvModal({
               {/* File Info & Template Controls Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl border border-slate-800 bg-[#07090e] text-xs">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/30 flex items-center justify-center text-[#6366f1] shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73] shrink-0">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 truncate">
@@ -1155,7 +1155,7 @@ export function ImportCsvModal({
                   {/* CSV Field Template Selector */}
                   <div className="flex items-center gap-1.5 text-xs flex-1 sm:flex-initial">
                     <span className="text-slate-400 font-bold flex items-center gap-1 text-[11px] sm:text-xs">
-                      <Layers className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <Layers className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span className="hidden sm:inline">Template:</span>
                     </span>
                     <Select
@@ -1207,14 +1207,14 @@ export function ImportCsvModal({
               {/* Instructions Bar & Template Hint */}
               <div className="text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-1.5">
-                  <HelpCircle className="w-4 h-4 text-[#6366f1] shrink-0" />
+                  <HelpCircle className="w-4 h-4 text-[#DD3C73] shrink-0" />
                   <span className="text-[11px] sm:text-xs">
                     {activeTemplateObj
                       ? `Template: ${activeTemplateObj.name}. Adjust individual column dropdowns below as needed.`
                       : "Custom mapping active. Use the dropdowns to map columns to system fields."}
                   </span>
                 </div>
-                <div className="font-bold text-[#6366f1] text-[11px] sm:text-xs">
+                <div className="font-bold text-[#DD3C73] text-[11px] sm:text-xs">
                   {mappedSummary.count} of {headers.length} columns mapped
                 </div>
               </div>
@@ -1235,7 +1235,7 @@ export function ImportCsvModal({
                                 <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
                                   <span>System Field</span>
                                   {isMapped ? (
-                                    <span className="text-[9px] text-[#6366f1] bg-[#6366f1]/15 px-1.5 py-0.2 rounded font-bold border border-[#6366f1]/30">MAPPED</span>
+                                    <span className="text-[9px] text-[#DD3C73] bg-[#DD3C73]/15 px-1.5 py-0.2 rounded font-bold border border-[#DD3C73]/30">MAPPED</span>
                                   ) : (
                                     <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">IGNORED</span>
                                   )}
@@ -1320,7 +1320,7 @@ export function ImportCsvModal({
                       onClick={() => setPreviewFilter("all")}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
                         previewFilter === "all"
-                          ? "bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]"
+                          ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]"
                           : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
                       }`}
                     >
@@ -1537,7 +1537,7 @@ export function ImportCsvModal({
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2 rounded-xl border border-[#6366f1] bg-[#6366f1] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#6366f1]/25 transition-all cursor-pointer uppercase"
+                  className="px-6 py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer uppercase"
                 >
                   Done
                 </button>
@@ -1579,7 +1579,7 @@ export function ImportCsvModal({
                 type="button"
                 disabled={submitting || rows.length === 0}
                 onClick={() => void handleProceedToDryRun()}
-                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl border border-[#6366f1] bg-[#6366f1] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#6366f1]/25 transition-all cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1616,7 +1616,7 @@ export function ImportCsvModal({
                 type="button"
                 disabled={submitting || rows.length === 0}
                 onClick={() => void handleFinalCommit()}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl border border-[#6366f1] bg-[#6366f1] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#6366f1]/25 transition-all cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

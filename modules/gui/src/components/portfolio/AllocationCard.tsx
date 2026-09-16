@@ -31,7 +31,7 @@ interface CategorySummary {
 const CATEGORY_COLORS: Record<string, string> = {
   Stock: "#243C8F", // Royal Blue
   ETF: "#341B83", // Deep Indigo
-  Crypto: "#6366f1", // Rose / Pink
+  Crypto: "#DD3C73", // Rose / Pink
   Cash: "#A7E2C0", // Mint
   Other: "#E3EACD", // Pale Sage
 };
@@ -39,7 +39,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CATEGORY_PALETTES: Record<string, string[]> = {
   Stock: ["#243C8F", "#3b5fc7", "#597dec", "#7898f5", "#1b2e6e", "#324ca8", "#4e6bd4", "#6582e8"],
   ETF: ["#341B83", "#4e29c2", "#673be0", "#865ef5", "#24135e", "#41219e", "#5a32cc", "#7c55e8"],
-  Crypto: ["#6366f1", "#e65f8e", "#ee84aa", "#f5abc5", "#b32053", "#c72d65", "#da4b81", "#e8729c"],
+  Crypto: ["#DD3C73", "#e65f8e", "#ee84aa", "#f5abc5", "#b32053", "#c72d65", "#da4b81", "#e8729c"],
   Cash: ["#A7E2C0", "#bdebd2", "#8ad9ab", "#6ecf97", "#55b87f", "#3fa56c"],
   Other: ["#E3EACD", "#edf2de", "#d5dfb8", "#c4d39e", "#b0c283", "#9cb16b"],
 };
@@ -199,7 +199,7 @@ export function AllocationCard({
 
         // Bottom count
         ctx.font = '500 9px monospace';
-        ctx.fillStyle = "#6366f1";
+        ctx.fillStyle = "#DD3C73";
         ctx.fillText(`${outerHoldings.length} Assets`, cx, cy + 17);
 
         ctx.restore();

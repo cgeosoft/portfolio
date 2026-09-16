@@ -108,7 +108,7 @@ export function ReportPromptModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-8 h-8 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -120,7 +120,7 @@ export function ReportPromptModal({
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                 <span className="flex items-center gap-1">
-                  <Bot className="w-3 h-3 text-[#6366f1]" />
+                  <Bot className="w-3 h-3 text-[#DD3C73]" />
                   <span className="truncate">{report.model}</span>
                 </span>
                 <span className="text-slate-600">•</span>
@@ -153,7 +153,7 @@ export function ReportPromptModal({
                 onClick={() => setActiveTab("all")}
                 className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer uppercase font-bold tracking-wider ${
                   activeTab === "all"
-                    ? "bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30"
+                    ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30"
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -164,7 +164,7 @@ export function ReportPromptModal({
                 onClick={() => setActiveTab("system")}
                 className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer uppercase font-bold tracking-wider ${
                   activeTab === "system"
-                    ? "bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30"
+                    ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30"
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -175,7 +175,7 @@ export function ReportPromptModal({
                 onClick={() => setActiveTab("user")}
                 className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer uppercase font-bold tracking-wider ${
                   activeTab === "user"
-                    ? "bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30"
+                    ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30"
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -184,7 +184,7 @@ export function ReportPromptModal({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold uppercase tracking-wider">
-              <FileCode className="w-3.5 h-3.5 text-[#6366f1]" />
+              <FileCode className="w-3.5 h-3.5 text-[#DD3C73]" />
               <span>Prompt Payload</span>
             </div>
           )}

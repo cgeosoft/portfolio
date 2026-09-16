@@ -75,7 +75,7 @@ export function ManagePortfoliosPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800/80">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
-            <TrendingUp className="w-4 h-4 text-[#6366f1] shrink-0" />
+            <TrendingUp className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span>Portfolios ({portfolios.length})</span>
           </div>
           <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
@@ -92,14 +92,14 @@ export function ManagePortfoliosPage({
                 placeholder="Search portfolios..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#6366f1]/50 font-mono"
+                className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
               />
             </div>
           )}
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#6366f1]/10 font-mono"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Portfolio</span>
@@ -172,7 +172,7 @@ export function ManagePortfoliosPage({
                           <div className="pt-1 shrink-0">
                             {isActive ? (
                               <div
-                                className="w-2 h-2 rounded-full bg-[#6366f1] ring-4 ring-[#6366f1]/20 shadow-sm shadow-[#6366f1]"
+                                className="w-2 h-2 rounded-full bg-[#DD3C73] ring-4 ring-[#DD3C73]/20 shadow-sm shadow-[#DD3C73]"
                                 title="Active Portfolio"
                               />
                             ) : (
@@ -186,7 +186,7 @@ export function ManagePortfoliosPage({
                                 {p.name}
                               </span>
                               {isActive && (
-                                <span className="text-[9px] uppercase tracking-wider font-bold text-[#6366f1] bg-[#6366f1]/10 border border-[#6366f1]/30 px-1.5 py-0.2 rounded">
+                                <span className="text-[9px] uppercase tracking-wider font-bold text-[#DD3C73] bg-[#DD3C73]/10 border border-[#DD3C73]/30 px-1.5 py-0.2 rounded">
                                   Active
                                 </span>
                               )}
@@ -236,7 +236,7 @@ export function ManagePortfoliosPage({
                           {/* Edit Button */}
                           <button
                             onClick={() => setEditingPortfolio(p)}
-                            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-[#6366f1] transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-[#DD3C73] transition-colors cursor-pointer"
                             title="Edit portfolio name and details"
                           >
                             <Edit3 className="w-3.5 h-3.5" />

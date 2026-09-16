@@ -76,7 +76,7 @@ function SectionHeader({ icon: Icon, title, subtitle, actions }: { icon: typeof 
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
-          <Icon className="w-4 h-4 text-[#6366f1] shrink-0" />
+          <Icon className="w-4 h-4 text-[#DD3C73] shrink-0" />
           <span className="truncate">{title}</span>
         </div>
         <p className="text-[11px] text-slate-400 mt-0.5">{subtitle}</p>
@@ -338,7 +338,7 @@ export function MetricsTab({
             <button
               type="button"
               onClick={() => setIsInstallOpen(true)}
-              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
+              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Install from URL</span>
@@ -355,7 +355,7 @@ export function MetricsTab({
               aria-pressed={category === name}
               className={`h-6 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
                 category === name
-                  ? "bg-[#6366f1]/15 text-[#6366f1] border-[#6366f1]/40"
+                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/40"
                   : "text-slate-500 hover:text-slate-300 border-transparent hover:bg-slate-800/40"
               }`}
             >
@@ -429,7 +429,7 @@ export function MetricsTab({
                         disabled={isSaving || !available}
                         onClick={() => onSave(withMetricAdded(prefs, row.id, manifest.display.defaultSize))}
                         title={available ? "Add to this portfolio" : "Not available in this build"}
-                        className="h-7 inline-flex items-center gap-1 px-2.5 rounded-md border border-[#6366f1]/40 bg-[#6366f1]/10 text-[10px] font-bold uppercase tracking-wider text-[#6366f1] hover:bg-[#6366f1]/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+                        className="h-7 inline-flex items-center gap-1 px-2.5 rounded-md border border-[#DD3C73]/40 bg-[#DD3C73]/10 text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] hover:bg-[#DD3C73]/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed font-mono"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Add</span>

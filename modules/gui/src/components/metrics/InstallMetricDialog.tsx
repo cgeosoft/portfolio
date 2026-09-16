@@ -92,7 +92,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
       <div className="relative w-full max-w-lg flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden max-h-[90vh]">
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3.5 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="p-1.5 rounded-lg bg-[#6366f1]/15 border border-[#6366f1]/30 text-[#6366f1] shrink-0">
+            <div className="p-1.5 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 text-[#DD3C73] shrink-0">
               <Download className="w-4 h-4" />
             </div>
             <h2 id="install-metric-title" className="text-sm font-bold text-slate-100 uppercase tracking-wider truncate">
@@ -128,7 +128,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                     if (e.key === "Enter") void handleFetch();
                   }}
                   placeholder="https://example.com/my-metric/manifest.yml"
-                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[#6366f1]/60 disabled:opacity-60"
+                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[#DD3C73]/60 disabled:opacity-60"
                   autoFocus
                 />
               </div>
@@ -204,7 +204,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                   checked={accepted}
                   disabled={busy || preview.conflict === "builtin"}
                   onChange={(e) => setAccepted(e.target.checked)}
-                  className="mt-0.5 accent-[#6366f1]"
+                  className="mt-0.5 accent-[#DD3C73]"
                 />
                 <span className="text-slate-300 text-[11px]">
                   I grant this module the data scopes listed above and accept that it is unverified.
@@ -227,7 +227,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
             type="button"
             onClick={() => void handleInstall()}
             disabled={!preview || !accepted || busy || preview.conflict === "builtin"}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isInstalling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             <span>Install</span>

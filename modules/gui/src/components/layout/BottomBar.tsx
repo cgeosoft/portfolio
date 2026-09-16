@@ -67,7 +67,7 @@ export function BottomBar({
                 if (updateInfo.releaseUrl) openExternal(updateInfo.releaseUrl);
               })
             }
-            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-500/30 transition-colors cursor-pointer inline-flex items-center gap-1"
+            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-500/20 text-accent-300 border border-accent-500/40 hover:bg-accent-500/30 transition-colors cursor-pointer inline-flex items-center gap-1"
             title={`New version v${updateInfo.latestVersion} available`}
           >
             <span>v{updateInfo.latestVersion} available</span>
@@ -77,7 +77,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={handleOpenCgeosoft}
-          className="text-slate-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1 focus:outline-none cursor-pointer"
+          className="text-slate-400 hover:text-accent-300 transition-colors inline-flex items-center gap-1 focus:outline-none cursor-pointer"
           title="Open cgeosoft.com in browser"
         >
           <span>cgeosoft</span>
@@ -87,7 +87,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={onOpenTerms}
-          className="text-slate-400 hover:text-indigo-300 transition-colors focus:outline-none cursor-pointer"
+          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-none cursor-pointer"
           title="Open Terms of Use in app"
         >
           terms of use
@@ -104,7 +104,7 @@ export function BottomBar({
               className={`p-1 rounded transition-colors focus:outline-none cursor-pointer flex items-center gap-1.5 ${
                 hideCurrencyValues
                   ? "text-[#E3EACD] hover:text-[#f0f5db] hover:bg-[#E3EACD]/10"
-                  : "text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60"
+                  : "text-slate-400 hover:text-accent-300 hover:bg-slate-800/60"
               }`}
               title={hideCurrencyValues ? "Show financial values (Privacy ON - Ctrl+H)" : "Hide financial values for privacy (Ctrl+H)"}
               aria-label={hideCurrencyValues ? "Show financial values" : "Hide financial values for privacy"}
@@ -133,12 +133,12 @@ export function BottomBar({
           type="button"
           onClick={onSyncQuotes}
           disabled={isSyncingQuotes}
-          className="p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer disabled:opacity-50"
+          className="p-1 rounded text-slate-400 hover:text-accent-300 hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer disabled:opacity-50"
           title="Force resync quotes with Yahoo Finance"
           aria-label="Force resync quotes with Yahoo Finance"
         >
           <RefreshCw
-            className={`w-3 h-3 ${isSyncingQuotes ? "animate-spin text-indigo-400" : ""}`}
+            className={`w-3 h-3 ${isSyncingQuotes ? "animate-spin text-accent-400" : ""}`}
           />
         </button>
       </div>

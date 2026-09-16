@@ -1196,7 +1196,7 @@ export default function App() {
     if (authState === "loading") {
       return (
         <div className="h-dvh flex items-center justify-center bg-[#07090e]">
-          <RefreshCw className="w-6 h-6 text-indigo-400 animate-spin" />
+          <RefreshCw className="w-6 h-6 text-accent-400 animate-spin" />
         </div>
       );
     }
@@ -1252,7 +1252,7 @@ export default function App() {
           transactionsCount={0}
         />
         <div className="flex-1 flex flex-col items-center justify-center space-y-3 p-8">
-          <RefreshCw className="w-8 h-8 text-[#6366f1] animate-spin" />
+          <RefreshCw className="w-8 h-8 text-[#DD3C73] animate-spin" />
           <p className="text-xs text-slate-400 font-mono tracking-wider uppercase">
             Synchronizing Portfolio &amp; Market Quotes...
           </p>
@@ -1334,7 +1334,7 @@ export default function App() {
           transactionsCount={0}
         />
         <div className="flex-1 flex flex-col items-center justify-center space-y-4 p-8 text-center max-w-md mx-auto">
-          <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/30 text-[#6366f1]">
+          <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/30 text-[#DD3C73]">
             <AlertTriangle className="w-8 h-8" />
           </div>
           <div className="space-y-1">
@@ -1345,7 +1345,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => void loadData(false)}
-              className="px-4 py-2 bg-[#6366f1] hover:bg-[#6366f1]/90 text-white rounded text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#6366f1]/20"
+              className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#DD3C73]/20"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Retry Sync

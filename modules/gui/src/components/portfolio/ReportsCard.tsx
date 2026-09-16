@@ -179,7 +179,7 @@ export function ReportsCard({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 pb-1">
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
-            <Sparkles className="w-4 h-4 text-[#6366f1] shrink-0" />
+            <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">Reports</span>
           </div>
           <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
@@ -198,13 +198,13 @@ export function ReportsCard({
                 aria-expanded={isDropdownOpen}
                 data-open={isDropdownOpen}
                 data-variant="outlined"
-                className="cx-menu-trigger h-8 justify-between px-3 text-xs font-bold uppercase tracking-wider text-[#6366f1]"
+                className="cx-menu-trigger h-8 justify-between px-3 text-xs font-bold uppercase tracking-wider text-[#DD3C73]"
               >
-                <Calendar className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />
+                <Calendar className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                 <span className="truncate max-w-[170px] sm:max-w-[240px] md:max-w-[300px] text-left">
                   {formatReportDropdownLabel(activeReport)}
                 </span>
-                <ChevronDown className="cx-menu-chevron w-3.5 h-3.5 text-[#6366f1]" />
+                <ChevronDown className="cx-menu-chevron w-3.5 h-3.5 text-[#DD3C73]" />
               </button>
 
               {/* Dropdown Menu Popover */}
@@ -236,7 +236,7 @@ export function ReportsCard({
                             {isRepFallback ? (
                               <AlertTriangle className="w-3.5 h-3.5 text-[#E3EACD] shrink-0" />
                             ) : (
-                              <Calendar className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-[#6366f1]" : "text-slate-500"}`} />
+                              <Calendar className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-[#DD3C73]" : "text-slate-500"}`} />
                             )}
                             <span className="truncate uppercase font-bold tracking-wider">
                               {formatReportDropdownLabel(rep)}
@@ -248,7 +248,7 @@ export function ReportsCard({
                                 Fallback
                               </span>
                             )}
-                            {isSelected && <Check className="w-3.5 h-3.5 text-[#6366f1] shrink-0" />}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />}
                           </div>
                         </button>
                       );
@@ -263,7 +263,7 @@ export function ReportsCard({
           <button
             type="button"
             onClick={() => setIsAnalysisModalOpen(true)}
-            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/15 text-xs font-bold text-[#6366f1] hover:bg-[#6366f1]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#6366f1]/10 font-mono"
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Analyze</span>
@@ -273,12 +273,12 @@ export function ReportsCard({
 
       {/* Error Alert */}
       {genError && (
-        <div className="rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 px-3.5 py-2.5 flex items-center justify-between text-xs text-[#6366f1] shrink-0">
+        <div className="rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 px-3.5 py-2.5 flex items-center justify-between text-xs text-[#DD3C73] shrink-0">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Notice: {genError}</span>
           </div>
-          <button onClick={() => setGenError(null)} className="text-[#6366f1] hover:text-[#e65f8e] font-bold ml-2 cursor-pointer">
+          <button onClick={() => setGenError(null)} className="text-[#DD3C73] hover:text-[#e65f8e] font-bold ml-2 cursor-pointer">
             ✕
           </button>
         </div>
@@ -287,13 +287,13 @@ export function ReportsCard({
       {/* Main Reports Layout Container */}
       {(loadingReports || isRefreshing) && reports.length === 0 ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-[#6366f1] mb-3" />
+          <RefreshCw className="w-8 h-8 animate-spin text-[#DD3C73] mb-3" />
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Loading Portfolio Briefings</div>
           <div className="text-[11px] text-slate-500 mt-1">Retrieving stored quantitative and qualitative reports...</div>
         </div>
       ) : !activeReport ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
-          <div className="w-12 h-12 rounded-2xl border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] mb-4">
+          <div className="w-12 h-12 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-4">
             <Bot className="w-6 h-6" />
           </div>
           <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">No Reports Recorded Yet</div>
@@ -303,7 +303,7 @@ export function ReportsCard({
           <button
             type="button"
             onClick={() => setIsAnalysisModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
           >
             <Sparkles className="w-4 h-4" />
             <span>Analyze Portfolio</span>
@@ -332,8 +332,8 @@ export function ReportsCard({
             {/* Markdown Report Body */}
             <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 bg-slate-950/20 custom-scrollbar select-text font-mono text-xs leading-relaxed">
               {activeReport.summary && (
-                <div className="p-3.5 rounded-xl border border-[#6366f1]/30 bg-[#6366f1]/5 mb-4 text-xs text-slate-300">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#6366f1] mb-1 flex items-center gap-1">
+                <div className="p-3.5 rounded-xl border border-[#DD3C73]/30 bg-[#DD3C73]/5 mb-4 text-xs text-slate-300">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] mb-1 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
                     <span>Executive Summary</span>
                   </div>
@@ -348,10 +348,10 @@ export function ReportsCard({
                 rehypePlugins={[rehypeSanitize]}
                 components={{
                   h1: ({ node: _n, ...props }) => (
-                    <h1 className="text-sm font-bold uppercase tracking-wider text-[#6366f1] border-b border-slate-800 pb-1.5 mt-4 mb-2" {...props} />
+                    <h1 className="text-sm font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1.5 mt-4 mb-2" {...props} />
                   ),
                   h2: ({ node: _n, ...props }) => (
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#6366f1] mt-4 mb-2" {...props} />
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-4 mb-2" {...props} />
                   ),
                   h3: ({ node: _n, ...props }) => (
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mt-3 mb-1.5" {...props} />
@@ -361,14 +361,14 @@ export function ReportsCard({
                   ol: ({ node: _n, ...props }) => <ol className="list-decimal list-outside pl-4 mb-3 space-y-1 text-slate-300" {...props} />,
                   li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
                   blockquote: ({ node: _n, ...props }) => (
-                    <blockquote className="border-l-2 border-[#6366f1] bg-[#6366f1]/5 px-3 py-2 my-3 text-slate-400 italic rounded-r" {...props} />
+                    <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-3 py-2 my-3 text-slate-400 italic rounded-r" {...props} />
                   ),
                   a: ({ node: _n, href, children, ...props }) => (
                     <a
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#6366f1] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                      className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
                       {...props}
                     >
                       {children}
@@ -409,7 +409,7 @@ export function ReportsCard({
 
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-950 border border-slate-800">
-                    <div className="w-7 h-7 rounded-lg border border-[#6366f1]/30 bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1] shrink-0">
+                    <div className="w-7 h-7 rounded-lg border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shrink-0">
                       <Wallet className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -422,13 +422,13 @@ export function ReportsCard({
 
                   <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-950 border border-slate-800">
                     <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
-                      isReturnUp ? "border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0]" : "border-[#6366f1]/30 bg-[#6366f1]/10 text-[#6366f1]"
+                      isReturnUp ? "border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0]" : "border-[#DD3C73]/30 bg-[#DD3C73]/10 text-[#DD3C73]"
                     }`}>
                       {isReturnUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] text-slate-500 uppercase tracking-wider">Period Return</div>
-                      <div className={`font-bold truncate ${isReturnUp ? "text-[#A7E2C0]" : "text-[#6366f1]"}`}>
+                      <div className={`font-bold truncate ${isReturnUp ? "text-[#A7E2C0]" : "text-[#DD3C73]"}`}>
                         {fmtPercent(returnPercent)}
                         {returnDollar !== undefined && (
                           <span className="text-[10px] text-slate-500 font-normal ml-1">
@@ -478,9 +478,9 @@ export function ReportsCard({
                       {activeReport.metrics?.topLoser && (
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-500 flex items-center gap-1">
-                            <span className="text-[#6366f1]">▼</span> Top Loser
+                            <span className="text-[#DD3C73]">▼</span> Top Loser
                           </span>
-                          <span className="font-bold text-[#6366f1]">
+                          <span className="font-bold text-[#DD3C73]">
                             {activeReport.metrics.topLoser.symbol} {fmtPercent(activeReport.metrics.topLoser.changePercent)}
                           </span>
                         </div>
@@ -499,7 +499,7 @@ export function ReportsCard({
 
                 <div className="flex flex-col gap-1">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-[#6366f1] shrink-0" />
+                    <Clock className="w-3 h-3 text-[#DD3C73] shrink-0" />
                     <span>Generated Timestamp</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px]">
@@ -516,7 +516,7 @@ export function ReportsCard({
 
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3 text-[#6366f1] shrink-0" />
+                    <Calendar className="w-3 h-3 text-[#DD3C73] shrink-0" />
                     <span>Period Window</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px]">{activeReport.period}</div>
@@ -524,7 +524,7 @@ export function ReportsCard({
 
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Bot className="w-3 h-3 text-[#6366f1] shrink-0" />
+                    <Bot className="w-3 h-3 text-[#DD3C73] shrink-0" />
                     <span>Inference Model</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px] truncate">{activeReport.model}</div>
@@ -550,13 +550,13 @@ export function ReportsCard({
 
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Terminal className="w-3 h-3 text-[#6366f1] shrink-0" />
+                    <Terminal className="w-3 h-3 text-[#DD3C73] shrink-0" />
                     <span>Inference Prompt</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsPromptModalOpen(true)}
-                    className="inline-flex items-center gap-1 text-[11px] text-[#6366f1] hover:text-[#e65f8e] transition-colors cursor-pointer text-left font-semibold"
+                    className="inline-flex items-center gap-1 text-[11px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer text-left font-semibold"
                   >
                     <span>Inspect LLM Prompt &rarr;</span>
                   </button>
@@ -597,14 +597,14 @@ export function ReportsCard({
                   <button
                     type="button"
                     onClick={() => setIsDownloadModalOpen(true)}
-                    className="h-8 px-3 rounded-lg border border-[#6366f1]/40 bg-[#6366f1]/10 hover:bg-[#6366f1]/20 hover:border-[#6366f1]/60 text-[#6366f1] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    className="h-8 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 hover:bg-[#DD3C73]/20 hover:border-[#DD3C73]/60 text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
                     title="Download report as Markdown or PDF"
                   >
                     <div className="flex items-center gap-2">
-                      <Download className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <Download className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span>Download</span>
                     </div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#6366f1]/80">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#DD3C73]/80">
                       MD / PDF
                     </span>
                   </button>
@@ -613,11 +613,11 @@ export function ReportsCard({
                   <button
                     type="button"
                     onClick={() => onDeleteReport(activeReport.id)}
-                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-[#6366f1]/10 hover:border-[#6366f1]/40 text-slate-400 hover:text-[#6366f1] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-[#DD3C73]/10 hover:border-[#DD3C73]/40 text-slate-400 hover:text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
                     title="Delete active report"
                   >
                     <div className="flex items-center gap-2">
-                      <Trash2 className="w-3.5 h-3.5 text-[#6366f1]" />
+                      <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span>Delete Report</span>
                     </div>
                   </button>

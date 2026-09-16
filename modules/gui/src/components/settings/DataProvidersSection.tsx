@@ -222,7 +222,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       {/* Section Header */}
       <div className="border-b border-slate-800/80 pb-4">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-          <Database className="w-4 h-4 text-[#6366f1]" />
+          <Database className="w-4 h-4 text-[#DD3C73]" />
           <span>Data Providers</span>
         </div>
         <p className="text-[11px] text-slate-400 mt-1">
@@ -233,7 +233,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       {/* Part 1: Provider Cards */}
       <div className="space-y-4">
         <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-          <Radio className="w-3.5 h-3.5 text-[#6366f1]" />
+          <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
           <span>Configured Providers</span>
         </div>
 
@@ -276,9 +276,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {isTestingYahoo ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#6366f1]" />
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
                   ) : (
-                    <PlayCircle className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
                   )}
                   <span>{isTestingYahoo ? "Testing Connection..." : "Test Connection"}</span>
                 </button>
@@ -295,7 +295,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
                     yahooTestResult.success
                       ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
-                      : "bg-[#6366f1]/10 border-[#6366f1]/30 text-[#6366f1]"
+                      : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
                   }`}
                 >
                   {yahooTestResult.success ? (
@@ -350,7 +350,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   <button
                     type="button"
                     onClick={() => rpc.request.openExternalUrl({ url: "https://finnhub.io/register" })}
-                    className="text-[#6366f1] hover:underline flex items-center gap-1 font-mono cursor-pointer"
+                    className="text-[#DD3C73] hover:underline flex items-center gap-1 font-mono cursor-pointer"
                   >
                     <span>Get free key</span>
                     <ExternalLink className="w-3 h-3" />
@@ -364,7 +364,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                     value={finnhubApiKey}
                     onChange={(e) => handleSaveFinnhubKey(e.target.value)}
                     placeholder="Enter Finnhub API Key"
-                    className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#6366f1] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                    className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                   />
                   <button
                     type="button"
@@ -386,9 +386,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer disabled:opacity-40"
                 >
                   {isTestingFinnhub ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#6366f1]" />
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
                   ) : (
-                    <PlayCircle className="w-3.5 h-3.5 text-[#6366f1]" />
+                    <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
                   )}
                   <span>{isTestingFinnhub ? "Verifying Key..." : "Test Connection"}</span>
                 </button>
@@ -405,7 +405,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
                     finnhubTestResult.success
                       ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
-                      : "bg-[#6366f1]/10 border-[#6366f1]/30 text-[#6366f1]"
+                      : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
                   }`}
                 >
                   {finnhubTestResult.success ? (
@@ -425,7 +425,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       <div className="space-y-4">
         <div className="border-b border-slate-800/80 pb-2">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Radio className="w-3.5 h-3.5 text-[#6366f1]" />
+            <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>Category Routing</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
@@ -446,7 +446,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
               >
                 <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-[#6366f1] shrink-0" />
+                    <Icon className="w-4 h-4 text-[#DD3C73] shrink-0" />
                     <span className="text-xs font-bold text-slate-200">{cat.label}</span>
                     {cat.recommended === "yahoo" ? (
                       <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
@@ -474,7 +474,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                     onClick={() => handleSelectProvider(cat.id, "yahoo")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                       selected === "yahoo"
-                        ? "bg-[#6366f1]/20 text-[#6366f1] font-bold shadow-sm"
+                        ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold shadow-sm"
                         : "text-slate-400 hover:text-slate-200"
                     }`}
                   >
@@ -487,7 +487,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                     onClick={() => handleSelectProvider(cat.id, "finnhub")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                       selected === "finnhub"
-                        ? "bg-[#6366f1]/20 text-[#6366f1] font-bold shadow-sm"
+                        ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold shadow-sm"
                         : "text-slate-400 hover:text-slate-200"
                     }`}
                   >
@@ -517,7 +517,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
             onClick={handleClearCache}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer disabled:opacity-40"
           >
-            <Trash2 className="w-3.5 h-3.5 text-[#6366f1]" />
+            <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>{isClearingCache ? "Purging..." : "Clear Market Cache"}</span>
           </button>
         </div>

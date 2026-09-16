@@ -69,7 +69,7 @@ export function PortfolioChartCard({
     );
 
     const totalColor = "#A7E2C0"; // mint green for total portfolio value with cash
-    const accentColor = "#6366f1"; // vibrant rose/magenta accent for invested value
+    const accentColor = "#DD3C73"; // vibrant rose/magenta accent for invested value
     const costBasisColor = "#64748b"; // slate for cost basis
     const returnColor = "#6d8bf7"; // royal blue tint for return %
     const textMuted = "#94a3b8";
@@ -249,7 +249,7 @@ export function PortfolioChartCard({
             </span>
             <span className="flex items-center gap-1">
               <span
-                className="w-2.5 h-1.5 rounded-sm border border-[#6366f1]/60 inline-block"
+                className="w-2.5 h-1.5 rounded-sm border border-[#DD3C73]/60 inline-block"
                 style={{ background: "rgba(221, 60, 115, 0.25)" }}
               />
               <span>Invested</span>
@@ -272,7 +272,7 @@ export function PortfolioChartCard({
               onClick={() => setRange(r)}
               className={`px-2.5 py-1 rounded uppercase transition-all cursor-pointer ${
                 range === r
-                  ? "bg-[#6366f1]/20 text-[#6366f1] border border-[#6366f1]/30 font-bold"
+                  ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
               }`}
             >

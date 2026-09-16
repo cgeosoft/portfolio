@@ -300,7 +300,7 @@ export function ExportPortfolioModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-lg bg-[#6366f1]/15 border border-[#6366f1]/30 flex items-center justify-center text-[#6366f1] shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73] shrink-0">
               <Archive className="w-3.5 h-3.5" />
             </div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-200 truncate">
@@ -322,7 +322,7 @@ export function ExportPortfolioModal({
           <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-[#6366f1]" />
+                <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73]" />
                 <span>Target Portfolio</span>
               </div>
               <div className="text-sm font-bold text-slate-100 truncate mt-0.5" title={portfolio.name}>
@@ -337,7 +337,7 @@ export function ExportPortfolioModal({
 
             <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">
-                <Coins className="w-3 h-3 text-[#6366f1]" />
+                <Coins className="w-3 h-3 text-[#DD3C73]" />
                 <span className="text-xs font-bold text-slate-200">{portfolio.baseCurrency}</span>
               </div>
             </div>
@@ -372,7 +372,7 @@ export function ExportPortfolioModal({
               <label
                 className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-colors select-none ${
                   includeTransactions
-                    ? "bg-[#6366f1]/10 border-[#6366f1]/40 text-slate-100"
+                    ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 text-slate-100"
                     : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
                 }`}
               >
@@ -387,7 +387,7 @@ export function ExportPortfolioModal({
                   <div
                     className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                       includeTransactions
-                        ? "bg-[#6366f1] border-[#6366f1] text-white"
+                        ? "bg-[#DD3C73] border-[#DD3C73] text-white"
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
@@ -425,7 +425,7 @@ export function ExportPortfolioModal({
               <label
                 className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-colors select-none ${
                   includeReports
-                    ? "bg-[#6366f1]/10 border-[#6366f1]/40 text-slate-100"
+                    ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 text-slate-100"
                     : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
                 }`}
               >
@@ -440,7 +440,7 @@ export function ExportPortfolioModal({
                   <div
                     className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                       includeReports
-                        ? "bg-[#6366f1] border-[#6366f1] text-white"
+                        ? "bg-[#DD3C73] border-[#DD3C73] text-white"
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
@@ -448,7 +448,7 @@ export function ExportPortfolioModal({
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#6366f1] shrink-0" />
+                    <FileText className="w-4 h-4 text-[#DD3C73] shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>AI Intelligence Reports</span>
@@ -478,7 +478,7 @@ export function ExportPortfolioModal({
               <label
                 className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-colors select-none ${
                   includeReadme
-                    ? "bg-[#6366f1]/10 border-[#6366f1]/40 text-slate-100"
+                    ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 text-slate-100"
                     : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
                 }`}
               >
@@ -493,7 +493,7 @@ export function ExportPortfolioModal({
                   <div
                     className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
                       includeReadme
-                        ? "bg-[#6366f1] border-[#6366f1] text-white"
+                        ? "bg-[#DD3C73] border-[#DD3C73] text-white"
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
@@ -546,7 +546,7 @@ export function ExportPortfolioModal({
             type="button"
             onClick={handleDownloadZip}
             disabled={isExporting || (!includeTransactions && !includeReports && !includeReadme)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
           >
             {isExporting ? (
               <>

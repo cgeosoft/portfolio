@@ -67,7 +67,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
         {/* Modal Header */}
         <div className="p-6 border-b border-[#1e293b] bg-[#181d2b]/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#6366f1]/10 text-[#6366f1] border border-[#6366f1]/20">
+            <div className="p-2 rounded-xl bg-[#DD3C73]/10 text-[#DD3C73] border border-[#DD3C73]/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
@@ -81,7 +81,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                 <div
                   key={s}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    step === s ? "w-6 bg-[#6366f1]" : step > s ? "bg-[#A7E2C0]" : "bg-slate-700"
+                    step === s ? "w-6 bg-[#DD3C73]" : step > s ? "bg-[#A7E2C0]" : "bg-slate-700"
                   }`}
                 />
               ))}
@@ -121,7 +121,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-[#181d2b] border border-[#1e293b]">
-                  <BarChart3 className="w-4 h-4 text-[#6366f1] mt-0.5 shrink-0" />
+                  <BarChart3 className="w-4 h-4 text-[#DD3C73] mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold text-slate-200">Live Yahoo Finance Quotes</div>
                     <div className="text-[11px] text-slate-400">Automatic multi-currency conversion, intraday prices, and historical charts.</div>
@@ -151,7 +151,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
               <div className="p-4 rounded-xl bg-[#181d2b] border border-[#1e293b] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <Zap className="w-4 h-4 text-[#6366f1]" />
+                    <Zap className="w-4 h-4 text-[#DD3C73]" />
                     <span className="text-xs font-bold text-slate-200">Generate Demo Data</span>
                   </div>
                   <button
@@ -160,7 +160,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                     aria-checked={populateDemo}
                     onClick={() => setPopulateDemo((prev) => !prev)}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      populateDemo ? "bg-[#6366f1]" : "bg-slate-800"
+                      populateDemo ? "bg-[#DD3C73]" : "bg-slate-800"
                     }`}
                   >
                     <span className="sr-only">Generate Demo Data</span>
@@ -205,7 +205,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                     aria-checked={enableTelemetry}
                     onClick={() => setEnableTelemetry((prev) => !prev)}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      enableTelemetry ? "bg-[#6366f1]" : "bg-slate-800"
+                      enableTelemetry ? "bg-[#DD3C73]" : "bg-slate-800"
                     }`}
                   >
                     <span className="sr-only">Enable Anonymous Telemetry</span>
@@ -261,7 +261,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
               type="button"
               onClick={() => setStep((s) => (s + 1) as 2 | 3)}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6366f1] hover:bg-[#c93264] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#c93264] text-xs font-bold text-white transition-colors cursor-pointer disabled:opacity-50"
             >
               <span>Continue</span>
               <ArrowRight className="w-3.5 h-3.5" />

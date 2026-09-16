@@ -70,8 +70,8 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
         {/* Modal Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#6366f1]/15 border border-[#6366f1]/40 flex items-center justify-center shrink-0">
-              <HelpCircle className="w-5 h-5 text-[#6366f1]" />
+            <div className="w-10 h-10 rounded-xl bg-[#DD3C73]/15 border border-[#DD3C73]/40 flex items-center justify-center shrink-0">
+              <HelpCircle className="w-5 h-5 text-[#DD3C73]" />
             </div>
             <div>
               <h2 id="sponsor-info-title" className="text-base font-bold tracking-wide text-slate-100">
@@ -92,7 +92,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
         {/* Informational Blocks */}
         <div className="space-y-3 text-xs leading-relaxed text-slate-300">
           <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-2.5">
-            <HeartHandshake className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
+            <HeartHandshake className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
             <p>
               This box shows partner content. Sponsorships fund independent maintenance, live market quotes, and updates to keep development active.
             </p>
@@ -106,8 +106,8 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           </div>
 
           {/* Dev email contact section */}
-          <div className="p-3.5 rounded-xl bg-[#181d2b] border border-[#6366f1]/30 space-y-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6366f1] uppercase tracking-wider">
+          <div className="p-3.5 rounded-xl bg-[#181d2b] border border-[#DD3C73]/30 space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#DD3C73] uppercase tracking-wider">
               <Mail className="w-3.5 h-3.5" />
               <span>Offer a Sponsorship</span>
             </div>
@@ -139,7 +139,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           <button
             type="button"
             onClick={handleSendEmail}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#6366f1] hover:text-white bg-[#6366f1]/10 hover:bg-[#6366f1]/20 border border-[#6366f1]/30 rounded-lg font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#DD3C73] hover:text-white bg-[#DD3C73]/10 hover:bg-[#DD3C73]/20 border border-[#DD3C73]/30 rounded-lg font-semibold transition-colors cursor-pointer"
           >
             <Mail className="w-3.5 h-3.5" />
             <span>Contact via Email</span>

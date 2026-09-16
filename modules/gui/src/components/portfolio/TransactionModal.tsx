@@ -194,7 +194,7 @@ export function TransactionModal({
             {/* Top Banner */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-[#6366f1] shrink-0" />
+                <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
                 <span>{transaction ? "Modify Transaction Details" : "Manual Trade & Asset Entry"}</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
@@ -208,7 +208,7 @@ export function TransactionModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  <Wallet className="w-3 h-3 text-[#6366f1]" />
+                  <Wallet className="w-3 h-3 text-[#DD3C73]" />
                   <span>Total Amount</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">
@@ -241,13 +241,13 @@ export function TransactionModal({
 
             {/* Error Message */}
             {error && (
-              <div className="p-3.5 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/10 flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-[#6366f1] shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-[#6366f1] uppercase tracking-wider">
+                  <div className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
                     Transaction Error
                   </div>
-                  <div className="text-xs text-[#6366f1] font-mono break-words leading-relaxed mt-1">
+                  <div className="text-xs text-[#DD3C73] font-mono break-words leading-relaxed mt-1">
                     {error}
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export function TransactionModal({
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1]"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
                 />
               </div>
 
@@ -293,7 +293,7 @@ export function TransactionModal({
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider flex items-center justify-between">
                   <span>Ticker Symbol & Lookup</span>
-                  {isSearching && <span className="text-[#6366f1] text-[10px] animate-pulse">Searching…</span>}
+                  {isSearching && <span className="text-[#DD3C73] text-[10px] animate-pulse">Searching…</span>}
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -308,7 +308,7 @@ export function TransactionModal({
                         }
                       }}
                       required
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#6366f1]"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73]"
                     />
                     {/* Autocomplete Dropdown */}
                     {searchResults.length > 0 && (
@@ -323,7 +323,7 @@ export function TransactionModal({
                             }}
                             className="p-2.5 hover:bg-slate-800/80 cursor-pointer border-b border-slate-800/60 last:border-0 flex items-center justify-between text-xs"
                           >
-                            <span className="font-bold text-[#6366f1]">{r.symbol}</span>
+                            <span className="font-bold text-[#DD3C73]">{r.symbol}</span>
                             <span className="text-[11px] text-slate-400 truncate max-w-[240px]">{r.name}</span>
                           </div>
                         ))}
@@ -335,7 +335,7 @@ export function TransactionModal({
                     placeholder="EUR"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-20 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#6366f1] text-center font-bold"
+                    className="w-20 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73] text-center font-bold"
                   />
                 </div>
               </div>
@@ -350,7 +350,7 @@ export function TransactionModal({
                     placeholder="e.g. Microsoft Corporation"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1]"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
                   />
                 </div>
 
@@ -389,7 +389,7 @@ export function TransactionModal({
                       setAmount((parseFloat(e.target.value) * parseFloat(price)).toFixed(2));
                     }
                   }}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1] text-right"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] text-right"
                 />
               </div>
 
@@ -408,7 +408,7 @@ export function TransactionModal({
                       setAmount((parseFloat(shares) * parseFloat(e.target.value)).toFixed(2));
                     }
                   }}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1] text-right"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] text-right"
                 />
               </div>
 
@@ -422,7 +422,7 @@ export function TransactionModal({
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-[#6366f1] font-bold focus:outline-none focus:border-[#6366f1] text-right"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-[#DD3C73] font-bold focus:outline-none focus:border-[#DD3C73] text-right"
                 />
               </div>
             </div>
@@ -439,7 +439,7 @@ export function TransactionModal({
                   placeholder="0.00"
                   value={fee}
                   onChange={(e) => setFee(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1] text-right"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] text-right"
                 />
               </div>
 
@@ -453,7 +453,7 @@ export function TransactionModal({
                   placeholder="0.00"
                   value={tax}
                   onChange={(e) => setTax(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6366f1] text-right"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73] text-right"
                 />
               </div>
             </div>
@@ -477,7 +477,7 @@ export function TransactionModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#6366f1] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#6366f1]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

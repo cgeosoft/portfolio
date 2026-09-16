@@ -97,7 +97,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         label: "Transaction Fees",
         description: "Total brokerage commissions and order fees deducted over time.",
         getValue: (s, c, h) => `-${fmtCurrency(s?.totalFees ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#6366f1]",
+        colorClass: "text-[#DD3C73]",
       },
     ],
     keyTakeaways: [
@@ -111,7 +111,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Portfolio Valuation",
     category: "Valuation",
     icon: Wallet,
-    iconColor: "text-[#6366f1]",
+    iconColor: "text-[#DD3C73]",
     shortDescription: "Total liquidated net worth of your portfolio at live market quotes.",
     fullExplanation:
       "Portfolio Valuation reflects the exact total liquid value of your entire investment portfolio right now. It combines the real-time market value of all active securities (stocks, ETFs, cryptocurrencies, mutual funds) with your uninvested cash reserves.",
@@ -123,7 +123,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         label: "Invested Holdings Value",
         description: "Aggregate live value of all active stocks, ETFs, crypto, and other assets.",
         getValue: (s, c, h) => fmtCurrency(s?.totalValue ?? 0, s?.baseCurrency || c, h),
-        colorClass: "text-[#6366f1]",
+        colorClass: "text-[#DD3C73]",
       },
       {
         label: "Uninvested Cash Reserves",
@@ -149,7 +149,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Today's Return",
     category: "Daily Return",
     icon: DollarSign,
-    iconColor: "text-[#6366f1]",
+    iconColor: "text-[#DD3C73]",
     shortDescription: "Single-session valuation delta compared to previous market close.",
     fullExplanation:
       "Today's Return measures the monetary and percentage fluctuation of your active positions during the current trading session. It compares live quotes against the prior day's official market closing prices for each holding.",
@@ -163,14 +163,14 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         description: "Absolute financial gain or loss experienced in the current session.",
         getValue: (s, c, h) =>
           `${(s?.dayGainLossDollar ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.dayGainLossDollar ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: (s) => ((s?.dayGainLossDollar ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#6366f1]"),
+        colorClass: (s) => ((s?.dayGainLossDollar ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#DD3C73]"),
       },
       {
         label: "24h Percentage Change",
         description: "Percentage return relative to yesterday's closing baseline valuation.",
         getValue: (s) =>
           `${(s?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${fmtPercent(s?.dayGainLossPercent ?? 0)}`,
-        colorClass: (s) => ((s?.dayGainLossPercent ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#6366f1]"),
+        colorClass: (s) => ((s?.dayGainLossPercent ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#DD3C73]"),
       },
       {
         label: "Session Top Winner",
@@ -310,7 +310,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Top Session Performer",
     category: "Session Leader",
     icon: Flame,
-    iconColor: "text-[#6366f1]",
+    iconColor: "text-[#DD3C73]",
     shortDescription: "The individual active asset with the highest percentage gain in the current market session.",
     fullExplanation:
       "Identifies the standout asset in your portfolio based on intraday percentage gain from the previous official market close. Helps spot momentum drivers and market leadership across your holdings.",
@@ -390,7 +390,7 @@ export function MetricInfoModal({
           sub: `Return: ${isStartUp ? "+" : ""}${fmtPercent(
             summary?.totalGainSinceStartPercent ?? summary?.totalGainLossPercent ?? 0
           )} since inception`,
-          color: isStartUp ? "text-[#A7E2C0]" : "text-[#6366f1]",
+          color: isStartUp ? "text-[#A7E2C0]" : "text-[#DD3C73]",
         };
       case "valuation":
         return {
@@ -409,7 +409,7 @@ export function MetricInfoModal({
         return {
           main: `${isDayUp ? "+" : ""}${fmtCurrency(summary?.dayGainLossDollar ?? 0, baseCurr, hideCurrencyValues)}`,
           sub: `24h Change: ${isDayUp ? "▲" : "▼"} ${fmtPercent(summary?.dayGainLossPercent ?? 0)}`,
-          color: isDayUp ? "text-[#A7E2C0]" : "text-[#6366f1]",
+          color: isDayUp ? "text-[#A7E2C0]" : "text-[#DD3C73]",
         };
       case "realizedIncome": {
         const combined =
@@ -474,7 +474,7 @@ export function MetricInfoModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-800 px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 bg-slate-950/40">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 text-[#6366f1] shrink-0">
+            <div className="p-1.5 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/20 text-[#DD3C73] shrink-0">
               <Calculator className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -512,11 +512,11 @@ export function MetricInfoModal({
                   onClick={() => onSelectMetricKey(key)}
                   className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all cursor-pointer border shrink-0 sm:shrink ${
                     isSelected
-                      ? "bg-[#6366f1]/20 text-[#6366f1] border-[#6366f1]/40 shadow-sm shadow-[#6366f1]/10"
+                      ? "bg-[#DD3C73]/20 text-[#DD3C73] border-[#DD3C73]/40 shadow-sm shadow-[#DD3C73]/10"
                       : "bg-slate-950/40 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
                   }`}
                 >
-                  <TabIcon className={`w-3.5 h-3.5 ${isSelected ? "text-[#6366f1]" : "text-slate-400"}`} />
+                  <TabIcon className={`w-3.5 h-3.5 ${isSelected ? "text-[#DD3C73]" : "text-slate-400"}`} />
                   <span>{def.title}</span>
                 </button>
               );
@@ -529,7 +529,7 @@ export function MetricInfoModal({
           {/* Live Current Value Card */}
           <div className="p-3 sm:p-4 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
             <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[#6366f1] shrink-0">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[#DD3C73] shrink-0">
                 <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${currentDef.iconColor}`} />
               </div>
               <div>
@@ -565,7 +565,7 @@ export function MetricInfoModal({
           {/* Section 1: Detailed Explanation */}
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-              <Info className="w-3.5 h-3.5 text-[#6366f1]" />
+              <Info className="w-3.5 h-3.5 text-[#DD3C73]" />
               <span>What this value means</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-mono">
@@ -577,11 +577,11 @@ export function MetricInfoModal({
           {/* Section 2: Formula & Calculation */}
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-              <Calculator className="w-3.5 h-3.5 text-[#6366f1]" />
+              <Calculator className="w-3.5 h-3.5 text-[#DD3C73]" />
               <span>Mathematical Formula & Method</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 font-mono space-y-2">
-              <div className="p-2 sm:p-2.5 rounded-lg bg-[#07090e] border border-[#6366f1]/20 text-[#6366f1] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
+              <div className="p-2 sm:p-2.5 rounded-lg bg-[#07090e] border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
                 {currentDef.formula}
               </div>
               <p className="text-[10.5px] sm:text-[11px] text-slate-400 leading-relaxed">
@@ -594,7 +594,7 @@ export function MetricInfoModal({
           {currentDef.components.length > 0 && (
             <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-                <Layers className="w-3.5 h-3.5 text-[#6366f1]" />
+                <Layers className="w-3.5 h-3.5 text-[#DD3C73]" />
                 <span>Components & Current Balances</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
@@ -633,7 +633,7 @@ export function MetricInfoModal({
             <ul className="space-y-1 sm:space-y-1.5 p-3 sm:p-3.5 rounded-xl bg-slate-950/30 border border-slate-800/60 text-xs text-slate-400 font-mono">
               {currentDef.keyTakeaways.map((point, index) => (
                 <li key={index} className="flex items-start gap-2 text-[10.5px] sm:text-[11px] leading-relaxed">
-                  <span className="text-[#6366f1] font-bold shrink-0">▸</span>
+                  <span className="text-[#DD3C73] font-bold shrink-0">▸</span>
                   <span>{point}</span>
                 </li>
               ))}

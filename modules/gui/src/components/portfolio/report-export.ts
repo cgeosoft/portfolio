@@ -86,7 +86,7 @@ export async function generateReportPdf(
   doc.rect(margin, y, contentWidth, 24, "F");
 
   // Accent Line
-  doc.setFillColor(221, 60, 115); // Cyber Pink (#6366f1)
+  doc.setFillColor(221, 60, 115); // Cyber Pink (#DD3C73)
   doc.rect(margin, y, contentWidth, 1.5, "F");
 
   // Title
