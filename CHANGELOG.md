@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1] - 2026-09-16
+
+- 735c868 Remove cross-project references to Assistant across codebase and documentation
+- 86cd101 Restore brand pink accent color and clean up settings presentation across GUI
+- bb7cede Redesign desktop shell splash and error pages and harmonize app description
+- e97d456 Switch to daily log files and write development logs to workspace logs directory
+- 0759be9 Align marketing website layout and styles with Assistant and update metrics site generator
+- 899e0e4 Release script with Docker Linux builder, website release manifest, docs and skills for the module layout
+- 7121a35 Restructure into modules: pure Bun service with HTTP API, Vite GUI, thin Electrobun shell
+- b3c6827 Consolidate agent config: condensed AGENTS.md, uniform skills
+
+
 ## [0.3.0] - Unreleased
 ### Changed
 - Split the app into `modules/service` (pure Bun HTTP service with `bun:sqlite`), `modules/gui` (Vite build served by the service), `modules/desktop` (Electrobun shell that spawns the service) and `modules/shared`; the GUI talks to the service over HTTP instead of the Electrobun RPC bridge.
