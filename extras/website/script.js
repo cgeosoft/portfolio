@@ -11,10 +11,11 @@
   // Modify these URLs when publishing new releases or let fetchLatestRelease auto-update
   // ===========================================================================
   const GITHUB_REPO_URL = "https://github.com/cgeosoft/portfolio";
-  const GITHUB_RELEASES_URL = `${GITHUB_REPO_URL}/releases`;
-  const GITHUB_LATEST_RELEASE_URL = `${GITHUB_RELEASES_URL}/latest`;
-  const GITHUB_API_LATEST_RELEASE = "https://api.github.com/repos/cgeosoft/portfolio/releases/latest";
-  const CACHE_KEY = "portfolio_latest_release_v1";
+  // The release script publishes the packages under /releases/<version>/ and
+  // describes them in /releases/latest.json (see scripts/release.sh).
+  const RELEASE_MANIFEST_URL = "/releases/latest.json";
+  const GITHUB_LATEST_RELEASE_URL = "#downloads";
+  const CACHE_KEY = "portfolio_latest_release_v2";
   const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache to prevent GitHub API rate limits
 
   // Release assets follow a fixed naming scheme: portfolio_<version>_<platform>.<ext>
@@ -422,80 +423,69 @@
   // ===========================================================================
   // Dynamic GitHub Release Resolution
   // ===========================================================================
-  function applyReleaseData(releaseData) {
-    if (!releaseData || !releaseData.tag_name) return;
+  function applyReleaseData(manifest) {
+    if (!manifest || !manifest.version || !manifest.files) return;
 
-    const rawTag = releaseData.tag_name;
-    const cleanVersion = rawTag.replace(/^v/, '');
-    const releaseBase = `${GITHUB_REPO_URL}/releases/download/${rawTag}`;
+    const cleanVersion = String(manifest.version).replace(/^v/, '');
     const files = buildAssetFilenames(cleanVersion);
+    const url = (platform, kind, fallbackName) => {
+      const entry = manifest.files[platform] && manifest.files[platform][kind];
+      return entry && entry.url ? entry.url : `/releases/${cleanVersion}/${fallbackName}`;
+    };
 
     DOWNLOAD_CONFIG.version = cleanVersion;
-    DOWNLOAD_CONFIG.releaseBase = releaseBase;
 
     DOWNLOAD_CONFIG.windows.installerFile = files.windows.installer;
-    DOWNLOAD_CONFIG.windows.installerUrl = `${releaseBase}/${files.windows.installer}`;
-    DOWNLOAD_CONFIG.windows.portableUrl = `${releaseBase}/${files.windows.portable}`;
+    DOWNLOAD_CONFIG.windows.installerUrl = url('windows', 'installer', files.windows.installer);
+    DOWNLOAD_CONFIG.windows.portableUrl = url('windows', 'portable', files.windows.portable);
 
     DOWNLOAD_CONFIG.macos.installerFile = files.macos.installer;
-    DOWNLOAD_CONFIG.macos.installerUrl = `${releaseBase}/${files.macos.installer}`;
-    DOWNLOAD_CONFIG.macos.portableUrl = `${releaseBase}/${files.macos.portable}`;
+    DOWNLOAD_CONFIG.macos.installerUrl = url('macos', 'installer', files.macos.installer);
+    DOWNLOAD_CONFIG.macos.portableUrl = url('macos', 'portable', files.macos.portable);
 
     DOWNLOAD_CONFIG.linux.installerFile = files.linux.installer;
-    DOWNLOAD_CONFIG.linux.installerUrl = `${releaseBase}/${files.linux.installer}`;
-    DOWNLOAD_CONFIG.linux.portableUrl = `${releaseBase}/${files.linux.portable}`;
+    DOWNLOAD_CONFIG.linux.installerUrl = url('linux', 'installer', files.linux.installer);
+    DOWNLOAD_CONFIG.linux.portableUrl = url('linux', 'portable', files.linux.portable);
     DOWNLOAD_CONFIG.linux.terminalCmd = `sudo dpkg -i ${files.linux.installer}`;
 
-    // Update version badge and meta labels in DOM
     document.querySelectorAll('.latest-version-text').forEach(el => {
       el.textContent = `v${cleanVersion}`;
     });
-
     const metaVersionEl = document.getElementById('meta-version-text');
     if (metaVersionEl) {
       metaVersionEl.textContent = `• Version ${cleanVersion} Latest`;
     }
 
-    // Update active hero button & matrix links
     renderHeroDownload(activeOS);
     bindAllDownloadLinks();
   }
 
   async function fetchLatestRelease() {
-    // 1. Try reading valid cache first
     try {
       const cachedItem = localStorage.getItem(CACHE_KEY);
       if (cachedItem) {
         const parsed = JSON.parse(cachedItem);
-        if (parsed && typeof parsed.timestamp === 'number' && (Date.now() - parsed.timestamp < CACHE_TTL_MS)) {
-          if (parsed.data) {
-            applyReleaseData(parsed.data);
-          }
+        if (parsed && typeof parsed.timestamp === 'number' && (Date.now() - parsed.timestamp < CACHE_TTL_MS) && parsed.data) {
+          applyReleaseData(parsed.data);
         }
       }
     } catch (err) {
       // Ignore cache access error
     }
 
-    // 2. Fetch latest release from GitHub API
     try {
-      const response = await fetch(GITHUB_API_LATEST_RELEASE, {
-        headers: { Accept: 'application/vnd.github.v3+json' }
-      });
+      const response = await fetch(RELEASE_MANIFEST_URL, { headers: { Accept: 'application/json' }, cache: 'no-cache' });
       if (response.ok) {
         const data = await response.json();
         applyReleaseData(data);
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({
-            timestamp: Date.now(),
-            data: data
-          }));
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
         } catch (e) {
           // Ignore cache write error
         }
       }
     } catch (err) {
-      console.warn('Could not retrieve latest release from GitHub API. Using fallback configuration.', err);
+      console.warn('Could not read the release manifest. Download links point to the downloads section.', err);
     }
   }
 

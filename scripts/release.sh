@@ -2,468 +2,274 @@
 set -euo pipefail
 
 # =============================================================================
-# Portfolio - Release and Build Automation Orchestrator
+# Release orchestrator.
+#
+#   scripts/release.sh tag [patch|minor|major|<version>] [--dry-run] [--no-push]
+#       Bump every package.json, write the changelog, commit, tag and push.
+#
+#   scripts/release.sh build [linux|windows|macos ...] [--native] [--version=X]
+#       Produce the release packages into dist/<version>/.
+#       linux    runs inside the Docker image scripts/docker/Dockerfile.linux
+#                (or natively with --native); emits .deb and .tar.gz
+#       windows  Electrobun builds only for its host OS, so the Windows and
+#       macos    macOS packages are built on such a machine: either this one
+#                (--native) or a builder reached over SSH, set with
+#                RELEASE_BUILDER_WINDOWS=user@host and RELEASE_BUILDER_MACOS.
+#
+#   scripts/release.sh publish [--version=X] [--skip-deploy]
+#       Copy dist/<version>/* and a releases/latest.json manifest into
+#       extras/website/releases/ and deploy the website to Cloudflare Pages.
+#
+# Environment (never committed; put it in .env or export it):
+#   POSTHOG_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+#   CLOUDFLARE_PAGES_PROJECT, RELEASE_BUILDER_WINDOWS, RELEASE_BUILDER_MACOS
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+APP_ID="portfolio"
+APP_NAME="Portfolio"
+WEBSITE_URL="https://portfolio.cgeosoft.com"
+DOCKER_IMAGE="${APP_ID}-linux-builder"
+MANIFESTS=(package.json modules/shared/package.json modules/service/package.json modules/gui/package.json modules/desktop/package.json)
+PAGES_MAX_FILE_BYTES=$((25 * 1024 * 1024))
 
-# Ensure Windows native tar (bsdtar in System32) takes precedence over Git GNU tar
-# Git GNU tar treats drive letters (such as D:\...) as remote hostnames and fails
-if [[ "$(uname -s)" =~ MINGW|MSYS|CYGWIN ]]; then
-  mkdir -p "${APP_DIR}/.bin"
-  if [[ -f "/c/Windows/System32/tar.exe" ]]; then
-    cp -f "/c/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
-    export PATH="${APP_DIR}/.bin:${PATH}"
-  elif [[ -f "C:/Windows/System32/tar.exe" ]]; then
-    cp -f "C:/Windows/System32/tar.exe" "${APP_DIR}/.bin/tar.exe" 2>/dev/null || true
-    export PATH="${APP_DIR}/.bin:${PATH}"
-  fi
+if [[ -f "${ROOT}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT}/.env"
+  set +a
 fi
 
-CLEAN=false
-SKIP_BUILD=false
+ACTION=""
+TARGETS=()
+BUMP=""
+CUSTOM_VERSION=""
 DRY_RUN=false
 NO_PUSH=false
 ALLOW_DIRTY=false
-ALLOW_BRANCH=false
-CUSTOM_VERSION=""
-CUSTOM_REMOTE=""
-CUSTOM_MSG=""
-BUMP_TYPE=""
-ACTION=""
-TARGETS=()
+NATIVE=false
+SKIP_DEPLOY=false
 
-detect_host_target() {
-  case "$(uname -s)" in
-    Linux*)   echo "debian" ;;
-    Darwin*)  echo "macos" ;;
-    MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
-    *)        echo "debian" ;;
+usage() { sed -n '4,26p' "$0"; }
+
+for arg in "$@"; do
+  case "${arg}" in
+    tag|build|publish) ACTION="${arg}" ;;
+    linux|windows|macos) TARGETS+=("${arg}") ;;
+    patch|minor|major) BUMP="${arg}" ;;
+    --version=*) CUSTOM_VERSION="${arg#*=}" ;;
+    --dry-run) DRY_RUN=true ;;
+    --no-push) NO_PUSH=true ;;
+    --allow-dirty) ALLOW_DIRTY=true ;;
+    --native) NATIVE=true ;;
+    --skip-deploy) SKIP_DEPLOY=true ;;
+    -h|--help) usage; exit 0 ;;
+    v[0-9]*.[0-9]*.[0-9]*|[0-9]*.[0-9]*.[0-9]*) CUSTOM_VERSION="${arg#v}" ;;
+    *) echo "unknown argument: ${arg}" >&2; usage >&2; exit 1 ;;
   esac
-}
+done
+[[ -z "${ACTION}" ]] && ACTION="tag"
+
+log() { echo "[release] $*"; }
+run() { if ${DRY_RUN}; then echo "[dry-run] $*"; else "$@"; fi; }
+
+current_version() { bun -e "console.log(require('${ROOT}/package.json').version)"; }
 
 bump_semver() {
-  local version="$1"
-  local bump="$2"
-  local major minor patch
-  major="$(echo "${version}" | awk -F. '{print $1}')"
-  minor="$(echo "${version}" | awk -F. '{print $2}')"
-  patch="$(echo "${version}" | awk -F. '{print $3}' | sed 's/-.*//')"
-
+  local version="$1" bump="$2" major minor patch
+  IFS=. read -r major minor patch <<< "${version%%-*}"
   case "${bump}" in
     patch) echo "${major}.${minor}.$((patch + 1))" ;;
     minor) echo "${major}.$((minor + 1)).0" ;;
     major) echo "$((major + 1)).0.0" ;;
-    *)     echo "${version}" ;;
+    *) echo "${version}" ;;
   esac
 }
 
-show_help() {
-  cat << 'EOF'
-Portfolio Release Script
+# ── tag ──────────────────────────────────────────────────────────────────────
 
-Usage:
-  ./release.sh [command|targets...] [options]
-
-Commands:
-  tag [version|bump]    Automate release tag generation and push to trigger GitHub Actions CI builds [Default]
-                        Bump options: patch, minor, major, or explicit version (for example: 0.2.0)
-  local                 Build release package for current platform locally
-  debian|deb            Build Debian package (.deb) locally
-  windows|win           Stage Windows installer / portable package locally
-  macos|mac             Stage macOS DMG and .app archive locally
-  all                   Build release package for current platform locally
-
-Tag Options:
-  --dry-run             Show release actions without modifying git or pushing
-  --no-push             Create commit and tag locally without pushing to remote
-  --allow-dirty         Allow release tag creation with uncommitted changes in working tree
-  --allow-branch        Allow release tag creation on non-main branches
-  --remote=<name>       Git remote to push to (default: github, origin, or tracked remote)
-  -m, --message=<msg>   Custom annotated tag message
-
-Build Options:
-  --clean               Clean dist directory before packaging
-  --skip-build          Skip Electrobun compilation if already built
-  --version=<version>   Override package version
-  --dist-dir=<path>     Output directory
-  -h, --help            Show this help message
-EOF
-}
-
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --clean)
-      CLEAN=true
-      shift
-      ;;
-    --skip-build)
-      SKIP_BUILD=true
-      shift
-      ;;
-    --dry-run)
-      DRY_RUN=true
-      shift
-      ;;
-    --no-push)
-      NO_PUSH=true
-      shift
-      ;;
-    --allow-dirty)
-      ALLOW_DIRTY=true
-      shift
-      ;;
-    --allow-branch)
-      ALLOW_BRANCH=true
-      shift
-      ;;
-    --remote=*)
-      CUSTOM_REMOTE="${1#*=}"
-      shift
-      ;;
-    --remote)
-      CUSTOM_REMOTE="$2"
-      shift 2
-      ;;
-    -m|--message)
-      CUSTOM_MSG="$2"
-      shift 2
-      ;;
-    --message=*)
-      CUSTOM_MSG="${1#*=}"
-      shift
-      ;;
-    --version=*)
-      CUSTOM_VERSION="${1#*=}"
-      shift
-      ;;
-    --version)
-      CUSTOM_VERSION="$2"
-      shift 2
-      ;;
-    --dist-dir=*)
-      DIST_DIR="${1#*=}"
-      shift
-      ;;
-    --patch|patch)
-      BUMP_TYPE="patch"
-      ACTION="tag"
-      shift
-      ;;
-    --minor|minor)
-      BUMP_TYPE="minor"
-      ACTION="tag"
-      shift
-      ;;
-    --major|major)
-      BUMP_TYPE="major"
-      ACTION="tag"
-      shift
-      ;;
-    tag|--tag)
-      ACTION="tag"
-      shift
-      ;;
-    debian|deb)
-      ACTION="build"
-      TARGETS+=("debian")
-      shift
-      ;;
-    windows|win)
-      ACTION="build"
-      TARGETS+=("windows")
-      shift
-      ;;
-    macos|mac)
-      ACTION="build"
-      TARGETS+=("macos")
-      shift
-      ;;
-    local|all)
-      ACTION="build"
-      TARGETS+=("$(detect_host_target)")
-      shift
-      ;;
-    -h|--help)
-      show_help
-      exit 0
-      ;;
-    v[0-9]*.[0-9]*.[0-9]*|[0-9]*.[0-9]*.[0-9]*)
-      CUSTOM_VERSION="${1#v}"
-      ACTION="tag"
-      shift
-      ;;
-    *)
-      echo "Unknown argument: $1" >&2
-      show_help >&2
-      exit 1
-      ;;
-  esac
-done
-
-if [[ -z "${ACTION}" ]]; then
-  if [[ ${#TARGETS[@]} -gt 0 ]]; then
-    ACTION="build"
-  else
-    ACTION="tag"
-  fi
-fi
-
-run_tag_release() {
-  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "Error: Directory is not a git repository." >&2
+run_tag() {
+  cd "${ROOT}"
+  if ! ${ALLOW_DIRTY} && [[ -n "$(git status --porcelain)" ]]; then
+    echo "error: working tree is not clean (use --allow-dirty to override)" >&2
     exit 1
   fi
+  local current next
+  current="$(current_version)"
+  if [[ -n "${CUSTOM_VERSION}" ]]; then next="${CUSTOM_VERSION}"
+  elif [[ -n "${BUMP}" ]]; then next="$(bump_semver "${current}" "${BUMP}")"
+  else next="$(bump_semver "${current}" patch)"; fi
+  [[ "${next}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "error: '${next}' is not a semver version" >&2; exit 1; }
+  git rev-parse "v${next}" >/dev/null 2>&1 && { echo "error: tag v${next} already exists" >&2; exit 1; }
+  log "release: ${current} -> ${next}"
 
-  local current_branch
-  current_branch="$(git branch --show-current 2>/dev/null || echo "")"
-  if [[ "${current_branch}" != "main" && "${ALLOW_BRANCH}" != "true" ]]; then
-    echo "Notice: Current branch is '${current_branch}', not 'main'."
-  fi
-
-  if [[ "${ALLOW_DIRTY}" != "true" ]]; then
-    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-      echo "Error: Working directory has uncommitted changes." >&2
-      echo "Commit or stash changes before you create a release tag, or use --allow-dirty." >&2
-      git status --short >&2
-      exit 1
-    fi
-  fi
-
-  local remote
-  if [[ -n "${CUSTOM_REMOTE}" ]]; then
-    remote="${CUSTOM_REMOTE}"
-  elif git remote | grep -qx "github"; then
-    remote="github"
-  elif git remote | grep -qx "origin"; then
-    remote="origin"
-  else
-    remote="$(git remote | head -n 1)"
-  fi
-
-  if [[ -n "${remote}" ]]; then
-    echo "[RELEASE] Fetching tags from remote '${remote}'..."
-    git fetch "${remote}" --tags --quiet 2>/dev/null || true
-  fi
-
-  local pkg_version
-  pkg_version="$(bun -e "console.log(require('${APP_DIR}/package.json').version)" 2>/dev/null || echo "0.1.0")"
-
-  local target_version=""
-  if [[ -n "${CUSTOM_VERSION}" ]]; then
-    target_version="${CUSTOM_VERSION#v}"
-  elif [[ -n "${BUMP_TYPE}" ]]; then
-    target_version="$(bump_semver "${pkg_version}" "${BUMP_TYPE}")"
-  else
-    if git rev-parse "v${pkg_version}" >/dev/null 2>&1; then
-      target_version="$(bump_semver "${pkg_version}" "patch")"
-      echo "[RELEASE] Tag v${pkg_version} already exists. Incrementing patch to ${target_version}."
-    else
-      target_version="${pkg_version}"
-    fi
-  fi
-
-  if [[ ! "${target_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-    echo "Error: Target version '${target_version}' is not valid semantic versioning." >&2
-    exit 1
-  fi
-
-  local tag_name="v${target_version}"
-
-  if git rev-parse "${tag_name}" >/dev/null 2>&1; then
-    echo "Error: Git tag '${tag_name}' already exists." >&2
-    exit 1
-  fi
-
-  local tag_message="${CUSTOM_MSG:-Release ${tag_name}}"
-
-  echo "================================================================="
-  echo " Portfolio Release Tag Automation"
-  echo " Current Version:  ${pkg_version}"
-  echo " Release Version:  ${target_version}"
-  echo " Tag Name:         ${tag_name}"
-  echo " Branch:           ${current_branch}"
-  echo " Remote:           ${remote}"
-  if [[ "${DRY_RUN}" == "true" ]]; then
-    echo " Mode:             DRY RUN (no modifications will be applied)"
-  fi
-  echo "================================================================="
-
-  # Update package.json if version has changed
-  if [[ "${target_version}" != "${pkg_version}" ]]; then
-    if [[ "${DRY_RUN}" == "true" ]]; then
-      echo "[DRY RUN] Would update package.json to version ${target_version}"
-      echo "[DRY RUN] Would generate changelog entry and commit: \"chore(release): ${tag_name}\""
-    else
-      echo "[RELEASE] Updating package.json to version ${target_version}..."
-      bun -e "const fs=require('fs');const p=require('${APP_DIR}/package.json');p.version='${target_version}';fs.writeFileSync('${APP_DIR}/package.json',JSON.stringify(p,null,2)+'\n');"
-      git add "${APP_DIR}/package.json"
-
-      # Generate a changelog entry from the diff vs the previous release using
-      # the OPENAI_* compatible model env vars read from .env.
-      echo "[RELEASE] Generating changelog entry with release notes generator..."
-      if (cd "${APP_DIR}" && bun scripts/gen-changelog.ts --version="${target_version}" >/dev/null); then
-        git add "${APP_DIR}/CHANGELOG.md"
-      else
-        echo "[RELEASE] WARNING: changelog entry not generated; continuing release."
-      fi
-
-      git commit -m "chore(release): ${tag_name}"
-    fi
-  fi
-
-  # Create annotated tag
-  if [[ "${DRY_RUN}" == "true" ]]; then
-    echo "[DRY RUN] Would run: git tag -a \"${tag_name}\" -m \"${tag_message}\""
-  else
-    echo "[RELEASE] Creating annotated tag ${tag_name}..."
-    git tag -a "${tag_name}" -m "${tag_message}"
-  fi
-
-  # Push commit and tag to remote
-  if [[ "${DRY_RUN}" == "true" ]]; then
-    echo "[DRY RUN] Would run: git push \"${remote}\" \"${current_branch}\""
-    echo "[DRY RUN] Would run: git push \"${remote}\" \"${tag_name}\""
-    if [[ "${remote}" != "origin" ]] && git remote | grep -qx "origin"; then
-      echo "[DRY RUN] Would run: git push origin \"${current_branch}\""
-      echo "[DRY RUN] Would run: git push origin \"${tag_name}\""
-    fi
-  elif [[ "${NO_PUSH}" == "true" ]]; then
-    echo "[RELEASE] Tag ${tag_name} created locally (--no-push specified)."
-  else
-    echo "[RELEASE] Pushing branch and tag to remote '${remote}'..."
-    git push "${remote}" "${current_branch}"
-    git push "${remote}" "${tag_name}"
-
-    if [[ "${remote}" != "origin" ]] && git remote | grep -qx "origin"; then
-      echo "[RELEASE] Syncing release branch and tag with origin..."
-      git push origin "${current_branch}" 2>/dev/null || true
-      git push origin "${tag_name}" 2>/dev/null || true
-    fi
-  fi
-
-  echo "================================================================="
-  echo " Release Tag Process Finished"
-  echo " Tag:    ${tag_name}"
-  echo " Remote: ${remote}"
-  echo "================================================================="
-  echo "GitHub Actions triggers build jobs for:"
-  echo "  - Debian (.deb, .tar.gz)"
-  echo "  - Windows (x64 setup .exe, portable .zip)"
-  echo "  - macOS (.dmg, universal .zip)"
-  echo ""
-  echo "Check GitHub Actions workflow status at:"
-  echo "  https://github.com/cgeosoft/portfolio/actions"
-  echo "================================================================="
-}
-
-run_build_packages() {
-  if [[ -n "${CUSTOM_VERSION}" ]]; then
-    VERSION="${CUSTOM_VERSION}"
-  else
-    VERSION="$(bun -e "console.log(require('${APP_DIR}/package.json').version)" 2>/dev/null || echo "0.1.0")"
-  fi
-
-  echo "================================================================="
-  echo " Portfolio Build Orchestrator"
-  echo " Version:  ${VERSION}"
-  echo " Targets:  ${TARGETS[*]}"
-  echo " Output:   ${DIST_DIR}"
-  echo "================================================================="
-
-  if [[ "${CLEAN}" == "true" ]]; then
-    echo "[RELEASE] Cleaning ${DIST_DIR}..."
-    rm -rf "${DIST_DIR}"
-  fi
-  mkdir -p "${DIST_DIR}"
-
-  # 1. Electrobun Compilation (stable production build)
-  if [[ "${SKIP_BUILD}" != "true" ]]; then
-    echo "[RELEASE] Building metric modules..."
-    (cd "${APP_DIR}" && bun run build:metrics)
-    echo "[RELEASE] Building Tailwind CSS..."
-    (cd "${APP_DIR}" && bun run build:css)
-    echo "[RELEASE] Compiling Electrobun application (--env=stable)..."
-    (cd "${APP_DIR}" && bunx electrobun build --env=stable)
-  else
-    echo "[RELEASE] Skipping compilation (--skip-build specified)."
-  fi
-
-  # 2. Execute target packagers
-  for target in "${TARGETS[@]}"; do
-    case "${target}" in
-      debian|deb)
-        echo "[RELEASE] Dispatching Debian packager..."
-        bash "${SCRIPT_DIR}/build-deb.sh" \
-          --skip-build \
-          --version="${VERSION}" \
-          --dist-dir="${DIST_DIR}"
-        for f in "${APP_DIR}/artifacts"/*-Portfolio-Setup.tar.gz "${APP_DIR}/artifacts"/*-Setup.tar.gz; do
-          if [[ -f "$f" ]]; then
-            cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_linux-x64.tar.gz"
-            break
-          fi
-        done
-        ;;
-      windows|win)
-        echo "[RELEASE] Packaging Windows artifacts..."
-        mkdir -p "${DIST_DIR}"
-        for f in "${APP_DIR}/artifacts"/*Setup*.exe "${APP_DIR}/artifacts"/*.exe; do
-          if [[ -f "$f" ]]; then
-            cp -v "$f" "${DIST_DIR}/"
-            cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_x64_setup.exe"
-          fi
-        done
-        for f in "${APP_DIR}/artifacts"/*.zip; do
-          if [[ -f "$f" ]]; then
-            cp -v "$f" "${DIST_DIR}/"
-          fi
-        done
-        if [[ -d "${APP_DIR}/build/stable-windows-x64" ]]; then
-          if command -v 7z >/dev/null 2>&1; then
-            (cd "${APP_DIR}/build" && 7z a -r "${DIST_DIR}/portfolio_${VERSION}_windows-x64_portable.zip" stable-windows-x64/*)
-          elif command -v zip >/dev/null 2>&1; then
-            (cd "${APP_DIR}/build" && zip -r "${DIST_DIR}/portfolio_${VERSION}_windows-x64_portable.zip" stable-windows-x64)
-          fi
-        fi
-        ;;
-      macos|mac)
-        echo "[RELEASE] Packaging macOS artifacts..."
-        mkdir -p "${DIST_DIR}"
-        for f in "${APP_DIR}/artifacts"/*.dmg; do
-          if [[ -f "$f" ]]; then
-            cp -v "$f" "${DIST_DIR}/"
-            cp -v "$f" "${DIST_DIR}/portfolio_${VERSION}_universal.dmg"
-          fi
-        done
-        APP_BUNDLE="$(find "${APP_DIR}/build" -maxdepth 3 -name "*.app" -type d 2>/dev/null | head -n 1)"
-        if [[ -n "${APP_BUNDLE}" && -d "${APP_BUNDLE}" ]]; then
-          APP_PARENT="$(dirname "${APP_BUNDLE}")"
-          APP_NAME="$(basename "${APP_BUNDLE}")"
-          ARCH_NAME="$(uname -m)"
-          if command -v ditto >/dev/null 2>&1; then
-            (cd "${APP_PARENT}" && ditto -c -k --keepParent "${APP_NAME}" "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip")
-            cp -v "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${DIST_DIR}/portfolio_${VERSION}_macos-universal.zip"
-          elif command -v zip >/dev/null 2>&1; then
-            (cd "${APP_PARENT}" && zip -r "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${APP_NAME}")
-            cp -v "${DIST_DIR}/portfolio_${VERSION}_macos-${ARCH_NAME}.zip" "${DIST_DIR}/portfolio_${VERSION}_macos-universal.zip"
-          fi
-        fi
-        ;;
-    esac
+  for file in "${MANIFESTS[@]}"; do
+    run bun -e '
+const fs = require("fs");
+const [file, version] = process.argv.slice(1);
+fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/"version": "[^"]*"/, `"version": "${version}"`));
+' "${file}" "${next}"
   done
-
-  echo "================================================================="
-  echo " Release build complete. Artifacts in ${DIST_DIR}:"
-  ls -lh "${DIST_DIR}"
-  echo "================================================================="
+  run git add "${MANIFESTS[@]}"
+  if ${DRY_RUN}; then
+    echo "[dry-run] bun scripts/gen-changelog.ts --version=${next}"
+  elif bun scripts/gen-changelog.ts --version="${next}" >/dev/null 2>&1; then
+    git add CHANGELOG.md
+  else
+    log "changelog entry not generated (OPENAI_* not configured); continuing"
+  fi
+  run git commit -m "chore(release): v${next}"
+  run git tag -a "v${next}" -m "Release v${next}"
+  if ! ${NO_PUSH}; then
+    local branch remote
+    branch="$(git branch --show-current)"
+    remote="$(git remote | grep -qx github && echo github || echo origin)"
+    run git push "${remote}" "${branch}"
+    run git push "${remote}" "v${next}"
+    if [[ "${remote}" != "origin" ]] && git remote | grep -qx origin; then
+      run git push origin "${branch}" || true
+      run git push origin "v${next}" || true
+    fi
+  fi
+  log "tagged v${next}; next: scripts/release.sh build && scripts/release.sh publish"
 }
 
-if [[ "${ACTION}" == "tag" ]]; then
-  run_tag_release
-else
-  run_build_packages
-fi
+# ── build ────────────────────────────────────────────────────────────────────
+
+host_target() {
+  case "$(uname -s)" in
+    Darwin*) echo macos ;;
+    MINGW*|MSYS*|CYGWIN*) echo windows ;;
+    *) echo linux ;;
+  esac
+}
+
+# Runs on the machine that builds: bundles the desktop app for its own OS and
+# copies the renamed packages into $1 (dist/<version>).
+native_build() {
+  local out="$1" version="$2" target
+  target="$(host_target)"
+  mkdir -p "${out}"
+  cd "${ROOT}"
+  log "building ${APP_NAME} ${version} for ${target} (native)"
+  bun install --frozen-lockfile
+  (cd modules/desktop && bun run build)
+  local artifacts="${ROOT}/modules/desktop/artifacts"
+  case "${target}" in
+    linux)
+      bash "${SCRIPT_DIR}/build-deb.sh" --skip-build --version="${version}" --dist-dir="${out}"
+      local tarball
+      tarball="$(ls "${artifacts}"/*-linux-x64-*-Setup.tar.gz 2>/dev/null | head -n1 || true)"
+      [[ -n "${tarball}" ]] && cp -f "${tarball}" "${out}/${APP_ID}_${version}_linux-x64.tar.gz"
+      ;;
+    windows)
+      local setup
+      setup="$(ls "${artifacts}"/*Setup*.exe 2>/dev/null | head -n1 || true)"
+      [[ -n "${setup}" ]] && cp -f "${setup}" "${out}/${APP_ID}_${version}_x64_setup.exe"
+      local build_dir="${ROOT}/modules/desktop/build/stable-windows-x64"
+      if [[ -d "${build_dir}" ]]; then
+        (cd "${build_dir}" && { command -v 7z >/dev/null && 7z a -tzip -mx=6 "${out}/${APP_ID}_${version}_windows-x64_portable.zip" ./* >/dev/null || zip -qr "${out}/${APP_ID}_${version}_windows-x64_portable.zip" .; })
+      fi
+      ;;
+    macos)
+      local dmg app
+      dmg="$(ls "${artifacts}"/*.dmg 2>/dev/null | head -n1 || true)"
+      [[ -n "${dmg}" ]] && cp -f "${dmg}" "${out}/${APP_ID}_${version}_universal.dmg"
+      app="$(ls -d "${ROOT}"/modules/desktop/build/stable-macos-*/*.app 2>/dev/null | head -n1 || true)"
+      [[ -n "${app}" ]] && ditto -c -k --keepParent "${app}" "${out}/${APP_ID}_${version}_macos-universal.zip"
+      ;;
+  esac
+  log "packages for ${target}:"; ls -la "${out}"
+}
+
+docker_linux_build() {
+  local out="$1" version="$2"
+  command -v docker >/dev/null || { echo "error: docker is required for the linux build (or pass --native)" >&2; exit 1; }
+  log "building Docker image ${DOCKER_IMAGE}"
+  docker build -q -t "${DOCKER_IMAGE}" -f "${SCRIPT_DIR}/docker/Dockerfile.linux" "${SCRIPT_DIR}/docker" >/dev/null
+  mkdir -p "${out}"
+  log "building ${APP_NAME} ${version} for linux in Docker"
+  docker run --rm \
+    -v "${ROOT}:/work" \
+    -v "${DOCKER_IMAGE}-hutch:/root/.hutch" \
+    -e POSTHOG_API_KEY="${POSTHOG_API_KEY:-}" \
+    -e HOME=/root \
+    "${DOCKER_IMAGE}" \
+    bash -lc "cd /work && bash scripts/release.sh build linux --native --version=${version} && chown -R $(id -u):$(id -g) /work/dist /work/modules/desktop/build /work/modules/desktop/artifacts /work/modules/desktop/stage /work/modules/service/dist-bundle /work/modules/gui/dist /work/build 2>/dev/null || true"
+}
+
+remote_build() {
+  local target="$1" out="$2" version="$3" var="RELEASE_BUILDER_$(echo "${target}" | tr '[:lower:]' '[:upper:]')" host
+  host="${!var:-}"
+  if [[ -z "${host}" ]]; then
+    cat >&2 <<EOM
+error: the ${target} package can only be built on a ${target} machine (Electrobun has no cross-compiler).
+       Either run "scripts/release.sh build ${target} --native" there, or set ${var}=user@host
+       (a machine with git, bun and the toolchain) and run this command again.
+EOM
+    exit 1
+  fi
+  local remote_dir="~/.cache/${APP_ID}-release"
+  local ref
+  ref="$(git -C "${ROOT}" rev-parse HEAD)"
+  log "building ${target} on ${host} (commit ${ref:0:8})"
+  ssh "${host}" "mkdir -p ${remote_dir} && cd ${remote_dir} && { [ -d repo ] || git clone -q $(git -C "${ROOT}" remote get-url github 2>/dev/null || git -C "${ROOT}" remote get-url origin) repo; } && cd repo && git fetch -q --all --tags && git checkout -q ${ref} && POSTHOG_API_KEY='${POSTHOG_API_KEY:-}' bash scripts/release.sh build ${target} --native --version=${version}"
+  mkdir -p "${out}"
+  scp -q "${host}:${remote_dir}/repo/dist/${version}/*" "${out}/"
+}
+
+run_build() {
+  local version out
+  version="${CUSTOM_VERSION:-$(current_version)}"
+  out="${ROOT}/dist/${version}"
+  [[ ${#TARGETS[@]} -eq 0 ]] && TARGETS=(linux windows macos)
+  for target in "${TARGETS[@]}"; do
+    if ${NATIVE}; then
+      [[ "$(host_target)" == "${target}" ]] || { echo "error: --native can only build ${target} on a ${target} host" >&2; exit 1; }
+      native_build "${out}" "${version}"
+    elif [[ "${target}" == "linux" ]]; then
+      docker_linux_build "${out}" "${version}"
+    elif [[ "$(host_target)" == "${target}" ]]; then
+      native_build "${out}" "${version}"
+    else
+      remote_build "${target}" "${out}" "${version}"
+    fi
+  done
+  log "done: ${out}"
+}
+
+# ── publish ──────────────────────────────────────────────────────────────────
+
+run_publish() {
+  local version out site
+  version="${CUSTOM_VERSION:-$(current_version)}"
+  out="${ROOT}/dist/${version}"
+  site="${ROOT}/extras/website"
+  [[ -d "${out}" ]] || { echo "error: ${out} does not exist; run scripts/release.sh build first" >&2; exit 1; }
+
+  local oversized
+  oversized="$(find "${out}" -type f -size +${PAGES_MAX_FILE_BYTES}c -printf '%f (%s bytes)\n' || true)"
+  if [[ -n "${oversized}" ]]; then
+    echo "error: Cloudflare Pages rejects files above 25 MiB:" >&2
+    echo "${oversized}" >&2
+    exit 1
+  fi
+
+  rm -rf "${site}/releases"
+  mkdir -p "${site}/releases/${version}"
+  cp -f "${out}"/* "${site}/releases/${version}/"
+  bun "${SCRIPT_DIR}/write-release-manifest.ts" --app="${APP_ID}" --name="${APP_NAME}" --version="${version}" --site="${WEBSITE_URL}" --dir="${site}/releases" --changelog="${ROOT}/CHANGELOG.md"
+  log "manifest: $(cat "${site}/releases/latest.json" | head -c 400)"
+  if ${SKIP_DEPLOY}; then
+    log "skipping deploy (--skip-deploy)"
+  else
+    run bash "${site}/deploy.sh"
+  fi
+}
+
+case "${ACTION}" in
+  tag) run_tag ;;
+  build) run_build ;;
+  publish) run_publish ;;
+esac

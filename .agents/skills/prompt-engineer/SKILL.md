@@ -25,9 +25,9 @@ Owns everything between the app and a language model: provider client, model cat
 
 ## Project Instructions
 
-- `LlmService` in `src/bun/services/llm.ts` is the multi-provider client: Ollama and llama.cpp server locally; Groq, OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek in the cloud. `getProviderModels()` lists models; `testLlm` / `testLlmStep` RPCs test a connection.
-- Provider config (provider, model, keys, base URLs, temperature) lives in `DesktopConfig` (`src/bun/config.ts`).
+- `LlmService` in `modules/service/src/services/llm.ts` is the multi-provider client: Ollama and llama.cpp server locally; Groq, OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek in the cloud. `getProviderModels()` lists models; `POST /api/llm/test` and `/api/llm/test-step` test a connection.
+- Provider config (provider, model, keys, base URLs, temperature) lives in `DesktopConfig` (`modules/service/src/config.ts`, stored in the `config` table).
 - `llm.ts` exports `LlmMessage`, `LlmChatOptions`, `sanitizeLlmResponse(text, isReport)`; every output goes through it.
-- `src/bun/services/portfolio-report.ts`: ISO week keys, prompt preparation, streaming, persistence through `reportRepo`; `extractLastWords` for stream status. `src/bun/services/portfolio-chat.ts`: assistant conversation tied to a portfolio, persisted via `conversation.repo.ts`.
+- `modules/service/src/services/portfolio-report.ts`: ISO week keys, prompt preparation, streaming, persistence through `reportRepo`; `extractLastWords` for stream status. `modules/service/src/services/portfolio-chat.ts`: assistant conversation tied to a portfolio, persisted via `conversation.repo.ts`.
 - Never send balances, holdings, transactions or personal identifiers to a provider unless the user asked for a report about their own portfolio.
 - Report content is Markdown; render it with `react-markdown` and `remark-gfm` in the webview.

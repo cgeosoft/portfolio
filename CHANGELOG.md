@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0] - Unreleased
+### Changed
+- Split the app into `modules/service` (pure Bun HTTP service with `bun:sqlite`), `modules/gui` (Vite build served by the service), `modules/desktop` (Electrobun shell that spawns the service) and `modules/shared`; the GUI talks to the service over HTTP instead of the Electrobun RPC bridge.
+- Settings moved from `config.json` to the `config` table of the database; an existing `config.json` is imported on first start. No `.env` file is read at runtime.
+- Same look as Assistant: menu bar, footer, lock screen, colour tokens and self-hosted fonts.
+- One log file, `service.log`, with the line layout shared with Assistant.
+- Updates and website download links come from `releases/latest.json` on the website; the release script builds Linux packages in Docker and publishes to Cloudflare Pages. GitHub Actions removed.
+### Added
+- Settings → Access: app lock PIN and "Allow remote connections" so phones on the LAN can open Portfolio.
+
 ## [0.2.3] - 2026-09-13
 
 ### Added

@@ -24,9 +24,9 @@ Owns the numbers: market data and caching, currency conversion, holdings, P&L, e
 
 ## Project Instructions
 
-- `src/bun/services/yahoo-finance.ts` `YahooFinanceService`: `searchSymbol()`, quotes with `mapWithConcurrencyLimit`, chart history (`extractQuoteFromChart`), FX pairs.
-- `src/bun/services/portfolio.ts` `PortfolioService`: holdings, cost basis, realised and unrealised P&L, invested capital, cash, equity curves, SMA 50 / 200, RSI 14, conversion of foreign assets to `baseCurrency`.
-- `src/bun/services/demo-portfolio.ts`: `DEMO_ASSETS`, `generateDemoTransactions` (100 transactions).
-- `src/bun/db/market-cache.repo.ts`: quote cache with `CACHE_TTL_MS`.
+- `modules/service/src/services/yahoo-finance.ts` `YahooFinanceService`: `searchSymbol()`, quotes with `mapWithConcurrencyLimit`, chart history (`extractQuoteFromChart`), FX pairs.
+- `modules/service/src/services/portfolio.ts` `PortfolioService`: holdings, cost basis, realised and unrealised P&L, invested capital, cash, equity curves, SMA 50 / 200, RSI 14, conversion of foreign assets to `baseCurrency`.
+- `modules/service/src/services/demo-portfolio.ts`: `DEMO_ASSETS`, `generateDemoTransactions` (100 transactions).
+- `modules/service/src/db/market-cache.repo.ts`: quote cache with `CACHE_TTL_MS`.
 - Domain types in `src/types/portfolio.ts`: `PortfolioHolding`, `PortfolioSummary`, `PortfolioHistoricalPoint`, `FinancialPortfolioData`.
-- Tests in `src/bun/services/__tests__/`, following the existing cache and portfolio math tests. Log through `appLogger`.
+- Tests in `modules/service/src/services/__tests__/` (`bun test` in `modules/service`; they run against a temporary data directory), following the existing cache and portfolio math tests. Log through `appLogger`.

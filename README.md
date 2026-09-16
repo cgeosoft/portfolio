@@ -1,6 +1,6 @@
 # Portfolio
 
-An offline-first, private personal investment portfolio tracker for Linux (Debian) built with **Electrobun**, **Bun:SQLite**, and **React 19**.
+An offline-first, private personal investment portfolio tracker for Linux, Windows and macOS built with **Bun**, **bun:sqlite**, **React 19** and **Electrobun**.
 
 Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and AI analytical briefings can be generated on-demand using local (Ollama, llamacpp-server) or cloud (Groq, OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek) LLMs.
 
@@ -27,7 +27,8 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 - **On-Demand AI Analyst**: Generate tactical markdown portfolio performance briefings via local or cloud LLMs.
 - **Setup Wizard**: 3-step onboarding wizard describing the application, offering an optional 100-transaction demo portfolio, and an opt-in anonymous telemetry toggle.
 - **Anonymous Telemetry (Opt-in)**: Privacy-preserving telemetry using PostHog, completely optional (default off). No financial data, portfolio values, or personal identifiers are ever transmitted.
-- **Tactical Cyberpunk UI**: Monospace `JetBrains Mono` typography, sleek dark mode palette, and interactive Chart.js visualizations.
+- **Same look as Assistant**: dark navy canvas, indigo accent, `Plus Jakarta Sans` for text and `JetBrains Mono` for numbers, interactive Chart.js visualizations.
+- **App lock and LAN access**: an optional PIN locks the app; with a PIN set, phones and other devices on your network can open Portfolio in a browser.
 
 ---
 
@@ -35,56 +36,24 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 
 ```
 portfolio/
-├── electrobun.config.ts        # Electrobun desktop application configuration
-├── package.json               # Flat project dependencies and scripts
-├── tsconfig.json              # Bun main process TypeScript configuration
-├── src/
-│   ├── bun/                   # Main Process (Bun runtime)
-│   │   ├── config.ts          # ~/.config/portfolio/config.json configuration manager
-│   │   ├── index.ts           # Bun entry point, RPC handlers, window management
-│   │   ├── logger.ts          # Rotating file logger
-│   │   ├── db/                # bun:sqlite native database layer
-│   │   │   ├── database.ts    # Database connection & schema migration
-│   │   │   ├── portfolio.repo.ts
-│   │   │   ├── transaction.repo.ts
-│   │   │   ├── report.repo.ts
-│   │   │   └── snapshot.repo.ts
-│   │   └── services/          # Core analytics & integration services
-│   │       ├── portfolio.ts   # Core analytics engine (holdings, equity curves, math)
-│   │       ├── portfolio-report.ts # LLM report generator
-│   │       ├── demo-portfolio.ts   # 100-transaction demo portfolio generator
-│   │       ├── yahoo-finance.ts    # Market quotes, FX rates, chart histories
-│   │       ├── llm.ts              # 8-provider LLM interface
-│   │       ├── telemetry.ts        # PostHog anonymous analytics client
-│   │       └── metrics/            # Sandboxed metric modules: engine process, registry, installer
-│   ├── shared/                # Shared contracts
-│   │   ├── rpc-types.ts       # Type-safe RPC schema (PortfolioRPC)
-│   │   ├── metrics.ts         # Per-portfolio metric selection and dashboard slots
-│   │   ├── metric-abi.ts      # Guest ABI v1: payload layout and data scopes
-│   │   ├── metric-manifest.ts # Manifest schema and validation
-│   │   └── metric-output.ts   # Result schema and host-side formatting
-│   ├── types/                 # Unified domain types
-│   │   ├── portfolio.ts       # FinancialPortfolioData, Holding, Transaction, Report
-│   │   └── electrobun.d.ts    # Electrobun type definitions
-│   └── views/                 # Webview GUI (React 19, Chart.js, Tailwind CSS)
-│       ├── index.html         # Webview HTML shell
-│       ├── main.ts            # Electroview entrypoint & React DOM mounter
-│       ├── style.css          # Compiled Tailwind CSS & theme bundle
-│       ├── tsconfig.json      # Webview TypeScript configuration
-│       └── src/
-│           ├── input.css      # Source Tailwind CSS stylesheet
-│           ├── App.tsx        # Dashboard application router
-│           ├── rpc.ts         # Electroview RPC client bridge
-│           └── components/    # Reusable cards, modals, and navigation views
+├── package.json                # Bun workspace: modules/*
+├── modules/
+│   ├── service/                # Pure Bun HTTP service: Bun.serve + bun:sqlite (API, settings, logs)
+│   ├── gui/                    # React 19 + Vite GUI, served by the service on /
+│   ├── desktop/                # Electrobun shell: spawns the service, one window, packaging
+│   └── shared/                 # Types, brand constants and helpers used by all three
 ├── extras/
-│   ├── metrics/               # Metric module repository (manifests + AssemblyScript sources)
-│   └── website/               # Marketing site, including the generated metrics catalog page
-└── scripts/
-    ├── build-deb.sh           # Debian (.deb) package builder
-    ├── build-metrics.ts       # Compiles metric modules and embeds the bundled ones
-    ├── build-metrics-site.ts  # Renders extras/website/metrics/index.html from the repository
-    └── release.sh             # Release orchestrator script
+│   ├── metrics/                # Sandboxed AssemblyScript metric modules
+│   └── website/                # Marketing site (Cloudflare Pages) + releases/latest.json and packages
+├── scripts/
+│   ├── release.sh              # tag | build (Docker for Linux) | publish (website)
+│   ├── docker/Dockerfile.linux # Linux build box
+│   ├── build-deb.sh            # Debian package from the Electrobun bundle
+│   └── build-metrics.ts        # Compiles extras/metrics
+└── docs/                       # architecture.md, theme.md
 ```
+
+See [docs/architecture.md](docs/architecture.md) for how the modules fit together, where settings and logs live, and how releases are built.
 
 ---
 
@@ -92,9 +61,9 @@ portfolio/
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2+)
-- Linux with WebKitGTK (`libwebkit2gtk-4.1-0` or `libwebkit2gtk-4.0-37`)
-- `dpkg-deb` (for building `.deb` packages)
+- [Bun](https://bun.sh) 1.3 or newer
+- Linux: `libwebkit2gtk-4.1` and GTK 3 for the desktop shell; `dpkg-deb` and `zstd` for the Debian package
+- Docker (for `scripts/release.sh build linux`)
 
 ### Install Dependencies
 
@@ -102,56 +71,39 @@ portfolio/
 bun install
 ```
 
-### Typecheck
-
-Typechecks both the Bun main process and the React webview:
-
-```bash
-bun run typecheck
-```
-
 ### Run in Development
 
 ```bash
-bun run dev
+bun run dev        # service on http://127.0.0.1:5130, Vite GUI on http://localhost:5131
+bun run desktop    # stages service + GUI and opens the Electrobun window
 ```
 
-> Note: `bun run dev` automatically compiles the metric modules and Tailwind CSS before starting the application. To watch CSS changes continuously during styling work, run `bun run watch:css` in a separate terminal.
+Data goes to `~/.config/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). Set `PORTFOLIO_DATA_DIR` to use another directory.
 
-### Build Tailwind CSS
+### Typecheck and Test
 
 ```bash
-bun run build:css
+bun run typecheck
+bun run test
 ```
 
 ### Build Metric Modules
 
-Compiles every metric in `extras/metrics/` with AssemblyScript and embeds the bundled ones in `src/bun/services/metrics/builtin-modules.generated.ts` (generated, not committed). `typecheck`, `test`, `dev`, and `build` run it first.
-
 ```bash
-bun run build:metrics          # incremental
-bun run build:metrics -- --force
-bun run build:metrics-site     # regenerate the website catalog page
+bun run build:metrics       # after changing extras/metrics
+bun run check:metrics       # validate without writing
 ```
 
-See [`extras/metrics/README.md`](extras/metrics/README.md) to write and submit a metric.
-
-### Build Desktop Application
+### Build the Desktop Application
 
 ```bash
-bun run build
+bun run desktop:build       # modules/desktop/artifacts for this OS
 ```
 
-### Build Debian Package (.deb)
+### Release
 
 ```bash
-bun run release:deb
-```
-
-The resulting package will be placed in `dist/portfolio_<version>_<arch>.deb`.
-
-Install on Debian/Ubuntu with:
-
-```bash
-sudo dpkg -i dist/portfolio_0.1.0_amd64.deb
+bun run release patch|minor|major      # bump, changelog, commit, tag, push
+bun run release:build                  # Linux in Docker; Windows/macOS on such a machine (see docs/architecture.md)
+bun run release:publish                # copy packages + latest.json into the website and deploy
 ```

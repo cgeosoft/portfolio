@@ -7,6 +7,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DESKTOP_DIR="${APP_DIR}/modules/desktop"
+ASSETS_DIR="${DESKTOP_DIR}/assets"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 
 # Configurable options
@@ -74,14 +76,12 @@ if ! command -v dpkg-deb >/dev/null 2>&1; then
   exit 1
 fi
 
-TAR_ZST="${APP_DIR}/artifacts/stable-${ELECTROBUN_ARCH}-Portfolio.tar.zst"
+TAR_ZST="${DESKTOP_DIR}/artifacts/stable-${ELECTROBUN_ARCH}-Portfolio.tar.zst"
 
 # Build if requested or if artifacts missing
 if [[ "${SKIP_BUILD}" != "true" || ! -f "${TAR_ZST}" ]]; then
-  echo "[DEB BUILD] Building Tailwind CSS..."
-  (cd "${APP_DIR}" && bun run build:css)
-  echo "[DEB BUILD] Running electrobun build..."
-  (cd "${APP_DIR}" && bunx electrobun build --env=stable)
+  echo "[DEB BUILD] Running desktop build..."
+  (cd "${DESKTOP_DIR}" && bun run build)
 fi
 
 if [[ ! -f "${TAR_ZST}" ]]; then
@@ -186,22 +186,22 @@ EOF
 chmod 644 "${STAGE_DIR}/usr/share/metainfo/portfolio.appdata.xml"
 
 # Icons
-if [[ -f "${APP_DIR}/src/assets/app-icon.svg" ]]; then
-  cp "${APP_DIR}/src/assets/app-icon.svg" "${STAGE_DIR}/usr/share/icons/hicolor/scalable/apps/portfolio.svg"
-  cp "${APP_DIR}/src/assets/app-icon.svg" "${STAGE_DIR}/usr/share/pixmaps/portfolio.svg"
+if [[ -f "${ASSETS_DIR}/app-icon.svg" ]]; then
+  cp "${ASSETS_DIR}/app-icon.svg" "${STAGE_DIR}/usr/share/icons/hicolor/scalable/apps/portfolio.svg"
+  cp "${ASSETS_DIR}/app-icon.svg" "${STAGE_DIR}/usr/share/pixmaps/portfolio.svg"
 fi
 
 for sz in 16 24 32 48 64 128 256 512; do
-  if [[ -f "${APP_DIR}/src/assets/app-icon-${sz}x${sz}.png" ]]; then
+  if [[ -f "${ASSETS_DIR}/app-icon-${sz}x${sz}.png" ]]; then
     mkdir -p "${STAGE_DIR}/usr/share/icons/hicolor/${sz}x${sz}/apps"
-    cp "${APP_DIR}/src/assets/app-icon-${sz}x${sz}.png" "${STAGE_DIR}/usr/share/icons/hicolor/${sz}x${sz}/apps/portfolio.png"
+    cp "${ASSETS_DIR}/app-icon-${sz}x${sz}.png" "${STAGE_DIR}/usr/share/icons/hicolor/${sz}x${sz}/apps/portfolio.png"
   fi
 done
 
-if [[ -f "${APP_DIR}/src/assets/app-icon-256x256.png" ]]; then
-  cp "${APP_DIR}/src/assets/app-icon-256x256.png" "${STAGE_DIR}/usr/share/pixmaps/portfolio.png"
-elif [[ -f "${APP_DIR}/src/assets/app-icon.png" ]]; then
-  cp "${APP_DIR}/src/assets/app-icon.png" "${STAGE_DIR}/usr/share/pixmaps/portfolio.png"
+if [[ -f "${ASSETS_DIR}/app-icon-256x256.png" ]]; then
+  cp "${ASSETS_DIR}/app-icon-256x256.png" "${STAGE_DIR}/usr/share/pixmaps/portfolio.png"
+elif [[ -f "${ASSETS_DIR}/app-icon.png" ]]; then
+  cp "${ASSETS_DIR}/app-icon.png" "${STAGE_DIR}/usr/share/pixmaps/portfolio.png"
 fi
 
 # Installed size in KB
