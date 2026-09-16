@@ -14,7 +14,7 @@ ASSETS_DIR="${DESKTOP_DIR}/assets"
 APP_ID="portfolio"
 ELECTROBUN_VERSION="2.0.1"
 WIN_CORE_URL="https://github.com/blackboardsh/electrobun/releases/download/v${ELECTROBUN_VERSION}/electrobun-core-win-x64.tar.gz"
-CACHE_DIR="${APP_DIR}/.cache"
+CACHE_DIR="${APP_DIR}/.tmp/cache"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 CUSTOM_VERSION=""
 
@@ -65,13 +65,16 @@ if [[ ! -f "${WIN_CORE_TAR}" ]]; then
   curl -fsSL -o "${WIN_CORE_TAR}" "${WIN_CORE_URL}"
 fi
 
-BUILD_DIR="${DESKTOP_DIR}/build/stable-windows-x64/Portfolio"
-rm -rf "${DESKTOP_DIR}/build/stable-windows-x64"
+mkdir -p "${APP_DIR}/.tmp"
+TMP_WORK="$(mktemp -d -p "${APP_DIR}/.tmp" win-pkg.XXXXXX)"
+trap 'rm -rf "${TMP_WORK}"' EXIT
+
+BUILD_DIR="${TMP_WORK}/Portfolio"
 mkdir -p "${BUILD_DIR}/bin" "${BUILD_DIR}/Resources/app"
 
 echo "[WIN BUILD] Extracting Windows runtime binaries..."
-TMP_EXTRACT="$(mktemp -d)"
-trap 'rm -rf "${TMP_EXTRACT}"' EXIT
+TMP_EXTRACT="${TMP_WORK}/extract"
+mkdir -p "${TMP_EXTRACT}"
 tar -xzf "${WIN_CORE_TAR}" -C "${TMP_EXTRACT}"
 
 # Copy runtime binaries to bin/
@@ -118,7 +121,7 @@ echo "[WIN BUILD] Bundling main process entrypoint..."
 # Create portable zip
 echo "[WIN BUILD] Creating portable zip..."
 PORTABLE_ZIP="${DIST_DIR}/${APP_ID}_${VERSION}_windows-x64_portable.zip"
-(cd "${DESKTOP_DIR}/build/stable-windows-x64" && zip -qr "${PORTABLE_ZIP}" Portfolio)
+(cd "${TMP_WORK}" && zip -qr "${PORTABLE_ZIP}" Portfolio)
 
 # Create NSIS setup exe
 SETUP_EXE="${DIST_DIR}/${APP_ID}_${VERSION}_x64_setup.exe"

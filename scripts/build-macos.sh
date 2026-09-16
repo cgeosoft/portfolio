@@ -14,7 +14,7 @@ ASSETS_DIR="${DESKTOP_DIR}/assets"
 APP_ID="portfolio"
 ELECTROBUN_VERSION="2.0.1"
 MAC_CORE_URL="https://github.com/blackboardsh/electrobun/releases/download/v${ELECTROBUN_VERSION}/electrobun-core-darwin-arm64.tar.gz"
-CACHE_DIR="${APP_DIR}/.cache"
+CACHE_DIR="${APP_DIR}/.tmp/cache"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 CUSTOM_VERSION=""
 
@@ -65,13 +65,16 @@ if [[ ! -f "${MAC_CORE_TAR}" ]]; then
   curl -fsSL -o "${MAC_CORE_TAR}" "${MAC_CORE_URL}"
 fi
 
-BUNDLE_DIR="${DESKTOP_DIR}/build/stable-macos-arm64/Portfolio.app"
-rm -rf "${DESKTOP_DIR}/build/stable-macos-arm64"
+mkdir -p "${APP_DIR}/.tmp"
+TMP_WORK="$(mktemp -d -p "${APP_DIR}/.tmp" mac-pkg.XXXXXX)"
+trap 'rm -rf "${TMP_WORK}"' EXIT
+
+BUNDLE_DIR="${TMP_WORK}/Portfolio.app"
 mkdir -p "${BUNDLE_DIR}/Contents/MacOS" "${BUNDLE_DIR}/Contents/Resources/app"
 
 echo "[MAC BUILD] Extracting macOS runtime binaries..."
-TMP_EXTRACT="$(mktemp -d)"
-trap 'rm -rf "${TMP_EXTRACT}"' EXIT
+TMP_EXTRACT="${TMP_WORK}/extract"
+mkdir -p "${TMP_EXTRACT}"
 tar -xzf "${MAC_CORE_TAR}" -C "${TMP_EXTRACT}"
 
 # Copy runtime binaries to Contents/MacOS/
@@ -150,17 +153,17 @@ echo "[MAC BUILD] Bundling main process entrypoint..."
 # Create zip archive
 echo "[MAC BUILD] Creating macOS zip archive..."
 ZIP_FILE="${DIST_DIR}/${APP_ID}_${VERSION}_macos-universal.zip"
-(cd "${DESKTOP_DIR}/build/stable-macos-arm64" && zip -qyr "${ZIP_FILE}" Portfolio.app)
+(cd "${TMP_WORK}" && zip -qyr "${ZIP_FILE}" Portfolio.app)
 
 # Create DMG
 DMG_FILE="${DIST_DIR}/${APP_ID}_${VERSION}_universal.dmg"
 if command -v genisoimage >/dev/null 2>&1; then
   echo "[MAC BUILD] Creating DMG disk image: ${DMG_FILE}..."
-  DMG_STAGE="$(mktemp -d)"
+  DMG_STAGE="${TMP_WORK}/dmg-stage"
+  mkdir -p "${DMG_STAGE}"
   cp -r "${BUNDLE_DIR}" "${DMG_STAGE}/Portfolio.app"
   ln -s /Applications "${DMG_STAGE}/Applications"
   genisoimage -V "Portfolio" -D -R -apple -no-pad -quiet -o "${DMG_FILE}" "${DMG_STAGE}"
-  rm -rf "${DMG_STAGE}"
 else
   echo "Warning: genisoimage not found, skipping DMG build" >&2
 fi

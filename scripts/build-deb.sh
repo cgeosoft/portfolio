@@ -90,7 +90,8 @@ if [[ ! -f "${TAR_ZST}" ]]; then
 fi
 
 # Create staging tree
-STAGE_DIR="$(mktemp -d -t portfolio-deb-staging.XXXXXX)"
+mkdir -p "${APP_DIR}/.tmp"
+STAGE_DIR="$(mktemp -d -p "${APP_DIR}/.tmp" deb-pkg.XXXXXX)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
 
 echo "[DEB BUILD] Staging tree: ${STAGE_DIR}"
