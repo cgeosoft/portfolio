@@ -32,7 +32,7 @@ export default {
     name: "Portfolio",
     identifier: "cgeosoft.portfolio.desktop",
     version: packageJson.version,
-    description: "Offline personal investment tracker",
+    description: "Personal investment tracker",
   },
   build: {
     cottontail: {

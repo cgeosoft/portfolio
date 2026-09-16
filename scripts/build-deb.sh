@@ -143,7 +143,7 @@ cat << EOF > "${STAGE_DIR}/usr/share/metainfo/portfolio.appdata.xml"
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <name>Portfolio</name>
-  <summary>Private investment tracker that keeps your data on your computer</summary>
+  <summary>Personal investment tracker that keeps your data on your computer</summary>
   <description>
     <p>
       Portfolio is a free, open source desktop app for keeping track of your investments
@@ -219,7 +219,7 @@ Installed-Size: ${INSTALLED_SIZE}
 Depends: libc6, libstdc++6
 Recommends: libwebkit2gtk-4.1-0 | libwebkit2gtk-4.0-37
 Homepage: https://github.com/cgeosoft/portfolio
-Description: private investment tracker that keeps your data on your PC
+Description: Personal investment tracker that keeps your data on your PC
  Portfolio is a free, open source desktop app for keeping track of your
  stocks, ETFs and crypto without handing your net worth to a website.
  Everything you enter is stored in a single file on your own computer.
