@@ -39,9 +39,21 @@ Thumbs.db
 *~
 
 # generated style
-src/views/style.css
+modules/gui/dist/
 
 # generated metric module bundle (bun run build:metrics)
-src/bun/services/metrics/builtin-modules.generated.ts
+modules/service/src/services/metrics/builtin-modules.generated.ts
 
 tmp/
+
+# Desktop app (Hutch/Electrobun): toolchain projection, staged inputs, build output
+modules/desktop/.hutch/
+modules/desktop/.cottontail-tmp/
+modules/desktop/stage/
+modules/desktop/build/
+modules/desktop/artifacts/
+modules/service/dist-bundle/
+
+# Release packages copied next to the website before deploy (not committed)
+extras/website/releases/*
+!extras/website/releases/.gitkeep

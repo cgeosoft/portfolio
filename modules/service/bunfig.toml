@@ -1,0 +1,3 @@
+[test]
+# Tests run against a throwaway data directory, never the user's real one.
+preload = ["./src/test-setup.ts"]

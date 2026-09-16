@@ -1,0 +1,16 @@
+{
+  "name": "portfolio-shared",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Types and pure helpers shared by the service, the GUI and the desktop shell.",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

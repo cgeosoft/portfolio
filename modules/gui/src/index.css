@@ -1,0 +1,666 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens shared with Assistant: dark navy canvas, indigo brand, glass
+ * panels. Portfolio keeps its chart palette (mint, cream, blue, purple) for
+ * data, the chrome follows the vendor look. */
+@layer base {
+  :root {
+    color-scheme: dark;
+    --app-bg: #07090e;
+    --background: #07090e;
+    --background-widget: #131722;
+    --background-card: #181d2b;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-accent: #6366f1;
+    --accent: #6366f1;
+    --accent-rgb: 99, 102, 241;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --status-success: #34d399;
+    --status-success-rgb: 52, 211, 153;
+    --status-error: #fb7185;
+    --status-error-rgb: 251, 113, 133;
+    --status-warning: #fbbf24;
+    --status-info: #818cf8;
+
+    --palette-purple: #8b5cf6;
+    --palette-pink: #ec4899;
+    --palette-cream: #E3EACD;
+    --palette-mint: #A7E2C0;
+    --palette-blue: #6366f1;
+
+    --glass-bg: rgba(18, 22, 33, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-hover: rgba(99, 102, 241, 0.35);
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--app-bg);
+    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+      radial-gradient(at 90% 20%, rgba(139, 92, 246, 0.07) 0px, transparent 50%),
+      radial-gradient(at 50% 90%, rgba(6, 182, 212, 0.05) 0px, transparent 50%);
+  }
+
+  select,
+  option,
+  optgroup {
+    color-scheme: dark;
+  }
+
+  select {
+    background-color: var(--background-widget);
+    color: var(--text-main);
+    font-family: inherit;
+  }
+
+  option {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 0.375rem 0.5rem;
+  }
+
+  option:checked,
+  option[selected] {
+    background-color: rgba(var(--accent-rgb), 0.18);
+    color: #a5b4fc;
+    font-weight: 700;
+  }
+
+  option:disabled {
+    color: #64748b;
+  }
+
+  optgroup {
+    background-color: #0b0f19;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.4);
+  }
+}
+
+/* iOS Safari zooms the page when a focused field is smaller than 16px. */
+@media (pointer: coarse) and (max-width: 1023px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Glass panel helpers (same as Assistant). */
+.glass-panel {
+  background: rgba(15, 19, 29, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-elevated {
+  background: rgba(22, 28, 43, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 12px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-input {
+  background: rgba(12, 15, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-input:focus-within,
+.glass-input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 20px -3px rgba(99, 102, 241, 0.25);
+}
+
+/* Cards: plain fill, no backdrop blur (software-rendered webview on Linux). */
+.cx-card {
+  background-color: var(--background-widget);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.cx-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}
+
+@keyframes popover-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-popover-in {
+  animation: popover-slide-in 0.3s ease-out forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Three-dot "thinking" indicator: each dot pulses in turn */
+@keyframes cx-typing-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cx-typing-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--accent);
+  animation: cx-typing-pulse 1.2s ease-in-out infinite;
+}
+
+.cx-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.cx-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Every continuous animation stops when the OS asks for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-iteration-count: 1 !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Desktop menu bar (components/layout/AppMenuBar.tsx). Plain fills, no
+   backdrop-filter: the dropdown sits above scrolling content in a software-
+   rendered webview. Identical to Assistant.
+   ========================================================================== */
+.app-menubar {
+  position: relative;
+  z-index: 60;
+  align-items: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(12, 15, 23, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  user-select: none;
+}
+
+.app-menubar-trigger {
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+
+.app-menubar-trigger:hover {
+  color: #fff;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.app-menubar-trigger[data-open="true"] {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  font-weight: 600;
+}
+
+@keyframes app-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  width: 19.5rem;
+  z-index: 50;
+  padding: 0.375rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(17, 21, 32, 0.98);
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(99, 102, 241, 0.08);
+  transform-origin: top;
+  animation: app-menu-in 0.12s ease-out;
+}
+
+.app-menu-separator {
+  height: 1px;
+  margin: 0.375rem 0.25rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4375rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-align: left;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.app-menu-item:hover,
+.app-menu-item[data-highlighted="true"] {
+  background: rgba(99, 102, 241, 0.18);
+  color: #f8fafc;
+}
+
+.app-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.app-menu-shortcut {
+  flex-shrink: 0;
+  padding-left: 0.5rem;
+  font-size: 10px;
+  letter-spacing: -0.02em;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   Dropdowns: custom listbox (.cx-select) and popover menus (.cx-menu). The
+   list is a custom control because WebKitGTK cannot style native select
+   popups; the list is portalled with fixed coordinates.
+   ========================================================================== */
+.cx-select-wrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+/* The dropdown is a custom listbox because the app renders in WebKitGTK,
+   where a native select popup is drawn by GTK and cannot be styled. The
+   trigger below keeps the look of an input; the list is plain HTML. */
+.cx-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-align: left;
+  color: var(--text-main);
+  background-color: rgba(11, 15, 25, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.cx-select:hover:not(:disabled) {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background-color: rgba(21, 29, 48, 0.9);
+}
+
+.cx-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+}
+
+.cx-select[data-open="true"] {
+  border-color: var(--accent);
+  background-color: rgba(21, 29, 48, 0.95);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+}
+
+.cx-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.cx-select[data-size="sm"] {
+  padding: 0.375rem 0.5rem 0.375rem 0.625rem;
+}
+
+.cx-select[data-size="md"] {
+  padding: 0.5rem 0.625rem 0.5rem 0.75rem;
+}
+
+.cx-select[data-size="lg"] {
+  padding: 0.625rem 0.75rem 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+}
+
+.cx-select-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cx-select-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--text-muted);
+  transition: color 0.18s ease;
+}
+
+.cx-select:hover .cx-select-icon,
+.cx-select[data-open="true"] .cx-select-icon {
+  color: var(--accent);
+}
+
+.cx-select-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease;
+}
+
+.cx-select[data-open="true"] .cx-select-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+/* Accent tone for emphasised pickers */
+.cx-select[data-tone="accent"] {
+  color: var(--accent);
+  font-weight: 700;
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background-color: rgba(var(--accent-rgb), 0.08);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.12);
+}
+
+.cx-select[data-tone="accent"] .cx-select-chevron,
+.cx-select[data-tone="accent"] .cx-select-icon {
+  color: var(--accent);
+}
+
+.cx-select[data-tone="accent"]:hover:not(:disabled) {
+  border-color: var(--accent);
+  background-color: rgba(var(--accent-rgb), 0.14);
+}
+
+/* Muted tone for unset values */
+.cx-select[data-tone="muted"] {
+  color: var(--text-muted);
+  background-color: rgba(11, 15, 25, 0.6);
+}
+
+/* The list is portalled to the body and positioned with fixed coordinates so
+   it is never clipped by a modal or a scrolling card. */
+.cx-select-menu {
+  position: fixed;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  max-height: 17rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cx-select-menu[data-placement="top"] {
+  transform-origin: bottom;
+}
+
+.cx-select-menu .cx-menu-item {
+  flex-shrink: 0;
+}
+
+.cx-select-option-check {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Custom popover menus
+   -------------------------------------------------------------------------- */
+
+@keyframes cx-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cx-menu {
+  background-color: rgba(17, 23, 38, 0.98);
+  background-image: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(11, 15, 25, 0.35));
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.375rem;
+  box-shadow:
+    0 24px 48px -16px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(var(--accent-rgb), 0.06);
+  
+  transform-origin: top;
+  animation: cx-menu-in 0.14s ease-out;
+}
+
+.cx-menu-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cx-menu-label[data-align="start"] {
+  justify-content: flex-start;
+}
+
+.cx-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.3125rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  text-align: left;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.cx-menu-item:hover {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: var(--text-main);
+}
+
+.cx-menu-item[data-active="true"] {
+  background-color: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.cx-menu-item[data-active="true"]:hover {
+  background-color: rgba(var(--accent-rgb), 0.18);
+  color: var(--accent);
+}
+
+.cx-menu-item[data-highlighted="true"] {
+  background-color: rgba(var(--accent-rgb), 0.2);
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.cx-menu-item[data-active="true"][data-highlighted="true"] {
+  background-color: rgba(var(--accent-rgb), 0.24);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.cx-menu-item:disabled,
+.cx-menu-item[data-disabled="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Compact density for the application menu bar */
+.cx-menu[data-density="compact"] {
+  padding: 0.25rem;
+}
+
+.cx-menu[data-density="compact"] .cx-menu-item {
+  padding: 0.3125rem 0.5rem;
+}
+
+.cx-menu[data-density="compact"] .cx-menu-label {
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.cx-menu-separator {
+  height: 1px;
+  margin: 0.25rem 0.25rem;
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+/* Trigger button shared by the custom dropdowns */
+.cx-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.cx-menu-trigger[data-variant="outlined"] {
+  border-color: var(--border);
+  background-color: rgba(11, 15, 25, 0.85);
+}
+
+.cx-menu-trigger[data-variant="outlined"]:hover {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background-color: rgba(21, 29, 48, 0.9);
+}
+
+.cx-menu-trigger[data-open="true"],
+.cx-menu-trigger[data-variant="outlined"][data-open="true"] {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background-color: rgba(var(--accent-rgb), 0.12);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.12);
+}
+
+.cx-menu-chevron {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.cx-menu-trigger[data-open="true"] .cx-menu-chevron {
+  transform: rotate(180deg);
+}

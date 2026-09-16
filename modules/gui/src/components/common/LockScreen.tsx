@@ -1,0 +1,137 @@
+import React, { useEffect, useRef, useState } from "react";
+import { AlertCircle, Lock, RefreshCw } from "lucide-react";
+import { AppIcon } from "./AppIcon";
+import { AmbientGlow } from "./AmbientGlow";
+import { APP_VERSION } from "../../environment";
+
+interface LockScreenProps {
+  /** The account has a PIN and this client has no session yet. */
+  locked: boolean;
+  /** Neither a session nor the automatic login could be established. */
+  authError: string | null;
+  onUnlock: (pin: string) => Promise<unknown>;
+  onRetry: () => void;
+}
+
+/**
+ * Full-screen gate shown before the workspace: the PIN prompt when the app
+ * lock is on, or a retry card when the service cannot be reached. Same layout
+ * as the Assistant lock screen.
+ */
+export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnlock, onRetry }) => {
+  const step: "pin" | "error" = locked ? "pin" : "error";
+  const [pin, setPin] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pinInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setPin("");
+    setError(null);
+    setLoading(false);
+    if (step === "pin") setTimeout(() => pinInputRef.current?.focus(), 50);
+  }, [step]);
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = pin.trim();
+    if (!/^[0-9]{4,8}$/.test(value)) {
+      setError("Enter your 4 to 8 digit PIN");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      await onUnlock(value);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Wrong PIN");
+      setPin("");
+      setTimeout(() => pinInputRef.current?.focus(), 50);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const title = step === "pin" ? "Enter your PIN" : "Cannot reach the service";
+  const subtitle = step === "pin" ? "This Portfolio is locked. Type the PIN set under Settings → Access." : authError || "The local service did not answer.";
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#030712] text-slate-100 overflow-y-auto px-4 sm:px-6 py-6 select-none">
+      <AmbientGlow
+        pulse
+        glows={[
+          { x: "50%", y: "25%", radius: 420, rgb: "79, 70, 229", alpha: 0.22 },
+          { x: "33%", y: "78%", radius: 330, rgb: "8, 145, 178", alpha: 0.2 },
+          { x: "78%", y: "36%", radius: 300, rgb: "147, 51, 234", alpha: 0.14 },
+        ]}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />
+
+      <div className="relative z-10 flex flex-col items-center mb-6 sm:mb-8">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 p-[1px] shadow-xl shadow-indigo-500/20 mb-3">
+          <div className="w-full h-full bg-slate-950 rounded-[15px] flex items-center justify-center">
+            <AppIcon className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-400" />
+          </div>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent">Portfolio</h1>
+          {APP_VERSION && <span className="text-xs sm:text-sm font-mono text-slate-400 font-medium">v{APP_VERSION}</span>}
+        </div>
+        <p className="text-xs font-mono text-indigo-400 mt-1">Offline investment tracker</p>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md p-5 sm:p-8 bg-slate-900/90 border border-slate-800/80 rounded-3xl shadow-2xl">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-bold text-slate-100">{title}</h2>
+          <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2.5 p-3.5 mb-6 text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 rounded-2xl animate-shake">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {step === "pin" ? (
+          <form onSubmit={handleUnlock} className="space-y-5">
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
+                maxLength={8}
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value.replace(/[^0-9]/g, "").slice(0, 8));
+                  setError(null);
+                }}
+                placeholder="PIN"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-white/10 bg-slate-950/60 text-base text-slate-100 placeholder-slate-500 tracking-[0.4em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || pin.length < 4}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-purple-500 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? "Unlocking…" : "Unlock"}
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-100 text-sm font-bold transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try again
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};

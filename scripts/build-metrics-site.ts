@@ -12,8 +12,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { METRIC_SCOPE_DESCRIPTIONS } from "../src/shared/metric-abi.ts";
-import { validateMetricManifest, type MetricManifest } from "../src/shared/metric-manifest.ts";
+import { METRIC_SCOPE_DESCRIPTIONS } from "../modules/shared/src/metric-abi.ts";
+import { validateMetricManifest, type MetricManifest } from "../modules/shared/src/metric-manifest.ts";
 
 const ROOT = resolve(import.meta.dir, "..");
 const METRICS_DIR = join(ROOT, "extras", "metrics");
