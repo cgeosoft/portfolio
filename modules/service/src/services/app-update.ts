@@ -6,7 +6,7 @@
 import { appLogger } from "../logger";
 import { loadConfig, updateConfig } from "../config";
 import { getAppVersion } from "../environment";
-import { RELEASE_MANIFEST_URL, WEBPAGE_URL } from "portfolio-shared/brand";
+import { GITHUB_URL, RELEASE_MANIFEST_URL, WEBPAGE_URL } from "portfolio-shared/brand";
 import type { AppUpdateInfo, DownloadUpdateResponse, ReleaseManifest, ReleasePlatformKey } from "portfolio-shared/api-types";
 
 export interface ParsedSemver {
@@ -61,6 +61,8 @@ export function getReleaseAssetName(version: string, platform: NodeJS.Platform =
   }
 }
 
+const GITHUB_API_LATEST = "https://api.github.com/repos/cgeosoft/portfolio/releases/latest";
+
 export class AppUpdateService {
   private currentVersion: string;
   private intervalTimer: ReturnType<typeof setInterval> | null = null;
@@ -94,7 +96,7 @@ export class AppUpdateService {
     };
   }
 
-  /** Reads the release manifest from the website. */
+  /** Reads the latest release from GitHub Releases API, with fallback to the website manifest. */
   public async checkForUpdates(force = false): Promise<AppUpdateInfo> {
     const cfg = loadConfig();
     const enabled = cfg.checkForUpdates ?? true;
@@ -105,16 +107,56 @@ export class AppUpdateService {
 
     const timer = appLogger.startTimer("update", "check");
     try {
-      const response = await fetch(this.manifestUrl, {
-        headers: { Accept: "application/json", "User-Agent": `Portfolio-Desktop/${this.currentVersion}` },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!response.ok) {
-        timer.end("warning", `Release manifest returned HTTP ${response.status}`);
-        this.cachedInfo = { ...this.cachedInfo, enabled, currentVersion: this.currentVersion, error: `HTTP ${response.status}` };
-        return this.cachedInfo;
+      let manifest: ReleaseManifest | null = null;
+
+      // 1. Check GitHub Releases API directly (no website deploy needed)
+      try {
+        const ghRes = await fetch(GITHUB_API_LATEST, {
+          headers: { Accept: "application/vnd.github.v3+json", "User-Agent": `Portfolio-Desktop/${this.currentVersion}` },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (ghRes.ok) {
+          const gh = (await ghRes.json()) as any;
+          if (gh && gh.tag_name) {
+            const version = String(gh.tag_name).replace(/^v/, "");
+            const assets = Array.isArray(gh.assets) ? gh.assets : [];
+            const findAsset = (re: RegExp) => {
+              const match = assets.find((a: any) => re.test(a.name));
+              return match ? { name: match.name, url: match.browser_download_url, size: match.size, sha256: "" } : undefined;
+            };
+            manifest = {
+              app: "portfolio",
+              version,
+              name: gh.name || `Portfolio ${version}`,
+              notes: gh.body || "",
+              url: gh.html_url || `${GITHUB_URL}/releases/tag/v${version}`,
+              publishedAt: gh.published_at,
+              files: {
+                linux: { installer: findAsset(/_amd64\.deb$|linux.*\.deb$/i), portable: findAsset(/_linux-x64\.tar\.gz$|linux.*\.tar\.gz$/i) },
+                windows: { installer: findAsset(/_x64_setup\.exe$|win.*setup\.(exe|zip)$/i), portable: findAsset(/_windows-x64_portable\.zip$|win.*portable\.zip$/i) },
+                macos: { installer: findAsset(/_universal\.dmg$|mac.*\.dmg$/i), portable: findAsset(/_macos-universal\.zip$|mac.*\.zip$/i) },
+              },
+            };
+          }
+        }
+      } catch {
+        // Best-effort GitHub API lookup; fall through to website manifest below.
       }
-      const manifest = (await response.json()) as ReleaseManifest;
+
+      // 2. Fallback to website release manifest if GitHub API lookup failed
+      if (!manifest) {
+        const response = await fetch(this.manifestUrl, {
+          headers: { Accept: "application/json", "User-Agent": `Portfolio-Desktop/${this.currentVersion}` },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (!response.ok) {
+          timer.end("warning", `Release manifest returned HTTP ${response.status}`);
+          this.cachedInfo = { ...this.cachedInfo, enabled, currentVersion: this.currentVersion, error: `HTTP ${response.status}` };
+          return this.cachedInfo;
+        }
+        manifest = (await response.json()) as ReleaseManifest;
+      }
+
       const latestVersion = String(manifest.version || "").replace(/^[vV]/, "");
       const hasUpdate = isNewerVersion(this.currentVersion, latestVersion);
       const nowIso = new Date().toISOString();
@@ -174,7 +216,7 @@ export class AppUpdateService {
     const platform = releasePlatformKey();
     const fromManifest = this.manifest?.version?.replace(/^[vV]/, "") === cleanVersion ? this.manifest?.files?.[platform]?.installer : undefined;
     const fileName = fromManifest?.name || getReleaseAssetName(cleanVersion);
-    const url = fromManifest?.url || `${WEBPAGE_URL}/releases/${cleanVersion}/${fileName}`;
+    const url = fromManifest?.url || `${GITHUB_URL}/releases/download/v${cleanVersion}/${fileName}`;
     return { success: true, url, fileName };
   }
 

@@ -48,10 +48,13 @@ The service writes one file per local day, `service-YYYY-MM-DD.log`, in the log 
 
 ## Release
 
-`scripts/release.sh` has three commands:
+`scripts/release.sh` provides the release and packaging commands:
 
-1. `tag` bumps every `package.json`, writes the changelog entry, commits, tags `vX.Y.Z` and pushes.
-2. `build [linux|windows|macos]` produces `dist/<version>/portfolio_<version>_{amd64.deb,linux-x64.tar.gz,x64_setup.exe,windows-x64_portable.zip,universal.dmg,macos-universal.zip}`. The Linux packages are built inside the Docker image `scripts/docker/Dockerfile.linux`. Electrobun only builds for the host OS and macOS cannot run in Docker, so the Windows and macOS packages are built on such a machine: `--native` on that machine, or over SSH by setting `RELEASE_BUILDER_WINDOWS` / `RELEASE_BUILDER_MACOS` to `user@host`.
-3. `publish` copies `dist/<version>/*` into `extras/website/releases/<version>/`, writes `releases/latest.json` (version, notes, file names, sizes, SHA-256) and deploys the website to Cloudflare Pages with `extras/website/deploy.sh`. Cloudflare Pages rejects files above 25 MiB; the script stops if a package is larger.
+1. `release [minor|patch|major]` runs the end-to-end release: bumps the version (defaults to minor), updates package manifests, generates the changelog entry, commits, tags `vX.Y.Z`, pushes, builds all 3 OS packages locally in Docker, creates a GitHub release, and uploads all artifacts.
+2. `build [linux|windows|macos ...]` produces packages in `dist/<version>/`. The packages are built locally inside Docker (`scripts/docker/Dockerfile.linux`):
+   - Linux: `portfolio_<version>_amd64.deb` and `portfolio_<version>_linux-x64.tar.gz`
+   - Windows: `portfolio_<version>_x64_setup.exe` and `portfolio_<version>_windows-x64_portable.zip`
+   - macOS: `portfolio_<version>_universal.dmg` and `portfolio_<version>_macos-universal.zip`
+3. `publish-website` writes `extras/website/releases/latest.json` (version, notes, file names, sizes, SHA-256 and GitHub Releases asset URLs) from `dist/<version>/` and deploys the website to Cloudflare Pages with `extras/website/deploy.sh`. Release packages are hosted directly on GitHub Releases, so the website never hosts heavy binaries.
 
-The app checks `https://portfolio.cgeosoft.com/releases/latest.json` for updates and opens the installer URL in the browser. The website reads the same file for its download links. GitHub Actions are no longer used.
+The app checks `https://portfolio.cgeosoft.com/releases/latest.json` for updates and opens the installer URL in the browser. The website reads the same file for its download links. GitHub Releases hosts all release binaries.

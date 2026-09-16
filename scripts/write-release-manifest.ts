@@ -1,9 +1,11 @@
 /**
- * Writes releases/latest.json next to the packages on the website. The app
- * (update check) and the website (download links) both read this file.
+ * Writes releases/latest.json describing the latest release. The app (update check)
+ * and the website (download links) both read this file. Asset URLs point directly
+ * to GitHub Releases downloads.
  *
  *   bun scripts/write-release-manifest.ts --app=portfolio --name=Portfolio \
- *       --version=0.3.0 --site=https://portfolio.cgeosoft.com --dir=extras/website/releases
+ *       --version=0.3.0 --site=https://portfolio.cgeosoft.com --dir=extras/website/releases \
+ *       --artifacts=dist/0.3.0 --github=https://github.com/cgeosoft/portfolio
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
@@ -14,15 +16,26 @@ const app = args.app!;
 const name = args.name || app;
 const version = args.version!;
 const site = (args.site || "").replace(/\/+$/, "");
+const github = (args.github || "").replace(/\/+$/, "");
 const dir = args.dir!;
+const artifactsDir = args.artifacts || join(dir, version);
 const changelog = args.changelog;
-const files = readdirSync(join(dir, version));
+const files = existsSync(artifactsDir) ? readdirSync(artifactsDir) : [];
 
 function entry(fileName: string | undefined) {
   if (!fileName) return undefined;
-  const path = join(dir, version, fileName);
+  const path = join(artifactsDir, fileName);
+  if (!existsSync(path)) return undefined;
   const bytes = readFileSync(path);
-  return { name: fileName, url: `${site}/releases/${version}/${fileName}`, size: statSync(path).size, sha256: createHash("sha256").update(bytes).digest("hex") };
+  const downloadUrl = github
+    ? `${github}/releases/download/v${version}/${fileName}`
+    : `${site}/releases/${version}/${fileName}`;
+  return {
+    name: fileName,
+    url: downloadUrl,
+    size: statSync(path).size,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
 }
 const pick = (re: RegExp) => files.find((f) => re.test(f));
 

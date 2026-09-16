@@ -21,9 +21,10 @@
     "build:metrics-site": "bun run scripts/build-metrics-site.ts",
     "test": "bun --filter portfolio-service --filter portfolio-gui --filter portfolio-desktop test",
     "typecheck": "bun --filter '*' typecheck",
-    "release": "bash scripts/release.sh tag",
+    "release": "bash scripts/release.sh release",
     "release:build": "bash scripts/release.sh build",
-    "release:publish": "bash scripts/release.sh publish"
+    "release:publish": "bash scripts/release.sh publish-website",
+    "website:publish": "bash scripts/release.sh publish-website"
   },
   "devDependencies": {
     "assemblyscript": "0.28.20",

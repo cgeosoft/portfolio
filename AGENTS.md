@@ -14,7 +14,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 - `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (design tokens).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.
-- `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) including `releases/latest.json` and the packages.
+- `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) with `releases/latest.json` manifest.
 - `scripts/release.sh` (tag, build, publish), `scripts/docker/Dockerfile.linux`, `scripts/build-deb.sh`, `scripts/build-metrics.ts`.
 - `docs/architecture.md` (modules, config, logging, release), `docs/theme.md`.
 
@@ -39,9 +39,9 @@ bun run dev                       # service (port 5130) + Vite GUI (port 5131)
 bun run desktop                   # electrobun dev with the staged service and GUI
 bun run typecheck | bun run test
 bun run build:metrics             # after changing extras/metrics
-bun run release [patch|minor|major]      # tag
-bun run release:build [linux|windows|macos]
-bun run release:publish
+bun run release [minor|patch|major]      # tag, build 3 OS artifacts in Docker, GitHub release
+bun run release:build [linux|windows|macos] # build OS packages locally in Docker
+bun run website:publish                   # write latest.json and deploy website to Cloudflare Pages
 ```
 
 ## Rules

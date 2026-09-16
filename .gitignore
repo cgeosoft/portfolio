@@ -12,6 +12,7 @@ coverage/
 .hutch/
 .scratch/
 .bin/
+.cache/
 
 # Runtime data
 data/

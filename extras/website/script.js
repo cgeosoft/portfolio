@@ -7,9 +7,10 @@
   "use strict";
 
   const SITE_SLUG = "portfolio";
+  const GITHUB_REPO = "cgeosoft/portfolio";
 
-  // The release script publishes the packages under /releases/<version>/ and
-  // describes them in /releases/latest.json (see scripts/release.sh).
+  // The release script writes /releases/latest.json describing the latest
+  // release assets on GitHub Releases (see scripts/release.sh).
   const RELEASE_MANIFEST_URL = "/releases/latest.json";
   const FALLBACK_URL = "#downloads";
   const CACHE_KEY = `${SITE_SLUG}_latest_release_v2`;
@@ -294,7 +295,7 @@
     const files = buildAssetFilenames(version);
     const url = (platform, kind, fallbackName) => {
       const entry = manifest.files[platform] && manifest.files[platform][kind];
-      return entry && entry.url ? entry.url : `/releases/${version}/${fallbackName}`;
+      return entry && entry.url ? entry.url : `https://github.com/${GITHUB_REPO}/releases/download/v${version}/${fallbackName}`;
     };
 
     DOWNLOAD_CONFIG.version = version;
@@ -316,6 +317,40 @@
     bindAllDownloadLinks();
   }
 
+  const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+
+  function transformGitHubRelease(gh) {
+    if (!gh || !gh.tag_name) return null;
+    const version = String(gh.tag_name).replace(/^v/, "");
+    const assets = Array.isArray(gh.assets) ? gh.assets : [];
+    const find = (re) => {
+      const match = assets.find((a) => re.test(a.name));
+      return match ? { name: match.name, url: match.browser_download_url, size: match.size } : undefined;
+    };
+    return {
+      app: SITE_SLUG,
+      name: gh.name || `Portfolio ${version}`,
+      version: version,
+      publishedAt: gh.published_at,
+      notes: gh.body || "",
+      url: gh.html_url || `https://github.com/${GITHUB_REPO}/releases/tag/v${version}`,
+      files: {
+        linux: {
+          installer: find(/_amd64\.deb$|linux.*\.deb$/i),
+          portable: find(/_linux-x64\.tar\.gz$|linux.*\.tar\.gz$/i),
+        },
+        windows: {
+          installer: find(/_x64_setup\.exe$|win.*setup\.(exe|zip)$/i),
+          portable: find(/_windows-x64_portable\.zip$|win.*portable\.zip$/i),
+        },
+        macos: {
+          installer: find(/_universal\.dmg$|mac.*\.dmg$/i),
+          portable: find(/_macos-universal\.zip$|mac.*\.zip$/i),
+        },
+      },
+    };
+  }
+
   async function fetchLatestRelease() {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -329,15 +364,38 @@
     } catch (err) {
       // Cache unavailable; fall through to the network.
     }
+
+    // 1. Fetch directly from GitHub Releases API (no website deploy needed)
+    try {
+      const res = await fetch(GITHUB_API_URL, {
+        headers: { Accept: "application/vnd.github.v3+json" },
+        cache: "no-cache",
+      });
+      if (res.ok) {
+        const ghData = await res.json();
+        const manifest = transformGitHubRelease(ghData);
+        if (manifest) {
+          applyReleaseData(manifest);
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: manifest }));
+          } catch (err) {}
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("GitHub release lookup failed; trying local manifest fallback.", err);
+    }
+
+    // 2. Fallback to /releases/latest.json if present
     try {
       const response = await fetch(RELEASE_MANIFEST_URL, { headers: { Accept: "application/json" }, cache: "no-cache" });
-      if (!response.ok) return;
-      const data = await response.json();
-      applyReleaseData(data);
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
-      } catch (err) {
-        // Ignore storage errors.
+      if (response.ok) {
+        const data = await response.json();
+        applyReleaseData(data);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+        } catch (err) {}
+        return;
       }
     } catch (err) {
       console.warn("Latest release lookup failed; links point at the downloads section.", err);

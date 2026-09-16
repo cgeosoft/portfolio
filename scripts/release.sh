@@ -4,25 +4,28 @@ set -euo pipefail
 # =============================================================================
 # Release orchestrator.
 #
-#   scripts/release.sh tag [patch|minor|major|<version>] [--dry-run] [--no-push]
-#       Bump every package.json, write the changelog, commit, tag and push.
+#   scripts/release.sh [release] [minor|patch|major|<version>] [options]
+#       End-to-end release flow: bump version (defaults to minor), write changelog,
+#       commit, tag, git push, build 3 OS artifacts in local Docker, and create
+#       GitHub release with uploaded artifacts.
+#
+#   scripts/release.sh tag [minor|patch|major|<version>] [--dry-run] [--no-push]
+#       Bump every package.json, write changelog, commit, tag and push.
 #
 #   scripts/release.sh build [linux|windows|macos ...] [--native] [--version=X]
-#       Produce the release packages into dist/<version>/.
-#       linux    runs inside the Docker image scripts/docker/Dockerfile.linux
-#                (or natively with --native); emits .deb and .tar.gz
-#       windows  Electrobun builds only for its host OS, so the Windows and
-#       macos    macOS packages are built on such a machine: either this one
-#                (--native) or a builder reached over SSH, set with
-#                RELEASE_BUILDER_WINDOWS=user@host and RELEASE_BUILDER_MACOS.
+#       Produce release packages into dist/<version>/.
+#       Builds all 3 OS artifacts locally in Docker (or natively with --native):
+#       - Linux:   .deb and .tar.gz
+#       - Windows: .exe (NSIS setup) and .zip (portable)
+#       - macOS:   .dmg and .zip (universal)
 #
-#   scripts/release.sh publish [--version=X] [--skip-deploy]
-#       Copy dist/<version>/* and a releases/latest.json manifest into
-#       extras/website/releases/ and deploy the website to Cloudflare Pages.
+#   scripts/release.sh publish-website [--version=X] [--skip-deploy]
+#       Copy dist/<version>/* and releases/latest.json manifest into
+#       extras/website/releases/ and deploy website to Cloudflare Pages.
 #
 # Environment (never committed; put it in .env or export it):
 #   POSTHOG_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
-#   CLOUDFLARE_PAGES_PROJECT, RELEASE_BUILDER_WINDOWS, RELEASE_BUILDER_MACOS
+#   CLOUDFLARE_PAGES_PROJECT, GH_TOKEN / GITHUB_TOKEN
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,9 +33,10 @@ ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 APP_ID="portfolio"
 APP_NAME="Portfolio"
 WEBSITE_URL="https://portfolio.cgeosoft.com"
+GITHUB_REPO="cgeosoft/portfolio"
+GITHUB_URL="https://github.com/${GITHUB_REPO}"
 DOCKER_IMAGE="${APP_ID}-linux-builder"
 MANIFESTS=(package.json modules/shared/package.json modules/service/package.json modules/gui/package.json modules/desktop/package.json)
-PAGES_MAX_FILE_BYTES=$((25 * 1024 * 1024))
 
 if [[ -f "${ROOT}/.env" ]]; then
   set -a
@@ -51,11 +55,11 @@ ALLOW_DIRTY=false
 NATIVE=false
 SKIP_DEPLOY=false
 
-usage() { sed -n '4,26p' "$0"; }
+usage() { sed -n '4,28p' "$0"; }
 
 for arg in "$@"; do
   case "${arg}" in
-    tag|build|publish) ACTION="${arg}" ;;
+    release|tag|build|publish|publish-website) ACTION="${arg}" ;;
     linux|windows|macos) TARGETS+=("${arg}") ;;
     patch|minor|major) BUMP="${arg}" ;;
     --version=*) CUSTOM_VERSION="${arg#*=}" ;;
@@ -69,7 +73,8 @@ for arg in "$@"; do
     *) echo "unknown argument: ${arg}" >&2; usage >&2; exit 1 ;;
   esac
 done
-[[ -z "${ACTION}" ]] && ACTION="tag"
+[[ -z "${ACTION}" ]] && ACTION="release"
+[[ "${ACTION}" == "publish" ]] && ACTION="publish-website"
 
 log() { echo "[release] $*"; }
 run() { if ${DRY_RUN}; then echo "[dry-run] $*"; else "$@"; fi; }
@@ -99,7 +104,7 @@ run_tag() {
   current="$(current_version)"
   if [[ -n "${CUSTOM_VERSION}" ]]; then next="${CUSTOM_VERSION}"
   elif [[ -n "${BUMP}" ]]; then next="$(bump_semver "${current}" "${BUMP}")"
-  else next="$(bump_semver "${current}" patch)"; fi
+  else next="$(bump_semver "${current}" minor)"; fi
   [[ "${next}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "error: '${next}' is not a semver version" >&2; exit 1; }
   git rev-parse "v${next}" >/dev/null 2>&1 && { echo "error: tag v${next} already exists" >&2; exit 1; }
   log "release: ${current} -> ${next}"
@@ -132,91 +137,58 @@ fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/"version": "[^"]*"
       run git push origin "v${next}" || true
     fi
   fi
-  log "tagged v${next}; next: scripts/release.sh build && scripts/release.sh publish"
+  log "tagged v${next}"
 }
 
 # ── build ────────────────────────────────────────────────────────────────────
 
-host_target() {
-  case "$(uname -s)" in
-    Darwin*) echo macos ;;
-    MINGW*|MSYS*|CYGWIN*) echo windows ;;
-    *) echo linux ;;
-  esac
-}
-
-# Runs on the machine that builds: bundles the desktop app for its own OS and
-# copies the renamed packages into $1 (dist/<version>).
-native_build() {
-  local out="$1" version="$2" target
-  target="$(host_target)"
+native_build_target() {
+  local target="$1" out="$2" version="$3"
   mkdir -p "${out}"
   cd "${ROOT}"
-  log "building ${APP_NAME} ${version} for ${target} (native)"
-  bun install --frozen-lockfile
-  (cd modules/desktop && bun run build)
-  local artifacts="${ROOT}/modules/desktop/artifacts"
+  log "packaging ${APP_NAME} ${version} for ${target}"
   case "${target}" in
     linux)
-      bash "${SCRIPT_DIR}/build-deb.sh" --skip-build --version="${version}" --dist-dir="${out}"
+      bash "${SCRIPT_DIR}/build-deb.sh" --version="${version}" --dist-dir="${out}"
       local tarball
-      tarball="$(ls "${artifacts}"/*-linux-x64-*-Setup.tar.gz 2>/dev/null | head -n1 || true)"
-      [[ -n "${tarball}" ]] && cp -f "${tarball}" "${out}/${APP_ID}_${version}_linux-x64.tar.gz"
-      ;;
-    windows)
-      local setup
-      setup="$(ls "${artifacts}"/*Setup*.exe 2>/dev/null | head -n1 || true)"
-      [[ -n "${setup}" ]] && cp -f "${setup}" "${out}/${APP_ID}_${version}_x64_setup.exe"
-      local build_dir="${ROOT}/modules/desktop/build/stable-windows-x64"
-      if [[ -d "${build_dir}" ]]; then
-        (cd "${build_dir}" && { command -v 7z >/dev/null && 7z a -tzip -mx=6 "${out}/${APP_ID}_${version}_windows-x64_portable.zip" ./* >/dev/null || zip -qr "${out}/${APP_ID}_${version}_windows-x64_portable.zip" .; })
+      tarball="$(ls "${ROOT}/modules/desktop/artifacts"/*linux-x64*Setup.tar.gz 2>/dev/null | head -n1 || true)"
+      if [[ -n "${tarball}" && -f "${tarball}" ]]; then
+        cp -f "${tarball}" "${out}/${APP_ID}_${version}_linux-x64.tar.gz"
       fi
       ;;
+    windows)
+      bash "${SCRIPT_DIR}/build-windows.sh" --version="${version}" --dist-dir="${out}"
+      ;;
     macos)
-      local dmg app
-      dmg="$(ls "${artifacts}"/*.dmg 2>/dev/null | head -n1 || true)"
-      [[ -n "${dmg}" ]] && cp -f "${dmg}" "${out}/${APP_ID}_${version}_universal.dmg"
-      app="$(ls -d "${ROOT}"/modules/desktop/build/stable-macos-*/*.app 2>/dev/null | head -n1 || true)"
-      [[ -n "${app}" ]] && ditto -c -k --keepParent "${app}" "${out}/${APP_ID}_${version}_macos-universal.zip"
+      bash "${SCRIPT_DIR}/build-macos.sh" --version="${version}" --dist-dir="${out}"
       ;;
   esac
-  log "packages for ${target}:"; ls -la "${out}"
 }
 
-docker_linux_build() {
+docker_build() {
   local out="$1" version="$2"
-  command -v docker >/dev/null || { echo "error: docker is required for the linux build (or pass --native)" >&2; exit 1; }
-  log "building Docker image ${DOCKER_IMAGE}"
+  shift 2
+  local targets=("$@")
+  [[ ${#targets[@]} -eq 0 ]] && targets=(linux windows macos)
+  command -v docker >/dev/null || { echo "error: docker is required for the build (or pass --native)" >&2; exit 1; }
+  log "ensuring Docker builder image ${DOCKER_IMAGE}"
   docker build -q -t "${DOCKER_IMAGE}" -f "${SCRIPT_DIR}/docker/Dockerfile.linux" "${SCRIPT_DIR}/docker" >/dev/null
   mkdir -p "${out}"
-  log "building ${APP_NAME} ${version} for linux in Docker"
+  log "building ${APP_NAME} ${version} for [${targets[*]}] in Docker"
+  local uid gid
+  uid="$(id -u)"
+  gid="$(id -g)"
   docker run --rm \
     -v "${ROOT}:/work" \
     -v "${DOCKER_IMAGE}-hutch:/root/.hutch" \
     -e POSTHOG_API_KEY="${POSTHOG_API_KEY:-}" \
     -e HOME=/root \
     "${DOCKER_IMAGE}" \
-    bash -lc "cd /work && bash scripts/release.sh build linux --native --version=${version} && chown -R $(id -u):$(id -g) /work/dist /work/modules/desktop/build /work/modules/desktop/artifacts /work/modules/desktop/stage /work/modules/service/dist-bundle /work/modules/gui/dist /work/build 2>/dev/null || true"
-}
-
-remote_build() {
-  local target="$1" out="$2" version="$3" var="RELEASE_BUILDER_$(echo "${target}" | tr '[:lower:]' '[:upper:]')" host
-  host="${!var:-}"
-  if [[ -z "${host}" ]]; then
-    cat >&2 <<EOM
-error: the ${target} package can only be built on a ${target} machine (Electrobun has no cross-compiler).
-       Either run "scripts/release.sh build ${target} --native" there, or set ${var}=user@host
-       (a machine with git, bun and the toolchain) and run this command again.
-EOM
-    exit 1
-  fi
-  local remote_dir="~/.cache/${APP_ID}-release"
-  local ref
-  ref="$(git -C "${ROOT}" rev-parse HEAD)"
-  log "building ${target} on ${host} (commit ${ref:0:8})"
-  ssh "${host}" "mkdir -p ${remote_dir} && cd ${remote_dir} && { [ -d repo ] || git clone -q $(git -C "${ROOT}" remote get-url github 2>/dev/null || git -C "${ROOT}" remote get-url origin) repo; } && cd repo && git fetch -q --all --tags && git checkout -q ${ref} && POSTHOG_API_KEY='${POSTHOG_API_KEY:-}' bash scripts/release.sh build ${target} --native --version=${version}"
-  mkdir -p "${out}"
-  scp -q "${host}:${remote_dir}/repo/dist/${version}/*" "${out}/"
+    bash -c '
+      trap "chown -R '"${uid}:${gid}"' /work/dist /work/modules/desktop/build /work/modules/desktop/artifacts /work/modules/desktop/stage /work/modules/service/dist-bundle /work/modules/gui/dist /work/build /work/.cache 2>/dev/null || true" EXIT
+      cd /work
+      bash scripts/release.sh build '"${targets[*]}"' --native --version='"${version}"'
+    '
 }
 
 run_build() {
@@ -224,43 +196,83 @@ run_build() {
   version="${CUSTOM_VERSION:-$(current_version)}"
   out="${ROOT}/dist/${version}"
   [[ ${#TARGETS[@]} -eq 0 ]] && TARGETS=(linux windows macos)
-  for target in "${TARGETS[@]}"; do
-    if ${NATIVE}; then
-      [[ "$(host_target)" == "${target}" ]] || { echo "error: --native can only build ${target} on a ${target} host" >&2; exit 1; }
-      native_build "${out}" "${version}"
-    elif [[ "${target}" == "linux" ]]; then
-      docker_linux_build "${out}" "${version}"
-    elif [[ "$(host_target)" == "${target}" ]]; then
-      native_build "${out}" "${version}"
-    else
-      remote_build "${target}" "${out}" "${version}"
-    fi
-  done
-  log "done: ${out}"
+
+  if ${DRY_RUN}; then
+    log "[dry-run] would build [${TARGETS[*]}] for version ${version} into ${out}"
+    return 0
+  fi
+
+  if ${NATIVE}; then
+    for target in "${TARGETS[@]}"; do
+      native_build_target "${target}" "${out}" "${version}"
+    done
+  else
+    docker_build "${out}" "${version}" "${TARGETS[@]}"
+  fi
+  log "build complete for [${TARGETS[*]}]:"
+  ls -la "${out}"
 }
 
-# ── publish ──────────────────────────────────────────────────────────────────
+# ── github release ───────────────────────────────────────────────────────────
 
-run_publish() {
+run_github_release() {
+  local version="$1" out="$2"
+  command -v gh >/dev/null || { echo "error: gh CLI is required to create GitHub release" >&2; exit 1; }
+  local tag="v${version}"
+  local notes=""
+  if [[ -f "${ROOT}/CHANGELOG.md" ]]; then
+    notes="$(bun -e "
+const fs = require('fs');
+const text = fs.readFileSync('${ROOT}/CHANGELOG.md', 'utf-8');
+const m = text.match(new RegExp('## \\\[' + '${version}'.replace(/\\./g, '\\\\.') + '\\\][^\\\\n]*\\\\n([\\\\s\\\\S]*?)(?=\\\\n## \\\[|$)'));
+console.log(m ? m[1].trim() : '');
+")"
+  fi
+  [[ -z "${notes}" ]] && notes="Release ${tag}"
+
+  if ${DRY_RUN}; then
+    log "[dry-run] gh release create \"${tag}\" \"${out}/*\" --title \"${tag}\" --notes \"${notes}\""
+    return 0
+  fi
+
+  local files=()
+  for f in "${out}"/*; do
+    [[ -f "$f" ]] && files+=("$f")
+  done
+  [[ ${#files[@]} -eq 0 ]] && { echo "error: no release artifacts found in ${out}" >&2; exit 1; }
+
+  log "publishing ${#files[@]} artifact(s) to GitHub release ${tag}"
+  if gh release view "${tag}" >/dev/null 2>&1; then
+    log "release ${tag} exists on GitHub; uploading/updating assets"
+    gh release upload "${tag}" "${files[@]}" --clobber
+    gh release edit "${tag}" --notes "${notes}"
+  else
+    gh release create "${tag}" "${files[@]}" --title "${tag}" --notes "${notes}"
+  fi
+}
+
+# ── publish-website ──────────────────────────────────────────────────────────
+
+run_publish_website() {
   local version out site
   version="${CUSTOM_VERSION:-$(current_version)}"
   out="${ROOT}/dist/${version}"
   site="${ROOT}/extras/website"
-  [[ -d "${out}" ]] || { echo "error: ${out} does not exist; run scripts/release.sh build first" >&2; exit 1; }
-
-  local oversized
-  oversized="$(find "${out}" -type f -size +${PAGES_MAX_FILE_BYTES}c -printf '%f (%s bytes)\n' || true)"
-  if [[ -n "${oversized}" ]]; then
-    echo "error: Cloudflare Pages rejects files above 25 MiB:" >&2
-    echo "${oversized}" >&2
-    exit 1
-  fi
+  [[ -d "${out}" ]] || { echo "error: ${out} does not exist; run build first" >&2; exit 1; }
 
   rm -rf "${site}/releases"
-  mkdir -p "${site}/releases/${version}"
-  cp -f "${out}"/* "${site}/releases/${version}/"
-  bun "${SCRIPT_DIR}/write-release-manifest.ts" --app="${APP_ID}" --name="${APP_NAME}" --version="${version}" --site="${WEBSITE_URL}" --dir="${site}/releases" --changelog="${ROOT}/CHANGELOG.md"
-  log "manifest: $(cat "${site}/releases/latest.json" | head -c 400)"
+  mkdir -p "${site}/releases"
+  touch "${site}/releases/.gitkeep"
+  bun "${SCRIPT_DIR}/write-release-manifest.ts" \
+    --app="${APP_ID}" \
+    --name="${APP_NAME}" \
+    --version="${version}" \
+    --site="${WEBSITE_URL}" \
+    --github="${GITHUB_URL}" \
+    --artifacts="${out}" \
+    --dir="${site}/releases" \
+    --changelog="${ROOT}/CHANGELOG.md"
+  log "manifest: $(head -c 400 "${site}/releases/latest.json")"
   if ${SKIP_DEPLOY}; then
     log "skipping deploy (--skip-deploy)"
   else
@@ -268,8 +280,26 @@ run_publish() {
   fi
 }
 
+# ── full release flow ────────────────────────────────────────────────────────
+
+run_release() {
+  local current next
+  current="$(current_version)"
+  if [[ -n "${CUSTOM_VERSION}" ]]; then next="${CUSTOM_VERSION}"
+  elif [[ -n "${BUMP}" ]]; then next="$(bump_semver "${current}" "${BUMP}")"
+  else next="$(bump_semver "${current}" minor)"; fi
+  CUSTOM_VERSION="${next}"
+  run_tag
+  local out="${ROOT}/dist/${CUSTOM_VERSION}"
+  TARGETS=(linux windows macos)
+  run_build
+  run_github_release "${CUSTOM_VERSION}" "${out}"
+  log "release v${CUSTOM_VERSION} complete!"
+}
+
 case "${ACTION}" in
+  release) run_release ;;
   tag) run_tag ;;
   build) run_build ;;
-  publish) run_publish ;;
+  publish-website) run_publish_website ;;
 esac

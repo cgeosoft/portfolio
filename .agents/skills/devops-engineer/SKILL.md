@@ -25,8 +25,7 @@ Runs build, verification and release, and keeps deployment config, secrets handl
 
 ## Project Instructions
 
-- Lifecycle: `bun run typecheck && bun run test`; `bun run build:metrics && bun run build:metrics-site` (asc-compile `extras/metrics`, regenerate the website page); `bun run desktop:build` (stage GUI + service, `electrobun build` in `modules/desktop`); `scripts/release.sh build [linux|windows|macos]` (Linux inside `scripts/docker/Dockerfile.linux`; Windows and macOS natively on such a machine or over SSH with `RELEASE_BUILDER_*`). Packages land in `dist/<version>/`.
-- `scripts/release.sh tag [patch|minor|major|X.Y.Z] [--dry-run] [--allow-dirty] [--no-push]` bumps every package.json, writes the changelog, commits, tags and pushes. `scripts/release.sh publish` copies `dist/<version>` and `releases/latest.json` into `extras/website/releases/` and deploys to Cloudflare Pages (`extras/website/deploy.sh`, files above 25 MiB are refused). No GitHub Actions; the app and the website read `latest.json`. See `docs/architecture.md`.
-- `metrics.yml` runs on PRs touching `extras/metrics/**`: validates manifests, compiles modules, runs sandbox tests, checks generated files are committed.
-- Release checklist: typecheck and tests pass; `bun run build` exits clean; `release:deb` or `release:local` produces an artifact; `release.sh tag --dry-run`, then the real tag.
-- `--no-push` keeps the bump local. On Windows the script prefers native bsdtar over Git GNU tar; keep that logic.
+- Lifecycle: `bun run typecheck && bun run test`; `bun run build:metrics && bun run build:metrics-site` (asc-compile `extras/metrics`, regenerate the website page); `bun run desktop:build` (stage GUI + service, `electrobun build` in `modules/desktop`); `bun run release:build` (builds Linux, Windows and macOS packages locally inside Docker). Packages land in `dist/<version>/`.
+- `bun run release [minor|patch|major|X.Y.Z] [--dry-run] [--allow-dirty] [--no-push]` bumps version (minor by default), commits, tags, pushes, builds all 3 OS packages locally in Docker, and uploads artifacts to GitHub Releases via `gh release create`.
+- `bun run website:publish` writes `releases/latest.json` into `extras/website/releases/` and deploys to Cloudflare Pages (`extras/website/deploy.sh`). Binaries are hosted on GitHub Releases.
+- Release checklist: typecheck and tests pass; `bun run build` exits clean; `bun run release:build` produces all 6 packages in `dist/<version>/`; `bun run release --dry-run`, then the real release.

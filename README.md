@@ -44,7 +44,7 @@ portfolio/
 │   └── shared/                 # Types, brand constants and helpers used by all three
 ├── extras/
 │   ├── metrics/                # Sandboxed AssemblyScript metric modules
-│   └── website/                # Marketing site (Cloudflare Pages) + releases/latest.json and packages
+│   └── website/                # Marketing site (Cloudflare Pages) + releases/latest.json manifest
 ├── scripts/
 │   ├── release.sh              # tag | build (Docker for Linux) | publish (website)
 │   ├── docker/Dockerfile.linux # Linux build box
@@ -103,7 +103,7 @@ bun run desktop:build       # modules/desktop/artifacts for this OS
 ### Release
 
 ```bash
-bun run release patch|minor|major      # bump, changelog, commit, tag, push
-bun run release:build                  # Linux in Docker; Windows/macOS on such a machine (see docs/architecture.md)
-bun run release:publish                # copy packages + latest.json into the website and deploy
+bun run release [minor|patch|major]    # bump, changelog, commit, tag, push, build 3 OS artifacts in Docker, GitHub release
+bun run release:build                  # build 3 OS packages locally in Docker (dist/<version>/)
+bun run website:publish                # write latest.json and deploy website to Cloudflare Pages
 ```

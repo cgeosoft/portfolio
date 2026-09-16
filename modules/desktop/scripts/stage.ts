@@ -9,7 +9,7 @@
  * The version and the PostHog key are baked into the service bundle here, so
  * no .env file is needed at runtime. Run with `bun run stage`.
  */
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const desktopDir = resolve(import.meta.dir, "..");
@@ -56,4 +56,5 @@ for (const [from, to] of files) {
   }
   cpSync(from, to, { recursive: true });
 }
+writeFileSync(join(stageDir, "version.txt"), version + "\n");
 console.log(`[stage] ready in ${stageDir} (version ${version})`);
