@@ -24,7 +24,19 @@ export function TransactionsCard({
   hideValues = false,
 }: TransactionsCardProps) {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState<string>(() => {
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem("portfolio_transactions_type_filter") || "ALL";
+    }
+    return "ALL";
+  });
+
+  const handleTypeFilterChange = (val: string) => {
+    setTypeFilter(val);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_transactions_type_filter", val);
+    }
+  };
 
   const filtered = (transactions || [])
     .filter((tx) => {
@@ -93,7 +105,7 @@ export function TransactionsCard({
 
           <Select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => handleTypeFilterChange(e.target.value)}
             selectSize="sm"
             className="h-8"
             wrapperClassName="shrink-0"

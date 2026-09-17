@@ -11,6 +11,8 @@ interface HoldingsTableCardProps {
   summary?: PortfolioSummary;
 }
 
+const VALID_ASSET_FILTERS = ["ALL", "Stock", "ETF", "Crypto", "Cash", "Other"] as const;
+
 export function HoldingsTableCard({
   holdings,
   currency = "EUR",
@@ -18,16 +20,48 @@ export function HoldingsTableCard({
   summary,
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("ALL");
-  const [sortField, setSortField] = useState<keyof PortfolioHolding>("currentValue");
-  const [sortAsc, setSortAsc] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_holdings_type_filter");
+      if (saved && (VALID_ASSET_FILTERS as readonly string[]).includes(saved)) {
+        return saved;
+      }
+    }
+    return "ALL";
+  });
+  const [sortField, setSortField] = useState<keyof PortfolioHolding>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_holdings_sort_field");
+      if (saved) return saved as keyof PortfolioHolding;
+    }
+    return "currentValue";
+  });
+  const [sortAsc, setSortAsc] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem("portfolio_holdings_sort_asc") === "true";
+    }
+    return false;
+  });
+
+  const handleTypeFilterChange = (val: string) => {
+    setTypeFilter(val);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_holdings_type_filter", val);
+    }
+  };
 
   const handleSort = (field: keyof PortfolioHolding) => {
+    let nextAsc = false;
     if (sortField === field) {
-      setSortAsc(!sortAsc);
+      nextAsc = !sortAsc;
+      setSortAsc(nextAsc);
     } else {
       setSortField(field);
       setSortAsc(false);
+    }
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_holdings_sort_field", field);
+      localStorage.setItem("portfolio_holdings_sort_asc", String(nextAsc));
     }
   };
 
@@ -261,7 +295,7 @@ export function HoldingsTableCard({
           {/* Type filter */}
           <Select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => handleTypeFilterChange(e.target.value)}
             selectSize="sm"
             className="h-8"
             wrapperClassName="shrink-0"

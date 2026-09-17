@@ -26,6 +26,8 @@ interface PortfolioChartCardProps {
 
 type Timeframe = "1m" | "3m" | "6m" | "1y" | "all";
 
+const VALID_TIMEFRAMES: readonly Timeframe[] = ["1m", "3m", "6m", "1y", "all"] as const;
+
 export function PortfolioChartCard({
   chartHistory,
   currency = "EUR",
@@ -34,7 +36,22 @@ export function PortfolioChartCard({
 }: PortfolioChartCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
-  const [range, setRange] = useState<Timeframe>("1y");
+  const [range, setRange] = useState<Timeframe>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_chart_range");
+      if (saved && (VALID_TIMEFRAMES as readonly string[]).includes(saved)) {
+        return saved as Timeframe;
+      }
+    }
+    return "1y";
+  });
+
+  const handleSelectRange = (r: Timeframe) => {
+    setRange(r);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_chart_range", r);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -270,10 +287,10 @@ export function PortfolioChartCard({
         </div>
 
         <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-xs font-mono self-stretch sm:self-auto justify-center">
-          {(["1m", "3m", "6m", "1y", "all"] as const).map((r) => (
+          {VALID_TIMEFRAMES.map((r) => (
             <button
               key={r}
-              onClick={() => setRange(r)}
+              onClick={() => handleSelectRange(r)}
               className={`px-2.5 py-1 rounded uppercase transition-all cursor-pointer ${
                 range === r
                   ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30 font-bold"

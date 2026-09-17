@@ -107,8 +107,20 @@ export function MetricsTab({
   onRetry,
 }: MetricsTabProps) {
   const [isInstallOpen, setIsInstallOpen] = useState(false);
-  const [category, setCategory] = useState<string>("All");
+  const [category, setCategory] = useState<string>(() => {
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem("portfolio_metrics_category") || "All";
+    }
+    return "All";
+  });
   const [uninstalling, setUninstalling] = useState<string | null>(null);
+
+  const handleSelectCategory = (name: string) => {
+    setCategory(name);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_metrics_category", name);
+    }
+  };
 
   const listingById = useMemo(() => new Map(listings.map((l) => [l.id, l])), [listings]);
   const used = countMetricSlots(prefs);
@@ -351,7 +363,7 @@ export function MetricsTab({
             <button
               key={name}
               type="button"
-              onClick={() => setCategory(name)}
+              onClick={() => handleSelectCategory(name)}
               aria-pressed={category === name}
               className={`h-6 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border ${
                 category === name

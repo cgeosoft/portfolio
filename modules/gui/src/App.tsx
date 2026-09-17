@@ -109,12 +109,21 @@ export default function App() {
     if (typeof window !== "undefined" && window.location.hash) {
       return getTabFromHash(window.location.hash);
     }
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_active_tab");
+      if (saved && ["overview", "metrics", "reports", "transactions"].includes(saved)) {
+        return saved as PortfolioTabKey;
+      }
+    }
     return "overview";
   });
 
   const handleTabChange = useCallback((tab: PortfolioTabKey) => {
     setView("dashboard");
     setActiveTab(tab);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_active_tab", tab);
+    }
     if (typeof window !== "undefined") {
       const newHash = `#${tab}`;
       if (window.location.hash !== newHash) {
@@ -152,6 +161,9 @@ export default function App() {
     setView("dashboard");
     const targetTab = tab || activeTab;
     setActiveTab(targetTab);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_active_tab", targetTab);
+    }
     if (typeof window !== "undefined") {
       const newHash = `#${targetTab}`;
       if (window.location.hash !== newHash) {
@@ -171,6 +183,9 @@ export default function App() {
         window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#metrics`);
         setView("dashboard");
         setActiveTab("metrics");
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("portfolio_active_tab", "metrics");
+        }
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
         if (parts[1] && SETTINGS_SECTIONS.includes(parts[1])) {
@@ -183,7 +198,10 @@ export default function App() {
         setView("terms");
       } else {
         setView("dashboard");
-        setActiveTab(getTabFromHash(window.location.hash));
+        const tab = window.location.hash
+          ? getTabFromHash(window.location.hash)
+          : (typeof localStorage !== "undefined" && (localStorage.getItem("portfolio_active_tab") as PortfolioTabKey)) || "overview";
+        setActiveTab(tab);
       }
     };
     window.addEventListener("hashchange", handleRouting);
@@ -223,7 +241,13 @@ export default function App() {
   }, [currency]);
 
   // Privacy Mode Toggle State
-  const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(false);
+  const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_privacy_mode");
+      if (saved !== null) return saved === "true";
+    }
+    return false;
+  });
 
   // Zoom State & Persistence (50% to 250%)
   const [zoomLevel, setZoomLevel] = useState<number>(() => {
@@ -341,7 +365,12 @@ export default function App() {
   }, [theme, applyTheme]);
 
   // Assistant Chat & Conversations State
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem("portfolio_assistant_open") === "true";
+    }
+    return false;
+  });
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<PortfolioChatMessage[]>([]);
@@ -375,7 +404,20 @@ export default function App() {
   }, [activePortfolioId, loadConversations]);
 
   const handleToggleAssistant = useCallback(() => {
-    setIsAssistantOpen((prev) => !prev);
+    setIsAssistantOpen((prev) => {
+      const next = !prev;
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("portfolio_assistant_open", String(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCloseAssistant = useCallback(() => {
+    setIsAssistantOpen(false);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("portfolio_assistant_open", "false");
+    }
   }, []);
 
   const handleSelectConversation = useCallback(
@@ -598,6 +640,9 @@ export default function App() {
   const toggleHideCurrencyValues = () => {
     setHideCurrencyValues((prev) => {
       const next = !prev;
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("portfolio_privacy_mode", String(next));
+      }
       rpc.request.saveConfig({ hideCurrencyValues: next }).catch(() => {});
       return next;
     });
@@ -848,7 +893,12 @@ export default function App() {
       try {
         const config = await callWithRetry<DesktopConfig>("getConfig", () => rpc.request.getConfig({}), 3, 200, 3000);
         if (config.baseCurrency) setCurrency(config.baseCurrency);
-        if (config.hideCurrencyValues !== undefined) setHideCurrencyValues(config.hideCurrencyValues);
+        if (config.hideCurrencyValues !== undefined) {
+          setHideCurrencyValues(config.hideCurrencyValues);
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem("portfolio_privacy_mode", String(config.hideCurrencyValues));
+          }
+        }
         if (config.llmProvider) setAssistantProvider(config.llmProvider);
         if (config.llmModel) setAssistantModel(config.llmModel);
         if (config.zoomLevel !== undefined && Number.isFinite(config.zoomLevel)) {
@@ -1776,7 +1826,7 @@ export default function App() {
         {/* Assistant Sidebar (Persistent across all views & tabs) */}
         <AssistantSidebar
           isOpen={isAssistantOpen}
-          onClose={() => setIsAssistantOpen(false)}
+          onClose={handleCloseAssistant}
           portfolio={activePortfolio}
           portfolioData={portfolioData}
           onOpenSettings={() => handleOpenSettings("assistant")}
