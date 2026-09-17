@@ -63,9 +63,9 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#131722] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden font-mono text-slate-100 flex flex-col">
+      <div className="bg-widget border border-line rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden font-mono text-slate-100 flex flex-col">
         {/* Modal Header */}
-        <div className="p-6 border-b border-[#1e293b] bg-[#181d2b]/50 flex items-center justify-between">
+        <div className="p-6 border-b border-line bg-card/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#DD3C73]/10 text-[#DD3C73] border border-[#DD3C73]/20">
               <Sparkles className="w-5 h-5" />
@@ -81,7 +81,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                 <div
                   key={s}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    step === s ? "w-6 bg-[#DD3C73]" : step > s ? "bg-[#A7E2C0]" : "bg-slate-700"
+                    step === s ? "w-6 bg-[#DD3C73]" : step > s ? "bg-mint" : "bg-slate-700"
                   }`}
                 />
               ))}
@@ -112,15 +112,15 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
               </div>
 
               <div className="grid grid-cols-1 gap-2.5 pt-2">
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-[#181d2b] border border-[#1e293b]">
-                  <Database className="w-4 h-4 text-[#A7E2C0] mt-0.5 shrink-0" />
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-card border border-line">
+                  <Database className="w-4 h-4 text-mint mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold text-slate-200">Local SQLite Engine</div>
                     <div className="text-[11px] text-slate-400">All transactions, portfolios, and snapshots are stored locally.</div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-[#181d2b] border border-[#1e293b]">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-card border border-line">
                   <BarChart3 className="w-4 h-4 text-[#DD3C73] mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold text-slate-200">Live Yahoo Finance Quotes</div>
@@ -128,8 +128,8 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-[#181d2b] border border-[#1e293b]">
-                  <Bot className="w-4 h-4 text-[#E3EACD] mt-0.5 shrink-0" />
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-card border border-line">
+                  <Bot className="w-4 h-4 text-cream mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold text-slate-200">AI Quantitative Analyst</div>
                     <div className="text-[11px] text-slate-400">Generate on-demand portfolio briefings using Ollama, Groq, OpenAI, or Anthropic.</div>
@@ -148,7 +148,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#181d2b] border border-[#1e293b] space-y-3">
+              <div className="p-4 rounded-xl bg-card border border-line space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Zap className="w-4 h-4 text-[#DD3C73]" />
@@ -193,10 +193,10 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#181d2b] border border-[#1e293b] space-y-3">
+              <div className="p-4 rounded-xl bg-card border border-line space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <Activity className="w-4 h-4 text-[#A7E2C0]" />
+                    <Activity className="w-4 h-4 text-mint" />
                     <span className="text-xs font-bold text-slate-200">Enable Anonymous Telemetry</span>
                   </div>
                   <button
@@ -235,7 +235,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-6 border-t border-[#1e293b] bg-[#181d2b]/30 flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-6 border-t border-line bg-card/30 flex items-center justify-between gap-3">
           {step > 1 ? (
             <button
               type="button"
@@ -271,7 +271,7 @@ export function SetupWizardModal({ isOpen, onComplete, onClose }: SetupWizardMod
               type="button"
               onClick={handleFinish}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#A7E2C0] hover:bg-[#92d6b0] text-xs font-bold text-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-mint hover:bg-[#92d6b0] text-xs font-bold text-slate-900 transition-colors disabled:opacity-50 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>{isSubmitting ? "Finishing..." : "Start Using Portfolio"}</span>

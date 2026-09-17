@@ -141,7 +141,7 @@ export function DownloadReportModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -160,7 +160,7 @@ export function DownloadReportModal({
           {savedFilePath ? (
             /* Success State */
             <div className="flex flex-col items-center justify-center py-6 text-center gap-3">
-              <div className="w-12 h-12 rounded-2xl border border-[#A7E2C0]/40 bg-[#A7E2C0]/10 flex items-center justify-center text-[#A7E2C0]">
+              <div className="w-12 h-12 rounded-2xl border border-mint/40 bg-mint/10 flex items-center justify-center text-mint">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div className="text-sm font-bold text-slate-100 uppercase tracking-wider">
@@ -219,7 +219,7 @@ export function DownloadReportModal({
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-xs font-bold uppercase tracking-wider ${
-                        format === "markdown" ? "text-white" : "text-slate-200"
+                        format === "markdown" ? "text-slate-50" : "text-slate-200"
                       }`}
                     >
                       Markdown Document (.md)
@@ -259,7 +259,7 @@ export function DownloadReportModal({
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-xs font-bold uppercase tracking-wider ${
-                        format === "pdf" ? "text-white" : "text-slate-200"
+                        format === "pdf" ? "text-slate-50" : "text-slate-200"
                       }`}
                     >
                       PDF Document (.pdf)
@@ -325,7 +325,7 @@ export function DownloadReportModal({
                 type="button"
                 onClick={() => setStep(1)}
                 disabled={isProcessing}
-                className="h-8 px-3 rounded-lg border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
+                className="h-8 px-3 rounded-lg border border-slate-800 text-slate-300 hover:text-slate-50 hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -334,7 +334,7 @@ export function DownloadReportModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="h-8 px-3 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
+                className="h-8 px-3 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-50 hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
               >
                 Cancel
               </button>

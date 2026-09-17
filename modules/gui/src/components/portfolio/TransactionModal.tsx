@@ -220,7 +220,7 @@ export function TransactionModal({
 
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  <Layers className="w-3 h-3 text-[#ab97f7]" />
+                  <Layers className="w-3 h-3 text-plum-bright" />
                   <span>Asset Class</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">
@@ -230,7 +230,7 @@ export function TransactionModal({
 
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  <Percent className="w-3 h-3 text-[#A7E2C0]" />
+                  <Percent className="w-3 h-3 text-mint" />
                   <span>Fee & Tax</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">

@@ -113,7 +113,7 @@ export function Header({
               aria-haspopup="listbox"
               aria-expanded={isPortfolioDropdownOpen}
               data-open={isPortfolioDropdownOpen}
-              className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-[#e65f8e] hover:bg-slate-800/40 max-w-[170px]"
+              className="cx-menu-trigger h-7 px-2.5 text-[11px] font-bold text-[#DD3C73] hover:text-accent-bright hover:bg-slate-800/40 max-w-[170px]"
               title="Switch Portfolio"
             >
               {activePortfolio?.isShared ? (
@@ -137,7 +137,7 @@ export function Header({
                         setIsPortfolioDropdownOpen(false);
                         onOpenManagePortfolios();
                       }}
-                      className="text-[10px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer font-bold tracking-wider hover:underline"
+                      className="text-[10px] text-[#DD3C73] hover:text-accent-bright transition-colors cursor-pointer font-bold tracking-wider hover:underline"
                     >
                       Manage
                     </button>

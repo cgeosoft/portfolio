@@ -201,8 +201,8 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
         const stateClass = hasError
           ? "border-rose-500/70 ring-1 ring-rose-500/30 bg-rose-950/25 text-rose-300 focus:border-rose-400 focus:ring-rose-500/50"
           : digit
-          ? "border-white/20 bg-slate-950/80 text-white focus:border-[#DD3C73] focus:ring-[#DD3C73]/30"
-          : "border-white/10 bg-slate-950/60 text-slate-100 focus:border-[#DD3C73] focus:ring-[#DD3C73]/30";
+          ? "border-slate-700 bg-slate-950/80 text-slate-50 focus:border-[#DD3C73] focus:ring-[#DD3C73]/30"
+          : "border-slate-800 bg-slate-950/60 text-slate-100 focus:border-[#DD3C73] focus:ring-[#DD3C73]/30";
 
         return (
           <input

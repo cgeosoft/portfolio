@@ -131,7 +131,7 @@ export function AssistantSystemPromptModal({
             </div>
           ) : !systemPrompt ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
-              <AlertCircle className="w-8 h-8 text-[#E3EACD] mb-3 opacity-80" />
+              <AlertCircle className="w-8 h-8 text-cream mb-3 opacity-80" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-1">
                 No System Prompt
               </div>
@@ -145,13 +145,13 @@ export function AssistantSystemPromptModal({
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900/90 text-[11px] font-medium text-slate-300 hover:text-white hover:border-slate-700 transition-colors shadow-lg cursor-pointer"
+                  className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900/90 text-[11px] font-medium text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors shadow-lg cursor-pointer"
                   title="Copy system prompt text"
                 >
                   {copied ? (
                     <>
-                      <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
-                      <span className="text-[#A7E2C0]">Copied</span>
+                      <CheckCheck className="w-3.5 h-3.5 text-mint" />
+                      <span className="text-mint">Copied</span>
                     </>
                   ) : (
                     <>
@@ -203,7 +203,7 @@ export function AssistantSystemPromptModal({
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                        className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
                       >
                         {children}
                       </a>
@@ -212,7 +212,7 @@ export function AssistantSystemPromptModal({
                       <strong className="font-bold text-slate-100">{children}</strong>
                     ),
                     code: ({ children }) => (
-                      <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-[#A7E2C0] font-mono border border-slate-800">
+                      <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
                         {children}
                       </code>
                     ),
@@ -253,12 +253,12 @@ export function AssistantSystemPromptModal({
               <button
                 type="button"
                 onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:text-white hover:border-slate-700 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors cursor-pointer"
               >
                 {copied ? (
                   <>
-                    <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
-                    <span className="text-[#A7E2C0]">Copied</span>
+                    <CheckCheck className="w-3.5 h-3.5 text-mint" />
+                    <span className="text-mint">Copied</span>
                   </>
                 ) : (
                   <>
@@ -272,7 +272,7 @@ export function AssistantSystemPromptModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-lg bg-[#243C8F] hover:bg-[#341B83] text-white text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
+              className="px-3.5 py-1.5 rounded-lg bg-royal hover:bg-plum text-white text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
             >
               Close
             </button>

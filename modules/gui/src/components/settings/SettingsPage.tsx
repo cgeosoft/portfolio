@@ -852,7 +852,7 @@ export function SettingsPage({
               {/* 3. Telemetry Configuration */}
               <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <Activity className="w-4 h-4 text-[#A7E2C0] shrink-0 mt-0.5" />
+                  <Activity className="w-4 h-4 text-mint shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
                       Enable Anonymous Analytics (Telemetry)
@@ -1082,7 +1082,7 @@ export function SettingsPage({
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => setExportingPortfolio(p)}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-700/70 bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm mr-1"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-700/70 bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-50 transition-all cursor-pointer shadow-sm mr-1"
                                     title={`Export ${p.name} transactions and reports as ZIP`}
                                   >
                                     <Download className="w-3.5 h-3.5 text-emerald-400" />
@@ -1531,7 +1531,7 @@ export function SettingsPage({
               {/* App Identity Banner */}
               <div className="flex items-start justify-between border-b border-slate-800/80 pb-5">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-plum via-royal to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
                     <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
                       <TrendingUp className="w-6 h-6 text-[#DD3C73]" />
                     </div>
@@ -1577,7 +1577,7 @@ export function SettingsPage({
                           : "Portfolio is up to date"}
                       </span>
                       {updateInfo?.hasUpdate && (
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#A7E2C0]/15 text-[#A7E2C0] border border-[#A7E2C0]/30">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-mint/15 text-mint border border-mint/30">
                           Update Available
                         </span>
                       )}

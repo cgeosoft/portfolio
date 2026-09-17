@@ -19,7 +19,7 @@ export function UpdatePopover({
 
   return (
     <div className="fixed bottom-6 right-6 z-50 max-w-sm animate-popover-in">
-      <div className="p-4 rounded-xl bg-[#131722] border border-[#DD3C73]/40 shadow-2xl shadow-[#DD3C73]/10 font-mono">
+      <div className="p-4 rounded-xl bg-widget border border-[#DD3C73]/40 shadow-2xl shadow-[#DD3C73]/10 font-mono">
         <div className="flex items-start gap-3">
           {/* Icon */}
           <div className="w-8 h-8 rounded-lg bg-[#DD3C73]/15 border border-[#DD3C73]/30 flex items-center justify-center shrink-0 mt-0.5">

@@ -46,16 +46,16 @@ export function TransactionsCard({
       case "BUY":
       case "STOCKPERK":
       case "PRIVATE_MARKET_BUY":
-        return "bg-[#243C8F]/20 text-[#7392fa] border-[#243C8F]/40";
+        return "bg-royal/20 text-royal-bright border-royal/40";
       case "SELL":
         return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";
       case "DIVIDEND":
-        return "bg-[#A7E2C0]/15 text-[#A7E2C0] border-[#A7E2C0]/30";
+        return "bg-mint/15 text-mint border-mint/30";
       case "INTEREST_PAYMENT":
-        return "bg-[#E3EACD]/15 text-[#E3EACD] border-[#E3EACD]/30";
+        return "bg-cream/15 text-cream border-cream/30";
       case "CUSTOMER_INBOUND":
       case "DEPOSIT":
-        return "bg-[#243C8F]/20 text-[#7392fa] border-[#243C8F]/40";
+        return "bg-royal/20 text-royal-bright border-royal/40";
       case "CUSTOMER_OUTBOUND":
       case "WITHDRAWAL":
         return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";

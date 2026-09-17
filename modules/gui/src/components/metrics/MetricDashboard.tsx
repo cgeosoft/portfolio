@@ -49,7 +49,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
       )}
 
       {compact.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#131722]/60 border border-[#1e293b] text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-widget/60 border border-line text-xs">
           {compact.map((pref) => {
             const listing = listingById.get(pref.id)!;
             return (
@@ -60,7 +60,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
       )}
 
       {slotted.length === 0 && (
-        <div className="p-6 rounded-2xl bg-[#131722]/60 border border-[#1e293b] text-center space-y-3">
+        <div className="p-6 rounded-2xl bg-widget/60 border border-line text-center space-y-3">
           <div className="text-xs text-slate-400 font-mono">No metrics are on the dashboard of this portfolio.</div>
           <button
             type="button"

@@ -61,7 +61,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Total Gain Since Start",
     category: "Performance",
     icon: TrendingUp,
-    iconColor: "text-[#A7E2C0]",
+    iconColor: "text-mint",
     shortDescription: "All-time net economic performance generated across your entire portfolio since inception.",
     fullExplanation:
       "This metric captures the comprehensive net performance of your capital. It does not look merely at current unrealized paper gains, but synthesizes all asset price changes, realized profits from closed sales, dividend distributions, interest payouts, and subtracts transaction fees paid across time.",
@@ -77,21 +77,21 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
           const val = (s?.totalValue ?? 0) - (s?.totalCost ?? 0);
           return `${val >= 0 ? "+" : ""}${fmtCurrency(val, s?.baseCurrency || c, h)}`;
         },
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Closed / Realized PnL",
         description: "Net profit or loss locked in upon selling assets over time.",
         getValue: (s, c, h) =>
           `${(s?.realizedPnL ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.realizedPnL ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Dividends & Interest",
         description: "Cumulative cash distributions and fixed yields credited into the portfolio.",
         getValue: (s, c, h) =>
           `+${fmtCurrency((s?.totalDividends ?? 0) + (s?.totalInterest ?? 0), s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Transaction Fees",
@@ -129,7 +129,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         label: "Uninvested Cash Reserves",
         description: "Liquid cash buffer available for new buys or safe-haven liquidity.",
         getValue: (s, c, h) => fmtCurrency(s?.cashBalance ?? 0, s?.baseCurrency || c, h),
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Holdings Cost Basis",
@@ -163,21 +163,21 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         description: "Absolute financial gain or loss experienced in the current session.",
         getValue: (s, c, h) =>
           `${(s?.dayGainLossDollar ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.dayGainLossDollar ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: (s) => ((s?.dayGainLossDollar ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#DD3C73]"),
+        colorClass: (s) => ((s?.dayGainLossDollar ?? 0) >= 0 ? "text-mint" : "text-[#DD3C73]"),
       },
       {
         label: "24h Percentage Change",
         description: "Percentage return relative to yesterday's closing baseline valuation.",
         getValue: (s) =>
           `${(s?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${fmtPercent(s?.dayGainLossPercent ?? 0)}`,
-        colorClass: (s) => ((s?.dayGainLossPercent ?? 0) >= 0 ? "text-[#A7E2C0]" : "text-[#DD3C73]"),
+        colorClass: (s) => ((s?.dayGainLossPercent ?? 0) >= 0 ? "text-mint" : "text-[#DD3C73]"),
       },
       {
         label: "Session Top Winner",
         description: "The best performing asset in your active portfolio during this session.",
         getValue: (s) =>
           s?.bestPerformer ? `${s.bestPerformer.symbol} (+${s.bestPerformer.changePercent.toFixed(1)}%)` : "—",
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
     ],
     keyTakeaways: [
@@ -191,7 +191,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Realized & Income",
     category: "Income & Yield",
     icon: PiggyBank,
-    iconColor: "text-[#A7E2C0]",
+    iconColor: "text-mint",
     shortDescription: "Cumulative locked-in cash profits from executed sales, dividends, and yields.",
     fullExplanation:
       "While unrealized paper gains rise and fall with market sentiment, Realized & Income tracks the permanent, crystalized wealth you have banked. It sums all profits realized from sold securities together with regular income flows from dividends and interest.",
@@ -205,19 +205,19 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         description: "Crystalized capital gains from executed sell transactions.",
         getValue: (s, c, h) =>
           `${(s?.realizedPnL ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.realizedPnL ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Dividends Received",
         description: "Cash payments distributed by portfolio holdings directly to you.",
         getValue: (s, c, h) => `+${fmtCurrency(s?.totalDividends ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Fixed Interest / Yields",
         description: "Income earned from cash yields, bond coupons, or lending.",
         getValue: (s, c, h) => `+${fmtCurrency(s?.totalInterest ?? 0, s?.baseCurrency || c, h)}`,
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
     ],
     keyTakeaways: [
@@ -231,7 +231,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Cash Reserves",
     category: "Liquidity",
     icon: Coins,
-    iconColor: "text-[#A7E2C0]",
+    iconColor: "text-mint",
     shortDescription: "Unallocated liquid cash available for strategic rebalancing or safety.",
     fullExplanation:
       "Cash Reserves represent uninvested fiat currency in your portfolio. This liquidity serves as 'dry powder' for opportunistic market dips, emergency buffers, or awaiting dividend reinvestment.",
@@ -242,7 +242,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         label: "Current Balance",
         description: "Instant liquid cash available in the portfolio base currency.",
         getValue: (s, c, h) => fmtCurrency(s?.cashBalance ?? 0, s?.baseCurrency || c, h),
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
       {
         label: "Allocation Share",
@@ -261,7 +261,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Capital Injected",
     category: "Principal",
     icon: Layers,
-    iconColor: "text-[#7392fa]",
+    iconColor: "text-royal-bright",
     shortDescription: "Total cumulative principal capital deposited into the portfolio.",
     fullExplanation:
       "Capital Injected tracks your total principal contributions (deposits) into the portfolio ledger. It acts as the financial baseline denominator for calculating true Return on Invested Capital (ROIC).",
@@ -273,7 +273,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         description: "Sum of all historical external deposits transferred into the portfolio.",
         getValue: (s, c, h) =>
           fmtCurrency(s?.totalCashInjected || s?.totalCost || 0, s?.baseCurrency || c, h),
-        colorClass: "text-[#7392fa]",
+        colorClass: "text-royal-bright",
       },
     ],
     keyTakeaways: [
@@ -286,7 +286,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
     title: "Total Dividends",
     category: "Distributions",
     icon: CircleDollarSign,
-    iconColor: "text-[#A7E2C0]",
+    iconColor: "text-mint",
     shortDescription: "All-time cash dividend payouts received from equity and fund holdings.",
     fullExplanation:
       "Total Dividends represents the aggregate lifetime cash distributions paid directly to your portfolio by dividend-yielding equities, ETFs, and REITs. These can be held as cash liquidity or redeployed into new holdings.",
@@ -297,7 +297,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         label: "Cumulative Dividends",
         description: "Total monetary dividends credited across all portfolio assets.",
         getValue: (s, c, h) => fmtCurrency(s?.totalDividends ?? 0, s?.baseCurrency || c, h),
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
     ],
     keyTakeaways: [
@@ -324,7 +324,7 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
           s?.bestPerformer
             ? `${s.bestPerformer.symbol} (+${s.bestPerformer.changePercent.toFixed(1)}%)`
             : "No active equity positions",
-        colorClass: "text-[#A7E2C0]",
+        colorClass: "text-mint",
       },
     ],
     keyTakeaways: [
@@ -390,7 +390,7 @@ export function MetricInfoModal({
           sub: `Return: ${isStartUp ? "+" : ""}${fmtPercent(
             summary?.totalGainSinceStartPercent ?? summary?.totalGainLossPercent ?? 0
           )} since inception`,
-          color: isStartUp ? "text-[#A7E2C0]" : "text-[#DD3C73]",
+          color: isStartUp ? "text-mint" : "text-[#DD3C73]",
         };
       case "valuation":
         return {
@@ -409,7 +409,7 @@ export function MetricInfoModal({
         return {
           main: `${isDayUp ? "+" : ""}${fmtCurrency(summary?.dayGainLossDollar ?? 0, baseCurr, hideCurrencyValues)}`,
           sub: `24h Change: ${isDayUp ? "▲" : "▼"} ${fmtPercent(summary?.dayGainLossPercent ?? 0)}`,
-          color: isDayUp ? "text-[#A7E2C0]" : "text-[#DD3C73]",
+          color: isDayUp ? "text-mint" : "text-[#DD3C73]",
         };
       case "realizedIncome": {
         const combined =
@@ -421,14 +421,14 @@ export function MetricInfoModal({
             baseCurr,
             hideCurrencyValues
           )}`,
-          color: "text-[#A7E2C0]",
+          color: "text-mint",
         };
       }
       case "cashReserves":
         return {
           main: `${fmtCurrency(summary?.cashBalance ?? 0, baseCurr, hideCurrencyValues)}`,
           sub: `${summary?.cashWeightPercent ?? 0}% of Total Portfolio`,
-          color: "text-[#A7E2C0]",
+          color: "text-mint",
         };
       case "capitalInjected":
         return {
@@ -444,13 +444,13 @@ export function MetricInfoModal({
         return {
           main: fmtCurrency(summary?.totalDividends || 0, baseCurr, hideCurrencyValues),
           sub: "All-Time Cash Distributions",
-          color: "text-[#A7E2C0]",
+          color: "text-mint",
         };
       case "topPerformer":
         return {
           main: summary?.bestPerformer ? summary.bestPerformer.symbol : "—",
           sub: summary?.bestPerformer ? `+${summary.bestPerformer.changePercent.toFixed(1)}% session change` : "No equities active",
-          color: summary?.bestPerformer ? "text-[#A7E2C0]" : "text-slate-400",
+          color: summary?.bestPerformer ? "text-mint" : "text-slate-400",
         };
       default:
         return { main: "—", sub: "", color: "text-slate-100" };
@@ -555,7 +555,7 @@ export function MetricInfoModal({
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">Active Currency</div>
                 <div className="text-xs sm:text-sm font-bold text-slate-200 font-mono mt-0.5">{baseCurr}</div>
               </div>
-              <div className="text-[10px] text-[#A7E2C0] flex items-center gap-1 justify-end sm:mt-1">
+              <div className="text-[10px] text-mint flex items-center gap-1 justify-end sm:mt-1">
                 <CheckCircle2 className="w-3 h-3" />
                 <span>Live Portfolio Data</span>
               </div>
@@ -581,7 +581,7 @@ export function MetricInfoModal({
               <span>Mathematical Formula & Method</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 font-mono space-y-2">
-              <div className="p-2 sm:p-2.5 rounded-lg bg-[#07090e] border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
+              <div className="p-2 sm:p-2.5 rounded-lg bg-canvas border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
                 {currentDef.formula}
               </div>
               <p className="text-[10.5px] sm:text-[11px] text-slate-400 leading-relaxed">
@@ -627,7 +627,7 @@ export function MetricInfoModal({
           {/* Section 4: Key Insights & Takeaways */}
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#A7E2C0]" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-mint" />
               <span>Key Analytical Insights</span>
             </div>
             <ul className="space-y-1 sm:space-y-1.5 p-3 sm:p-3.5 rounded-xl bg-slate-950/30 border border-slate-800/60 text-xs text-slate-400 font-mono">

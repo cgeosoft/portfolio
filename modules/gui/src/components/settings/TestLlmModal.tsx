@@ -285,7 +285,7 @@ export function TestLlmModal({
               overallResult === "failed"
                 ? "bg-rose-500"
                 : overallResult === "passed"
-                ? "bg-[#A7E2C0]"
+                ? "bg-mint"
                 : "bg-[#DD3C73]"
             }`}
             style={{ width: `${progressPercent}%` }}
@@ -305,7 +305,7 @@ export function TestLlmModal({
                   key={step.id}
                   className={`p-3.5 rounded-xl border transition-all ${
                     isPassed
-                      ? "bg-slate-950/40 border-[#A7E2C0]/30 shadow-sm"
+                      ? "bg-slate-950/40 border-mint/30 shadow-sm"
                       : isRunningStep
                       ? "bg-[#DD3C73]/10 border-[#DD3C73]/50 shadow-md shadow-[#DD3C73]/5"
                       : isFailed
@@ -317,7 +317,7 @@ export function TestLlmModal({
                     {/* Status Indicator Icon */}
                     <div className="mt-0.5 shrink-0">
                       {isPassed ? (
-                        <div className="w-5 h-5 rounded-full bg-[#A7E2C0]/20 border border-[#A7E2C0] flex items-center justify-center text-[#A7E2C0]">
+                        <div className="w-5 h-5 rounded-full bg-mint/20 border border-mint flex items-center justify-center text-mint">
                           <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       ) : isRunningStep ? (
@@ -342,7 +342,7 @@ export function TestLlmModal({
                           <span
                             className={`text-[10px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider ${
                               isPassed
-                                ? "text-[#A7E2C0] border-[#A7E2C0]/30 bg-[#A7E2C0]/10"
+                                ? "text-mint border-mint/30 bg-mint/10"
                                 : isRunningStep
                                 ? "text-[#DD3C73] border-[#DD3C73]/40 bg-[#DD3C73]/20"
                                 : isFailed
@@ -384,7 +384,7 @@ export function TestLlmModal({
                         <div
                           className={`text-[11px] mt-2 p-2 rounded-lg font-mono break-words ${
                             isPassed
-                              ? "bg-slate-900 text-[#A7E2C0] border border-[#A7E2C0]/20"
+                              ? "bg-slate-900 text-mint border border-mint/20"
                               : isFailed
                               ? "bg-rose-950/40 text-rose-300 border border-rose-800/50"
                               : "bg-slate-900 text-slate-300 border border-slate-800"
@@ -402,9 +402,9 @@ export function TestLlmModal({
 
           {/* Model Response Preview upon Success */}
           {overallResult === "passed" && generatedOutput && (
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-[#A7E2C0]/40 space-y-2 animate-fade-in">
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-mint/40 space-y-2 animate-fade-in">
               <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-[#A7E2C0] font-bold uppercase tracking-wider text-[10px]">
+                <div className="flex items-center gap-2 text-mint font-bold uppercase tracking-wider text-[10px]">
                   <Terminal className="w-3.5 h-3.5" />
                   <span>Model Response Output</span>
                 </div>
@@ -474,7 +474,7 @@ export function TestLlmModal({
               disabled={isRunning}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                 overallResult === "passed"
-                  ? "bg-[#A7E2C0] hover:bg-[#8fd4ad] text-slate-950"
+                  ? "bg-mint hover:bg-[#8fd4ad] text-slate-950"
                   : "bg-slate-800 hover:bg-slate-700 text-slate-200"
               }`}
             >

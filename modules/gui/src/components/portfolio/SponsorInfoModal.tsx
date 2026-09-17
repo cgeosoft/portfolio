@@ -61,7 +61,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-[#131722] border border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-100 font-mono flex flex-col space-y-4"
+        className="relative w-full max-w-md bg-widget border border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-100 font-mono flex flex-col space-y-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="sponsor-info-title"
@@ -99,14 +99,14 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           </div>
 
           <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-[#A7E2C0] shrink-0 mt-0.5" />
+            <ShieldCheck className="w-4 h-4 text-mint shrink-0 mt-0.5" />
             <p>
               Your personal investment numbers, balances, and holdings are 100% private. No financial data is ever shared with sponsors or third parties.
             </p>
           </div>
 
           {/* Dev email contact section */}
-          <div className="p-3.5 rounded-xl bg-[#181d2b] border border-[#DD3C73]/30 space-y-2">
+          <div className="p-3.5 rounded-xl bg-card border border-[#DD3C73]/30 space-y-2">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#DD3C73] uppercase tracking-wider">
               <Mail className="w-3.5 h-3.5" />
               <span>Offer a Sponsorship</span>
@@ -115,7 +115,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
               Want to showcase your platform or financial service? You can reach out directly to the developer email:
             </p>
             <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800">
-              <code className="text-[#A7E2C0] text-[11px] select-all truncate">{contactEmail}</code>
+              <code className="text-mint text-[11px] select-all truncate">{contactEmail}</code>
               <button
                 type="button"
                 onClick={handleCopyEmail}
@@ -123,8 +123,8 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
               >
                 {copied ? (
                   <>
-                    <Check className="w-3 h-3 text-[#A7E2C0]" />
-                    <span className="text-[#A7E2C0]">Copied</span>
+                    <Check className="w-3 h-3 text-mint" />
+                    <span className="text-mint">Copied</span>
                   </>
                 ) : (
                   <span>Copy</span>

@@ -393,7 +393,7 @@ export function AnalyzePortfolioModal({
                       isCurrent
                         ? "bg-[#DD3C73]/20 border border-[#DD3C73]/40 text-[#DD3C73]"
                         : isPassed
-                        ? "bg-[#A7E2C0]/10 border border-[#A7E2C0]/30 text-[#A7E2C0]"
+                        ? "bg-mint/10 border border-mint/30 text-mint"
                         : "text-slate-500 border border-transparent"
                     }`}
                   >
@@ -409,7 +409,7 @@ export function AnalyzePortfolioModal({
                   {idx < WIZARD_STEPS.length - 1 && (
                     <div
                       className={`h-0.5 w-6 sm:w-10 rounded-full shrink-0 ${
-                        isPassed ? "bg-[#A7E2C0]/40" : "bg-slate-800"
+                        isPassed ? "bg-mint/40" : "bg-slate-800"
                       }`}
                     />
                   )}
@@ -461,8 +461,8 @@ export function AnalyzePortfolioModal({
 
                 {/* Current Running Week Warning */}
                 {selectedWeek?.isCurrent && (
-                  <div className="mt-1 p-2.5 rounded-lg border border-[#E3EACD]/40 bg-[#E3EACD]/10 flex items-center gap-2 text-xs text-[#E3EACD]">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#E3EACD]" />
+                  <div className="mt-1 p-2.5 rounded-lg border border-cream/40 bg-cream/10 flex items-center gap-2 text-xs text-cream">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-cream" />
                     <span>Notice: This week is currently in progress. Market data and weekly metrics are partial.</span>
                   </div>
                 )}
@@ -494,7 +494,7 @@ export function AnalyzePortfolioModal({
 
                 <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-0.5">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-[#ab97f7]" />
+                    <Layers className="w-3 h-3 text-plum-bright" />
                     <span>Positions</span>
                   </div>
                   <div className="font-bold text-slate-100 text-xs">
@@ -504,7 +504,7 @@ export function AnalyzePortfolioModal({
 
                 <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-0.5">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <Percent className="w-3 h-3 text-[#A7E2C0]" />
+                    <Percent className="w-3 h-3 text-mint" />
                     <span>Cash Liquidity</span>
                   </div>
                   <div className="font-bold text-slate-100 text-xs truncate">
@@ -521,11 +521,11 @@ export function AnalyzePortfolioModal({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400">
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
-                    <BarChart3 className="w-3.5 h-3.5 text-[#A7E2C0] shrink-0" />
+                    <BarChart3 className="w-3.5 h-3.5 text-mint shrink-0" />
                     <span className="truncate">Weight allocations & returns</span>
                   </div>
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
-                    <TrendingUp className="w-3.5 h-3.5 text-[#ab97f7] shrink-0" />
+                    <TrendingUp className="w-3.5 h-3.5 text-plum-bright shrink-0" />
                     <span className="truncate">SMA 50/200 & RSI momentum</span>
                   </div>
                   <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900 border border-slate-800/80">
@@ -556,7 +556,7 @@ export function AnalyzePortfolioModal({
                 {promptData && (
                   <div className="flex items-center gap-2">
                     {promptData.finnhubConfigured ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase flex items-center gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-mint/30 bg-mint/10 text-mint uppercase flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         <span>Finnhub Enriched ({promptData.finnhubNewsCount || 0} news)</span>
                       </span>
@@ -565,7 +565,7 @@ export function AnalyzePortfolioModal({
                         Finnhub: Off
                       </span>
                     )}
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0] uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-mint/30 bg-mint/10 text-mint uppercase">
                       Context Ready
                     </span>
                   </div>
@@ -631,13 +631,13 @@ export function AnalyzePortfolioModal({
                       <button
                         type="button"
                         onClick={() => void handleCopyPrompt()}
-                        className="h-6 inline-flex items-center gap-1 px-2 rounded border border-slate-800 bg-slate-950 text-[10px] font-medium text-slate-300 hover:text-white hover:border-slate-700 transition-colors cursor-pointer"
+                        className="h-6 inline-flex items-center gap-1 px-2 rounded border border-slate-800 bg-slate-950 text-[10px] font-medium text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors cursor-pointer"
                         title="Copy full prompt to clipboard"
                       >
                         {copiedPrompt ? (
                           <>
-                            <CheckCheck className="w-3 h-3 text-[#A7E2C0]" />
-                            <span className="text-[#A7E2C0]">Copied</span>
+                            <CheckCheck className="w-3 h-3 text-mint" />
+                            <span className="text-mint">Copied</span>
                           </>
                         ) : (
                           <>
@@ -670,7 +670,7 @@ export function AnalyzePortfolioModal({
                           ),
                           strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
                           code: ({ node: _n, ...props }) => (
-                            <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-[#E3EACD] font-mono text-[11px]" {...props} />
+                            <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
                           ),
                         }}
                       >
@@ -736,12 +736,12 @@ export function AnalyzePortfolioModal({
               {/* SUCCESS STATE */}
               {confirmationStatus === "success" && (
                 <div className="flex flex-col gap-3.5">
-                  <div className="p-3.5 rounded-xl border border-[#A7E2C0]/40 bg-[#A7E2C0]/10 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full border border-[#A7E2C0]/50 bg-[#A7E2C0]/20 flex items-center justify-center text-[#A7E2C0] shrink-0">
+                  <div className="p-3.5 rounded-xl border border-mint/40 bg-mint/10 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full border border-mint/50 bg-mint/20 flex items-center justify-center text-mint shrink-0">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-[#A7E2C0] uppercase tracking-wider">
+                      <div className="text-xs font-bold text-mint uppercase tracking-wider">
                         Report Generated Successfully
                       </div>
                       <div className="text-[11px] text-slate-400">
@@ -779,19 +779,19 @@ export function AnalyzePortfolioModal({
               {/* CANCELLED STATE */}
               {confirmationStatus === "cancelled" && (
                 <div className="flex flex-col gap-3.5">
-                  <div className="p-3.5 rounded-xl border border-[#E3EACD]/40 bg-[#E3EACD]/10 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full border border-[#E3EACD]/50 bg-[#E3EACD]/20 flex items-center justify-center text-[#E3EACD] shrink-0">
+                  <div className="p-3.5 rounded-xl border border-cream/40 bg-cream/10 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full border border-cream/50 bg-cream/20 flex items-center justify-center text-cream shrink-0">
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-[#E3EACD] uppercase tracking-wider">
+                      <div className="text-xs font-bold text-cream uppercase tracking-wider">
                         Report Generation Cancelled
                       </div>
                       <div className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
                         The generation process was stopped before completion. No new report was archived.
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD] uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-cream/40 bg-cream/10 text-cream uppercase">
                       Cancelled
                     </span>
                   </div>

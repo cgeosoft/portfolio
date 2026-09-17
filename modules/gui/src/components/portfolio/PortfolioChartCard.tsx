@@ -72,10 +72,10 @@ export function PortfolioChartCard({
     );
 
     const isLight = theme === "light" || (theme === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
-    const totalColor = "#A7E2C0"; // mint green for total portfolio value with cash
+    const totalColor = isLight ? "#047857" : "#A7E2C0"; // mint for total value with cash, deeper on white
     const accentColor = "#DD3C73"; // vibrant rose/magenta accent for invested value
     const costBasisColor = isLight ? "#94a3b8" : "#64748b"; // slate for cost basis
-    const returnColor = "#6d8bf7"; // royal blue tint for return %
+    const returnColor = isLight ? "#1d4ed8" : "#6d8bf7"; // royal blue tint for return %
     const textMuted = isLight ? "#64748b" : "#94a3b8";
     const textColor = isLight ? "#0f172a" : "#f1f5f9";
     const bgWidget = isLight ? "#ffffff" : "#090d16";
@@ -248,7 +248,7 @@ export function PortfolioChartCard({
 
           <div className="hidden lg:flex items-center gap-3 text-[10px] text-slate-400 ml-2 pl-3 border-l border-slate-800">
             <span className="flex items-center gap-1">
-              <span className="w-2.5 h-0.5 border-t border-dashed border-[#A7E2C0] inline-block" />
+              <span className="w-2.5 h-0.5 border-t border-dashed border-mint inline-block" />
               <span>Total inc. Cash</span>
             </span>
             <span className="flex items-center gap-1">

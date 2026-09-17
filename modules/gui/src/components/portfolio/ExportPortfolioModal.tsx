@@ -395,7 +395,7 @@ export function ExportPortfolioModal({
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
-                    <FileSpreadsheet className="w-4 h-4 text-[#A7E2C0] shrink-0" />
+                    <FileSpreadsheet className="w-4 h-4 text-mint shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>Transactions Ledger</span>
@@ -457,7 +457,7 @@ export function ExportPortfolioModal({
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        Analytical briefings & reports stored in <code className="text-[#E3EACD]">reports/</code> folder
+                        Analytical briefings & reports stored in <code className="text-cream">reports/</code> folder
                       </p>
                     </div>
                   </div>
@@ -524,7 +524,7 @@ export function ExportPortfolioModal({
             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
               Output ZIP Archive Filename:
             </div>
-            <div className="text-xs font-mono text-[#E3EACD] truncate flex items-center gap-1.5">
+            <div className="text-xs font-mono text-cream truncate flex items-center gap-1.5">
               <Archive className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span className="truncate">{sanitizedFileName}</span>
             </div>

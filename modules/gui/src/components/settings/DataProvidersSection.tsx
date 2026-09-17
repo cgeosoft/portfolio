@@ -246,7 +246,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   <div className="text-sm font-bold text-slate-100">Yahoo Finance</div>
                   <div className="text-[11px] text-slate-400">Public Market Data Engine</div>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#A7E2C0]/15 text-[#A7E2C0] border border-[#A7E2C0]/30">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-mint/15 text-mint border border-mint/30">
                   Ready (Keyless)
                 </span>
               </div>
@@ -294,7 +294,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                 <div
                   className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
                     yahooTestResult.success
-                      ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
+                      ? "bg-mint/10 border-mint/30 text-mint"
                       : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
                   }`}
                 >
@@ -320,8 +320,8 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                 <span
                   className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                     isFinnhubConfigured
-                      ? "bg-[#A7E2C0]/15 text-[#A7E2C0] border-[#A7E2C0]/30"
-                      : "bg-[#E3EACD]/15 text-[#E3EACD] border-[#E3EACD]/30"
+                      ? "bg-mint/15 text-mint border-mint/30"
+                      : "bg-cream/15 text-cream border-cream/30"
                   }`}
                 >
                   {isFinnhubConfigured ? "Key Configured" : "Key Required"}
@@ -404,7 +404,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                 <div
                   className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border ${
                     finnhubTestResult.success
-                      ? "bg-[#A7E2C0]/10 border-[#A7E2C0]/30 text-[#A7E2C0]"
+                      ? "bg-mint/10 border-mint/30 text-mint"
                       : "bg-[#DD3C73]/10 border-[#DD3C73]/30 text-[#DD3C73]"
                   }`}
                 >
@@ -460,8 +460,8 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed">{cat.description}</p>
                   {needsFinnhubKey && (
-                    <div className="flex items-center gap-1.5 text-[10px] text-[#E3EACD] pt-0.5">
-                      <AlertCircle className="w-3 h-3 text-[#E3EACD] shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[10px] text-cream pt-0.5">
+                      <AlertCircle className="w-3 h-3 text-cream shrink-0" />
                       <span>Finnhub API key not set. Falling back to Yahoo Finance until configured.</span>
                     </div>
                   )}
@@ -523,7 +523,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
         </div>
 
         {cacheClearMessage && (
-          <div className="text-xs text-[#A7E2C0] bg-[#A7E2C0]/10 border border-[#A7E2C0]/30 rounded-lg px-3 py-2">
+          <div className="text-xs text-mint bg-mint/10 border border-mint/30 rounded-lg px-3 py-2">
             {cacheClearMessage}
           </div>
         )}

@@ -226,7 +226,7 @@ export function ManagePortfoliosPage({
                           {/* Export Button with white text */}
                           <button
                             onClick={() => setExportingPortfolio(p)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-700/70 bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm mr-1"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-700/70 bg-slate-800/80 hover:bg-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-50 transition-all cursor-pointer shadow-sm mr-1"
                             title={`Export ${p.name} transactions & reports as ZIP`}
                           >
                             <Download className="w-3.5 h-3.5 text-emerald-400" />

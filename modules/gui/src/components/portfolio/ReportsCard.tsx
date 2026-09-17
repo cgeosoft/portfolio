@@ -234,7 +234,7 @@ export function ReportsCard({
                         >
                           <div className="flex items-center gap-2 min-w-0 truncate">
                             {isRepFallback ? (
-                              <AlertTriangle className="w-3.5 h-3.5 text-[#E3EACD] shrink-0" />
+                              <AlertTriangle className="w-3.5 h-3.5 text-cream shrink-0" />
                             ) : (
                               <Calendar className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-[#DD3C73]" : "text-slate-500"}`} />
                             )}
@@ -244,7 +244,7 @@ export function ReportsCard({
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isRepFallback && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD] font-bold uppercase">
+                              <span className="text-[10px] px-1.5 py-0.2 rounded border border-cream/40 bg-cream/10 text-cream font-bold uppercase">
                                 Fallback
                               </span>
                             )}
@@ -278,7 +278,7 @@ export function ReportsCard({
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Notice: {genError}</span>
           </div>
-          <button onClick={() => setGenError(null)} className="text-[#DD3C73] hover:text-[#e65f8e] font-bold ml-2 cursor-pointer">
+          <button onClick={() => setGenError(null)} className="text-[#DD3C73] hover:text-accent-bright font-bold ml-2 cursor-pointer">
             ✕
           </button>
         </div>
@@ -314,7 +314,7 @@ export function ReportsCard({
 
           {/* Degraded Inference Banner */}
           {isReportFallback && (
-            <div className="px-4 py-2.5 bg-[#E3EACD]/10 border-b border-[#E3EACD]/30 flex items-start gap-2.5 text-xs text-[#E3EACD] shrink-0 font-mono">
+            <div className="px-4 py-2.5 bg-cream/10 border-b border-cream/30 flex items-start gap-2.5 text-xs text-cream shrink-0 font-mono">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="min-w-0">
                 <span className="font-bold uppercase tracking-wider">AI Fallback Telemetry Notice:</span>{" "}
@@ -368,7 +368,7 @@ export function ReportsCard({
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors"
+                      className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
                       {...props}
                     >
                       {children}
@@ -388,7 +388,7 @@ export function ReportsCard({
                   td: ({ node: _n, ...props }) => <td className="px-3 py-2 text-slate-400" {...props} />,
                   strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
                   code: ({ node: _n, ...props }) => (
-                    <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-[#E3EACD] font-mono text-[11px]" {...props} />
+                    <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
                   ),
                 }}
               >
@@ -422,13 +422,13 @@ export function ReportsCard({
 
                   <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-950 border border-slate-800">
                     <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
-                      isReturnUp ? "border-[#A7E2C0]/30 bg-[#A7E2C0]/10 text-[#A7E2C0]" : "border-[#DD3C73]/30 bg-[#DD3C73]/10 text-[#DD3C73]"
+                      isReturnUp ? "border-mint/30 bg-mint/10 text-mint" : "border-[#DD3C73]/30 bg-[#DD3C73]/10 text-[#DD3C73]"
                     }`}>
                       {isReturnUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] text-slate-500 uppercase tracking-wider">Period Return</div>
-                      <div className={`font-bold truncate ${isReturnUp ? "text-[#A7E2C0]" : "text-[#DD3C73]"}`}>
+                      <div className={`font-bold truncate ${isReturnUp ? "text-mint" : "text-[#DD3C73]"}`}>
                         {fmtPercent(returnPercent)}
                         {returnDollar !== undefined && (
                           <span className="text-[10px] text-slate-500 font-normal ml-1">
@@ -440,7 +440,7 @@ export function ReportsCard({
                   </div>
 
                   <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-950 border border-slate-800">
-                    <div className="w-7 h-7 rounded-lg border border-[#A7E2C0]/30 bg-[#A7E2C0]/10 flex items-center justify-center text-[#A7E2C0] shrink-0">
+                    <div className="w-7 h-7 rounded-lg border border-mint/30 bg-mint/10 flex items-center justify-center text-mint shrink-0">
                       <Percent className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -452,7 +452,7 @@ export function ReportsCard({
                   </div>
 
                   <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-950 border border-slate-800">
-                    <div className="w-7 h-7 rounded-lg border border-[#341B83]/40 bg-[#341B83]/20 flex items-center justify-center text-[#ab97f7] shrink-0">
+                    <div className="w-7 h-7 rounded-lg border border-plum/40 bg-plum/20 flex items-center justify-center text-plum-bright shrink-0">
                       <Layers className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -468,9 +468,9 @@ export function ReportsCard({
                       {activeReport.metrics?.topWinner && (
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-500 flex items-center gap-1">
-                            <span className="text-[#A7E2C0]">★</span> Top Winner
+                            <span className="text-mint">★</span> Top Winner
                           </span>
-                          <span className="font-bold text-[#A7E2C0]">
+                          <span className="font-bold text-mint">
                             {activeReport.metrics.topWinner.symbol} {fmtPercent(activeReport.metrics.topWinner.changePercent)}
                           </span>
                         </div>
@@ -533,17 +533,17 @@ export function ReportsCard({
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     {isReportFallback ? (
-                      <AlertTriangle className="w-3 h-3 text-[#E3EACD] shrink-0" />
+                      <AlertTriangle className="w-3 h-3 text-cream shrink-0" />
                     ) : (
-                      <Check className="w-3 h-3 text-[#A7E2C0] shrink-0" />
+                      <Check className="w-3 h-3 text-mint shrink-0" />
                     )}
                     <span>Execution Health</span>
                   </div>
                   <div className="font-bold text-[11px]">
                     {isReportFallback ? (
-                      <span className="text-[#E3EACD]">Fallback / Degraded</span>
+                      <span className="text-cream">Fallback / Degraded</span>
                     ) : (
-                      <span className="text-[#A7E2C0]">Optimal (AI Synthesized)</span>
+                      <span className="text-mint">Optimal (AI Synthesized)</span>
                     )}
                   </div>
                 </div>
@@ -556,7 +556,7 @@ export function ReportsCard({
                   <button
                     type="button"
                     onClick={() => setIsPromptModalOpen(true)}
-                    className="inline-flex items-center gap-1 text-[11px] text-[#DD3C73] hover:text-[#e65f8e] transition-colors cursor-pointer text-left font-semibold"
+                    className="inline-flex items-center gap-1 text-[11px] text-[#DD3C73] hover:text-accent-bright transition-colors cursor-pointer text-left font-semibold"
                   >
                     <span>Inspect LLM Prompt &rarr;</span>
                   </button>
@@ -575,19 +575,19 @@ export function ReportsCard({
                   <button
                     type="button"
                     onClick={handleCopyMarkdown}
-                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
+                    className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
                     title="Copy markdown report to clipboard"
                   >
                     <div className="flex items-center gap-2">
                       {copied ? (
-                        <CheckCheck className="w-3.5 h-3.5 text-[#A7E2C0]" />
+                        <CheckCheck className="w-3.5 h-3.5 text-mint" />
                       ) : (
                         <Copy className="w-3.5 h-3.5 text-slate-400" />
                       )}
                       <span>{copied ? "Copied" : "Copy Markdown"}</span>
                     </div>
                     {copied && (
-                      <span className="text-[10px] text-[#A7E2C0] font-bold uppercase tracking-wider">
+                      <span className="text-[10px] text-mint font-bold uppercase tracking-wider">
                         Copied
                       </span>
                     )}

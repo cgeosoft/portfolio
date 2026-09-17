@@ -2,23 +2,23 @@ export { fmtCurrency, formatMoney, fmtPercent } from "portfolio-shared/format";
 
 export function getDeltaColorClass(val: number | undefined): string {
   if (val === undefined || isNaN(val) || Math.abs(val) < 0.001) return "text-slate-400";
-  return val > 0 ? "text-[#A7E2C0]" : "text-rose-400";
+  return val > 0 ? "text-mint" : "text-rose-400";
 }
 
 export function getAssetTypeBadgeClass(assetType: string): string {
   switch (assetType) {
     case "Stock":
-      return "bg-[#243C8F]/20 text-[#7392fa] border-[#243C8F]/40";
+      return "bg-royal/20 text-royal-bright border-royal/40";
     case "ETF":
     case "Fund":
-      return "bg-[#341B83]/25 text-[#ab97f7] border-[#341B83]/50";
+      return "bg-plum/25 text-plum-bright border-plum/50";
     case "Crypto":
       return "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30";
     case "Cash":
-      return "bg-[#A7E2C0]/15 text-[#A7E2C0] border-[#A7E2C0]/30";
+      return "bg-mint/15 text-mint border-mint/30";
     case "Private":
     case "Other":
-      return "bg-[#E3EACD]/15 text-[#E3EACD] border-[#E3EACD]/30";
+      return "bg-cream/15 text-cream border-cream/30";
     default:
       return "bg-slate-500/10 text-slate-400 border-slate-500/20";
   }
@@ -32,9 +32,9 @@ export function getRsiZone(rsi?: number): { label: string; color: string; bgClas
     return { label: "OVERBOUGHT", color: "text-[#DD3C73]", bgClass: "bg-[#DD3C73]/10", textClass: "text-[#DD3C73]", borderClass: "border-[#DD3C73]/20" };
   }
   if (rsi <= 30) {
-    return { label: "OVERSOLD", color: "text-[#A7E2C0]", bgClass: "bg-[#A7E2C0]/10", textClass: "text-[#A7E2C0]", borderClass: "border-[#A7E2C0]/20" };
+    return { label: "OVERSOLD", color: "text-mint", bgClass: "bg-mint/10", textClass: "text-mint", borderClass: "border-mint/20" };
   }
-  return { label: "NEUTRAL", color: "text-[#E3EACD]", bgClass: "bg-[#E3EACD]/10", textClass: "text-[#E3EACD]", borderClass: "border-[#E3EACD]/20" };
+  return { label: "NEUTRAL", color: "text-cream", bgClass: "bg-cream/10", textClass: "text-cream", borderClass: "border-cream/20" };
 }
 
 /**

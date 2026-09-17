@@ -128,7 +128,7 @@ export function EditPortfolioModal({
             )}
 
             {successMsg && (
-              <div className="p-3.5 rounded-xl border border-[#A7E2C0]/40 bg-[#A7E2C0]/10 flex items-center gap-2.5 text-xs text-[#A7E2C0]">
+              <div className="p-3.5 rounded-xl border border-mint/40 bg-mint/10 flex items-center gap-2.5 text-xs text-mint">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="font-bold">{successMsg}</span>
               </div>
@@ -170,7 +170,7 @@ export function EditPortfolioModal({
                   <label className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                     Base Currency
                   </label>
-                  <span className="text-[10px] text-[#E3EACD]/80 flex items-center gap-1 font-mono">
+                  <span className="text-[10px] text-cream/80 flex items-center gap-1 font-mono">
                     <Lock className="w-2.5 h-2.5" /> Fixed
                   </span>
                 </div>

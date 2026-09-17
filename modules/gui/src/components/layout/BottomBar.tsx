@@ -49,7 +49,7 @@ export function BottomBar({
 
   return (
     <footer
-      className="bg-[var(--background-widget)] border border-[var(--border)] rounded-xl px-3 py-1 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none shrink-0"
+      className="app-bottombar text-slate-400"
       role="contentinfo"
       aria-label="Application Status Bar"
     >
@@ -103,14 +103,14 @@ export function BottomBar({
               onClick={onToggleHideCurrency}
               className={`p-1 rounded transition-colors focus:outline-none cursor-pointer flex items-center gap-1.5 ${
                 hideCurrencyValues
-                  ? "text-[#E3EACD] hover:text-[#f0f5db] hover:bg-[#E3EACD]/10"
+                  ? "text-cream hover:text-[#f0f5db] hover:bg-cream/10"
                   : "text-slate-400 hover:text-accent-300 hover:bg-slate-800/60"
               }`}
               title={hideCurrencyValues ? "Show financial values (Privacy ON - Ctrl+H)" : "Hide financial values for privacy (Ctrl+H)"}
               aria-label={hideCurrencyValues ? "Show financial values" : "Hide financial values for privacy"}
             >
               {hideCurrencyValues ? (
-                <EyeOff className="w-3 h-3 text-[#E3EACD]" />
+                <EyeOff className="w-3 h-3 text-cream" />
               ) : (
                 <Eye className="w-3 h-3" />
               )}

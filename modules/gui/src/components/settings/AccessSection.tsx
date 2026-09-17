@@ -77,7 +77,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
             <Lock className="h-4 w-4" />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-bold text-white">App lock</span>
+            <span className="text-sm font-bold text-slate-50">App lock</span>
             <span className="text-xs text-slate-400 leading-relaxed">
               Ask for a PIN before opening Portfolio. Applies to this computer and to any device that connects over the network. Without it the app opens straight away.
             </span>
@@ -95,7 +95,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           disabled={busy}
           onClick={() => (mode !== "idle" ? reset() : setMode(pinEnabled ? "disable" : "enable"))}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 ${
-            pinEnabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-white/10"
+            pinEnabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-slate-800"
           }`}
         >
           <span className="sr-only">App lock</span>
@@ -229,7 +229,7 @@ export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (en
                   <Wifi className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm font-bold text-white">Allow remote connections</span>
+                  <span className="text-sm font-bold text-slate-50">Allow remote connections</span>
                   <span className="text-xs text-slate-400 leading-relaxed">
                     Let phones and other devices on the same network open this Portfolio. The app lock PIN is required first. When off, only this computer can connect.
                   </span>
@@ -243,7 +243,7 @@ export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (en
                 onClick={toggleRemote}
                 title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                  remote.enabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-white/10"
+                  remote.enabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-slate-800"
                 }`}
               >
                 <span className="sr-only">Allow remote connections</span>
@@ -257,7 +257,7 @@ export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (en
                   <span className="text-xs text-slate-500">No network interface found. Connect this computer to your Wi-Fi or LAN.</span>
                 ) : (
                   remote.urls.map((url) => (
-                    <code key={url} className="px-2.5 py-1 rounded-lg border border-white/10 bg-slate-800 text-xs font-mono text-sky-200 select-all">
+                    <code key={url} className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all">
                       {url}
                     </code>
                   ))

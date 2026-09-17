@@ -212,7 +212,7 @@ export function MetricsTab({
                       {slot === "large" ? (
                         <MetricLargeCard listing={listing} display={display(pref.id)} onInfo={() => onInfo(listing)} />
                       ) : (
-                        <div className="p-3 rounded-xl bg-[#131722]/60 border border-[#1e293b] text-xs">
+                        <div className="p-3 rounded-xl bg-widget/60 border border-line text-xs">
                           <MetricCompactTile listing={listing} display={display(pref.id)} onInfo={() => onInfo(listing)} />
                         </div>
                       )}

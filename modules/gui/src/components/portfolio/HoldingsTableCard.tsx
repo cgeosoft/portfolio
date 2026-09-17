@@ -150,14 +150,14 @@ export function HoldingsTableCard({
             <span>{isCash ? fmtCurrency(1, h.currency || currency, false) : fmtCurrency(h.currentPrice, h.currency || currency, hideValues)}</span>
             {!isCash && h.nativeCurrency && h.nativeCurrency !== currency && h.nativePrice !== undefined && (
               <span
-                className="text-[10px] font-normal px-1 py-0.5 rounded border border-[#E3EACD]/40 bg-[#E3EACD]/10 text-[#E3EACD]"
+                className="text-[10px] font-normal px-1 py-0.5 rounded border border-cream/40 bg-cream/10 text-cream"
                 title={`Native Price: ${fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)} (FX Rate: ${h.fxRate ?? "—"})`}
               >
                 {fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)}
               </span>
             )}
           </div>
-          <div className={isCash ? "text-[11px] text-slate-400 font-semibold" : "text-[11px] text-white"}>
+          <div className={isCash ? "text-[11px] text-slate-400 font-semibold" : "text-[11px] text-slate-50"}>
             {fmtCurrency(h.currentValue, h.currency || currency, hideValues)} ({h.weightPercent.toFixed(1)}%)
           </div>
         </td>
@@ -199,7 +199,7 @@ export function HoldingsTableCard({
             <div className="flex flex-col items-center gap-1 w-24 mx-auto">
               <div className="w-full h-1.5 rounded bg-slate-800 border border-slate-700 relative overflow-hidden">
                 <div
-                  className="h-full bg-[#A7E2C0] rounded transition-all"
+                  className="h-full bg-mint rounded transition-all"
                   style={{ width: `${rangePercent}%` }}
                 />
               </div>

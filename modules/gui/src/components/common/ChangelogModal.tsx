@@ -77,7 +77,7 @@ export function ChangelogModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className="relative w-full max-w-lg max-h-[85vh] bg-[#131722] border border-[#1e293b] rounded-2xl shadow-2xl p-6 sm:p-7 text-slate-100 font-mono flex flex-col"
+        className="relative w-full max-w-lg max-h-[85vh] bg-widget border border-line rounded-2xl shadow-2xl p-6 sm:p-7 text-slate-100 font-mono flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby="changelog-modal-title"
@@ -85,7 +85,7 @@ export function ChangelogModal({
         {/* Header */}
         <div className="flex items-start justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#341B83] via-[#243C8F] to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-plum via-royal to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Download className="w-5 h-5 text-[#DD3C73]" />
               </div>
@@ -148,7 +148,7 @@ export function ChangelogModal({
                       e.preventDefault();
                       if (href) openExternal(href);
                     }}
-                    className="text-[#DD3C73] underline underline-offset-2 hover:text-[#e8558a] transition-colors cursor-pointer"
+                    className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors cursor-pointer"
                     {...props}
                   >
                     {children}
@@ -157,11 +157,11 @@ export function ChangelogModal({
                 strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
                 em: ({ node: _n, ...props }) => <em className="italic text-slate-200" {...props} />,
                 code: ({ node: _n, ...props }) => (
-                  <code className="px-1 py-0.5 rounded bg-slate-950 border border-slate-800 text-[#E3EACD] font-mono text-[10px]" {...props} />
+                  <code className="px-1 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[10px]" {...props} />
                 ),
                 pre: ({ node: _n, ...props }) => (
                   <pre
-                    className="my-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 overflow-x-auto text-[10px] leading-relaxed custom-scrollbar [&_code]:bg-transparent [&_code]:border-0 [&_code]:p-0 [&_code]:text-[#E3EACD]"
+                    className="my-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 overflow-x-auto text-[10px] leading-relaxed custom-scrollbar [&_code]:bg-transparent [&_code]:border-0 [&_code]:p-0 [&_code]:text-cream"
                     {...props}
                   />
                 ),
@@ -199,7 +199,7 @@ export function ChangelogModal({
 
         {/* Download status */}
         {downloadState === "done" && (
-          <div className="mt-3 p-2.5 rounded-lg bg-[#A7E2C0]/10 border border-[#A7E2C0]/30 flex items-center gap-2 text-[10px] text-[#A7E2C0] shrink-0">
+          <div className="mt-3 p-2.5 rounded-lg bg-mint/10 border border-mint/30 flex items-center gap-2 text-[10px] text-mint shrink-0">
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Download started in your browser: {downloadPath}</span>
           </div>

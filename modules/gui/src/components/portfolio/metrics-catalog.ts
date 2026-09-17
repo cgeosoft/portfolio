@@ -113,10 +113,10 @@ export function getMetricIcon(name: string): LucideIcon {
 /** Tailwind text color class of each design accent. */
 const ACCENT_CLASSES: Record<MetricAccent, string> = {
   pink: "text-[#DD3C73]",
-  mint: "text-[#A7E2C0]",
-  cream: "text-[#E3EACD]",
-  blue: "text-[#7392fa]",
-  navy: "text-[#243C8F]",
+  mint: "text-mint",
+  cream: "text-cream",
+  blue: "text-royal-bright",
+  navy: "text-royal",
   slate: "text-slate-400",
 };
 
