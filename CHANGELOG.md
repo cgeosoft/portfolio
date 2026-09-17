@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.1] - 2026-09-17
+
+### Added
+- GUI selections are now persisted across restarts.
+
+### Changed
+- Added a vertical divider before the assistant in the main menu.
+- Added a lock label to the lock button in the top menu.
+- Moved the privacy button to the top menu, to the left of the lock button.
+
+
 ## [0.5.0] - 2026-09-17
 
 ### Added
