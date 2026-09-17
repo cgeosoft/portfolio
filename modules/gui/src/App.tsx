@@ -506,8 +506,9 @@ export default function App() {
     if (!ok) setChatMessages(chatMessages);
   }, [chatMessages, submitChatMessages]);
 
-  // Session: automatic login without a PIN, the lock screen otherwise.
-  const [authState, setAuthState] = useState<"loading" | "locked" | "ready" | "error">("loading");
+  // Session: automatic login without a PIN, the lock screen otherwise; the
+  // Terms of Use gate on first run.
+  const [authState, setAuthState] = useState<"loading" | "locked" | "terms" | "ready" | "error">("loading");
   const [authError, setAuthError] = useState<string | null>(null);
   const [authAttempt, setAuthAttempt] = useState(0);
   /** Whether the app lock is on; drives the lock button in the menu bar. */
@@ -530,7 +531,7 @@ export default function App() {
         const me = await api.me();
         if (!cancelled) {
           setPinEnabled(me.pinEnabled);
-          setAuthState("ready");
+          setAuthState(me.hasAcceptedTerms ? "ready" : "terms");
         }
         return;
       } catch {
@@ -543,8 +544,8 @@ export default function App() {
         if (status.pinEnabled) {
           setAuthState("locked");
         } else {
-          await api.login();
-          if (!cancelled) setAuthState("ready");
+          const session = await api.login();
+          if (!cancelled) setAuthState(session.hasAcceptedTerms ? "ready" : "terms");
         }
       } catch (err) {
         if (cancelled) return;
@@ -561,6 +562,17 @@ export default function App() {
   const handleUnlock = useCallback(async (pin: string) => {
     const res = await api.login(pin);
     setPinEnabled(res.pinEnabled);
+    if (!res.hasAcceptedTerms) {
+      setAuthState("terms");
+      return;
+    }
+    setAuthState("ready");
+    setAuthAttempt((n) => n + 1);
+  }, []);
+
+  /** First run: record the acceptance, then load the workspace. */
+  const handleAcceptTerms = useCallback(async () => {
+    await api.acceptTerms();
     setAuthState("ready");
     setAuthAttempt((n) => n + 1);
   }, []);
@@ -1292,7 +1304,26 @@ export default function App() {
         </div>
       );
     }
-    return <LockScreen locked={authState === "locked"} authError={authError} onUnlock={handleUnlock} onRetry={() => setAuthAttempt((n) => n + 1)} />;
+    if (authState === "terms" && view === "terms") {
+      return (
+        <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3">
+          <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+            <TermsPage onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
+          </main>
+        </div>
+      );
+    }
+    return (
+      <LockScreen
+        locked={authState === "locked"}
+        termsPending={authState === "terms"}
+        authError={authError}
+        onUnlock={handleUnlock}
+        onAcceptTerms={handleAcceptTerms}
+        onOpenTerms={handleOpenTerms}
+        onRetry={() => setAuthAttempt((n) => n + 1)}
+      />
+    );
   }
 
   if (isLoading && !portfolioData && view === "dashboard") {

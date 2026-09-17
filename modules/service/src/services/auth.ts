@@ -2,7 +2,8 @@
  * One local account, optionally locked with a PIN (Settings → General).
  * Sessions are cookies stored in the `sessions` table so a phone on the LAN
  * (remote connections) gets its own session and the PIN applies to it too.
- * The PIN hash and the attempt counter live in `kv_entries`.
+ * The PIN hash, the attempt counter and the Terms of Use acceptance live in
+ * `kv_entries`.
  */
 import * as crypto from "node:crypto";
 import { getDatabase } from "../db/database";
@@ -17,6 +18,7 @@ const SESSION_REFRESH_MS = 60 * 60 * 1000;
 const SCRYPT_KEYLEN = 32;
 const PIN_KEY = "auth:pinHash";
 const ATTEMPTS_KEY = "rate-limit:pin";
+const TERMS_KEY = "auth:acceptedTermsAt";
 
 export const SESSION_COOKIE = "portfolio_session";
 
@@ -95,6 +97,27 @@ export class AuthService {
     this.checkPin(currentPin);
     this.kvDel(PIN_KEY);
     appLogger.logStep("info", "auth", "pin", "PIN disabled");
+  }
+
+  // -------------------------------------------------------------- terms ----
+
+  /** ISO timestamp of the Terms of Use acceptance, null on first run. */
+  acceptedTermsAt(): string | null {
+    return this.kvGet(TERMS_KEY);
+  }
+
+  hasAcceptedTerms(): boolean {
+    return !!this.kvGet(TERMS_KEY);
+  }
+
+  /** Records the acceptance once; later calls keep the original timestamp. */
+  acceptTerms(): string {
+    const existing = this.kvGet(TERMS_KEY);
+    if (existing) return existing;
+    const at = new Date().toISOString();
+    this.kvSet(TERMS_KEY, at);
+    appLogger.logStep("info", "auth", "terms", "Terms of Use accepted");
+    return at;
   }
 
   // ----------------------------------------------------------- sessions ----

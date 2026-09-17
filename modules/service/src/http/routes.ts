@@ -45,6 +45,12 @@ import type {
 import type { DesktopConfig } from "portfolio-shared/config-types";
 
 const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login"]);
+/** Routes a signed-in client may call before accepting the Terms of Use. */
+const PRE_TERMS_PATHS = new Set(["/api/auth/me", "/api/auth/accept-terms", "/api/auth/logout"]);
+
+function authStatus() {
+  return { pinEnabled: authService.isPinEnabled(), hasAcceptedTerms: authService.hasAcceptedTerms(), acceptedTermsAt: authService.acceptedTermsAt() };
+}
 
 function assertLocal(ctx: RequestContext, what: string): void {
   if (!ctx.isLocal) throw new HttpError(403, `${what} is only available from the desktop window`);
@@ -99,6 +105,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const sessionId = readSessionCookie(ctx.req);
     if (!authService.validateSession(sessionId)) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
     ctx.sessionId = sessionId;
+    if (!authService.hasAcceptedTerms() && !PRE_TERMS_PATHS.has(ctx.url.pathname)) {
+      throw new HttpError(403, "Terms of Use must be accepted before using the application");
+    }
   });
 
   // ── health ──────────────────────────────────────────────────────────────
@@ -107,14 +116,14 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   // ── auth ────────────────────────────────────────────────────────────────
 
-  router.get("/api/auth/status", () => ({ pinEnabled: authService.isPinEnabled() }));
+  router.get("/api/auth/status", () => authStatus());
 
   router.post("/api/auth/login", async (ctx) => {
     const body = await ctx.body<{ pin?: string }>();
     const id = authService.login(body.pin);
     const secure = ctx.req.headers.get("x-forwarded-proto") === "https";
     ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, secure));
-    return { success: true, pinEnabled: authService.isPinEnabled() };
+    return { success: true, ...authStatus() };
   });
 
   router.post("/api/auth/logout", (ctx) => {
@@ -123,7 +132,12 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     return { success: true };
   });
 
-  router.get("/api/auth/me", () => ({ pinEnabled: authService.isPinEnabled() }));
+  router.get("/api/auth/me", () => authStatus());
+
+  router.post("/api/auth/accept-terms", () => {
+    authService.acceptTerms();
+    return authStatus();
+  });
 
   router.put("/api/auth/pin", async (ctx) => {
     const body = await ctx.body<{ pin?: string; currentPin?: string }>();

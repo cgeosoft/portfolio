@@ -108,12 +108,21 @@ export async function request<T = unknown>(url: string, init: RequestInit = {}, 
 const json = (body: unknown) => JSON.stringify(body);
 const enc = encodeURIComponent;
 
+export interface AuthStatus {
+  /** Whether the app lock is on. */
+  pinEnabled: boolean;
+  /** False until the Terms of Use are accepted on first run. */
+  hasAcceptedTerms: boolean;
+  acceptedTermsAt: string | null;
+}
+
 export const api = {
   // ---- health and auth
   health: () => request<{ status: string; version: string }>("/api/health", {}, { ownUnauthorized: true, timeoutMs: 4000 }),
-  authStatus: () => request<{ pinEnabled: boolean }>("/api/auth/status", {}, { ownUnauthorized: true }),
-  login: (pin?: string) => request<{ success: boolean; pinEnabled: boolean }>("/api/auth/login", { method: "POST", body: json(pin ? { pin } : {}) }, { ownUnauthorized: true }),
-  me: () => request<{ pinEnabled: boolean }>("/api/auth/me", {}, { ownUnauthorized: true }),
+  authStatus: () => request<AuthStatus>("/api/auth/status", {}, { ownUnauthorized: true }),
+  login: (pin?: string) => request<AuthStatus & { success: boolean }>("/api/auth/login", { method: "POST", body: json(pin ? { pin } : {}) }, { ownUnauthorized: true }),
+  me: () => request<AuthStatus>("/api/auth/me", {}, { ownUnauthorized: true }),
+  acceptTerms: () => request<AuthStatus>("/api/auth/accept-terms", { method: "POST" }),
   logout: () => request("/api/auth/logout", { method: "POST" }),
   setPin: (pin: string, currentPin?: string) => request<{ pinEnabled: boolean }>("/api/auth/pin", { method: "PUT", body: json({ pin, currentPin }) }, { ownUnauthorized: true }),
   removePin: (currentPin: string) => request<{ pinEnabled: boolean }>("/api/auth/pin", { method: "DELETE", body: json({ currentPin }) }, { ownUnauthorized: true }),

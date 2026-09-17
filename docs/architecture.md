@@ -33,6 +33,7 @@ Everything the user can change lives in the `config` table: one row per key, JSO
 
 - `GET /api/health`, `GET /api/auth/status` and `POST /api/auth/login` are public; everything else needs the `portfolio_session` cookie (7 days, stored in the `sessions` table).
 - Without a PIN the GUI logs in automatically. With a PIN (Settings → Access) the lock screen asks for it; five wrong attempts lock for five minutes.
+- On first run the lock screen asks to accept the Terms of Use. Until `POST /api/auth/accept-terms` records it (`auth:acceptedTermsAt` in `kv_entries`), a session may only call `/api/auth/me`, `/api/auth/accept-terms` and `/api/auth/logout`; everything else gets 403.
 - The service binds to `127.0.0.1` until "Allow remote connections" is on, which requires a PIN. The switch rebinds the listener to `0.0.0.0` in place and is only accepted from a loopback client (the desktop window). Non-loopback clients get 403 while the switch is off.
 
 ## Logging
