@@ -125,7 +125,7 @@ cat << 'EOF' > "${STAGE_DIR}/usr/share/applications/portfolio.desktop"
 Version=1.0
 Type=Application
 Name=Portfolio
-GenericName=Portfolio Tracker
+GenericName=Personal Investment Tracker
 Comment=Track your stocks, ETFs and crypto privately. Your data never leaves your computer
 Exec=portfolio %U
 Icon=portfolio

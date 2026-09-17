@@ -304,6 +304,8 @@ const SHORTCUTS = [
   { key: "Ctrl + 0", desc: "Reset Zoom" },
   { key: "Ctrl + R", desc: "Reload Page" },
   { key: "Ctrl + H", desc: "Toggle Privacy Mode (Mask Values)" },
+  { key: "Ctrl + J", desc: "Toggle Assistant Sidebar" },
+  { key: "Ctrl + Shift + L", desc: "Switch Light / Dark Theme" },
   { key: "Ctrl + ,", desc: "Open Preferences" },
   { key: "Ctrl + Q", desc: "Quit Application" },
 ];
@@ -319,6 +321,8 @@ interface SettingsPageProps {
   onPortfolioDeleted?: (id: string) => void;
   theme?: AppTheme;
   onChangeTheme?: (theme: AppTheme) => void;
+  /** Fires when the app lock is turned on or off under Access. */
+  onPinEnabledChange?: (enabled: boolean) => void;
 }
 
 export function SettingsPage({
@@ -332,6 +336,7 @@ export function SettingsPage({
   onPortfolioDeleted,
   theme,
   onChangeTheme,
+  onPinEnabledChange,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
@@ -720,7 +725,7 @@ export function SettingsPage({
         {/* Right/Center Content Area */}
         <div className="min-w-0 space-y-6">
           {/* SECTION 1: GENERAL */}
-          {activeSection === "access" && <AccessSection />}
+          {activeSection === "access" && <AccessSection onPinEnabledChange={onPinEnabledChange} />}
 
           {activeSection === "general" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">

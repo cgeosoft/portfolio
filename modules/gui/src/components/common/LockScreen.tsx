@@ -61,9 +61,10 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
       <AmbientGlow
         pulse
         glows={[
-          { x: "50%", y: "25%", radius: 420, rgb: "79, 70, 229", alpha: 0.22 },
-          { x: "33%", y: "78%", radius: 330, rgb: "8, 145, 178", alpha: 0.2 },
-          { x: "78%", y: "36%", radius: 300, rgb: "147, 51, 234", alpha: 0.14 },
+          // Brand accent (#DD3C73) with the purple it is paired with in the app's gradients.
+          { x: "50%", y: "25%", radius: 420, rgb: "221, 60, 115", alpha: 0.22 },
+          { x: "33%", y: "78%", radius: 330, rgb: "168, 85, 247", alpha: 0.18 },
+          { x: "78%", y: "36%", radius: 300, rgb: "244, 63, 94", alpha: 0.12 },
         ]}
       />
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:32px_32px] opacity-25 pointer-events-none" />

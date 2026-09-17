@@ -185,7 +185,7 @@ export function syncAutostart(enabled: boolean): void {
       const execCommand = process.env["PORTFOLIO_LAUNCHER"] || "portfolio";
       writeFileSync(
         desktopFilePath,
-        `[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Portfolio Tracker\nExec=${execCommand}\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n`,
+        `[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=${execCommand}\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n`,
         "utf-8",
       );
     } else if (existsSync(desktopFilePath)) {

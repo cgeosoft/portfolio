@@ -73,7 +73,7 @@ export function setupLinuxDesktop(projectRoot?: string): void {
 Version=1.0
 Type=Application
 Name=Portfolio (Development)
-GenericName=Portfolio Tracker
+GenericName=Personal Investment Tracker
 Comment=Offline-first personal investment portfolio tracker (Development)
 Exec=/usr/bin/env bash -c "cd '${root}' && bun run dev"
 Icon=portfolio-dev
@@ -90,7 +90,7 @@ Categories=Office;Finance;Development;
 Version=1.0
 Type=Application
 Name=Portfolio (Development)
-GenericName=Portfolio Tracker
+GenericName=Personal Investment Tracker
 Comment=Offline-first personal investment portfolio tracker (Development)
 Exec=/usr/bin/env bash -c "cd '${root}' && bun run dev"
 Icon=portfolio-dev

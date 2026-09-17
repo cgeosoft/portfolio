@@ -28,9 +28,16 @@ export interface PinInputProps {
 
 const PIN_LENGTH = 6;
 
+const clampIndex = (index: number) => Math.max(0, Math.min(index, PIN_LENGTH - 1));
+
 /**
  * Fixed 6-digit PIN input with six distinct boxes.
- * Supports typing, backspace, arrow navigation, paste, and auto-submit on completion.
+ *
+ * `value` is always a contiguous run of digits (no gaps), so the box at
+ * `value.length` is the next one to fill. Handlers read the latest value from
+ * a ref rather than from the render closure: focus moves synchronously into
+ * the next box, whose `onFocus` guard would otherwise still see the previous
+ * value and bounce straight back.
  */
 export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinInput(
   {
@@ -49,174 +56,133 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
   ref,
 ) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
-  // 6 boxes, each containing at most 1 character.
   const digits = Array.from({ length: PIN_LENGTH }, (_, i) => value[i] || "");
+
+  const focusBox = useCallback((index: number) => {
+    const el = inputRefs.current[clampIndex(index)];
+    if (!el) return;
+    el.focus();
+    el.select();
+  }, []);
+
+  /** Push a new value to the parent and move the caret to the given box. */
+  const commit = useCallback(
+    (nextVal: string, focusIndex: number) => {
+      const next = nextVal.slice(0, PIN_LENGTH);
+      valueRef.current = next;
+      onChange(next);
+      focusBox(focusIndex);
+      if (next.length === PIN_LENGTH) onComplete?.(next);
+    },
+    [focusBox, onChange, onComplete],
+  );
 
   useImperativeHandle(
     ref,
     () => ({
-      focus: (index = 0) => {
-        const target = Math.max(0, Math.min(index, PIN_LENGTH - 1));
-        inputRefs.current[target]?.focus();
-      },
+      focus: (index = 0) => focusBox(index),
       clear: () => {
+        valueRef.current = "";
         onChange("");
+        focusBox(0);
       },
-      select: (index = 0) => {
-        const target = Math.max(0, Math.min(index, PIN_LENGTH - 1));
-        inputRefs.current[target]?.select();
-      },
+      select: (index = 0) => inputRefs.current[clampIndex(index)]?.select(),
     }),
-    [onChange],
+    [focusBox, onChange],
   );
 
   useEffect(() => {
     if (autoFocus && !disabled) {
-      const timer = setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 50);
+      const timer = setTimeout(() => focusBox(0), 50);
       return () => clearTimeout(timer);
     }
-  }, [autoFocus, disabled]);
+  }, [autoFocus, disabled, focusBox]);
 
   const handleChange = useCallback(
     (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       if (disabled) return;
-      const raw = e.target.value;
-      const cleaned = raw.replace(/[^0-9]/g, "");
-      const prevChar = digits[index];
+      const current = valueRef.current;
+      const typed = e.target.value.replace(/[^0-9]/g, "");
 
-      // Handle multi-character paste or autofill (length > 2, or length 2 when box was empty)
-      if (cleaned.length > 2 || (cleaned.length === 2 && !prevChar)) {
-        const nextDigits = [...digits];
-        const startIdx = cleaned.length === PIN_LENGTH ? 0 : index;
-        for (let j = 0; j < cleaned.length && startIdx + j < PIN_LENGTH; j++) {
-          nextDigits[startIdx + j] = cleaned[j];
-        }
-        const nextVal = nextDigits.join("");
-        onChange(nextVal);
-
-        if (nextDigits.every((d) => d !== "") && nextVal.length === PIN_LENGTH) {
-          inputRefs.current[PIN_LENGTH - 1]?.focus();
-          onComplete?.(nextVal);
-        } else {
-          const firstEmpty = nextDigits.findIndex((d) => d === "");
-          const focusTarget = firstEmpty !== -1 ? firstEmpty : Math.min(startIdx + cleaned.length, PIN_LENGTH - 1);
-          inputRefs.current[focusTarget]?.focus();
-        }
+      if (typed.length === 0) {
+        // Box emptied by the browser (e.g. cut); drop this digit.
+        commit(current.slice(0, index) + current.slice(index + 1), index);
         return;
       }
 
-      // Input was cleared
-      if (cleaned.length === 0) {
-        const nextDigits = [...digits];
-        nextDigits[index] = "";
-        const nextVal = nextDigits.join("");
-        onChange(nextVal);
-        return;
-      }
+      // Paste or autofill of several digits: fill from this box onwards.
+      // A single keystroke into a box that already has a digit shows up as
+      // two characters when the browser did not replace the selection.
+      const prevChar = current[index] || "";
+      const chars = typed.length === 2 && prevChar && typed[0] === prevChar ? typed.slice(1) : typed.length > 1 && prevChar ? typed.slice(-1) : typed;
 
-      // Single digit entry (or replacing existing digit)
-      let char = cleaned;
-      if (cleaned.length === 2 && prevChar) {
-        char = cleaned[0] === prevChar ? cleaned[1] : cleaned[cleaned.length - 1];
-      } else if (cleaned.length > 1) {
-        char = cleaned.slice(-1);
-      }
-
-      const nextDigits = [...digits];
-      nextDigits[index] = char;
-      const nextVal = nextDigits.join("");
-      onChange(nextVal);
-
-      // Advance focus if not last box
-      if (index < PIN_LENGTH - 1) {
-        inputRefs.current[index + 1]?.focus();
-      }
-
-      // Auto-submit when all 6 characters are filled
-      if (nextDigits.every((d) => d !== "") && nextVal.length === PIN_LENGTH) {
-        onComplete?.(nextVal);
-      }
+      const next = current.slice(0, index) + chars + current.slice(index + chars.length);
+      commit(next, index + chars.length);
     },
-    [digits, disabled, onChange, onComplete],
+    [commit, disabled],
   );
 
   const handleKeyDown = useCallback(
     (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
       if (disabled) return;
+      const current = valueRef.current;
 
       if (e.key === "Backspace") {
-        if (digits[index] === "" && index > 0) {
-          e.preventDefault();
-          const nextDigits = [...digits];
-          nextDigits[index - 1] = "";
-          const nextVal = nextDigits.join("");
-          onChange(nextVal);
-          inputRefs.current[index - 1]?.focus();
-        } else if (digits[index] !== "") {
-          e.preventDefault();
-          const nextDigits = [...digits];
-          nextDigits[index] = "";
-          const nextVal = nextDigits.join("");
-          onChange(nextVal);
+        e.preventDefault();
+        if (current[index]) {
+          // Clear from this box onwards; the value never has gaps.
+          commit(current.slice(0, index), index);
+        } else if (index > 0) {
+          commit(current.slice(0, index - 1), index - 1);
         }
       } else if (e.key === "Delete") {
         e.preventDefault();
-        const nextDigits = [...digits];
-        nextDigits[index] = "";
-        onChange(nextDigits.join(""));
-      } else if (e.key === "ArrowLeft" && index > 0) {
+        commit(current.slice(0, index) + current.slice(index + 1), index);
+      } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        inputRefs.current[index - 1]?.focus();
-      } else if (e.key === "ArrowRight" && index < PIN_LENGTH - 1) {
+        focusBox(index - 1);
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        inputRefs.current[index + 1]?.focus();
+        focusBox(Math.min(index + 1, current.length));
       } else if (e.key === "Enter") {
-        if (digits.every((d) => d !== "") && value.length === PIN_LENGTH) {
+        if (current.length === PIN_LENGTH) {
           e.preventDefault();
-          onComplete?.(value);
+          onComplete?.(current);
         }
+      } else if (e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Ignore letters and symbols outright so nothing flickers into the box.
+        e.preventDefault();
       }
     },
-    [digits, disabled, onChange, onComplete, value],
+    [commit, disabled, focusBox, onComplete],
   );
 
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent<HTMLInputElement>) => {
+    (index: number, e: React.ClipboardEvent<HTMLInputElement>) => {
       if (disabled) return;
       e.preventDefault();
-      const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, PIN_LENGTH);
+      const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
       if (!pasted) return;
-
-      const nextDigits = Array(PIN_LENGTH).fill("");
-      for (let i = 0; i < pasted.length; i++) {
-        nextDigits[i] = pasted[i];
-      }
-      const nextVal = nextDigits.join("");
-      onChange(nextVal);
-
-      if (pasted.length === PIN_LENGTH) {
-        inputRefs.current[PIN_LENGTH - 1]?.focus();
-        onComplete?.(nextVal);
-      } else {
-        inputRefs.current[pasted.length]?.focus();
-      }
+      // A full PIN always replaces everything; a partial one continues from here.
+      const start = pasted.length >= PIN_LENGTH ? 0 : index;
+      const next = valueRef.current.slice(0, start) + pasted;
+      commit(next, Math.min(start + pasted.length, PIN_LENGTH - 1));
     },
-    [disabled, onChange, onComplete],
+    [commit, disabled],
   );
 
-  const handleFocus = useCallback(
-    (index: number, e: React.FocusEvent<HTMLInputElement>) => {
-      e.target.select();
-      const firstEmpty = digits.findIndex((d) => d === "");
-      if (firstEmpty !== -1 && index > firstEmpty) {
-        inputRefs.current[firstEmpty]?.focus();
-      }
-    },
-    [digits],
-  );
+  const handleFocus = useCallback((index: number, e: React.FocusEvent<HTMLInputElement>) => {
+    // Never leave a gap: focusing past the first empty box lands on it instead.
+    const firstEmpty = valueRef.current.length;
+    if (index > firstEmpty && firstEmpty < PIN_LENGTH) {
+      inputRefs.current[firstEmpty]?.focus();
+      return;
+    }
+    e.target.select();
+  }, []);
 
   const sizeClass = {
     sm: "w-8 h-10 text-base rounded-lg",
@@ -231,11 +197,10 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
       role="group"
       aria-label={ariaLabel || "6-digit PIN input"}
     >
-      {Array.from({ length: PIN_LENGTH }).map((_, i) => {
-        const isFilled = Boolean(digits[i]);
+      {digits.map((digit, i) => {
         const stateClass = hasError
           ? "border-rose-500/70 ring-1 ring-rose-500/30 bg-rose-950/25 text-rose-300 focus:border-rose-400 focus:ring-rose-500/50"
-          : isFilled
+          : digit
           ? "border-white/20 bg-slate-950/80 text-white focus:border-[#DD3C73] focus:ring-[#DD3C73]/30"
           : "border-white/10 bg-slate-950/60 text-slate-100 focus:border-[#DD3C73] focus:ring-[#DD3C73]/30";
 
@@ -249,14 +214,14 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
             inputMode="numeric"
             pattern="[0-9]*"
             autoComplete={i === 0 ? "one-time-code" : "off"}
-            value={digits[i]}
+            value={digit}
             disabled={disabled}
             onChange={(e) => handleChange(i, e)}
             onKeyDown={(e) => handleKeyDown(i, e)}
-            onPaste={handlePaste}
+            onPaste={(e) => handlePaste(i, e)}
             onFocus={(e) => handleFocus(i, e)}
             aria-label={ariaLabel ? `${ariaLabel} digit ${i + 1}` : `PIN digit ${i + 1} of 6`}
-            className={`${sizeClass} ${stateClass} text-center font-mono font-bold caret-[#DD3C73] border transition-all duration-150 focus:outline-none focus:ring-2 focus:bg-slate-900/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner`}
+            className={`${sizeClass} ${stateClass} text-center font-mono font-bold caret-[#DD3C73] border transition-colors duration-100 focus:outline-none focus:ring-2 focus:bg-slate-900/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner`}
           />
         );
       })}

@@ -29,6 +29,7 @@ import {
   RotateCcw,
   Sun,
   Moon,
+  Lock,
 } from "lucide-react";
 import type { AppTheme } from "portfolio-shared/api-types";
 
@@ -62,9 +63,12 @@ export interface AppMenuBarProps {
   onZoomReset?: () => void;
   theme?: AppTheme;
   onToggleTheme?: () => void;
+  /** App lock is on: shows the lock button at the right edge and the File → Lock entry. */
+  pinEnabled?: boolean;
+  onLock?: () => void;
 }
 
-type MenuKey = "file" | "edit" | "view" | "portfolio" | "help" | null;
+type MenuKey = "file" | "portfolio" | "view" | "help" | null;
 
 interface MenuItemDef {
   type?: "item" | "separator" | "header";
@@ -106,6 +110,8 @@ export function AppMenuBar({
   onZoomReset,
   theme = "dark",
   onToggleTheme,
+  pinEnabled = false,
+  onLock,
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -127,280 +133,86 @@ export function AppMenuBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [closeMenu]);
 
-  // Menu items definition
+  const run = (fn: () => void) => () => {
+    closeMenu();
+    fn();
+  };
+
+  // File: portfolios as documents (create, switch, manage, import/export) plus app-level session items.
   const fileItems: MenuItemDef[] = [
-    {
-      label: "New Portfolio...",
-      shortcut: "Ctrl+N",
-      icon: FolderPlus,
-      action: () => {
-        closeMenu();
-        onNewPortfolio();
-      },
-    },
-    {
-      label: "Import Transactions (CSV)...",
-      shortcut: "Ctrl+I",
-      icon: FileSpreadsheet,
-      action: () => {
-        closeMenu();
-        onImportCsv();
-      },
-    },
-    {
-      label: "Export Active Portfolio...",
-      shortcut: "Ctrl+E",
-      icon: Download,
-      action: () => {
-        closeMenu();
-        onExportPortfolio();
-      },
-      disabled: !activePortfolio,
-    },
+    { label: "New Portfolio...", shortcut: "Ctrl+N", icon: FolderPlus, action: run(onNewPortfolio) },
+    ...(portfolios && portfolios.length > 1
+      ? [
+          { type: "header", label: "Switch Portfolio" } satisfies MenuItemDef,
+          ...portfolios.map(
+            (p) =>
+              ({
+                label: p.name,
+                checked: p.id === activePortfolio?.id,
+                action: run(() => onSelectPortfolio?.(p.id)),
+              }) satisfies MenuItemDef,
+          ),
+        ]
+      : []),
+    { label: "Manage Portfolios...", icon: FolderCog, action: run(onManagePortfolios) },
     { type: "separator" },
-    {
-      label: "Quit Portfolio",
-      shortcut: "Ctrl+Q",
-      icon: Power,
-      action: () => {
-        closeMenu();
-        onQuit();
-      },
-    },
+    { label: "Import Transactions (CSV)...", shortcut: "Ctrl+I", icon: FileSpreadsheet, action: run(onImportCsv), disabled: !activePortfolio },
+    { label: "Export Portfolio...", shortcut: "Ctrl+E", icon: Download, action: run(onExportPortfolio), disabled: !activePortfolio },
+    { type: "separator" },
+    { label: "Preferences...", shortcut: "Ctrl+,", icon: Settings, action: run(() => onOpenSettings()) },
+    { type: "separator" },
+    ...(pinEnabled ? [{ label: "Lock Portfolio", icon: Lock, action: run(() => onLock?.()) } satisfies MenuItemDef] : []),
+    { label: "Quit Portfolio", shortcut: "Ctrl+Q", icon: Power, action: run(onQuit) },
   ];
 
-  const editItems: MenuItemDef[] = [
-    {
-      label: "Add Transaction...",
-      shortcut: "Ctrl+T",
-      icon: PlusCircle,
-      action: () => {
-        closeMenu();
-        onAddTransaction();
-      },
-      disabled: !activePortfolio,
-    },
-    {
-      label: "Manage Portfolios...",
-      icon: FolderCog,
-      action: () => {
-        closeMenu();
-        onManagePortfolios();
-      },
-    },
-    { type: "separator" },
-    {
-      label: "Preferences",
-      shortcut: "Ctrl+,",
-      icon: Settings,
-      action: () => {
-        closeMenu();
-        onOpenSettings();
-      },
-    },
-  ];
-
-  const viewItems: MenuItemDef[] = [
-    {
-      label: "Overview (Dashboard)",
-      icon: PieChart,
-      checked: activeTab === "overview",
-      action: () => {
-        closeMenu();
-        onSelectTab("overview");
-      },
-    },
-    {
-      label: "Metrics",
-      icon: Gauge,
-      checked: activeTab === "metrics",
-      action: () => {
-        closeMenu();
-        onSelectTab("metrics");
-      },
-    },
-    {
-      label: "Transactions",
-      icon: History,
-      checked: activeTab === "transactions",
-      action: () => {
-        closeMenu();
-        onSelectTab("transactions");
-      },
-    },
-    {
-      label: "Reports",
-      icon: FileText,
-      checked: activeTab === "reports",
-      action: () => {
-        closeMenu();
-        onSelectTab("reports");
-      },
-    },
-    {
-      label: isAssistantOpen ? "Close Assistant Sidebar" : "Open Assistant Sidebar",
-      shortcut: "Ctrl+J",
-      icon: Sparkles,
-      action: () => {
-        closeMenu();
-        onToggleAssistant?.();
-      },
-    },
-    { type: "separator" },
-    {
-      label: "Zoom In",
-      shortcut: "Ctrl++",
-      icon: ZoomIn,
-      action: () => {
-        closeMenu();
-        onZoomIn?.();
-      },
-      disabled: (zoomLevel ?? 1) >= 2.5,
-    },
-    {
-      label: "Zoom Out",
-      shortcut: "Ctrl+-",
-      icon: ZoomOut,
-      action: () => {
-        closeMenu();
-        onZoomOut?.();
-      },
-      disabled: (zoomLevel ?? 1) <= 0.5,
-    },
-    {
-      label: `Reset Zoom (${Math.round((zoomLevel ?? 1) * 100)}%)`,
-      shortcut: "Ctrl+0",
-      icon: RotateCcw,
-      action: () => {
-        closeMenu();
-        onZoomReset?.();
-      },
-      disabled: Math.abs((zoomLevel ?? 1) - 1.0) < 0.01,
-    },
-    { type: "separator" },
-    {
-      label: `Toggle Theme (${theme === "light" ? "Light" : theme === "system" ? "System" : "Dark"})`,
-      shortcut: "Ctrl+Shift+L",
-      icon: theme === "light" ? Sun : Moon,
-      action: () => {
-        closeMenu();
-        onToggleTheme?.();
-      },
-    },
-    { type: "separator" },
-    {
-      label: "Reload Page",
-      shortcut: "Ctrl+R",
-      icon: RotateCw,
-      action: () => {
-        closeMenu();
-        if (onReload) {
-          onReload();
-        } else {
-          void reloadPage();
-        }
-      },
-    },
-    {
-      label: isRefreshing ? "Refreshing Market Quotes..." : "Refresh Market Quotes",
-      icon: RefreshCw,
-      action: () => {
-        closeMenu();
-        onRefresh();
-      },
-      disabled: isRefreshing,
-    },
-    { type: "separator" },
-    {
-      label: hideCurrencyValues ? "Show Currency Values" : "Mask Currency Values (Privacy)",
-      shortcut: "Ctrl+H",
-      icon: hideCurrencyValues ? Eye : EyeOff,
-      action: () => {
-        closeMenu();
-        onToggleHideCurrency();
-      },
-    },
-  ];
-
+  // Portfolio: actions that change or analyze the active portfolio's data.
   const portfolioItems: MenuItemDef[] = [
-    {
-      label: "Chat with Assistant...",
-      shortcut: "Ctrl+J",
-      icon: Sparkles,
-      action: () => {
-        closeMenu();
-        if (!isAssistantOpen) {
-          onToggleAssistant?.();
-        }
-      },
-      disabled: !activePortfolio,
-    },
-    {
-      label: "Analyze Portfolio (AI Report)...",
-      icon: Sparkles,
-      action: () => {
-        closeMenu();
-        onAnalyzePortfolio();
-      },
-      disabled: !activePortfolio,
-    },
+    { label: "Add Transaction...", shortcut: "Ctrl+T", icon: PlusCircle, action: run(onAddTransaction), disabled: !activePortfolio },
+    { label: isRefreshing ? "Refreshing Market Quotes..." : "Refresh Market Quotes", icon: RefreshCw, action: run(onRefresh), disabled: isRefreshing || !activePortfolio },
+    { type: "separator" },
+    { label: "Analyze with AI...", icon: Sparkles, action: run(onAnalyzePortfolio), disabled: !activePortfolio },
+  ];
+
+  // View: what is on screen (page, panels, masking, zoom, theme) — never data mutations.
+  const zoom = zoomLevel ?? 1;
+  const nextTheme = theme === "light" ? "Dark" : "Light";
+  const viewItems: MenuItemDef[] = [
+    { label: "Overview", icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
+    { label: "Metrics", icon: Gauge, checked: activeTab === "metrics", action: run(() => onSelectTab("metrics")) },
+    { label: "Transactions", icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
+    { label: "Reports", icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
+    { type: "separator" },
+    ...(onToggleAssistant
+      ? [{ label: "Assistant Sidebar", shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]
+      : []),
+    { label: "Mask Currency Values", shortcut: "Ctrl+H", icon: hideCurrencyValues ? Eye : EyeOff, checked: hideCurrencyValues, action: run(onToggleHideCurrency) },
+    { type: "separator" },
+    { label: "Zoom In", shortcut: "Ctrl++", icon: ZoomIn, action: run(() => onZoomIn?.()), disabled: zoom >= 2.5 },
+    { label: "Zoom Out", shortcut: "Ctrl+-", icon: ZoomOut, action: run(() => onZoomOut?.()), disabled: zoom <= 0.5 },
+    { label: `Reset Zoom (${Math.round(zoom * 100)}%)`, shortcut: "Ctrl+0", icon: RotateCcw, action: run(() => onZoomReset?.()), disabled: Math.abs(zoom - 1) < 0.01 },
+    { type: "separator" },
+    { label: `Switch to ${nextTheme} Theme`, shortcut: "Ctrl+Shift+L", icon: theme === "light" ? Moon : Sun, action: run(() => onToggleTheme?.()) },
+    { type: "separator" },
+    { label: "Reload", shortcut: "Ctrl+R", icon: RotateCw, action: run(() => (onReload ? onReload() : void reloadPage())) },
   ];
 
   const helpItems: MenuItemDef[] = [
-    {
-      label: "Setup Wizard...",
-      icon: HelpCircle,
-      action: () => {
-        closeMenu();
-        onOpenSetupWizard();
-      },
-    },
-    {
-      label: "Keyboard Shortcuts...",
-      icon: Keyboard,
-      action: () => {
-        closeMenu();
-        onOpenSettings("about");
-      },
-    },
-    {
-      label: "Support Ticket...",
-      icon: LifeBuoy,
-      action: () => {
-        closeMenu();
-        onOpenSettings("support");
-      },
-    },
-    {
-      label: updateInfo?.hasUpdate
-        ? `Update Available (v${updateInfo.latestVersion})...`
-        : "Check for Updates...",
-      icon: RefreshCw,
-      action: () => {
-        closeMenu();
-        if (onCheckForUpdates) {
-          onCheckForUpdates();
-        } else {
-          onOpenSettings("about");
-        }
-      },
-    },
+    { label: "Keyboard Shortcuts...", icon: Keyboard, action: run(() => onOpenSettings("about")) },
+    { label: "Setup Wizard...", icon: HelpCircle, action: run(onOpenSetupWizard) },
+    { label: "Support Ticket...", icon: LifeBuoy, action: run(() => onOpenSettings("support")) },
     { type: "separator" },
     {
-      label: "About Portfolio",
-      icon: Info,
-      action: () => {
-        closeMenu();
-        onOpenSettings("about");
-      },
+      label: updateInfo?.hasUpdate ? `Update Available (v${updateInfo.latestVersion})...` : "Check for Updates...",
+      icon: RefreshCw,
+      action: run(() => (onCheckForUpdates ? onCheckForUpdates() : onOpenSettings("about"))),
     },
+    { label: "About Portfolio", icon: Info, action: run(() => onOpenSettings("about")) },
   ];
 
   const menus: { key: MenuKey; label: string; accessKey: string; items: MenuItemDef[] }[] = [
     { key: "file", label: "File", accessKey: "f", items: fileItems },
-    { key: "edit", label: "Edit", accessKey: "e", items: editItems },
-    { key: "view", label: "View", accessKey: "v", items: viewItems },
     { key: "portfolio", label: "Portfolio", accessKey: "p", items: portfolioItems },
+    { key: "view", label: "View", accessKey: "v", items: viewItems },
     { key: "help", label: "Help", accessKey: "h", items: helpItems },
   ];
 
@@ -419,7 +231,7 @@ export function AppMenuBar({
         return;
       }
 
-      // Alt shortcuts (Alt+F, Alt+E, Alt+V, Alt+P, Alt+H)
+      // Alt shortcuts (Alt+F, Alt+P, Alt+V, Alt+H)
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
         const found = menus.find((m) => m.accessKey === key);
@@ -565,6 +377,20 @@ export function AppMenuBar({
           </div>
         );
       })}
+      {pinEnabled && (
+        <button
+          type="button"
+          onClick={() => {
+            closeMenu();
+            onLock?.();
+          }}
+          className="app-menubar-trigger app-menubar-lock"
+          title="Lock Portfolio"
+          aria-label="Lock Portfolio"
+        >
+          <Lock className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 }

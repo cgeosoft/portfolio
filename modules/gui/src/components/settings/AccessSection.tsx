@@ -114,12 +114,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
                   value={currentPin}
                   onChange={(v) => { setCurrentPin(v); setError(null); }}
                   onComplete={() => {
-                    if (mode === "disable") {
-                      // Automatically submit when the only field (current PIN) is filled for disable.
-                      // This is handled via the form submit; we just move focus.
-                    } else {
-                      newPinRef.current?.focus(0);
-                    }
+                    if (mode !== "disable") newPinRef.current?.focus(0);
                   }}
                   disabled={busy}
                   size="sm"
@@ -175,7 +170,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
  * remote card only renders in the desktop window (the service answers 403
  * for other clients) and needs a PIN before it can be turned on.
  */
-export function AccessSection() {
+export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void } = {}) {
   const [pinEnabled, setPinEnabled] = useState(false);
   const [remote, setRemote] = useState<RemoteAccessInfo | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
@@ -221,6 +216,7 @@ export function AccessSection() {
           pinEnabled={pinEnabled}
           onChanged={(enabled) => {
             setPinEnabled(enabled);
+            onPinEnabledChange?.(enabled);
             load();
           }}
         />

@@ -50,7 +50,7 @@ cat << EOF > "${USER_APPS_DIR}/portfolio-dev.desktop"
 Version=1.0
 Type=Application
 Name=Portfolio (Development)
-GenericName=Portfolio Tracker
+GenericName=Personal Investment Tracker
 Comment=Offline-first personal investment portfolio tracker (Development)
 Exec=/usr/bin/env bash -c "cd '${APP_DIR}' && bun run dev"
 Icon=portfolio-dev
@@ -66,7 +66,7 @@ cat << EOF > "${USER_APPS_DIR}/portfolio-dev-alt.desktop"
 Version=1.0
 Type=Application
 Name=Portfolio (Development)
-GenericName=Portfolio Tracker
+GenericName=Personal Investment Tracker
 Comment=Offline-first personal investment portfolio tracker (Development)
 Exec=/usr/bin/env bash -c "cd '${APP_DIR}' && bun run dev"
 Icon=portfolio-dev

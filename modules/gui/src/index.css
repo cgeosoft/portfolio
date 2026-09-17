@@ -483,6 +483,20 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
   font-weight: 600;
 }
 
+/* Lock button: icon-only trigger pushed to the right edge, shown when the app lock is on. */
+.app-menubar-lock {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.375rem;
+  margin-left: auto;
+  color: #94a3b8;
+}
+
+.app-menubar-lock:hover {
+  color: #f5abc5;
+  background: rgba(221, 60, 115, 0.18);
+}
+
 @keyframes app-menu-in {
   from {
     opacity: 0;
@@ -563,6 +577,15 @@ html.light .app-menubar-trigger {
 html.light .app-menubar-trigger:hover {
   color: #0f172a;
   background: rgba(15, 23, 42, 0.06);
+}
+
+html.light .app-menubar-lock {
+  color: #64748b;
+}
+
+html.light .app-menubar-lock:hover {
+  color: #be185d;
+  background: rgba(221, 60, 115, 0.12);
 }
 
 html.light .app-menubar-trigger[data-open="true"] {

@@ -2,7 +2,8 @@
  * Where the service keeps its files. Resolved once from the environment the
  * desktop shell (or a developer) passes in:
  *
- *   PORTFOLIO_DATA_DIR   data directory; default is the per-user config dir
+ *   PORTFOLIO_DATA_DIR   data directory; default is `<workspace>/.tmp` in
+ *                        development and the per-user config dir in production
  *                        (~/.config/portfolio, %APPDATA%\portfolio, ...)
  *   PORTFOLIO_LOG_DIR    log directory; default is `<workspace>/logs` in
  *                        development and the per-user log dir in production
@@ -23,10 +24,19 @@ function envDir(name: string): string | undefined {
   return value ? value : undefined;
 }
 
-/** Per-user data directory of the app (settings database, market cache). */
+/**
+ * Data directory of the app (settings database, host settings, metric
+ * modules). A developer gets `<workspace>/.tmp` (ignored by git) so `bun dev`
+ * never touches the data of the installed app; production uses the per-user
+ * config directory.
+ */
 export function getStorageDir(): string {
   const override = envDir("PORTFOLIO_DATA_DIR");
   if (override) return override;
+  if (!isProduction()) {
+    const root = getWorkspaceRoot();
+    if (root) return join(root, ".tmp");
+  }
   const home = homedir() || process.env["HOME"] || "~";
   if (process.platform === "win32") {
     return process.env["APPDATA"] ? join(process.env["APPDATA"], APP_DIR_NAME) : join(home, "AppData", "Roaming", APP_DIR_NAME);

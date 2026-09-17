@@ -1,8 +1,7 @@
 /**
- * Portfolio Chat Service
- * Synthesizes a comprehensive system prompt from live portfolio metrics, holdings,
- * technical indicators, and transaction history, and orchestrates conversational turns
- * with the configured LLM provider.
+ * Portfolio chat: builds the system prompt from the live portfolio state
+ * (weights, returns, indicators, recent transactions; never money amounts),
+ * runs one turn through LlmService and stores the conversation.
  */
 
 import { loadConfig } from "../config.js";
@@ -10,61 +9,34 @@ import type { LlmService, LlmMessage } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as conversationRepo from "../db/conversation.repo.js";
-import type {
-  PortfolioItem,
-  FinancialPortfolioData,
-  PortfolioHolding,
-  PortfolioTransaction,
-} from "portfolio-shared/portfolio";
+import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
-import {
-  DEFAULT_NEBIUS_URL,
-  DEFAULT_OLLAMA_MODEL,
-  DEFAULT_OPENAI_COMPATIBLE_URL,
-} from "portfolio-shared/llm-defaults";
 
-export function buildPortfolioSystemPrompt(
-  portfolio: PortfolioItem,
-  data: FinancialPortfolioData,
-): string {
+const TITLE_MAX_CHARS = 42;
+const RECENT_TRANSACTIONS = 10;
+
+const pct = (value = 0) => `${value.toFixed(2)}%`;
+const signedPct = (value = 0) => `${value >= 0 ? "+" : ""}${pct(value)}`;
+const indicator = (value: number | undefined, digits: number) => (value !== undefined && !isNaN(value) ? value.toFixed(digits) : "N/A");
+
+export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData): string {
   const summary = data.summary;
-  const holdings: PortfolioHolding[] = data.holdings || [];
-  const transactions: PortfolioTransaction[] = data.transactions || [];
 
-  const unrealizedPnLPercentStr = `${(summary?.totalGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.totalGainLossPercent ?? 0).toFixed(2)}%`;
-  const dayGainLossPercentStr = `${(summary?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${(summary?.dayGainLossPercent ?? 0).toFixed(2)}%`;
-  const cashWeightStr = `${(summary?.cashWeightPercent ?? 0).toFixed(2)}%`;
+  const holdingsLedger =
+    data.holdings
+      ?.map(
+        (h) => `- **${h.symbol}** (${h.name}, Type: ${h.assetType}):
+  - Portfolio Weight: ${pct(h.weightPercent)}
+  - Day Change: ${signedPct(h.dayChangePercent)} | Total Return: ${signedPct(h.totalGainLossPercent)}
+  - Technical Indicators: RSI(14): ${indicator(h.rsi, 1)}, SMA50: ${indicator(h.sma50, 2)}, SMA200: ${indicator(h.sma200, 2)}`,
+      )
+      .join("\n") || "No active holdings.";
 
-  // Holdings ledger
-  let holdingsLedger = "No active holdings.";
-  if (holdings.length > 0) {
-    holdingsLedger = holdings
-      .map((h) => {
-        const dayChangeFormatted = `${h.dayChangePercent >= 0 ? "+" : ""}${h.dayChangePercent.toFixed(2)}%`;
-        const totalGainFormatted = `${h.totalGainLossPercent >= 0 ? "+" : ""}${h.totalGainLossPercent.toFixed(2)}%`;
-        const rsiFormatted = h.rsi !== undefined && !isNaN(h.rsi) ? h.rsi.toFixed(1) : "N/A";
-        const sma50Formatted = h.sma50 !== undefined && !isNaN(h.sma50) ? h.sma50.toFixed(2) : "N/A";
-        const sma200Formatted = h.sma200 !== undefined && !isNaN(h.sma200) ? h.sma200.toFixed(2) : "N/A";
-        return `- **${h.symbol}** (${h.name}, Type: ${h.assetType}):
-  - Portfolio Weight: ${h.weightPercent.toFixed(2)}%
-  - Day Change: ${dayChangeFormatted} | Total Return: ${totalGainFormatted}
-  - Technical Indicators: RSI(14): ${rsiFormatted}, SMA50: ${sma50Formatted}, SMA200: ${sma200Formatted}`;
-      })
-      .join("\n");
-  }
-
-  // Recent transactions (up to 10 latest)
-  let recentTxText = "No transaction history recorded.";
-  if (transactions.length > 0) {
-    const recent = transactions.slice(0, 10);
-    recentTxText = recent
-      .map((tx) => {
-        const dateStr = tx.date ? tx.date.slice(0, 10) : "Unknown date";
-        const sharesText = tx.shares ? `${tx.shares} ` : "";
-        return `- ${dateStr} [${tx.type}] ${sharesText}${tx.symbol || ""}`.trim();
-      })
-      .join("\n");
-  }
+  const recentTransactions =
+    data.transactions
+      ?.slice(0, RECENT_TRANSACTIONS)
+      .map((tx) => `- ${tx.date ? tx.date.slice(0, 10) : "Unknown date"} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol || ""}`.trim())
+      .join("\n") || "No transaction history recorded.";
 
   return `You are a quantitative investment portfolio analyst and tactical financial assistant.
 You possess real-time, comprehensive context for the user's active portfolio.
@@ -75,21 +47,21 @@ Answer questions objectively, clearly, and concisely. Ground your answers strict
 === CURRENT PORTFOLIO PROFILE ===
 Portfolio Name: ${portfolio.name}
 ${portfolio.description ? `Description: ${portfolio.description}` : ""}
-Cash Allocation: ${cashWeightStr} of total portfolio
-Lifetime Unrealized Return: ${unrealizedPnLPercentStr}
-Today's Return: ${dayGainLossPercentStr}
+Cash Allocation: ${pct(summary?.cashWeightPercent)} of total portfolio
+Lifetime Unrealized Return: ${signedPct(summary?.totalGainLossPercent)}
+Today's Return: ${signedPct(summary?.dayGainLossPercent)}
 
 === ASSET ALLOCATION BREAKDOWN ===
-- Stocks: ${(summary?.stockWeightPercent ?? 0).toFixed(2)}%
-- ETFs & Funds: ${(summary?.etfWeightPercent ?? 0).toFixed(2)}%
-- Crypto: ${(summary?.cryptoWeightPercent ?? 0).toFixed(2)}%
-- Cash: ${(summary?.cashWeightPercent ?? 0).toFixed(2)}%
+- Stocks: ${pct(summary?.stockWeightPercent)}
+- ETFs & Funds: ${pct(summary?.etfWeightPercent)}
+- Crypto: ${pct(summary?.cryptoWeightPercent)}
+- Cash: ${pct(summary?.cashWeightPercent)}
 
 === FULL HOLDINGS LEDGER ===
 ${holdingsLedger}
 
 === RECENT TRANSACTIONS ===
-${recentTxText}
+${recentTransactions}
 
 === INSTRUCTIONS FOR ASSISTANT ===
 1. Analyze holdings, performance, risk concentration, technical indicators, and asset allocation based on the ledger.
@@ -98,45 +70,38 @@ ${recentTxText}
 4. Format responses using clean Markdown with bold labels and lists.`;
 }
 
+/** First user message, shortened, or a generic title. */
+function titleFor(messages: PortfolioChatMessage[]): string {
+  const first = messages.find((m) => m.role === "user")?.content.trim();
+  if (!first) return "Chat Session";
+  return first.length > TITLE_MAX_CHARS ? `${first.slice(0, TITLE_MAX_CHARS)}...` : first;
+}
+
+function parseMessages(json: string): PortfolioChatMessage[] {
+  try {
+    return JSON.parse(json) as PortfolioChatMessage[];
+  } catch {
+    return [];
+  }
+}
+
 export class PortfolioChatService {
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
   ) {}
 
-  /**
-   * Build a fresh copy of the system prompt for the given portfolio so the UI
-   * can show the user exactly what the assistant will receive in a new chat.
-   */
+  /** The system prompt a new chat would receive, so the UI can show it. */
   public async getSystemPrompt(portfolioId: string): Promise<string> {
     const portfolio = portfolioRepo.findById(portfolioId);
-    if (!portfolio) {
-      throw new Error(`Portfolio with ID "${portfolioId}" not found`);
-    }
-    const config = loadConfig();
-    const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
+    if (!portfolio) throw new Error(`Portfolio with ID "${portfolioId}" not found`);
+    const baseCurrency = portfolio.baseCurrency || loadConfig().baseCurrency || "EUR";
     const data = await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency);
     return buildPortfolioSystemPrompt(portfolio, data);
   }
 
   public getConversations(portfolioId: string): AssistantConversation[] {
-    const rows = conversationRepo.findByPortfolio(portfolioId);
-    return rows.map((r) => {
-      let parsedMessages: PortfolioChatMessage[] = [];
-      try {
-        parsedMessages = JSON.parse(r.messages) as PortfolioChatMessage[];
-      } catch {
-        parsedMessages = [];
-      }
-      return {
-        id: r.id,
-        portfolioId: r.portfolioId,
-        title: r.title,
-        messages: parsedMessages,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-      };
-    });
+    return conversationRepo.findByPortfolio(portfolioId).map((row) => ({ ...row, messages: parseMessages(row.messages) }));
   }
 
   public deleteConversation(portfolioId: string, conversationId: string): boolean {
@@ -146,123 +111,19 @@ export class PortfolioChatService {
   public async chat(
     portfolioId: string,
     messages: PortfolioChatMessage[],
-    options: {
-      conversationId?: string;
-      title?: string;
-      provider?: string;
-      model?: string;
-    } = {},
-  ): Promise<{
-    message: PortfolioChatMessage;
-    conversationId: string;
-    title: string;
-    provider: string;
-    model: string;
-  }> {
-    const portfolio = portfolioRepo.findById(portfolioId);
-    if (!portfolio) {
-      throw new Error(`Portfolio with ID "${portfolioId}" not found`);
-    }
-
-    const config = loadConfig();
-    const provider = (options.provider || config.llmProvider || "llamacpp-server").toLowerCase().trim();
-
-    const defaultModel =
-      provider === "groq"
-        ? "llama-3.3-70b-versatile"
-        : provider === "openai"
-          ? "gpt-4o-mini"
-          : provider === "anthropic"
-            ? "claude-3-5-sonnet-20241022"
-            : provider === "openrouter"
-              ? "meta-llama/llama-3.3-70b-instruct"
-              : provider === "deepseek"
-                ? "deepseek-chat"
-                : provider === "gemini"
-                  ? "gemini-2.5-flash"
-                  : provider === "nebius"
-                    ? "meta-llama/Llama-3.3-70B-Instruct"
-                    : provider === "ollama"
-                      ? DEFAULT_OLLAMA_MODEL
-                      // llama.cpp and custom openai-compatible have no fixed default.
-                      : "";
-
-    const model = options.model || config.llmModel || defaultModel;
-    const apiKey = config.llmApiKeys?.[provider] || config.llmApiKey;
-    const configuredBaseUrl =
-      config.llmBaseUrls?.[provider] ||
-      config.llmBaseUrl ||
-      (provider === "nebius" ? DEFAULT_NEBIUS_URL : undefined) ||
-      (provider === "openai-compatible" ? DEFAULT_OPENAI_COMPATIBLE_URL : undefined) ||
-      (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
-    const baseUrl = configuredBaseUrl;
-
-    // Validate cloud provider API keys before network call
-    const cloudProviders = ["groq", "openai", "anthropic", "openrouter", "deepseek", "gemini", "nebius"];
-    if (cloudProviders.includes(provider) && !apiKey?.trim()) {
-      const capitalized = provider === "nebius" ? "Nebius" : provider.charAt(0).toUpperCase() + provider.slice(1);
-      throw new Error(
-        `${capitalized} API key is not configured. Please open Settings > Assistant and configure your API key.`,
-      );
-    }
-
-    // Fetch latest portfolio state
-    const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
-    const data = await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency);
-
-    // Build the dynamic system prompt
-    const systemPrompt = buildPortfolioSystemPrompt(portfolio, data);
-
-    // Filter and sanitize conversation messages
-    const formattedMessages: LlmMessage[] = [
-      { role: "system", content: systemPrompt },
-      ...messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+    options: { conversationId?: string; title?: string; provider?: string; model?: string } = {},
+  ): Promise<{ message: PortfolioChatMessage; conversationId: string; title: string; provider: string; model: string }> {
+    const target = this.llm.resolve(options);
+    const history: LlmMessage[] = [
+      { role: "system", content: await this.getSystemPrompt(portfolioId) },
+      ...messages.map(({ role, content }) => ({ role, content })),
     ];
+    const reply: PortfolioChatMessage = { role: "assistant", content: await this.llm.chat(history, target) };
 
-    const replyContent = await this.llm.chat(formattedMessages, {
-      provider,
-      model,
-      apiKey,
-      baseUrl,
-      isReport: false,
-    });
-
-    const assistantMsg: PortfolioChatMessage = {
-      role: "assistant",
-      content: replyContent,
-    };
-
-    // Determine conversation ID & title
     const conversationId = options.conversationId || `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    let title = options.title;
-    if (!title) {
-      const firstUserMsg = messages.find((m) => m.role === "user");
-      if (firstUserMsg && firstUserMsg.content.trim()) {
-        title = firstUserMsg.content.trim().slice(0, 42);
-        if (firstUserMsg.content.trim().length > 42) title += "...";
-      } else {
-        title = "Chat Session";
-      }
-    }
+    const title = options.title || titleFor(messages);
+    conversationRepo.upsert({ id: conversationId, portfolioId, title, messages: JSON.stringify([...messages, reply]) });
 
-    // Persist conversation
-    const fullHistory = [...messages, assistantMsg];
-    conversationRepo.upsert({
-      id: conversationId,
-      portfolioId,
-      title,
-      messages: JSON.stringify(fullHistory),
-    });
-
-    return {
-      message: assistantMsg,
-      conversationId,
-      title,
-      provider,
-      model,
-    };
+    return { message: reply, conversationId, title, provider: target.provider, model: target.model };
   }
 }

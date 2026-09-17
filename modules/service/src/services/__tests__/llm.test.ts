@@ -45,7 +45,7 @@ describe("LlmService diagnostic and configuration", () => {
         apiKey: "",
       });
       expect(res.success).toBe(false);
-      expect(res.message).toContain("Openai requires an API key");
+      expect(res.message).toContain("OpenAI requires an API key");
     });
 
     it("succeeds when cloud provider has API key", async () => {

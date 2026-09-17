@@ -510,6 +510,8 @@ export default function App() {
   const [authState, setAuthState] = useState<"loading" | "locked" | "ready" | "error">("loading");
   const [authError, setAuthError] = useState<string | null>(null);
   const [authAttempt, setAuthAttempt] = useState(0);
+  /** Whether the app lock is on; drives the lock button in the menu bar. */
+  const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -525,8 +527,11 @@ export default function App() {
         return;
       }
       try {
-        await api.me();
-        if (!cancelled) setAuthState("ready");
+        const me = await api.me();
+        if (!cancelled) {
+          setPinEnabled(me.pinEnabled);
+          setAuthState("ready");
+        }
         return;
       } catch {
         // No session yet.
@@ -534,6 +539,7 @@ export default function App() {
       try {
         const status = await api.authStatus();
         if (cancelled) return;
+        setPinEnabled(status.pinEnabled);
         if (status.pinEnabled) {
           setAuthState("locked");
         } else {
@@ -553,9 +559,20 @@ export default function App() {
   }, [authAttempt]);
 
   const handleUnlock = useCallback(async (pin: string) => {
-    await api.login(pin);
+    const res = await api.login(pin);
+    setPinEnabled(res.pinEnabled);
     setAuthState("ready");
     setAuthAttempt((n) => n + 1);
+  }, []);
+
+  /** Drop the session and show the PIN prompt again. */
+  const handleLock = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch {
+      // The session cookie is cleared server-side anyway; the lock screen asks for the PIN regardless.
+    }
+    setAuthState("locked");
   }, []);
 
   // App Info & Quotes Sync State
@@ -605,15 +622,17 @@ export default function App() {
     getDefaultMetricPreferences,
   );
 
+  // Runs only once the session exists: on a cold start the requests would
+  // otherwise race the login and fail with a 401.
   useEffect(() => {
     if (!activePortfolioId) {
       setMetricPreferences(getDefaultMetricPreferences());
       return;
     }
+    if (authState !== "ready") return;
     let cancelled = false;
     void (async () => {
       try {
-        await ensureRpcReady();
         const res = await rpc.request.getPortfolioMetrics({ portfolioId: activePortfolioId });
         if (!cancelled && res?.metrics) {
           setMetricPreferences(res.metrics);
@@ -625,7 +644,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [activePortfolioId]);
+  }, [activePortfolioId, authState]);
 
   // Metric modules: installed listings, marketplace repository, and live sandbox results
   const [metricListings, setMetricListings] = useState<MetricListing[]>([]);
@@ -638,7 +657,6 @@ export default function App() {
 
   const loadMetricCatalog = useCallback(async () => {
     try {
-      await ensureRpcReady();
       const res = await rpc.request.getMetricCatalog({});
       setMetricListings(res.installed);
       setMetricRepository(res.repository);
@@ -648,8 +666,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    void loadMetricCatalog();
-  }, [loadMetricCatalog]);
+    if (authState === "ready") void loadMetricCatalog();
+  }, [loadMetricCatalog, authState]);
 
   const addedMetricIds = metricPreferences.filter((pref) => pref.added).map((pref) => pref.id).join(",");
   const portfolioDataStamp = portfolioData?.summary?.lastUpdated ?? "";
@@ -1309,6 +1327,8 @@ export default function App() {
           onZoomReset={handleZoomReset}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          pinEnabled={pinEnabled}
+          onLock={handleLock}
         />
         <Header
           currency={currency}
@@ -1393,6 +1413,8 @@ export default function App() {
           onZoomReset={handleZoomReset}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          pinEnabled={pinEnabled}
+          onLock={handleLock}
         />
         <Header
           currency={currency}
@@ -1492,6 +1514,8 @@ export default function App() {
         onZoomReset={handleZoomReset}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        pinEnabled={pinEnabled}
+        onLock={handleLock}
       />
 
       {/* Main Content Area & Assistant Sidebar */}
@@ -1557,6 +1581,7 @@ export default function App() {
             onPortfolioDeleted={handlePortfolioDeleted}
             theme={theme}
             onChangeTheme={handleThemeChange}
+            onPinEnabledChange={setPinEnabled}
           />
         </main>
       )}
@@ -1574,6 +1599,7 @@ export default function App() {
             onPortfolioDeleted={handlePortfolioDeleted}
             theme={theme}
             onChangeTheme={handleThemeChange}
+            onPinEnabledChange={setPinEnabled}
           />
         </main>
       )}

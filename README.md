@@ -78,7 +78,7 @@ bun run dev        # service on http://127.0.0.1:5130, Vite GUI on http://localh
 bun run desktop    # stages service + GUI and opens the Electrobun window
 ```
 
-Data goes to `~/.config/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). Set `PORTFOLIO_DATA_DIR` to use another directory.
+In development data goes to `.tmp/` in the workspace (ignored by git). Packaged builds use `~/.config/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). Set `PORTFOLIO_DATA_DIR` to use another directory.
 
 ### Typecheck and Test
 

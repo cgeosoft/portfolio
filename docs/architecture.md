@@ -21,7 +21,7 @@ There is no `.env` file at runtime. The service reads only these environment var
 |---|---|---|
 | `PORTFOLIO_PORT` | `5130` | Listen port |
 | `PORTFOLIO_HOST` | remote-access switch | Force a bind address (servers) |
-| `PORTFOLIO_DATA_DIR` | `~/.config/portfolio` (Linux), `%APPDATA%\portfolio`, `~/Library/Application Support/portfolio` | Database `data/portfolio.sqlite`, `host-settings.json` |
+| `PORTFOLIO_DATA_DIR` | `<workspace>/.tmp` in dev; `~/.config/portfolio` (Linux), `%APPDATA%\portfolio`, `~/Library/Application Support/portfolio` in production | Database `data/portfolio.sqlite`, `host-settings.json` |
 | `PORTFOLIO_LOG_DIR` | `<workspace>/logs` in dev; `~/.local/state/portfolio/logs` (Linux), `%LOCALAPPDATA%\portfolio\logs`, `~/Library/Logs/portfolio` in production | One `service-YYYY-MM-DD.log` per day |
 | `PORTFOLIO_GUI_DIR` | unset | Built GUI to serve on `/` |
 | `PORTFOLIO_VERSION` | root `package.json` in dev | Baked into the bundle by `modules/desktop/scripts/stage.ts` |
