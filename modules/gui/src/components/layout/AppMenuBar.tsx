@@ -414,11 +414,12 @@ export function AppMenuBar({
               closeMenu();
               onLock?.();
             }}
-            className="app-menubar-trigger app-menubar-lock"
+            className="app-menubar-trigger app-menubar-lock flex items-center gap-1.5"
             title="Lock Portfolio"
             aria-label="Lock Portfolio"
           >
             <Lock className="w-3.5 h-3.5" />
+            <span>lock</span>
           </button>
         )}
       </div>
