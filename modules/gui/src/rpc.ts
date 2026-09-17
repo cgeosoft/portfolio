@@ -54,7 +54,7 @@ export const rpc = {
     revealFile: (p: { filePath: string }) => api.revealFile(p.filePath),
     saveFile: (p: { fileName: string; content?: string; base64Data?: string }) => api.saveFile(p.fileName, p.content, p.base64Data),
     syncQuotes: (_p?: unknown) => api.syncQuotes(),
-    getSponsorBanner: (p?: { url?: string }) => api.getSponsorBanner(p?.url),
+    getSponsorBanner: (p?: { url?: string; theme?: string }) => api.getSponsorBanner(p?.url, p?.theme),
     completeSetup: api.completeSetup,
     quitApp: (_p?: unknown) => api.quitApp(),
     reloadApp: async (_p?: unknown) => {

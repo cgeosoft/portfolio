@@ -42,6 +42,7 @@ export default {
       ...copyTree("service"),
       ...copyTree("gui"),
       "stage/service/sponsor.html": "sponsor.html",
+      "stage/service/sponsor-light.html": "sponsor-light.html",
       "assets/app-icon.png": "app-icon.png",
     },
     watch: ["stage"],

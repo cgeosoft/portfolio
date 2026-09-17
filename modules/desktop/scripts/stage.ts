@@ -48,6 +48,7 @@ const files: [string, string][] = [
   [join(serviceDir, "dist-bundle/main.js"), join(stageDir, "service/main.js")],
   [join(guiDir, "dist"), join(stageDir, "gui")],
   [join(repoRoot, "extras/website/sponsor/index.html"), join(stageDir, "service/sponsor.html")],
+  [join(repoRoot, "extras/website/sponsor/light/index.html"), join(stageDir, "service/sponsor-light.html")],
 ];
 for (const [from, to] of files) {
   if (!existsSync(from)) {

@@ -60,14 +60,27 @@ function toItem(row: portfolioRepo.PortfolioRow) {
 }
 
 /** Bundled sponsor page: set by the desktop shell, or the website source in development. */
-function sponsorFallbackFile(): string | null {
-  const configured = process.env["PORTFOLIO_SPONSOR_FILE"]?.trim();
+function sponsorFallbackFile(theme?: string): string | null {
+  const isLight = theme === "light";
+  const configured = isLight
+    ? process.env["PORTFOLIO_SPONSOR_LIGHT_FILE"]?.trim()
+    : process.env["PORTFOLIO_SPONSOR_FILE"]?.trim();
+  const relFile = isLight ? "sponsor/light/index.html" : "sponsor/index.html";
   const candidates = [
     configured,
-    resolve(dirname(new URL(import.meta.url).pathname), "../../../../extras/website/sponsor/index.html"),
-    join(process.cwd(), "extras/website/sponsor/index.html"),
+    resolve(dirname(new URL(import.meta.url).pathname), `../../../../extras/website/${relFile}`),
+    join(process.cwd(), `extras/website/${relFile}`),
+    ...(isLight
+      ? [
+          resolve(dirname(new URL(import.meta.url).pathname), "../../../../extras/website/sponsor/light.html"),
+          join(process.cwd(), "extras/website/sponsor/light.html"),
+        ]
+      : []),
   ].filter((p): p is string => !!p);
-  return candidates.find((p) => existsSync(p)) ?? null;
+  const found = candidates.find((p) => existsSync(p));
+  if (found) return found;
+  if (isLight) return sponsorFallbackFile();
+  return null;
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
@@ -413,9 +426,17 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.get("/api/app/sponsor", async (ctx) => {
-    const override = (ctx.url.searchParams.get("url") || "").trim().replace(/\/+$/, "");
-    const base = override || WEBPAGE_URL;
-    const targetUrl = base.endsWith("/sponsor") ? `${base}/` : base.endsWith("/sponsor/") ? base : `${base}/sponsor/`;
+    const rawUrl = (ctx.url.searchParams.get("url") || "").trim();
+    const themeParam = (ctx.url.searchParams.get("theme") || "").trim().toLowerCase();
+    const isLight = themeParam === "light" || rawUrl.includes("/sponsor/light");
+    let targetUrl: string;
+    if (rawUrl) {
+      const clean = rawUrl.replace(/\/+$/, "");
+      targetUrl = clean.endsWith(".html") ? clean : `${clean}/`;
+    } else {
+      const base = WEBPAGE_URL.replace(/\/+$/, "");
+      targetUrl = isLight ? `${base}/sponsor/light/` : `${base}/sponsor/`;
+    }
     try {
       const res = await fetch(targetUrl, { headers: { Accept: "text/html" }, signal: AbortSignal.timeout(4000) });
       if (res.ok) {
@@ -425,7 +446,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     } catch {
       // offline: fall back to the bundled page
     }
-    const file = sponsorFallbackFile();
+    const file = sponsorFallbackFile(isLight ? "light" : "dark");
     if (file) return { success: true, html: readFileSync(file, "utf-8") };
     return { success: false, html: "", error: "Failed to load sponsor banner" };
   });

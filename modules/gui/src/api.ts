@@ -190,7 +190,10 @@ export const api = {
   checkForUpdates: (force = false) => request<AppUpdateInfo>("/api/app/update/check", { method: "POST", body: json({ force }) }),
   downloadUpdate: (version: string) => request<DownloadUpdateResponse>("/api/app/update/download", { method: "POST", body: json({ version }) }),
   logClientEvent: (entry: LogClientEventRequest) => request<{ success: boolean }>("/api/app/logs", { method: "POST", body: json(entry) }, { timeoutMs: 2000 }),
-  getSponsorBanner: (url?: string) => request<{ success: boolean; html: string; error?: string }>(`/api/app/sponsor${url ? `?url=${enc(url)}` : ""}`),
+  getSponsorBanner: (url?: string, theme?: string) => {
+    const params = [url ? `url=${enc(url)}` : "", theme ? `theme=${enc(theme)}` : ""].filter(Boolean).join("&");
+    return request<{ success: boolean; html: string; error?: string }>(`/api/app/sponsor${params ? `?${params}` : ""}`);
+  },
   openSupportTicket: (body: OpenSupportTicketRequest) => request<OpenSupportTicketResponse>("/api/app/support", { method: "POST", body: json(body) }),
   /** URL of the anonymised diagnostics zip (browser download for remote clients). */
   diagnosticsUrl: () => "/api/app/support/diagnostics",

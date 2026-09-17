@@ -4,11 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChristosFX - Official Crypto and Multi-Asset Sponsor</title>
-  <script>
-    if (new URLSearchParams(window.location.search).get("theme") === "light") {
-      window.location.replace("./light/" + window.location.search + window.location.hash);
-    }
-  </script>
   <style>
     /* Reset and box-sizing */
     *, *::before, *::after {
@@ -18,20 +13,20 @@
     }
 
     :root {
-      --bg-black: #08080a;
-      --bg-dark: #0f0f14;
-      --bg-card: #13131a;
-      --bg-card-hover: #191924;
-      --yellow-primary: #facc15;
-      --yellow-bright: #ffe600;
-      --yellow-dark: #ca8a04;
-      --yellow-border: rgba(250, 204, 21, 0.35);
-      --yellow-glow: rgba(250, 204, 21, 0.18);
-      --text-main: #ffffff;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --green-up: #4ade80;
-      --red-down: #f87171;
+      --bg-white: #ffffff;
+      --bg-light: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --gold-primary: #d97706;
+      --gold-bright: #b45309;
+      --gold-dark: #92400e;
+      --gold-border: rgba(217, 119, 6, 0.25);
+      --gold-glow: rgba(245, 158, 11, 0.12);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --green-up: #16a34a;
+      --red-down: #dc2626;
     }
 
     html, body {
@@ -39,7 +34,7 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      background: var(--bg-black) !important;
+      background: var(--bg-white) !important;
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "JetBrains Mono", monospace;
       overflow-x: hidden;
@@ -51,8 +46,8 @@
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(to right, rgba(250, 204, 21, 0.03) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(250, 204, 21, 0.03) 1px, transparent 1px);
+        linear-gradient(to right, rgba(217, 119, 6, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(217, 119, 6, 0.05) 1px, transparent 1px);
       background-size: 28px 28px;
       pointer-events: none;
       z-index: 1;
@@ -66,7 +61,7 @@
       transform: translate(-50%, -50%);
       width: min(600px, 90vw);
       height: min(400px, 80vh);
-      background: radial-gradient(circle, var(--yellow-glow) 0%, rgba(250, 204, 21, 0) 70%);
+      background: radial-gradient(circle, var(--gold-glow) 0%, rgba(245, 158, 11, 0) 70%);
       filter: blur(40px);
       pointer-events: none;
       animation: bg-drift 8s ease-in-out infinite alternate;
@@ -76,11 +71,11 @@
     @keyframes bg-drift {
       0% {
         transform: translate(-50%, -50%) scale(0.9);
-        opacity: 0.6;
+        opacity: 0.5;
       }
       100% {
         transform: translate(-45%, -45%) scale(1.15);
-        opacity: 0.95;
+        opacity: 0.85;
       }
     }
 
@@ -96,9 +91,9 @@
       justify-content: center;
       align-items: center;
       padding: clamp(1.5rem, 4vh, 3rem) clamp(1rem, 3vw, 2.5rem);
-      background: radial-gradient(circle at 50% 35%, #15151f 0%, #0a0a0e 65%, #050507 100%);
-      border: 1px solid var(--yellow-border);
-      box-shadow: inset 0 0 30px rgba(250, 204, 21, 0.05);
+      background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f8fafc 65%, #edf2f7 100%);
+      border: 1px solid var(--gold-border);
+      box-shadow: inset 0 0 30px rgba(217, 119, 6, 0.03);
       overflow: hidden;
       gap: 1.5rem;
       text-align: center;
@@ -108,50 +103,49 @@
     .brand-logo {
       width: 44px;
       height: 44px;
-      background: linear-gradient(135deg, #1e1b09 0%, #2f2700 100%);
-      border: 1.5px solid var(--yellow-primary);
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1.5px solid var(--gold-primary);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 16px rgba(250, 204, 21, 0.4);
+      box-shadow: 0 2px 10px rgba(217, 119, 6, 0.2);
       flex-shrink: 0;
       animation: logo-glow 3s ease-in-out infinite alternate;
     }
 
     @keyframes logo-glow {
       0% {
-        box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        box-shadow: 0 2px 8px rgba(217, 119, 6, 0.15);
       }
       100% {
-        box-shadow: 0 0 24px rgba(250, 204, 21, 0.65);
+        box-shadow: 0 4px 16px rgba(217, 119, 6, 0.35);
       }
     }
 
     .brand-logo svg {
       width: 24px;
       height: 24px;
-      fill: var(--yellow-bright);
+      fill: var(--gold-bright);
     }
 
     .brand-name {
       font-weight: 800;
-      color: var(--yellow-bright);
+      color: var(--text-main);
       letter-spacing: -0.01em;
-      text-shadow: 0 0 14px rgba(250, 204, 21, 0.4);
     }
 
     .sponsor-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      background: rgba(0, 0, 0, 0.75);
-      border: 1px solid rgba(250, 204, 21, 0.45);
+      background: #fef3c7;
+      border: 1px solid rgba(217, 119, 6, 0.4);
       border-radius: 4px;
       padding: 0.15rem 0.45rem;
       font-size: 0.65rem;
       font-weight: 700;
-      color: var(--yellow-primary);
+      color: var(--gold-dark);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -160,8 +154,8 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--yellow-bright);
-      box-shadow: 0 0 8px var(--yellow-bright);
+      background: var(--gold-primary);
+      box-shadow: 0 0 6px var(--gold-primary);
       animation: dot-pulse 1.8s infinite ease-in-out;
     }
 
@@ -177,43 +171,44 @@
     }
 
     .crypto-card {
-      background: rgba(10, 10, 14, 0.9);
-      border: 1px solid rgba(250, 204, 21, 0.28);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 6px;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.4s ease;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.4s ease, box-shadow 0.2s ease;
       white-space: nowrap;
       user-select: none;
     }
 
     .crypto-card:hover {
       transform: translateY(-1px);
-      border-color: rgba(250, 204, 21, 0.7);
+      border-color: rgba(217, 119, 6, 0.5);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
     }
 
     .crypto-card.flash-up {
-      background-color: rgba(74, 222, 128, 0.18) !important;
-      border-color: rgba(74, 222, 128, 0.6) !important;
+      background-color: rgba(22, 163, 74, 0.12) !important;
+      border-color: rgba(22, 163, 74, 0.6) !important;
     }
 
     .crypto-card.flash-down {
-      background-color: rgba(248, 113, 113, 0.18) !important;
-      border-color: rgba(248, 113, 113, 0.6) !important;
+      background-color: rgba(220, 38, 38, 0.12) !important;
+      border-color: rgba(220, 38, 38, 0.6) !important;
     }
 
     .crypto-sym {
       font-weight: 800;
-      color: var(--yellow-bright);
+      color: var(--gold-bright);
       font-size: 0.75rem;
     }
 
     .crypto-price {
       font-family: "JetBrains Mono", monospace;
       font-weight: 600;
-      color: #ffffff;
+      color: var(--text-main);
       font-size: 0.75rem;
       transition: color 0.3s ease;
     }
@@ -238,8 +233,8 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, var(--yellow-bright) 0%, var(--yellow-primary) 100%);
-      color: #000000;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
       font-weight: 800;
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -248,7 +243,7 @@
       border-radius: 8px;
       cursor: pointer;
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(250, 204, 21, 0.45);
+      box-shadow: 0 2px 10px rgba(217, 119, 6, 0.35);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       white-space: nowrap;
       flex-shrink: 0;
@@ -256,7 +251,7 @@
 
     .cta-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 0 28px rgba(250, 204, 21, 0.75);
+      box-shadow: 0 4px 16px rgba(217, 119, 6, 0.5);
     }
 
     .cta-btn:active {
@@ -273,7 +268,7 @@
       background: linear-gradient(
         60deg,
         rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.7) 50%,
+        rgba(255, 255, 255, 0.6) 50%,
         rgba(255, 255, 255, 0) 100%
       );
       transform: rotate(25deg);
@@ -293,7 +288,7 @@
     }
 
     /* =========================================================================
-       FULL-PAGE MODE (Height > 220px, e.g. standalone browser tab at /sponsor)
+       FULL-PAGE MODE (Height > 220px, e.g. standalone browser tab at /sponsor/light/)
        ========================================================================= */
     .banner-left {
       position: relative;
@@ -326,13 +321,14 @@
     }
 
     .perk-card {
-      background: rgba(18, 18, 24, 0.85);
-      border: 1px solid rgba(250, 204, 21, 0.25);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 4px;
       padding: 0.4rem 0.8rem;
       font-size: 0.78rem;
-      color: #e4e4e7;
+      color: #334155;
       white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
 
     .banner-center {
@@ -368,7 +364,7 @@
 
     .footer-note {
       font-size: 0.7rem;
-      color: #71717a;
+      color: #64748b;
       max-width: 500px;
     }
 
@@ -380,7 +376,7 @@
         height: 100%;
         min-height: 0;
         overflow: hidden;
-        background: #08080a !important;
+        background: #ffffff !important;
       }
 
       .sponsor-banner {
@@ -393,8 +389,8 @@
         padding: 0 clamp(0.75rem, 2vw, 1.25rem);
         gap: clamp(0.5rem, 1.5vw, 1rem);
         text-align: left;
-        background: #08080a !important;
-        background: linear-gradient(135deg, #09090b 0%, #121216 50%, #0d0d10 100%) !important;
+        background: #ffffff !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%) !important;
         border: none !important;
         box-shadow: none !important;
       }
@@ -454,12 +450,13 @@
         align-items: center;
         gap: 0.4rem;
         font-size: 0.68rem;
-        color: var(--text-muted);
+        color: #64748b;
         white-space: nowrap;
       }
 
       .brand-sub .sub-perk {
-        color: #e2e8f0;
+        color: #1e293b;
+        font-weight: 600;
       }
 
       /* Compact Center Tickers */
@@ -494,7 +491,7 @@
       .banner-right .cta-btn {
         font-size: 0.78rem;
         padding: 0.5rem 1rem;
-        box-shadow: 0 0 14px rgba(250, 204, 21, 0.4);
+        box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
       }
     }
 

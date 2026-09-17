@@ -1633,7 +1633,7 @@ export default function App() {
               />
 
               {/* Sponsor Banner Box */}
-              <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} />
+              <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />
 
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { HelpCircle } from "lucide-react";
+import type { AppTheme } from "portfolio-shared/api-types";
 import { rpc, ensureRpcReady } from "../../rpc";
 import { WEBPAGE_URL } from "../../environment";
 import { SponsorInfoModal } from "./SponsorInfoModal";
@@ -7,17 +8,32 @@ import { SponsorInfoModal } from "./SponsorInfoModal";
 export interface SponsorBannerCardProps {
   webpageUrl?: string;
   devEmail?: string;
+  theme?: AppTheme;
 }
 
-export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardProps) {
+export function SponsorBannerCard({ webpageUrl, devEmail, theme = "dark" }: SponsorBannerCardProps) {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [bannerHeight, setBannerHeight] = useState(90);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  const [systemIsDark, setSystemIsDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
+    media.addEventListener("change", handler);
+    return () => media.removeEventListener("change", handler);
+  }, []);
+
+  const isLight = theme === "light" || (theme === "system" && !systemIsDark);
   const cleanBase = (webpageUrl || WEBPAGE_URL).replace(/\/+$/, "");
-  const sponsorUrl = `${cleanBase}/sponsor/`;
+  const sponsorUrl = isLight ? `${cleanBase}/sponsor/light/` : `${cleanBase}/sponsor/`;
 
   const fetchBanner = useCallback(async () => {
     setIsLoading(true);
@@ -26,7 +42,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
     // 1. Try RPC call to backend
     try {
       await ensureRpcReady();
-      const rpcPromise = rpc.request.getSponsorBanner({ url: sponsorUrl });
+      const rpcPromise = rpc.request.getSponsorBanner({ url: sponsorUrl, theme: isLight ? "light" : "dark" });
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Sponsor banner timeout")), 2500)
       );
@@ -59,7 +75,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
       setHtmlContent(loadedHtml);
     }
     setIsLoading(false);
-  }, [sponsorUrl]);
+  }, [sponsorUrl, isLight]);
 
   useEffect(() => {
     void fetchBanner();
@@ -98,19 +114,19 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
   if (isLoading && !htmlContent) {
     return (
       <div
-        className="w-full rounded-2xl bg-[#131722]/60 border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
+        className="w-full rounded-2xl bg-widget border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
         style={{ height: `${bannerHeight}px` }}
       >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-yellow-500/10 border border-yellow-500/20" />
           <div className="space-y-1.5">
-            <div className="w-28 h-3.5 bg-slate-700/50 rounded" />
-            <div className="w-44 h-2.5 bg-slate-800/60 rounded" />
+            <div className="w-28 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded" />
+            <div className="w-44 h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded" />
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-3">
-          <div className="w-20 h-6 bg-slate-800/40 rounded" />
-          <div className="w-20 h-6 bg-slate-800/40 rounded" />
+          <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
+          <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
         </div>
         <div className="w-28 h-8 bg-yellow-500/20 rounded-lg" />
       </div>
@@ -126,7 +142,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
       <div className="relative w-full">
         {/* Card containing the iframe with rounded corners and overflow hidden */}
         <div
-          className="w-full rounded-2xl overflow-hidden border border-[#DD3C73] bg-[#07090e] shadow-sm shadow-[#DD3C73]/10"
+          className="w-full rounded-2xl overflow-hidden border border-[#DD3C73] bg-canvas shadow-sm shadow-[#DD3C73]/10"
           style={{ height: `${bannerHeight}px` }}
         >
           <iframe
@@ -134,7 +150,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
             srcDoc={htmlContent}
             title="Sponsor Banner"
             className="w-full h-full block border-0 overflow-hidden"
-            style={{ backgroundColor: "#08080a" }}
+            style={{ backgroundColor: isLight ? "#ffffff" : "#08080a" }}
             sandbox="allow-scripts allow-popups allow-forms allow-same-origin"
             scrolling="no"
           />
@@ -144,7 +160,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail }: SponsorBannerCardPro
         <button
           type="button"
           onClick={() => setIsInfoModalOpen(true)}
-          className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-slate-900/95 hover:bg-[#DD3C73]/20 border border-slate-700 hover:border-[#DD3C73] text-slate-400 hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
+          className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
           title="About sponsorship"
           aria-label="About sponsorship"
         >

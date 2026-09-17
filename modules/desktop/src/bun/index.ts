@@ -94,6 +94,7 @@ async function main(): Promise<void> {
       PORTFOLIO_LOG_DIR: logDir,
       PORTFOLIO_GUI_DIR: join(appDir, "gui"),
       PORTFOLIO_SPONSOR_FILE: join(appDir, "sponsor.html"),
+      PORTFOLIO_SPONSOR_LIGHT_FILE: join(appDir, "sponsor-light.html"),
       PORTFOLIO_LAUNCHER: process.execPath,
       ...(desktopVersion ? { PORTFOLIO_VERSION: desktopVersion } : {}),
     },

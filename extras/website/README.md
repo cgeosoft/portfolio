@@ -9,7 +9,8 @@ The site uses vanilla HTML, `style.css` and `script.js`. `index.html` is structu
 - `index.html` - hero with OS-detected download button, annotated screenshot (numbered markers with tooltips; click or "Expand" opens it full size; on narrow screens the markers become a list under the image), features, how it works, download matrix, FAQ.
 - `terms/index.html` - Terms of Use, including the "Analytics and Cookies" section (`#cookie-policy`).
 - `metrics/index.html` - the Metrics Marketplace catalog. **Generated** by `bun run build:metrics-site` from `extras/metrics/repository.yml` and each `manifest.yml`; it copies the `<head>`, header and footer of `terms/index.html`. Do not edit by hand; `deploy.sh` regenerates it.
-- `sponsor/index.html` - self-contained sponsor page with its own inline styles.
+- `sponsor/index.html` - self-contained sponsor page (dark theme) with its own inline styles.
+- `sponsor/light/index.html` - self-contained sponsor page (light theme) for light mode.
 - `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x1104, the overview tab with the demo portfolio).
 
 ## Local preview
