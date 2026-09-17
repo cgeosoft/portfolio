@@ -48,7 +48,7 @@ function loadDotEnv(): void {
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
-    if (key.startsWith("OPENAI_") && !(key in process.env)) {
+    if ((key.startsWith("OPENAI_") || key.startsWith("NEBIUS_")) && !(key in process.env && process.env[key])) {
       process.env[key] = value;
     }
   }
@@ -65,23 +65,29 @@ function run(cmd: string): string {
   }
 }
 
-function parseArgs(argv: string[]): { version: string; prevTag: string; onlyPrint: boolean } {
+function parseArgs(argv: string[]): { version: string; prevTag: string; toRef: string; onlyPrint: boolean } {
   let version = "";
   let prevTag = "";
+  let toRef = "";
   let onlyPrint = false;
   for (const arg of argv) {
     if (arg.startsWith("--version=")) version = arg.slice("--version=".length).replace(/^v/, "");
     else if (arg.startsWith("--prev-tag=")) prevTag = arg.slice("--prev-tag=".length);
+    else if (arg.startsWith("--to-tag=")) toRef = arg.slice("--to-tag=".length);
+    else if (arg.startsWith("--to=")) toRef = arg.slice("--to=".length);
     else if (arg === "--only-print") onlyPrint = true;
   }
-  return { version, prevTag, onlyPrint };
+  return { version, prevTag, toRef, onlyPrint };
 }
 
-function detectionPrevTag(): string {
+function detectionPrevTag(currentVersion?: string): string {
   const tags = run("git tag --sort=-version:refname")
     .split("\n")
-    .filter((t) => t.trim().length > 0);
-  return tags[0] || "";
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  if (!currentVersion) return tags[0] || "";
+  const normalized = currentVersion.replace(/^v/, "");
+  return tags.find((t) => t.replace(/^v/, "") !== normalized) || "";
 }
 
 function buildCompletionsUrl(baseUrl: string): string {
@@ -108,26 +114,34 @@ const SECTIONS = [
 type SectionKey = (typeof SECTIONS)[number][0];
 type ReleaseNotes = Partial<Record<SectionKey, string[]>>;
 
-async function generateNotes(diffText: string, prevTag: string, version: string): Promise<{ ok: boolean; body: string; reason?: string }> {
+async function generateNotes(diffText: string, prevTag: string, version: string, toRef: string = "HEAD"): Promise<{ ok: boolean; body: string; reason?: string }> {
   const token =
     process.env.OPENAI_API_TOKEN ||
     process.env.OPENAI_API_KEY ||
-    process.env.OPENAI_TOKEN;
+    process.env.OPENAI_TOKEN ||
+    process.env.NEBIUS_API_KEY ||
+    process.env.NEBIUS_API_TOKEN;
   if (!token) {
-    return { ok: false, body: "", reason: "no OPENAI_API_TOKEN configured in .env" };
+    return { ok: false, body: "", reason: "no OPENAI_API_TOKEN or NEBIUS_API_KEY configured in .env" };
   }
 
-  const baseUrl = process.env.OPENAI_API_URL || process.env.OPENAI_BASE_URL || process.env.OPENAI_URL || "";
+  const baseUrl =
+    process.env.OPENAI_API_URL ||
+    process.env.OPENAI_BASE_URL ||
+    process.env.OPENAI_URL ||
+    process.env.NEBIUS_API_URL ||
+    process.env.NEBIUS_BASE_URL ||
+    "";
   if (!baseUrl) {
-    return { ok: false, body: "", reason: "no OPENAI_API_URL configured in .env" };
+    return { ok: false, body: "", reason: "no OPENAI_API_URL or NEBIUS_API_URL configured in .env" };
   }
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const model = process.env.OPENAI_MODEL || process.env.NEBIUS_MODEL || "gpt-4o-mini";
   const url = buildCompletionsUrl(baseUrl);
 
   const prompt = [
     "You write release notes for the Portfolio application.",
     "Describe the changes of version " + version + " in Simplified English.",
-    "The changes are the git diff from tag " + prevTag + " to HEAD.",
+    "The changes are the git diff from " + (prevTag || "start") + " to " + toRef + ".",
     "",
     "Answer with a single JSON object and nothing else. Use this shape:",
     '{"added": ["..."], "changed": ["..."], "fixed": ["..."], "removed": ["..."], "security": ["..."]}',
@@ -143,7 +157,7 @@ async function generateNotes(diffText: string, prevTag: string, version: string)
   const payload: Record<string, unknown> = {
     model,
     temperature: 0.2,
-    max_tokens: 1200,
+    max_tokens: 4096,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "You are a helpful release note writer that answers with JSON only." },
@@ -270,8 +284,7 @@ function prependToChangelog(entry: string): void {
 // ---------------------------------------------------------------------------
 (async () => {
   loadDotEnv();
-  const { version, prevTag: prevArg, onlyPrint } = parseArgs(process.argv.slice(2));
-  const prevTag = prevArg || detectionPrevTag();
+  const { version, prevTag: prevArg, toRef: toArg, onlyPrint } = parseArgs(process.argv.slice(2));
   const currentVersion = version || (process.env.npm_package_version || "");
 
   if (!currentVersion) {
@@ -280,15 +293,24 @@ function prependToChangelog(entry: string): void {
     return;
   }
 
+  const prevTag = prevArg || detectionPrevTag(currentVersion);
+  let toRef = toArg;
+  if (!toRef) {
+    const versionTag = `v${currentVersion}`;
+    const tagExists = run(`git rev-parse "${versionTag}" >/dev/null 2>&1 && echo yes || echo no`) === "yes";
+    toRef = tagExists ? versionTag : "HEAD";
+  }
+
+  const diffRange = prevTag ? `${prevTag}..${toRef}` : toRef;
   const diffText = [
     "Commits:",
-    run(`git --no-pager log --oneline --no-merges ${prevTag}..HEAD`) || "(none)",
+    run(`git --no-pager log --format="- %s%n%b" --no-merges ${diffRange}`) || "(none)",
     "",
     "Changed files:",
-    run(`git --no-pager diff --stat ${prevTag} HEAD`) || "(none)",
+    run(`git --no-pager diff --stat ${diffRange}`) || "(none)",
   ].join("\n");
 
-  const result = prevTag ? await generateNotes(diffText, prevTag, currentVersion) : { ok: false, body: "", reason: "no previous tag found" };
+  const result = await generateNotes(diffText, prevTag, currentVersion, toRef);
 
   let body: string;
   if (result.ok) {
@@ -297,7 +319,7 @@ function prependToChangelog(entry: string): void {
     if (result.reason) console.error(`[gen-changelog] LLM skipped: ${result.reason}`);
     // Fallback: plain commit list so a release never blocks on the LLM.
     body =
-      run(`git --no-pager log --oneline --no-merges ${prevTag || ""}..HEAD`)
+      run(`git --no-pager log --oneline --no-merges ${diffRange}`)
         .split("\n")
         .filter((l) => l.trim().length > 0)
         .map((l) => `- ${l}`)

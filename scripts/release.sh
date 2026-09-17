@@ -130,10 +130,10 @@ fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/"version": "[^"]*"
   run git add "${MANIFESTS[@]}"
   if ${DRY_RUN}; then
     echo "[dry-run] bun scripts/gen-changelog.ts --version=${next}"
-  elif bun scripts/gen-changelog.ts --version="${next}" >/dev/null 2>&1; then
+  elif bun scripts/gen-changelog.ts --version="${next}" >/dev/null; then
     git add CHANGELOG.md
   else
-    log "changelog entry not generated (OPENAI_* not configured); continuing"
+    log "changelog entry not generated (LLM skipped or error); continuing"
   fi
   run git commit -m "chore(release): v${next}"
   run git tag -a "v${next}" -m "Release v${next}"
