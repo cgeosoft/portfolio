@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, ExternalLink } from "lucide-react";
 import { openExternal, VENDOR_URL } from "../../environment";
 import { formatTimeAgo } from "../portfolio/utils";
 
@@ -94,34 +94,8 @@ export function BottomBar({
         </button>
       </div>
 
-      {/* Right side: Privacy toggle, Yahoo quotes sync info and resync button */}
+      {/* Right side: Yahoo quotes sync info and resync button */}
       <div className="flex items-center gap-2 shrink-0 pl-2">
-        {onToggleHideCurrency && (
-          <>
-            <button
-              type="button"
-              onClick={onToggleHideCurrency}
-              className={`p-1 rounded transition-colors focus:outline-none cursor-pointer flex items-center gap-1.5 ${
-                hideCurrencyValues
-                  ? "text-cream hover:text-[#f0f5db] hover:bg-cream/10"
-                  : "text-slate-400 hover:text-accent-300 hover:bg-slate-800/60"
-              }`}
-              title={hideCurrencyValues ? "Show financial values (Privacy ON - Ctrl+H)" : "Hide financial values for privacy (Ctrl+H)"}
-              aria-label={hideCurrencyValues ? "Show financial values" : "Hide financial values for privacy"}
-            >
-              {hideCurrencyValues ? (
-                <EyeOff className="w-3 h-3 text-cream" />
-              ) : (
-                <Eye className="w-3 h-3" />
-              )}
-              <span className="hidden sm:inline">
-                {hideCurrencyValues ? "privacy: on" : "privacy"}
-              </span>
-            </button>
-            <span className="text-slate-700 hidden sm:inline">|</span>
-          </>
-        )}
-
         <div className="flex items-center gap-1.5" title={isoTooltip}>
           <span className="text-slate-500 hidden sm:inline">quotes:</span>
           <span className="text-slate-300 font-medium cursor-help underline decoration-dotted decoration-slate-600 underline-offset-2">

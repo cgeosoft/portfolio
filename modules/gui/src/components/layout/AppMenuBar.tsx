@@ -377,20 +377,51 @@ export function AppMenuBar({
           </div>
         );
       })}
-      {pinEnabled && (
-        <button
-          type="button"
-          onClick={() => {
-            closeMenu();
-            onLock?.();
-          }}
-          className="app-menubar-trigger app-menubar-lock"
-          title="Lock Portfolio"
-          aria-label="Lock Portfolio"
-        >
-          <Lock className="w-3.5 h-3.5" />
-        </button>
-      )}
+      <div className="ml-auto flex items-center gap-1">
+        {onToggleHideCurrency && (
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              onToggleHideCurrency();
+            }}
+            className={`app-menubar-trigger flex items-center gap-1.5 ${
+              hideCurrencyValues ? "text-cream hover:text-[#f0f5db]" : ""
+            }`}
+            title={
+              hideCurrencyValues
+                ? "Show financial values (Privacy ON - Ctrl+H)"
+                : "Hide financial values for privacy (Ctrl+H)"
+            }
+            aria-label={
+              hideCurrencyValues
+                ? "Show financial values"
+                : "Hide financial values for privacy"
+            }
+          >
+            {hideCurrencyValues ? (
+              <EyeOff className="w-3.5 h-3.5 text-cream" />
+            ) : (
+              <Eye className="w-3.5 h-3.5" />
+            )}
+            <span>{hideCurrencyValues ? "privacy: on" : "privacy"}</span>
+          </button>
+        )}
+        {pinEnabled && (
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              onLock?.();
+            }}
+            className="app-menubar-trigger app-menubar-lock"
+            title="Lock Portfolio"
+            aria-label="Lock Portfolio"
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
