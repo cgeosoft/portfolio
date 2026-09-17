@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { AlertCircle, Lock, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { AppIcon } from "./AppIcon";
 import { AmbientGlow } from "./AmbientGlow";
+import { PinInput, type PinInputHandle } from "./PinInput";
 import { APP_VERSION } from "../../environment";
 
 interface LockScreenProps {
@@ -22,20 +23,18 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pinInputRef = useRef<HTMLInputElement | null>(null);
+  const pinRef = useRef<PinInputHandle | null>(null);
 
   useEffect(() => {
     setPin("");
     setError(null);
     setLoading(false);
-    if (step === "pin") setTimeout(() => pinInputRef.current?.focus(), 50);
+    if (step === "pin") setTimeout(() => pinRef.current?.focus(0), 50);
   }, [step]);
 
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = pin.trim();
-    if (!/^[0-9]{4,8}$/.test(value)) {
-      setError("Enter your 4 to 8 digit PIN");
+  const handleUnlock = async (value: string) => {
+    if (!/^[0-9]{6}$/.test(value)) {
+      setError("Enter your 6-digit PIN");
       return;
     }
     setError(null);
@@ -45,14 +44,17 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Wrong PIN");
       setPin("");
-      setTimeout(() => pinInputRef.current?.focus(), 50);
+      setTimeout(() => pinRef.current?.focus(0), 50);
     } finally {
       setLoading(false);
     }
   };
 
   const title = step === "pin" ? "Enter your PIN" : "Cannot reach the service";
-  const subtitle = step === "pin" ? "This Portfolio is locked. Type the PIN set under Settings → Access." : authError || "The local service did not answer.";
+  const subtitle =
+    step === "pin"
+      ? "This Portfolio is locked. Enter the 6-digit PIN set under Settings → Access."
+      : authError || "The local service did not answer.";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#030712] text-slate-100 overflow-y-auto px-4 sm:px-6 py-6 select-none">
@@ -93,28 +95,32 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
         )}
 
         {step === "pin" ? (
-          <form onSubmit={handleUnlock} className="space-y-5">
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input
-                ref={pinInputRef}
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                autoComplete="off"
-                maxLength={8}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!loading && pin.length === 6) handleUnlock(pin);
+            }}
+            className="space-y-6"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <PinInput
+                ref={pinRef}
                 value={pin}
-                onChange={(e) => {
-                  setPin(e.target.value.replace(/[^0-9]/g, "").slice(0, 8));
+                onChange={(v) => {
+                  setPin(v);
                   setError(null);
                 }}
-                placeholder="PIN"
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-white/10 bg-slate-950/60 text-base text-slate-100 placeholder-slate-500 tracking-[0.4em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-accent-500"
+                onComplete={handleUnlock}
+                disabled={loading}
+                autoFocus
+                size="lg"
+                hasError={!!error}
+                ariaLabel="PIN"
               />
             </div>
             <button
               type="submit"
-              disabled={loading || pin.length < 4}
+              disabled={loading || pin.length < 6}
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-accent-600 to-purple-600 text-white text-sm font-bold shadow-lg shadow-accent-500/25 hover:from-accent-500 hover:to-purple-500 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Unlocking…" : "Unlock"}

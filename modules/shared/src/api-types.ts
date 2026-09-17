@@ -13,12 +13,12 @@ import type {
   ReportMetrics,
   FinancialPortfolioData,
 } from "./portfolio";
-import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "./config-types";
+import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, AppTheme } from "./config-types";
 import type { PortfolioMetricPreference } from "./metrics";
 import type { MetricManifest } from "./metric-manifest";
 import type { MetricScope } from "./metric-abi";
 import type { MetricOutput } from "./metric-output";
-export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, ReportMetrics };
+export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, ReportMetrics, AppTheme };
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
 

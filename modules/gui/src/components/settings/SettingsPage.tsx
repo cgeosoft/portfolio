@@ -34,11 +34,13 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
-import type { AppUpdateInfo, DesktopConfig } from "portfolio-shared/api-types";
+import type { AppUpdateInfo, DesktopConfig, AppTheme } from "portfolio-shared/api-types";
 import { CreatePortfolioModal } from "../portfolio/CreatePortfolioModal";
 import { EditPortfolioModal } from "../portfolio/EditPortfolioModal";
 import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
@@ -315,6 +317,8 @@ interface SettingsPageProps {
   onPortfolioCreated?: (newPortfolio: PortfolioItem) => void;
   onPortfolioUpdated?: (updated: PortfolioItem) => void;
   onPortfolioDeleted?: (id: string) => void;
+  theme?: AppTheme;
+  onChangeTheme?: (theme: AppTheme) => void;
 }
 
 export function SettingsPage({
@@ -326,6 +330,8 @@ export function SettingsPage({
   onPortfolioCreated,
   onPortfolioUpdated,
   onPortfolioDeleted,
+  theme,
+  onChangeTheme,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
@@ -499,6 +505,13 @@ export function SettingsPage({
   const saveConfig = async (updates: any) => {
     setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
     await rpc.request.saveConfig(updates);
+  };
+
+  const currentTheme: AppTheme = theme ?? (fullConfig?.theme as AppTheme) ?? "dark";
+
+  const handleThemeChange = (newTheme: AppTheme) => {
+    onChangeTheme?.(newTheme);
+    saveConfig({ theme: newTheme });
   };
 
   const handleProviderSelect = (newProvider: string) => {
@@ -717,12 +730,48 @@ export function SettingsPage({
                   <span>General Configuration</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Manage background quote updates, startup behavior, and telemetry settings.
+                  Manage interface theme, background quote updates, startup behavior, and telemetry settings.
                 </p>
               </div>
 
-              {/* 1. Market Quotes Auto-Fetch Interval */}
+              {/* 1. Interface Theme */}
               <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+                    {currentTheme === "light" ? (
+                      <Sun className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    )}
+                    <span>Interface Theme</span>
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono capitalize">
+                    {currentTheme}
+                  </span>
+                </div>
+
+                <Select
+                  value={currentTheme}
+                  onChange={(e) => {
+                    const val = e.target.value as AppTheme;
+                    handleThemeChange(val);
+                  }}
+                  selectSize="lg"
+                  icon={currentTheme === "light" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  aria-label="Interface Theme"
+                >
+                  <option value="dark">Dark Theme (Terminal Default)</option>
+                  <option value="light">Light Theme (Daylight)</option>
+                  <option value="system">Follow System Appearance</option>
+                </Select>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Choose between high-contrast dark terminal mode, clean daylight theme, or automatic synchronization with your system appearance.
+                </p>
+              </div>
+
+              {/* 2. Market Quotes Auto-Fetch Interval */}
+              <div className="space-y-2 pt-4 border-t border-slate-800/80">
                 <div className="flex items-center justify-between">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-[#DD3C73]" />

@@ -6,12 +6,38 @@
     <meta name="theme-color" content="#090b10" />
     <meta name="color-scheme" content="dark" />
     <meta name="description" content="Personal investment tracker" />
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('portfolio_theme') || 'dark';
+          var resolved = theme;
+          if (theme === 'system') {
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          if (resolved === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            var metaScheme = document.querySelector('meta[name="color-scheme"]');
+            if (metaScheme) metaScheme.content = 'light';
+            var metaColor = document.querySelector('meta[name="theme-color"]');
+            if (metaColor) metaColor.content = '#f8fafc';
+          } else {
+            document.documentElement.classList.remove('light');
+            document.documentElement.classList.add('dark');
+            var metaScheme = document.querySelector('meta[name="color-scheme"]');
+            if (metaScheme) metaScheme.content = 'dark';
+            var metaColor = document.querySelector('meta[name="theme-color"]');
+            if (metaColor) metaColor.content = '#090b10';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Portfolio</title>
   </head>
-  <body class="bg-[#090b10] text-[#e2e8f0] font-sans antialiased selection:bg-accent-500/30 selection:text-accent-200 overflow-hidden">
+  <body class="bg-[var(--app-bg)] text-[var(--text-main)] font-sans antialiased selection:bg-accent-500/30 selection:text-accent-200 overflow-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -18,7 +18,7 @@ export function isProduction(): boolean {
   const nodeEnv = process.env["NODE_ENV"];
   if (nodeEnv === "production") cachedIsProduction = true;
   else if (nodeEnv === "development" || nodeEnv === "test") cachedIsProduction = false;
-  else cachedIsProduction = !!process.env["PORTFOLIO_VERSION"];
+  else cachedIsProduction = !!(process.env.PORTFOLIO_VERSION || process.env["PORTFOLIO_VERSION"]);
   return cachedIsProduction;
 }
 
@@ -69,10 +69,23 @@ export function getWorkspaceRoot(): string | undefined {
 /** Semver of the running application. */
 export function getAppVersion(): string {
   if (cachedVersion !== null) return cachedVersion;
-  const baked = process.env["PORTFOLIO_VERSION"]?.trim();
+  const baked = (process.env.PORTFOLIO_VERSION || process.env["PORTFOLIO_VERSION"])?.trim();
   if (baked) {
     cachedVersion = baked;
     return baked;
+  }
+  // Packaged build fallback: version.txt next to the service bundle.
+  try {
+    const versionFile = resolve(dirname(new URL(import.meta.url).pathname), "version.txt");
+    if (existsSync(versionFile)) {
+      const v = readFileSync(versionFile, "utf-8").trim();
+      if (v) {
+        cachedVersion = v;
+        return cachedVersion;
+      }
+    }
+  } catch {
+    // fall through
   }
   // Development: the version of the workspace root package.json.
   const root = getWorkspaceRoot();

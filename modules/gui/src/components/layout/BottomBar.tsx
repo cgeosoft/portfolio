@@ -49,7 +49,7 @@ export function BottomBar({
 
   return (
     <footer
-      className="bg-[#080b13] border border-white/[0.06] rounded-xl px-3 py-1 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none shrink-0"
+      className="bg-[var(--background-widget)] border border-[var(--border)] rounded-xl px-3 py-1 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none shrink-0"
       role="contentinfo"
       aria-label="Application Status Bar"
     >

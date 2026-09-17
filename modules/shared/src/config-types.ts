@@ -82,4 +82,8 @@ export interface DesktopConfig {
   dismissedUpdateVersion?: string;
   /** UI zoom scaling factor (1.0 = 100%) */
   zoomLevel?: number;
+  /** UI theme mode: "dark" | "light" | "system" */
+  theme?: AppTheme;
 }
+
+export type AppTheme = "dark" | "light" | "system";

@@ -88,6 +88,7 @@ export class AppUpdateService {
 
   public getUpdateInfo(): AppUpdateInfo {
     const cfg = loadConfig();
+    this.currentVersion = getAppVersion();
     return {
       ...this.cachedInfo,
       enabled: cfg.checkForUpdates ?? true,
@@ -98,6 +99,7 @@ export class AppUpdateService {
 
   /** Reads the latest release from GitHub Releases API, with fallback to the website manifest. */
   public async checkForUpdates(force = false): Promise<AppUpdateInfo> {
+    this.currentVersion = getAppVersion();
     const cfg = loadConfig();
     const enabled = cfg.checkForUpdates ?? true;
     if (!enabled && !force) {
@@ -158,7 +160,7 @@ export class AppUpdateService {
       }
 
       const latestVersion = String(manifest.version || "").replace(/^[vV]/, "");
-      const hasUpdate = isNewerVersion(this.currentVersion, latestVersion);
+      const hasUpdate = this.currentVersion !== "0.0.0" && isNewerVersion(this.currentVersion, latestVersion);
       const nowIso = new Date().toISOString();
       updateConfig({ lastUpdateCheck: nowIso });
       this.manifest = manifest;

@@ -42,6 +42,7 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   lastUpdateCheck: undefined,
   dismissedUpdateVersion: undefined,
   zoomLevel: 1.0,
+  theme: "dark",
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */
@@ -110,6 +111,9 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   }
   if (typeof cfg.zoomLevel !== "number" || !Number.isFinite(cfg.zoomLevel) || cfg.zoomLevel < 0.25 || cfg.zoomLevel > 5.0) {
     cfg.zoomLevel = 1.0;
+  }
+  if (cfg.theme !== "dark" && cfg.theme !== "light" && cfg.theme !== "system") {
+    cfg.theme = "dark";
   }
   if (typeof cfg.deviceId !== "string" || !cfg.deviceId) {
     cfg.deviceId = randomUUID();

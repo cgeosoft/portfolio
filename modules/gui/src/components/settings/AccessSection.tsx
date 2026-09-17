@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Lock, ShieldCheck, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
+import { PinInput, type PinInputHandle } from "../common/PinInput";
 
-const PIN_RULE = /^[0-9]{4,8}$/;
+const PIN_RULE = /^[0-9]{6}$/;
 
 interface AppLockCardProps {
   pinEnabled: boolean;
@@ -19,6 +20,10 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const currentPinRef = useRef<PinInputHandle | null>(null);
+  const newPinRef = useRef<PinInputHandle | null>(null);
+  const confirmPinRef = useRef<PinInputHandle | null>(null);
+
   const reset = () => {
     setMode("idle");
     setCurrentPin("");
@@ -27,16 +32,26 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
     setError(null);
   };
 
-  const digits = (v: string) => v.replace(/[^0-9]/g, "").slice(0, 8);
+  // Focus the first relevant input when the form opens.
+  useEffect(() => {
+    if (mode === "idle") return;
+    const timer = setTimeout(() => {
+      if (mode === "enable") newPinRef.current?.focus(0);
+      else currentPinRef.current?.focus(0);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [mode]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
     if (mode !== "disable") {
-      if (!PIN_RULE.test(pin)) return setError("The PIN must be 4 to 8 digits.");
+      if (!PIN_RULE.test(pin)) return setError("The PIN must be exactly 6 digits.");
       if (pin !== confirmPin) return setError("The two PINs do not match.");
     }
-    if (mode !== "enable" && !currentPin) return setError("Enter the current PIN.");
+    if (mode !== "enable" && !PIN_RULE.test(currentPin)) return setError("Enter the current 6-digit PIN.");
+
     setBusy(true);
     try {
       if (mode === "disable") {
@@ -53,24 +68,6 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
       setBusy(false);
     }
   };
-
-  const pinInput = (value: string, onChange: (v: string) => void, placeholder: string, autoFocus = false) => (
-    <input
-      type="password"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      autoComplete="off"
-      maxLength={8}
-      value={value}
-      autoFocus={autoFocus}
-      onChange={(e) => {
-        onChange(digits(e.target.value));
-        setError(null);
-      }}
-      placeholder={placeholder}
-      className="w-full sm:w-40 px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-sm text-slate-100 placeholder-slate-500 tracking-[0.3em] placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-accent-500"
-    />
-  );
 
   return (
     <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-3">
@@ -107,11 +104,56 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
       </div>
 
       {mode !== "idle" && (
-        <form onSubmit={submit} className="pl-12 flex flex-col gap-2.5">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {mode !== "enable" && pinInput(currentPin, setCurrentPin, "Current PIN", true)}
-            {mode !== "disable" && pinInput(pin, setPin, "New PIN", mode === "enable")}
-            {mode !== "disable" && pinInput(confirmPin, setConfirmPin, "Repeat new PIN")}
+        <form onSubmit={submit} className="pl-12 flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            {mode !== "enable" && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Current PIN</label>
+                <PinInput
+                  ref={currentPinRef}
+                  value={currentPin}
+                  onChange={(v) => { setCurrentPin(v); setError(null); }}
+                  onComplete={() => {
+                    if (mode === "disable") {
+                      // Automatically submit when the only field (current PIN) is filled for disable.
+                      // This is handled via the form submit; we just move focus.
+                    } else {
+                      newPinRef.current?.focus(0);
+                    }
+                  }}
+                  disabled={busy}
+                  size="sm"
+                  hasError={!!error}
+                />
+              </div>
+            )}
+            {mode !== "disable" && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">New PIN</label>
+                <PinInput
+                  ref={newPinRef}
+                  value={pin}
+                  onChange={(v) => { setPin(v); setError(null); }}
+                  onComplete={() => confirmPinRef.current?.focus(0)}
+                  disabled={busy}
+                  size="sm"
+                  hasError={!!error}
+                />
+              </div>
+            )}
+            {mode !== "disable" && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Repeat new PIN</label>
+                <PinInput
+                  ref={confirmPinRef}
+                  value={confirmPin}
+                  onChange={(v) => { setConfirmPin(v); setError(null); }}
+                  disabled={busy}
+                  size="sm"
+                  hasError={!!error}
+                />
+              </div>
+            )}
           </div>
           {error && <p className="text-xs text-rose-400">{error}</p>}
           <div className="flex items-center gap-2">
@@ -171,7 +213,7 @@ export function AccessSection() {
           <ShieldCheck className="w-4 h-4 text-[#DD3C73]" />
           <span>Access</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">Lock the app with a PIN and decide whether other devices on your network may open it.</p>
+        <p className="text-[11px] text-slate-400 mt-1">Lock the app with a 6-digit PIN and decide whether other devices on your network may open it.</p>
       </div>
 
       <div className="divide-y divide-slate-800/80">

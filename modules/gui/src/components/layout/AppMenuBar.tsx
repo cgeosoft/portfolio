@@ -27,7 +27,10 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Sun,
+  Moon,
 } from "lucide-react";
+import type { AppTheme } from "portfolio-shared/api-types";
 
 export interface AppMenuBarProps {
   portfolios?: PortfolioItem[];
@@ -57,6 +60,8 @@ export interface AppMenuBarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomReset?: () => void;
+  theme?: AppTheme;
+  onToggleTheme?: () => void;
 }
 
 type MenuKey = "file" | "edit" | "view" | "portfolio" | "help" | null;
@@ -99,6 +104,8 @@ export function AppMenuBar({
   onZoomIn,
   onZoomOut,
   onZoomReset,
+  theme = "dark",
+  onToggleTheme,
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -269,6 +276,16 @@ export function AppMenuBar({
         onZoomReset?.();
       },
       disabled: Math.abs((zoomLevel ?? 1) - 1.0) < 0.01,
+    },
+    { type: "separator" },
+    {
+      label: `Toggle Theme (${theme === "light" ? "Light" : theme === "system" ? "System" : "Dark"})`,
+      shortcut: "Ctrl+Shift+L",
+      icon: theme === "light" ? Sun : Moon,
+      action: () => {
+        closeMenu();
+        onToggleTheme?.();
+      },
     },
     { type: "separator" },
     {

@@ -57,4 +57,5 @@ for (const [from, to] of files) {
   cpSync(from, to, { recursive: true });
 }
 writeFileSync(join(stageDir, "version.txt"), version + "\n");
+writeFileSync(join(stageDir, "service/version.txt"), version + "\n");
 console.log(`[stage] ready in ${stageDir} (version ${version})`);

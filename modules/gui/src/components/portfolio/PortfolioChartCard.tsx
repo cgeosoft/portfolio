@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "chart.js";
 import type { PortfolioHistoricalPoint } from "portfolio-shared/portfolio";
+import type { AppTheme } from "portfolio-shared/api-types";
 import { fmtCurrency, fmtPercent } from "./utils";
 import { TrendingUp } from "lucide-react";
 
@@ -20,6 +21,7 @@ interface PortfolioChartCardProps {
   chartHistory: PortfolioHistoricalPoint[];
   currency?: string;
   hideValues?: boolean;
+  theme?: AppTheme;
 }
 
 type Timeframe = "1m" | "3m" | "6m" | "1y" | "all";
@@ -28,6 +30,7 @@ export function PortfolioChartCard({
   chartHistory,
   currency = "EUR",
   hideValues = false,
+  theme,
 }: PortfolioChartCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -68,15 +71,16 @@ export function PortfolioChartCard({
       pt.totalCost > 0 ? ((pt.totalValue - pt.totalCost) / pt.totalCost) * 100 : 0
     );
 
+    const isLight = theme === "light" || (theme === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
     const totalColor = "#A7E2C0"; // mint green for total portfolio value with cash
     const accentColor = "#DD3C73"; // vibrant rose/magenta accent for invested value
-    const costBasisColor = "#64748b"; // slate for cost basis
+    const costBasisColor = isLight ? "#94a3b8" : "#64748b"; // slate for cost basis
     const returnColor = "#6d8bf7"; // royal blue tint for return %
-    const textMuted = "#94a3b8";
-    const textColor = "#f1f5f9";
-    const bgWidget = "#090d16";
-    const border = "#1e293b";
-    const gridColor = "rgba(255, 255, 255, 0.05)";
+    const textMuted = isLight ? "#64748b" : "#94a3b8";
+    const textColor = isLight ? "#0f172a" : "#f1f5f9";
+    const bgWidget = isLight ? "#ffffff" : "#090d16";
+    const border = isLight ? "#e2e8f0" : "#1e293b";
+    const gridColor = isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.05)";
 
     const zeroLinePlugin = {
       id: "zeroLineY1",
@@ -226,7 +230,7 @@ export function PortfolioChartCard({
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [chartHistory, range, currency, hideValues]);
+  }, [chartHistory, range, currency, hideValues, theme]);
 
   return (
     <div className="cx-card p-4 sm:p-5 font-mono h-full flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">

@@ -7,7 +7,7 @@
  * Access), so nothing else lives here.
  */
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Utils } from "electrobun/bun";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { failedPage, startingPage } from "./pages";
 import { ServiceProcess } from "./service";
@@ -67,6 +67,21 @@ async function main(): Promise<void> {
     }
   });
 
+  function getDesktopVersion(): string | undefined {
+    for (const candidate of [join(appDir, "service", "version.txt"), join(appDir, "version.txt")]) {
+      try {
+        if (existsSync(candidate)) {
+          const v = readFileSync(candidate, "utf-8").trim();
+          if (v) return v;
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    return undefined;
+  }
+
+  const desktopVersion = getDesktopVersion();
   const service = new ServiceProcess({
     serviceDir: join(appDir, "service"),
     port,
@@ -80,6 +95,7 @@ async function main(): Promise<void> {
       PORTFOLIO_GUI_DIR: join(appDir, "gui"),
       PORTFOLIO_SPONSOR_FILE: join(appDir, "sponsor.html"),
       PORTFOLIO_LAUNCHER: process.execPath,
+      ...(desktopVersion ? { PORTFOLIO_VERSION: desktopVersion } : {}),
     },
   });
 

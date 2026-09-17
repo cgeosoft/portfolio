@@ -7,6 +7,7 @@ import {
   Tooltip,
 } from "chart.js";
 import type { PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
+import type { AppTheme } from "portfolio-shared/api-types";
 import { fmtCurrency, fmtPercent } from "./utils";
 import { PieChart } from "lucide-react";
 
@@ -17,6 +18,7 @@ interface AllocationCardProps {
   holdings: PortfolioHolding[];
   currency?: string;
   hideValues?: boolean;
+  theme?: AppTheme;
 }
 
 interface CategorySummary {
@@ -49,6 +51,7 @@ export function AllocationCard({
   holdings,
   currency = "EUR",
   hideValues = false,
+  theme,
 }: AllocationCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -168,10 +171,11 @@ export function AllocationCard({
 
     if (outerHoldings.length === 0 && innerCategories.length === 0) return;
 
-    const bgWidget = "#090d16";
-    const border = "#1e293b";
-    const textColor = "#f1f5f9";
-    const textMuted = "#94a3b8";
+    const isLight = theme === "light" || (theme === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
+    const bgWidget = isLight ? "#ffffff" : "#090d16";
+    const border = isLight ? "#e2e8f0" : "#1e293b";
+    const textColor = isLight ? "#0f172a" : "#f1f5f9";
+    const textMuted = isLight ? "#64748b" : "#94a3b8";
 
     // Center text plugin to display portfolio value & asset count inside the donut
     const centerTextPlugin = {
@@ -324,7 +328,7 @@ export function AllocationCard({
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [holdings, summary, currency, hideValues, totalVal]);
+  }, [holdings, summary, currency, hideValues, totalVal, theme]);
 
   return (
     <div className="cx-card p-4 sm:p-5 flex flex-col justify-between font-mono h-full w-full max-w-full min-w-0 overflow-hidden">

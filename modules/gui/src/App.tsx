@@ -42,10 +42,12 @@ import type {
   MetricEvaluation,
   MetricListing,
   MetricRepositoryListing,
+  AppTheme,
 } from "portfolio-shared/api-types";
 import { rpc, ensureRpcReady, clientLogger, onUpdateAvailable } from "./rpc";
 import { api, setUnauthorizedHandler } from "./api";
 import { LockScreen } from "./components/common/LockScreen";
+import { APP_VERSION } from "./environment";
 import {
   getDefaultMetricPreferences,
   type PortfolioMetricPreference,
@@ -277,6 +279,67 @@ export default function App() {
     applyZoom(1.0);
   }, [applyZoom]);
 
+  // Theme State & Persistence ("dark" | "light" | "system")
+  const [theme, setTheme] = useState<AppTheme>(() => {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("portfolio_theme");
+      if (saved === "dark" || saved === "light" || saved === "system") {
+        return saved;
+      }
+    }
+    return "dark";
+  });
+
+  const applyTheme = useCallback((newTheme: AppTheme) => {
+    if (typeof document === "undefined") return;
+    let resolved = newTheme;
+    if (newTheme === "system") {
+      resolved = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    const root = document.documentElement;
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    const metaColor = document.querySelector('meta[name="theme-color"]');
+    if (resolved === "light") {
+      root.classList.remove("dark");
+      root.classList.add("light");
+      if (metaScheme) metaScheme.setAttribute("content", "light");
+      if (metaColor) metaColor.setAttribute("content", "#f8fafc");
+    } else {
+      root.classList.remove("light");
+      root.classList.add("dark");
+      if (metaScheme) metaScheme.setAttribute("content", "dark");
+      if (metaColor) metaColor.setAttribute("content", "#090b10");
+    }
+  }, []);
+
+  const handleThemeChange = useCallback(
+    (newTheme: AppTheme) => {
+      setTheme(newTheme);
+      applyTheme(newTheme);
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("portfolio_theme", newTheme);
+      }
+      rpc.request.saveConfig({ theme: newTheme }).catch(() => {});
+    },
+    [applyTheme],
+  );
+
+  const handleToggleTheme = useCallback(() => {
+    const next: AppTheme = theme === "light" ? "dark" : "light";
+    handleThemeChange(next);
+  }, [theme, handleThemeChange]);
+
+  // Listen for system theme changes when in "system" mode
+  useEffect(() => {
+    if (theme !== "system" || typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyTheme("system");
+    media.addEventListener("change", handler);
+    return () => media.removeEventListener("change", handler);
+  }, [theme, applyTheme]);
+
   // Assistant Chat & Conversations State
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
@@ -496,7 +559,7 @@ export default function App() {
   }, []);
 
   // App Info & Quotes Sync State
-  const [appVersion, setAppVersion] = useState("0.1.0");
+  const [appVersion, setAppVersion] = useState(APP_VERSION || "0.4.0");
   const [webpageUrl, setWebpageUrl] = useState(WEBPAGE_URL);
   const [devEmail, setDevEmail] = useState<string | undefined>(undefined);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
@@ -768,6 +831,13 @@ export default function App() {
             localStorage.setItem("portfolio_zoom_level", String(clamped));
           }
         }
+        if (config.theme) {
+          setTheme(config.theme);
+          applyTheme(config.theme);
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem("portfolio_theme", config.theme);
+          }
+        }
 
         if (!config.setupCompleted) {
           setIsSetupWizardOpen(true);
@@ -782,8 +852,9 @@ export default function App() {
 
       try {
         const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", () => rpc.request.getAppInfo({}), 3, 200, 3000);
-        if (appInfo.version) setAppVersion(appInfo.version);
-        else if (appInfo.majorMinor) setAppVersion(appInfo.majorMinor);
+        if (appInfo.version && appInfo.version !== "0.0.0") setAppVersion(appInfo.version);
+        else if (appInfo.majorMinor && appInfo.majorMinor !== "0.0") setAppVersion(appInfo.majorMinor);
+        else if (APP_VERSION) setAppVersion(APP_VERSION);
         if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
         if (appInfo.devEmail) setDevEmail(appInfo.devEmail);
         if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
@@ -1152,13 +1223,16 @@ export default function App() {
         } else if (key === "q") {
           e.preventDefault();
           void handleQuitApp();
+        } else if (key === "l" && e.shiftKey) {
+          e.preventDefault();
+          handleToggleTheme();
         }
       }
     };
 
     window.addEventListener("keydown", handleGlobalShortcuts);
     return () => window.removeEventListener("keydown", handleGlobalShortcuts);
-  }, [handleOpenSettings, handleQuitApp, handleReload, loadData, handleZoomIn, handleZoomOut, handleZoomReset]);
+  }, [handleOpenSettings, handleQuitApp, handleReload, loadData, handleZoomIn, handleZoomOut, handleZoomReset, handleToggleTheme]);
 
   // Mouse Wheel Zoom (Ctrl + Wheel)
   useEffect(() => {
@@ -1195,7 +1269,7 @@ export default function App() {
   if (authState !== "ready") {
     if (authState === "loading") {
       return (
-        <div className="h-dvh flex items-center justify-center bg-[#07090e]">
+        <div className="h-dvh flex items-center justify-center bg-[var(--app-bg)]">
           <RefreshCw className="w-6 h-6 text-accent-400 animate-spin" />
         </div>
       );
@@ -1205,7 +1279,7 @@ export default function App() {
 
   if (isLoading && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[#07090e] text-slate-100 flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1233,6 +1307,8 @@ export default function App() {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onZoomReset={handleZoomReset}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
         <Header
           currency={currency}
@@ -1287,7 +1363,7 @@ export default function App() {
 
   if (!isLoading && loadError && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[#07090e] text-slate-100 flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1315,6 +1391,8 @@ export default function App() {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onZoomReset={handleZoomReset}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
         <Header
           currency={currency}
@@ -1379,7 +1457,7 @@ export default function App() {
 
 
   return (
-    <div className="h-dvh min-h-0 overflow-hidden bg-[#07090e] text-slate-100 flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+    <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
       {/* Application Menu Bar (Native HTML Menu for Linux) */}
       <AppMenuBar
         portfolios={portfolios}
@@ -1412,6 +1490,8 @@ export default function App() {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onZoomReset={handleZoomReset}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Content Area & Assistant Sidebar */}
@@ -1475,6 +1555,8 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
+            theme={theme}
+            onChangeTheme={handleThemeChange}
           />
         </main>
       )}
@@ -1490,6 +1572,8 @@ export default function App() {
             onPortfolioCreated={handlePortfolioCreated}
             onPortfolioUpdated={handlePortfolioUpdated}
             onPortfolioDeleted={handlePortfolioDeleted}
+            theme={theme}
+            onChangeTheme={handleThemeChange}
           />
         </main>
       )}
@@ -1528,10 +1612,11 @@ export default function App() {
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 min-w-0">
-                  <PortfolioChartCard chartHistory={chartHistory} currency={currency} hideValues={hideCurrencyValues} />
+                  <PortfolioChartCard chartHistory={chartHistory} currency={currency} hideValues={hideCurrencyValues} theme={theme} />
                 </div>
                 <div className="min-w-0">
                   <AllocationCard
+                    theme={theme}
                     summary={summary || {
                       totalValue: 0,
                       totalCost: 0,

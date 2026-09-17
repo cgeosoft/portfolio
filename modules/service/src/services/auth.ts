@@ -9,7 +9,7 @@ import { getDatabase } from "../db/database";
 import { appLogger } from "../logger";
 import { HttpError } from "../http/router";
 
-const PIN_RULE = /^[0-9]{4,8}$/;
+const PIN_RULE = /^[0-9]{6}$/;
 const PIN_ATTEMPTS_LIMIT = 5;
 const PIN_ATTEMPTS_WINDOW_MS = 5 * 60 * 1000;
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -83,7 +83,7 @@ export class AuthService {
 
   /** Sets or changes the PIN; the current PIN is required when one is set. */
   setPin(pin: string, currentPin?: string): void {
-    if (!PIN_RULE.test(pin || "")) throw new HttpError(400, "PIN must be 4 to 8 digits");
+    if (!PIN_RULE.test(pin || "")) throw new HttpError(400, "PIN must be exactly 6 digits");
     this.checkPin(currentPin);
     const hadPin = this.isPinEnabled();
     this.kvSet(PIN_KEY, this.hashPin(pin));
