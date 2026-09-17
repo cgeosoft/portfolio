@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0] - 2026-09-17
+
+- 613e870 Require Terms of Use acceptance on first run
+- ef73d2b Add light theme sponsor banner and theme-aware rendering
+- dee7392 Adopt semantic theme tokens and refine light mode styling across GUI
+- 2434242 Table-driven LLM client, lock action, dev data in .tmp
+- a87563e Add light theme and 6-digit PIN input
+- 6a9418a Update website screenshot and hotspot position
+- 92929c7 fix(website): bump cache key to v3 and reduce TTL to 2m
+
+
 ## [0.4.0] - 2026-09-16
 
 - 9d65a78 Rework release pipeline for local builds
