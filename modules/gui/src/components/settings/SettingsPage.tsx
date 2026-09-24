@@ -29,9 +29,6 @@ import {
   Sparkles,
   Database,
   LifeBuoy,
-  Mail,
-  FolderOpen,
-  Copy,
   Check,
   ExternalLink,
   Sun,
@@ -48,8 +45,7 @@ import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessSection } from "./AccessSection";
-import { api } from "../../api";
-import { downloadBlob, openExternal } from "../../environment";
+import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import {
   DEFAULT_LLAMACPP_URL,
   DEFAULT_NEBIUS_URL,
@@ -58,7 +54,7 @@ import {
   DEFAULT_OPENAI_COMPATIBLE_URL,
 } from "portfolio-shared/llm-defaults";
 
-export type SettingsSection = "general" | "access" | "portfolios" | "providers" | "assistant" | "support" | "about";
+export type SettingsSection = "general" | "access" | "portfolios" | "providers" | "assistant" | "about";
 
 interface ProviderPreset {
   id: string;
@@ -281,12 +277,6 @@ const SECTIONS = [
     icon: Bot,
   },
   {
-    id: "support" as const,
-    label: "Support",
-    description: "Submit tickets & diagnostics",
-    icon: LifeBuoy,
-  },
-  {
     id: "about" as const,
     label: "About",
     description: "App details & shortcuts",
@@ -323,6 +313,8 @@ interface SettingsPageProps {
   onChangeTheme?: (theme: AppTheme) => void;
   /** Fires when the app lock is turned on or off under Access. */
   onPinEnabledChange?: (enabled: boolean) => void;
+  /** About → Report an Issue: opens the support ticket form (the Help menu has the same item). */
+  onReportIssue?: () => void;
 }
 
 export function SettingsPage({
@@ -337,6 +329,7 @@ export function SettingsPage({
   theme,
   onChangeTheme,
   onPinEnabledChange,
+  onReportIssue,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
@@ -349,19 +342,6 @@ export function SettingsPage({
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [appVersion, setAppVersion] = useState("0.1.0");
   const [appPaths, setAppPaths] = useState<{ data: string; logs: string } | null>(null);
-  const [isLocalClient, setIsLocalClient] = useState(false);
-
-  // Support ticket state
-  const [ticketSubject, setTicketSubject] = useState("");
-  const [ticketMessage, setTicketMessage] = useState("");
-  const [ticketIncludeLogs, setTicketIncludeLogs] = useState(true);
-  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
-  const [ticketStatus, setTicketStatus] = useState<{
-    type: "success" | "error";
-    text: string;
-    zipPath?: string;
-  } | null>(null);
-  const [copiedZipPath, setCopiedZipPath] = useState(false);
 
   // Assistant settings state
   const [reportProvider, setReportProvider] = useState("llamacpp-server");
@@ -487,7 +467,6 @@ export function SettingsPage({
     rpc.request.getAppInfo({}).then((info) => {
       if (info?.version) setAppVersion(info.version);
       if (info?.paths) setAppPaths(info.paths);
-      setIsLocalClient(Boolean(info?.isLocalClient));
     }).catch(() => {});
 
     rpc.request.getUpdateInfo({}).then((res: any) => {
@@ -599,59 +578,6 @@ export function SettingsPage({
       text: `Portfolio "${p.name}" and all associated data were successfully removed.`,
     });
     setTimeout(() => setPortfolioStatusMsg(null), 3500);
-  };
-
-  const handleOpenSupportTicket = async () => {
-    setIsSubmittingTicket(true);
-    setTicketStatus(null);
-    try {
-      const res = await rpc.request.openSupportTicket({
-        subject: ticketSubject.trim() || undefined,
-        message: ticketMessage.trim() || undefined,
-        includeLogs: ticketIncludeLogs,
-      });
-      if (!res.success) throw new Error(res.error || "Failed to prepare the support ticket.");
-      // Remote client: the diagnostics come as a browser download.
-      if (ticketIncludeLogs && !res.zipPath) {
-        try {
-          const blob = await fetch(api.diagnosticsUrl(), { credentials: "include" }).then((r) => r.blob());
-          downloadBlob(res.zipFileName || "portfolio-support-logs.zip", blob);
-        } catch {
-          // The mail still opens without the archive.
-        }
-      }
-      const mailto = `mailto:${encodeURIComponent(res.recipient)}?subject=${encodeURIComponent(res.subject)}&body=${encodeURIComponent(res.body)}`;
-      openExternal(mailto);
-      setTicketStatus({
-        type: "success",
-        text: res.zipPath
-          ? "Support mail opened. The diagnostics archive was saved to your Downloads folder; attach it to the mail."
-          : ticketIncludeLogs
-            ? "Support mail opened. The diagnostics archive was downloaded; attach it to the mail."
-            : "Support mail opened in your default email application.",
-        zipPath: res.zipPath,
-      });
-    } catch (err: unknown) {
-      setTicketStatus({ type: "error", text: err instanceof Error ? err.message : "An unexpected error occurred while creating the support ticket." });
-    } finally {
-      setIsSubmittingTicket(false);
-    }
-  };
-
-  const handleRevealZipFile = async (path: string) => {
-    try {
-      await api.revealFile(path);
-    } catch {
-      // Not available for remote clients.
-    }
-  };
-
-  const handleCopyZipPath = (path: string) => {
-    if (navigator?.clipboard) {
-      navigator.clipboard.writeText(path);
-      setCopiedZipPath(true);
-      setTimeout(() => setCopiedZipPath(false), 2000);
-    }
   };
 
   const filteredPortfolios = (portfolios || []).filter((p) => {
@@ -1370,161 +1296,6 @@ export function SettingsPage({
             </div>
           )}
 
-          {/* SECTION 4: SUPPORT TICKET */}
-          {activeSection === "support" && (
-            <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <LifeBuoy className="w-4 h-4 text-[#DD3C73]" />
-                  <span>Support Ticket & Diagnostics</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Open a technical support ticket or report an issue directly to christos@cgeosoft.com.
-                </p>
-              </div>
-
-              {/* Anonymization Guarantee Notice */}
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 text-xs flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div className="space-y-1 leading-relaxed">
-                  <div className="font-bold text-emerald-200">
-                    Strict Log Anonymization Guarantee
-                  </div>
-                  <p className="text-[11px] text-emerald-300/90 leading-relaxed">
-                    All diagnostic log entries are completely anonymized before packaging into the ZIP file. Personal usernames, home directories, file paths, portfolio names, tickers, quantities, financial values, and API keys are automatically stripped and redacted.
-                  </p>
-                </div>
-              </div>
-
-              {/* Ticket Form */}
-              <div className="space-y-4 pt-1">
-                {/* Recipient */}
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Recipient Email</span>
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value="christos@cgeosoft.com"
-                    className="w-full bg-slate-950/90 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono focus:outline-none cursor-default select-all"
-                  />
-                </div>
-
-                {/* Subject */}
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                    Ticket Subject
-                  </label>
-                  <input
-                    type="text"
-                    value={ticketSubject}
-                    onChange={(e) => setTicketSubject(e.target.value)}
-                    placeholder="e.g. Issue with transaction import or quote sync"
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
-                  />
-                </div>
-
-                {/* Message */}
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                    Problem Description (Optional)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={ticketMessage}
-                    onChange={(e) => setTicketMessage(e.target.value)}
-                    placeholder="Describe what happened or steps to reproduce..."
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
-                  />
-                </div>
-
-                {/* Checkbox for 24h logs */}
-                <div className="flex items-start gap-3 pt-1">
-                  <input
-                    type="checkbox"
-                    id="ticket-include-logs"
-                    checked={ticketIncludeLogs}
-                    onChange={(e) => setTicketIncludeLogs(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
-                  />
-                  <label htmlFor="ticket-include-logs" className="cursor-pointer select-none space-y-0.5">
-                    <div className="text-xs font-semibold text-slate-200">
-                      Submit last day logs as an anonymized zip attachment
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Packages diagnostic events and system metadata from the previous 24 hours into a ZIP file. Personal file paths, portfolio names, financial values, and credentials are automatically redacted.
-                    </p>
-                  </label>
-                </div>
-
-                {/* Status / Alert Banner */}
-                {ticketStatus && (
-                  <div
-                    className={`p-3 text-xs rounded-xl flex flex-col gap-2 ${
-                      ticketStatus.type === "success"
-                        ? "text-emerald-300 bg-emerald-950/40 border border-emerald-800/50"
-                        : "text-rose-300 bg-rose-950/40 border border-rose-800/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {ticketStatus.type === "success" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                      )}
-                      <span>{ticketStatus.text}</span>
-                    </div>
-
-                    {ticketStatus.zipPath && (
-                      <div className="pt-2 border-t border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <code className="text-[10px] text-emerald-200 bg-slate-950/70 px-2 py-1 rounded border border-emerald-800/40 truncate max-w-md">
-                          {ticketStatus.zipPath}
-                        </code>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {isLocalClient && (
-                          <button
-                            type="button"
-                            onClick={() => handleRevealZipFile(ticketStatus.zipPath!)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-[11px] font-semibold transition-colors cursor-pointer"
-                            title="Open folder containing ZIP archive"
-                          >
-                            <FolderOpen className="w-3.5 h-3.5" />
-                            <span>Open Folder</span>
-                          </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleCopyZipPath(ticketStatus.zipPath!)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors cursor-pointer"
-                            title="Copy path to clipboard"
-                          >
-                            {copiedZipPath ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedZipPath ? "Copied" : "Copy Path"}</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Action Button */}
-                <div className="pt-2 flex items-center justify-end">
-                  <button
-                    type="button"
-                    disabled={isSubmittingTicket}
-                    onClick={handleOpenSupportTicket}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-[#DD3C73]/20"
-                  >
-                    <LifeBuoy className={`w-3.5 h-3.5 ${isSubmittingTicket ? "animate-spin" : ""}`} />
-                    <span>{isSubmittingTicket ? "Preparing Ticket..." : "Open Support Ticket"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* SECTION 5: ABOUT */}
           {activeSection === "about" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
@@ -1611,6 +1382,30 @@ export function SettingsPage({
                 </div>
               </div>
 
+              {/* Support */}
+              <div className="space-y-2.5">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <LifeBuoy className="w-3.5 h-3.5 text-[#DD3C73]" />
+                  <span>Support</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <div>
+                    <span className="text-xs text-slate-200 font-semibold">Something is not working or you have an idea?</span>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Open a support ticket to {WEBPAGE_EMAIL}. Your version is filled in and the anonymized diagnostics of the last day can be attached.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onReportIssue?.()}
+                    className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                  >
+                    <LifeBuoy className="w-3.5 h-3.5" />
+                    <span>Report an Issue</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Storage Locations */}
               <div className="space-y-2.5">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -1622,12 +1417,6 @@ export function SettingsPage({
                     <span className="text-slate-400 text-[11px]">Database Ledger:</span>
                     <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                       {appPaths?.data || "…"}
-                    </code>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                    <span className="text-slate-400 text-[11px]">User Preferences:</span>
-                    <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                      config table in the database
                     </code>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">

@@ -52,6 +52,8 @@ export interface AppMenuBarProps {
   onReload?: () => void;
   onAnalyzePortfolio: () => void;
   onOpenSetupWizard: () => void;
+  /** Help → Report an Issue...: the support ticket form. */
+  onReportIssue: () => void;
   onQuit: () => void;
   isAssistantOpen?: boolean;
   onToggleAssistant?: () => void;
@@ -99,6 +101,7 @@ export function AppMenuBar({
   onReload,
   onAnalyzePortfolio,
   onOpenSetupWizard,
+  onReportIssue,
   onQuit,
   isAssistantOpen,
   onToggleAssistant,
@@ -199,7 +202,7 @@ export function AppMenuBar({
   const helpItems: MenuItemDef[] = [
     { label: "Keyboard Shortcuts...", icon: Keyboard, action: run(() => onOpenSettings("about")) },
     { label: "Setup Wizard...", icon: HelpCircle, action: run(onOpenSetupWizard) },
-    { label: "Support Ticket...", icon: LifeBuoy, action: run(() => onOpenSettings("support")) },
+    { label: "Report an Issue...", icon: LifeBuoy, action: run(onReportIssue) },
     { type: "separator" },
     {
       label: updateInfo?.hasUpdate ? `Update Available (v${updateInfo.latestVersion})...` : "Check for Updates...",

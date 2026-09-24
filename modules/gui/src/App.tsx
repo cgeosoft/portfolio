@@ -23,6 +23,7 @@ import { SetupWizardModal } from "./components/common/SetupWizardModal";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { ChangelogModal } from "./components/common/ChangelogModal";
 import { SettingsPage, type SettingsSection } from "./components/settings/SettingsPage";
+import { SupportTicketModal } from "./components/settings/SupportTicketModal";
 import { TermsPage } from "./components/common/TermsPage";
 import { BottomBar } from "./components/layout/BottomBar";
 import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
@@ -65,7 +66,7 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "providers", "assistant", "support", "about"];
+const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "providers", "assistant", "about"];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
@@ -659,6 +660,7 @@ export default function App() {
 
   // Modals state
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
+  const [isSupportTicketOpen, setIsSupportTicketOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -1401,6 +1403,7 @@ export default function App() {
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+          onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -1487,6 +1490,7 @@ export default function App() {
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+          onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -1584,6 +1588,7 @@ export default function App() {
         onReload={handleReload}
         onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
         onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+        onReportIssue={() => setIsSupportTicketOpen(true)}
         onQuit={handleQuitApp}
         isAssistantOpen={isAssistantOpen}
         onToggleAssistant={handleToggleAssistant}
@@ -1663,6 +1668,7 @@ export default function App() {
             theme={theme}
             onChangeTheme={handleThemeChange}
             onPinEnabledChange={setPinEnabled}
+            onReportIssue={() => setIsSupportTicketOpen(true)}
           />
         </main>
       )}
@@ -1681,6 +1687,7 @@ export default function App() {
             theme={theme}
             onChangeTheme={handleThemeChange}
             onPinEnabledChange={setPinEnabled}
+            onReportIssue={() => setIsSupportTicketOpen(true)}
           />
         </main>
       )}
@@ -1865,6 +1872,8 @@ export default function App() {
         onComplete={handleSetupComplete}
         onClose={() => setIsSetupWizardOpen(false)}
       />
+
+      <SupportTicketModal isOpen={isSupportTicketOpen} onClose={() => setIsSupportTicketOpen(false)} />
 
       <TransactionModal
         isOpen={isTxModalOpen}
