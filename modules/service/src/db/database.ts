@@ -5,7 +5,7 @@ import { getDatabaseFile } from "../paths";
 
 let db: Database | null = null;
 
-/** Absolute path of the database file (see paths.ts). */
+/** Absolute path of the database file, `<data dir>/portfolio.sqlite` (see paths.ts). */
 export function getDatabasePath(): string {
   return getDatabaseFile();
 }

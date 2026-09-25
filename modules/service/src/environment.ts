@@ -1,29 +1,25 @@
 /**
- * Runtime environment of the service: production vs development and the
- * application version.
+ * Runtime environment of the service: whether it runs from a checkout and
+ * the application version. Nothing here reads an environment variable.
  *
- *   NODE_ENV            "production" in packaged builds (set by the desktop shell)
- *   PORTFOLIO_VERSION   baked into the bundle by modules/desktop/scripts/stage.ts;
- *                       in development the root package.json is read instead
+ * The version comes from the `APP_VERSION` constant that
+ * modules/desktop/scripts/stage.ts bakes into the bundle with
+ * `bun build --define`, else from `version.txt` next to the bundle, else from
+ * the root package.json of the checkout.
  */
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { join } from "node:path";
+import { REPO_ROOT } from "./paths";
 
-let cachedIsProduction: boolean | null = null;
 let cachedVersion: string | null = null;
-let cachedWorkspaceRoot: string | null = null;
 
-export function isProduction(): boolean {
-  if (cachedIsProduction !== null) return cachedIsProduction;
-  const nodeEnv = process.env["NODE_ENV"];
-  if (nodeEnv === "production") cachedIsProduction = true;
-  else if (nodeEnv === "development" || nodeEnv === "test") cachedIsProduction = false;
-  else cachedIsProduction = !!(process.env.PORTFOLIO_VERSION || process.env["PORTFOLIO_VERSION"]);
-  return cachedIsProduction;
+/** True when the service runs from a checkout (`bun start`), not from the desktop bundle. */
+export function isDev(): boolean {
+  return REPO_ROOT !== undefined;
 }
 
-export function isDev(): boolean {
-  return !isProduction();
+export function isProduction(): boolean {
+  return !isDev();
 }
 
 export function getEnvironmentName(): "production" | "development" {
@@ -37,76 +33,28 @@ export function isLocalhostUrl(url?: string): boolean {
   return trimmed.includes("localhost") || trimmed.includes("127.0.0.1") || trimmed.startsWith("http://[::1]");
 }
 
-/**
- * Root of the Bun workspace in development (the directory whose package.json
- * is named `portfolio`), found by walking up from this file. Undefined inside
- * the packaged bundle, where no such package.json exists.
- */
-export function getWorkspaceRoot(): string | undefined {
-  if (cachedWorkspaceRoot !== null) return cachedWorkspaceRoot || undefined;
-  let dir = dirname(new URL(import.meta.url).pathname);
-  for (let i = 0; i < 6; i++) {
-    const candidate = resolve(dir, "package.json");
-    try {
-      if (existsSync(candidate)) {
-        const pkg = JSON.parse(readFileSync(candidate, "utf-8")) as { name?: string };
-        if (pkg.name === "portfolio") {
-          cachedWorkspaceRoot = dir;
-          return dir;
-        }
-      }
-    } catch {
-      // keep walking
-    }
-    const parent = resolve(dir, "..");
-    if (parent === dir) break;
-    dir = parent;
+function readTrimmed(file: string): string | undefined {
+  try {
+    return existsSync(file) ? readFileSync(file, "utf-8").trim() || undefined : undefined;
+  } catch {
+    return undefined;
   }
-  cachedWorkspaceRoot = "";
-  return undefined;
 }
 
 /** Semver of the running application. */
 export function getAppVersion(): string {
   if (cachedVersion !== null) return cachedVersion;
-  const baked = (process.env.PORTFOLIO_VERSION || process.env["PORTFOLIO_VERSION"])?.trim();
-  if (baked) {
-    cachedVersion = baked;
-    return baked;
-  }
-  // Packaged build fallback: version.txt next to the service bundle.
-  try {
-    const versionFile = resolve(dirname(new URL(import.meta.url).pathname), "version.txt");
-    if (existsSync(versionFile)) {
-      const v = readFileSync(versionFile, "utf-8").trim();
-      if (v) {
-        cachedVersion = v;
-        return cachedVersion;
-      }
-    }
-  } catch {
-    // fall through
-  }
-  // Development: the version of the workspace root package.json.
-  const root = getWorkspaceRoot();
-  if (root) {
+  const baked = typeof APP_VERSION !== "undefined" ? APP_VERSION?.trim() : undefined;
+  const fromFile = baked ? undefined : readTrimmed(join(import.meta.dir, "version.txt"));
+  let fromPackage: string | undefined;
+  if (!baked && !fromFile && REPO_ROOT) {
     try {
-      const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf-8")) as { version?: string };
-      if (typeof pkg.version === "string") {
-        cachedVersion = pkg.version.trim();
-        return cachedVersion;
-      }
+      const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf-8")) as { version?: string };
+      if (typeof pkg.version === "string") fromPackage = pkg.version.trim();
     } catch {
       // fall through
     }
   }
-  cachedVersion = "0.0.0";
+  cachedVersion = baked || fromFile || fromPackage || "0.0.0";
   return cachedVersion;
-}
-
-/** Test helper: clears the cached environment state. */
-export function _resetEnvironmentCache(): void {
-  cachedIsProduction = null;
-  cachedVersion = null;
-  cachedWorkspaceRoot = null;
 }

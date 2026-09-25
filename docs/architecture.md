@@ -15,17 +15,22 @@ The service is plain Bun: `Bun.serve` with the router in `src/http/router.ts` an
 
 ## Configuration
 
-There is no `.env` file at runtime. The service reads only these environment variables, set by the desktop shell or a developer:
+There is no `.env` file and the service reads no environment variable of its own. It derives its paths itself (`modules/service/src/paths.ts`; the desktop shell applies the same rule in `modules/desktop/src/bun/app.ts`):
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `PORTFOLIO_PORT` | `5130` | Listen port |
-| `PORTFOLIO_HOST` | remote-access switch | Force a bind address (servers) |
-| `PORTFOLIO_DATA_DIR` | `<workspace>/.tmp` in dev; `~/.config/portfolio` (Linux), `%APPDATA%\portfolio`, `~/Library/Application Support/portfolio` in production | Database `data/portfolio.sqlite`, `host-settings.json` |
-| `PORTFOLIO_LOG_DIR` | `<workspace>/logs` in dev; `~/.local/state/portfolio/logs` (Linux), `%LOCALAPPDATA%\portfolio\logs`, `~/Library/Logs/portfolio` in production | One `service-YYYY-MM-DD.log` per day |
-| `PORTFOLIO_GUI_DIR` | unset | Built GUI to serve on `/` |
-| `PORTFOLIO_VERSION` | root `package.json` in dev | Baked into the bundle by `modules/desktop/scripts/stage.ts` |
-| `POSTHOG_API_KEY` | empty (telemetry off) | Baked into the bundle at build time |
+| Path | Where |
+|---|---|
+| Data directory | `~/.local/share/portfolio` (Linux, `XDG_DATA_HOME` ignored), `~/Library/Application Support/portfolio` (macOS), `%APPDATA%\portfolio` (Windows); the same in development and in the installed app |
+| Database | `<data>/portfolio.sqlite` |
+| Logs | `<data>/logs/` |
+| Metric engine and modules | `<data>/metrics/` |
+| Built GUI | `Resources/app/gui`, next to the bundle's `service/` directory; from a checkout Vite serves the GUI |
+| Sponsor pages | `sponsor.html` and `sponsor-light.html` next to the bundle; `extras/website/sponsor/` in a checkout |
+
+The service runs "from source" when a parent directory of the code holds the workspace `package.json` (`REPO_ROOT`). That run counts as development: debug records are printed and `/api/app/info` reports `isDev`.
+
+On the first start `src/bootstrap.ts` imports the data of releases before 0.6: when `<data>/portfolio.sqlite` is missing and `<old>/data/portfolio.sqlite` exists (`<old>` = `~/.config/portfolio` on Linux, the data directory itself on macOS and Windows), it checkpoints the old database, copies it to `<data>/portfolio.sqlite` and copies the other entries of the old directory, skipping SQLite `-wal`, `-shm` and `-journal` files. The old directory stays in place.
+
+Build-time values are global constants that `bun build --define` bakes into the bundle (`modules/service/src/globals.d.ts`): `APP_VERSION` (without it: `version.txt` next to the bundle, then the root `package.json`) and `POSTHOG_API_KEY` (empty: telemetry stays off).
 
 Everything the user can change lives in the `settings` table: one row per key, `key` and `value`, a string as is and other values as JSON (`modules/service/src/config.ts`, types in `modules/shared/src/config-types.ts`). A `config.json` from a release before 0.3 is imported once and renamed to `config.json.migrated`. `GET /api/config` never returns an API key: each stored key comes back as `SECRET_MASK`, and a request that carries `SECRET_MASK` uses the stored key.
 

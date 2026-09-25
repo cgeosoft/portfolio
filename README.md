@@ -17,7 +17,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 
 ## Key Features
 
-- **100% Offline-First Data Storage**: Portfolios, transactions, and snapshots are stored locally in SQLite (`~/.config/portfolio/data/portfolio.sqlite`). No external server or accounts needed.
+- **100% Offline-First Data Storage**: Portfolios, transactions, and snapshots are stored locally in SQLite (`~/.local/share/portfolio/portfolio.sqlite` on Linux). No external server or accounts needed.
 - **Local SQLite Engine (`bun:sqlite`)**: High-performance WAL-mode SQLite database with indexed tables and instant queries.
 - **Live Market Valuation & Multi-Currency FX**: Real-time quotes, intraday P&L, historical charts, and foreign exchange conversions powered by Yahoo Finance.
 - **Progressive Financial Analytics**: Automatic calculation of total invested capital, realized gains, uninvested cash liquidity balance, dividend income, broker fees, and tax withholdings.
@@ -79,7 +79,7 @@ bun run dev        # service on http://127.0.0.1:5130, Vite GUI on http://localh
 bun run desktop    # stages service + GUI and opens the Electrobun window
 ```
 
-In development data goes to `.tmp/` in the workspace (ignored by git). Packaged builds use `~/.config/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). Set `PORTFOLIO_DATA_DIR` to use another directory.
+Development and the installed app share one data directory: `~/.local/share/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). The first start copies the data of releases before 0.6 from `~/.config/portfolio` on Linux.
 
 ### Typecheck and Test
 

@@ -7,7 +7,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getStorageDir } from "../../config.js";
+import { getMetricsDir } from "../../paths.js";
 import { appLogger } from "../../logger.js";
 import * as installedRepo from "../../db/installed-metrics.repo.js";
 import type { MetricManifest } from "portfolio-shared/metric-manifest";
@@ -31,7 +31,7 @@ export interface MetricRecord {
 }
 
 export function getMetricsStorageDir(): string {
-  return join(getStorageDir(), "metrics");
+  return getMetricsDir();
 }
 
 export function getInstalledModulePath(id: string, version: string): string {

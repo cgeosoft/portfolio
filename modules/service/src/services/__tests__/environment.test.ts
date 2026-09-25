@@ -1,23 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { isProduction, isDev, getEnvironmentName, isLocalhostUrl, getAppVersion, _resetEnvironmentCache } from "../../environment";
+import { describe, it, expect } from "bun:test";
+import { isProduction, isDev, getEnvironmentName, isLocalhostUrl, getAppVersion } from "../../environment";
 
 describe("Environment detection", () => {
-  const originalNodeEnv = process.env["NODE_ENV"];
-  const originalVersion = process.env["PORTFOLIO_VERSION"];
-
-  beforeEach(() => {
-    _resetEnvironmentCache();
-    delete process.env["PORTFOLIO_VERSION"];
-  });
-
-  afterEach(() => {
-    _resetEnvironmentCache();
-    if (originalNodeEnv !== undefined) process.env["NODE_ENV"] = originalNodeEnv;
-    else delete process.env["NODE_ENV"];
-    if (originalVersion !== undefined) process.env["PORTFOLIO_VERSION"] = originalVersion;
-    else delete process.env["PORTFOLIO_VERSION"];
-  });
-
   describe("isLocalhostUrl", () => {
     it("identifies localhost and 127.0.0.1 URLs", () => {
       expect(isLocalhostUrl("http://localhost:3000")).toBe(true);
@@ -32,29 +16,13 @@ describe("Environment detection", () => {
     });
   });
 
-  it("follows NODE_ENV", () => {
-    process.env["NODE_ENV"] = "development";
-    _resetEnvironmentCache();
+  it("counts a run from the checkout as development", () => {
     expect(isDev()).toBe(true);
+    expect(isProduction()).toBe(false);
     expect(getEnvironmentName()).toBe("development");
-
-    process.env["NODE_ENV"] = "production";
-    _resetEnvironmentCache();
-    expect(isProduction()).toBe(true);
-    expect(getEnvironmentName()).toBe("production");
   });
 
-  it("treats a baked version without NODE_ENV as production", () => {
-    delete process.env["NODE_ENV"];
-    process.env["PORTFOLIO_VERSION"] = "1.2.3";
-    _resetEnvironmentCache();
-    expect(isProduction()).toBe(true);
-    expect(getAppVersion()).toBe("1.2.3");
-  });
-
-  it("reads the workspace version in development", () => {
-    process.env["NODE_ENV"] = "test";
-    _resetEnvironmentCache();
+  it("reads the workspace version from the checkout", () => {
     expect(getAppVersion()).toMatch(/^\d+\.\d+\.\d+/);
   });
 });

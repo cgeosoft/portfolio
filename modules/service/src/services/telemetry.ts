@@ -8,7 +8,8 @@ import { PostHog } from "posthog-node";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 
-const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY ?? "";
+/** Baked into the release bundle (see ../globals.d.ts); empty from a checkout. */
+const POSTHOG_KEY = typeof POSTHOG_API_KEY !== "undefined" ? (POSTHOG_API_KEY ?? "") : "";
 const POSTHOG_HOST = "https://eu.i.posthog.com";
 
 export class TelemetryService {
@@ -20,8 +21,8 @@ export class TelemetryService {
     const config = loadConfig();
     this.deviceId = config.deviceId;
 
-    if (config.telemetryEnabled && POSTHOG_API_KEY) {
-      this.client = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_HOST });
+    if (config.telemetryEnabled && POSTHOG_KEY) {
+      this.client = new PostHog(POSTHOG_KEY, { host: POSTHOG_HOST });
       appLogger.logStep("info", "telemetry", "initialize", "Anonymous analytics enabled");
     }
   }

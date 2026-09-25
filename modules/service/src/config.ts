@@ -7,16 +7,15 @@
  * imported once and renamed to config.json.migrated.
  */
 import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { DEFAULT_DATA_PROVIDER_ROUTING, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { getDatabase } from "./db/database";
-import { getStorageDir } from "./paths";
+import { DATA_DIR } from "./paths";
 
 export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, WindowStateConfig } from "portfolio-shared/config-types";
 export { DEFAULT_DATA_PROVIDER_ROUTING } from "portfolio-shared/config-types";
-export { getStorageDir } from "./paths";
 
 const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   setupCompleted: false,
@@ -117,7 +116,7 @@ function migrateLegacyFile(): void {
   if (migrated) return;
   migrated = true;
   migrateConfigTable();
-  const file = join(getStorageDir(), "config.json");
+  const file = join(DATA_DIR, "config.json");
   if (!existsSync(file)) return;
   const db = getDatabase();
   const count = (db.query("SELECT COUNT(*) AS n FROM settings").get() as { n: number }).n;
@@ -274,17 +273,26 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
   return out;
 }
 
+/**
+ * The desktop launcher of the installed app. The desktop shell runs the
+ * service with the runtime binary in the app's `bin/` directory, next to
+ * `launcher`. From a checkout there is none.
+ */
+function desktopLauncher(): string | undefined {
+  const launcher = join(dirname(process.execPath), "launcher");
+  return existsSync(launcher) ? launcher : undefined;
+}
+
 /** Linux autostart entry (~/.config/autostart/portfolio.desktop). */
 export function syncAutostart(enabled: boolean): void {
   if (process.platform !== "linux") return;
   try {
-    const home = homedir() || process.env["HOME"] || "~";
+    const home = homedir();
     const autostartDir = join(home, ".config", "autostart");
     const desktopFilePath = join(autostartDir, "portfolio.desktop");
     if (enabled) {
       mkdirSync(autostartDir, { recursive: true });
-      // The desktop shell passes its own launcher path; a bare service has none.
-      const execCommand = process.env["PORTFOLIO_LAUNCHER"] || "portfolio";
+      const execCommand = desktopLauncher() ?? "portfolio";
       writeFileSync(
         desktopFilePath,
         `[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=${execCommand}\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n`,

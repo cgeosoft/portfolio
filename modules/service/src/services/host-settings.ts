@@ -9,7 +9,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { appLogger } from "../logger";
-import { getStorageDir } from "../paths";
+import { DATA_DIR } from "../paths";
 
 export interface HostSettings {
   allowRemoteConnections: boolean;
@@ -24,7 +24,7 @@ export interface RemoteAccessInfo {
 }
 
 export class HostSettingsService {
-  private readonly file = process.env["PORTFOLIO_HOST_SETTINGS_FILE"]?.trim() || path.join(getStorageDir(), "host-settings.json");
+  private readonly file = process.env["PORTFOLIO_HOST_SETTINGS_FILE"]?.trim() || path.join(DATA_DIR, "host-settings.json");
   private settings: HostSettings = this.read();
   private port = 0;
   private rebind: ((host: string) => Promise<void>) | null = null;

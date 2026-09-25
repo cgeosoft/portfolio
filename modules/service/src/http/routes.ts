@@ -4,14 +4,13 @@
  * followed). Paths are grouped by resource; the GUI client is
  * modules/gui/src/api.ts.
  */
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { HttpError, Router, json, type RequestContext } from "./router";
 import { appLogger } from "../logger";
 import { loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
 import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
-import { getLogDir } from "../paths";
+import { findBundledFile, getLogDir } from "../paths";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
@@ -67,28 +66,15 @@ function toItem(row: portfolioRepo.PortfolioRow) {
   return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, createdAt: row.createdAt, updatedAt: row.updatedAt };
 }
 
-/** Bundled sponsor page: set by the desktop shell, or the website source in development. */
+/** Offline sponsor page: next to the service bundle, or the website source in a checkout. */
 function sponsorFallbackFile(theme?: string): string | null {
-  const isLight = theme === "light";
-  const configured = isLight
-    ? process.env["PORTFOLIO_SPONSOR_LIGHT_FILE"]?.trim()
-    : process.env["PORTFOLIO_SPONSOR_FILE"]?.trim();
-  const relFile = isLight ? "sponsor/light/index.html" : "sponsor/index.html";
-  const candidates = [
-    configured,
-    resolve(dirname(new URL(import.meta.url).pathname), `../../../../extras/website/${relFile}`),
-    join(process.cwd(), `extras/website/${relFile}`),
-    ...(isLight
-      ? [
-          resolve(dirname(new URL(import.meta.url).pathname), "../../../../extras/website/sponsor/light.html"),
-          join(process.cwd(), "extras/website/sponsor/light.html"),
-        ]
-      : []),
-  ].filter((p): p is string => !!p);
-  const found = candidates.find((p) => existsSync(p));
-  if (found) return found;
-  if (isLight) return sponsorFallbackFile();
-  return null;
+  if (theme === "light") {
+    const light =
+      findBundledFile("sponsor-light.html", "extras/website/sponsor/light/index.html") ??
+      findBundledFile("sponsor-light.html", "extras/website/sponsor/light.html");
+    if (light) return light;
+  }
+  return findBundledFile("sponsor.html", "extras/website/sponsor/index.html") ?? null;
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {

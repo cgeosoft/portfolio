@@ -5,10 +5,10 @@
  *   PORTFOLIO_PORT       listen port (default 5130)
  *   PORTFOLIO_HOST       force a bind address (servers); otherwise the
  *                        remote-access switch decides (127.0.0.1 or 0.0.0.0)
- *   PORTFOLIO_DATA_DIR   data directory (database, host settings)
  *   PORTFOLIO_LOG_DIR    log directory
- *   PORTFOLIO_GUI_DIR    built GUI to serve on "/" (set by the desktop shell)
  */
+import { ensureDataDir } from "./bootstrap";
+import { DATA_DIR, getGuiDir } from "./paths";
 import { appLogger } from "./logger";
 import { getDatabase, closeDatabase, getDatabasePath } from "./db/database";
 import * as portfolioRepo from "./db/portfolio.repo";
@@ -38,6 +38,9 @@ appLogger.logStep("info", "main", "start", `Portfolio service ${getAppVersion()}
 
 // ── database and services ───────────────────────────────────────────────────
 
+const imported = ensureDataDir();
+if (imported) appLogger.logStep("success", "main", "migrate", `Copied the data of ${imported} into ${DATA_DIR}`);
+
 const dbTimer = appLogger.startTimer("db", "open", `Opening ${getDatabasePath()}`);
 getDatabase();
 loadConfig();
@@ -51,7 +54,7 @@ telemetry.capture("app_launched");
 // ── HTTP ────────────────────────────────────────────────────────────────────
 
 const router = new Router();
-const site = new StaticSite(process.env["PORTFOLIO_GUI_DIR"]?.trim() || "");
+const site = new StaticSite(getGuiDir() ?? "");
 let server: ReturnType<typeof Bun.serve> | null = null;
 
 registerRoutes(router, services, () => {
@@ -97,9 +100,6 @@ hostSettings.attach(PORT, async (host) => {
 });
 
 appLogger.logStep("success", "http", "listen", `Listening on http://${hostSettings.listenHost()}:${PORT}${site.available ? " (serving GUI)" : ""}`);
-if (!site.available && process.env["PORTFOLIO_GUI_DIR"]) {
-  appLogger.logStep("warning", "http", "gui", `PORTFOLIO_GUI_DIR=${process.env["PORTFOLIO_GUI_DIR"]} has no index.html; the GUI is not served`);
-}
 
 // ── background work ─────────────────────────────────────────────────────────
 

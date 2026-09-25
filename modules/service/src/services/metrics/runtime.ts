@@ -13,7 +13,7 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { getStorageDir } from "../../config.js";
+import { getMetricsDir } from "../../paths.js";
 import { appLogger } from "../../logger.js";
 import {
   DEFAULT_METRIC_TIMEOUT_MS,
@@ -90,7 +90,7 @@ export class MetricRuntime {
   private spawnPromise: Promise<EngineProcess> | null = null;
 
   constructor(options: MetricRuntimeOptions = {}) {
-    this.enginePath = join(options.engineDir ?? join(getStorageDir(), "metrics"), "engine.js");
+    this.enginePath = join(options.engineDir ?? getMetricsDir(), "engine.js");
     this.executable = options.executable ?? process.execPath;
   }
 
