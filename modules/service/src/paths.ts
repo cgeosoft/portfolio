@@ -11,7 +11,7 @@
  *                        %LOCALAPPDATA%\portfolio\logs)
  *
  * Everything else the service needs (LLM providers, API keys, preferences)
- * lives in the `config` table of the SQLite database, never in a .env file.
+ * lives in the `settings` table of the SQLite database, never in a .env file.
  */
 import { homedir } from "node:os";
 import { join } from "node:path";

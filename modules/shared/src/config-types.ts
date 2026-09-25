@@ -1,5 +1,5 @@
 /**
- * User settings of the application. Stored by the service in the `config`
+ * User settings of the application. Stored by the service in the `settings`
  * table of the SQLite database (see modules/service/src/config.ts) and edited
  * through Settings in the GUI.
  */

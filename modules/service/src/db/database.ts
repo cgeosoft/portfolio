@@ -160,12 +160,11 @@ function initializeSchema(database: Database): void {
     )
   `);
 
-  // User settings, one JSON value per DesktopConfig key (see ../config.ts).
+  // User settings, one row per DesktopConfig key (see ../config.ts).
   database.run(`
-    CREATE TABLE IF NOT EXISTS config (
+    CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+      value TEXT NOT NULL
     )
   `);
 

@@ -1,6 +1,7 @@
 /**
- * User settings, stored as JSON values in the `config` table of the SQLite
- * database (one row per DesktopConfig key). `loadConfig()` returns the merged
+ * User settings, stored in the `settings` table of the SQLite database: one
+ * row per DesktopConfig key, `key` and `value`. A string is stored as is;
+ * numbers, booleans and records as JSON. `loadConfig()` returns the merged
  * view over the defaults; `updateConfig()` merges a partial update the same
  * way the old config.json did. A config.json from an earlier release is
  * imported once and renamed to config.json.migrated.
@@ -46,15 +47,30 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
 /** Keys of the old config.json that are no longer settings of the service. */
 const DROPPED_KEYS = new Set(["windowState", "lastImportDirectory", "webpageUrl"]);
 
+/** Keys whose value is not a string, stored as JSON. Every other key is stored as plain text. */
+const JSON_KEYS = new Set(
+  Object.entries(DEFAULT_CONFIG)
+    .filter(([, value]) => value !== undefined && typeof value !== "string")
+    .map(([key]) => key),
+);
+
 let migrated = false;
+
+function decode(key: string, value: string): unknown {
+  return JSON_KEYS.has(key) ? JSON.parse(value) : value;
+}
+
+function encode(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
 
 function readRows(): Record<string, unknown> {
   const db = getDatabase();
-  const rows = db.query("SELECT key, value FROM config").all() as { key: string; value: string }[];
+  const rows = db.query("SELECT key, value FROM settings").all() as { key: string; value: string }[];
   const out: Record<string, unknown> = {};
   for (const row of rows) {
     try {
-      out[row.key] = JSON.parse(row.value);
+      out[row.key] = decode(row.key, row.value);
     } catch {
       // A corrupt row falls back to the default.
     }
@@ -64,29 +80,47 @@ function readRows(): Record<string, unknown> {
 
 function writeRows(values: Record<string, unknown>): void {
   const db = getDatabase();
-  const upsert = db.prepare(
-    "INSERT INTO config (key, value, updatedAt) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = excluded.updatedAt",
-  );
-  const remove = db.prepare("DELETE FROM config WHERE key = ?");
-  const now = new Date().toISOString();
+  const upsert = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  const remove = db.prepare("DELETE FROM settings WHERE key = ?");
   const run = db.transaction(() => {
     for (const [key, value] of Object.entries(values)) {
       if (DROPPED_KEYS.has(key)) continue;
       if (value === undefined) remove.run(key);
-      else upsert.run(key, JSON.stringify(value), now);
+      else upsert.run(key, encode(value));
     }
   });
   run();
+}
+
+/** One-time move of the `config` table (JSON value per key, releases before 0.6) into `settings`. */
+function migrateConfigTable(): void {
+  const db = getDatabase();
+  const exists = db.query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'config'").get();
+  if (!exists) return;
+  const rows = db.query("SELECT key, value FROM config").all() as { key: string; value: string }[];
+  const values: Record<string, unknown> = {};
+  for (const row of rows) {
+    try {
+      values[row.key] = JSON.parse(row.value);
+    } catch {
+      // A corrupt row falls back to the default.
+    }
+  }
+  db.transaction(() => {
+    writeRows(values);
+    db.run("DROP TABLE config");
+  })();
 }
 
 /** One-time import of the config.json written by releases before 0.3. */
 function migrateLegacyFile(): void {
   if (migrated) return;
   migrated = true;
+  migrateConfigTable();
   const file = join(getStorageDir(), "config.json");
   if (!existsSync(file)) return;
   const db = getDatabase();
-  const count = (db.query("SELECT COUNT(*) AS n FROM config").get() as { n: number }).n;
+  const count = (db.query("SELECT COUNT(*) AS n FROM settings").get() as { n: number }).n;
   try {
     if (count === 0) {
       const parsed = JSON.parse(readFileSync(file, "utf-8")) as Record<string, unknown>;

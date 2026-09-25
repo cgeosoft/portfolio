@@ -10,7 +10,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 
 ## Layout
 
-- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `config` table), `paths.ts` (data and log directories), `logger.ts` (daily `service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
+- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `settings` table), `paths.ts` (data and log directories), `logger.ts` (daily `service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
 - `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (design tokens).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.
@@ -52,7 +52,7 @@ bun run website:publish                   # write latest.json and deploy website
 3. Never log or send balances, tickers, quantities or personal data.
 4. GUI and service talk only over HTTP: a route in `modules/service/src/http/routes.ts`, a method in `modules/gui/src/api.ts`, types in `modules/shared/src/api-types.ts`. No `bun` or `node:*` imports in `modules/gui`.
 5. Keep route handlers thin; logic in `modules/service/src/services/`.
-6. Settings live in the `config` table (`loadConfig`/`updateConfig`), never in a .env file. Only paths and ports come from the environment (`paths.ts`, `main.ts`).
+6. Settings live in the `settings` table (`loadConfig`/`updateConfig`), never in a .env file. Only paths and ports come from the environment (`paths.ts`, `main.ts`).
 7. Clean LLM output with `sanitizeLlmResponse()` before display.
 8. A metric never runs in the main process or webview; the ABI changes only with a new version.
 9. Writing: short active sentences. No em-dashes, emojis or AI clichés. State only verified facts.

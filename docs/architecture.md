@@ -27,7 +27,7 @@ There is no `.env` file at runtime. The service reads only these environment var
 | `PORTFOLIO_VERSION` | root `package.json` in dev | Baked into the bundle by `modules/desktop/scripts/stage.ts` |
 | `POSTHOG_API_KEY` | empty (telemetry off) | Baked into the bundle at build time |
 
-Everything the user can change lives in the `config` table: one row per key, JSON value (`modules/service/src/config.ts`, types in `modules/shared/src/config-types.ts`). A `config.json` from a release before 0.3 is imported once and renamed to `config.json.migrated`.
+Everything the user can change lives in the `settings` table: one row per key, `key` and `value`, a string as is and other values as JSON (`modules/service/src/config.ts`, types in `modules/shared/src/config-types.ts`). A `config.json` from a release before 0.3 is imported once and renamed to `config.json.migrated`.
 
 ## Access
 
