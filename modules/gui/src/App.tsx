@@ -66,7 +66,7 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "providers", "assistant", "about"];
+const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "assistant", "about"];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
@@ -96,7 +96,9 @@ export default function App() {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
-        const sec = hash.replace("#settings/", "") as SettingsSection;
+        const raw = hash.replace("#settings/", "");
+        // Data providers moved into the Assistant section.
+        const sec = (raw === "providers" ? "assistant" : raw) as SettingsSection;
         if (SETTINGS_SECTIONS.includes(sec)) {
           return sec;
         }
@@ -189,8 +191,9 @@ export default function App() {
         }
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
-        if (parts[1] && SETTINGS_SECTIONS.includes(parts[1])) {
-          setSettingsSection(parts[1] as SettingsSection);
+        const sec = parts[1] === "providers" ? "assistant" : parts[1];
+        if (sec && SETTINGS_SECTIONS.includes(sec)) {
+          setSettingsSection(sec as SettingsSection);
         } else {
           setSettingsSection("general");
         }

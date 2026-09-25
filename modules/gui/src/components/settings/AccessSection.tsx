@@ -3,6 +3,7 @@ import { Lock, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
+import { SettingItem, Toggle } from "./SettingsFields";
 
 const PIN_RULE = /^[0-9]{6}$/;
 
@@ -70,41 +71,30 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
   };
 
   return (
-    <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2 rounded-lg bg-accent-500/10 text-accent-300 shrink-0 mt-0.5">
-            <Lock className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-bold text-slate-50">App lock</span>
-            <span className="text-xs text-slate-400 leading-relaxed">
-              Ask for a PIN before opening Portfolio. Applies to this computer and to any device that connects over the network. Without it the app opens straight away.
-            </span>
-            {pinEnabled && mode === "idle" && (
-              <button type="button" onClick={() => setMode("change")} className="self-start text-xs font-semibold text-accent-400 hover:text-accent-300 mt-1 cursor-pointer">
-                Change PIN
-              </button>
-            )}
-          </div>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={pinEnabled}
+    <SettingItem
+      icon={Lock}
+      title="App lock"
+      description={
+        <>
+          Ask for a PIN before opening Portfolio. Applies to this computer and to any device that connects over the network. Without it the app opens straight away.
+          {pinEnabled && mode === "idle" && (
+            <button type="button" onClick={() => setMode("change")} className="block text-xs font-semibold text-accent-400 hover:text-accent-300 mt-1 cursor-pointer">
+              Change PIN
+            </button>
+          )}
+        </>
+      }
+      control={
+        <Toggle
+          checked={pinEnabled}
           disabled={busy}
-          onClick={() => (mode !== "idle" ? reset() : setMode(pinEnabled ? "disable" : "enable"))}
-          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 ${
-            pinEnabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-slate-800"
-          }`}
-        >
-          <span className="sr-only">App lock</span>
-          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${pinEnabled ? "translate-x-5" : "translate-x-0"}`} />
-        </button>
-      </div>
-
+          onChange={() => (mode !== "idle" ? reset() : setMode(pinEnabled ? "disable" : "enable"))}
+          label="App lock"
+        />
+      }
+    >
       {mode !== "idle" && (
-        <form onSubmit={submit} className="pl-12 flex flex-col gap-4">
+        <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-3">
             {mode !== "enable" && (
               <div className="flex flex-col gap-1.5">
@@ -161,7 +151,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           </div>
         </form>
       )}
-    </div>
+    </SettingItem>
   );
 }
 
@@ -224,83 +214,68 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
   };
 
   return (
-    <div className="pt-4 border-t border-slate-800/80">
-      <div className="divide-y divide-slate-800/80">
-        <AppLockCard
-          pinEnabled={pinEnabled}
-          onChanged={(enabled) => {
-            setPinEnabled(enabled);
-            onPinEnabledChange?.(enabled);
-            load();
-          }}
-        />
+    <>
+      <AppLockCard
+        pinEnabled={pinEnabled}
+        onChanged={(enabled) => {
+          setPinEnabled(enabled);
+          onPinEnabledChange?.(enabled);
+          load();
+        }}
+      />
 
-        {remote && (
-          <div className="py-4 first:pt-0 last:pb-0 flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className="p-2 rounded-lg bg-sky-500/10 text-sky-300 shrink-0 mt-0.5">
-                  <Wifi className="h-4 w-4" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-bold text-slate-50">Allow remote connections</span>
-                  <span className="text-xs text-slate-400 leading-relaxed">
-                    Let phones and other devices on the same network open this Portfolio. The app lock PIN is required first. When off, only this computer can connect.
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={remote.enabled}
+      {remote && (
+        <SettingItem
+          icon={Wifi}
+          title="Allow remote connections"
+          description="Let phones and other devices on the same network open this Portfolio. The app lock PIN is required first. When off, only this computer can connect."
+          control={
+            <span title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}>
+              <Toggle
+                checked={remote.enabled}
                 disabled={remoteBusy || (!remote.enabled && remote.pinRequired)}
-                onClick={toggleRemote}
-                title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-                  remote.enabled ? "bg-gradient-to-r from-accent-600 to-purple-600 shadow-lg shadow-accent-500/25" : "bg-slate-800 border-slate-800"
-                }`}
-              >
-                <span className="sr-only">Allow remote connections</span>
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${remote.enabled ? "translate-x-5" : "translate-x-0"}`} />
-              </button>
-            </div>
-            <div className="pl-12 flex items-center gap-2">
-              <label htmlFor="remote-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Port
-              </label>
-              <input
-                id="remote-port"
-                type="text"
-                inputMode="numeric"
-                value={portText}
-                disabled={remoteBusy}
-                onChange={(e) => setPortText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
-                onBlur={savePort}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                }}
-                className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+                onChange={toggleRemote}
+                label="Allow remote connections"
               />
-              <span className="text-[11px] text-slate-500">Other devices connect on this port.</span>
-            </div>
-            {remoteError && <p className="text-xs text-rose-400 pl-12">{remoteError}</p>}
-            {!remoteError && remote.error && <p className="text-xs text-rose-400 pl-12">{remote.error}</p>}
-            {remote.enabled && (
-              <div className="pl-12 flex flex-wrap gap-2">
-                {remote.urls.length === 0 ? (
-                  <span className="text-xs text-slate-500">No network interface found. Connect this computer to your Wi-Fi or LAN.</span>
-                ) : (
-                  remote.urls.map((url) => (
-                    <code key={url} className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all">
-                      {url}
-                    </code>
-                  ))
-                )}
-              </div>
-            )}
+            </span>
+          }
+        >
+          <div className="flex items-center gap-2">
+            <label htmlFor="remote-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Port
+            </label>
+            <input
+              id="remote-port"
+              type="text"
+              inputMode="numeric"
+              value={portText}
+              disabled={remoteBusy}
+              onChange={(e) => setPortText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+              onBlur={savePort}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+            />
+            <span className="text-[11px] text-slate-500">Other devices connect on this port.</span>
           </div>
-        )}
-      </div>
-    </div>
+          {remoteError && <p className="text-xs text-rose-400">{remoteError}</p>}
+          {!remoteError && remote.error && <p className="text-xs text-rose-400">{remote.error}</p>}
+          {remote.enabled && (
+            <div className="flex flex-wrap gap-2">
+              {remote.urls.length === 0 ? (
+                <span className="text-xs text-slate-500">No network interface found. Connect this computer to your Wi-Fi or LAN.</span>
+              ) : (
+                remote.urls.map((url) => (
+                  <code key={url} className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all">
+                    {url}
+                  </code>
+                ))
+              )}
+            </div>
+          )}
+        </SettingItem>
+      )}
+    </>
   );
 }

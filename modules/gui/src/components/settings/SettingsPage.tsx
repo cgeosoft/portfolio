@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft,
   Settings,
   Sliders,
   TrendingUp,
@@ -42,12 +41,12 @@ import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessRows } from "./AccessSection";
-import { SettingsFields } from "./SettingsFields";
+import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
-export type SettingsSection = "general" | "portfolios" | "providers" | "assistant" | "about";
+export type SettingsSection = "general" | "portfolios" | "assistant" | "about";
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -91,15 +90,9 @@ const SECTIONS = [
     icon: TrendingUp,
   },
   {
-    id: "providers" as const,
-    label: "Data Providers",
-    description: "Market quotes, news & FX",
-    icon: Database,
-  },
-  {
     id: "assistant" as const,
     label: "Assistant",
-    description: "AI & LLM inference model",
+    description: "LLM, market data & news",
     icon: Bot,
   },
   {
@@ -351,7 +344,7 @@ export function SettingsPage({
       {/* Main Container: Left Sidebar + Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
         {/* Left Navigation Sidebar */}
-        <aside className="w-full">
+        <aside className="w-full lg:sticky lg:top-0">
           <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Settings className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>Preferences</span>
@@ -385,95 +378,73 @@ export function SettingsPage({
           {/* SECTION 1: GENERAL */}
           {activeSection === "general" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-              <div className="border-b border-slate-800/80 pb-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <Sliders className="w-4 h-4 text-[#DD3C73]" />
-                  <span>General Configuration</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Manage interface theme, background quote updates, startup behavior, telemetry, the app lock and remote connections.
-                </p>
-              </div>
+              <SectionHeader
+                icon={Sliders}
+                title="General Configuration"
+                description="Manage interface theme, background quote updates, startup behavior, telemetry, the app lock and remote connections."
+              />
 
-              {/* 1. Interface Theme */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    {currentTheme === "light" ? (
-                      <Sun className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    ) : (
-                      <Moon className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    )}
-                    <span>Interface Theme</span>
-                  </label>
-                  <span className="text-[10px] text-slate-500 font-mono capitalize">
-                    {currentTheme}
-                  </span>
-                </div>
-
-                <Select
-                  value={currentTheme}
-                  onChange={(e) => {
-                    const val = e.target.value as AppTheme;
-                    handleThemeChange(val);
-                  }}
-                  selectSize="lg"
-                  icon={currentTheme === "light" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  aria-label="Interface Theme"
+              <div className="divide-y divide-slate-800/80 -mt-2">
+                <SettingItem
+                  icon={currentTheme === "light" ? Sun : Moon}
+                  title="Interface theme"
+                  description="Choose between high-contrast dark terminal mode, clean daylight theme, or automatic synchronization with your system appearance."
                 >
-                  <option value="dark">Dark Theme (Terminal Default)</option>
-                  <option value="light">Light Theme (Daylight)</option>
-                  <option value="system">Follow System Appearance</option>
-                </Select>
+                  <Select
+                    value={currentTheme}
+                    onChange={(e) => {
+                      const val = e.target.value as AppTheme;
+                      handleThemeChange(val);
+                    }}
+                    selectSize="lg"
+                    icon={currentTheme === "light" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    aria-label="Interface Theme"
+                  >
+                    <option value="dark">Dark Theme (Terminal Default)</option>
+                    <option value="light">Light Theme (Daylight)</option>
+                    <option value="system">Follow System Appearance</option>
+                  </Select>
+                </SettingItem>
 
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Choose between high-contrast dark terminal mode, clean daylight theme, or automatic synchronization with your system appearance.
-                </p>
+                <SettingsFields section="general" />
+
+                <AccessRows onPinEnabledChange={onPinEnabledChange} />
               </div>
-
-              <SettingsFields section="general" />
-
-              <AccessRows onPinEnabledChange={onPinEnabledChange} />
             </div>
           )}
 
           {/* SECTION 2: PORTFOLIOS */}
           {activeSection === "portfolios" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
-                    <TrendingUp className="w-4 h-4 text-[#DD3C73] shrink-0" />
-                    <span>Portfolio Ledgers ({portfolios.length})</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                    Manage financial ledgers, base currencies, and export data archives
-                  </p>
-                </div>
+              <SectionHeader
+                icon={TrendingUp}
+                title={`Portfolio Ledgers (${portfolios.length})`}
+                description="Manage financial ledgers, base currencies, and export data archives"
+                actions={
+                  <>
+                    {portfolios.length > 3 && (
+                      <div className="relative w-40 sm:w-48">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                        <input
+                          type="text"
+                          placeholder="Search portfolios..."
+                          value={portfolioSearch}
+                          onChange={(e) => setPortfolioSearch(e.target.value)}
+                          className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
+                        />
+                      </div>
+                    )}
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {portfolios.length > 3 && (
-                    <div className="relative w-40 sm:w-48">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="Search portfolios..."
-                        value={portfolioSearch}
-                        onChange={(e) => setPortfolioSearch(e.target.value)}
-                        className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
-                      />
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>New Portfolio</span>
-                  </button>
-                </div>
-              </div>
+                    <button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>New Portfolio</span>
+                    </button>
+                  </>
+                }
+              />
 
               {/* Status Alert Banner */}
               {portfolioStatusMsg && (
@@ -627,23 +598,14 @@ export function SettingsPage({
             </div>
           )}
 
-          {/* SECTION: DATA PROVIDERS */}
-          {activeSection === "providers" && fullConfig && (
-            <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
-          )}
-
           {/* SECTION 3: ASSISTANT */}
           {activeSection === "assistant" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
-              <div className="border-b border-slate-800/80 pb-4">
-                <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  <Bot className="w-4 h-4 text-[#DD3C73]" />
-                  <span>Assistant Engine</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Configure local or cloud inference providers for automated portfolio analysis briefings.
-                </p>
-              </div>
+              <SectionHeader
+                icon={Bot}
+                title="Assistant Engine"
+                description="Configure local or cloud inference providers for automated portfolio analysis briefings."
+              />
 
               {/* Provider Selection Dropdown: styled identically to inputs */}
               <div className="space-y-2">
@@ -856,58 +818,25 @@ export function SettingsPage({
                   <span>Test LLM Provider</span>
                 </button>
               </div>
-
-              {/* Market Data & Intelligence Providers Reference */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-3">
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span>Market Data & News Intelligence</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Configure Finnhub API keys, Yahoo Finance connectivity, and category routing in the dedicated Data Providers tab.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("providers")}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-[#DD3C73] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
-                  >
-                    <span>Manage Data Providers</span>
-                    <ArrowLeft className="w-3 h-3 rotate-180" />
-                  </button>
-                </div>
-              </div>
             </div>
+          )}
+          {activeSection === "assistant" && fullConfig && (
+            <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
           )}
 
           {/* SECTION 5: ABOUT */}
           {activeSection === "about" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-              {/* App Identity Banner */}
-              <div className="flex items-start justify-between border-b border-slate-800/80 pb-5">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-plum via-royal to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
-                    <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-[#DD3C73]" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold tracking-wide text-slate-100">
-                        Portfolio
-                      </h2>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
-                        v{appVersion}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Personal Investment Tracker
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <SectionHeader
+                icon={Info}
+                title="About Portfolio"
+                description="Personal Investment Tracker"
+                actions={
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
+                    v{appVersion}
+                  </span>
+                }
+              />
 
               {/* Version and Updates */}
               <div className="space-y-2.5">

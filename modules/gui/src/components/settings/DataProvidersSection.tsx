@@ -20,6 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import { rpc } from "../../rpc";
+import { SectionHeader } from "./SettingsFields";
 import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "portfolio-shared/api-types";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
@@ -220,15 +221,11 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-8">
       {/* Section Header */}
-      <div className="border-b border-slate-800/80 pb-4">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-          <Database className="w-4 h-4 text-[#DD3C73]" />
-          <span>Data Providers</span>
-        </div>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Manage market data providers. Providers operate independently. Select which provider supplies each data category.
-        </p>
-      </div>
+      <SectionHeader
+        icon={Database}
+        title="Data Providers"
+        description="Manage market data providers. Providers operate independently. Select which provider supplies each data category."
+      />
 
       {/* Part 1: Provider Cards */}
       <div className="space-y-4">
