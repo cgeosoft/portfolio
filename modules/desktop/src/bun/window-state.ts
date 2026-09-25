@@ -1,16 +1,24 @@
 /**
- * Window geometry persisted by the desktop shell in `window-state.json`
- * (user data dir). The service knows nothing about windows.
+ * Window geometry persisted by the desktop shell in `<data>/window-state.json`.
+ * The service knows nothing about windows.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import type { WindowStateConfig } from "portfolio-shared/config-types";
+import { APP } from "./app";
+
+export interface WindowStateConfig {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  isMaximized?: boolean;
+}
 
 export const MIN_WINDOW_WIDTH = 400;
 export const MIN_WINDOW_HEIGHT = 300;
 export const MAX_WINDOW_DIMENSION = 10000;
-export const DEFAULT_WINDOW_WIDTH = 1400;
-export const DEFAULT_WINDOW_HEIGHT = 900;
+export const DEFAULT_WINDOW_WIDTH: number = APP.window.width;
+export const DEFAULT_WINDOW_HEIGHT: number = APP.window.height;
 export const MIN_WINDOW_COORD = -10000;
 export const MAX_WINDOW_COORD = 30000;
 
@@ -25,30 +33,19 @@ export interface WindowTarget {
   getFrame: () => { x: number; y: number; width: number; height: number };
 }
 
+function inRange(value: unknown, min: number, max: number): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
+}
+
 /** Validates saved window state; out-of-range values fall back to the defaults. */
 export function normalizeWindowState(saved?: WindowStateConfig): NormalizedWindowState {
-  let width = DEFAULT_WINDOW_WIDTH;
-  if (typeof saved?.width === "number" && Number.isFinite(saved.width) && saved.width >= MIN_WINDOW_WIDTH && saved.width <= MAX_WINDOW_DIMENSION) {
-    width = Math.round(saved.width);
-  }
-  let height = DEFAULT_WINDOW_HEIGHT;
-  if (typeof saved?.height === "number" && Number.isFinite(saved.height) && saved.height >= MIN_WINDOW_HEIGHT && saved.height <= MAX_WINDOW_DIMENSION) {
-    height = Math.round(saved.height);
-  }
+  const width = inRange(saved?.width, MIN_WINDOW_WIDTH, MAX_WINDOW_DIMENSION) ? Math.round(saved!.width!) : DEFAULT_WINDOW_WIDTH;
+  const height = inRange(saved?.height, MIN_WINDOW_HEIGHT, MAX_WINDOW_DIMENSION) ? Math.round(saved!.height!) : DEFAULT_WINDOW_HEIGHT;
   let x: number | undefined;
   let y: number | undefined;
-  if (
-    typeof saved?.x === "number" &&
-    Number.isFinite(saved.x) &&
-    saved.x >= MIN_WINDOW_COORD &&
-    saved.x <= MAX_WINDOW_COORD &&
-    typeof saved?.y === "number" &&
-    Number.isFinite(saved.y) &&
-    saved.y >= MIN_WINDOW_COORD &&
-    saved.y <= MAX_WINDOW_COORD
-  ) {
-    x = Math.round(saved.x);
-    y = Math.round(saved.y);
+  if (inRange(saved?.x, MIN_WINDOW_COORD, MAX_WINDOW_COORD) && inRange(saved?.y, MIN_WINDOW_COORD, MAX_WINDOW_COORD)) {
+    x = Math.round(saved!.x!);
+    y = Math.round(saved!.y!);
   }
   return { frame: { width, height, x, y }, isMaximized: Boolean(saved?.isMaximized) };
 }
@@ -98,7 +95,7 @@ export class WindowStateManager {
       this.isCurrentlyMaximized = maximized;
       if (!maximized) {
         const frame = window.getFrame();
-        if (typeof frame.width === "number" && frame.width >= MIN_WINDOW_WIDTH && typeof frame.height === "number" && frame.height >= MIN_WINDOW_HEIGHT) {
+        if (frame.width >= MIN_WINDOW_WIDTH && frame.height >= MIN_WINDOW_HEIGHT) {
           this.normalBounds = { width: Math.round(frame.width), height: Math.round(frame.height), x: Math.round(frame.x), y: Math.round(frame.y) };
         }
       }
@@ -122,7 +119,7 @@ export class WindowStateManager {
       this.saveTimer = null;
     }
     try {
-      this.onPersist({ x: this.normalBounds.x, y: this.normalBounds.y, width: this.normalBounds.width, height: this.normalBounds.height, isMaximized: this.isCurrentlyMaximized });
+      this.onPersist({ ...this.normalBounds, isMaximized: this.isCurrentlyMaximized });
     } catch {
       // Persisting is best effort.
     }

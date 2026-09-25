@@ -8,7 +8,7 @@ Portfolio is structured as a Bun workspace with `modules/service`, `modules/gui`
 |---|---|---|
 | `modules/service` | Bun process (`bun src/main.ts`, or `service/main.js` inside the desktop bundle) | HTTP API on `/api`, serves the built GUI on `/`, owns the SQLite database, settings, sessions, logs, background work |
 | `modules/gui` | Browser (the desktop webview or any browser on the LAN) | React app built by Vite; talks to the service over HTTP with cookies |
-| `modules/desktop` | Electrobun main process | Spawns the service, waits for `/api/health`, loads `http://127.0.0.1:5130`, persists the window geometry, routes external links |
+| `modules/desktop` | Electrobun main process | Starts the service (`service/main.js` in the bundle), reads its `SERVICE_PORT=` line, waits for `/api/health` and loads `http://127.0.0.1:<port>`. In development (`bun start`) it runs the service under `bun --watch` and the Vite dev server itself (`src/bun/dev.ts`). Writes `<data>/logs`, keeps the window geometry in `<data>/window-state.json`, owns the tray and close to tray, installs the Linux `.desktop` entry, routes external links |
 | `modules/shared` | Imported by all three | API and config types, brand constants, log line layout, domain models |
 
 The service is plain Bun: `Bun.serve` with the router in `src/http/router.ts` and `bun:sqlite`. No web framework, no ORM.
