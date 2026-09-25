@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "stage": "bun run scripts/stage.ts",
-    "start": "electrobun dev",
-    "build": "bun run stage && electrobun build --env=stable",
+    "start": "HUTCH_HOME=$PWD/.hutch/home electrobun dev",
+    "build": "bun run stage && HUTCH_HOME=$PWD/.hutch/home electrobun build --env=stable",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
