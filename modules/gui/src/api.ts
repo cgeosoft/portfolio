@@ -48,6 +48,7 @@ import type {
   TestLlmStepResponse,
   TestYahooConnectionResponse,
   UpdatePortfolioRequest,
+  UpdateRemoteAccessRequest,
 } from "portfolio-shared/api-types";
 import type { PortfolioItem, PortfolioReport, PortfolioTransaction, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { MetricScope } from "portfolio-shared/metric-abi";
@@ -131,7 +132,7 @@ export const api = {
 
   // ---- remote access (desktop window only; 403 from a remote client)
   remoteAccess: () => request<RemoteAccessInfo>("/api/host/remote-access"),
-  setRemoteAccess: (enabled: boolean) => request<RemoteAccessInfo>("/api/host/remote-access", { method: "PATCH", body: json({ enabled }) }),
+  setRemoteAccess: (update: UpdateRemoteAccessRequest) => request<RemoteAccessInfo>("/api/host/remote-access", { method: "PATCH", body: json(update) }),
 
   // ---- portfolios
   getPortfolios: () => request<GetPortfoliosResponse>("/api/portfolios"),

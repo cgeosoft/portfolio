@@ -404,10 +404,22 @@ export interface GetAppInfoResponse {
 /** Desktop-only switch that opens the service to the local network. */
 export interface RemoteAccessInfo {
   enabled: boolean;
+  /** Port of the LAN listener (a setting; the desktop window uses a random loopback port). */
   port: number;
+  /** URLs another device on the network can open. Empty while off or not listening. */
   urls: string[];
   /** A PIN must be set before remote access can be enabled. */
   pinRequired: boolean;
+  /** True while the LAN listener runs. */
+  listening: boolean;
+  /** Why the LAN listener is not running although the switch is on (e.g. the port is in use). */
+  error?: string;
+}
+
+/** `PATCH /api/host/remote-access`: either field may be left out. */
+export interface UpdateRemoteAccessRequest {
+  enabled?: boolean;
+  port?: number;
 }
 
 export interface AppUpdateInfo {

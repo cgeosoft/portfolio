@@ -14,7 +14,7 @@ import { findBundledFile, getLogDir } from "../paths";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
-import { hostSettings } from "../services/host-settings";
+import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
 import { revealInFileManager, saveToDownloads } from "../services/files";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
@@ -42,8 +42,9 @@ import type {
   TestLlmRequest,
   TestLlmStepRequest,
   UpdatePortfolioRequest,
+  UpdateRemoteAccessRequest,
 } from "portfolio-shared/api-types";
-import type { DesktopConfig } from "portfolio-shared/config-types";
+import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
 const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login"]);
 /** Routes a signed-in client may call before accepting the Terms of Use. */
@@ -83,7 +84,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   // ── middleware: remote-access gate and session ──────────────────────────
 
   router.use((ctx) => {
-    if (!ctx.isLocal && !hostSettings.allowRemoteConnections) {
+    if (!ctx.isLocal && !isRemoteListening()) {
       throw new HttpError(403, "Remote connections are disabled on this Portfolio");
     }
   });
@@ -137,31 +138,24 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.delete("/api/auth/pin", async (ctx) => {
     const body = await ctx.body<{ currentPin?: string }>();
     authService.removePin(String(body.currentPin ?? ""));
-    if (hostSettings.allowRemoteConnections) await hostSettings.setAllowRemoteConnections(false);
+    disableRemoteAccess();
     return { pinEnabled: false };
   });
 
   // ── host (remote access) ────────────────────────────────────────────────
 
-  const remoteInfo = () => ({
-    enabled: hostSettings.allowRemoteConnections,
-    port: hostSettings.listenPort,
-    urls: hostSettings.allowRemoteConnections ? hostSettings.lanUrls() : [],
-    pinRequired: !authService.isPinEnabled(),
-  });
-
   router.get("/api/host/remote-access", (ctx) => {
     assertLocal(ctx, "Remote access control");
-    return remoteInfo();
+    return remoteAccessInfo();
   });
 
   router.patch("/api/host/remote-access", async (ctx) => {
     assertLocal(ctx, "Remote access control");
-    const body = await ctx.body<{ enabled?: boolean }>();
-    const enabled = body.enabled === true;
-    if (enabled && !authService.isPinEnabled()) throw new HttpError(400, "Set a PIN before allowing remote connections");
-    await hostSettings.setAllowRemoteConnections(enabled);
-    return remoteInfo();
+    const body = await ctx.body<UpdateRemoteAccessRequest>();
+    return setRemoteAccess({
+      enabled: typeof body.enabled === "boolean" ? body.enabled : undefined,
+      port: body.port === undefined ? undefined : Number(body.port),
+    });
   });
 
   // ── portfolios ──────────────────────────────────────────────────────────
@@ -385,7 +379,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.patch("/api/config", async (ctx) => {
     const body = await ctx.body<Partial<DesktopConfig>>();
-    delete (body as Record<string, unknown>).deviceId;
+    for (const key of PROTECTED_CONFIG_KEYS) delete (body as Record<string, unknown>)[key];
     const updated = updateConfig(unmaskUpdates(body));
     if ("telemetryEnabled" in body) telemetry.reinitialize();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});

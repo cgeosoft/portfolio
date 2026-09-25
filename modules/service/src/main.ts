@@ -1,10 +1,14 @@
 /**
- * Portfolio service: HTTP API plus the built GUI on one port. Started by the
- * desktop shell (modules/desktop) or directly with `bun run dev`.
+ * Portfolio service: the HTTP API plus the built GUI. The desktop shell runs
+ * it (`bun start` from a checkout, `service/main.js` in the app); nothing is
+ * passed in, the service derives its paths itself (paths.ts).
  *
- *   PORTFOLIO_PORT       listen port (default 5130)
- *   PORTFOLIO_HOST       force a bind address (servers); otherwise the
- *                        remote-access switch decides (127.0.0.1 or 0.0.0.0)
+ * Start-up: data directory (and the one-time import of an old one), database
+ * and settings, desktop-settings.json for the shell, background work, then
+ * `Bun.serve` on 127.0.0.1 with a random port. Once it listens, the service
+ * prints exactly one `SERVICE_PORT=<port>` line to stdout; the shell reads it
+ * and polls `/api/health`. The LAN listener of the remote connections switch
+ * starts last (services/remote-access.ts).
  */
 import { ensureDataDir } from "./bootstrap";
 import { DATA_DIR, getGuiDir } from "./paths";
@@ -14,17 +18,17 @@ import * as portfolioRepo from "./db/portfolio.repo";
 import * as txRepo from "./db/transaction.repo";
 import * as marketCache from "./db/market-cache.repo";
 import { loadConfig, updateConfig } from "./config";
-import { getAppVersion, getEnvironmentName, isDev } from "./environment";
+import { getAppVersion, getEnvironmentName } from "./environment";
 import { createServices } from "./services/container";
 import { telemetry } from "./services/telemetry";
 import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
-import { hostSettings } from "./services/host-settings";
+import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
 import { Router, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
 
-const PORT = Number(process.env["PORTFOLIO_PORT"]) || 5130;
+const LOOPBACK_HOST = "127.0.0.1";
 
 appLogger.logStep("info", "main", "start", `Portfolio service ${getAppVersion()} (${getEnvironmentName()})`, undefined, {
   pid: process.pid,
@@ -33,7 +37,7 @@ appLogger.logStep("info", "main", "start", `Portfolio service ${getAppVersion()}
   bun: Bun.version,
 });
 
-// ── database and services ───────────────────────────────────────────────────
+// ── data directory, database and settings ───────────────────────────────────
 
 const imported = ensureDataDir();
 if (imported) appLogger.logStep("success", "main", "migrate", `Copied the data of ${imported} into ${DATA_DIR}`);
@@ -47,56 +51,6 @@ dbTimer.end("success", `Database ready (${portfolioRepo.findAll().length} portfo
 const services = createServices();
 telemetry.initialize();
 telemetry.capture("app_launched");
-
-// ── HTTP ────────────────────────────────────────────────────────────────────
-
-const router = new Router();
-const site = new StaticSite(getGuiDir() ?? "");
-let server: ReturnType<typeof Bun.serve> | null = null;
-
-registerRoutes(router, services, () => {
-  shutdown().catch(() => process.exit(0));
-});
-
-async function fetchHandler(req: Request, srv: { requestIP(req: Request): { address: string } | null }): Promise<Response> {
-  const ip = srv.requestIP(req)?.address ?? "";
-  const url = new URL(req.url);
-  if (url.pathname.startsWith("/api/")) {
-    const res = await router.handle(req, ip);
-    return res ?? json({ statusCode: 404, message: `No route for ${req.method} ${url.pathname}` }, 404);
-  }
-  const res = await router.handle(req, ip);
-  if (res) return res;
-  return site.serve(req, url) ?? new Response("Not found", { status: 404 });
-}
-
-function listen(host: string): void {
-  server = Bun.serve({
-    hostname: host,
-    port: PORT,
-    idleTimeout: 120,
-    fetch: (req, srv) => fetchHandler(req, srv),
-    error(err) {
-      appLogger.logStep("error", "http", "unhandled", err.message);
-      return json({ statusCode: 500, message: err.message }, 500);
-    },
-  });
-}
-
-try {
-  listen(hostSettings.listenHost());
-} catch (err) {
-  appLogger.logStep("error", "http", "listen", `Could not listen on ${hostSettings.listenHost()}:${PORT}: ${err instanceof Error ? err.message : err}`);
-  process.exit(1);
-}
-
-hostSettings.attach(PORT, async (host) => {
-  // Detach the listener without dropping in-flight requests, then bind again.
-  server?.stop(false);
-  listen(host);
-});
-
-appLogger.logStep("success", "http", "listen", `Listening on http://${hostSettings.listenHost()}:${PORT}${site.available ? " (serving GUI)" : ""}`);
 
 // ── background work ─────────────────────────────────────────────────────────
 
@@ -140,6 +94,62 @@ appUpdateService.startPeriodicChecks();
 void services.metricsService.warmUp();
 const pruneTimer = setInterval(() => authService.prune(), 60 * 60 * 1000);
 
+// ── HTTP ────────────────────────────────────────────────────────────────────
+
+const router = new Router();
+const site = new StaticSite(getGuiDir() ?? "");
+
+registerRoutes(router, services, () => {
+  shutdown().catch(() => process.exit(0));
+});
+
+async function fetchHandler(req: Request, srv: { requestIP(req: Request): { address: string } | null }): Promise<Response> {
+  const ip = srv.requestIP(req)?.address ?? "";
+  const url = new URL(req.url);
+  if (url.pathname.startsWith("/api/")) {
+    const res = await router.handle(req, ip);
+    return res ?? json({ statusCode: 404, message: `No route for ${req.method} ${url.pathname}` }, 404);
+  }
+  const res = await router.handle(req, ip);
+  if (res) return res;
+  return site.serve(req, url) ?? new Response("Not found", { status: 404 });
+}
+
+/** One listener with the app's handler. The loopback one and the LAN one serve the same app. */
+function serve(hostname: string, port: number): ReturnType<typeof Bun.serve> {
+  return Bun.serve({
+    hostname,
+    port,
+    idleTimeout: 120,
+    development: false,
+    fetch: (req, srv) => fetchHandler(req, srv),
+    error(err) {
+      appLogger.logStep("error", "http", "unhandled", err.message);
+      return json({ statusCode: 500, message: err.message }, 500);
+    },
+  });
+}
+
+let server: ReturnType<typeof Bun.serve>;
+try {
+  server = serve(LOOPBACK_HOST, 0);
+} catch (err) {
+  appLogger.logStep("error", "http", "listen", `Could not listen on ${LOOPBACK_HOST}: ${err instanceof Error ? err.message : err}`);
+  process.exit(1);
+}
+
+// The desktop shell reads this exact line from stdout.
+console.log(`SERVICE_PORT=${server.port}`);
+
+appLogger.logStep("success", "http", "listen", `Listening on http://${LOOPBACK_HOST}:${server.port}${site.available ? " (serving GUI)" : ""}`);
+appLogger.log("info", `Version:  ${getAppVersion()}`);
+appLogger.log("info", `Data:     ${DATA_DIR}`);
+appLogger.log("info", `Database: ${getDatabasePath()}`);
+appLogger.log("info", `App lock: ${authService.isPinEnabled() ? "PIN set" : "off"}`);
+appLogger.log("info", `Remote:   ${isRemoteAccessAllowed() ? `on, port ${remotePort()}` : "off"}`);
+
+startRemoteAccess(serve);
+
 // ── shutdown ────────────────────────────────────────────────────────────────
 
 let stopping = false;
@@ -150,7 +160,8 @@ async function shutdown(): Promise<void> {
   clearInterval(pruneTimer);
   appUpdateService.stopPeriodicChecks();
   services.metricsService.shutdown();
-  server?.stop(true);
+  stopRemoteAccess();
+  server.stop(true);
   await telemetry.shutdown();
   closeDatabase();
   process.exit(0);
@@ -158,3 +169,10 @@ async function shutdown(): Promise<void> {
 
 process.on("SIGINT", () => void shutdown());
 process.on("SIGTERM", () => void shutdown());
+
+process.on("uncaughtException", (err) => {
+  appLogger.logStep("error", "main", "uncaught", `Uncaught exception: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+});
+process.on("unhandledRejection", (reason) => {
+  appLogger.logStep("error", "main", "unhandled", `Unhandled promise rejection: ${reason instanceof Error ? (reason.stack ?? reason.message) : String(reason)}`);
+});

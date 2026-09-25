@@ -6,11 +6,11 @@ Portfolio is an offline personal investment tracker for Linux, Windows and macOS
 
 Offline-first and private: no remote accounts or databases. Yahoo Finance and Finnhub provide quotes, news and FX. Local or cloud LLMs generate reports and answer in the assistant sidebar. PostHog telemetry is off by default and never sends balances, holdings or personal data. Metric modules are sandboxed AssemblyScript (`extras/metrics/`) run in a separate engine process.
 
-The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback; Settings → General can lock the app with a PIN and, once a PIN is set, allow other devices on the network to open it.
+The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback on a random port and prints `SERVICE_PORT=<port>`; Settings → General can lock the app with a PIN and, once a PIN is set, open a second listener on a user-set port for other devices on the network.
 
 ## Layout
 
-- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, host settings, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `settings` table), `paths.ts` (data directory, repo root, bundled files), `bootstrap.ts` (creates the data directory, one-time import of the old one), `globals.d.ts` (build-time constants), `logger.ts` (stdout only; the desktop shell writes `<data>/logs/service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
+- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, remote access, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `settings` table), `paths.ts` (data directory, repo root, bundled files), `bootstrap.ts` (creates the data directory, one-time import of the old one), `globals.d.ts` (build-time constants), `logger.ts` (stdout only; the desktop shell writes `<data>/logs/service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
 - `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (design tokens).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.

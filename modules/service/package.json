@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/main.ts",
-    "start": "bun src/main.ts",
     "build": "bun build src/main.ts --target=bun --outdir dist-bundle --outfile main.js",
     "bundle": "bun run build",
     "test": "bun test",

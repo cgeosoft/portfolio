@@ -175,12 +175,16 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
   const [remote, setRemote] = useState<RemoteAccessInfo | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
   const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [portText, setPortText] = useState("");
 
   const load = useCallback(() => {
     api.authStatus().then((s) => setPinEnabled(s.pinEnabled)).catch(() => {});
     api
       .remoteAccess()
-      .then(setRemote)
+      .then((info) => {
+        setRemote(info);
+        setPortText(String(info.port));
+      })
       .catch(() => setRemote(null));
   }, []);
 
@@ -188,17 +192,35 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
     load();
   }, [load]);
 
-  const toggleRemote = async () => {
+  const updateRemote = async (update: { enabled?: boolean; port?: number }) => {
     if (!remote || remoteBusy) return;
     setRemoteBusy(true);
     setRemoteError(null);
     try {
-      setRemote(await api.setRemoteAccess(!remote.enabled));
+      const info = await api.setRemoteAccess(update);
+      setRemote(info);
+      setPortText(String(info.port));
     } catch (err: unknown) {
       setRemoteError(err instanceof ApiError ? err.message : "Could not change the setting.");
+      setPortText(String(remote.port));
     } finally {
       setRemoteBusy(false);
     }
+  };
+
+  const toggleRemote = () => updateRemote({ enabled: !remote?.enabled });
+
+  // Saves the port on blur or Enter, like the other text settings.
+  const savePort = () => {
+    if (!remote) return;
+    const port = Number(portText.trim());
+    if (portText.trim() === String(remote.port)) return;
+    if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+      setRemoteError("The port must be a whole number from 1024 to 65535.");
+      setPortText(String(remote.port));
+      return;
+    }
+    void updateRemote({ port });
   };
 
   return (
@@ -242,7 +264,27 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
                 <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${remote.enabled ? "translate-x-5" : "translate-x-0"}`} />
               </button>
             </div>
+            <div className="pl-12 flex items-center gap-2">
+              <label htmlFor="remote-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Port
+              </label>
+              <input
+                id="remote-port"
+                type="text"
+                inputMode="numeric"
+                value={portText}
+                disabled={remoteBusy}
+                onChange={(e) => setPortText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+                onBlur={savePort}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+                className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+              />
+              <span className="text-[11px] text-slate-500">Other devices connect on this port.</span>
+            </div>
             {remoteError && <p className="text-xs text-rose-400 pl-12">{remoteError}</p>}
+            {!remoteError && remote.error && <p className="text-xs text-rose-400 pl-12">{remote.error}</p>}
             {remote.enabled && (
               <div className="pl-12 flex flex-wrap gap-2">
                 {remote.urls.length === 0 ? (

@@ -39,7 +39,8 @@ Everything the user can change lives in the `settings` table: one row per key, `
 - `GET /api/health`, `GET /api/auth/status` and `POST /api/auth/login` are public; everything else needs the `portfolio_session` cookie (7 days, stored in the `sessions` table).
 - Without a PIN the GUI logs in automatically. With a PIN (Settings → General) the lock screen asks for it; five wrong attempts lock for five minutes.
 - On first run the lock screen asks to accept the Terms of Use. Until `POST /api/auth/accept-terms` records it (`auth:acceptedTermsAt` in `kv_entries`), a session may only call `/api/auth/me`, `/api/auth/accept-terms` and `/api/auth/logout`; everything else gets 403.
-- The service binds to `127.0.0.1` until "Allow remote connections" is on, which requires a PIN. The switch rebinds the listener to `0.0.0.0` in place and is only accepted from a loopback client (the desktop window). Non-loopback clients get 403 while the switch is off.
+- The service always listens on `127.0.0.1` on a random port (`Bun.serve` with port 0) and prints `SERVICE_PORT=<port>` once to stdout; the desktop shell reads that line and polls `GET /api/health`.
+- "Allow remote connections" (Settings → General, requires a PIN) starts a second listener on `0.0.0.0:<remote port>` that serves the same app (`modules/service/src/services/remote-access.ts`). The port is a setting next to the switch (default 5130). The switch and the port live in the `settings` table (`allowRemoteConnections`, `remotePort`), change only through `PATCH /api/host/remote-access` from a loopback client, and start, stop or rebind the listener without a restart. A port in use comes back as 409 and the old listener keeps running. Removing the PIN turns the switch off. Non-loopback clients get 403 while the LAN listener is off. A `host-settings.json` from an earlier release is imported once and renamed to `host-settings.json.migrated`.
 
 ## Logging
 

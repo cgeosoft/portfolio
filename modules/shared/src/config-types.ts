@@ -82,7 +82,20 @@ export interface DesktopConfig {
   zoomLevel?: number;
   /** UI theme mode: "dark" | "light" | "system" */
   theme?: AppTheme;
+  /**
+   * Remote connections switch (Settings, General). Counts only while a PIN is
+   * set. Changed through `/api/host/remote-access`, never `PATCH /api/config`.
+   */
+  allowRemoteConnections: boolean;
+  /** Port of the LAN listener on 0.0.0.0 while remote connections are on. */
+  remotePort: number;
 }
+
+/** Default port of the LAN listener. The loopback listener of the desktop window uses a random port. */
+export const DEFAULT_REMOTE_PORT = 5130;
+
+/** Settings the GUI cannot change through `PATCH /api/config`. */
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
 

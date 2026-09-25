@@ -10,7 +10,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkS
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { DEFAULT_DATA_PROVIDER_ROUTING, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
+import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { getDatabase } from "./db/database";
 import { DATA_DIR } from "./paths";
 
@@ -41,6 +41,8 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   dismissedUpdateVersion: undefined,
   zoomLevel: 1.0,
   theme: "dark",
+  allowRemoteConnections: false,
+  remotePort: DEFAULT_REMOTE_PORT,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */
@@ -187,6 +189,9 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   migrateLlmProvider(cfg, parsed);
   if (typeof cfg.zoomLevel !== "number" || !Number.isFinite(cfg.zoomLevel) || cfg.zoomLevel < 0.25 || cfg.zoomLevel > 5.0) {
     cfg.zoomLevel = 1.0;
+  }
+  if (!Number.isInteger(cfg.remotePort) || cfg.remotePort < 1024 || cfg.remotePort > 65535) {
+    cfg.remotePort = DEFAULT_REMOTE_PORT;
   }
   if (cfg.theme !== "dark" && cfg.theme !== "light" && cfg.theme !== "system") {
     cfg.theme = "dark";
