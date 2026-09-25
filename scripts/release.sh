@@ -26,6 +26,8 @@ set -euo pipefail
 # Environment (never committed; put it in .env or export it):
 #   POSTHOG_API_KEY, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
 #   CLOUDFLARE_PAGES_PROJECT, GH_TOKEN / GITHUB_TOKEN
+# The changelog comes from the local Claude Code CLI (`claude -p`), signed in
+# with `claude auth login`; it needs no API variables.
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -55,7 +57,7 @@ ALLOW_DIRTY=false
 NATIVE=false
 SKIP_DEPLOY=false
 
-usage() { sed -n '4,28p' "$0"; }
+usage() { sed -n '4,30p' "$0"; }
 
 for arg in "$@"; do
   case "${arg}" in
@@ -133,7 +135,7 @@ fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/"version": "[^"]*"
   elif bun scripts/gen-changelog.ts --version="${next}" >/dev/null; then
     git add CHANGELOG.md
   else
-    log "changelog entry not generated (LLM skipped or error); continuing"
+    log "changelog entry not generated (Claude CLI skipped or failed); continuing"
   fi
   run git commit -m "chore(release): v${next}"
   run git tag -a "v${next}" -m "Release v${next}"
