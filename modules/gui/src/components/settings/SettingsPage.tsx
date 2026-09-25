@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Activity,
-  ShieldCheck,
   Clock,
   Power,
   Plus,
@@ -45,11 +44,11 @@ import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
 import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
-import { AccessSection } from "./AccessSection";
+import { AccessRows } from "./AccessSection";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 
-export type SettingsSection = "general" | "access" | "portfolios" | "providers" | "assistant" | "about";
+export type SettingsSection = "general" | "portfolios" | "providers" | "assistant" | "about";
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -83,14 +82,8 @@ const SECTIONS = [
   {
     id: "general" as const,
     label: "General",
-    description: "Telemetry, refresh & startup",
+    description: "Refresh, startup & app lock",
     icon: Sliders,
-  },
-  {
-    id: "access" as const,
-    label: "Access",
-    description: "App lock & remote connections",
-    icon: ShieldCheck,
   },
   {
     id: "portfolios" as const,
@@ -399,8 +392,6 @@ export function SettingsPage({
         {/* Right/Center Content Area */}
         <div className="min-w-0 space-y-6">
           {/* SECTION 1: GENERAL */}
-          {activeSection === "access" && <AccessSection onPinEnabledChange={onPinEnabledChange} />}
-
           {activeSection === "general" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
               <div className="border-b border-slate-800/80 pb-4">
@@ -409,7 +400,7 @@ export function SettingsPage({
                   <span>General Configuration</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Manage interface theme, background quote updates, startup behavior, and telemetry settings.
+                  Manage interface theme, background quote updates, startup behavior, telemetry, the app lock and remote connections.
                 </p>
               </div>
 
@@ -598,6 +589,8 @@ export function SettingsPage({
                   />
                 </button>
               </div>
+
+              <AccessRows onPinEnabledChange={onPinEnabledChange} />
             </div>
           )}
 

@@ -6,7 +6,7 @@ Portfolio is an offline personal investment tracker for Linux, Windows and macOS
 
 Offline-first and private: no remote accounts or databases. Yahoo Finance and Finnhub provide quotes, news and FX. Local or cloud LLMs generate reports and answer in the assistant sidebar. PostHog telemetry is off by default and never sends balances, holdings or personal data. Metric modules are sandboxed AssemblyScript (`extras/metrics/`) run in a separate engine process.
 
-The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback; Settings → Access can lock the app with a PIN and, once a PIN is set, allow other devices on the network to open it.
+The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback; Settings → General can lock the app with a PIN and, once a PIN is set, allow other devices on the network to open it.
 
 ## Layout
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, ShieldCheck, Wifi } from "lucide-react";
+import { Lock, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
@@ -166,11 +166,11 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
 }
 
 /**
- * Settings → Access: the app lock and the remote-connections switch. The
- * remote card only renders in the desktop window (the service answers 403
+ * The app lock and the remote-connections rows of Settings → General. The
+ * remote row only renders in the desktop window (the service answers 403
  * for other clients) and needs a PIN before it can be turned on.
  */
-export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void } = {}) {
+export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void } = {}) {
   const [pinEnabled, setPinEnabled] = useState(false);
   const [remote, setRemote] = useState<RemoteAccessInfo | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
@@ -202,15 +202,7 @@ export function AccessSection({ onPinEnabledChange }: { onPinEnabledChange?: (en
   };
 
   return (
-    <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-2">
-      <div className="border-b border-slate-800/80 pb-4 mb-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
-          <ShieldCheck className="w-4 h-4 text-[#DD3C73]" />
-          <span>Access</span>
-        </div>
-        <p className="text-[11px] text-slate-400 mt-1">Lock the app with a 6-digit PIN and decide whether other devices on your network may open it.</p>
-      </div>
-
+    <div className="pt-4 border-t border-slate-800/80">
       <div className="divide-y divide-slate-800/80">
         <AppLockCard
           pinEnabled={pinEnabled}
