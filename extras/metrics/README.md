@@ -1,6 +1,6 @@
 # Portfolio metrics
 
-A metric is a small WebAssembly module plus a YAML manifest. The application runs it in a sandbox against the portfolio data it was granted and shows the result on the Metrics tab and, when slotted, on the Overview dashboard.
+A metric is a small WebAssembly module plus a YAML manifest. The application runs it in a sandbox against the portfolio data it was granted and shows the result under Preferences → Metrics and, when slotted, on the Overview dashboard.
 
 This directory is the metric repository. Every metric here is reviewed by pull request, compiled by `bun run build:metrics`, and bundled into the application. Users can also install a metric from any URL; those are never reviewed and stay marked **UNVERIFIED** in the application.
 
@@ -75,7 +75,7 @@ asc index.ts -o my-metric.wasm --runtime stub --optimize --importMemory --noExpo
     --initialMemory 2 --maximumMemory 16
 ```
 
-`--maximumMemory` should match `runtime.memoryPages` in your manifest. Publish the `.wasm` and a `manifest.yml` with a `module` block (`url`, `sha256`, `size`), then use **Install from URL** on the Metrics tab. The application checks the size and hash, rejects forbidden imports, and shows the requested scopes before anything is installed.
+`--maximumMemory` should match `runtime.memoryPages` in your manifest. Publish the `.wasm` and a `manifest.yml` with a `module` block (`url`, `sha256`, `size`), then use **Install from URL** under Preferences → Metrics. The application checks the size and hash, rejects forbidden imports, and shows the requested scopes before anything is installed.
 
 ## Limits
 

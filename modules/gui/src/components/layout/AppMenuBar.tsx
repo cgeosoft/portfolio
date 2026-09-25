@@ -11,7 +11,6 @@ import {
   FolderCog,
   Settings,
   PieChart,
-  Gauge,
   FileText,
   History,
   Eye,
@@ -46,7 +45,7 @@ export interface AppMenuBarProps {
   onAddTransaction: () => void;
   onManagePortfolios: () => void;
   onOpenSettings: (section?: any) => void;
-  onSelectTab: (tab: "overview" | "metrics" | "reports" | "transactions") => void;
+  onSelectTab: (tab: "overview" | "reports" | "transactions") => void;
   activeTab: string;
   hideCurrencyValues: boolean;
   onToggleHideCurrency: () => void;
@@ -186,7 +185,6 @@ export function AppMenuBar({
   const nextTheme = theme === "light" ? "Dark" : "Light";
   const viewItems: MenuItemDef[] = [
     { label: "Overview", icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
-    { label: "Metrics", icon: Gauge, checked: activeTab === "metrics", action: run(() => onSelectTab("metrics")) },
     { label: "Transactions", icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
     { label: "Reports", icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
     { type: "separator" },

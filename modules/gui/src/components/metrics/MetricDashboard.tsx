@@ -11,11 +11,11 @@ interface MetricDashboardProps {
   currency: string;
   hideValues: boolean;
   onInfo: (listing: MetricListing) => void;
-  onOpenMetricsTab: () => void;
+  onOpenMetrics: () => void;
 }
 
 /** The slotted metrics of the portfolio, as shown at the top of the Overview tab. */
-export function MetricDashboard({ prefs, listings, evaluations, currency, hideValues, onInfo, onOpenMetricsTab }: MetricDashboardProps) {
+export function MetricDashboard({ prefs, listings, evaluations, currency, hideValues, onInfo, onOpenMetrics }: MetricDashboardProps) {
   const listingById = new Map(listings.map((l) => [l.id, l]));
   const slotted = prefs.filter((pref) => pref.added && pref.slot && listingById.has(pref.id));
   const large = slotted.filter((pref) => pref.slot === "large");
@@ -28,7 +28,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
         <div className="text-[10px] uppercase tracking-widest text-slate-500 font-mono truncate">Portfolio Metrics</div>
         <button
           type="button"
-          onClick={onOpenMetricsTab}
+          onClick={onOpenMetrics}
           className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-all cursor-pointer shrink-0"
           title="Choose the metrics of this portfolio"
         >
@@ -64,7 +64,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
           <div className="text-xs text-slate-400 font-mono">No metrics are on the dashboard of this portfolio.</div>
           <button
             type="button"
-            onClick={onOpenMetricsTab}
+            onClick={onOpenMetrics}
             className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
           >
             <Sliders className="w-3.5 h-3.5" />

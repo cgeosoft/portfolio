@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   Settings,
   Sliders,
@@ -29,6 +29,7 @@ import {
   Sun,
   Moon,
   Terminal,
+  Gauge,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
@@ -46,7 +47,7 @@ import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
-export type SettingsSection = "general" | "portfolios" | "assistant" | "about";
+export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "about";
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -88,6 +89,12 @@ const SECTIONS = [
     label: "Portfolios",
     description: "Ledgers & asset management",
     icon: TrendingUp,
+  },
+  {
+    id: "metrics" as const,
+    label: "Metrics",
+    description: "Dashboard metrics & marketplace",
+    icon: Gauge,
   },
   {
     id: "assistant" as const,
@@ -134,6 +141,8 @@ interface SettingsPageProps {
   onPinEnabledChange?: (enabled: boolean) => void;
   /** About → Report an Issue: opens the support ticket form (the Help menu has the same item). */
   onReportIssue?: () => void;
+  /** Preferences → Metrics: the metrics page of the active portfolio, rendered by App with its state. */
+  metrics?: ReactNode;
 }
 
 export function SettingsPage({
@@ -149,6 +158,7 @@ export function SettingsPage({
   onChangeTheme,
   onPinEnabledChange,
   onReportIssue,
+  metrics,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
@@ -823,6 +833,8 @@ export function SettingsPage({
           {activeSection === "assistant" && fullConfig && (
             <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
           )}
+
+          {activeSection === "metrics" && metrics}
 
           {/* SECTION 5: ABOUT */}
           {activeSection === "about" && (

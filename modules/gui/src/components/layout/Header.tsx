@@ -5,11 +5,10 @@ import {
   FileText,
   History,
   Bot,
-  Gauge,
   Settings,
 } from "lucide-react";
 
-export type PortfolioTabKey = "overview" | "metrics" | "reports" | "transactions";
+export type PortfolioTabKey = "overview" | "reports" | "transactions";
 
 interface HeaderProps {
   currency?: string;
@@ -55,7 +54,6 @@ export function Header({
 
   const tabs = [
     { id: "overview" as PortfolioTabKey, label: "Overview", icon: PieChart },
-    { id: "metrics" as PortfolioTabKey, label: "Metrics", icon: Gauge },
     {
       id: "transactions" as PortfolioTabKey,
       label: "Transactions",

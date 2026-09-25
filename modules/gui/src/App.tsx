@@ -55,7 +55,7 @@ import {
 } from "portfolio-shared/metrics";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 
-const VALID_TABS: readonly string[] = ["overview", "metrics", "reports", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "reports", "transactions"];
 const INFO_MODAL_KEYS: readonly string[] = [
   "totalGain",
   "valuation",
@@ -66,12 +66,11 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "assistant", "about"];
+const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "metrics", "assistant", "about"];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
   if (cleanHash === "charts" || cleanHash === "holdings") return "overview";
-  if (cleanHash === "settings/metrics") return "metrics";
   if (cleanHash === "logs") return "transactions";
   if (VALID_TABS.includes(cleanHash)) {
     return cleanHash as PortfolioTabKey;
@@ -84,8 +83,8 @@ export default function App() {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
       if (hash === "#portfolios") return "settings";
-      // The metrics page moved from Preferences to a top-level tab; keep old links working.
-      if (hash === "#settings/metrics") return "dashboard";
+      // Metrics moved from a top-level tab to Preferences; keep old links working.
+      if (hash === "#metrics") return "settings";
       if (hash.startsWith("#settings")) return "settings";
       if (hash === "#terms") return "terms";
     }
@@ -104,6 +103,7 @@ export default function App() {
         }
       }
       if (hash === "#portfolios") return "portfolios";
+      if (hash === "#metrics") return "metrics";
     }
     return "general";
   });
@@ -114,7 +114,7 @@ export default function App() {
     }
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem("portfolio_active_tab");
-      if (saved && ["overview", "metrics", "reports", "transactions"].includes(saved)) {
+      if (saved && VALID_TABS.includes(saved)) {
         return saved as PortfolioTabKey;
       }
     }
@@ -182,13 +182,10 @@ export default function App() {
       if (hash === "#portfolios") {
         setSettingsSection("portfolios");
         setView("settings");
-      } else if (hash === "#settings/metrics") {
-        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#metrics`);
-        setView("dashboard");
-        setActiveTab("metrics");
-        if (typeof localStorage !== "undefined") {
-          localStorage.setItem("portfolio_active_tab", "metrics");
-        }
+      } else if (hash === "#metrics") {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#settings/metrics`);
+        setSettingsSection("metrics");
+        setView("settings");
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
         const sec = parts[1] === "providers" ? "assistant" : parts[1];
@@ -1583,6 +1580,24 @@ export default function App() {
   const chartHistory = portfolioData?.chartHistory || [];
   const transactions = portfolioData?.transactions || [];
 
+  const metricsPage = (
+    <MetricsTab
+      hasPortfolio={Boolean(activePortfolioId)}
+      prefs={metricPreferences}
+      listings={metricListings}
+      repository={metricRepository}
+      evaluations={metricEvaluations}
+      currency={currency}
+      hideValues={hideCurrencyValues}
+      isSaving={isSavingMetrics}
+      onSave={(next) => void handleSaveMetrics(next)}
+      onReset={() => void handleResetMetrics()}
+      onInfo={handleMetricInfo}
+      onInstalled={handleMetricInstalled}
+      onUninstall={handleMetricUninstall}
+      onRetry={handleMetricRetry}
+    />
+  );
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
@@ -1693,6 +1708,7 @@ export default function App() {
             onChangeTheme={handleThemeChange}
             onPinEnabledChange={setPinEnabled}
             onReportIssue={() => setIsSupportTicketOpen(true)}
+            metrics={metricsPage}
           />
         </main>
       )}
@@ -1712,6 +1728,7 @@ export default function App() {
             onChangeTheme={handleThemeChange}
             onPinEnabledChange={setPinEnabled}
             onReportIssue={() => setIsSupportTicketOpen(true)}
+            metrics={metricsPage}
           />
         </main>
       )}
@@ -1733,7 +1750,7 @@ export default function App() {
           {/* TAB: OVERVIEW (Charts & Holdings) */}
           {activeTab === "overview" && (
             <>
-              {/* Dashboard metrics, chosen on the Metrics tab */}
+              {/* Dashboard metrics, chosen under Preferences → Metrics */}
               <MetricDashboard
                 prefs={metricPreferences}
                 listings={metricListings}
@@ -1741,7 +1758,7 @@ export default function App() {
                 currency={currency}
                 hideValues={hideCurrencyValues}
                 onInfo={handleMetricInfo}
-                onOpenMetricsTab={() => handleTabChange("metrics")}
+                onOpenMetrics={() => handleOpenSettings("metrics")}
               />
 
               {/* Sponsor Banner Box */}
@@ -1792,26 +1809,6 @@ export default function App() {
                 summary={summary}
               />
             </>
-          )}
-
-          {/* TAB: METRICS */}
-          {activeTab === "metrics" && (
-            <MetricsTab
-              hasPortfolio={Boolean(activePortfolioId)}
-              prefs={metricPreferences}
-              listings={metricListings}
-              repository={metricRepository}
-              evaluations={metricEvaluations}
-              currency={currency}
-              hideValues={hideCurrencyValues}
-              isSaving={isSavingMetrics}
-              onSave={(next) => void handleSaveMetrics(next)}
-              onReset={() => void handleResetMetrics()}
-              onInfo={handleMetricInfo}
-              onInstalled={handleMetricInstalled}
-              onUninstall={handleMetricUninstall}
-              onRetry={handleMetricRetry}
-            />
           )}
 
           {/* TAB: REPORTS */}
