@@ -85,3 +85,10 @@ export interface DesktopConfig {
 }
 
 export type AppTheme = "dark" | "light" | "system";
+
+/**
+ * What `GET /api/config` returns in place of a stored API key. The service
+ * never sends a key back; a request that carries this value means "use the
+ * stored key".
+ */
+export const SECRET_MASK = "********";

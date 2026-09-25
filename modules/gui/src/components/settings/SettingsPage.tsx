@@ -45,6 +45,7 @@ import { AccessRows } from "./AccessSection";
 import { SettingsFields } from "./SettingsFields";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { SECRET_MASK } from "portfolio-shared/config-types";
 
 export type SettingsSection = "general" | "portfolios" | "providers" | "assistant" | "about";
 
@@ -819,14 +820,14 @@ export function SettingsPage({
                     <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type={showApiKey ? "text" : "password"}
-                      value={reportApiKey}
+                      value={reportApiKey === SECRET_MASK ? "" : reportApiKey}
                       onChange={(e) => {
                         const val = e.target.value;
                         setReportApiKey(val);
                         saveConfig({ llmApiKey: val, llmApiKeys: { ...(fullConfig?.llmApiKeys || {}), [reportProvider]: val } });
                       }}
                       onBlur={(e) => fetchServerModels(reportBaseUrl, e.target.value.trim())}
-                      placeholder="API key or bearer token"
+                      placeholder={reportApiKey === SECRET_MASK ? "•••••••• (stored)" : "API key or bearer token"}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                     <button

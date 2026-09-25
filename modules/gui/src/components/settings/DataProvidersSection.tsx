@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "portfolio-shared/api-types";
+import { SECRET_MASK } from "portfolio-shared/config-types";
 
 interface DataProvidersSectionProps {
   config: DesktopConfig;
@@ -361,9 +362,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   <Key className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type={showFinnhubKey ? "text" : "password"}
-                    value={finnhubApiKey}
+                    value={finnhubApiKey === SECRET_MASK ? "" : finnhubApiKey}
                     onChange={(e) => handleSaveFinnhubKey(e.target.value)}
-                    placeholder="Enter Finnhub API Key"
+                    placeholder={finnhubApiKey === SECRET_MASK ? "•••••••• (stored)" : "Enter Finnhub API Key"}
                     className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                   />
                   <button

@@ -63,6 +63,7 @@ export function listSettings(): SettingView[] {
   return SETTING_DEFINITIONS.map((def) => {
     const raw = config[def.key];
     const value = typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean" ? raw : "";
-    return { ...def, value, isSet: value !== "" };
+    // A secret never leaves the service; `isSet` tells the GUI one is stored.
+    return { ...def, value: def.kind === "secret" ? "" : value, isSet: value !== "" };
   });
 }

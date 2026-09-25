@@ -10,7 +10,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkS
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { DEFAULT_DATA_PROVIDER_ROUTING, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
+import { DEFAULT_DATA_PROVIDER_ROUTING, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { getDatabase } from "./db/database";
 import { getStorageDir } from "./paths";
 
@@ -233,6 +233,44 @@ function pickMerged(updated: DesktopConfig, updates: Partial<DesktopConfig>): Pa
   if (updates.llmApiKeys) out.llmApiKeys = updated.llmApiKeys;
   if (updates.llmBaseUrls) out.llmBaseUrls = updated.llmBaseUrls;
   if (updates.llmModels) out.llmModels = updated.llmModels;
+  return out;
+}
+
+const mask = (value: string | undefined): string => (value ? SECRET_MASK : "");
+
+/** The config as the GUI sees it: every API key replaced by SECRET_MASK. */
+export function maskSecrets(cfg: DesktopConfig): DesktopConfig {
+  return {
+    ...cfg,
+    llmApiKey: mask(cfg.llmApiKey),
+    finnhubApiKey: mask(cfg.finnhubApiKey),
+    llmApiKeys: Object.fromEntries(Object.entries(cfg.llmApiKeys || {}).map(([id, key]) => [id, mask(key)])),
+  };
+}
+
+/** A key from a request: SECRET_MASK stands for the stored key. */
+export function unmaskSecret(value: string | undefined, stored: string | undefined): string | undefined {
+  return value === SECRET_MASK ? stored : value;
+}
+
+/** The stored key of the OpenAI-compatible provider, for a request that carries SECRET_MASK. */
+export function unmaskLlmKey(value: string | undefined): string | undefined {
+  const cfg = loadConfig();
+  return unmaskSecret(value, cfg.llmApiKeys?.["openai-compatible"] || cfg.llmApiKey);
+}
+
+/** An update from the GUI with every SECRET_MASK put back to the stored key. */
+export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopConfig> {
+  const cfg = loadConfig();
+  const out = { ...updates };
+  if (out.finnhubApiKey === SECRET_MASK) delete out.finnhubApiKey;
+  if (out.llmApiKeys) {
+    out.llmApiKeys = Object.fromEntries(Object.entries(out.llmApiKeys).map(([id, key]) => [id, unmaskSecret(key, cfg.llmApiKeys?.[id]) ?? ""]));
+  }
+  if (out.llmApiKey === SECRET_MASK) {
+    const provider = out.llmProvider || cfg.llmProvider;
+    out.llmApiKey = cfg.llmApiKeys?.[provider] || cfg.llmApiKey;
+  }
   return out;
 }
 

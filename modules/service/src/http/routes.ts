@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { HttpError, Router, json, type RequestContext } from "./router";
 import { appLogger } from "../logger";
-import { loadConfig, updateConfig } from "../config";
+import { loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
 import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
 import { getLogDir } from "../paths";
@@ -289,7 +289,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if (!portfolio) throw new HttpError(404, "Portfolio not found");
     const report = await reportService.generateReport(
       { id: portfolio.id, name: portfolio.name, baseCurrency: portfolio.baseCurrency },
-      { provider: body.provider, model: body.model, apiKey: body.apiKey, baseUrl: body.baseUrl, weekKey: body.weekKey },
+      { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, weekKey: body.weekKey },
     );
     telemetry.capture("report_generated", { provider: body.provider });
     return report;
@@ -332,7 +332,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
         ],
-        { provider: body.provider, model: body.model, apiKey: body.apiKey, baseUrl: body.baseUrl, maxTokens: 50 },
+        { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, maxTokens: 50 },
       );
       return { success: true, message: result.slice(0, 200) };
     } catch (err) {
@@ -343,7 +343,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/llm/test-step", async (ctx) => {
     const body = await ctx.body<TestLlmStepRequest>();
     try {
-      return await llm.testStep(body.step, { provider: body.provider, model: body.model, apiKey: body.apiKey, baseUrl: body.baseUrl, previousOutput: body.previousOutput });
+      return await llm.testStep(body.step, { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, previousOutput: body.previousOutput });
     } catch (err) {
       return { success: false, message: err instanceof Error ? err.message : String(err) };
     }
@@ -352,7 +352,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/llm/models", async (ctx) => {
     const body = await ctx.body<GetProviderModelsRequest>();
     try {
-      return { models: await llm.getAvailableModels(body.provider, body.baseUrl, body.apiKey) };
+      return { models: await llm.getAvailableModels(body.provider, body.baseUrl, unmaskLlmKey(body.apiKey)) };
     } catch {
       return { models: [] };
     }
@@ -360,7 +360,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/llm/claude-cli/status", () => llm.claudeCliStatus());
 
-  router.post("/api/providers/finnhub/test", async (ctx) => finnhub.testConnection((await ctx.body<TestFinnhubConnectionRequest>()).apiKey));
+  router.post("/api/providers/finnhub/test", async (ctx) => finnhub.testConnection(unmaskSecret((await ctx.body<TestFinnhubConnectionRequest>()).apiKey, loadConfig().finnhubApiKey)));
   router.get("/api/providers/yahoo/test", () => yahoo.testConnection());
 
   router.post("/api/market/cache/clear", () => {
@@ -393,17 +393,17 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   // ── config ──────────────────────────────────────────────────────────────
 
-  router.get("/api/config", () => loadConfig());
+  router.get("/api/config", () => maskSecrets(loadConfig()));
 
   router.get("/api/settings", (): GetSettingsResponse => ({ settings: listSettings() }));
 
   router.patch("/api/config", async (ctx) => {
     const body = await ctx.body<Partial<DesktopConfig>>();
     delete (body as Record<string, unknown>).deviceId;
-    const updated = updateConfig(body);
+    const updated = updateConfig(unmaskUpdates(body));
     if ("telemetryEnabled" in body) telemetry.reinitialize();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});
-    return updated;
+    return maskSecrets(updated);
   });
 
   router.post("/api/setup/complete", async (ctx) => {
