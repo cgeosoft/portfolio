@@ -1,15 +1,12 @@
 /**
- * Terminal rendering for `appLogger`. Adds colour and column alignment on top
- * of the shared layout in `src/shared/log-format.ts`.
+ * Stdout rendering for `appLogger`: the file layout of
+ * portfolio-shared/log-format.ts (`renderFileLogLine`, full ISO timestamp)
+ * with optional colour. The desktop shell strips the colour and appends each
+ * line to `service-YYYY-MM-DD.log`, so the support ticket can filter the
+ * lines by their timestamp.
  */
 
-import {
-  buildConsoleLogLine,
-  renderPlainLogLine,
-  CONTINUATION_INDENT,
-  type ConsoleLogLevel,
-  type ConsoleLogRecord,
-} from "portfolio-shared/log-format";
+import { buildConsoleLogLine, renderFileLogLine, type ConsoleLogLevel, type ConsoleLogRecord } from "portfolio-shared/log-format";
 import { isDev } from "./environment.js";
 
 const RESET = "\x1b[0m";
@@ -35,15 +32,13 @@ function sourceColor(source: string): string {
   return SOURCE_COLORS[hash % SOURCE_COLORS.length] as string;
 }
 
+/**
+ * Colour when stdout is a terminal, or when running from a checkout: the
+ * desktop shell then pipes the output to the developer's terminal (and strips
+ * the colour for the log file).
+ */
 function detectColorSupport(): boolean {
-  const env = process.env;
-  if (env["NO_COLOR"]) return false;
-  const forced = env["FORCE_COLOR"];
-  if (forced !== undefined) return forced !== "0" && forced !== "false";
-  if (env["TERM"] === "dumb") return false;
   if (process.stdout?.isTTY) return true;
-  // In dev the launcher pipes the main process stdout, so `isTTY` is false even
-  // though a developer is watching a real terminal.
   try {
     return isDev();
   } catch {
@@ -72,10 +67,16 @@ function durationColor(durationMs: number): string {
   return DIM;
 }
 
+function isoTime(timestamp?: string | Date): string {
+  const date = timestamp instanceof Date ? timestamp : timestamp ? new Date(timestamp) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
 /** Formats one record as a single (possibly multi-line) terminal string. */
 export function formatConsoleLogLine(record: ConsoleLogRecord): string {
+  if (!colorEnabled) return renderFileLogLine(record);
   const parts = buildConsoleLogLine(record);
-  if (!colorEnabled) return renderPlainLogLine(parts);
+  const time = isoTime(record.timestamp);
 
   const levelColor = LEVEL_COLORS[parts.level] ?? "";
   const scope = parts.step
@@ -91,7 +92,7 @@ export function formatConsoleLogLine(record: ConsoleLogRecord): string {
         : headline;
 
   const segments = [
-    paint(parts.time, DIM),
+    paint(time, DIM),
     "  ",
     paint(parts.levelLabel, `${BOLD}${levelColor}`),
     "  ",
@@ -109,13 +110,14 @@ export function formatConsoleLogLine(record: ConsoleLogRecord): string {
   }
 
   const lines = [segments.join("")];
+  const indent = " ".repeat(time.length + 2 + parts.levelLabel.length + 2);
   for (const line of rest) {
-    lines.push(`${CONTINUATION_INDENT}${paint(line, DIM)}`);
+    lines.push(`${indent}${paint(line, DIM)}`);
   }
   return lines.join("\n");
 }
 
-/** Writes one record to the terminal. */
+/** Writes one record to stdout. */
 export function writeConsoleLog(record: ConsoleLogRecord): void {
   console.log(formatConsoleLogLine(record));
 }

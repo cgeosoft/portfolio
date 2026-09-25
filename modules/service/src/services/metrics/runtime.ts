@@ -81,6 +81,9 @@ export interface MetricRuntimeOptions {
   executable?: string;
 }
 
+/** Colour codes the runtime may add to an error on stderr. */
+const ANSI_ESCAPE = /\x1b\[[0-9;]*m/g;
+
 export class MetricRuntime {
   private engine: EngineProcess | null = null;
   private nextId = 1;
@@ -181,7 +184,6 @@ export class MetricRuntime {
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
-      env: { ...process.env, NO_COLOR: "1" },
     });
     const engine: EngineProcess = { proc, loaded: new Set(), pending: new Map(), alive: true };
     this.engine = engine;
@@ -238,7 +240,7 @@ export class MetricRuntime {
     try {
       for await (const chunk of engine.proc.stderr as ReadableStream<Uint8Array>) {
         if (logged++ > 20) continue;
-        const text = decoder.decode(chunk).trim().slice(0, 500);
+        const text = decoder.decode(chunk).replace(ANSI_ESCAPE, "").trim().slice(0, 500);
         if (text) appLogger.logStep("warning", "metrics", "engine_stderr", "Metric engine wrote to stderr", undefined, { text });
       }
     } catch {

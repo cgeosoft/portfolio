@@ -5,7 +5,6 @@
  *   PORTFOLIO_PORT       listen port (default 5130)
  *   PORTFOLIO_HOST       force a bind address (servers); otherwise the
  *                        remote-access switch decides (127.0.0.1 or 0.0.0.0)
- *   PORTFOLIO_LOG_DIR    log directory
  */
 import { ensureDataDir } from "./bootstrap";
 import { DATA_DIR, getGuiDir } from "./paths";
@@ -27,13 +26,11 @@ import { StaticSite } from "./http/static";
 
 const PORT = Number(process.env["PORTFOLIO_PORT"]) || 5130;
 
-if (isDev()) appLogger.setFileLevel("debug");
 appLogger.logStep("info", "main", "start", `Portfolio service ${getAppVersion()} (${getEnvironmentName()})`, undefined, {
   pid: process.pid,
   platform: process.platform,
   arch: process.arch,
   bun: Bun.version,
-  log: appLogger.getLogFilePath(),
 });
 
 // ── database and services ───────────────────────────────────────────────────

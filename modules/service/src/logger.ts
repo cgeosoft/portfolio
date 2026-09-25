@@ -1,19 +1,17 @@
 /**
- * Service logger. Every record goes to the console (aligned, coloured when a
- * terminal is attached or in development) and to one file per local day in
- * the log directory, `service-YYYY-MM-DD.log`. Every start on the same day
- * appends to that day's file; a new file begins at midnight. The file layout
- * is defined in portfolio-shared/log-format.ts (`renderFileLogLine`).
+ * Service logger. Every record goes to stdout as one aligned line (coloured
+ * when a terminal is attached or when running from a checkout). The service
+ * opens no log file: the desktop shell appends the output, colour stripped,
+ * to `<data dir>/logs/service-YYYY-MM-DD.log`. The line layout is defined in
+ * portfolio-shared/log-format.ts.
  */
-import { mkdirSync, appendFileSync } from "node:fs";
-import { join } from "node:path";
-import { dailyLogFileName, renderFileLogLine, type ConsoleLogLevel, type ConsoleLogRecord } from "portfolio-shared/log-format";
+import type { ConsoleLogLevel, ConsoleLogRecord } from "portfolio-shared/log-format";
 import { writeConsoleLog } from "./log-console";
-import { getLogDir } from "./paths";
+import { isDev } from "./environment";
 
 export { getLogDir } from "./paths";
 
-/** Base name of the service log files: `service-2026-09-17.log`. */
+/** Base name of the service log files the shell writes: `service-2026-09-17.log`. */
 export const LOG_FILE_BASE = "service";
 
 export type LogLevel = ConsoleLogLevel;
@@ -25,34 +23,18 @@ export interface LogEntry {
 }
 
 export class AppLogger {
-  private readonly logDir: string;
-  /** Records below this level are shown on the console only. */
-  private fileLevel: LogLevel = "info";
+  /** Debug records are printed only when running from a checkout. */
+  private debug = isDev();
 
-  constructor(customLogDir?: string) {
-    this.logDir = customLogDir ?? getLogDir();
-  }
-
-  /** File of the current day; changes at midnight. */
-  getLogFilePath(date = new Date()): string {
-    return join(this.logDir, dailyLogFileName(LOG_FILE_BASE, date));
-  }
-
-  getLogDir(): string {
-    return this.logDir;
-  }
-
-  /** Include debug records in the file too (development). */
-  setFileLevel(level: LogLevel): void {
-    this.fileLevel = level;
+  /** Print debug records too (or not). */
+  setDebug(enabled: boolean): void {
+    this.debug = enabled;
   }
 
   private write(record: ConsoleLogRecord): void {
-    writeConsoleLog(record);
-    if (record.level === "debug" && this.fileLevel !== "debug") return;
+    if (record.level === "debug" && !this.debug) return;
     try {
-      mkdirSync(this.logDir, { recursive: true });
-      appendFileSync(this.getLogFilePath(), renderFileLogLine(record) + "\n", "utf-8");
+      writeConsoleLog(record);
     } catch {
       // Logging must never take the service down.
     }
