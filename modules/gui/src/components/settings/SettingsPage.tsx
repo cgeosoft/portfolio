@@ -15,9 +15,6 @@ import {
   PlayCircle,
   CheckCircle2,
   AlertCircle,
-  Activity,
-  Clock,
-  Power,
   Plus,
   Edit3,
   Trash2,
@@ -45,6 +42,7 @@ import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessRows } from "./AccessSection";
+import { SettingsFields } from "./SettingsFields";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 
@@ -161,10 +159,6 @@ export function SettingsPage({
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
   // General settings state
-  const [telemetryEnabled, setTelemetryEnabled] = useState(false);
-  const [quotesInterval, setQuotesInterval] = useState<number>(15);
-  const [startWithBoot, setStartWithBoot] = useState(false);
-  const [checkForUpdates, setCheckForUpdates] = useState(true);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [appVersion, setAppVersion] = useState("0.1.0");
@@ -257,10 +251,6 @@ export function SettingsPage({
         desktopConfig.llmBaseUrls?.[provider] || (isCurrent ? desktopConfig.llmBaseUrl : "") || DEFAULT_OPENAI_COMPATIBLE_URL;
       setReportBaseUrl(savedUrl);
 
-      setTelemetryEnabled(desktopConfig.telemetryEnabled ?? false);
-      if (desktopConfig.marketQuotesInterval !== undefined) setQuotesInterval(desktopConfig.marketQuotesInterval);
-      if (desktopConfig.startWithBoot !== undefined) setStartWithBoot(desktopConfig.startWithBoot);
-      if (desktopConfig.checkForUpdates !== undefined) setCheckForUpdates(desktopConfig.checkForUpdates);
 
       if (provider === "claude-cli") checkClaudeCli();
       else fetchServerModels(savedUrl, savedKey);
@@ -440,155 +430,7 @@ export function SettingsPage({
                 </p>
               </div>
 
-              {/* 2. Market Quotes Auto-Fetch Interval */}
-              <div className="space-y-2 pt-4 border-t border-slate-800/80">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Market Quotes Auto-Fetch Interval</span>
-                  </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    {quotesInterval === 0 ? "Disabled" : `Every ${quotesInterval}m`}
-                  </span>
-                </div>
-
-                <Select
-                  value={quotesInterval}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setQuotesInterval(val);
-                    saveConfig({ marketQuotesInterval: val });
-                  }}
-                  selectSize="lg"
-                  icon={<Clock className="w-4 h-4" />}
-                  aria-label="Market quotes auto-fetch interval"
-                >
-                  <option value={0}>Manual Only (Off)</option>
-                  <option value={5}>Every 5 Minutes (Active Trading)</option>
-                  <option value={15}>Every 15 Minutes (Recommended)</option>
-                  <option value={30}>Every 30 Minutes</option>
-                  <option value={60}>Every 1 Hour</option>
-                  <option value={240}>Every 4 Hours</option>
-                </Select>
-
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Automatically pulls live quotes and foreign exchange rates from Yahoo Finance in the background to update portfolio equity valuations.
-                </p>
-              </div>
-
-              {/* 2. Start with Boot Toggle */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <Power className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Start at System Boot
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                      Automatically launch Portfolio in the background when your computer boots up.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={startWithBoot}
-                  onClick={() => {
-                    const next = !startWithBoot;
-                    setStartWithBoot(next);
-                    saveConfig({ startWithBoot: next });
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    startWithBoot ? "bg-[#DD3C73]" : "bg-slate-800"
-                  }`}
-                  title={startWithBoot ? "Disable boot startup" : "Enable boot startup"}
-                >
-                  <span className="sr-only">Start at System Boot</span>
-                  <span
-                    aria-hidden="true"
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      startWithBoot ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* 3. Telemetry Configuration */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <Activity className="w-4 h-4 text-mint shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Enable Anonymous Analytics (Telemetry)
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                      Help improve Portfolio by sharing privacy-preserving diagnostic usage events. No financial holdings, balances, or transactions are ever collected.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={telemetryEnabled}
-                  onClick={() => {
-                    const next = !telemetryEnabled;
-                    setTelemetryEnabled(next);
-                    saveConfig({ telemetryEnabled: next });
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    telemetryEnabled ? "bg-[#DD3C73]" : "bg-slate-800"
-                  }`}
-                  title={telemetryEnabled ? "Disable anonymous analytics" : "Enable anonymous analytics"}
-                >
-                  <span className="sr-only">Enable anonymous analytics</span>
-                  <span
-                    aria-hidden="true"
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      telemetryEnabled ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* 4. Check for Application Updates Toggle */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3 min-w-0 pr-2">
-                  <RefreshCw className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                      Check for Application Updates
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                      Automatically check GitHub releases on startup and every hour for new versions.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={checkForUpdates}
-                  onClick={() => {
-                    const next = !checkForUpdates;
-                    setCheckForUpdates(next);
-                    saveConfig({ checkForUpdates: next });
-                  }}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none self-end sm:self-center ${
-                    checkForUpdates ? "bg-[#DD3C73]" : "bg-slate-800"
-                  }`}
-                  title={checkForUpdates ? "Disable update checks" : "Enable update checks"}
-                >
-                  <span className="sr-only">Check for Application Updates</span>
-                  <span
-                    aria-hidden="true"
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      checkForUpdates ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
+              <SettingsFields section="general" />
 
               <AccessRows onPinEnabledChange={onPinEnabledChange} />
             </div>
@@ -1082,7 +924,7 @@ export function SettingsPage({
                       <span className="text-xs text-slate-200 font-semibold">
                         {updateInfo?.hasUpdate
                           ? `New version available: v${updateInfo.latestVersion}`
-                          : !checkForUpdates
+                          : fullConfig?.checkForUpdates === false
                           ? "Automatic update checks are disabled"
                           : "Portfolio is up to date"}
                       </span>

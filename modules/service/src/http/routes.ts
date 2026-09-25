@@ -9,6 +9,7 @@ import { dirname, join, resolve } from "node:path";
 import { HttpError, Router, json, type RequestContext } from "./router";
 import { appLogger } from "../logger";
 import { loadConfig, updateConfig } from "../config";
+import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
 import { getLogDir } from "../paths";
 import { getDatabasePath } from "../db/database";
@@ -26,6 +27,7 @@ import type {
   ChatWithPortfolioRequest,
   CompleteSetupRequest,
   CreatePortfolioRequest,
+  GetSettingsResponse,
   EvaluatePortfolioMetricsRequest,
   GenerateReportRequest,
   GetProviderModelsRequest,
@@ -392,6 +394,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   // ── config ──────────────────────────────────────────────────────────────
 
   router.get("/api/config", () => loadConfig());
+
+  router.get("/api/settings", (): GetSettingsResponse => ({ settings: listSettings() }));
 
   router.patch("/api/config", async (ctx) => {
     const body = await ctx.body<Partial<DesktopConfig>>();

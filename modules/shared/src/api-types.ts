@@ -537,3 +537,26 @@ export interface SaveFileResponse {
   filePath?: string;
   error?: string;
 }
+
+/** How Settings draws one setting of the catalog (`GET /api/settings`). */
+export type SettingKind = "toggle" | "choice" | "text" | "secret";
+
+export type SettingSection = "general" | "providers" | "assistant";
+
+/** One setting as the service lists it: its definition and its current value. */
+export interface SettingView {
+  key: string;
+  section: SettingSection;
+  kind: SettingKind;
+  label: string;
+  description: string;
+  placeholder?: string;
+  options?: { value: string | number; label: string }[];
+  value: string | number | boolean;
+  /** Whether a value is stored (a secret comes back masked, so this is the only sign of one). */
+  isSet: boolean;
+}
+
+export interface GetSettingsResponse {
+  settings: SettingView[];
+}

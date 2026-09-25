@@ -25,6 +25,7 @@ import type {
   GetPortfoliosResponse,
   GetProviderModelsRequest,
   GetProviderModelsResponse,
+  GetSettingsResponse,
   InstallMetricResponse,
   LogClientEventRequest,
   ManageTransactionRequest,
@@ -192,6 +193,7 @@ export const api = {
 
   // ---- config and setup
   getConfig: () => request<DesktopConfig>("/api/config"),
+  getSettings: () => request<GetSettingsResponse>("/api/settings"),
   saveConfig: (updates: Partial<DesktopConfig>) => request<DesktopConfig>("/api/config", { method: "PATCH", body: json(updates) }),
   completeSetup: (body: CompleteSetupRequest) => request<{ success: boolean }>("/api/setup/complete", { method: "POST", body: json(body) }),
 
