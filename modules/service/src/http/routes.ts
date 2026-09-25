@@ -356,6 +356,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     }
   });
 
+  router.get("/api/llm/claude-cli/status", () => llm.claudeCliStatus());
+
   router.post("/api/providers/finnhub/test", async (ctx) => finnhub.testConnection((await ctx.body<TestFinnhubConnectionRequest>()).apiKey));
   router.get("/api/providers/yahoo/test", () => yahoo.testConnection());
 

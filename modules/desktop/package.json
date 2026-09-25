@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "stage": "bun run scripts/stage.ts",
+    "start": "bun run scripts/dev.ts",
     "dev": "bun run stage && electrobun dev",
     "build": "bun run stage && electrobun build --env=stable",
     "test": "bun test",

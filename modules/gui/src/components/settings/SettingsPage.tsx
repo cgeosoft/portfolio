@@ -33,11 +33,12 @@ import {
   ExternalLink,
   Sun,
   Moon,
+  Terminal,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
-import type { AppUpdateInfo, DesktopConfig, AppTheme } from "portfolio-shared/api-types";
+import type { AppUpdateInfo, ClaudeCliStatusResponse, DesktopConfig, AppTheme } from "portfolio-shared/api-types";
 import { CreatePortfolioModal } from "../portfolio/CreatePortfolioModal";
 import { EditPortfolioModal } from "../portfolio/EditPortfolioModal";
 import { DeletePortfolioModal } from "../portfolio/DeletePortfolioModal";
@@ -46,204 +47,37 @@ import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessSection } from "./AccessSection";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
-import {
-  DEFAULT_LLAMACPP_URL,
-  DEFAULT_NEBIUS_URL,
-  DEFAULT_OLLAMA_MODEL,
-  DEFAULT_OLLAMA_URL,
-  DEFAULT_OPENAI_COMPATIBLE_URL,
-} from "portfolio-shared/llm-defaults";
+import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 
 export type SettingsSection = "general" | "access" | "portfolios" | "providers" | "assistant" | "about";
 
-interface ProviderPreset {
-  id: string;
+type LlmProviderId = "openai-compatible" | "claude-cli";
+
+interface LlmProviderOption {
+  id: LlmProviderId;
   name: string;
   badge: string;
-  defaultModel: string;
-  /** Bundled model names. Omitted for local server providers whose models come from the endpoint. */
-  models?: string[];
   description: string;
-  requiresKey: boolean;
-  keyOptional?: boolean;
-  keyPlaceholder: string;
-  supportsBaseUrl?: boolean;
-  baseUrlPlaceholder?: string;
-  defaultBaseUrl?: string;
 }
 
-const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
-  "llamacpp": {
-    id: "llamacpp",
-    name: "Llama.cpp Server",
-    badge: "Local Daemon",
-    // The server answers with whichever model it was started with, so there is
-    // no meaningful default to preselect; the list comes from /v1/models.
-    defaultModel: "",
-    description: "Connect to local OpenAI-compatible inference server daemon.",
-    requiresKey: false,
-    keyOptional: true,
-    keyPlaceholder: "Optional Bearer Token",
-    supportsBaseUrl: true,
-    baseUrlPlaceholder: DEFAULT_LLAMACPP_URL,
-    defaultBaseUrl: DEFAULT_LLAMACPP_URL,
-  },
-  ollama: {
-    id: "ollama",
-    name: "Ollama Server",
-    badge: "Local Daemon",
-    defaultModel: DEFAULT_OLLAMA_MODEL,
-    description: "Run models locally via native Ollama daemon endpoint.",
-    requiresKey: false,
-    keyOptional: true,
-    keyPlaceholder: "Optional API Token",
-    supportsBaseUrl: true,
-    baseUrlPlaceholder: DEFAULT_OLLAMA_URL,
-    defaultBaseUrl: DEFAULT_OLLAMA_URL,
-  },
-  groq: {
-    id: "groq",
-    name: "Groq Cloud",
-    badge: "Ultra-Fast LPU",
-    defaultModel: "llama-3.3-70b-versatile",
-    models: [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
-      "deepseek-r1-distill-llama-70b",
-      "gemma2-9b-it",
-      "mixtral-8x7b-32768",
-    ],
-    description: "Ultra-low latency cloud inference powered by Groq LPU chips.",
-    requiresKey: true,
-    keyPlaceholder: "gsk_...",
-    supportsBaseUrl: false,
-  },
-  openai: {
-    id: "openai",
-    name: "OpenAI Cloud",
-    badge: "GPT-4o & Reasoning",
-    defaultModel: "gpt-4o-mini",
-    models: [
-      "gpt-4o-mini",
-      "gpt-4o",
-      "o3-mini",
-      "o1-mini",
-      "o1",
-      "gpt-4-turbo",
-    ],
-    description: "Industry-standard OpenAI language models for deep financial analysis.",
-    requiresKey: true,
-    keyPlaceholder: "sk-proj-... / sk-...",
-    supportsBaseUrl: false,
-  },
-  anthropic: {
-    id: "anthropic",
-    name: "Anthropic Cloud",
-    badge: "Claude 3.5 & 3.7",
-    defaultModel: "claude-3-5-sonnet-20241022",
-    models: [
-      "claude-3-7-sonnet-20250219",
-      "claude-3-5-sonnet-20241022",
-      "claude-3-5-haiku-20241022",
-      "claude-3-opus-20240229",
-    ],
-    description: "Anthropic Claude models specializing in nuanced financial reasoning.",
-    requiresKey: true,
-    keyPlaceholder: "sk-ant-api03-...",
-    supportsBaseUrl: false,
-  },
-  gemini: {
-    id: "gemini",
-    name: "Google Gemini",
-    badge: "Gemini 1.5 & 2.0",
-    defaultModel: "gemini-2.0-flash",
-    models: [
-      "gemini-2.0-flash",
-      "gemini-2.5-flash",
-      "gemini-2.0-pro-exp-02-05",
-      "gemini-1.5-flash",
-      "gemini-1.5-pro",
-    ],
-    description: "High-context multimodal inference powered by Google AI.",
-    requiresKey: true,
-    keyPlaceholder: "AIzaSy...",
-    supportsBaseUrl: false,
-  },
-  openrouter: {
-    id: "openrouter",
-    name: "OpenRouter",
-    badge: "Universal Gateway",
-    defaultModel: "meta-llama/llama-3.3-70b-instruct",
-    models: [
-      "meta-llama/llama-3.3-70b-instruct",
-      "deepseek/deepseek-r1",
-      "anthropic/claude-3.5-sonnet",
-      "openai/gpt-4o-mini",
-      "google/gemini-2.0-flash-001",
-      "mistralai/mistral-large-2411",
-    ],
-    description: "Unified API gateway supporting hundreds of leading models.",
-    requiresKey: true,
-    keyPlaceholder: "sk-or-v1-...",
-    supportsBaseUrl: false,
-  },
-  deepseek: {
-    id: "deepseek",
-    name: "DeepSeek API",
-    badge: "DeepSeek-V3 / R1",
-    defaultModel: "deepseek-chat",
-    models: [
-      "deepseek-chat",
-      "deepseek-reasoner",
-    ],
-    description: "Reasoning and general intelligence models from DeepSeek.",
-    requiresKey: true,
-    keyPlaceholder: "sk-...",
-    supportsBaseUrl: false,
-  },
-  nebius: {
-    id: "nebius",
-    name: "Nebius Token Factory",
-    badge: "Cloud API",
-    defaultModel: "meta-llama/Llama-3.3-70B-Instruct",
-    models: [
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "meta-llama/Meta-Llama-3.1-70B-Instruct",
-      "meta-llama/Meta-Llama-3.1-8B-Instruct",
-      "deepseek-ai/DeepSeek-R1",
-      "deepseek-ai/DeepSeek-V3",
-      "Qwen/Qwen2.5-72B-Instruct",
-      "mistralai/Mistral-Large-2407",
-    ],
-    description: "Nebius Token Factory OpenAI-compatible API for open-source foundation models.",
-    requiresKey: true,
-    keyPlaceholder: "Enter Nebius API Key",
-    supportsBaseUrl: true,
-    baseUrlPlaceholder: DEFAULT_NEBIUS_URL,
-    defaultBaseUrl: DEFAULT_NEBIUS_URL,
-  },
-  "openai-compatible": {
+const LLM_PROVIDERS: LlmProviderOption[] = [
+  {
     id: "openai-compatible",
     name: "OpenAI Compatible",
-    badge: "Custom Endpoint",
-    defaultModel: "",
-    description: "Connect to any OpenAI-compatible inference server (LM Studio, vLLM, LocalAI, etc.).",
-    requiresKey: false,
-    keyOptional: true,
-    keyPlaceholder: "Optional API Key / Bearer Token",
-    supportsBaseUrl: true,
-    baseUrlPlaceholder: DEFAULT_OPENAI_COMPATIBLE_URL,
-    defaultBaseUrl: DEFAULT_OPENAI_COMPATIBLE_URL,
+    badge: "HTTP API",
+    description:
+      "Any local server or cloud API that speaks OpenAI chat completions: llama.cpp, Ollama, LM Studio, vLLM, OpenAI, Groq, OpenRouter and others.",
   },
-};
+  {
+    id: "claude-cli",
+    name: "Claude CLI",
+    badge: "Claude Subscription",
+    description: "Runs the Claude Code CLI installed on this machine with your Claude subscription. No API key needed.",
+  },
+];
 
-/**
- * Resolve a preset from a stored provider id, tolerating the legacy
- * "llamacpp-server" key the backend still persists for llama.cpp.
- */
-const resolveProviderPreset = (provider: string): ProviderPreset | undefined =>
-  PROVIDER_PRESETS[provider] ||
-  (provider === "llamacpp-server" ? PROVIDER_PRESETS["llamacpp"] : undefined);
+/** Provider ids from earlier releases were migrated to "openai-compatible" by the service. */
+const toProviderId = (raw: string | undefined): LlmProviderId => (raw === "claude-cli" ? "claude-cli" : "openai-compatible");
 
 const SECTIONS = [
   {
@@ -344,16 +178,17 @@ export function SettingsPage({
   const [appPaths, setAppPaths] = useState<{ data: string; logs: string } | null>(null);
 
   // Assistant settings state
-  const [reportProvider, setReportProvider] = useState("llamacpp-server");
+  const [reportProvider, setReportProvider] = useState<LlmProviderId>("openai-compatible");
   const [reportModel, setReportModel] = useState("");
   const [reportApiKey, setReportApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [reportBaseUrl, setReportBaseUrl] = useState(DEFAULT_LLAMACPP_URL);
+  const [reportBaseUrl, setReportBaseUrl] = useState(DEFAULT_OPENAI_COMPATIBLE_URL);
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [isCustomModel, setIsCustomModel] = useState(false);
-  const [customModelInput, setCustomModelInput] = useState("");
-  const [serverModels, setServerModels] = useState<Record<string, string[]>>({});
+  const [serverModels, setServerModels] = useState<string[]>([]);
   const [isFetchingModels, setIsFetchingModels] = useState(false);
+  const [claudeStatus, setClaudeStatus] = useState<ClaudeCliStatusResponse | null>(null);
+  const [isCheckingClaude, setIsCheckingClaude] = useState(false);
 
   // Full desktop config state for data providers and general settings
   const [fullConfig, setFullConfig] = useState<DesktopConfig | null>(null);
@@ -374,41 +209,34 @@ export function SettingsPage({
     text: string;
   } | null>(null);
 
-  const fetchModelsForProvider = async (provider: string, url?: string, key?: string) => {
-    const isEndpoint =
-      provider === "ollama" ||
-      provider === "llamacpp-server" ||
-      provider === "llamacpp" ||
-      provider === "nebius" ||
-      provider === "openai-compatible";
-    if (!isEndpoint) return;
+  /** Lists the models of the OpenAI-compatible server and keeps the saved one when it is still offered. */
+  const fetchServerModels = async (url: string, key: string) => {
     setIsFetchingModels(true);
     try {
-      const res = await rpc.request.getProviderModels({ provider, baseUrl: url, apiKey: key });
-      if (res.models && res.models.length > 0) {
-        setServerModels((prev) => ({ ...prev, [provider]: res.models }));
-        setReportModel((current) => {
-          if (current && res.models.includes(current)) return current;
-          const preset = resolveProviderPreset(provider);
-          const preferred =
-            preset?.defaultModel && res.models.includes(preset.defaultModel)
-              ? preset.defaultModel
-              : res.models[0];
-          const providerKey = preset?.id || provider;
-          const updatedModels = {
-            ...(fullConfig?.llmModels || {}),
-            [providerKey]: preferred,
-          };
-          setFullConfig((prev) => (prev ? { ...prev, llmModel: preferred, llmModels: updatedModels } : prev));
-          saveConfig({ llmModel: preferred, llmModels: updatedModels });
-          return preferred;
-        });
-      }
+      const res = await rpc.request.getProviderModels({ provider: "openai-compatible", baseUrl: url, apiKey: key });
+      setServerModels(res.models || []);
     } catch {
-      // Server offline or not responding
+      setServerModels([]); // server offline or not responding
     } finally {
       setIsFetchingModels(false);
     }
+  };
+
+  /** Checks that the Claude CLI is installed and signed in. */
+  const checkClaudeCli = async () => {
+    setIsCheckingClaude(true);
+    try {
+      setClaudeStatus(await rpc.request.getClaudeCliStatus());
+    } catch (err) {
+      setClaudeStatus({ installed: false, loggedIn: false, message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setIsCheckingClaude(false);
+    }
+  };
+
+  const saveModel = (provider: LlmProviderId, model: string) => {
+    setReportModel(model);
+    saveConfig({ llmModel: model, llmModels: { ...(fullConfig?.llmModels || {}), [provider]: model } });
   };
 
   useEffect(() => {
@@ -421,37 +249,19 @@ export function SettingsPage({
     rpc.request.getConfig({}).then((config: any) => {
       const desktopConfig = config as DesktopConfig;
       setFullConfig(desktopConfig);
-      const provider = desktopConfig.llmProvider || "llamacpp-server";
+      const provider = toProviderId(desktopConfig.llmProvider);
+      const isCurrent = desktopConfig.llmProvider === provider;
       setReportProvider(provider);
 
-      const preset = resolveProviderPreset(provider);
-      const providerKey = preset?.id || provider;
-      const isLlama = providerKey === "llamacpp" || providerKey === "llamacpp-server";
-
-      const savedModel =
-        desktopConfig.llmModels?.[providerKey] ||
-        desktopConfig.llmModel ||
-        preset?.defaultModel ||
-        "";
+      const savedModel = desktopConfig.llmModels?.[provider] || (isCurrent ? desktopConfig.llmModel : "") || "";
       setReportModel(savedModel);
+      if (provider === "claude-cli" && savedModel && !CLAUDE_CLI_MODELS.includes(savedModel)) setIsCustomModel(true);
 
-      if (savedModel && preset?.models && !preset.models.includes(savedModel)) {
-        setIsCustomModel(true);
-        setCustomModelInput(savedModel);
-      }
-
-      const savedKey =
-        desktopConfig.llmApiKeys?.[providerKey] ||
-        (provider === desktopConfig.llmProvider ? desktopConfig.llmApiKey : "") ||
-        "";
+      const savedKey = desktopConfig.llmApiKeys?.[provider] || (isCurrent ? desktopConfig.llmApiKey : "") || "";
       setReportApiKey(savedKey);
 
       const savedUrl =
-        desktopConfig.llmBaseUrls?.[providerKey] ||
-        (isLlama ? desktopConfig.llamacppServerUrl : undefined) ||
-        (provider === desktopConfig.llmProvider ? desktopConfig.llmBaseUrl : undefined) ||
-        preset?.defaultBaseUrl ||
-        "";
+        desktopConfig.llmBaseUrls?.[provider] || (isCurrent ? desktopConfig.llmBaseUrl : "") || DEFAULT_OPENAI_COMPATIBLE_URL;
       setReportBaseUrl(savedUrl);
 
       setTelemetryEnabled(desktopConfig.telemetryEnabled ?? false);
@@ -459,9 +269,8 @@ export function SettingsPage({
       if (desktopConfig.startWithBoot !== undefined) setStartWithBoot(desktopConfig.startWithBoot);
       if (desktopConfig.checkForUpdates !== undefined) setCheckForUpdates(desktopConfig.checkForUpdates);
 
-      if (preset?.supportsBaseUrl) {
-        fetchModelsForProvider(provider, savedUrl || preset?.defaultBaseUrl, savedKey);
-      }
+      if (provider === "claude-cli") checkClaudeCli();
+      else fetchServerModels(savedUrl, savedKey);
     });
 
     rpc.request.getAppInfo({}).then((info) => {
@@ -498,69 +307,24 @@ export function SettingsPage({
     saveConfig({ theme: newTheme });
   };
 
-  const handleProviderSelect = (newProvider: string) => {
-    const isLlamaCpp = newProvider === "llamacpp" || newProvider === "llamacpp-server";
+  const handleProviderSelect = (newProvider: LlmProviderId) => {
     setReportProvider(newProvider);
-    const preset = resolveProviderPreset(newProvider);
-    const providerKey = preset?.id || newProvider;
+    const nextModel = fullConfig?.llmModels?.[newProvider] || "";
+    setReportModel(nextModel);
+    setIsCustomModel(newProvider === "claude-cli" && Boolean(nextModel) && !CLAUDE_CLI_MODELS.includes(nextModel));
 
-    if (preset) {
-      // 1. Model for selected provider
-      const nextModel =
-        fullConfig?.llmModels?.[providerKey] ||
-        preset.defaultModel ||
-        "";
-      setReportModel(nextModel);
-      const isCustom = Boolean(
-        (newProvider === "openai-compatible" && !nextModel) ||
-        (nextModel && preset?.models && !preset.models.includes(nextModel))
-      );
-      setIsCustomModel(isCustom);
-      setCustomModelInput(isCustom ? nextModel : "");
-
-      // 2. Base URL for selected provider: isolated per provider!
-      let nextBaseUrl = "";
-      if (preset.supportsBaseUrl) {
-        nextBaseUrl =
-          fullConfig?.llmBaseUrls?.[providerKey] ||
-          (providerKey === "llamacpp" ? fullConfig?.llamacppServerUrl : undefined) ||
-          preset.defaultBaseUrl ||
-          "";
-      }
-      setReportBaseUrl(nextBaseUrl);
-
-      // 3. API Key for selected provider: isolated per provider!
-      const nextApiKey = fullConfig?.llmApiKeys?.[providerKey] || "";
-      setReportApiKey(nextApiKey);
-
-      const updates: any = {
-        llmProvider: newProvider,
-        llmModel: nextModel,
-        llmBaseUrl: nextBaseUrl,
-        llmApiKey: nextApiKey,
-        ...(isLlamaCpp && nextBaseUrl ? { llamacppServerUrl: nextBaseUrl } : {}),
-        llmBaseUrls: {
-          ...(fullConfig?.llmBaseUrls || {}),
-          [providerKey]: nextBaseUrl,
-        },
-        llmApiKeys: {
-          ...(fullConfig?.llmApiKeys || {}),
-          [providerKey]: nextApiKey,
-        },
-        llmModels: {
-          ...(fullConfig?.llmModels || {}),
-          [providerKey]: nextModel,
-        },
-      };
-
-      setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
-      saveConfig(updates);
-      if (preset.supportsBaseUrl) {
-        fetchModelsForProvider(newProvider, nextBaseUrl, nextApiKey);
-      }
-    } else {
-      saveConfig({ llmProvider: newProvider });
+    if (newProvider === "claude-cli") {
+      saveConfig({ llmProvider: newProvider, llmModel: nextModel, llmBaseUrl: "", llmApiKey: "" });
+      checkClaudeCli();
+      return;
     }
+
+    const nextBaseUrl = fullConfig?.llmBaseUrls?.[newProvider] || DEFAULT_OPENAI_COMPATIBLE_URL;
+    const nextApiKey = fullConfig?.llmApiKeys?.[newProvider] || "";
+    setReportBaseUrl(nextBaseUrl);
+    setReportApiKey(nextApiKey);
+    saveConfig({ llmProvider: newProvider, llmModel: nextModel, llmBaseUrl: nextBaseUrl, llmApiKey: nextApiKey });
+    fetchServerModels(nextBaseUrl, nextApiKey);
   };
 
   const handleConfirmDeletePortfolio = async (p: PortfolioItem) => {
@@ -589,29 +353,13 @@ export function SettingsPage({
     );
   });
 
-  // Resolve the preset even when the provider value still uses the legacy
-  // "llamacpp-server" key used by the backend.
-  const currentPreset = resolveProviderPreset(reportProvider);
-  const dynamicList = serverModels[reportProvider] || [];
-  const presetList = currentPreset?.models || [];
-  // Local server providers (llamacpp-server and ollama) list models only from
-  // the live server endpoint. Models are never hardcoded for them. Cloud
-  // providers keep the bundled preset list because they expose no accessible
-  // model listing.
-  const isEndpointProvider =
-    reportProvider === "ollama" ||
-    reportProvider === "llamacpp-server" ||
-    reportProvider === "llamacpp" ||
-    reportProvider === "openai-compatible" ||
-    reportProvider === "nebius";
-  const isLlamaCpp = reportProvider === "llamacpp-server" || reportProvider === "llamacpp";
-  const baseList = isEndpointProvider
-    ? (dynamicList.length > 0 ? dynamicList : presetList)
-    : presetList;
-  const availableModels = Array.from(new Set(baseList));
-  if (reportModel && !isCustomModel && !availableModels.includes(reportModel)) {
-    availableModels.unshift(reportModel);
-  }
+  const currentProvider = LLM_PROVIDERS.find((p) => p.id === reportProvider) ?? LLM_PROVIDERS[0]!;
+  const isClaudeCli = reportProvider === "claude-cli";
+  const modelOptions = isClaudeCli ? CLAUDE_CLI_MODELS : serverModels;
+  // A saved model the list no longer offers stays selectable instead of silently switching.
+  const availableModels = reportModel && !isCustomModel && !modelOptions.includes(reportModel) ? [reportModel, ...modelOptions] : modelOptions;
+  // Without a model list the only way to name a model is to type it.
+  const showModelInput = isCustomModel || (!isClaudeCli && serverModels.length === 0);
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
@@ -1068,24 +816,69 @@ export function SettingsPage({
                   <span>Inference Provider</span>
                 </label>
                 <Select
-                  value={currentPreset?.id || reportProvider}
-                  onChange={(e) => handleProviderSelect(e.target.value)}
+                  value={reportProvider}
+                  onChange={(e) => handleProviderSelect(toProviderId(e.target.value))}
                   selectSize="lg"
                   icon={<Bot className="w-4 h-4" />}
                   aria-label="Inference provider"
                 >
-                  {Object.values(PROVIDER_PRESETS).map((p) => (
+                  {LLM_PROVIDERS.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.badge})
                     </option>
                   ))}
                 </Select>
-                {currentPreset && (
-                  <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                    {currentPreset.description}
-                  </p>
-                )}
+                <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">{currentProvider.description}</p>
               </div>
+
+              {/* Claude CLI status: checked on selection */}
+              {isClaudeCli && (
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-slate-400" />
+                      <span>CLI Status</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={checkClaudeCli}
+                      disabled={isCheckingClaude}
+                      className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      title="Check the Claude CLI again"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isCheckingClaude ? "animate-spin" : ""}`} />
+                      <span>{isCheckingClaude ? "Checking..." : "Check Again"}</span>
+                    </button>
+                  </div>
+                  {isCheckingClaude && !claudeStatus ? (
+                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400">
+                      Looking for the Claude CLI and its sign-in...
+                    </div>
+                  ) : claudeStatus?.installed && claudeStatus.loggedIn ? (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2 text-[11px] text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-px" />
+                      <span>{claudeStatus.message}</span>
+                    </div>
+                  ) : claudeStatus ? (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-[11px] text-rose-300">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-px" />
+                      <div className="space-y-1">
+                        <p>{claudeStatus.message}</p>
+                        {!claudeStatus.installed && (
+                          <button
+                            type="button"
+                            onClick={() => openExternal("https://code.claude.com/docs/en/setup")}
+                            className="flex items-center gap-1 text-rose-200 hover:text-white underline underline-offset-2 cursor-pointer"
+                          >
+                            <span>Claude Code setup guide</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {/* Model Identifier Dropdown */}
               <div className="space-y-2 pt-2 border-t border-slate-800/80">
@@ -1094,10 +887,10 @@ export function SettingsPage({
                     <Cpu className="w-3.5 h-3.5 text-slate-400" />
                     <span>Model Identifier</span>
                   </label>
-                  {currentPreset?.supportsBaseUrl && (
+                  {!isClaudeCli && (
                     <button
                       type="button"
-                      onClick={() => fetchModelsForProvider(reportProvider, reportBaseUrl, reportApiKey)}
+                      onClick={() => fetchServerModels(reportBaseUrl, reportApiKey)}
                       disabled={isFetchingModels}
                       className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       title="Fetch available models from endpoint"
@@ -1108,66 +901,52 @@ export function SettingsPage({
                   )}
                 </div>
 
-                <Select
-                  value={isCustomModel ? "__custom__" : reportModel}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const providerKey = currentPreset?.id || reportProvider;
-                    if (val === "__custom__") {
-                      setIsCustomModel(true);
-                      setCustomModelInput(reportModel);
-                    } else {
-                      setIsCustomModel(false);
-                      setReportModel(val);
-                      const updatedModels = {
-                        ...(fullConfig?.llmModels || {}),
-                        [providerKey]: val,
-                      };
-                      saveConfig({ llmModel: val, llmModels: updatedModels });
-                    }
-                  }}
-                  selectSize="lg"
-                  icon={<Cpu className="w-4 h-4" />}
-                  aria-label="Model identifier"
-                >
-                  {availableModels.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                  <option value="__custom__">
-                    Custom Model (Manual Entry)...
-                  </option>
-                </Select>
+                {(isClaudeCli || serverModels.length > 0) && (
+                  <Select
+                    value={isCustomModel ? "__custom__" : reportModel}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "__custom__") {
+                        setIsCustomModel(true);
+                      } else {
+                        setIsCustomModel(false);
+                        saveModel(reportProvider, val);
+                      }
+                    }}
+                    selectSize="lg"
+                    icon={<Cpu className="w-4 h-4" />}
+                    aria-label="Model identifier"
+                  >
+                    <option value="">{isClaudeCli ? "Default (chosen by the CLI)" : "Default (chosen by the server)"}</option>
+                    {availableModels.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                    <option value="__custom__">Custom Model (Manual Entry)...</option>
+                  </Select>
+                )}
 
-                {(isCustomModel || (reportProvider === "openai-compatible" && availableModels.length === 0)) && (
+                {showModelInput && (
                   <div className="pt-2 animate-fade-in">
                     <input
                       type="text"
-                      value={isCustomModel ? customModelInput : reportModel}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const providerKey = currentPreset?.id || reportProvider;
-                        setCustomModelInput(val);
-                        setReportModel(val);
-                        const updatedModels = {
-                          ...(fullConfig?.llmModels || {}),
-                          [providerKey]: val,
-                        };
-                        saveConfig({ llmModel: val, llmModels: updatedModels });
-                      }}
-                      placeholder="e.g. meta-llama/Llama-3.3-70B-Instruct or model identifier"
+                      value={reportModel}
+                      onChange={(e) => saveModel(reportProvider, e.target.value)}
+                      placeholder={isClaudeCli ? "e.g. claude-sonnet-5" : "e.g. llama-3.3-70b-versatile or leave empty for the server default"}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
-                      Enter the model identifier expected by your inference endpoint.
+                      {isClaudeCli
+                        ? "Any model name or alias the Claude CLI accepts with --model."
+                        : "Enter the model identifier expected by your inference endpoint."}
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Server Base URL: Only rendered for local server daemons or custom endpoints */}
-              {currentPreset?.supportsBaseUrl && (
+              {/* Server Base URL and API Key: OpenAI-compatible only */}
+              {!isClaudeCli && (
                 <div className="space-y-2 pt-2 border-t border-slate-800/80">
                   <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -1181,83 +960,50 @@ export function SettingsPage({
                       onChange={(e) => {
                         const val = e.target.value;
                         setReportBaseUrl(val);
-                        const providerKey = currentPreset?.id || reportProvider;
-                        const isLlama = providerKey === "llamacpp" || providerKey === "llamacpp-server";
-                        const updatedUrls = {
-                          ...(fullConfig?.llmBaseUrls || {}),
-                          [providerKey]: val,
-                        };
-                        saveConfig({
-                          llmBaseUrl: val,
-                          llmBaseUrls: updatedUrls,
-                          ...(isLlama ? { llamacppServerUrl: val } : {}),
-                        });
+                        saveConfig({ llmBaseUrl: val, llmBaseUrls: { ...(fullConfig?.llmBaseUrls || {}), [reportProvider]: val } });
                       }}
-                      onBlur={(e) => {
-                        if (isEndpointProvider) {
-                          fetchModelsForProvider(reportProvider, e.target.value.trim(), reportApiKey);
-                        }
-                      }}
-                      placeholder={
-                        currentPreset?.baseUrlPlaceholder ||
-                        (reportProvider === "ollama" ? DEFAULT_OLLAMA_URL : DEFAULT_LLAMACPP_URL)
-                      }
+                      onBlur={(e) => fetchServerModels(e.target.value.trim(), reportApiKey)}
+                      placeholder={DEFAULT_OPENAI_COMPATIBLE_URL}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">
-                    {reportProvider === "ollama"
-                      ? `Default Ollama daemon endpoint: ${DEFAULT_OLLAMA_URL}`
-                      : reportProvider === "nebius"
-                      ? `Default Nebius Token Factory endpoint: ${DEFAULT_NEBIUS_URL}`
-                      : reportProvider === "openai-compatible"
-                      ? `Default OpenAI-compatible endpoint: ${DEFAULT_OPENAI_COMPATIBLE_URL}`
-                      : `Default llama.cpp server endpoint: ${DEFAULT_LLAMACPP_URL}`}
+                    Examples: http://127.0.0.1:8080 (llama.cpp), http://127.0.0.1:11434/v1 (Ollama), https://api.openai.com/v1, https://api.groq.com/openai/v1
                   </p>
                 </div>
               )}
 
-              {/* Provider API Key */}
-              <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Provider API Key</span>
-                  {currentPreset?.keyOptional && (
-                    <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional)</span>
-                  )}
-                </label>
-                <div className="relative">
-                  <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showApiKey ? "text" : "password"}
-                    value={reportApiKey}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setReportApiKey(val);
-                      const providerKey = currentPreset?.id || reportProvider;
-                      const updatedKeys = {
-                        ...(fullConfig?.llmApiKeys || {}),
-                        [providerKey]: val,
-                      };
-                      saveConfig({
-                        llmApiKey: val,
-                        llmApiKeys: updatedKeys,
-                      });
-                    }}
-                    placeholder={
-                      currentPreset?.keyPlaceholder || "Enter API Key"
-                    }
-                    className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                  >
-                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+              {!isClaudeCli && (
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
+                    <span>Provider API Key</span>
+                    <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional for local servers)</span>
+                  </label>
+                  <div className="relative">
+                    <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={reportApiKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setReportApiKey(val);
+                        saveConfig({ llmApiKey: val, llmApiKeys: { ...(fullConfig?.llmApiKeys || {}), [reportProvider]: val } });
+                      }}
+                      onBlur={(e) => fetchServerModels(reportBaseUrl, e.target.value.trim())}
+                      placeholder="API key or bearer token"
+                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Test LLM Action */}
               <div className="space-y-3 pt-3 border-t border-slate-800/80">
@@ -1501,7 +1247,7 @@ export function SettingsPage({
         isOpen={isTestModalOpen}
         onClose={() => setIsTestModalOpen(false)}
         provider={reportProvider}
-        providerName={currentPreset?.name || reportProvider}
+        providerName={currentProvider.name}
         model={reportModel}
         apiKey={reportApiKey}
         baseUrl={reportBaseUrl}

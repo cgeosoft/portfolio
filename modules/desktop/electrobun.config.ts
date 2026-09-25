@@ -1,4 +1,4 @@
-import { readdirSync, type Dirent } from "node:fs";
+import { existsSync, readdirSync, type Dirent } from "node:fs";
 import { join, resolve } from "node:path";
 import type { ElectrobunConfig } from "electrobun";
 import packageJson from "./package.json";
@@ -7,6 +7,8 @@ import packageJson from "./package.json";
  * Lists every file below `stage/<dir>` as a `build.copy` entry so the staged
  * service bundle and GUI land in `Resources/app/<dir>/`. `bun run stage` must
  * run before this config is loaded (it is part of `dev` and `build`).
+ * `bun start` (scripts/dev.ts) skips the stage: the shell then runs the
+ * service from source, so a missing `stage/` is not an error.
  */
 function copyTree(dir: string, into: Record<string, string> = {}): Record<string, string> {
   const root = resolve(import.meta.dir, "stage", dir);
@@ -27,6 +29,11 @@ function copyTree(dir: string, into: Record<string, string> = {}): Record<string
   return into;
 }
 
+/** One staged file, when it exists. */
+function copyFile(from: string, to: string): Record<string, string> {
+  return existsSync(resolve(import.meta.dir, from)) ? { [from]: to } : {};
+}
+
 export default {
   app: {
     name: "Portfolio",
@@ -41,8 +48,8 @@ export default {
     copy: {
       ...copyTree("service"),
       ...copyTree("gui"),
-      "stage/service/sponsor.html": "sponsor.html",
-      "stage/service/sponsor-light.html": "sponsor-light.html",
+      ...copyFile("stage/service/sponsor.html", "sponsor.html"),
+      ...copyFile("stage/service/sponsor-light.html", "sponsor-light.html"),
       "assets/app-icon.png": "app-icon.png",
     },
     watch: ["stage"],

@@ -40,6 +40,7 @@ export const rpc = {
     testLlm: api.testLlm,
     testLlmStep: api.testLlmStep,
     getProviderModels: api.getProviderModels,
+    getClaudeCliStatus: (_p?: unknown) => api.getClaudeCliStatus(),
     testFinnhubConnection: (p: { apiKey?: string }) => api.testFinnhubConnection(p.apiKey),
     testYahooConnection: (_p?: unknown) => api.testYahooConnection(),
     clearMarketCache: (_p?: unknown) => api.clearMarketCache(),

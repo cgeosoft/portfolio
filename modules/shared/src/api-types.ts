@@ -376,6 +376,18 @@ export interface GetProviderModelsResponse {
   models: string[];
 }
 
+/** Whether the Claude Code CLI on this machine can serve as the inference provider. */
+export interface ClaudeCliStatusResponse {
+  installed: boolean;
+  loggedIn: boolean;
+  version?: string;
+  /** "claude.ai" for a subscription sign-in. */
+  authMethod?: string;
+  /** Subscription plan, e.g. "pro" or "max". */
+  subscriptionType?: string;
+  message: string;
+}
+
 export interface GetAppInfoResponse {
   version: string;
   majorMinor: string;

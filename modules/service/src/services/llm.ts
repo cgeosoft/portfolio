@@ -1,20 +1,17 @@
 /**
- * Multi-provider LLM client.
+ * LLM client for the two inference providers.
  *
- * Every provider is a row in PROVIDERS; the wire protocol (`api`) decides how
- * the request body, the reply and the stream frames look. Options given by
- * the caller win over the settings, which win over the provider defaults.
+ * `openai-compatible` speaks OpenAI chat completions over HTTP to any server
+ * or cloud API that offers them (llama.cpp, Ollama, LM Studio, vLLM, OpenAI,
+ * Groq, OpenRouter and others). `claude-cli` runs the Claude Code CLI on this
+ * machine with the user's Claude subscription (see claude-cli.ts). Options
+ * given by the caller win over the settings, which win over the defaults.
  */
 
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
-import {
-  DEFAULT_LLAMACPP_URL,
-  DEFAULT_NEBIUS_URL,
-  DEFAULT_OLLAMA_MODEL,
-  DEFAULT_OLLAMA_URL,
-  DEFAULT_OPENAI_COMPATIBLE_URL,
-} from "portfolio-shared/llm-defaults";
+import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
@@ -33,7 +30,7 @@ export interface LlmChatOptions {
   signal?: AbortSignal;
 }
 
-/** Everything a request needs once options, settings and provider defaults are merged. */
+/** Everything a request needs once options, settings and defaults are merged. */
 export interface LlmTarget {
   provider: ProviderId;
   name: string;
@@ -52,56 +49,21 @@ export interface TestStepResult {
 
 // ── providers ───────────────────────────────────────────────────────────────
 
-export type ProviderId =
-  | "llamacpp-server"
-  | "ollama"
-  | "openai-compatible"
-  | "nebius"
-  | "groq"
-  | "openai"
-  | "anthropic"
-  | "openrouter"
-  | "deepseek"
-  | "gemini";
+export type ProviderId = "openai-compatible" | "claude-cli";
 
-interface ProviderSpec {
-  /** Name used in messages shown to the user. */
-  name: string;
-  /** Wire protocol: OpenAI chat completions, Anthropic messages or the Ollama API. */
-  api: "openai" | "anthropic" | "ollama";
-  /** Cloud services refuse requests without an API key; local servers accept one. */
-  cloud: boolean;
-  /** Model used when neither the request nor the settings name one; empty when the server decides. */
-  defaultModel: string;
-  defaultUrl: string;
-  headers?: Record<string, string>;
-}
-
-const PROVIDERS: Record<ProviderId, ProviderSpec> = {
-  "llamacpp-server": { name: "llama.cpp", api: "openai", cloud: false, defaultModel: "", defaultUrl: DEFAULT_LLAMACPP_URL },
-  ollama: { name: "Ollama", api: "ollama", cloud: false, defaultModel: DEFAULT_OLLAMA_MODEL, defaultUrl: DEFAULT_OLLAMA_URL },
-  "openai-compatible": { name: "OpenAI-compatible", api: "openai", cloud: false, defaultModel: "", defaultUrl: DEFAULT_OPENAI_COMPATIBLE_URL },
-  nebius: { name: "Nebius", api: "openai", cloud: true, defaultModel: "meta-llama/Llama-3.3-70B-Instruct", defaultUrl: DEFAULT_NEBIUS_URL },
-  groq: { name: "Groq", api: "openai", cloud: true, defaultModel: "llama-3.3-70b-versatile", defaultUrl: "https://api.groq.com/openai/v1" },
-  openai: { name: "OpenAI", api: "openai", cloud: true, defaultModel: "gpt-4o-mini", defaultUrl: "https://api.openai.com/v1" },
-  anthropic: { name: "Anthropic", api: "anthropic", cloud: true, defaultModel: "claude-3-5-sonnet-20241022", defaultUrl: "https://api.anthropic.com" },
-  openrouter: {
-    name: "OpenRouter",
-    api: "openai",
-    cloud: true,
-    defaultModel: "meta-llama/llama-3.3-70b-instruct",
-    defaultUrl: "https://openrouter.ai/api/v1",
-    headers: { "HTTP-Referer": "https://portfolio.local", "X-Title": "Financial Portfolio" },
-  },
-  deepseek: { name: "DeepSeek", api: "openai", cloud: true, defaultModel: "deepseek-chat", defaultUrl: "https://api.deepseek.com/v1" },
-  gemini: { name: "Gemini", api: "openai", cloud: true, defaultModel: "gemini-2.5-flash", defaultUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
+const PROVIDER_NAMES: Record<ProviderId, string> = {
+  "openai-compatible": "OpenAI-compatible",
+  "claude-cli": "Claude CLI",
 };
 
-/** Settings may still say "llamacpp" (the GUI preset id) for the llama.cpp server. */
+/**
+ * Every stored id other than "claude-cli" maps to the OpenAI-compatible
+ * provider. Earlier versions stored one id per server or cloud (llamacpp,
+ * ollama, groq, ...); their base URL and key still apply through the
+ * `llmBaseUrl` / `llmApiKey` settings.
+ */
 function normalizeProvider(raw: string | undefined): ProviderId {
-  const id = (raw || "").toLowerCase().trim();
-  if (id === "llamacpp") return "llamacpp-server";
-  return id in PROVIDERS ? (id as ProviderId) : "llamacpp-server";
+  return (raw || "").toLowerCase().trim() === "claude-cli" ? "claude-cli" : "openai-compatible";
 }
 
 /**
@@ -112,12 +74,15 @@ function normalizeProvider(raw: string | undefined): ProviderId {
  */
 const TEST_INFERENCE_MAX_TOKENS = 512;
 
-/** How long an auto-detected llama.cpp model name stays valid. */
-const LLAMACPP_MODEL_CACHE_MS = 60_000;
+/** How long an auto-detected server model name stays valid. */
+const SERVER_MODEL_CACHE_MS = 60_000;
 
 const REQUEST_TIMEOUT_MS = 120_000;
 
-// ── URLs and headers ────────────────────────────────────────────────────────
+/** The CLI starts a fresh session per request, so it gets more time than an HTTP call. */
+const CLAUDE_CLI_TIMEOUT_MS = 300_000;
+
+// ── URLs, headers and reply shapes ──────────────────────────────────────────
 
 /**
  * OpenAI-compatible endpoint for a base URL. A bare host gets the usual `/v1`
@@ -131,49 +96,18 @@ export function buildOpenAIUrl(rawBaseUrl: string, endpointPath: "chat/completio
   return `${base}${hasPath ? "" : "/v1"}/${endpointPath}`;
 }
 
-function endpointUrl(spec: ProviderSpec, baseUrl: string, kind: "chat" | "models"): string {
-  const root = baseUrl.replace(/\/+$/, "");
-  const withSuffix = (suffix: string) => (root.endsWith(suffix) ? root : `${root}${suffix}`);
-  if (spec.api === "ollama") return kind === "chat" ? withSuffix("/api/chat") : `${root}/api/tags`;
-  if (spec.api === "anthropic") return kind === "chat" ? withSuffix("/v1/messages") : `${root}/v1/models`;
-  return buildOpenAIUrl(root, kind === "chat" ? "chat/completions" : "models");
-}
-
-function requestHeaders(spec: ProviderSpec, apiKey: string): Record<string, string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json", ...spec.headers };
-  if (!apiKey) return headers;
-  if (spec.api === "anthropic") {
-    headers["x-api-key"] = apiKey;
-    headers["anthropic-version"] = "2023-06-01";
-  } else {
-    headers.Authorization = `Bearer ${apiKey}`;
-  }
+function requestHeaders(apiKey: string): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
   return headers;
 }
 
-// ── request and reply shapes per protocol ───────────────────────────────────
-
-function requestBody(spec: ProviderSpec, target: LlmTarget, messages: LlmMessage[], maxTokens: number, stream: boolean): unknown {
-  const model = target.model || undefined; // omitted when empty: llama.cpp answers with the model it was started with
-  const { temperature } = target;
-  if (spec.api === "ollama") return { model, messages, stream, options: { temperature } };
-  if (spec.api === "anthropic") {
-    const system = messages.find((m) => m.role === "system")?.content;
-    return { model, max_tokens: maxTokens, temperature, stream, ...(system ? { system } : {}), messages: messages.filter((m) => m.role !== "system") };
-  }
-  return { model, messages, temperature, max_tokens: maxTokens, stream };
-}
-
 interface ChatReply {
-  message?: { content?: string };
-  content?: Array<{ text?: string }>;
   choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>;
 }
 
-/** Text of a non-streamed reply; empty when the provider returned none. */
-function replyText(spec: ProviderSpec, json: ChatReply): string {
-  if (spec.api === "ollama") return json.message?.content ?? "";
-  if (spec.api === "anthropic") return json.content?.[0]?.text ?? "";
+/** Text of a non-streamed reply; empty when the server returned none. */
+function replyText(json: ChatReply): string {
   const message = json.choices?.[0]?.message;
   if (message?.content?.trim()) return message.content;
   // Servers started with `--reasoning-format deepseek` return the thinking in
@@ -183,18 +117,14 @@ function replyText(spec: ProviderSpec, json: ChatReply): string {
   return reasoning ? `<think>${reasoning}</think>` : "";
 }
 
-/** Text carried by one line of a streamed reply (SSE `data:` frames, or NDJSON for Ollama). */
-function streamDelta(spec: ProviderSpec, line: string): string {
+/** Text carried by one SSE `data:` line of a streamed reply. */
+function streamDelta(line: string): string {
   let payload = line.trim();
-  if (spec.api !== "ollama") {
-    if (!payload.startsWith("data:")) return "";
-    payload = payload.slice(5).trim();
-  }
+  if (!payload.startsWith("data:")) return "";
+  payload = payload.slice(5).trim();
   if (!payload || payload === "[DONE]") return "";
   try {
     const frame = JSON.parse(payload);
-    if (spec.api === "ollama") return frame.message?.content ?? "";
-    if (spec.api === "anthropic") return frame.type === "content_block_delta" ? (frame.delta?.text ?? "") : "";
     return frame.choices?.[0]?.delta?.content ?? frame.choices?.[0]?.text ?? "";
   } catch {
     return ""; // partial or non-JSON frame
@@ -216,7 +146,6 @@ async function readLines(body: ReadableStream<Uint8Array>, signal: AbortSignal |
 
 interface ModelList {
   data?: Array<{ id?: string; status?: { value?: string } }>;
-  models?: Array<{ name?: string }>;
 }
 
 function errorMessage(err: unknown): string {
@@ -266,34 +195,29 @@ function stripThinkTags(input: string): string {
 // ── service ─────────────────────────────────────────────────────────────────
 
 export class LlmService {
-  /** Model auto-detected per llama.cpp base URL, see detectLlamaCppModel(). */
+  /** Model auto-detected per server base URL, see detectServerModel(). */
   private static readonly detectedModels = new Map<string, { model: string; at: number }>();
 
   /**
-   * Merges request options, the stored settings and the provider defaults.
-   * The single `llmModel` / `llmApiKey` / `llmBaseUrl` settings mirror the
-   * provider chosen in Settings; the per-provider maps hold every other one.
+   * Merges request options, the stored settings and the defaults. The single
+   * `llmModel` / `llmApiKey` / `llmBaseUrl` settings mirror the provider
+   * chosen in Settings; the per-provider maps hold the other one.
    */
   public resolve(options: LlmChatOptions = {}): LlmTarget {
     const config = loadConfig();
     const provider = normalizeProvider(options.provider || config.llmProvider);
-    const spec = PROVIDERS[provider];
     const isCurrent = normalizeProvider(config.llmProvider) === provider;
-    const isLlamaCpp = provider === "llamacpp-server";
-    const stored = (map: Record<string, string> | undefined) => map?.[provider]?.trim() || (isLlamaCpp ? map?.llamacpp?.trim() : "");
+    const stored = (map: Record<string, string> | undefined) => map?.[provider]?.trim() || "";
     const current = (value: string | undefined) => (isCurrent ? value?.trim() : "");
+    const isCli = provider === "claude-cli";
     return {
       provider,
-      name: spec.name,
-      model: options.model?.trim() || stored(config.llmModels) || current(config.llmModel) || spec.defaultModel,
-      apiKey: options.apiKey?.trim() || stored(config.llmApiKeys) || current(config.llmApiKey) || "",
-      baseUrl: (
-        options.baseUrl?.trim() ||
-        stored(config.llmBaseUrls) ||
-        (isLlamaCpp ? config.llamacppServerUrl?.trim() : "") ||
-        current(config.llmBaseUrl) ||
-        spec.defaultUrl
-      ).replace(/\/+$/, ""),
+      name: PROVIDER_NAMES[provider],
+      model: options.model?.trim() || stored(config.llmModels) || current(config.llmModel) || "",
+      apiKey: isCli ? "" : options.apiKey?.trim() || stored(config.llmApiKeys) || current(config.llmApiKey) || "",
+      baseUrl: isCli
+        ? ""
+        : (options.baseUrl?.trim() || stored(config.llmBaseUrls) || current(config.llmBaseUrl) || DEFAULT_OPENAI_COMPATIBLE_URL).replace(/\/+$/, ""),
       temperature: options.temperature ?? config.llmTemperature ?? 0.3,
     };
   }
@@ -311,36 +235,46 @@ export class LlmService {
   /** Raw model output; streamed when onChunk is given. */
   private async complete(messages: LlmMessage[], options: LlmChatOptions, onChunk?: (chunk: string) => void): Promise<string> {
     const target = this.resolve(options);
-    const spec = PROVIDERS[target.provider];
-    if (spec.cloud && !target.apiKey) {
-      throw new Error(`${spec.name} API key is not configured. Please open Settings > Assistant and configure your API key.`);
-    }
-    if (target.provider === "llamacpp-server" && !target.model) target.model = await this.detectLlamaCppModel(spec, target);
 
     appLogger.logStep("info", "llm", onChunk ? "chat_stream" : "chat", "Executing chat request", undefined, {
       provider: target.provider,
       model: target.model || "default",
     });
 
-    const res = await fetch(endpointUrl(spec, target.baseUrl, "chat"), {
+    if (target.provider === "claude-cli") {
+      return claudeCliComplete(messages, {
+        model: target.model,
+        signal: options.signal ?? AbortSignal.timeout(CLAUDE_CLI_TIMEOUT_MS),
+        onChunk,
+      });
+    }
+
+    if (!target.model) target.model = await this.detectServerModel(target);
+    const res = await fetch(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
       method: "POST",
-      headers: requestHeaders(spec, target.apiKey),
-      body: JSON.stringify(requestBody(spec, target, messages, options.maxTokens ?? 3000, Boolean(onChunk))),
+      headers: requestHeaders(target.apiKey),
+      body: JSON.stringify({
+        model: target.model || undefined, // omitted when empty: llama.cpp answers with the model it was started with
+        messages,
+        temperature: target.temperature,
+        max_tokens: options.maxTokens ?? 3000,
+        stream: Boolean(onChunk),
+      }),
       signal: options.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!res.ok) {
-      throw new Error(`${spec.name} API request failed with status ${res.status}: ${await res.text().catch(() => "")}`);
+      throw new Error(`${target.name} API request failed with status ${res.status}: ${await res.text().catch(() => "")}`);
     }
 
     if (!onChunk) {
-      const text = replyText(spec, (await res.json()) as ChatReply);
-      if (!text) throw new Error(`No completion content returned from ${spec.name}`);
+      const text = replyText((await res.json()) as ChatReply);
+      if (!text) throw new Error(`No completion content returned from ${target.name}`);
       return text;
     }
-    if (!res.body) throw new Error(`No response body returned from ${spec.name}`);
+    if (!res.body) throw new Error(`No response body returned from ${target.name}`);
     let full = "";
     await readLines(res.body, options.signal, (line) => {
-      const delta = streamDelta(spec, line);
+      const delta = streamDelta(line);
       if (!delta) return;
       full += delta;
       onChunk(delta);
@@ -355,12 +289,12 @@ export class LlmService {
    * the router does not have to swap a cold model in. Servers that cannot
    * answer get no model at all.
    */
-  private async detectLlamaCppModel(spec: ProviderSpec, target: LlmTarget): Promise<string> {
+  private async detectServerModel(target: LlmTarget): Promise<string> {
     const cached = LlmService.detectedModels.get(target.baseUrl);
-    if (cached && Date.now() - cached.at < LLAMACPP_MODEL_CACHE_MS) return cached.model;
+    if (cached && Date.now() - cached.at < SERVER_MODEL_CACHE_MS) return cached.model;
     try {
-      const res = await fetch(endpointUrl(spec, target.baseUrl, "models"), {
-        headers: requestHeaders(spec, target.apiKey),
+      const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
+        headers: requestHeaders(target.apiKey),
         signal: AbortSignal.timeout(4000),
       });
       if (!res.ok) return "";
@@ -369,23 +303,22 @@ export class LlmService {
       if (model) LlmService.detectedModels.set(target.baseUrl, { model, at: Date.now() });
       return model;
     } catch {
-      return ""; // offline or not a router
+      return ""; // offline or no model listing
     }
   }
 
-  /** Model names the server lists; empty when it is offline or does not support listing. */
+  /** Model names the provider offers; empty when the server is offline or does not list models. */
   public async getAvailableModels(provider: string, baseUrl?: string, apiKey?: string): Promise<string[]> {
     const target = this.resolve({ provider, baseUrl, apiKey });
-    const spec = PROVIDERS[target.provider];
+    if (target.provider === "claude-cli") return [...CLAUDE_CLI_MODELS];
     try {
-      const res = await fetch(endpointUrl(spec, target.baseUrl, "models"), {
-        headers: requestHeaders(spec, target.apiKey),
+      const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
+        headers: requestHeaders(target.apiKey),
         signal: AbortSignal.timeout(3000),
       });
       if (!res.ok) return [];
       const list = (await res.json()) as ModelList;
-      const names = spec.api === "ollama" ? list.models?.map((m) => m.name) : list.data?.map((m) => m.id);
-      return (names ?? []).filter((n): n is string => Boolean(n));
+      return (list.data ?? []).map((m) => m.id).filter((n): n is string => Boolean(n));
     } catch {
       return [];
     }
@@ -399,12 +332,11 @@ export class LlmService {
     const fail = (message: string): TestStepResult => ({ success: false, message });
     const typed: LlmChatOptions = { provider: options.provider, model: options.model, apiKey: options.apiKey, baseUrl: options.baseUrl };
     const target = this.resolve(typed);
-    const spec = PROVIDERS[target.provider];
+    const isCli = target.provider === "claude-cli";
 
     if (step === "config") {
-      // Only what the user typed counts here; llama.cpp may run without a model name.
-      if (!options.model?.trim() && target.provider !== "llamacpp-server") return fail("Model identifier cannot be empty.");
-      if (spec.cloud && !options.apiKey?.trim()) return fail(`${spec.name} requires an API key.`);
+      // The model may stay empty: the server or the CLI then picks its default.
+      if (isCli) return { success: true, message: `Claude CLI with ${target.model ? `model "${target.model}"` : "its default model"}.` };
       try {
         new URL(target.baseUrl);
       } catch {
@@ -415,11 +347,16 @@ export class LlmService {
 
     if (step === "connection") {
       const started = Date.now();
-      const headers = requestHeaders(spec, target.apiKey);
+      if (isCli) {
+        const status = await getClaudeCliStatus();
+        if (!status.installed || !status.loggedIn) return fail(status.message);
+        return { success: true, message: status.message, latencyMs: Date.now() - started };
+      }
+      const headers = requestHeaders(target.apiKey);
       let res: Response | undefined;
       let failure = "";
       // The model list is the cheapest authenticated call; the bare base URL still proves the host is up.
-      for (const url of [endpointUrl(spec, target.baseUrl, "models"), target.baseUrl]) {
+      for (const url of [buildOpenAIUrl(target.baseUrl, "models"), target.baseUrl]) {
         try {
           res = await fetch(url, { headers, signal: AbortSignal.timeout(4000) });
           break;
@@ -429,9 +366,9 @@ export class LlmService {
       }
       if (!res) return fail(`Unable to connect to ${target.baseUrl}: ${failure}`);
       if (res.status === 401) return fail("Authentication failed. Please check your API key.");
-      if (res.status >= 500) return fail(`${spec.name} server error with status ${res.status}.`);
+      if (res.status >= 500) return fail(`${target.name} server error with status ${res.status}.`);
       const latencyMs = Date.now() - started;
-      return { success: true, message: `Connected to ${spec.name} endpoint at ${target.baseUrl} (${latencyMs}ms).`, latencyMs };
+      return { success: true, message: `Connected to ${target.name} endpoint at ${target.baseUrl} (${latencyMs}ms).`, latencyMs };
     }
 
     if (step === "inference") {
@@ -469,5 +406,10 @@ export class LlmService {
     }
 
     return fail(`Unknown step identifier: ${step}`);
+  }
+
+  /** Whether the Claude CLI on this machine is installed and signed in. */
+  public claudeCliStatus() {
+    return getClaudeCliStatus();
   }
 }

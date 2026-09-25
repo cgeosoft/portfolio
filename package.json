@@ -13,7 +13,8 @@
   "scripts": {
     "dev": "bun --filter portfolio-service --filter portfolio-gui dev",
     "build": "bun --filter portfolio-service --filter portfolio-gui build",
-    "start": "bun --filter portfolio-service start",
+    "start": "bun run --cwd modules/desktop start",
+    "serve": "bun --filter portfolio-service start",
     "desktop": "bun run --cwd modules/desktop dev",
     "desktop:build": "bun run --cwd modules/desktop build",
     "build:metrics": "bun run scripts/build-metrics.ts",

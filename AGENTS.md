@@ -35,6 +35,7 @@ Load the matching skill before you change that area.
 
 ```bash
 bun install                       # links the workspace packages
+bun start                         # desktop window, Vite GUI (5133) with hot reload, service under bun --watch (5132)
 bun run dev                       # service (port 5130) + Vite GUI (port 5131)
 bun run desktop                   # electrobun dev with the staged service and GUI
 bun run typecheck | bun run test

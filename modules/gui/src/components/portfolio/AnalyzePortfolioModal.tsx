@@ -267,7 +267,7 @@ export function AnalyzePortfolioModal({
         provider: config.llmProvider,
         model: config.llmModel,
         apiKey: config.llmApiKey,
-        baseUrl: config.llmBaseUrl || config.llamacppServerUrl,
+        baseUrl: config.llmBaseUrl,
         weekKey: selectedWeekKey,
       });
 

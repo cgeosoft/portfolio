@@ -29,120 +29,35 @@ describe("LlmService diagnostic and configuration", () => {
   const service = new LlmService();
 
   describe("testStep: config phase", () => {
-    it("fails when model identifier is empty", async () => {
+    it("accepts an OpenAI-compatible server without a model or API key", async () => {
       const res = await service.testStep("config", {
-        provider: "ollama",
-        model: "",
-      });
-      expect(res.success).toBe(false);
-      expect(res.message).toContain("Model identifier cannot be empty");
-    });
-
-    it("fails when cloud provider has no API key", async () => {
-      const res = await service.testStep("config", {
-        provider: "openai",
-        model: "gpt-4o-mini",
-        apiKey: "",
-      });
-      expect(res.success).toBe(false);
-      expect(res.message).toContain("OpenAI requires an API key");
-    });
-
-    it("succeeds when cloud provider has API key", async () => {
-      const res = await service.testStep("config", {
-        provider: "groq",
-        model: "llama-3.3-70b-versatile",
-        apiKey: "gsk_test_token",
-      });
-      expect(res.success).toBe(true);
-    });
-
-    it("succeeds for local provider without API key", async () => {
-      const res = await service.testStep("config", {
-        provider: "llamacpp-server",
-        model: "local-model",
-        baseUrl: "http://127.0.0.1:8080",
-      });
-      expect(res.success).toBe(true);
-    });
-
-    it("succeeds for llamacpp without a model identifier", async () => {
-      const res = await service.testStep("config", {
-        provider: "llamacpp-server",
+        provider: "openai-compatible",
         model: "",
         baseUrl: "http://192.168.1.50:9000",
       });
       expect(res.success).toBe(true);
     });
 
-    it("fails when a named-model provider has no model identifier", async () => {
+    it("fails when the server URL is malformed", async () => {
       const res = await service.testStep("config", {
-        provider: "ollama",
-        model: "",
-        baseUrl: "http://127.0.0.1:11434",
-      });
-      expect(res.success).toBe(false);
-      expect(res.message).toContain("Model identifier cannot be empty");
-    });
-
-    it("fails when local provider has invalid URL format", async () => {
-      const res = await service.testStep("config", {
-        provider: "ollama",
-        model: "llama3.2:latest",
-        baseUrl: "invalid://url with spaces",
+        provider: "openai-compatible",
+        model: "local-model",
+        baseUrl: "bad url with spaces",
       });
       expect(res.success).toBe(false);
       expect(res.message).toContain("Invalid server URL format");
     });
 
-    it("validates Nebius requires an API key and model", async () => {
-      const resNoKey = await service.testStep("config", {
-        provider: "nebius",
-        model: "meta-llama/Llama-3.3-70B-Instruct",
-        apiKey: "",
-      });
-      expect(resNoKey.success).toBe(false);
-      expect(resNoKey.message).toContain("Nebius requires an API key");
-
-      const resNoModel = await service.testStep("config", {
-        provider: "nebius",
-        model: "",
-        apiKey: "test-token",
-      });
-      expect(resNoModel.success).toBe(false);
-      expect(resNoModel.message).toContain("Model identifier cannot be empty");
-
-      const resOk = await service.testStep("config", {
-        provider: "nebius",
-        model: "meta-llama/Llama-3.3-70B-Instruct",
-        apiKey: "test-token",
-      });
-      expect(resOk.success).toBe(true);
+    it("accepts the Claude CLI without a URL or key", async () => {
+      const res = await service.testStep("config", { provider: "claude-cli", model: "sonnet" });
+      expect(res.success).toBe(true);
+      expect(res.message).toContain("sonnet");
     });
 
-    it("validates OpenAI-compatible provider allows optional key but requires model and valid URL", async () => {
-      const resNoModel = await service.testStep("config", {
-        provider: "openai-compatible",
-        model: "",
-        baseUrl: "http://127.0.0.1:1234/v1",
-      });
-      expect(resNoModel.success).toBe(false);
-      expect(resNoModel.message).toContain("Model identifier cannot be empty");
-
-      const resBadUrl = await service.testStep("config", {
-        provider: "openai-compatible",
-        model: "local-model",
-        baseUrl: "bad url with spaces",
-      });
-      expect(resBadUrl.success).toBe(false);
-      expect(resBadUrl.message).toContain("Invalid server URL format");
-
-      const resOk = await service.testStep("config", {
-        provider: "openai-compatible",
-        model: "qwen2.5-coder-7b",
-        baseUrl: "http://localhost:8000/v1",
-      });
-      expect(resOk.success).toBe(true);
+    it("treats provider ids from earlier releases as OpenAI-compatible", () => {
+      for (const legacy of ["llamacpp-server", "ollama", "groq", "nebius"]) {
+        expect(service.resolve({ provider: legacy, baseUrl: "http://127.0.0.1:8080" }).provider).toBe("openai-compatible");
+      }
     });
   });
 
@@ -158,7 +73,7 @@ describe("LlmService diagnostic and configuration", () => {
         )) as unknown as typeof fetch;
       try {
         const res = await service.testStep("inference", {
-          provider: "llamacpp-server",
+          provider: "openai-compatible",
           model: "qwen3",
           baseUrl: "http://127.0.0.1:8080",
         });
@@ -180,7 +95,7 @@ describe("LlmService diagnostic and configuration", () => {
         )) as unknown as typeof fetch;
       try {
         const res = await service.testStep("inference", {
-          provider: "llamacpp-server",
+          provider: "openai-compatible",
           model: "qwen3",
           baseUrl: "http://127.0.0.1:8080",
         });
@@ -202,7 +117,7 @@ describe("LlmService diagnostic and configuration", () => {
         )) as unknown as typeof fetch;
       try {
         const res = await service.testStep("inference", {
-          provider: "llamacpp-server",
+          provider: "openai-compatible",
           model: "qwen3",
           baseUrl: "http://127.0.0.1:8080",
         });
@@ -214,7 +129,7 @@ describe("LlmService diagnostic and configuration", () => {
     });
   });
 
-  describe("llama.cpp model resolution", () => {
+  describe("server model resolution", () => {
     it("sends the loaded model when the user pinned none", async () => {
       const originalFetch = globalThis.fetch;
       let chatBody: Record<string, unknown> | undefined;
@@ -239,7 +154,7 @@ describe("LlmService diagnostic and configuration", () => {
       }) as unknown as typeof fetch;
       try {
         const res = await service.testStep("inference", {
-          provider: "llamacpp-server",
+          provider: "openai-compatible",
           model: "",
           baseUrl: "http://127.0.0.1:19101",
         });
@@ -264,7 +179,7 @@ describe("LlmService diagnostic and configuration", () => {
       }) as unknown as typeof fetch;
       try {
         const res = await service.testStep("inference", {
-          provider: "llamacpp-server",
+          provider: "openai-compatible",
           model: "",
           baseUrl: "http://127.0.0.1:19102",
         });
@@ -279,7 +194,7 @@ describe("LlmService diagnostic and configuration", () => {
   describe("testStep: integrity phase", () => {
     it("fails when previous output is empty", async () => {
       const res = await service.testStep("integrity", {
-        provider: "ollama",
+        provider: "openai-compatible",
         model: "llama3.2:latest",
         previousOutput: "",
       });
@@ -289,7 +204,7 @@ describe("LlmService diagnostic and configuration", () => {
 
     it("succeeds when previous output contains text", async () => {
       const res = await service.testStep("integrity", {
-        provider: "ollama",
+        provider: "openai-compatible",
         model: "llama3.2:latest",
         previousOutput: "LLM connection verified",
       });
@@ -318,7 +233,7 @@ describe("LlmService diagnostic and configuration", () => {
     });
   });
 
-  describe("OpenAI-compatible & Nebius endpoint operations", () => {
+  describe("OpenAI-compatible endpoint operations", () => {
     it("fetches available models from OpenAI-compatible endpoint with Bearer auth", async () => {
       const originalFetch = globalThis.fetch;
       let capturedUrl = "";
@@ -340,7 +255,7 @@ describe("LlmService diagnostic and configuration", () => {
 
       try {
         const models = await service.getAvailableModels(
-          "nebius",
+          "openai-compatible",
           "https://api.tokenfactory.nebius.com/v1",
           "test-nebius-token"
         );

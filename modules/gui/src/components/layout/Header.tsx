@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { Fragment, useState, useRef, useEffect } from "react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import {
   TrendingUp,
@@ -10,6 +10,7 @@ import {
   Users,
   Bot,
   Gauge,
+  Settings,
 } from "lucide-react";
 
 export type PortfolioTabKey = "overview" | "metrics" | "reports" | "transactions";
@@ -46,6 +47,7 @@ export function Header({
   onTabChange,
   activeView = "dashboard",
   onNavigateDashboard,
+  onOpenSettings,
   reportsCount = 0,
   transactionsCount = 0,
   isAssistantOpen,
@@ -198,27 +200,55 @@ export function Header({
           const Icon = tab.icon;
           const isActive = activeView === "dashboard" && activeTab === tab.id;
           return (
-            <button
-              key={tab.id}
-              onClick={() => handlePageClick(tab.id)}
-              className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                isActive
-                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
-              }`}
-            >
-              <Icon className="w-3 h-3" />
-              <span>
-                {tab.label}
-                {tab.badge !== null &&
-                  tab.badge !== undefined &&
-                  ` (${tab.badge})`}
-              </span>
-            </button>
+            <Fragment key={tab.id}>
+              <button
+                onClick={() => handlePageClick(tab.id)}
+                className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                <span>
+                  {tab.label}
+                  {tab.badge !== null &&
+                    tab.badge !== undefined &&
+                    ` (${tab.badge})`}
+                </span>
+              </button>
+              {tab.id === "overview" && (
+                <div
+                  className="h-4 w-px bg-slate-800 shrink-0 mx-0.5"
+                  aria-hidden="true"
+                />
+              )}
+            </Fragment>
           );
         })}
 
         {onToggleAssistant && (
+          <button
+            type="button"
+            onClick={onToggleAssistant}
+            className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              isAssistantOpen
+                ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
+            }`}
+            title={
+              isAssistantOpen
+                ? "Close Assistant (Ctrl+J)"
+                : "Open Assistant (Ctrl+J)"
+            }
+            aria-label="Toggle Assistant"
+          >
+            <Bot className="w-3 h-3" />
+            <span>Assistant</span>
+          </button>
+        )}
+
+        {onOpenSettings && (
           <>
             <div
               className="h-4 w-px bg-slate-800 shrink-0 mx-0.5"
@@ -226,21 +256,16 @@ export function Header({
             />
             <button
               type="button"
-              onClick={onToggleAssistant}
-              className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                isAssistantOpen
+              onClick={() => onOpenSettings()}
+              className={`h-7 w-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                activeView === "settings"
                   ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
               }`}
-              title={
-                isAssistantOpen
-                  ? "Close Assistant (Ctrl+J)"
-                  : "Open Assistant (Ctrl+J)"
-              }
-              aria-label="Toggle Assistant"
+              title="Settings (Ctrl+,)"
+              aria-label="Settings"
             >
-              <Bot className="w-3 h-3" />
-              <span>Assistant</span>
+              <Settings className="w-3.5 h-3.5" />
             </button>
           </>
         )}

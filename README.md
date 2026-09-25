@@ -2,7 +2,7 @@
 
 An offline-first, private personal investment portfolio tracker for Linux, Windows and macOS built with **Bun**, **bun:sqlite**, **React 19** and **Electrobun**.
 
-Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and AI analytical briefings can be generated on-demand using local (Ollama, llamacpp-server) or cloud (Groq, OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek) LLMs.
+Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and AI analytical briefings can be generated on-demand through any OpenAI-compatible server or API (llama.cpp, Ollama, LM Studio, OpenAI, Groq, OpenRouter and others) or the Claude Code CLI with a Claude subscription.
 
 <p align="center">
   <img src="extras/website/assets/screenshot.png" width="900"
@@ -74,6 +74,7 @@ bun install
 ### Run in Development
 
 ```bash
+bun start          # desktop window on the Vite GUI (5133), service from source under bun --watch (5132)
 bun run dev        # service on http://127.0.0.1:5130, Vite GUI on http://localhost:5131
 bun run desktop    # stages service + GUI and opens the Electrobun window
 ```

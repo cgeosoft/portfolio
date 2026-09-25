@@ -8,6 +8,8 @@ const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
 export interface ServiceOptions {
   /** Directory holding `main.js`; also the child's cwd. */
   serviceDir: string;
+  /** Command line of the child. Defaults to `main.js` under the runtime of this process. */
+  command?: string[];
   env: Record<string, string | undefined>;
   port: number;
   /** Directory of the shell log `desktop-YYYY-MM-DD.log`; the service writes `service-YYYY-MM-DD.log` next to it. */
@@ -34,13 +36,13 @@ export class ServiceProcess {
   }
 
   start(onExit?: (code: number | null) => void): void {
-    const { serviceDir, env, logDir, echo } = this.options;
+    const { serviceDir, command, env, logDir, echo } = this.options;
     mkdirSync(logDir, { recursive: true });
     // The service colours its console output in development (echoed here) and
     // keeps it plain in production; its log file is always plain.
     const childEnv: Record<string, string> = {};
     for (const [key, value] of Object.entries(env)) if (value !== undefined) childEnv[key] = value;
-    this.proc = Bun.spawn([process.execPath, `${serviceDir}/main.js`], {
+    this.proc = Bun.spawn(command ?? [process.execPath, `${serviceDir}/main.js`], {
       cwd: serviceDir,
       env: childEnv,
       stdin: "ignore",

@@ -21,11 +21,6 @@ import type {
   PollReportStreamResponse,
   CancelReportStreamResponse,
 } from "portfolio-shared/api-types";
-import {
-  DEFAULT_NEBIUS_URL,
-  DEFAULT_OLLAMA_MODEL,
-  DEFAULT_OPENAI_COMPATIBLE_URL,
-} from "portfolio-shared/llm-defaults";
 
 function getIsoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -136,21 +131,9 @@ export class PortfolioReportService {
     if (!portfolio) throw new Error("Portfolio not found");
 
     const config = loadConfig();
-    const provider = options.provider || config.llmProvider || "llamacpp-server";
-
-    const defaultModel =
-      provider === "groq" ? "llama-3.3-70b-versatile"
-        : provider === "openai" ? "gpt-4o-mini"
-        : provider === "anthropic" ? "claude-3-5-sonnet-20241022"
-        : provider === "openrouter" ? "meta-llama/llama-3.3-70b-instruct"
-        : provider === "deepseek" ? "deepseek-chat"
-        : provider === "gemini" ? "gemini-2.5-flash"
-        : provider === "nebius" ? "meta-llama/Llama-3.3-70B-Instruct"
-        : provider === "ollama" ? DEFAULT_OLLAMA_MODEL
-        // llama.cpp and custom openai-compatible have no fixed default.
-        : "";
-
-    const model = options.model || config.llmModel || defaultModel;
+    // An empty model lets the server or the Claude CLI pick its default.
+    const provider = options.provider || config.llmProvider || "openai-compatible";
+    const model = options.model || config.llmModel || "";
     const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
     const data = options.portfolioData || (await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency));
 
@@ -416,17 +399,10 @@ ${structureInstructions}
           weekKey: params.weekKey,
         });
 
-        const config = loadConfig();
+        // LlmService.resolve() fills the key and URL from the settings when these are empty.
         const provider = params.provider || ctx.provider;
         const model = params.model || ctx.model;
-        const apiKey = params.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
-        const baseUrl =
-          params.baseUrl ||
-          config.llmBaseUrls?.[provider] ||
-          config.llmBaseUrl ||
-          (provider === "nebius" ? DEFAULT_NEBIUS_URL : undefined) ||
-          (provider === "openai-compatible" ? DEFAULT_OPENAI_COMPATIBLE_URL : undefined) ||
-          (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
+        const { apiKey, baseUrl } = params;
 
         let content = "";
         try {
@@ -554,15 +530,10 @@ ${structureInstructions}
     } = {},
   ) {
     const ctx = await this.buildReportContext(portfolio.id, options);
-    const config = loadConfig();
+    // LlmService.resolve() fills the key and URL from the settings when these are empty.
     const provider = options.provider || ctx.provider;
     const model = options.model || ctx.model;
-    const apiKey = options.apiKey || config.llmApiKeys?.[provider] || config.llmApiKey;
-    const baseUrl =
-      options.baseUrl ||
-      config.llmBaseUrls?.[provider] ||
-      config.llmBaseUrl ||
-      (provider === "llamacpp-server" || provider === "llamacpp" ? config.llamacppServerUrl : undefined);
+    const { apiKey, baseUrl } = options;
 
     let content = "";
     let reportStatus: "success" | "fallback" | "error" = "success";

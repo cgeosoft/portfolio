@@ -44,7 +44,7 @@ export interface DesktopConfig {
   baseCurrency: string;
   /** Privacy mode: mask monetary values in the UI */
   hideCurrencyValues: boolean;
-  /** Active LLM provider key (groq, openai, anthropic, etc.) */
+  /** Active LLM provider: "openai-compatible" or "claude-cli" */
   llmProvider: string;
   /** LLM model identifier */
   llmModel: string;
@@ -54,8 +54,6 @@ export interface DesktopConfig {
   llmBaseUrl: string;
   /** LLM sampling temperature */
   llmTemperature: number;
-  /** Local llama.cpp server URL */
-  llamacppServerUrl: string;
   /** Per-provider API keys */
   llmApiKeys: Record<string, string>;
   /** Per-provider base URLs */

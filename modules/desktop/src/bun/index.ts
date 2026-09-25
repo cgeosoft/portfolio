@@ -5,6 +5,13 @@
  * answers on loopback and points a single window at it. The service serves
  * the GUI itself and owns the "allow remote connections" switch (Settings →
  * Access), so nothing else lives here.
+ *
+ * Live development (`bun start`, `modules/desktop/scripts/dev.ts`) sets
+ * `PORTFOLIO_DEV_GUI_URL`, `PORTFOLIO_DEV_SERVICE_DIR` and `PORTFOLIO_DEV_BUN`.
+ * The shell then runs the service from source under `bun --watch` (it
+ * restarts on every change) and points the window at the Vite dev server
+ * (hot reload), which proxies `/api` to the service. The staged bundle is
+ * not used.
  */
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Utils } from "electrobun/bun";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
@@ -17,6 +24,20 @@ import { setNativeWindowIcon, setupLinuxDesktop } from "./linux-desktop";
 const STARTUP_TIMEOUT_MS = 60_000;
 const DEFAULT_PORT = 5130;
 
+interface DevMode {
+  guiUrl: string;
+  serviceDir: string;
+  bun: string;
+}
+
+/** The live development setup, when `scripts/dev.ts` started the shell. */
+function readDevMode(): DevMode | null {
+  const guiUrl = process.env.PORTFOLIO_DEV_GUI_URL?.trim();
+  const serviceDir = process.env.PORTFOLIO_DEV_SERVICE_DIR?.trim();
+  const bun = process.env.PORTFOLIO_DEV_BUN?.trim();
+  return guiUrl && serviceDir && bun ? { guiUrl: guiUrl.replace(/\/+$/, ""), serviceDir, bun } : null;
+}
+
 async function main(): Promise<void> {
   const build = await BuildConfig.get();
   const appDir = join(PATHS.RESOURCES_FOLDER, "app");
@@ -25,7 +46,8 @@ async function main(): Promise<void> {
   mkdirSync(userData, { recursive: true });
 
   const port = Number(process.env.PORTFOLIO_PORT) || DEFAULT_PORT;
-  const appUrl = `http://127.0.0.1:${port}`;
+  const dev = build.isPackaged ? null : readDevMode();
+  const appUrl = dev ? dev.guiUrl : `http://127.0.0.1:${port}`;
   const windowStateFile = join(userData, "window-state.json");
   const windowState = normalizeWindowState(readWindowState(windowStateFile));
   const windowStateManager = new WindowStateManager(readWindowState(windowStateFile), (state) => writeWindowState(windowStateFile, state));
@@ -82,23 +104,38 @@ async function main(): Promise<void> {
   }
 
   const desktopVersion = getDesktopVersion();
-  const service = new ServiceProcess({
-    serviceDir: join(appDir, "service"),
-    port,
-    logDir,
-    echo: !build.isPackaged,
-    env: {
-      ...process.env,
-      NODE_ENV: build.isPackaged ? "production" : process.env.NODE_ENV || "development",
-      PORTFOLIO_PORT: String(port),
-      PORTFOLIO_LOG_DIR: logDir,
-      PORTFOLIO_GUI_DIR: join(appDir, "gui"),
-      PORTFOLIO_SPONSOR_FILE: join(appDir, "sponsor.html"),
-      PORTFOLIO_SPONSOR_LIGHT_FILE: join(appDir, "sponsor-light.html"),
-      PORTFOLIO_LAUNCHER: process.execPath,
-      ...(desktopVersion ? { PORTFOLIO_VERSION: desktopVersion } : {}),
-    },
-  });
+  const serviceEnv = {
+    ...process.env,
+    NODE_ENV: build.isPackaged ? "production" : process.env.NODE_ENV || "development",
+    PORTFOLIO_PORT: String(port),
+    PORTFOLIO_LOG_DIR: logDir,
+    PORTFOLIO_LAUNCHER: process.execPath,
+  };
+  // In live development the service reads the version and the sponsor pages
+  // from the checkout and the Vite dev server serves the GUI, so only the
+  // bundle needs the paths spelled out.
+  const service = dev
+    ? new ServiceProcess({
+        serviceDir: dev.serviceDir,
+        command: [dev.bun, "--watch", "src/main.ts"],
+        port,
+        logDir,
+        echo: true,
+        env: serviceEnv,
+      })
+    : new ServiceProcess({
+        serviceDir: join(appDir, "service"),
+        port,
+        logDir,
+        echo: !build.isPackaged,
+        env: {
+          ...serviceEnv,
+          PORTFOLIO_GUI_DIR: join(appDir, "gui"),
+          PORTFOLIO_SPONSOR_FILE: join(appDir, "sponsor.html"),
+          PORTFOLIO_SPONSOR_LIGHT_FILE: join(appDir, "sponsor-light.html"),
+          ...(desktopVersion ? { PORTFOLIO_VERSION: desktopVersion } : {}),
+        },
+      });
 
   let ready = false;
   function shutdown(): void {
@@ -125,9 +162,11 @@ async function main(): Promise<void> {
       mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, service.tail()));
     }
   });
-  service.log(`service starting on ${appUrl} (data ${userData}, logs ${logDir})`);
+  service.log(`service starting on port ${port}, window on ${appUrl} (data ${userData}, logs ${logDir})`);
 
-  ready = await service.waitUntilReady(STARTUP_TIMEOUT_MS);
+  // In live development a failed start is fixed in the editor and bun --watch
+  // restarts the service, so keep waiting instead of giving up.
+  ready = await service.waitUntilReady(dev ? Number.POSITIVE_INFINITY : STARTUP_TIMEOUT_MS);
   if (ready) {
     mainWindow.webview.loadURL(appUrl);
   } else {

@@ -9,7 +9,6 @@ import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkS
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { DEFAULT_LLAMACPP_URL } from "portfolio-shared/llm-defaults";
 import { DEFAULT_DATA_PROVIDER_ROUTING, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { getDatabase } from "./db/database";
 import { getStorageDir } from "./paths";
@@ -28,7 +27,6 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   llmApiKey: "",
   llmBaseUrl: "",
   llmTemperature: 0.3,
-  llamacppServerUrl: DEFAULT_LLAMACPP_URL,
   llmApiKeys: {},
   llmBaseUrls: {},
   llmModels: {},
@@ -100,15 +98,60 @@ function migrateLegacyFile(): void {
   }
 }
 
+/** Base URLs of the per-server and per-cloud providers that releases before 0.6 offered. */
+const LEGACY_PROVIDER_URLS: Record<string, string> = {
+  llamacpp: "http://127.0.0.1:8080",
+  "llamacpp-server": "http://127.0.0.1:8080",
+  ollama: "http://127.0.0.1:11434",
+  nebius: "https://api.tokenfactory.nebius.com/v1",
+  groq: "https://api.groq.com/openai/v1",
+  openai: "https://api.openai.com/v1",
+  anthropic: "https://api.anthropic.com/v1",
+  openrouter: "https://openrouter.ai/api/v1",
+  deepseek: "https://api.deepseek.com/v1",
+  gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
+};
+
+/**
+ * Moves a provider from an earlier release onto the OpenAI-compatible
+ * provider, keeping its URL, key and model. Every one of them speaks the
+ * OpenAI chat completions protocol at the URLs above.
+ */
+function migrateLlmProvider(cfg: DesktopConfig, parsed: Record<string, unknown>): void {
+  const legacy = cfg.llmProvider;
+  const isLegacy = Object.hasOwn(LEGACY_PROVIDER_URLS, legacy);
+  const hasLegacyUrl = typeof parsed.llamacppServerUrl === "string";
+  if (!isLegacy && !hasLegacyUrl) return;
+  const updates: Record<string, unknown> = { llamacppServerUrl: undefined };
+  if (isLegacy) {
+    const isLlama = legacy === "llamacpp" || legacy === "llamacpp-server";
+    const pick = (map: Record<string, string> | undefined) => map?.[legacy]?.trim() || (isLlama ? map?.llamacpp?.trim() || map?.["llamacpp-server"]?.trim() : "") || "";
+    const baseUrl =
+      pick(cfg.llmBaseUrls) || cfg.llmBaseUrl?.trim() || (isLlama && hasLegacyUrl ? String(parsed.llamacppServerUrl) : "") || LEGACY_PROVIDER_URLS[legacy]!;
+    const apiKey = pick(cfg.llmApiKeys) || cfg.llmApiKey?.trim() || "";
+    const model = pick(cfg.llmModels) || cfg.llmModel?.trim() || "";
+    Object.assign(updates, {
+      llmProvider: "openai-compatible",
+      llmBaseUrl: baseUrl,
+      llmApiKey: apiKey,
+      llmModel: model,
+      llmBaseUrls: { ...cfg.llmBaseUrls, "openai-compatible": baseUrl },
+      llmApiKeys: { ...cfg.llmApiKeys, "openai-compatible": apiKey },
+      llmModels: { ...cfg.llmModels, "openai-compatible": model },
+    });
+  }
+  writeRows(updates);
+  Object.assign(cfg, updates);
+  delete (cfg as unknown as Record<string, unknown>).llamacppServerUrl;
+}
+
 function normalize(parsed: Record<string, unknown>): DesktopConfig {
   const cfg = { ...DEFAULT_CONFIG, ...parsed } as DesktopConfig;
   cfg.dataProviderRouting = {
     ...DEFAULT_DATA_PROVIDER_ROUTING,
     ...((parsed.dataProviderRouting as Partial<DataProviderCategoryRouting> | undefined) || {}),
   };
-  if (!cfg.llamacppServerUrl && cfg.llmBaseUrl && (!cfg.llmProvider || cfg.llmProvider === "llamacpp-server" || cfg.llmProvider === "llamacpp")) {
-    cfg.llamacppServerUrl = cfg.llmBaseUrl;
-  }
+  migrateLlmProvider(cfg, parsed);
   if (typeof cfg.zoomLevel !== "number" || !Number.isFinite(cfg.zoomLevel) || cfg.zoomLevel < 0.25 || cfg.zoomLevel > 5.0) {
     cfg.zoomLevel = 1.0;
   }
@@ -144,15 +187,6 @@ export function updateConfig(updates: Partial<DesktopConfig>): DesktopConfig {
   if (updates.llmApiKeys) updated.llmApiKeys = { ...(current.llmApiKeys || {}), ...updates.llmApiKeys };
   if (updates.llmBaseUrls) updated.llmBaseUrls = { ...(current.llmBaseUrls || {}), ...updates.llmBaseUrls };
   if (updates.llmModels) updated.llmModels = { ...(current.llmModels || {}), ...updates.llmModels };
-  if (
-    updates.llmBaseUrl !== undefined &&
-    (!updated.llamacppServerUrl || updated.llmProvider === "llamacpp-server" || updated.llmProvider === "llamacpp")
-  ) {
-    updated.llamacppServerUrl = updates.llmBaseUrl;
-  }
-  if (updates.llamacppServerUrl !== undefined && !updated.llmBaseUrl) {
-    updated.llmBaseUrl = updates.llamacppServerUrl;
-  }
   writeRows({ ...updates, ...pickMerged(updated, updates) });
   if (typeof updates.startWithBoot === "boolean") syncAutostart(updates.startWithBoot);
   return updated;
@@ -165,10 +199,6 @@ function pickMerged(updated: DesktopConfig, updates: Partial<DesktopConfig>): Pa
   if (updates.llmApiKeys) out.llmApiKeys = updated.llmApiKeys;
   if (updates.llmBaseUrls) out.llmBaseUrls = updated.llmBaseUrls;
   if (updates.llmModels) out.llmModels = updated.llmModels;
-  if (updates.llmBaseUrl !== undefined || updates.llamacppServerUrl !== undefined) {
-    out.llamacppServerUrl = updated.llamacppServerUrl;
-    out.llmBaseUrl = updated.llmBaseUrl;
-  }
   return out;
 }
 
