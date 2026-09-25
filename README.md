@@ -74,10 +74,10 @@ bun install
 ### Run in Development
 
 ```bash
-bun start          # desktop window on the Vite GUI (5133), service from source under bun --watch (5132)
-bun run dev        # service on http://127.0.0.1:5130, Vite GUI on http://localhost:5131
-bun run desktop    # stages service + GUI and opens the Electrobun window
+bun start          # desktop window with GUI hot reload; the service restarts on every change
 ```
+
+`bun start` runs `electrobun dev` without a stage. The shell finds the checkout, starts `modules/service/src/main.ts` under `bun --watch` and `modules/gui/scripts/dev-server.ts` (Vite, `/api` proxied to the service), and opens the window on Vite. Both pick a random free port, so an installed app can keep running. A change under `modules/desktop/src/bun/` needs a restart of `bun start`.
 
 Development and the installed app share one data directory: `~/.local/share/portfolio` (Linux), `%APPDATA%\portfolio` (Windows) or `~/Library/Application Support/portfolio` (macOS). The first start copies the data of releases before 0.6 from `~/.config/portfolio` on Linux.
 

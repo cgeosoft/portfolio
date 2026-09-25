@@ -13,7 +13,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 - `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, reports, chat, metrics runtime, auth, remote access, update check, support), `db/` (schema and repositories), `config.ts` (settings in the `settings` table), `paths.ts` (data directory, repo root, bundled files), `bootstrap.ts` (creates the data directory, one-time import of the old one), `globals.d.ts` (build-time constants), `logger.ts` (stdout only; the desktop shell writes `<data>/logs/service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
 - `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,metrics,settings}/`, `index.css` (design tokens).
 - `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
-- `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (shell, window state, Linux icons), `scripts/stage.ts`, `assets/`.
+- `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (`index.ts` shell, `dev.ts` development run, `service.ts` child process and logs, tray, window state, Linux icons; `app.ts` is the only file that differs from FintechCrafts Management), `scripts/stage.ts`, `assets/`. `modules/gui/scripts/dev-server.ts` starts Vite for `bun start`.
 - `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) with `releases/latest.json` manifest.
 - `scripts/release.sh` (tag, build, publish), `scripts/docker/Dockerfile.linux`, `scripts/build-deb.sh`, `scripts/build-metrics.ts`.
 - `docs/architecture.md` (modules, config, logging, release), `docs/theme.md`.
@@ -35,9 +35,7 @@ Load the matching skill before you change that area.
 
 ```bash
 bun install                       # links the workspace packages
-bun start                         # desktop window, Vite GUI (5133) with hot reload, service under bun --watch (5132)
-bun run dev                       # service (port 5130) + Vite GUI (port 5131)
-bun run desktop                   # electrobun dev with the staged service and GUI
+bun start                         # desktop window on Vite (hot reload), service under bun --watch; random ports, no stage
 bun run typecheck | bun run test
 bun run build:metrics             # after changing extras/metrics
 bun run release [minor|patch|major]      # tag, build 3 OS artifacts in Docker, GitHub release
