@@ -768,7 +768,9 @@ export function SettingsPage({
                     <input
                       type="text"
                       value={reportModel}
-                      onChange={(e) => saveModel(reportProvider, e.target.value)}
+                      onChange={(e) => setReportModel(e.target.value)}
+                      onBlur={(e) => saveModel(reportProvider, e.target.value.trim())}
+                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                       placeholder={isClaudeCli ? "e.g. claude-sonnet-5" : "e.g. llama-3.3-70b-versatile or leave empty for the server default"}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
@@ -793,12 +795,13 @@ export function SettingsPage({
                     <input
                       type="text"
                       value={reportBaseUrl}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setReportBaseUrl(val);
+                      onChange={(e) => setReportBaseUrl(e.target.value)}
+                      onBlur={(e) => {
+                        const val = e.target.value.trim();
                         saveConfig({ llmBaseUrl: val, llmBaseUrls: { ...(fullConfig?.llmBaseUrls || {}), [reportProvider]: val } });
+                        fetchServerModels(val, reportApiKey);
                       }}
-                      onBlur={(e) => fetchServerModels(e.target.value.trim(), reportApiKey)}
+                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                       placeholder={DEFAULT_OPENAI_COMPATIBLE_URL}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />
@@ -821,12 +824,13 @@ export function SettingsPage({
                     <input
                       type={showApiKey ? "text" : "password"}
                       value={reportApiKey === SECRET_MASK ? "" : reportApiKey}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setReportApiKey(val);
+                      onChange={(e) => setReportApiKey(e.target.value)}
+                      onBlur={() => {
+                        const val = reportApiKey.trim();
                         saveConfig({ llmApiKey: val, llmApiKeys: { ...(fullConfig?.llmApiKeys || {}), [reportProvider]: val } });
+                        fetchServerModels(reportBaseUrl, val);
                       }}
-                      onBlur={(e) => fetchServerModels(reportBaseUrl, e.target.value.trim())}
+                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                       placeholder={reportApiKey === SECRET_MASK ? "•••••••• (stored)" : "API key or bearer token"}
                       className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                     />

@@ -188,7 +188,6 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
     setFinnhubApiKey(trimmed);
     setFinnhubTestResult(null);
     onUpdateConfig({ finnhubApiKey: trimmed });
-    rpc.request.saveConfig({ finnhubApiKey: trimmed });
   };
 
   const handleSelectProvider = (category: keyof DataProviderCategoryRouting, provider: DataProviderId) => {
@@ -363,7 +362,12 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   <input
                     type={showFinnhubKey ? "text" : "password"}
                     value={finnhubApiKey === SECRET_MASK ? "" : finnhubApiKey}
-                    onChange={(e) => handleSaveFinnhubKey(e.target.value)}
+                    onChange={(e) => {
+                      setFinnhubApiKey(e.target.value);
+                      setFinnhubTestResult(null);
+                    }}
+                    onBlur={() => handleSaveFinnhubKey(finnhubApiKey)}
+                    onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                     placeholder={finnhubApiKey === SECRET_MASK ? "•••••••• (stored)" : "Enter Finnhub API Key"}
                     className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                   />
