@@ -106,7 +106,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, termsPending, au
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-50 via-slate-200 to-accent-bright bg-clip-text text-transparent">{APP_NAME}</h1>
           {APP_VERSION && <span className="text-xs sm:text-sm font-mono text-slate-400 font-medium">v{APP_VERSION}</span>}
         </div>
-        <p className="text-xs font-mono text-accent-400 mt-1">Personal investment tracker</p>
+        <p className="text-xs font-mono text-accent-400 mt-1">Personal Investment Tracker</p>
       </div>
 
       <div className="relative z-10 w-full max-w-md p-5 sm:p-8 bg-slate-900/90 border border-slate-800/80 rounded-3xl shadow-2xl">

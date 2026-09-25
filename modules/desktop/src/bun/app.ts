@@ -9,7 +9,7 @@ export const APP = {
   /** Electrobun `app.name`: the bundle name and the base of the window class. */
   bundleName: "Portfolio",
   identifier: "cgeosoft.portfolio.desktop",
-  description: "Personal investment tracker",
+  description: "Personal Investment Tracker",
   /** `name` of the root `package.json`; marks the checkout root for a development run. */
   rootPackageName: "portfolio",
   /** Folder of the user data directory. Same as `APP_DIR_NAME` in `modules/service/src/paths.ts`. */
@@ -35,7 +35,7 @@ export const APP = {
   pages: {
     documentTitle: "Portfolio",
     heading: "Portfolio",
-    tagline: "Personal investment tracker",
+    tagline: "Personal Investment Tracker",
     startingHint: "Opening the local database. This takes a few seconds.",
     failedHint: "Settings and API keys live in the database there; nothing is read from a .env file.",
     /** Brand mark from modules/gui/src/components/common/AppIcon.tsx: the trending-up line. */
