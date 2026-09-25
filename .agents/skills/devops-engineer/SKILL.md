@@ -25,7 +25,7 @@ Runs build, verification and release, and keeps deployment config, secrets handl
 
 ## Project Instructions
 
-- Lifecycle: `bun run typecheck && bun run test`; `bun run build:metrics && bun run build:metrics-site` (asc-compile `extras/metrics`, regenerate the website page); `bun run desktop:build` (stage GUI + service, `electrobun build` in `modules/desktop`); `bun run release:build` (builds Linux, Windows and macOS packages locally inside Docker). Packages land in `dist/<version>/`.
+- Lifecycle: `bun run typecheck && bun run test`; `bun run build:metrics && bun run website:metrics` (asc-compile `extras/metrics`, regenerate the website page); `bun run build` (stage GUI + service, `electrobun build` in `modules/desktop`); `bun run release:build` (builds Linux, Windows and macOS packages locally inside Docker). Packages land in `dist/<version>/`.
 - `bun run release [minor|patch|major|X.Y.Z] [--dry-run] [--allow-dirty] [--no-push]` bumps version (minor by default), commits, tags, pushes, builds all 3 OS packages locally in Docker, and uploads artifacts to GitHub Releases via `gh release create`.
 - `bun run website:publish` writes `releases/latest.json` into `extras/website/releases/` and deploys to Cloudflare Pages (`extras/website/deploy.sh`). Binaries are hosted on GitHub Releases.
-- Release checklist: typecheck and tests pass; `bun run build` exits clean; `bun run release:build` produces all 6 packages in `dist/<version>/`; `bun run release --dry-run`, then the real release.
+- Release checklist: typecheck and tests pass; `bun run release:build` produces all 6 packages in `dist/<version>/`; `bun run release --dry-run`, then the real release.

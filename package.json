@@ -11,17 +11,14 @@
     "modules/desktop"
   ],
   "scripts": {
-    "build": "bun --filter portfolio-service --filter portfolio-gui build",
     "start": "bun run --cwd modules/desktop start",
-    "desktop:build": "bun run --cwd modules/desktop build",
-    "build:metrics": "bun run scripts/build-metrics.ts",
-    "check:metrics": "bun run scripts/build-metrics.ts --check",
-    "build:metrics-site": "bun run scripts/build-metrics-site.ts",
-    "test": "bun --filter portfolio-service --filter portfolio-gui --filter portfolio-desktop test",
     "typecheck": "bun --filter '*' typecheck",
+    "test": "bun --filter portfolio-service --filter portfolio-gui --filter portfolio-desktop test",
+    "build": "bun run --cwd modules/desktop build",
+    "build:metrics": "bun run scripts/build-metrics.ts",
     "release": "bash scripts/release.sh release",
     "release:build": "bash scripts/release.sh build",
-    "release:publish": "bash scripts/release.sh publish-website",
+    "website:metrics": "bun run scripts/build-metrics-site.ts",
     "website:publish": "bash scripts/release.sh publish-website"
   },
   "devDependencies": {

@@ -236,7 +236,7 @@ export function metric_run(ptr: i32, len: i32): i32 {
 
   if (checkOnly) {
     const current = existsSync(OUT_PATH) ? readFileSync(OUT_PATH, "utf8") : "";
-    if (current !== html) throw new Error(`${relative(ROOT, OUT_PATH)} is stale; run bun run build:metrics-site and commit it`);
+    if (current !== html) throw new Error(`${relative(ROOT, OUT_PATH)} is stale; run bun run website:metrics and commit it`);
     console.log(`checked ${relative(ROOT, OUT_PATH)}`);
     return;
   }

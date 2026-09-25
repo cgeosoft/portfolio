@@ -91,14 +91,14 @@ bun run test
 ### Build Metric Modules
 
 ```bash
-bun run build:metrics       # after changing extras/metrics
-bun run check:metrics       # validate without writing
+bun run build:metrics          # after changing extras/metrics
+bun run build:metrics --check  # validate without writing
 ```
 
 ### Build the Desktop Application
 
 ```bash
-bun run desktop:build       # modules/desktop/artifacts for this OS
+bun run build       # modules/desktop/artifacts for this OS
 ```
 
 ### Release
