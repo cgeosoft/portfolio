@@ -1587,7 +1587,10 @@ export default function App() {
       <AppMenuBar
         portfolios={portfolios}
         activePortfolio={activePortfolio}
-        onSelectPortfolio={handleSelectPortfolio}
+        onSelectPortfolio={(id) => {
+          handleSelectPortfolio(id);
+          if (view !== "dashboard") handleNavigateDashboard();
+        }}
         onNewPortfolio={() => setIsCreateModalOpen(true)}
         onImportCsv={() => setIsImportModalOpen(true)}
         onExportPortfolio={() => setIsExportModalOpen(true)}
