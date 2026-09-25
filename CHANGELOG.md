@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.6.0] - 2026-09-25
+
+### Added
+- Added a Claude CLI option as an AI assistant provider.
+- Added a marketplace for browsing and installing metrics.
+- Added a close to tray option for the desktop app.
+- Added a setting to allow remote connections with a custom port.
+
+### Changed
+- Moved Metrics from a top level tab into a Preferences section.
+- Moved the Report an Issue form into its own window, opened from the Help menu or the About section.
+- Moved the app lock and remote connection settings into the General settings section.
+- Moved the portfolio switcher into the menu bar.
+- Merged data provider settings into the Assistant settings section.
+- Made all page headers look the same across the app.
+- Changed how settings fields like model, server URL, and API keys are saved. They now save when you finish typing instead of on every keystroke.
+- Made the app title use consistent capitalization.
+
+### Fixed
+- Fixed Ctrl+R so the app only reloads after you release the keys.
+
+### Security
+- API keys are now hidden when shown in settings.
+
+
 ## [0.5.1] - 2026-09-17
 
 ### Added
