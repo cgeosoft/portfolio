@@ -1256,7 +1256,25 @@ export default function App() {
 
       if (e.key === "F5" || (isCmdOrCtrl && e.key.toLowerCase() === "r")) {
         e.preventDefault();
-        handleReload();
+        if (e.repeat) return;
+        if (!isCmdOrCtrl) {
+          handleReload();
+          return;
+        }
+        // The desktop shell opens a navigation made with Ctrl/Cmd held in a new window,
+        // so reload only after the modifier is released.
+        const onRelease = (up: KeyboardEvent) => {
+          if (up.key !== "Control" && up.key !== "Meta") return;
+          window.removeEventListener("keyup", onRelease, true);
+          window.removeEventListener("blur", onBlur);
+          setTimeout(handleReload, 0);
+        };
+        const onBlur = () => {
+          window.removeEventListener("keyup", onRelease, true);
+          window.removeEventListener("blur", onBlur);
+        };
+        window.addEventListener("keyup", onRelease, true);
+        window.addEventListener("blur", onBlur);
         return;
       }
 
