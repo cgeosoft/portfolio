@@ -72,13 +72,13 @@ export function ManagePortfoliosPage({
   return (
     <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full container max-w-screen-xl mx-auto space-y-4 font-mono">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
             <TrendingUp className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span>Portfolios ({portfolios.length})</span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+            <span className="truncate">Portfolios ({portfolios.length})</span>
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
             Configure financial ledgers, access permissions, and export data archives
           </p>
         </div>

@@ -176,13 +176,13 @@ export function ReportsCard({
   return (
     <div className="flex flex-col gap-3.5 flex-1 min-h-0 font-mono">
       {/* Top Header Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 pb-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80 shrink-0">
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
             <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">Reports</span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
             Generated reports from your portfolio
           </p>
         </div>

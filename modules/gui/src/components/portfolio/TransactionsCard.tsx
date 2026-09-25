@@ -79,13 +79,13 @@ export function TransactionsCard({
   return (
     <div className="flex flex-col gap-3.5 flex-1 min-h-0 font-mono">
       {/* Header toolbar outside the table box */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shrink-0">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80 shrink-0">
         <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
-            <ArrowRightLeft className="w-4 h-4 text-slate-400 shrink-0" />
+          <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
+            <ArrowRightLeft className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">Transaction Ledger</span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={`${transactions.length} recorded events (trades, dividends, deposits)`}>
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5 font-mono" title={`${transactions.length} recorded events (trades, dividends, deposits)`}>
             {transactions.length} recorded events (trades, dividends, deposits)
           </p>
         </div>
