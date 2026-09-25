@@ -23,6 +23,7 @@ There is no `.env` file and the service reads no environment variable of its own
 | Database | `<data>/portfolio.sqlite` |
 | Logs | `<data>/logs/` |
 | Metric engine and modules | `<data>/metrics/` |
+| Desktop switches | `<data>/desktop-settings.json` (`{ "closeToTray": bool }`), written by the service at start-up and when Settings → General → Close to tray changes; the shell reads it when the window closes |
 | Built GUI | `Resources/app/gui`, next to the bundle's `service/` directory; from a checkout Vite serves the GUI |
 | Sponsor pages | `sponsor.html` and `sponsor-light.html` next to the bundle; `extras/website/sponsor/` in a checkout |
 

@@ -42,6 +42,13 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
     description: "Launch Portfolio in the background when your computer starts.",
   },
   {
+    key: "closeToTray",
+    section: "general",
+    kind: "toggle",
+    label: "Close to tray",
+    description: "Closing the window keeps Portfolio running in the system tray. Quit from the tray icon.",
+  },
+  {
     key: "telemetryEnabled",
     section: "general",
     kind: "toggle",

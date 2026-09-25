@@ -89,6 +89,8 @@ export interface DesktopConfig {
   allowRemoteConnections: boolean;
   /** Port of the LAN listener on 0.0.0.0 while remote connections are on. */
   remotePort: number;
+  /** Closing the desktop window hides it to the tray (mirrored to desktop-settings.json for the shell). */
+  closeToTray: boolean;
 }
 
 /** Default port of the LAN listener. The loopback listener of the desktop window uses a random port. */

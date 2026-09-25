@@ -15,6 +15,7 @@ import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
+import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveToDownloads } from "../services/files";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
@@ -382,6 +383,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     for (const key of PROTECTED_CONFIG_KEYS) delete (body as Record<string, unknown>)[key];
     const updated = updateConfig(unmaskUpdates(body));
     if ("telemetryEnabled" in body) telemetry.reinitialize();
+    if ("closeToTray" in body) writeDesktopSettingsFile();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});
     return maskSecrets(updated);
   });

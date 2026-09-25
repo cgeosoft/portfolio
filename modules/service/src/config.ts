@@ -43,6 +43,7 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   theme: "dark",
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
+  closeToTray: true,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */

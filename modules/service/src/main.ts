@@ -23,6 +23,7 @@ import { createServices } from "./services/container";
 import { telemetry } from "./services/telemetry";
 import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
+import { writeDesktopSettingsFile } from "./services/desktop-settings";
 import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
 import { Router, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
@@ -45,6 +46,7 @@ if (imported) appLogger.logStep("success", "main", "migrate", `Copied the data o
 const dbTimer = appLogger.startTimer("db", "open", `Opening ${getDatabasePath()}`);
 getDatabase();
 loadConfig();
+writeDesktopSettingsFile();
 authService.prune();
 dbTimer.end("success", `Database ready (${portfolioRepo.findAll().length} portfolios, ${txRepo.countTotal()} transactions)`);
 
