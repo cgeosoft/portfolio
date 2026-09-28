@@ -94,6 +94,7 @@ setTimeout(() => {
 }, 10_000);
 appUpdateService.startPeriodicChecks();
 void services.metricsService.warmUp();
+services.dailyBrief.start();
 const pruneTimer = setInterval(() => authService.prune(), 60 * 60 * 1000);
 
 // ── HTTP ────────────────────────────────────────────────────────────────────
@@ -161,6 +162,7 @@ async function shutdown(): Promise<void> {
   appLogger.logStep("info", "main", "stop", "Shutting down");
   clearInterval(pruneTimer);
   appUpdateService.stopPeriodicChecks();
+  services.dailyBrief.stop();
   services.metricsService.shutdown();
   stopRemoteAccess();
   server.stop(true);

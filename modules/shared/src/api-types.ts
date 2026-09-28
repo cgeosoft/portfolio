@@ -19,6 +19,7 @@ import type { MetricManifest } from "./metric-manifest";
 import type { MetricScope } from "./metric-abi";
 import type { MetricOutput } from "./metric-output";
 export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, ReportMetrics, AppTheme };
+export type { DailyBriefDays } from "./config-types";
 
 // ── Request/Response Payload Types ───────────────────────────────────────────
 
@@ -597,5 +598,36 @@ export type NotificationChannel = "gotify" | "ntfy";
 export interface SendNotificationResponse {
   success: boolean;
   latencyMs?: number;
+  error?: string;
+}
+
+/** `GET /api/automation/daily-brief`. */
+export interface AutomationStatus {
+  /** A run is in progress. */
+  running: boolean;
+  /** Local date (YYYY-MM-DD) of the last scheduled run. */
+  lastRun?: string;
+  /** ISO timestamp of the next scheduled run; absent while the schedule is off. */
+  nextRun?: string;
+  /** The notification channels that are set up; every run goes to all of them. */
+  channels: NotificationChannel[];
+  /** Outcome of the last run since the service started. */
+  lastResult?: {
+    at: string;
+    trigger: "schedule" | "manual";
+    success: boolean;
+    message: string;
+    errors: string[];
+  };
+}
+
+/** `POST /api/automation/daily-brief/run`. */
+export interface RunAutomationResponse {
+  success: boolean;
+  /** Portfolios that got a brief. */
+  portfolios: number;
+  /** Portfolios whose notification every set-up channel accepted. */
+  delivered: number;
+  message?: string;
   error?: string;
 }

@@ -51,6 +51,11 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   ntfyTopic: "",
   ntfyToken: "",
   ntfyPriority: DEFAULT_NTFY_PRIORITY,
+  dailyBriefEnabled: false,
+  dailyBriefTime: "08:00",
+  dailyBriefDays: "weekdays",
+  dailyBriefPortfolioId: "",
+  dailyBriefLastRun: undefined,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */
@@ -209,6 +214,8 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   }
   if (!Number.isInteger(cfg.ntfyPriority) || cfg.ntfyPriority < 1 || cfg.ntfyPriority > 5) cfg.ntfyPriority = DEFAULT_NTFY_PRIORITY;
   if (!cfg.ntfyUrl?.trim()) cfg.ntfyUrl = DEFAULT_NTFY_URL;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cfg.dailyBriefTime)) cfg.dailyBriefTime = "08:00";
+  if (cfg.dailyBriefDays !== "daily" && cfg.dailyBriefDays !== "weekdays") cfg.dailyBriefDays = "weekdays";
   if (typeof cfg.deviceId !== "string" || !cfg.deviceId) {
     cfg.deviceId = randomUUID();
     writeRows({ deviceId: cfg.deviceId });

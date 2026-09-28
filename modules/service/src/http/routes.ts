@@ -84,7 +84,7 @@ function sponsorFallbackFile(theme?: string): string | null {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, yahoo } = services;
+  const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, yahoo, dailyBrief } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -409,6 +409,10 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       { url: body.url, topic: body.topic, token: unmaskSecret(body.token, loadConfig().ntfyToken), priority: body.priority },
     );
   });
+
+  router.get("/api/automation/daily-brief", () => dailyBrief.status());
+
+  router.post("/api/automation/daily-brief/run", () => dailyBrief.run("manual"));
 
   router.post("/api/setup/complete", async (ctx) => {
     const body = await ctx.body<CompleteSetupRequest>();

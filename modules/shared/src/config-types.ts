@@ -105,7 +105,20 @@ export interface DesktopConfig {
   ntfyToken: string;
   /** ntfy message priority, 1 (min) to 5 (max). */
   ntfyPriority: number;
+  /** Whether the assistant writes the daily brief on a schedule (Settings, Automation). */
+  dailyBriefEnabled: boolean;
+  /** Local time of day the daily brief runs, "HH:MM". */
+  dailyBriefTime: string;
+  /** The days the daily brief runs. */
+  dailyBriefDays: DailyBriefDays;
+  /** The portfolio of the daily brief; empty for every portfolio. */
+  dailyBriefPortfolioId: string;
+  /** Local date (YYYY-MM-DD) of the last scheduled daily brief. Written by the service. */
+  dailyBriefLastRun?: string;
 }
+
+/** "weekdays" runs Monday to Friday; the Monday brief covers the Friday session. */
+export type DailyBriefDays = "daily" | "weekdays";
 
 /** Default Gotify priority: shows a notification on Android without sound override. */
 export const DEFAULT_GOTIFY_PRIORITY = 5;
@@ -120,7 +133,7 @@ export const DEFAULT_NTFY_PRIORITY = 3;
 export const DEFAULT_REMOTE_PORT = 5130;
 
 /** Settings the GUI cannot change through `PATCH /api/config`. */
-export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort"] as const;
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
 
