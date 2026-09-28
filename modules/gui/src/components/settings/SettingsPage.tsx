@@ -43,6 +43,7 @@ import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessRows } from "./AccessSection";
 import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
+import { SidebarEntry } from "./SettingsPrimitives";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
@@ -360,24 +361,15 @@ export function SettingsPage({
             <span>Preferences</span>
           </div>
 
-          <nav className="space-y-1 mt-1">
+          <nav className="space-y-1 mt-1" aria-label="Settings sections">
             {SECTIONS.map((sec) => {
-              const isActive = activeSection === sec.id;
-              const Icon = sec.icon;
               return (
-                <button
+                <SidebarEntry
                   key={sec.id}
-                  type="button"
-                  onClick={() => setActiveSection(sec.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-mono transition-colors cursor-pointer ${
-                    isActive
-                      ? "bg-[#DD3C73]/15 text-[#DD3C73] font-semibold"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-400"}`} />
-                  <span>{sec.label}</span>
-                </button>
+                  section={sec}
+                  isActive={activeSection === sec.id}
+                  onSelect={() => setActiveSection(sec.id)}
+                />
               );
             })}
           </nav>
