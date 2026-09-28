@@ -13,6 +13,7 @@ import type {
   ClearMarketCacheResponse,
   CompleteSetupRequest,
   CreatePortfolioRequest,
+  AutomationStatus,
   DesktopConfig,
   DownloadUpdateResponse,
   EvaluatePortfolioMetricsRequest,
@@ -37,6 +38,7 @@ import type {
   PrepareReportPromptResponse,
   PreviewMetricInstallResponse,
   RemoteAccessInfo,
+  RunAutomationResponse,
   SavePortfolioMetricsRequest,
   SearchSymbolResponse,
   SendNotificationResponse,
@@ -195,9 +197,13 @@ export const api = {
   clearMarketCache: () => request<ClearMarketCacheResponse>("/api/market/cache/clear", { method: "POST" }),
   syncQuotes: () => request<SyncQuotesResponse>("/api/market/sync", { method: "POST" }),
 
-  // ---- integrations
+  // ---- integrations and automation
   testGotify: (body: TestGotifyRequest) => request<SendNotificationResponse>("/api/integrations/gotify/test", { method: "POST", body: json(body) }),
   testNtfy: (body: TestNtfyRequest) => request<SendNotificationResponse>("/api/integrations/ntfy/test", { method: "POST", body: json(body) }),
+  getDailyBriefStatus: () => request<AutomationStatus>("/api/automation/daily-brief"),
+  runDailyBrief: () => request<RunAutomationResponse>("/api/automation/daily-brief/run", { method: "POST" }, { timeoutMs: 600_000 }),
+  getWeeklyAnalysisStatus: () => request<AutomationStatus>("/api/automation/weekly-analysis"),
+  runWeeklyAnalysis: () => request<RunAutomationResponse>("/api/automation/weekly-analysis/run", { method: "POST" }, { timeoutMs: 1_800_000 }),
 
   // ---- config and setup
   getConfig: () => request<DesktopConfig>("/api/config"),

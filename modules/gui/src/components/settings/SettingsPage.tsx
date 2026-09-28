@@ -31,6 +31,7 @@ import {
   Terminal,
   Gauge,
   Plug,
+  Workflow,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
@@ -46,11 +47,12 @@ import { AccessRows } from "./AccessSection";
 import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
 import { SidebarEntry, type SidebarSection } from "./SettingsPrimitives";
 import { INTEGRATIONS, IntegrationsSection, type IntegrationId } from "./IntegrationsSection";
+import { AUTOMATIONS, AutomationSection, type AutomationId } from "./AutomationSection";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
-export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "integrations" | "about";
+export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "integrations" | "automation" | "about";
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -110,6 +112,12 @@ const SECTIONS = [
     label: "Integrations",
     description: "Gotify and ntfy push notifications",
     icon: Plug,
+  },
+  {
+    id: "automation" as const,
+    label: "Automation",
+    description: "Scheduled assistant briefs",
+    icon: Workflow,
   },
   {
     id: "about" as const,
@@ -172,6 +180,7 @@ export function SettingsPage({
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
   // The open card of the sections with a submenu.
   const [activeIntegration, setActiveIntegration] = useState<IntegrationId>(INTEGRATIONS[0]!.id);
+  const [activeAutomation, setActiveAutomation] = useState<AutomationId>(AUTOMATIONS[0]!.id);
 
   // General settings state
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
@@ -362,8 +371,11 @@ export function SettingsPage({
   /** The submenu of a section: its cards and the one that shows, or null for a one-card section. */
   const submenu = (id: SettingsSection): { items: SidebarSection[]; active: string; select: (id: string) => void } | null => {
     if (id === "integrations") return { items: INTEGRATIONS, active: activeIntegration, select: (item) => setActiveIntegration(item as IntegrationId) };
+    if (id === "automation") return { items: AUTOMATIONS, active: activeAutomation, select: (item) => setActiveAutomation(item as AutomationId) };
     return null;
   };
+
+  const openIntegrations = () => setActiveSection("integrations");
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
@@ -853,6 +865,16 @@ export function SettingsPage({
 
           {activeSection === "integrations" && fullConfig && (
             <IntegrationsSection integration={activeIntegration} config={fullConfig} onConfigChange={setFullConfig} />
+          )}
+
+          {activeSection === "automation" && fullConfig && (
+            <AutomationSection
+              automation={activeAutomation}
+              config={fullConfig}
+              onConfigChange={setFullConfig}
+              portfolios={portfolios}
+              onOpenIntegrations={openIntegrations}
+            />
           )}
 
           {/* SECTION 5: ABOUT */}
