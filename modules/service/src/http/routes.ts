@@ -20,6 +20,8 @@ import { revealInFileManager, saveToDownloads } from "../services/files";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
 import { telemetry } from "../services/telemetry";
+import { sendGotify } from "../services/gotify";
+import { sendNtfy } from "../services/ntfy";
 import * as portfolioMetrics from "../services/portfolio-metrics";
 import { WEBPAGE_URL, SUPPORT_EMAIL } from "portfolio-shared/brand";
 import type { AppServices } from "../services/container";
@@ -40,6 +42,8 @@ import type {
   SavePortfolioMetricsRequest,
   StartReportStreamRequest,
   TestFinnhubConnectionRequest,
+  TestGotifyRequest,
+  TestNtfyRequest,
   TestLlmRequest,
   TestLlmStepRequest,
   UpdatePortfolioRequest,
@@ -386,6 +390,24 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if ("closeToTray" in body) writeDesktopSettingsFile();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});
     return maskSecrets(updated);
+  });
+
+  // ── integrations and automation ─────────────────────────────────────────
+
+  router.post("/api/integrations/gotify/test", async (ctx) => {
+    const body = await ctx.body<TestGotifyRequest>();
+    return sendGotify(
+      { title: "Portfolio", message: "Test message from Portfolio. Daily briefs will arrive here." },
+      { url: body.url, token: unmaskSecret(body.token, loadConfig().gotifyToken), priority: body.priority },
+    );
+  });
+
+  router.post("/api/integrations/ntfy/test", async (ctx) => {
+    const body = await ctx.body<TestNtfyRequest>();
+    return sendNtfy(
+      { title: "Portfolio", message: "Test message from Portfolio. Daily briefs and weekly analyses will arrive here." },
+      { url: body.url, topic: body.topic, token: unmaskSecret(body.token, loadConfig().ntfyToken), priority: body.priority },
+    );
   });
 
   router.post("/api/setup/complete", async (ctx) => {

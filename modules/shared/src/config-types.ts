@@ -91,7 +91,30 @@ export interface DesktopConfig {
   remotePort: number;
   /** Closing the desktop window hides it to the tray (mirrored to desktop-settings.json for the shell). */
   closeToTray: boolean;
+  /** Base URL of the Gotify server that receives push notifications (Settings, Integrations). */
+  gotifyUrl: string;
+  /** Application token of the Gotify server. Masked like the API keys. */
+  gotifyToken: string;
+  /** Gotify message priority, 0 to 10. */
+  gotifyPriority: number;
+  /** Base URL of the ntfy server (Settings, Integrations); https://ntfy.sh or a self-hosted one. */
+  ntfyUrl: string;
+  /** The ntfy topic the notifications go to; empty turns ntfy off. */
+  ntfyTopic: string;
+  /** Optional ntfy access token for a protected topic. Masked like the API keys. */
+  ntfyToken: string;
+  /** ntfy message priority, 1 (min) to 5 (max). */
+  ntfyPriority: number;
 }
+
+/** Default Gotify priority: shows a notification on Android without sound override. */
+export const DEFAULT_GOTIFY_PRIORITY = 5;
+
+/** The public ntfy server, the default until the user names a self-hosted one. */
+export const DEFAULT_NTFY_URL = "https://ntfy.sh";
+
+/** Default ntfy priority: a regular notification. */
+export const DEFAULT_NTFY_PRIORITY = 3;
 
 /** Default port of the LAN listener. The loopback listener of the desktop window uses a random port. */
 export const DEFAULT_REMOTE_PORT = 5130;

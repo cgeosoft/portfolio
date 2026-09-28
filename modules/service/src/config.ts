@@ -10,7 +10,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkS
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
+import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { getDatabase } from "./db/database";
 import { DATA_DIR } from "./paths";
 
@@ -44,6 +44,13 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
   closeToTray: true,
+  gotifyUrl: "",
+  gotifyToken: "",
+  gotifyPriority: DEFAULT_GOTIFY_PRIORITY,
+  ntfyUrl: DEFAULT_NTFY_URL,
+  ntfyTopic: "",
+  ntfyToken: "",
+  ntfyPriority: DEFAULT_NTFY_PRIORITY,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */
@@ -197,6 +204,11 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   if (cfg.theme !== "dark" && cfg.theme !== "light" && cfg.theme !== "system") {
     cfg.theme = "dark";
   }
+  if (!Number.isInteger(cfg.gotifyPriority) || cfg.gotifyPriority < 0 || cfg.gotifyPriority > 10) {
+    cfg.gotifyPriority = DEFAULT_GOTIFY_PRIORITY;
+  }
+  if (!Number.isInteger(cfg.ntfyPriority) || cfg.ntfyPriority < 1 || cfg.ntfyPriority > 5) cfg.ntfyPriority = DEFAULT_NTFY_PRIORITY;
+  if (!cfg.ntfyUrl?.trim()) cfg.ntfyUrl = DEFAULT_NTFY_URL;
   if (typeof cfg.deviceId !== "string" || !cfg.deviceId) {
     cfg.deviceId = randomUUID();
     writeRows({ deviceId: cfg.deviceId });
@@ -249,6 +261,8 @@ export function maskSecrets(cfg: DesktopConfig): DesktopConfig {
     ...cfg,
     llmApiKey: mask(cfg.llmApiKey),
     finnhubApiKey: mask(cfg.finnhubApiKey),
+    gotifyToken: mask(cfg.gotifyToken),
+    ntfyToken: mask(cfg.ntfyToken),
     llmApiKeys: Object.fromEntries(Object.entries(cfg.llmApiKeys || {}).map(([id, key]) => [id, mask(key)])),
   };
 }
@@ -269,6 +283,8 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
   const cfg = loadConfig();
   const out = { ...updates };
   if (out.finnhubApiKey === SECRET_MASK) delete out.finnhubApiKey;
+  if (out.gotifyToken === SECRET_MASK) delete out.gotifyToken;
+  if (out.ntfyToken === SECRET_MASK) delete out.ntfyToken;
   if (out.llmApiKeys) {
     out.llmApiKeys = Object.fromEntries(Object.entries(out.llmApiKeys).map(([id, key]) => [id, unmaskSecret(key, cfg.llmApiKeys?.[id]) ?? ""]));
   }

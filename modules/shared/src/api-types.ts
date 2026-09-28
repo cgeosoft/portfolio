@@ -572,3 +572,30 @@ export interface SettingView {
 export interface GetSettingsResponse {
   settings: SettingView[];
 }
+
+// ── integrations and automation ─────────────────────────────────────────────
+
+/** `POST /api/integrations/gotify/test`: sends a test message. Empty fields use the stored settings; SECRET_MASK is the stored token. */
+export interface TestGotifyRequest {
+  url?: string;
+  token?: string;
+  priority?: number;
+}
+
+/** `POST /api/integrations/ntfy/test`: sends a test message. Empty fields use the stored settings; SECRET_MASK is the stored token. */
+export interface TestNtfyRequest {
+  url?: string;
+  topic?: string;
+  token?: string;
+  priority?: number;
+}
+
+/** A push notification channel of Settings, Integrations. */
+export type NotificationChannel = "gotify" | "ntfy";
+
+/** The answer of a notification send or test, for any channel. */
+export interface SendNotificationResponse {
+  success: boolean;
+  latencyMs?: number;
+  error?: string;
+}
