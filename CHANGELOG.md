@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0] - 2026-09-28
+
+### Added
+- Added Gotify and ntfy push notification channels that can send messages to your phone.
+- Added an Integrations section in Preferences to set up Gotify and ntfy, with a test button for each.
+- Added an Automation section in Preferences to control a daily brief and a weekly analysis.
+- Added a scheduled daily brief that writes a short overview of the last trading session and sends it to your notification channels.
+- Added a scheduled weekly analysis that writes a weekly report for each portfolio and sends a summary to your notification channels.
+- Added a Run now option to send the daily brief or weekly analysis immediately.
+- Added a privacy note explaining what the assistant sees and that notifications never include money amounts.
+- Added submenus to sidebar sections that have more than one card.
+
+### Changed
+- Preferences sidebar now supports sections with multiple cards and animated submenus.
+- Sidebar accent color now uses a shared color setting instead of a fixed color.
+- Missed daily briefs or weekly analyses are caught up automatically the next time the service runs.
+
+
 ## [0.6.0] - 2026-09-25
 
 ### Added
