@@ -30,6 +30,7 @@ import {
   Moon,
   Terminal,
   Gauge,
+  Plug,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
@@ -43,12 +44,13 @@ import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessRows } from "./AccessSection";
 import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
-import { SidebarEntry } from "./SettingsPrimitives";
+import { SidebarEntry, type SidebarSection } from "./SettingsPrimitives";
+import { INTEGRATIONS, IntegrationsSection, type IntegrationId } from "./IntegrationsSection";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
-export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "about";
+export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "integrations" | "about";
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -102,6 +104,12 @@ const SECTIONS = [
     label: "Assistant",
     description: "LLM, market data & news",
     icon: Bot,
+  },
+  {
+    id: "integrations" as const,
+    label: "Integrations",
+    description: "Gotify and ntfy push notifications",
+    icon: Plug,
   },
   {
     id: "about" as const,
@@ -162,6 +170,8 @@ export function SettingsPage({
   metrics,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
+  // The open card of the sections with a submenu.
+  const [activeIntegration, setActiveIntegration] = useState<IntegrationId>(INTEGRATIONS[0]!.id);
 
   // General settings state
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
@@ -349,6 +359,12 @@ export function SettingsPage({
   // Without a model list the only way to name a model is to type it.
   const showModelInput = isCustomModel || (!isClaudeCli && serverModels.length === 0);
 
+  /** The submenu of a section: its cards and the one that shows, or null for a one-card section. */
+  const submenu = (id: SettingsSection): { items: SidebarSection[]; active: string; select: (id: string) => void } | null => {
+    if (id === "integrations") return { items: INTEGRATIONS, active: activeIntegration, select: (item) => setActiveIntegration(item as IntegrationId) };
+    return null;
+  };
+
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
 
@@ -363,12 +379,19 @@ export function SettingsPage({
 
           <nav className="space-y-1 mt-1" aria-label="Settings sections">
             {SECTIONS.map((sec) => {
+              const sub = submenu(sec.id);
               return (
                 <SidebarEntry
                   key={sec.id}
                   section={sec}
                   isActive={activeSection === sec.id}
                   onSelect={() => setActiveSection(sec.id)}
+                  items={sub?.items}
+                  activeItem={sub?.active}
+                  onSelectItem={(id) => {
+                    setActiveSection(sec.id);
+                    sub?.select(id);
+                  }}
                 />
               );
             })}
@@ -827,6 +850,10 @@ export function SettingsPage({
           )}
 
           {activeSection === "metrics" && metrics}
+
+          {activeSection === "integrations" && fullConfig && (
+            <IntegrationsSection integration={activeIntegration} config={fullConfig} onConfigChange={setFullConfig} />
+          )}
 
           {/* SECTION 5: ABOUT */}
           {activeSection === "about" && (

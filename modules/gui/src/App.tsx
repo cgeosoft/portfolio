@@ -66,7 +66,7 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "metrics", "assistant", "about"];
+const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "metrics", "assistant", "integrations", "about"];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();

@@ -39,10 +39,13 @@ import type {
   RemoteAccessInfo,
   SavePortfolioMetricsRequest,
   SearchSymbolResponse,
+  SendNotificationResponse,
   StartReportStreamRequest,
   StartReportStreamResponse,
   SyncQuotesResponse,
   TestFinnhubConnectionResponse,
+  TestGotifyRequest,
+  TestNtfyRequest,
   TestLlmRequest,
   TestLlmStepRequest,
   TestLlmStepResponse,
@@ -191,6 +194,10 @@ export const api = {
   testYahooConnection: () => request<TestYahooConnectionResponse>("/api/providers/yahoo/test"),
   clearMarketCache: () => request<ClearMarketCacheResponse>("/api/market/cache/clear", { method: "POST" }),
   syncQuotes: () => request<SyncQuotesResponse>("/api/market/sync", { method: "POST" }),
+
+  // ---- integrations
+  testGotify: (body: TestGotifyRequest) => request<SendNotificationResponse>("/api/integrations/gotify/test", { method: "POST", body: json(body) }),
+  testNtfy: (body: TestNtfyRequest) => request<SendNotificationResponse>("/api/integrations/ntfy/test", { method: "POST", body: json(body) }),
 
   // ---- config and setup
   getConfig: () => request<DesktopConfig>("/api/config"),

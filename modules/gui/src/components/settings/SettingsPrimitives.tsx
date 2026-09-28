@@ -1,4 +1,125 @@
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { AlertCircle, CheckCircle2, ChevronRight, Eye, EyeOff, type LucideIcon } from "lucide-react";
+
+/** The outcome of a control that saves or tests: green for success, red for failure. */
+export interface StatusResult {
+  ok: boolean;
+  message: string;
+}
+
+export function StatusLine({ result }: { result: StatusResult | null }) {
+  if (!result) return null;
+  return (
+    <span className={`inline-flex items-start gap-1.5 text-[11px] ${result.ok ? "text-emerald-400" : "text-rose-400"}`}>
+      {result.ok ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />}
+      <span>{result.message}</span>
+    </span>
+  );
+}
+
+/** One button of a choice group. */
+export function ChoiceButton({
+  active,
+  onClick,
+  disabled = false,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      disabled={disabled}
+      onClick={onClick}
+      className={`h-8 inline-flex items-center px-3 rounded-lg border text-[11px] font-bold font-mono whitespace-nowrap transition-colors cursor-pointer disabled:opacity-60 ${
+        active ? "border-accent-500/50 bg-accent-500/15 text-accent-500" : "border-slate-800 bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * A labelled text field that saves itself when it loses focus or on Enter.
+ * A secret comes back masked, so its field starts empty and shows whether a
+ * value is stored; typing and clearing the field removes it.
+ */
+export function TextField({
+  id,
+  label,
+  description,
+  value,
+  placeholder,
+  secret = false,
+  isSet = false,
+  first = false,
+  onCommit,
+}: {
+  id: string;
+  label: string;
+  description: ReactNode;
+  value: string;
+  placeholder?: string;
+  secret?: boolean;
+  isSet?: boolean;
+  first?: boolean;
+  onCommit: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | undefined>(undefined);
+  const [show, setShow] = useState(false);
+  const shown = draft ?? (secret ? "" : value);
+
+  const commit = () => {
+    if (draft === undefined) return;
+    setDraft(undefined);
+    if (secret || draft.trim() !== value) onCommit(draft.trim());
+  };
+
+  return (
+    <div className={`space-y-2 ${first ? "" : "pt-4 border-t border-slate-800/80"}`}>
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor={id} className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+          {label}
+        </label>
+        {secret && isSet && <span className="text-[10px] text-emerald-400/90 font-mono">stored</span>}
+      </div>
+      <div className="relative">
+        <input
+          id={id}
+          type={secret && !show ? "password" : "text"}
+          value={shown}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          placeholder={secret && isSet && draft === undefined ? "•••••••• (stored)" : placeholder}
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
+        />
+        {secret && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+            aria-label="Show or hide value"
+          >
+            {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
+      <p className="text-[11px] text-slate-400 leading-relaxed">{description}</p>
+      {secret && isSet && draft === undefined && (
+        <p className="text-[10px] text-slate-500">A value is stored. Type a new one to replace it, or type and clear the field to remove it.</p>
+      )}
+    </div>
+  );
+}
 
 export interface SidebarSection {
   id: string;
