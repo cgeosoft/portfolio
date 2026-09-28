@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portfolio - Personal Investment Tracker</title>
-  <meta name="description" content="A private, offline-first investment tracker that runs on your own computer. Live quotes, broker CSV import and on-demand AI briefings. Your data stays on your disk. No account, no cloud.">
+  <meta name="description" content="A private, offline-first investment tracker that runs on your own computer. Live quotes, broker CSV import, an AI assistant and scheduled briefs. Your data stays on your disk. No account, no cloud.">
   <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg">
   <link rel="apple-touch-icon" href="assets/icon-512.png">
   <meta property="og:title" content="Portfolio - Personal Investment Tracker">
@@ -75,7 +75,7 @@
         </h1>
 
         <p class="hero-subtitle">
-          Portfolio is a personal investment tracker that keeps your holdings, cash and transaction history in one file on your own disk. Live market valuation, broker CSV import and on-demand AI briefings, all running privately on your computer. No account to create, no cloud database, no one reading along.
+          Portfolio is a personal investment tracker that keeps your holdings, cash and transaction history in one file on your own disk. Live market valuation, broker CSV import, an AI assistant and scheduled briefs, all running privately on your computer. No account to create, no cloud database, no one reading along.
         </p>
 
         <div class="download-card" id="download-hero-card">
@@ -142,8 +142,8 @@
                   <button type="button" class="hotspot-pin" aria-expanded="false" aria-controls="hs-tip-1">1<span class="sr-only"> On-demand AI assistant</span></button>
                   <div class="hotspot-tip" id="hs-tip-1" role="tooltip">
                     <span class="tip-kicker">AI assistant</span>
-                    <span class="tip-title">Briefings on demand</span>
-                    <p class="tip-desc">Generate a markdown analysis of your portfolio with a local model (Ollama, llama.cpp) or a cloud provider. You choose which, and you can read the exact prompt first.</p>
+                    <span class="tip-title">Ask about your portfolio</span>
+                    <p class="tip-desc">Open the assistant sidebar to ask questions or follow up on a brief, or generate a written report. Use a local model, a cloud API or the Claude Code CLI.</p>
                   </div>
                 </li>
                 <li class="shot-hotspot hs-right" style="--x: 2.1%; --y: 17%;">
@@ -221,15 +221,15 @@
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
             </div>
             <h3 class="card-title">Live market valuation</h3>
-            <p class="card-desc">Stock, ETF and crypto quotes come straight from Yahoo Finance. Exchange rates are applied automatically so your whole portfolio is valued in your base currency.</p>
+            <p class="card-desc">Stock, ETF and crypto quotes come straight from Yahoo Finance. Exchange rates are applied automatically so your whole portfolio is valued in your base currency. Add a free Finnhub key for company news and analyst data.</p>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
             </div>
-            <h3 class="card-title">AI briefings on demand</h3>
-            <p class="card-desc">Ask for a written analysis of risk, allocation and rebalancing. Use a local model (Ollama, llama.cpp) for fully private processing, or your own API key for Groq, Anthropic, OpenAI or Gemini.</p>
+            <h3 class="card-title">AI assistant and reports</h3>
+            <p class="card-desc">Chat with an assistant that knows your weights, returns and indicators, or generate a written report on risk and allocation. Use a local model (Ollama, llama.cpp, LM Studio), any OpenAI-compatible API with your own key, or the Claude Code CLI.</p>
           </article>
 
           <article class="feature-card">
@@ -254,6 +254,30 @@
             </div>
             <h3 class="card-title">Fast and lightweight</h3>
             <p class="card-desc">A native desktop application that starts in a moment, uses little memory and runs smoothly on an ordinary computer. Metrics are small sandboxed modules you pick from the <a href="/metrics/">marketplace</a>.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h3 class="card-title">Daily brief and weekly analysis</h3>
+            <p class="card-desc">Schedule a short brief of the last trading session every day, and a full report every week. Missed a run because the app was closed? It catches up on the next start.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <h3 class="card-title">Push notifications</h3>
+            <p class="card-desc">Send the daily brief and weekly summary to your phone through Gotify or ntfy, including a server you host yourself. Notifications carry percentages and tickers, never money amounts.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 class="card-title">PIN lock and home network access</h3>
+            <p class="card-desc">Lock the app with a PIN. Once a PIN is set, you can open Portfolio from your phone or another computer on your home network. The connection stays on your network.</p>
           </article>
         </div>
       </div>
@@ -280,7 +304,7 @@
           <li class="how-step">
             <span class="how-index">3</span>
             <h3>Track, analyse, ask</h3>
-            <p>Watch value, cost basis and indicators update on the overview. Optionally point the app at a local model or your own API key and ask for a written briefing whenever you want one.</p>
+            <p>Watch value, cost basis and indicators update on the overview. Optionally connect a local model, your own API key or the Claude Code CLI, then ask the assistant or schedule a daily brief.</p>
           </li>
         </ol>
       </div>
@@ -355,15 +379,19 @@
           </details>
           <details class="faq-item">
             <summary>How do live quotes work without a cloud service?</summary>
-            <p>The app talks to Yahoo Finance directly from your computer to fetch current prices, intraday moves and exchange rates. Your holdings and portfolio values are never sent anywhere; only the ticker symbols you look up leave your machine.</p>
+            <p>The app talks to Yahoo Finance directly from your computer to fetch current prices, intraday moves and exchange rates. Your holdings and portfolio values are never sent to them; only the ticker symbols you look up leave your machine. If you add a Finnhub key, news and company data come from Finnhub the same way.</p>
           </details>
           <details class="faq-item">
-            <summary>How do the AI briefings work?</summary>
-            <p>You choose the model. Run fully offline with a local runtime such as Ollama or llama.cpp, or supply your own API key for a cloud provider (Groq, OpenAI, Anthropic, Gemini, OpenRouter or DeepSeek). The app sends the request straight to the provider you picked; nothing goes through a server of ours.</p>
+            <summary>How does the AI assistant work?</summary>
+            <p>You choose the model. Run fully offline with a local runtime such as Ollama, llama.cpp or LM Studio, supply your own API key for any OpenAI-compatible cloud provider (OpenAI, Groq, OpenRouter, DeepSeek, Gemini and others), or use the Claude Code CLI with your Claude subscription. The app sends the request straight to the provider you picked; nothing goes through a server of ours. Assistant chats and daily briefs share percentages, weights and tickers, not money amounts.</p>
           </details>
           <details class="faq-item">
             <summary>Which brokers can I import CSVs from?</summary>
             <p>The import wizard recognises Trade Republic, Scalable Capital, Interactive Brokers (Activity Statement CSV) and Degiro (Account CSV) exports automatically, and accepts a generic transaction CSV for anything else. Imports are previewed as a dry run before anything is written.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can I open Portfolio from my phone?</summary>
+            <p>Yes, on your home network. Set a PIN in Settings, General, then switch on remote connections. Other devices on the same network open the app in a browser and unlock it with the PIN. Nothing is exposed to the internet unless you set that up yourself.</p>
           </details>
           <details class="faq-item">
             <summary>Is Portfolio free?</summary>
