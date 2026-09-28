@@ -2,6 +2,7 @@ import { describe, it, expect } from "bun:test";
 import { isBriefDue, nextBriefRun, localDate } from "../daily-brief";
 import { gotifyMessageUrl } from "../gotify";
 import { isValidNtfyTopic, ntfyPublishUrl } from "../ntfy";
+import { analysisWeekKey, isAnalysisDue, nextAnalysisRun } from "../weekly-analysis";
 
 const base = { dailyBriefEnabled: true, dailyBriefTime: "08:00", dailyBriefDays: "weekdays" as string, dailyBriefLastRun: undefined as string | undefined };
 
@@ -41,6 +42,31 @@ describe("Gotify URL", () => {
     expect(gotifyMessageUrl("https://gotify.example.com")).toBe("https://gotify.example.com/message");
     expect(gotifyMessageUrl("https://gotify.example.com/")).toBe("https://gotify.example.com/message");
     expect(gotifyMessageUrl("https://example.com/gotify/message")).toBe("https://example.com/gotify/message");
+  });
+});
+
+describe("Weekly analysis schedule", () => {
+  const weekly = { weeklyAnalysisEnabled: true, weeklyAnalysisDay: 6, weeklyAnalysisTime: "09:00", weeklyAnalysisLastRun: undefined as string | undefined };
+
+  it("is due after the set day and time", () => {
+    expect(isAnalysisDue(weekly, at("2026-10-03", "08:59"))).toBe(false);
+    expect(isAnalysisDue(weekly, at("2026-10-03", "09:00"))).toBe(true);
+  });
+
+  it("catches up for two days, then waits for the next week", () => {
+    expect(isAnalysisDue(weekly, at("2026-10-04", "20:00"))).toBe(true);
+    expect(isAnalysisDue(weekly, at("2026-10-07", "20:00"))).toBe(false);
+  });
+
+  it("runs once a week", () => {
+    expect(isAnalysisDue({ ...weekly, weeklyAnalysisLastRun: "2026-10-03" }, at("2026-10-04", "10:00"))).toBe(false);
+    const next = nextAnalysisRun({ ...weekly, weeklyAnalysisLastRun: "2026-10-03" }, at("2026-10-04", "10:00"));
+    expect(localDate(new Date(next!))).toBe("2026-10-10");
+  });
+
+  it("covers the week of the day before", () => {
+    expect(analysisWeekKey(at("2026-10-03", "09:00"))).toBe("2026-w40");
+    expect(analysisWeekKey(at("2026-10-05", "09:00"))).toBe("2026-w40");
   });
 });
 

@@ -601,7 +601,7 @@ export interface SendNotificationResponse {
   error?: string;
 }
 
-/** `GET /api/automation/daily-brief`. */
+/** `GET /api/automation/daily-brief` and `GET /api/automation/weekly-analysis`. */
 export interface AutomationStatus {
   /** A run is in progress. */
   running: boolean;
@@ -621,10 +621,10 @@ export interface AutomationStatus {
   };
 }
 
-/** `POST /api/automation/daily-brief/run`. */
+/** `POST /api/automation/daily-brief/run` and `POST /api/automation/weekly-analysis/run`. */
 export interface RunAutomationResponse {
   success: boolean;
-  /** Portfolios that got a brief. */
+  /** Portfolios that got a brief or an analysis. */
   portfolios: number;
   /** Portfolios whose notification every set-up channel accepted. */
   delivered: number;

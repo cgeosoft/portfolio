@@ -56,6 +56,11 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   dailyBriefDays: "weekdays",
   dailyBriefPortfolioId: "",
   dailyBriefLastRun: undefined,
+  weeklyAnalysisEnabled: false,
+  weeklyAnalysisDay: 6,
+  weeklyAnalysisTime: "09:00",
+  weeklyAnalysisPortfolioId: "",
+  weeklyAnalysisLastRun: undefined,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */
@@ -216,6 +221,8 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   if (!cfg.ntfyUrl?.trim()) cfg.ntfyUrl = DEFAULT_NTFY_URL;
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cfg.dailyBriefTime)) cfg.dailyBriefTime = "08:00";
   if (cfg.dailyBriefDays !== "daily" && cfg.dailyBriefDays !== "weekdays") cfg.dailyBriefDays = "weekdays";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cfg.weeklyAnalysisTime)) cfg.weeklyAnalysisTime = "09:00";
+  if (!Number.isInteger(cfg.weeklyAnalysisDay) || cfg.weeklyAnalysisDay < 0 || cfg.weeklyAnalysisDay > 6) cfg.weeklyAnalysisDay = 6;
   if (typeof cfg.deviceId !== "string" || !cfg.deviceId) {
     cfg.deviceId = randomUUID();
     writeRows({ deviceId: cfg.deviceId });

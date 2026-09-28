@@ -8,6 +8,7 @@ import { PortfolioReportService } from "./portfolio-report";
 import { PortfolioChatService } from "./portfolio-chat";
 import { MetricsService } from "./metrics/index";
 import { DailyBriefService } from "./daily-brief";
+import { WeeklyAnalysisService } from "./weekly-analysis";
 
 export interface AppServices {
   yahoo: YahooFinanceService;
@@ -19,6 +20,7 @@ export interface AppServices {
   chatService: PortfolioChatService;
   metricsService: MetricsService;
   dailyBrief: DailyBriefService;
+  weeklyAnalysis: WeeklyAnalysisService;
 }
 
 export function createServices(): AppServices {
@@ -31,5 +33,6 @@ export function createServices(): AppServices {
   const chatService = new PortfolioChatService(llm, portfolioService);
   const metricsService = new MetricsService(portfolioService);
   const dailyBrief = new DailyBriefService(llm, portfolioService, finnhub);
-  return { yahoo, finnhub, marketData, llm, portfolioService, reportService, chatService, metricsService, dailyBrief };
+  const weeklyAnalysis = new WeeklyAnalysisService(llm, portfolioService, reportService);
+  return { yahoo, finnhub, marketData, llm, portfolioService, reportService, chatService, metricsService, dailyBrief, weeklyAnalysis };
 }

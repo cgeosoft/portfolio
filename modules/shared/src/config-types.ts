@@ -115,6 +115,16 @@ export interface DesktopConfig {
   dailyBriefPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled daily brief. Written by the service. */
   dailyBriefLastRun?: string;
+  /** Whether the assistant writes the weekly analysis on a schedule (Settings, Automation). */
+  weeklyAnalysisEnabled: boolean;
+  /** Day of the week the weekly analysis runs, 0 (Sunday) to 6 (Saturday). */
+  weeklyAnalysisDay: number;
+  /** Local time of day the weekly analysis runs, "HH:MM". */
+  weeklyAnalysisTime: string;
+  /** The portfolio of the weekly analysis; empty for every portfolio. */
+  weeklyAnalysisPortfolioId: string;
+  /** Local date (YYYY-MM-DD) of the last scheduled weekly analysis. Written by the service. */
+  weeklyAnalysisLastRun?: string;
 }
 
 /** "weekdays" runs Monday to Friday; the Monday brief covers the Friday session. */
@@ -133,7 +143,7 @@ export const DEFAULT_NTFY_PRIORITY = 3;
 export const DEFAULT_REMOTE_PORT = 5130;
 
 /** Settings the GUI cannot change through `PATCH /api/config`. */
-export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun"] as const;
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun", "weeklyAnalysisLastRun"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
 

@@ -22,7 +22,7 @@ import type {
   CancelReportStreamResponse,
 } from "portfolio-shared/api-types";
 
-function getIsoWeekKey(date: Date): string {
+export function getIsoWeekKey(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
