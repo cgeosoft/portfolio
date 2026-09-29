@@ -36,7 +36,13 @@ export const APP = {
     documentTitle: "Portfolio",
     heading: "Portfolio",
     tagline: "Personal Investment Tracker",
-    startingHint: "Opening the local database. This takes a few seconds.",
+    /** The line under the "Starting up" pill, one text per start-up step of `index.ts`. */
+    starting: {
+      service: "Starting the local service.",
+      health: (port: number) => `Waiting for the service to answer on port ${port}.`,
+      devGui: "Starting the Vite dev server.",
+      open: "Opening the dashboard.",
+    },
     failedHint: "Settings and API keys live in the database there; nothing is read from a .env file.",
     /** Brand mark from modules/gui/src/components/common/AppIcon.tsx: the trending-up line. */
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

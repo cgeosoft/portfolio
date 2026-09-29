@@ -4,7 +4,8 @@
  * They copy the GUI's own loading screen (brand tile, radial-gradient glows, pill status) so the
  * hand-off from "service starting" to the GUI is seamless. The texts and colours come from
  * `app.ts`. Glows are gradients, not blur filters, and the only animated elements are small
- * boxes: the window renders in software WebKitGTK on Linux.
+ * boxes: the window renders in software WebKitGTK on Linux. The line under the "Starting up"
+ * pill follows the start-up steps: `startingHintScript` replaces it in place, without a reload.
  */
 import { APP } from "./app";
 
@@ -55,13 +56,25 @@ const brand = (tagline: string, error = false) => `<div class="tile"><div>${page
 <h1>${escape(pages.heading)}</h1>
 <p class="tagline${error ? " error" : ""}">${escape(tagline)}</p>`;
 
-export function startingPage(): string {
+/** The id of the line under the "Starting up" pill; `startingHintScript` replaces its text. */
+const HINT_ID = "starting-hint";
+
+/** The page of the start-up, with `hint` (a text of `pages.starting`) under the pill. */
+export function startingPage(hint: string): string {
   return shell(
     `${brand(pages.tagline)}
 <div class="pill"><span class="spin"></span><span>Starting up</span></div>
-<p class="hint">${escape(pages.startingHint)}</p>`,
+<p class="hint" id="${HINT_ID}">${escape(hint)}</p>`,
     t.glow,
   );
+}
+
+/**
+ * A script for `webview.executeJavascript` that replaces the line under "Starting up" with
+ * `hint`, so the page follows the start-up without a reload. A no-op on any other page.
+ */
+export function startingHintScript(hint: string): string {
+  return `(function () { var el = document.getElementById(${JSON.stringify(HINT_ID)}); if (el) el.textContent = ${JSON.stringify(hint)}; })();`;
 }
 
 export function failedPage(logPath: string, logTail: string, dataDir: string, reason = "The service exited before it became reachable."): string {

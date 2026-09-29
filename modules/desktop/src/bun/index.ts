@@ -24,7 +24,7 @@ import { join } from "node:path";
 import { APP, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
-import { failedPage, startingPage } from "./pages";
+import { failedPage, startingHintScript, startingPage } from "./pages";
 import { ServiceProcess } from "./service";
 import { WindowStateManager, normalizeWindowState, readWindowState, writeWindowState } from "./window-state";
 
@@ -70,7 +70,7 @@ async function main(): Promise<void> {
 
   const mainWindow = new BrowserWindow({
     title: APP.windowTitle,
-    html: startingPage(),
+    html: startingPage(APP.pages.starting.service),
     frame: { width: windowState.frame.width, height: windowState.frame.height, x: windowState.frame.x, y: windowState.frame.y },
   });
   if (windowState.isMaximized) {
@@ -102,6 +102,18 @@ async function main(): Promise<void> {
     } else if (/^(https?:|mailto:)/i.test(url)) {
       Utils.openExternal(url);
     }
+  });
+
+  // The line under "Starting up" follows the start-up steps. The page loads a moment after the
+  // window opens, so the current line is written again when its DOM is ready (a no-op on the
+  // app and on the failure page).
+  let startingHint: string = APP.pages.starting.service;
+  const showStartingHint = (hint: string) => {
+    startingHint = hint;
+    mainWindow.webview.executeJavascript(startingHintScript(hint));
+  };
+  mainWindow.webview.on("dom-ready", () => {
+    if (!appUrl) mainWindow.webview.executeJavascript(startingHintScript(startingHint));
   });
 
   const service = new ServiceProcess(
@@ -179,7 +191,8 @@ async function main(): Promise<void> {
   }
 
   service.onPort((port) => {
-    service.log(`service listening on 127.0.0.1:${port}`);
+    service.log(`service listening on 127.0.0.1:${port}; waiting for /api/health`);
+    if (!ready) showStartingHint(APP.pages.starting.health(port));
     // A restart under --watch picks a new port; the Vite proxy follows it.
     devGui?.setServicePort(port);
   });
@@ -205,6 +218,7 @@ async function main(): Promise<void> {
   }
 
   if (devGui) {
+    showStartingHint(APP.pages.starting.devGui);
     devGui.start(service.port);
     const guiUrl = await devGui.waitForUrl(DEV_GUI_TIMEOUT_MS);
     if (!guiUrl) {
@@ -216,6 +230,7 @@ async function main(): Promise<void> {
   } else {
     appUrl = `http://127.0.0.1:${service.port}`;
   }
+  showStartingHint(APP.pages.starting.open);
   service.log(`window on ${appUrl}`);
   mainWindow.webview.loadURL(appUrl);
 }

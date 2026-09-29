@@ -79,13 +79,17 @@ export class ServiceProcess {
    * child exits or the time runs out.
    */
   async waitUntilReady(timeoutMs: number): Promise<boolean> {
-    const deadline = Date.now() + timeoutMs;
+    const startedAt = Date.now();
+    const deadline = startedAt + timeoutMs;
     while (Date.now() < deadline) {
       if (this.exited) return false;
       if (this.port !== null) {
         try {
           const res = await fetch(`http://127.0.0.1:${this.port}/api/health`, { signal: AbortSignal.timeout(2000) });
-          if (res.ok) return true;
+          if (res.ok) {
+            this.log(`service healthy after ${Date.now() - startedAt} ms`);
+            return true;
+          }
         } catch {
           // Not listening yet, or restarting under --watch.
         }
