@@ -44,6 +44,7 @@ import { ExportPortfolioModal } from "../portfolio/ExportPortfolioModal";
 import { TestLlmModal } from "./TestLlmModal";
 import { DataProvidersSection } from "./DataProvidersSection";
 import { AccessRows } from "./AccessSection";
+import { BackupCard } from "./BackupCard";
 import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
 import { SidebarEntry, type SidebarSection } from "./SettingsPrimitives";
 import { INTEGRATIONS, IntegrationsSection, type IntegrationId } from "./IntegrationsSection";
@@ -995,6 +996,8 @@ export function SettingsPage({
                   </div>
                 </div>
               </div>
+
+              <BackupCard />
 
               {/* Keyboard Shortcuts Reference */}
               <div className="space-y-2.5">

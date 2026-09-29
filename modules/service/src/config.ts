@@ -75,6 +75,16 @@ const JSON_KEYS = new Set(
 
 let migrated = false;
 
+/** Every key `PATCH /api/config` may set. Anything else in a request is dropped. */
+export const CONFIG_KEYS: ReadonlySet<string> = new Set([...Object.keys(DEFAULT_CONFIG), "deviceId"]);
+
+/**
+ * The settings rows, read once and kept until the next write. Only this
+ * module writes the table, so the copy cannot go stale; it saves a query
+ * and the JSON decoding on the many `loadConfig()` calls per request.
+ */
+let rowsCache: Record<string, unknown> | null = null;
+
 function decode(key: string, value: string): unknown {
   return JSON_KEYS.has(key) ? JSON.parse(value) : value;
 }
@@ -84,6 +94,7 @@ function encode(value: unknown): string {
 }
 
 function readRows(): Record<string, unknown> {
+  if (rowsCache) return { ...rowsCache };
   const db = getDatabase();
   const rows = db.query("SELECT key, value FROM settings").all() as { key: string; value: string }[];
   const out: Record<string, unknown> = {};
@@ -94,10 +105,12 @@ function readRows(): Record<string, unknown> {
       // A corrupt row falls back to the default.
     }
   }
+  rowsCache = { ...out };
   return out;
 }
 
 function writeRows(values: Record<string, unknown>): void {
+  rowsCache = null;
   const db = getDatabase();
   const upsert = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
   const remove = db.prepare("DELETE FROM settings WHERE key = ?");
@@ -129,6 +142,7 @@ function migrateConfigTable(): void {
     writeRows(values);
     db.run("DROP TABLE config");
   })();
+  rowsCache = null;
 }
 
 /** One-time import of the config.json written by releases before 0.3. */

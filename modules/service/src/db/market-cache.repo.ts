@@ -68,6 +68,17 @@ export function deleteKey(key: string): void {
   }
 }
 
+/** Removes every entry whose key starts with `prefix` (a portfolio's cached data in every currency). */
+export function deleteByPrefix(prefix: string): number {
+  try {
+    const db = getDatabase();
+    const escaped = prefix.replace(/[\\%_]/g, (c) => `\\${c}`);
+    return db.run("DELETE FROM market_cache WHERE key LIKE ? ESCAPE '\\'", [`${escaped}%`]).changes;
+  } catch {
+    return 0;
+  }
+}
+
 export function clearExpired(): void {
   try {
     const db = getDatabase();

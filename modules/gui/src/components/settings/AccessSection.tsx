@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, Wifi } from "lucide-react";
+import { Lock, MonitorSmartphone, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
@@ -155,6 +155,67 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
   );
 }
 
+/** Live session count with a button that ends every session but this one. */
+function SessionsCard() {
+  const [active, setActive] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    api.sessions().then((s) => setActive(s.active)).catch(() => setActive(null));
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const revoke = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await api.revokeOtherSessions();
+      setNotice(res.revoked === 0 ? "No other session was open." : `Signed out ${res.revoked} other ${res.revoked === 1 ? "session" : "sessions"}.`);
+      load();
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : "Could not sign out the other sessions.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const others = active === null ? null : Math.max(0, active - 1);
+
+  return (
+    <SettingItem
+      icon={MonitorSmartphone}
+      title="Signed-in devices"
+      description={
+        <>
+          Every window, browser or phone that opened this Portfolio keeps a session for seven days. End all of them except this one, for example after lending your phone or changing the PIN.
+          {others !== null && (
+            <span className="block text-xs text-slate-500 mt-1">{others === 0 ? "No other session is open." : `${others} other ${others === 1 ? "session is" : "sessions are"} open.`}</span>
+          )}
+          {notice && <span className="block text-xs text-emerald-400 mt-1">{notice}</span>}
+          {error && <span className="block text-xs text-rose-400 mt-1">{error}</span>}
+        </>
+      }
+      control={
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void revoke()}
+          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
+        >
+          {busy ? "Signing out…" : "Sign out other devices"}
+        </button>
+      }
+    />
+  );
+}
+
 /**
  * The app lock and the remote-connections rows of Settings → General. The
  * remote row only renders in the desktop window (the service answers 403
@@ -223,6 +284,8 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
           load();
         }}
       />
+
+      <SessionsCard />
 
       {remote && (
         <SettingItem

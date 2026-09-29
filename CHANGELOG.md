@@ -1,5 +1,30 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Added a Backup block in Preferences, About that saves a copy of the database to the Downloads folder.
+- Added a Signed-in devices row in Preferences, General that shows the open sessions and signs out every device but the current one.
+
+### Changed
+- Large API responses are gzipped for clients that accept it, so a phone on the network loads the portfolio faster.
+- Settings are read from memory between changes instead of from the database on every call.
+- A CSV import writes its updates in one database transaction, and the database no longer waits for the disk on every commit.
+- The ledger has an index on portfolio and date, which is how it is always read.
+- Changing a portfolio now drops its cached market data on disk as well as in memory, so a reopened app never shows the state before the change.
+
+### Fixed
+- Deleting a transaction now checks that it belongs to the portfolio of the request.
+- Clearing the market cache also clears the cached portfolio data, so the next load is recomputed.
+- A malformed URL no longer answers with a 500 from the static file server.
+
+### Security
+- The service rejects state-changing requests from another web origin and requests to the desktop listener with a foreign Host header (DNS rebinding).
+- API responses carry Cache-Control: no-store, so a shared browser keeps no balances.
+- The sponsor banner route only fetches pages on the Portfolio website.
+- Settings updates are limited to known keys.
+- Service logs no longer contain tickers, portfolio names or balances.
+
 ## [0.7.0] - 2026-09-28
 
 ### Added

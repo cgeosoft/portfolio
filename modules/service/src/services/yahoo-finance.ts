@@ -431,7 +431,7 @@ export class YahooFinanceService {
           return;
         }
         const msg = e instanceof Error ? e.message : String(e);
-        appLogger.logStep("warning", "yahoo", "get_quote", `Failed to fetch quote for ${sym}: ${msg}`);
+        appLogger.logStep("warning", "yahoo", "get_quote", `Failed to fetch a quote: ${msg}`);
       }
     });
 

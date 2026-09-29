@@ -28,6 +28,9 @@ interface KvRow {
 }
 
 export class AuthService {
+  /** The Terms of Use timestamp, read once: it is checked on every request and written once. */
+  private termsCache: string | null | undefined;
+
   private kvGet(key: string): string | null {
     const row = getDatabase().query("SELECT value, expiresAt FROM kv_entries WHERE key = ?").get(key) as KvRow | null;
     if (!row) return null;
@@ -103,11 +106,12 @@ export class AuthService {
 
   /** ISO timestamp of the Terms of Use acceptance, null on first run. */
   acceptedTermsAt(): string | null {
-    return this.kvGet(TERMS_KEY);
+    if (this.termsCache === undefined) this.termsCache = this.kvGet(TERMS_KEY);
+    return this.termsCache;
   }
 
   hasAcceptedTerms(): boolean {
-    return !!this.kvGet(TERMS_KEY);
+    return !!this.acceptedTermsAt();
   }
 
   /** Records the acceptance once; later calls keep the original timestamp. */
@@ -116,6 +120,7 @@ export class AuthService {
     if (existing) return existing;
     const at = new Date().toISOString();
     this.kvSet(TERMS_KEY, at);
+    this.termsCache = at;
     appLogger.logStep("info", "auth", "terms", "Terms of Use accepted");
     return at;
   }
@@ -150,11 +155,18 @@ export class AuthService {
     getDatabase().run("DELETE FROM sessions WHERE id = ?", [id]);
   }
 
-  /** Ends every session except `keep` (after a PIN change). */
-  revokeOtherSessions(keep: string | null): void {
+  /** Ends every session except `keep` (after a PIN change, or on request from Settings). Returns how many ended. */
+  revokeOtherSessions(keep: string | null): number {
     const db = getDatabase();
     const result = keep ? db.run("DELETE FROM sessions WHERE id != ?", [keep]) : db.run("DELETE FROM sessions");
     if (result.changes > 0) appLogger.logStep("info", "auth", "sessions", `Revoked ${result.changes} other session(s)`);
+    return result.changes;
+  }
+
+  /** Number of live sessions (this window, other browsers and devices). */
+  activeSessionCount(): number {
+    const row = getDatabase().query("SELECT COUNT(*) AS n FROM sessions WHERE expiresAt >= ?").get(Date.now()) as { n: number } | null;
+    return row?.n ?? 0;
   }
 
   /** Drops expired sessions and counters (called at start and hourly). */

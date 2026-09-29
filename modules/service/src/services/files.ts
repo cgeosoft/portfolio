@@ -14,8 +14,8 @@ export function downloadsDir(): string {
   return dir;
 }
 
-/** Writes `content` (text) or `base64Data` under a safe name in Downloads. */
-export function saveToDownloads(fileName: string, content?: string, base64Data?: string): string {
+/** A path in Downloads under a safe version of `fileName` that does not exist yet. */
+function freeDownloadPath(fileName: string): string {
   const safeName = basename(fileName).replace(/[\\/:*?"<>|]/g, "_").trim() || "portfolio-file";
   let target = join(downloadsDir(), safeName);
   if (existsSync(target)) {
@@ -24,8 +24,21 @@ export function saveToDownloads(fileName: string, content?: string, base64Data?:
     const ext = dot > 0 ? safeName.slice(dot) : "";
     target = join(downloadsDir(), `${stem}-${Date.now()}${ext}`);
   }
+  return target;
+}
+
+/** Writes `content` (text) or `base64Data` under a safe name in Downloads. */
+export function saveToDownloads(fileName: string, content?: string, base64Data?: string): string {
+  const target = freeDownloadPath(fileName);
   if (base64Data) writeFileSync(target, Buffer.from(base64Data, "base64"));
   else writeFileSync(target, content ?? "", "utf-8");
+  return target;
+}
+
+/** Writes raw bytes (a database backup) under a safe name in Downloads. */
+export function saveBytesToDownloads(fileName: string, bytes: Uint8Array): string {
+  const target = freeDownloadPath(fileName);
+  writeFileSync(target, bytes);
   return target;
 }
 

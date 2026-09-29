@@ -90,27 +90,41 @@ export function bulkCreate(transactions: Array<Partial<TransactionInput> & { por
 
   const stmt = db.prepare(
     `INSERT INTO transactions (id, portfolioId, date, datetime, type, assetClass, name, symbol, isin, shares, price, amount, fee, tax, currency, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING *`,
   );
 
-  const ids: string[] = [];
+  const rows: TransactionRow[] = [];
 
   const insertAll = db.transaction(() => {
     for (const tx of transactions) {
       const id = tx.id || generateId();
-      ids.push(id);
-      stmt.run(
+      const row = stmt.get(
         id, tx.portfolioId, tx.date, tx.datetime ?? null, tx.type,
         tx.assetClass ?? null, tx.name ?? null, tx.symbol, tx.isin ?? null,
         tx.shares ?? null, tx.price ?? null, tx.amount ?? null,
         tx.fee ?? null, tx.tax ?? null, tx.currency ?? "EUR", now, now,
-      );
+      ) as TransactionRow | null;
+      if (row) rows.push(row);
     }
   });
 
   insertAll();
 
-  return ids.map((id) => findById(id)!).filter(Boolean);
+  return rows;
+}
+
+/** Applies several updates atomically: one fsync for a whole CSV import instead of one per row. */
+export function bulkUpdate(updates: Array<{ id: string; data: Partial<TransactionInput> }>): number {
+  if (updates.length === 0) return 0;
+  const db = getDatabase();
+  let changed = 0;
+  db.transaction(() => {
+    for (const { id, data } of updates) {
+      if (update(id, data)) changed++;
+    }
+  })();
+  return changed;
 }
 
 export function countByPortfolio(portfolioId: string): number {
