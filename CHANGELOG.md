@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2026-09-29
+
+- 28ae343 chore(release): v0.7.1
+- 0276a41 Harden the HTTP layer, speed up settings and imports, add backup and session controls
+- a2ced78 Point the metrics site at Preferences, Metrics
+- 061e25f Update the website copy for the assistant, automations and remote access
+
+
 ## [0.7.1] - 2026-09-29
 
 ### Added
