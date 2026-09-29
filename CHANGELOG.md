@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.7.1] - 2026-09-29
 
 ### Added
 - Added a Backup block in Preferences, About that saves a copy of the database to the Downloads folder.
