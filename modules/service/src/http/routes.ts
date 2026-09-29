@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import { HttpError, Router, json, type RequestContext } from "./router";
 import { appLogger } from "../logger";
-import { loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
+import { CONFIG_KEYS, loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
 import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
 import { findBundledFile, getLogDir } from "../paths";
@@ -16,7 +16,8 @@ import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
-import { revealInFileManager, saveToDownloads } from "../services/files";
+import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
+import { createDatabaseBackup } from "../services/backup";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
 import { telemetry } from "../services/telemetry";
@@ -70,6 +71,15 @@ function str(value: unknown, name: string): string {
 
 function toItem(row: portfolioRepo.PortfolioRow) {
   return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, createdAt: row.createdAt, updatedAt: row.updatedAt };
+}
+
+/** True for a page on the Portfolio website; the sponsor route fetches nothing else on the client's behalf. */
+function isWebsiteUrl(value: string): boolean {
+  try {
+    return new URL(value).origin === new URL(WEBPAGE_URL).origin;
+  } catch {
+    return false;
+  }
 }
 
 /** Offline sponsor page: next to the service bundle, or the website source in a checkout. */
@@ -139,6 +149,10 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     authService.revokeOtherSessions(ctx.sessionId);
     return { pinEnabled: true };
   });
+
+  router.get("/api/auth/sessions", () => ({ active: authService.activeSessionCount() }));
+
+  router.post("/api/auth/sessions/revoke-others", (ctx) => ({ revoked: authService.revokeOtherSessions(ctx.sessionId) }));
 
   router.delete("/api/auth/pin", async (ctx) => {
     const body = await ctx.body<{ currentPin?: string }>();
@@ -384,7 +398,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.patch("/api/config", async (ctx) => {
     const body = await ctx.body<Partial<DesktopConfig>>();
-    for (const key of PROTECTED_CONFIG_KEYS) delete (body as Record<string, unknown>)[key];
+    const record = body as Record<string, unknown>;
+    for (const key of Object.keys(record)) if (!CONFIG_KEYS.has(key)) delete record[key];
+    for (const key of PROTECTED_CONFIG_KEYS) delete record[key];
     const updated = updateConfig(unmaskUpdates(body));
     if ("telemetryEnabled" in body) telemetry.reinitialize();
     if ("closeToTray" in body) writeDesktopSettingsFile();
@@ -462,7 +478,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const themeParam = (ctx.url.searchParams.get("theme") || "").trim().toLowerCase();
     const isLight = themeParam === "light" || rawUrl.includes("/sponsor/light");
     let targetUrl: string;
-    if (rawUrl) {
+    if (rawUrl && isWebsiteUrl(rawUrl)) {
       const clean = rawUrl.replace(/\/+$/, "");
       targetUrl = clean.endsWith(".html") ? clean : `${clean}/`;
     } else {
@@ -498,6 +514,14 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     return new Response(new Uint8Array(packaged.zip), {
       headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${packaged.fileName}"` },
     });
+  });
+
+  router.post("/api/app/backup", (ctx) => {
+    assertLocal(ctx, "Backing up the database");
+    const backup = createDatabaseBackup();
+    const filePath = saveBytesToDownloads(backup.fileName, backup.bytes);
+    appLogger.logStep("info", "app", "backup", "Database backup saved to Downloads");
+    return { success: true, fileName: backup.fileName, filePath, sizeBytes: backup.bytes.length };
   });
 
   router.post("/api/files/save", async (ctx) => {

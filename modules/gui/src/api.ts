@@ -12,6 +12,7 @@ import type {
   ClaudeCliStatusResponse,
   ClearMarketCacheResponse,
   CompleteSetupRequest,
+  CreateBackupResponse,
   CreatePortfolioRequest,
   AutomationStatus,
   DesktopConfig,
@@ -38,10 +39,12 @@ import type {
   PrepareReportPromptResponse,
   PreviewMetricInstallResponse,
   RemoteAccessInfo,
+  RevokeOtherSessionsResponse,
   RunAutomationResponse,
   SavePortfolioMetricsRequest,
   SearchSymbolResponse,
   SendNotificationResponse,
+  SessionsInfo,
   StartReportStreamRequest,
   StartReportStreamResponse,
   SyncQuotesResponse,
@@ -134,6 +137,9 @@ export const api = {
   logout: () => request("/api/auth/logout", { method: "POST" }),
   setPin: (pin: string, currentPin?: string) => request<{ pinEnabled: boolean }>("/api/auth/pin", { method: "PUT", body: json({ pin, currentPin }) }, { ownUnauthorized: true }),
   removePin: (currentPin: string) => request<{ pinEnabled: boolean }>("/api/auth/pin", { method: "DELETE", body: json({ currentPin }) }, { ownUnauthorized: true }),
+  sessions: () => request<SessionsInfo>("/api/auth/sessions"),
+  /** Ends every session but this one (other browsers, phones, and other windows on this computer). */
+  revokeOtherSessions: () => request<RevokeOtherSessionsResponse>("/api/auth/sessions/revoke-others", { method: "POST" }),
 
   // ---- remote access (desktop window only; 403 from a remote client)
   remoteAccess: () => request<RemoteAccessInfo>("/api/host/remote-access"),
@@ -227,6 +233,8 @@ export const api = {
   saveFile: (fileName: string, content?: string, base64Data?: string) =>
     request<{ success: boolean; filePath?: string; error?: string }>("/api/files/save", { method: "POST", body: json({ fileName, content, base64Data }) }),
   revealFile: (filePath: string) => request<{ success: boolean; error?: string }>("/api/files/reveal", { method: "POST", body: json({ filePath }) }),
+  /** Desktop window only: a copy of the database in the Downloads folder. */
+  createBackup: () => request<CreateBackupResponse>("/api/app/backup", { method: "POST" }),
   quitApp: () => request<{ success: boolean }>("/api/app/quit", { method: "POST" }),
 };
 

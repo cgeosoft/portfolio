@@ -25,7 +25,7 @@ import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
 import { writeDesktopSettingsFile } from "./services/desktop-settings";
 import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
-import { Router, json } from "./http/router";
+import { Router, hostnameOf, isLoopbackHostname, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
 
@@ -107,9 +107,20 @@ registerRoutes(router, services, () => {
   shutdown().catch(() => process.exit(0));
 });
 
-async function fetchHandler(req: Request, srv: { requestIP(req: Request): { address: string } | null }): Promise<Response> {
+/**
+ * The loopback listener answers only to a loopback `Host`. A web page whose
+ * domain is pointed at 127.0.0.1 (DNS rebinding) reaches the socket with its
+ * own host name and gets 403 before any route runs.
+ */
+function hostAllowed(req: Request, loopbackOnly: boolean): boolean {
+  if (!loopbackOnly) return true;
+  return isLoopbackHostname(hostnameOf(req.headers.get("host")));
+}
+
+async function fetchHandler(req: Request, srv: { requestIP(req: Request): { address: string } | null }, loopbackOnly: boolean): Promise<Response> {
   const ip = srv.requestIP(req)?.address ?? "";
   const url = new URL(req.url);
+  if (!hostAllowed(req, loopbackOnly)) return json({ statusCode: 403, message: "Invalid Host header" }, 403);
   if (url.pathname.startsWith("/api/")) {
     const res = await router.handle(req, ip);
     return res ?? json({ statusCode: 404, message: `No route for ${req.method} ${url.pathname}` }, 404);
@@ -121,12 +132,13 @@ async function fetchHandler(req: Request, srv: { requestIP(req: Request): { addr
 
 /** One listener with the app's handler. The loopback one and the LAN one serve the same app. */
 function serve(hostname: string, port: number): ReturnType<typeof Bun.serve> {
+  const loopbackOnly = hostname === LOOPBACK_HOST;
   return Bun.serve({
     hostname,
     port,
     idleTimeout: 120,
     development: false,
-    fetch: (req, srv) => fetchHandler(req, srv),
+    fetch: (req, srv) => fetchHandler(req, srv, loopbackOnly),
     error(err) {
       appLogger.logStep("error", "http", "unhandled", err.message);
       return json({ statusCode: 500, message: err.message }, 500);

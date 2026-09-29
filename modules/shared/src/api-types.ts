@@ -402,6 +402,24 @@ export interface GetAppInfoResponse {
   paths: { data: string; logs: string };
 }
 
+/** `POST /api/app/backup` (desktop window only): a copy of the database written to the Downloads folder. */
+export interface CreateBackupResponse {
+  success: boolean;
+  fileName: string;
+  filePath: string;
+  sizeBytes: number;
+}
+
+/** `GET /api/auth/sessions`: live sessions across every window, browser and device. */
+export interface SessionsInfo {
+  active: number;
+}
+
+/** `POST /api/auth/sessions/revoke-others`: every session but the caller's was ended. */
+export interface RevokeOtherSessionsResponse {
+  revoked: number;
+}
+
 /** Desktop-only switch that opens the service to the local network. */
 export interface RemoteAccessInfo {
   enabled: boolean;

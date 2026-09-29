@@ -111,14 +111,14 @@ export class PortfolioService {
     if (!portfolioId) {
       this.cache.clear();
       this.inFlightRequests.clear();
+      marketCache.deleteByPrefix("portfolio:");
       return;
     }
     for (const key of this.cache.keys()) {
-      if (key === portfolioId || key.startsWith(`${portfolioId}_`)) {
-        this.cache.delete(key);
-        marketCache.deleteKey(`portfolio:${key}`);
-      }
+      if (key === portfolioId || key.startsWith(`${portfolioId}_`)) this.cache.delete(key);
     }
+    // The disk copy too, in every currency, even when the memory entry was already swept.
+    marketCache.deleteByPrefix(`portfolio:${portfolioId}_`);
     for (const key of this.inFlightRequests.keys()) {
       if (key === portfolioId || key.startsWith(`${portfolioId}_`)) {
         this.inFlightRequests.delete(key);
@@ -264,7 +264,7 @@ export class PortfolioService {
     if (!forceFresh) {
       const cached = this.cache.get(cacheKey);
       if (cached && now - cached.timestamp < CACHE_TTL_MS) {
-        appLogger.logStep("info", "portfolio", "cache_hit_memory", `Memory cache hit for ${portfolio.name}`, undefined, {
+        appLogger.logStep("info", "portfolio", "cache_hit_memory", "Memory cache hit", undefined, {
           cacheKey,
           ageSeconds: Math.round((now - cached.timestamp) / 1000),
         });
@@ -279,7 +279,7 @@ export class PortfolioService {
           "info",
           "portfolio",
           "cache_hit_disk",
-          `Disk cache hit for ${portfolio.name} (isExpired=${diskCached.isExpired})`,
+          `Disk cache hit (isExpired=${diskCached.isExpired})`,
           undefined,
           { cacheKey, isExpired: diskCached.isExpired },
         );
@@ -296,7 +296,7 @@ export class PortfolioService {
     // 3. Check in-flight request deduplication
     const existingPromise = this.inFlightRequests.get(cacheKey);
     if (existingPromise) {
-      appLogger.logStep("info", "portfolio", "in_flight_dedup", `Joining existing in-flight request for ${portfolio.name}`, undefined, { cacheKey });
+      appLogger.logStep("info", "portfolio", "in_flight_dedup", "Joining the in-flight request", undefined, { cacheKey });
       return existingPromise;
     }
 
@@ -304,38 +304,34 @@ export class PortfolioService {
       "info",
       "portfolio",
       "rebuild_start",
-      `Starting portfolio calculation for ${portfolio.name} (${effectiveCurrency}, forceFresh=${forceFresh})`,
+      `Starting portfolio calculation (${effectiveCurrency}, forceFresh=${forceFresh})`,
       undefined,
       { portfolioId: portfolio.id, currency: effectiveCurrency },
     );
 
     const computePromise = (async (): Promise<FinancialPortfolioData> => {
-      const txTimer = appLogger.startTimer("portfolio", "get_transactions", `Fetching transactions for ${portfolio.name}`);
+      const txTimer = appLogger.startTimer("portfolio", "get_transactions", "Fetching transactions");
       const transactions = await this.getTransactions(portfolio);
       txTimer.end("info", `Retrieved ${transactions.length} transactions`, { count: transactions.length });
 
       const holdings = this.computeHoldingsFromTransactions(transactions);
       appLogger.logStep("info", "portfolio", "compute_holdings", `Computed ${holdings.length} holdings from transactions`, undefined, {
         holdingsCount: holdings.length,
-        symbols: holdings.map((h) => h.symbol),
       });
 
-      const buildTimer = appLogger.startTimer("portfolio", "build_data", `Building portfolio metrics and market quotes for ${portfolio.name}`);
+      const buildTimer = appLogger.startTimer("portfolio", "build_data", "Building portfolio metrics and market quotes");
       try {
         const data = await this.buildPortfolioData(portfolio, holdings, transactions, effectiveCurrency, forceFresh);
         this.cache.set(cacheKey, { data, timestamp: Date.now() });
         marketCache.set(`portfolio:${cacheKey}`, data, CACHE_TTL_MS);
-        buildTimer.end("success", `Portfolio built successfully for ${portfolio.name}`, {
-          holdingsCount: data.holdings?.length ?? 0,
-          totalValue: data.summary?.totalValue,
-        });
+        buildTimer.end("success", "Portfolio built", { holdingsCount: data.holdings?.length ?? 0 });
         return data;
       } catch (err) {
-        buildTimer.fail(err, `Build failed for ${portfolio.name}`);
+        buildTimer.fail(err, "Build failed");
         // If calculation/network failed, check if we have a stale disk cache to use offline
         const staleDisk = marketCache.get<FinancialPortfolioData>(`portfolio:${cacheKey}`);
         if (staleDisk && staleDisk.data) {
-          appLogger.logStep("warning", "portfolio", "fallback_stale_disk", `Using stale disk cache for ${portfolio.name} after build failure`);
+          appLogger.logStep("warning", "portfolio", "fallback_stale_disk", "Using the stale disk cache after a build failure");
           return staleDisk.data;
         }
         throw err;
@@ -579,7 +575,7 @@ export class PortfolioService {
     const chartFetchTimer = appLogger.startTimer(
       "portfolio",
       "fetch_charts",
-      `Fetching 1y daily charts for ${publicSymbols.length} symbols: ${publicSymbols.join(", ")}`,
+      `Fetching 1y daily charts for ${publicSymbols.length} symbols`,
     );
     await mapWithConcurrencyLimit(publicSymbols, 8, async (sym) => {
       try {
@@ -593,7 +589,7 @@ export class PortfolioService {
           quotesMap.set(sym, extracted);
         }
       } catch (e) {
-        appLogger.logStep("warning", "portfolio", "chart_fetch_error", `Chart fetch failed for ${sym}: ${e}`);
+        appLogger.logStep("warning", "portfolio", "chart_fetch_error", `Chart fetch failed for one symbol: ${e}`);
         chartHistories.set(sym, []);
         individualCharts[sym] = [];
       }
@@ -606,7 +602,7 @@ export class PortfolioService {
       const fallbackTimer = appLogger.startTimer(
         "portfolio",
         "fetch_fallback_quotes",
-        `Fetching fallback quotes for ${missingSymbols.length} symbols: ${missingSymbols.join(", ")}`,
+        `Fetching fallback quotes for ${missingSymbols.length} symbols`,
       );
       try {
         const fallbackQuotes = await this.yahoo.getQuotes(missingSymbols, forceFresh);
@@ -1038,6 +1034,10 @@ export class PortfolioService {
     }
 
     if (action === "delete" && targetId) {
+      const existing = txRepo.findById(targetId);
+      if (!existing || existing.portfolioId !== portfolio.id) {
+        return { success: false, action: "delete", totalTransactions: 0, error: "Transaction not found" };
+      }
       if (!isDryRun) {
         txRepo.deleteById(targetId);
         this.clearPortfolioCache(portfolio.id);
@@ -1125,9 +1125,7 @@ export class PortfolioService {
         if (toSaveNew.length > 0) {
           txRepo.bulkCreate(toSaveNew as any);
         }
-        for (const update of toSaveUpdate) {
-          txRepo.update(update.id, update.data);
-        }
+        txRepo.bulkUpdate(toSaveUpdate);
         if (toSaveNew.length > 0 || toSaveUpdate.length > 0) {
           this.clearPortfolioCache(portfolio.id);
         }

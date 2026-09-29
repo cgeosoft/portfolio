@@ -21,6 +21,8 @@ export function getDatabase(): Database {
 
   // Enable WAL mode for better concurrent read performance
   db.run("PRAGMA journal_mode = WAL");
+  // With WAL, NORMAL still survives a crash; it only skips the fsync per commit.
+  db.run("PRAGMA synchronous = NORMAL");
   db.run("PRAGMA foreign_keys = ON");
   db.run("PRAGMA busy_timeout = 5000");
 
@@ -73,6 +75,8 @@ function initializeSchema(database: Database): void {
   database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio ON transactions(portfolioId)`);
   database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)`);
   database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_symbol ON transactions(symbol)`);
+  // Covers the ledger read (`WHERE portfolioId = ? ORDER BY date, createdAt`) without a sort step.
+  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio_date ON transactions(portfolioId, date, createdAt)`);
 
   database.run(`
     CREATE TABLE IF NOT EXISTS reports (

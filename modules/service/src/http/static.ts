@@ -28,7 +28,13 @@ export class StaticSite {
 
   serve(req: Request, url: URL): Response | null {
     if (!this.available || (req.method !== "GET" && req.method !== "HEAD")) return null;
-    const relative = normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, "");
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(url.pathname);
+    } catch {
+      return new Response("Bad request", { status: 400 });
+    }
+    const relative = normalize(decoded).replace(/^([/\\])+/, "");
     if (relative.split(sep).includes("..")) return new Response("Forbidden", { status: 403 });
     const candidate = join(this.root, relative);
     if (relative && existsSync(candidate) && statSync(candidate).isFile()) {

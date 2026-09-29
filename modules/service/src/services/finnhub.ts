@@ -247,7 +247,7 @@ export class FinnhubService {
           results.set(sym, diskQuote.data);
         }
         const msg = err instanceof Error ? err.message : String(err);
-        appLogger.logStep("warning", "finnhub", "get_quotes_error", `Finnhub quote fetch failed for ${sym}: ${msg}`);
+        appLogger.logStep("warning", "finnhub", "get_quotes_error", `Finnhub quote fetch failed for one symbol: ${msg}`);
       }
     });
 
@@ -638,7 +638,7 @@ export class FinnhubService {
 
         holdings[sym] = holdingIntel;
       } catch (symErr) {
-        appLogger.logStep("warning", "finnhub", "symbol_intel_error", `Failed gathering Finnhub intel for ${sym}`, undefined, {
+        appLogger.logStep("warning", "finnhub", "symbol_intel_error", "Failed gathering Finnhub intel for one symbol", undefined, {
           error: symErr instanceof Error ? symErr.message : String(symErr),
         });
       }
