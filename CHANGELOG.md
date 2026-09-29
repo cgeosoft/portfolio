@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.1] - 2026-09-29
+
+- a88bc50 Show each start-up step on the starting page
+- 3ca93de Put the menu bar and status bar flush with the window edges
+
+
 ## [0.8.0] - 2026-09-29
 
 - 28ae343 chore(release): v0.7.1
