@@ -1398,7 +1398,7 @@ export default function App() {
 
   if (isLoading && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1485,7 +1485,7 @@ export default function App() {
 
   if (!isLoading && loadError && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1600,7 +1600,7 @@ export default function App() {
   );
 
   return (
-    <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3 gap-2 sm:gap-3">
+    <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
       {/* Application Menu Bar (Native HTML Menu for Linux) */}
       <AppMenuBar
         portfolios={portfolios}
@@ -1644,7 +1644,7 @@ export default function App() {
       />
 
       {/* Main Content Area & Assistant Sidebar */}
-      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+      <div className="flex-1 flex min-h-0 overflow-hidden relative p-2 sm:p-3">
         <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
           {/* Main Menu / Navigation Bar (Header) - pushed when assistant sidebar is shown */}
           <Header
