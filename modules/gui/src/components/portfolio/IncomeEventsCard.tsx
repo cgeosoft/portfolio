@@ -76,7 +76,7 @@ function eventDetail(e: PortfolioEvent, currency: string, hideValues: boolean): 
 /** Dividend income of the next 12 months, yields, upcoming dividend, earnings and split dates, and split hints. */
 export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = false, theme, refreshStamp }: IncomeEventsCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  const chartRef = useRef<Chart<"bar"> | null>(null);
   const [income, setIncome] = useState<PortfolioIncomeSummary | null>(null);
   const [events, setEvents] = useState<PortfolioEventsResponse | null>(null);
   const [loading, setLoading] = useState(false);

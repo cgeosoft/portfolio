@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sansation:wght@700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 
   <!-- PostHog Analytics (consent-gated: no tracking until the visitor opts in) -->
@@ -56,7 +56,7 @@
         <h1 class="hero-title">Metrics <span class="gradient-text">Marketplace</span></h1>
         <p class="hero-subtitle">Every metric is a small WebAssembly module with a manifest that declares the data it reads. It runs in a sandbox with no file, network or system access, against your portfolio only.</p>
         <ul class="hero-stats" aria-label="Highlights">
-          <li><strong>10</strong><span>metrics in the repository</span></li>
+          <li><strong>17</strong><span>metrics in the repository</span></li>
           <li><strong>0</strong><span>I/O imports allowed</span></li>
           <li><strong>4 MiB</strong><span>memory ceiling</span></li>
           <li><strong>MIT</strong><span>open source license</span></li>
@@ -80,13 +80,17 @@
           <button type="button" class="chip-btn" data-category="Principal">Principal</button>
           <button type="button" class="chip-btn" data-category="Income &amp; Yield">Income &amp; Yield</button>
           <button type="button" class="chip-btn" data-category="Costs">Costs</button>
+          <button type="button" class="chip-btn" data-category="Risk">Risk</button>
+          <button type="button" class="chip-btn" data-category="Income">Income</button>
+          <button type="button" class="chip-btn" data-category="Analysts">Analysts</button>
+          <button type="button" class="chip-btn" data-category="Quality">Quality</button>
         </div>
 
         <div class="features-grid" id="metric-grid">
           <article class="feature-card metric-card" data-category="Valuation">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg></div>
             <h3 class="card-title">Total Portfolio Value</h3>
-            <p class="card-meta">Valuation &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Valuation &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Live net worth of the portfolio. It adds the market value of every open position to the uninvested cash balance, with foreign assets converted into your base currency.</p>
             <p class="card-desc">This is the single number that answers &#39;what is my portfolio worth right now&#39;. Use it as the headline figure and as the baseline for allocation and risk decisions.</p>
             <div class="tag-row">
@@ -100,7 +104,7 @@
           <article class="feature-card metric-card" data-category="Performance">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 7h6v6"></path><path d="m22 7-8.5 8.5-5-5L2 17"></path></svg></div>
             <h3 class="card-title">Day Gain / Loss</h3>
-            <p class="card-meta">Performance &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Performance &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Value change of your open positions during the current trading session, measured against the previous official close of each holding.</p>
             <p class="card-desc">Shows how today&#39;s market moves hit your capital. It separates short-term noise from your long-term result and tells you if a market event touched your holdings.</p>
             <div class="tag-row">
@@ -114,7 +118,7 @@
           <article class="feature-card metric-card" data-category="Performance">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"></path></svg></div>
             <h3 class="card-title">Lifetime Total Gain</h3>
-            <p class="card-meta">Performance &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Performance &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">All-time net result since the first transaction. It combines unrealized gains, realized profits from closed positions, dividends, and interest, minus broker fees.</p>
             <p class="card-desc">The honest measure of the wealth your portfolio created. Daily and monthly swings cancel out, so you see if your strategy works over the full holding period.</p>
             <div class="tag-row">
@@ -128,7 +132,7 @@
           <article class="feature-card metric-card" data-category="Liquidity">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 18V6"></path></svg></div>
             <h3 class="card-title">Cash Liquidity</h3>
-            <p class="card-meta">Liquidity &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Liquidity &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Uninvested cash held in the portfolio, calculated from deposits, withdrawals, buys, sells, dividends, and fees.</p>
             <p class="card-desc">Free cash is your reaction capacity. It shows the money available for a new position or a market drop, and how much of your portfolio currently earns no market return.</p>
             <div class="tag-row">
@@ -142,7 +146,7 @@
           <article class="feature-card metric-card" data-category="Principal">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"></path><path d="M3.34 19a10 10 0 1 1 17.32 0"></path></svg></div>
             <h3 class="card-title">Invested Capital</h3>
-            <p class="card-meta">Principal &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Principal &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Total principal you moved into the portfolio, that is all deposits minus all capital withdrawals.</p>
             <p class="card-desc">Separates your own savings from market growth. It is the denominator of your return, so it tells you if the portfolio grew because of performance or because of new money.</p>
             <div class="tag-row">
@@ -156,7 +160,7 @@
           <article class="feature-card metric-card" data-category="Principal">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"></rect><line x1="8" x2="16" y1="6" y2="6"></line><line x1="16" x2="16" y1="14" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg></div>
             <h3 class="card-title">Current Holdings Cost</h3>
-            <p class="card-meta">Principal &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Principal &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Acquisition cost of the positions you hold today, in base currency, without closed positions and without cash.</p>
             <p class="card-desc">Compare it against the market value of your holdings to read the unrealized gain directly. It is also the cost basis that a future sale will use.</p>
             <div class="tag-row">
@@ -170,7 +174,7 @@
           <article class="feature-card metric-card" data-category="Income &amp; Yield">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"></path><path d="M16 10h.01"></path><path d="M2 8v1a2 2 0 0 0 2 2h1"></path></svg></div>
             <h3 class="card-title">Realized P&amp;L</h3>
-            <p class="card-meta">Income &amp; Yield &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Income &amp; Yield &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Profit or loss locked in by executed sells, calculated against the cost basis of each sold position.</p>
             <p class="card-desc">Realized results cannot be taken back by a later market drop, and they usually drive your tax bill. Watch it to judge your exit decisions, not only your open positions.</p>
             <div class="tag-row">
@@ -184,7 +188,7 @@
           <article class="feature-card metric-card" data-category="Income &amp; Yield">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"></path><path d="M15 6h1v4"></path><path d="m6.134 14.768.866-.5 2 3.464"></path><circle cx="16" cy="8" r="6"></circle></svg></div>
             <h3 class="card-title">Dividends &amp; Interest</h3>
-            <p class="card-meta">Income &amp; Yield &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Income &amp; Yield &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">All cash distributions credited to the portfolio: dividends from equities and funds, plus interest and coupon payments.</p>
             <p class="card-desc">Income arrives independently of price moves and keeps compounding when reinvested. It shows the cash yield of your holdings during flat or falling markets.</p>
             <div class="tag-row">
@@ -198,7 +202,7 @@
           <article class="feature-card metric-card" data-category="Costs">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V7"></path><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"></path><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"></path></svg></div>
             <h3 class="card-title">Broker Fees</h3>
-            <p class="card-meta">Costs &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Costs &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Sum of all commissions and order fees charged on your transactions since inception.</p>
             <p class="card-desc">Fees are a certain loss while returns are not. Tracking the total exposes expensive trading habits or an expensive broker before they erode your performance.</p>
             <div class="tag-row">
@@ -212,7 +216,7 @@
           <article class="feature-card metric-card" data-category="Costs">
             <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18v-7"></path><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"></path><path d="M14 18v-7"></path><path d="M18 18v-7"></path><path d="M3 22h18"></path><path d="M6 18v-7"></path></svg></div>
             <h3 class="card-title">Taxes Withheld</h3>
-            <p class="card-meta">Costs &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-meta">Costs &bull; v1.0.1 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
             <p class="card-desc">Tax amounts already deducted at the source on your transactions and distributions, for example withholding tax on dividends.</p>
             <p class="card-desc">Your net result is what remains after tax. The total helps you prepare a tax declaration and compare accounts or jurisdictions on an after-tax basis.</p>
             <div class="tag-row">
@@ -221,6 +225,111 @@
             <p class="card-footer">
               <span class="status-dot"></span><span>Bundled with the app</span>
               &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/taxes-withheld" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Risk">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
+            <h3 class="card-title">Portfolio Beta</h3>
+            <p class="card-meta">Risk &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Average beta of your positions, weighted by market value. Beta comes from Financial Modeling Prep and measures how much a security moved with the broad market. Holdings without a beta are left out; the sub-line shows how much of the portfolio is covered.</p>
+            <p class="card-desc">A beta of 1.3 means the portfolio tends to move 30% more than the market, up and down. It tells you how hard a market sell-off would hit you before it happens.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/portfolio-beta" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Valuation">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"></path><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M7 21h10"></path></svg></div>
+            <h3 class="card-title">Portfolio P/E</h3>
+            <p class="card-meta">Valuation &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Price-to-earnings ratio of your stock holdings as one figure. It is the weighted harmonic mean of each trailing P/E from Financial Modeling Prep, which equals the total price divided by the total earnings you own. Loss-making companies and funds are left out.</p>
+            <p class="card-desc">A high P/E means the market prices in strong growth; a low one means cheap or troubled companies. Compare it with the market (around 20 for the S&amp;P 500) to see if you hold an expensive or a cheap portfolio.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/portfolio-pe" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Income">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"></path><path d="M16 10h.01"></path><path d="M2 8v1a2 2 0 0 0 2 2h1"></path></svg></div>
+            <h3 class="card-title">Dividend Yield</h3>
+            <p class="card-meta">Income &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Trailing twelve month dividend yield of your stock holdings, weighted by market value, from Financial Modeling Prep. Stocks that pay nothing count as zero. Funds are left out because their yield is not in the data. The sub-line estimates the yearly income of the covered holdings.</p>
+            <p class="card-desc">Yield shows how much cash your stocks return without selling anything. A falling yield on the same holdings can mean cut dividends; a very high one can mean the market doubts the payout.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/dividend-yield" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Analysts">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></div>
+            <h3 class="card-title">Analyst Upside</h3>
+            <p class="card-meta">Analysts &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Gap between the current price and the consensus analyst price target of each stock, weighted by market value. Targets come from Financial Modeling Prep. Holdings without a target, and funds, are left out.</p>
+            <p class="card-desc">Positive upside means analysts expect your stocks to rise; a negative figure means you hold names that trade above their targets. Use it as a sentiment check, not a forecast: targets lag prices.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/analyst-upside" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Valuation">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"></rect><line x1="8" x2="16" y1="6" y2="6"></line><line x1="16" x2="16" y1="14" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg></div>
+            <h3 class="card-title">DCF Upside</h3>
+            <p class="card-meta">Valuation &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Gap between the price and the discounted cash flow value of each stock, weighted by market value. DCF values come from the Financial Modeling Prep model. Each upside is capped at +300% so one extreme model result does not dominate. Funds are left out.</p>
+            <p class="card-desc">A DCF value estimates what future cash flows are worth today. A portfolio well below its DCF values holds cheap businesses by that model; well above means you pay for growth the cash flows do not yet show.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/dcf-upside" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Quality">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg></div>
+            <h3 class="card-title">Piotroski Quality</h3>
+            <p class="card-meta">Quality &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Average Piotroski F-score of your stocks, weighted by market value. The score counts nine pass or fail checks on profit, debt and efficiency from the latest filings, as reported by Financial Modeling Prep. Funds are left out.</p>
+            <p class="card-desc">Scores of 7 and above point to improving fundamentals, 3 and below to weakening ones. A falling portfolio score warns that the businesses you own are getting weaker even when prices have not moved yet.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/quality-score" target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </article>
+          <article class="feature-card metric-card" data-category="Risk">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg></div>
+            <h3 class="card-title">Distress Exposure</h3>
+            <p class="card-meta">Risk &bull; v1.0.0 &bull; MIT &bull; by <a href="https://github.com/cgeosoft" target="_blank" rel="noopener noreferrer">Christos Georgiou</a></p>
+            <p class="card-desc">Share of the value of your stocks whose Altman Z-score is below 1.8, the distress zone, as reported by Financial Modeling Prep. The score combines working capital, retained earnings, operating profit, market value and sales. Funds are left out. Banks and insurers often score low by design.</p>
+            <p class="card-desc">Companies in the distress zone have a higher risk of financial trouble in the next two years. A rising share tells you to check the balance sheets of those positions before a credit event does it for you.</p>
+            <div class="tag-row">
+              <span class="tag" title="Per-position rows: symbol, shares, prices, weights, indicators.">Holdings</span>
+              <span class="tag" title="Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.">Fundamentals</span>
+            </div>
+            <p class="card-footer">
+              <span class="status-dot"></span><span>Bundled with the app</span>
+              &bull; <a href="https://github.com/cgeosoft/portfolio/tree/main/extras/metrics/distress-exposure" target="_blank" rel="noopener noreferrer">Source</a>
             </p>
           </article>
         </div>
@@ -242,6 +351,7 @@
               <tr><td><code>portfolio.holdings</code></td><td>Per-position rows: symbol, shares, prices, weights, indicators.</td><td>Every position you hold, including tickers and quantities.</td></tr>
               <tr><td><code>portfolio.transactions</code></td><td>The full ledger: every transaction with symbol, type, amount, fee, and tax.</td><td>Your complete transaction history.</td></tr>
               <tr><td><code>portfolio.history</code></td><td>The equity curve: portfolio value, cost, and cash per day.</td><td>Your portfolio value over time.</td></tr>
+              <tr><td><code>market.fundamentals</code></td><td>Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key.</td><td>Public company data for every symbol you hold. It names your symbols, not your quantities.</td></tr>
             </tbody>
           </table>
         </div>
