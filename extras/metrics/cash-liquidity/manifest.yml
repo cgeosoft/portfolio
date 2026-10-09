@@ -1,8 +1,8 @@
 schema: 1
-abi: 1
+abi: 2
 id: cash-liquidity
 name: Cash Liquidity
-version: 1.0.0
+version: 1.0.1
 developer:
   name: Christos Georgiou
   url: https://github.com/cgeosoft

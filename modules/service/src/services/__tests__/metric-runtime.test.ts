@@ -349,7 +349,7 @@ describe("Metric installer", () => {
 
   const manifestYaml = (moduleUrl: string, sha256: string, size: number, id = "acme-fixture") => `
 schema: 1
-abi: 1
+abi: 2
 id: ${id}
 name: Acme Fixture
 version: 1.2.3

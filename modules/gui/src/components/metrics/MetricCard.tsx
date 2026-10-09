@@ -1,8 +1,8 @@
-import { AlertTriangle, Info, Loader2 } from "lucide-react";
+import { AlertTriangle, Info, KeyRound, Loader2 } from "lucide-react";
 import type { MetricListing } from "portfolio-shared/api-types";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
 import { StatCard } from "../portfolio/StatCard";
-import { metricShortTitle, metricTitle, type MetricDisplay } from "./metric-view";
+import { UNAVAILABLE_LABEL, metricShortTitle, metricTitle, type MetricDisplay } from "./metric-view";
 
 interface MetricCardProps {
   listing: MetricListing;
@@ -23,6 +23,13 @@ export function MetricLargeCard({ listing, display, onInfo }: MetricCardProps) {
   if (display.kind === "ok") {
     return <StatCard title={metricTitle(listing)} value={display.value} subValue={display.sub} icon={icon} onInfo={onInfo} />;
   }
+  if (display.kind === "unavailable") {
+    return (
+      <div className="opacity-50" title={display.reason}>
+        <StatCard title={metricTitle(listing)} value={UNAVAILABLE_LABEL} subValue={display.reason} subValueClass="text-slate-500" icon={icon} onInfo={onInfo} hint={display.reason} />
+      </div>
+    );
+  }
   if (display.kind === "pending") {
     return <StatCard title={metricTitle(listing)} value="…" subValue="Calculating" subValueClass="text-slate-500" icon={icon} onInfo={onInfo} />;
   }
@@ -42,7 +49,7 @@ export function MetricLargeCard({ listing, display, onInfo }: MetricCardProps) {
 /** Compact dashboard tile of a metric module. */
 export function MetricCompactTile({ listing, display, onInfo }: MetricCardProps) {
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${display.kind === "unavailable" ? "opacity-50" : ""}`}>
       <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1 min-w-0">
         <span className="truncate whitespace-nowrap" title={metricTitle(listing)}>
           {metricShortTitle(listing)}
@@ -58,6 +65,12 @@ export function MetricCompactTile({ listing, display, onInfo }: MetricCardProps)
         <div className="font-bold mt-0.5 text-slate-600 flex items-center gap-1">
           <Loader2 className="w-3 h-3 animate-spin" />
           <span>…</span>
+        </div>
+      )}
+      {display.kind === "unavailable" && (
+        <div className="font-bold mt-0.5 text-slate-500 flex items-center gap-1 truncate" title={display.reason}>
+          <KeyRound className="w-3 h-3 shrink-0" />
+          <span className="truncate">{UNAVAILABLE_LABEL}</span>
         </div>
       )}
       {display.kind === "failed" && (

@@ -20,6 +20,9 @@ import asc from "assemblyscript/asc";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync, readdirSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import {
+  FUNDAMENTAL_FIELDS,
+  FUNDAMENTAL_FLAG_FUND,
+  FUNDAMENTAL_RECORD_PREFIX_BYTES,
   HISTORY_FIELDS,
   HOLDING_ASSET_TYPES,
   HOLDING_FIELDS,
@@ -103,7 +106,7 @@ class Payload {
     if (load<u32>(this.base + 4) != <u32>ABI_VERSION) throw new Error("payload abi mismatch");
   }
 
-  /** Offset of a block by header slot (3 = summary, 4 = holdings, 5 = transactions, 6 = history). */
+  /** Offset of a block by header slot (3 = summary, 4 = holdings, 5 = transactions, 6 = history, 8 = fundamentals). */
   blockOffset(slot: i32): usize {
     const off = <usize>load<u32>(this.base + <usize>(slot << 2));
     if (off != 0 && off + 8 > this.len) throw new Error("payload block out of range");
@@ -231,6 +234,57 @@ ${fieldGetters(HISTORY_FIELDS, "  ")}
 export class History extends RecordList {
   constructor(ptr: i32, len: i32) { super(ptr, len, 6, 0); }
   at(i: i32): HistoryPoint { return new HistoryPoint(this.recordPtr(i), this.fieldCount); }
+}
+
+/**
+ * Public company data of one held symbol (scope \`market.fundamentals\`).
+ * Ratios, margins, yields and upsides are fractions (0.27 = 27%). \`price\`,
+ * \`priceTarget\` and \`dcfValue\` are in the symbol's trading currency.
+ * A value the provider does not have is NaN; test it with \`isNaN()\`.
+ */
+export class Fundamental {
+  constructor(private payload: Payload, private ptr: usize, private fieldCount: i32) {}
+
+  get symbol(): string { return this.payload.str(load<u32>(this.ptr), load<u32>(this.ptr + 4)); }
+  /** True for an ETF or a fund: only beta, marketCap and price are filled. */
+  get isFund(): bool { return (load<u32>(this.ptr + 8) & ${FUNDAMENTAL_FLAG_FUND}) != 0; }
+
+  private field(i: i32): f64 {
+    return i < this.fieldCount ? load<f64>(this.ptr + ${FUNDAMENTAL_RECORD_PREFIX_BYTES} + (<usize>i << 3)) : NaN;
+  }
+
+${fieldGetters(FUNDAMENTAL_FIELDS, "  ")}
+}
+
+export class Fundamentals extends RecordList {
+  constructor(ptr: i32, len: i32) { super(ptr, len, 8, ${FUNDAMENTAL_RECORD_PREFIX_BYTES}); }
+  at(i: i32): Fundamental { return new Fundamental(this.payload, this.recordPtr(i), this.fieldCount); }
+
+  /**
+   * The row of a held symbol, or null when the provider has no data for it.
+   * Compares the UTF-8 bytes in place, so a lookup allocates only the key.
+   */
+  find(symbol: string): Fundamental | null {
+    const key = String.UTF8.encode(symbol);
+    const keyPtr = changetype<usize>(key);
+    const keyLen = <usize>key.byteLength;
+    for (let i = 0; i < this.count; i++) {
+      const ptr = this.recordPtr(i);
+      if (<usize>load<u32>(ptr + 4) != keyLen) continue;
+      const offset = <usize>load<u32>(ptr);
+      if (offset + keyLen > this.payload.len) continue;
+      const at = this.payload.base + offset;
+      let same = true;
+      for (let j: usize = 0; j < keyLen; j++) {
+        if (load<u8>(at + j) != load<u8>(keyPtr + j)) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return new Fundamental(this.payload, ptr, this.fieldCount);
+    }
+    return null;
+  }
 }
 
 // ── Output ───────────────────────────────────────────────────────────────────
@@ -367,6 +421,7 @@ function readManifest(dir: string, expectedId: string): MetricManifest {
     throw new Error(`${relative(ROOT, path)}: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (manifest.id !== expectedId) throw new Error(`${relative(ROOT, path)}: id ${manifest.id} does not match repository entry ${expectedId}`);
+  if (manifest.abi !== METRIC_ABI_VERSION) throw new Error(`${relative(ROOT, path)}: abi must be ${METRIC_ABI_VERSION}, the ABI of the SDK it compiles against`);
   if (!manifest.source) throw new Error(`${relative(ROOT, path)}: repository metrics need a source.entry`);
   if (manifest.module) throw new Error(`${relative(ROOT, path)}: repository metrics must not declare module`);
   if (manifest.runtime.memoryPages > MAX_METRIC_MEMORY_PAGES) {
@@ -433,7 +488,7 @@ async function main(): Promise<void> {
 
   const repository = readRepository();
   const bundled: { manifest: MetricManifest; bytes: Uint8Array; sha256: string }[] = [];
-  const abiFile = join(ROOT, "src", "shared", "metric-abi.ts");
+  const abiFile = join(ROOT, "modules", "shared", "src", "metric-abi.ts");
 
   for (const entry of repository) {
     const dir = join(METRICS_DIR, entry.path);

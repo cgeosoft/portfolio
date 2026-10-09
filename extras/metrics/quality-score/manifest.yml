@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: quality-score
+name: Piotroski Quality
+shortName: Quality
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Quality
+icon: shield-check
+accent: mint
+summary: Value-weighted Piotroski F-score of your stocks, from 0 to 9.
+description: >
+  Average Piotroski F-score of your stocks, weighted by market value. The score counts nine pass or fail checks on profit, debt and efficiency from the latest filings, as reported by Financial Modeling Prep. Funds are left out.
+importance: >
+  Scores of 7 and above point to improving fundamentals, 3 and below to weakening ones. A falling portfolio score warns that the businesses you own are getting weaker even when prices have not moved yet.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: number
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

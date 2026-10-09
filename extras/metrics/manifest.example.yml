@@ -2,7 +2,7 @@
 # src/shared/metric-manifest.ts; the error names the field that failed.
 
 schema: 1                       # manifest schema version, must be 1
-abi: 1                          # guest ABI the module targets, must be 1
+abi: 2                          # guest ABI: 2 for the current SDK (1 still runs, without fundamentals)
 
 id: broker-fees                 # unique, kebab-case, 3-64 chars, equals the directory name
 name: Broker Fees               # card title, at most 60 chars
@@ -32,6 +32,9 @@ importance: >                   # why it matters
 #   portfolio.holdings      every open position with symbol, shares, prices, indicators
 #   portfolio.transactions  the full ledger
 #   portfolio.history       the equity curve
+#   market.fundamentals     public company data per held symbol (abi 2). Needs a
+#                           Financial Modeling Prep key; without one the metric
+#                           is shown disabled.
 scopes:
   - portfolio.summary
 

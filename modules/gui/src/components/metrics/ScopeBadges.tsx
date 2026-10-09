@@ -1,4 +1,4 @@
-import { Database, Eye, History, LineChart, type LucideIcon } from "lucide-react";
+import { Building2, Database, Eye, History, LineChart, type LucideIcon } from "lucide-react";
 import { METRIC_SCOPE_DESCRIPTIONS, type MetricScope } from "portfolio-shared/metric-abi";
 
 const SCOPE_ICONS: Record<MetricScope, LucideIcon> = {
@@ -6,10 +6,11 @@ const SCOPE_ICONS: Record<MetricScope, LucideIcon> = {
   "portfolio.holdings": Database,
   "portfolio.transactions": History,
   "portfolio.history": LineChart,
+  "market.fundamentals": Building2,
 };
 
-/** Scopes above the summary reveal individual positions or the ledger. */
-const SENSITIVE: readonly MetricScope[] = ["portfolio.holdings", "portfolio.transactions"];
+/** Scopes that reveal individual positions, the ledger, or which symbols you hold. */
+const SENSITIVE: readonly MetricScope[] = ["portfolio.holdings", "portfolio.transactions", "market.fundamentals"];
 
 interface ScopeBadgesProps {
   scopes: readonly MetricScope[];

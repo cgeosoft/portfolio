@@ -10,11 +10,18 @@ import type { MetricScope } from "portfolio-shared/metric-abi";
 import { parseMetricOutput, type MetricOutput } from "portfolio-shared/metric-output";
 import type { MetricEvaluation } from "portfolio-shared/api-types";
 import { appLogger } from "../../logger.js";
-import { encodeMetricPayload } from "./payload.js";
-import type { MetricRegistry } from "./registry.js";
+import { encodeMetricPayload, type MetricFundamentalsRow } from "./payload.js";
+import type { MetricRecord, MetricRegistry } from "./registry.js";
 import { MetricQuarantinedError, MetricRuntime } from "./runtime.js";
 
 const CACHE_LIMIT = 256;
+
+export interface MetricEvaluateOptions {
+  /** Rows of the `market.fundamentals` scope. */
+  fundamentals?: readonly MetricFundamentalsRow[];
+  /** Why a metric cannot run (a data provider without a key), or undefined. */
+  unavailable?: (record: MetricRecord) => string | undefined;
+}
 
 function sha256Hex(input: Uint8Array | string): string {
   return new Bun.CryptoHasher("sha256").update(input).digest("hex");
@@ -29,13 +36,13 @@ export class MetricEvaluator {
   ) {}
 
   /** Evaluate the given metric ids. Missing, failing, and quarantined modules are reported, never thrown. */
-  async evaluate(data: FinancialPortfolioData, ids: readonly string[]): Promise<MetricEvaluation[]> {
+  async evaluate(data: FinancialPortfolioData, ids: readonly string[], options: MetricEvaluateOptions = {}): Promise<MetricEvaluation[]> {
     const payloads = new Map<string, { bytes: Uint8Array; hash: string }>();
-    const payloadFor = (scopes: readonly MetricScope[]) => {
-      const key = [...scopes].sort().join(",");
+    const payloadFor = (scopes: readonly MetricScope[], abi: number) => {
+      const key = `${abi}:${[...scopes].sort().join(",")}`;
       let entry = payloads.get(key);
       if (!entry) {
-        const bytes = encodeMetricPayload(data, scopes);
+        const bytes = encodeMetricPayload(data, scopes, { abi, fundamentals: options.fundamentals });
         entry = { bytes, hash: sha256Hex(bytes) };
         payloads.set(key, entry);
       }
@@ -53,10 +60,15 @@ export class MetricEvaluator {
         results.push({ id, status: "quarantined", error: this.runtime.getQuarantine().get(id) ?? "stopped" });
         continue;
       }
+      const unavailable = options.unavailable?.(record);
+      if (unavailable) {
+        results.push({ id, status: "unavailable", error: unavailable });
+        continue;
+      }
 
       let payload: { bytes: Uint8Array; hash: string };
       try {
-        payload = payloadFor(record.scopesGranted);
+        payload = payloadFor(record.scopesGranted, record.manifest.abi);
       } catch (err) {
         results.push({ id, status: "error", error: err instanceof Error ? err.message : String(err) });
         continue;

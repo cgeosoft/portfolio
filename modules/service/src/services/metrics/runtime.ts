@@ -19,7 +19,8 @@ import {
   DEFAULT_METRIC_TIMEOUT_MS,
   MAX_METRIC_MEMORY_PAGES,
   MAX_METRIC_TIMEOUT_MS,
-  METRIC_ABI_VERSION,
+  SUPPORTED_METRIC_ABI_VERSIONS,
+  isSupportedMetricAbi,
 } from "portfolio-shared/metric-abi";
 import { METRIC_ENGINE_SOURCE } from "./engine-source.js";
 
@@ -121,8 +122,8 @@ export class MetricRuntime {
       moduleId,
     );
     const abi = Number(res["abi"]);
-    if (abi !== METRIC_ABI_VERSION) {
-      throw new Error(`Module targets ABI ${abi}, this application supports ABI ${METRIC_ABI_VERSION}`);
+    if (!isSupportedMetricAbi(abi)) {
+      throw new Error(`Module targets ABI ${abi}, this application supports ABI ${SUPPORTED_METRIC_ABI_VERSIONS.join(" and ")}`);
     }
     engine.loaded.add(moduleId);
     return abi;

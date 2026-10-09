@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: distress-exposure
+name: Distress Exposure
+shortName: Distress
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Risk
+icon: shield-alert
+accent: slate
+summary: Share of your stocks in the Altman Z-score distress zone.
+description: >
+  Share of the value of your stocks whose Altman Z-score is below 1.8, the distress zone, as reported by Financial Modeling Prep. The score combines working capital, retained earnings, operating profit, market value and sales. Funds are left out. Banks and insurers often score low by design.
+importance: >
+  Companies in the distress zone have a higher risk of financial trouble in the next two years. A rising share tells you to check the balance sheets of those positions before a credit event does it for you.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: percent
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

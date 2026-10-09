@@ -39,3 +39,24 @@ metrics:
   - id: taxes-withheld
     path: taxes-withheld
     bundled: true
+  - id: portfolio-beta
+    path: portfolio-beta
+    bundled: true
+  - id: portfolio-pe
+    path: portfolio-pe
+    bundled: true
+  - id: dividend-yield
+    path: dividend-yield
+    bundled: true
+  - id: analyst-upside
+    path: analyst-upside
+    bundled: true
+  - id: dcf-upside
+    path: dcf-upside
+    bundled: true
+  - id: quality-score
+    path: quality-score
+    bundled: true
+  - id: distress-exposure
+    path: distress-exposure
+    bundled: true

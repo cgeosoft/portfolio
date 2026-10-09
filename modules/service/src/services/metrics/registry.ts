@@ -146,7 +146,8 @@ export class MetricRegistry {
     return getMetricRepository();
   }
 
-  toListing(record: MetricRecord, quarantine: ReadonlyMap<string, string>): MetricListing {
+  /** `unavailable` names a missing data provider; quarantine wins over it. */
+  toListing(record: MetricRecord, quarantine: ReadonlyMap<string, string>, unavailable?: string): MetricListing {
     const reason = quarantine.get(record.id);
     return {
       id: record.id,
@@ -157,8 +158,8 @@ export class MetricRegistry {
       verified: record.verified,
       installedAt: record.installedAt,
       scopesGranted: record.scopesGranted,
-      status: reason ? "quarantined" : "ready",
-      statusReason: reason,
+      status: reason ? "quarantined" : unavailable ? "unavailable" : "ready",
+      statusReason: reason ?? unavailable,
     };
   }
 }

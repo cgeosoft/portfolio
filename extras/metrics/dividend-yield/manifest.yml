@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: dividend-yield
+name: Dividend Yield
+shortName: Yield
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Income
+icon: piggy-bank
+accent: mint
+summary: Trailing dividend yield of your stocks and the income it implies.
+description: >
+  Trailing twelve month dividend yield of your stock holdings, weighted by market value, from Financial Modeling Prep. Stocks that pay nothing count as zero. Funds are left out because their yield is not in the data. The sub-line estimates the yearly income of the covered holdings.
+importance: >
+  Yield shows how much cash your stocks return without selling anything. A falling yield on the same holdings can mean cut dividends; a very high one can mean the market doubts the payout.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: percent
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

@@ -1,9 +1,9 @@
 schema: 1
-abi: 1
+abi: 2
 id: total-portfolio-value
 name: Total Portfolio Value
 shortName: Portfolio Value
-version: 1.0.0
+version: 1.0.1
 developer:
   name: Christos Georgiou
   url: https://github.com/cgeosoft

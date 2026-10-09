@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: analyst-upside
+name: Analyst Upside
+shortName: Upside
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Analysts
+icon: target
+accent: pink
+summary: Distance from current prices to the analyst consensus targets.
+description: >
+  Gap between the current price and the consensus analyst price target of each stock, weighted by market value. Targets come from Financial Modeling Prep. Holdings without a target, and funds, are left out.
+importance: >
+  Positive upside means analysts expect your stocks to rise; a negative figure means you hold names that trade above their targets. Use it as a sentiment check, not a forecast: targets lag prices.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: percent
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

@@ -73,7 +73,8 @@ export interface MetricListing {
   verified: boolean;
   installedAt?: string;
   scopesGranted: MetricScope[];
-  status: "ready" | "quarantined";
+  /** "unavailable": a data provider the metric needs has no API key. */
+  status: "ready" | "quarantined" | "unavailable";
   statusReason?: string;
 }
 
@@ -90,7 +91,7 @@ export interface GetMetricCatalogResponse {
 
 export type MetricEvaluation =
   | { id: string; status: "ok"; output: MetricOutput; elapsedMs: number; cached: boolean }
-  | { id: string; status: "error" | "quarantined" | "missing"; error: string };
+  | { id: string; status: "error" | "quarantined" | "missing" | "unavailable"; error: string };
 
 export interface EvaluatePortfolioMetricsRequest {
   portfolioId: string;

@@ -4,7 +4,7 @@
  * webview, which renders manifests in the Metrics tab.
  */
 
-import { METRIC_ABI_VERSION, isMetricScope, type MetricScope } from "./metric-abi.js";
+import { METRIC_SCOPE_MIN_ABI, SUPPORTED_METRIC_ABI_VERSIONS, isMetricScope, isSupportedMetricAbi, type MetricScope } from "./metric-abi.js";
 import { isMetricId, type MetricSlot } from "./metrics.js";
 
 export const METRIC_MANIFEST_SCHEMA_VERSION = 1;
@@ -119,7 +119,7 @@ export function validateMetricManifest(input: unknown): MetricManifest {
   const schema = readInteger(obj, "schema", "");
   if (schema !== METRIC_MANIFEST_SCHEMA_VERSION) fail("schema", `must be ${METRIC_MANIFEST_SCHEMA_VERSION}`);
   const abi = readInteger(obj, "abi", "");
-  if (abi !== METRIC_ABI_VERSION) fail("abi", `must be ${METRIC_ABI_VERSION}`);
+  if (!isSupportedMetricAbi(abi)) fail("abi", `must be one of ${SUPPORTED_METRIC_ABI_VERSIONS.join(", ")}`);
 
   const id = readString(obj, "id", "", 64);
   if (!isMetricId(id)) fail("id", "must be kebab-case (letters, digits, single hyphens), 3 to 64 characters");
@@ -143,6 +143,7 @@ export function validateMetricManifest(input: unknown): MetricManifest {
   const scopes: MetricScope[] = [];
   for (const scope of scopesRaw) {
     if (!isMetricScope(scope)) fail("scopes", `contains unknown scope ${JSON.stringify(scope)}`);
+    if (abi < METRIC_SCOPE_MIN_ABI[scope]) fail("scopes", `${scope} needs abi ${METRIC_SCOPE_MIN_ABI[scope]} or later`);
     if (!scopes.includes(scope)) scopes.push(scope);
   }
 

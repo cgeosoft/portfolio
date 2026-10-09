@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: portfolio-pe
+name: Portfolio P/E
+shortName: P/E
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Valuation
+icon: scale
+accent: cream
+summary: What you pay for each unit of earnings across your stocks.
+description: >
+  Price-to-earnings ratio of your stock holdings as one figure. It is the weighted harmonic mean of each trailing P/E from Financial Modeling Prep, which equals the total price divided by the total earnings you own. Loss-making companies and funds are left out.
+importance: >
+  A high P/E means the market prices in strong growth; a low one means cheap or troubled companies. Compare it with the market (around 20 for the S&P 500) to see if you hold an expensive or a cheap portfolio.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: number
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50

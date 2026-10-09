@@ -43,16 +43,18 @@ export function metric_run(ptr: i32, len: i32): i32 {
 }
 ```
 
-   Other scopes: `new Holdings(ptr, len)`, `new Transactions(ptr, len)`, `new History(ptr, len)`. Each has `count`, `present`, and `at(i)`. A block the manifest did not request has `present == false` and `count == 0`.
+   Other scopes: `new Holdings(ptr, len)`, `new Transactions(ptr, len)`, `new History(ptr, len)`, `new Fundamentals(ptr, len)`. Each has `count`, `present`, and `at(i)`. A block the manifest did not request has `present == false` and `count == 0`.
+
+   `Fundamentals` (scope `market.fundamentals`) holds public company data for each held symbol: beta, P/E, dividend yield, analyst target upside, DCF upside, Piotroski and Altman Z scores, and more. Look a holding up with `fundamentals.find(holding.symbol)`. Ratios and upsides are fractions, and a value the provider lacks is `NaN`. The data comes from Financial Modeling Prep only. Without an FMP API key the application shows the metric disabled and never runs it.
 
 4. Add the metric to `repository.yml`.
 5. Run `bun run build:metrics`. It validates the manifest, compiles the module, and prints its size and hash.
 6. Run `bun test`. Add a case to `src/bun/services/__tests__/metric-runtime.test.ts` if your metric needs one.
 7. Open a pull request. CI (`.github/workflows/metrics.yml`) validates every manifest, builds every module, and runs each one against a fixture portfolio.
 
-## The contract (ABI v1)
+## The contract (ABI v2)
 
-The host writes a binary payload into guest memory and calls `metric_run(ptr, len)`. The module returns a pointer to `[u32 length][UTF-8 JSON]`. The input layout is documented in `src/shared/metric-abi.ts` and mirrored by the generated SDK, so you never touch offsets. The output is:
+The host writes a binary payload into guest memory and calls `metric_run(ptr, len)`. The module returns a pointer to `[u32 length][UTF-8 JSON]`. The input layout is documented in `modules/shared/src/metric-abi.ts` and mirrored by the generated SDK, so you never touch offsets. The output is:
 
 ```jsonc
 {
@@ -63,6 +65,8 @@ The host writes a binary payload into guest memory and calls `metric_run(ptr, le
 ```
 
 `format` is `currency`, `percent`, `number`, or `none`. `sign: "always"` prefixes `+` to non-negative amounts. Formatting, currency symbols, and the privacy mask are applied by the application, so a module never learns whether values are hidden.
+
+ABI 2 adds the fundamentals block and a 40-byte header. Modules built for ABI 1 still run and receive the ABI 1 layout, without fundamentals. Repository metrics must declare `abi: 2`.
 
 Required exports: `metric_abi_version()`, `metric_alloc(size)`, `metric_run(ptr, len)`. Allowed imports: `env.memory`, `env.abort`, `env.seed`, `env.trace`. Anything else is rejected at load.
 

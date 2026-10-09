@@ -1,11 +1,14 @@
 /**
  * Encode the input payload of a metric module from the granted scopes only.
- * The layout is documented in src/shared/metric-abi.ts and mirrored by the
+ * The layout is documented in modules/shared/src/metric-abi.ts and mirrored by the
  * generated AssemblyScript SDK.
  */
 
 import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
 import {
+  FUNDAMENTAL_FIELDS,
+  FUNDAMENTAL_FLAG_FUND,
+  FUNDAMENTAL_RECORD_PREFIX_BYTES,
   HISTORY_FIELDS,
   HOLDING_ASSET_TYPES,
   HOLDING_FIELDS,
@@ -13,14 +16,29 @@ import {
   METRIC_ABI_VERSION,
   METRIC_PAYLOAD_MAGIC,
   METRIC_SCOPE_BITS,
-  PAYLOAD_HEADER_BYTES,
   SUMMARY_FIELDS,
   TRANSACTION_FIELDS,
   TRANSACTION_KINDS,
   TRANSACTION_RECORD_PREFIX_BYTES,
   classifyTransactionType,
+  payloadHeaderBytes,
+  type FundamentalField,
   type MetricScope,
 } from "portfolio-shared/metric-abi";
+
+/** Public company data of one held symbol, as the fundamentals block carries it. */
+export interface MetricFundamentalsRow {
+  symbol: string;
+  isFund: boolean;
+  values: Partial<Record<FundamentalField, number>>;
+}
+
+export interface EncodeMetricPayloadOptions {
+  /** ABI of the module that reads the payload. Defaults to the current ABI. */
+  abi?: number;
+  /** Rows of the `market.fundamentals` block. */
+  fundamentals?: readonly MetricFundamentalsRow[];
+}
 
 /** Upper bound of a payload; larger ledgers are truncated to the newest rows. */
 export const MAX_PAYLOAD_BYTES = 8 * 1024 * 1024;
@@ -35,6 +53,11 @@ function align8(n: number): number {
 
 function num(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/** Fundamentals keep "unknown" apart from zero. */
+function numOrNaN(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : Number.NaN;
 }
 
 class StringTable {
@@ -68,8 +91,15 @@ class StringTable {
  * present; the header offset of every other block is zero, so a module
  * cannot observe data it was not granted.
  */
-export function encodeMetricPayload(data: FinancialPortfolioData, scopes: readonly MetricScope[]): Uint8Array {
-  const granted = new Set(scopes);
+export function encodeMetricPayload(
+  data: FinancialPortfolioData,
+  scopes: readonly MetricScope[],
+  options: EncodeMetricPayloadOptions = {},
+): Uint8Array {
+  const abi = options.abi ?? METRIC_ABI_VERSION;
+  const headerBytes = payloadHeaderBytes(abi);
+  // An ABI 1 header has no slot for fundamentals, so the block is never sent.
+  const granted = new Set(scopes.filter((scope) => abi >= 2 || scope !== "market.fundamentals"));
   const strings = new StringTable();
 
   const summaryBytes = granted.has("portfolio.summary") ? align8(8 + SUMMARY_FIELDS.length * 8) : 0;
@@ -88,15 +118,22 @@ export function encodeMetricPayload(data: FinancialPortfolioData, scopes: readon
   const historyRecord = HISTORY_FIELDS.length * 8;
   const historyBytes = granted.has("portfolio.history") ? align8(8 + history.length * historyRecord) : 0;
 
+  const fundamentals = granted.has("market.fundamentals") ? options.fundamentals ?? [] : [];
+  const fundamentalRecord = FUNDAMENTAL_RECORD_PREFIX_BYTES + FUNDAMENTAL_FIELDS.length * 8;
+  const fundamentalsBytes = granted.has("market.fundamentals") ? align8(8 + fundamentals.length * fundamentalRecord) : 0;
+
   // Intern strings first so the table length is known before allocation.
   const holdingRefs = holdings.map((h) => strings.add(h.symbol));
   const transactionRefs = transactions.map((t) => [strings.add(t.symbol), strings.add(t.type)] as const);
+  const fundamentalRefs = fundamentals.map((f) => strings.add(f.symbol));
 
-  const summaryOffset = summaryBytes ? PAYLOAD_HEADER_BYTES : 0;
-  const holdingsOffset = holdingsBytes ? PAYLOAD_HEADER_BYTES + summaryBytes : 0;
-  const transactionsOffset = transactionsBytes ? PAYLOAD_HEADER_BYTES + summaryBytes + holdingsBytes : 0;
-  const historyOffset = historyBytes ? PAYLOAD_HEADER_BYTES + summaryBytes + holdingsBytes + transactionsBytes : 0;
-  const stringsOffset = PAYLOAD_HEADER_BYTES + summaryBytes + holdingsBytes + transactionsBytes + historyBytes;
+  const summaryOffset = summaryBytes ? headerBytes : 0;
+  const holdingsOffset = holdingsBytes ? headerBytes + summaryBytes : 0;
+  const transactionsOffset = transactionsBytes ? headerBytes + summaryBytes + holdingsBytes : 0;
+  const historyOffset = historyBytes ? headerBytes + summaryBytes + holdingsBytes + transactionsBytes : 0;
+  const fundamentalsStart = headerBytes + summaryBytes + holdingsBytes + transactionsBytes + historyBytes;
+  const fundamentalsOffset = fundamentalsBytes ? fundamentalsStart : 0;
+  const stringsOffset = fundamentalsStart + fundamentalsBytes;
   const total = align8(stringsOffset + strings.length);
   if (total > MAX_PAYLOAD_BYTES) throw new Error("Metric payload exceeds the size limit");
 
@@ -108,13 +145,14 @@ export function encodeMetricPayload(data: FinancialPortfolioData, scopes: readon
   for (const scope of granted) scopeMask |= METRIC_SCOPE_BITS[scope];
 
   view.setUint32(0, METRIC_PAYLOAD_MAGIC, true);
-  view.setUint32(4, METRIC_ABI_VERSION, true);
+  view.setUint32(4, abi, true);
   view.setUint32(8, scopeMask, true);
   view.setUint32(12, summaryOffset, true);
   view.setUint32(16, holdingsOffset, true);
   view.setUint32(20, transactionsOffset, true);
   view.setUint32(24, historyOffset, true);
   view.setUint32(28, stringsOffset, true);
+  if (abi >= 2) view.setUint32(32, fundamentalsOffset, true);
 
   if (summaryOffset) {
     const summary = (data.summary ?? {}) as unknown as Record<string, unknown>;
@@ -165,6 +203,21 @@ export function encodeMetricPayload(data: FinancialPortfolioData, scopes: readon
       const base = historyOffset + 8 + index * historyRecord;
       const row = point as unknown as Record<string, unknown>;
       HISTORY_FIELDS.forEach((field, i) => view.setFloat64(base + i * 8, num(row[field]), true));
+    });
+  }
+
+  if (fundamentalsOffset) {
+    view.setUint32(fundamentalsOffset, fundamentals.length, true);
+    view.setUint32(fundamentalsOffset + 4, FUNDAMENTAL_FIELDS.length, true);
+    fundamentals.forEach((row, index) => {
+      const base = fundamentalsOffset + 8 + index * fundamentalRecord;
+      const [symOff, symLen] = fundamentalRefs[index];
+      view.setUint32(base, stringsOffset + symOff, true);
+      view.setUint32(base + 4, symLen, true);
+      view.setUint32(base + 8, row.isFund ? FUNDAMENTAL_FLAG_FUND : 0, true);
+      FUNDAMENTAL_FIELDS.forEach((field, i) =>
+        view.setFloat64(base + FUNDAMENTAL_RECORD_PREFIX_BYTES + i * 8, numOrNaN(row.values[field]), true),
+      );
     });
   }
 

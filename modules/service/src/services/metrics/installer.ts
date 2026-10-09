@@ -195,7 +195,8 @@ export class MetricInstaller {
     // Compile in the sandbox: rejects forbidden imports, missing exports, and other ABI versions.
     const probeId = `preview:${manifest.id}:${sha256.slice(0, 12)}`;
     try {
-      await this.runtime.load(probeId, bytes);
+      const abi = await this.runtime.load(probeId, bytes);
+      if (abi !== manifest.abi) throw new Error(`Module targets ABI ${abi}, manifest declares abi ${manifest.abi}`);
     } finally {
       await this.runtime.unload(probeId);
     }

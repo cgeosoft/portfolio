@@ -112,8 +112,11 @@ function formatAmount(part: MetricAmountPart, fmt: MetricFormatters): string {
   switch (part.format) {
     case "currency":
       return `${prefix}${fmt.currency(amount)}`;
-    case "percent":
-      return fmt.percent(amount);
+    case "percent": {
+      // The host percent formatter signs positive values; "never" is for levels such as a yield.
+      const text = fmt.percent(amount);
+      return part.sign === "never" ? text.replace(/^\+/, "") : text;
+    }
     case "number":
       return `${prefix}${fmt.number ? fmt.number(amount) : String(amount ?? 0)}`;
     case "none":

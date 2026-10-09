@@ -1,8 +1,8 @@
 schema: 1
-abi: 1
+abi: 2
 id: day-gain-loss
 name: Day Gain / Loss
-version: 1.0.0
+version: 1.0.1
 developer:
   name: Christos Georgiou
   url: https://github.com/cgeosoft

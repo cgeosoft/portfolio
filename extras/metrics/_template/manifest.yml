@@ -1,7 +1,7 @@
 # Copy this directory to extras/metrics/<your-metric-id>/ and edit every field.
 # See ../manifest.example.yml for what each field means and accepts.
 schema: 1
-abi: 1
+abi: 2
 id: my-metric
 name: My Metric
 shortName: My Metric

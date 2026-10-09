@@ -1,0 +1,29 @@
+schema: 1
+abi: 2
+id: portfolio-beta
+name: Portfolio Beta
+shortName: Beta
+version: 1.0.0
+developer:
+  name: Christos Georgiou
+  url: https://github.com/cgeosoft
+license: MIT
+category: Risk
+icon: activity
+accent: blue
+summary: Value-weighted beta of your holdings against the market.
+description: >
+  Average beta of your positions, weighted by market value. Beta comes from Financial Modeling Prep and measures how much a security moved with the broad market. Holdings without a beta are left out; the sub-line shows how much of the portfolio is covered.
+importance: >
+  A beta of 1.3 means the portfolio tends to move 30% more than the market, up and down. It tells you how hard a market sell-off would hit you before it happens.
+scopes:
+  - portfolio.holdings
+  - market.fundamentals
+display:
+  defaultSize: compact
+  valueFormat: number
+source:
+  entry: assembly/index.ts
+runtime:
+  memoryPages: 16
+  timeoutMs: 50
