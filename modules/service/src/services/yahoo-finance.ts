@@ -94,7 +94,9 @@ export function extractQuoteFromChart(chart: YahooChartData): YahooQuote | null 
   const prev = candles.length > 1 ? candles[candles.length - 2] : undefined;
 
   const price = chart.regularMarketPrice || latest?.close || 0;
-  const prevClose = chart.previousClose || prev?.close || price;
+  // The close before the latest candle. meta.previousClose is absent on
+  // multi-day ranges and chartPreviousClose is the close before the range start.
+  const prevClose = prev?.close || chart.previousClose || price;
   const change = price - prevClose;
   const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
 
@@ -362,7 +364,7 @@ export class YahooFinanceService {
             symbol: cleanSymbol,
             currency: (meta.currency as string) || "USD",
             regularMarketPrice: currentPrice,
-            previousClose: (meta.previousClose as number) ?? (meta.chartPreviousClose as number),
+            previousClose: meta.previousClose as number | undefined,
             fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh as number | undefined,
             fiftyTwoWeekLow: meta.fiftyTwoWeekLow as number | undefined,
             shortName: meta.shortName as string | undefined,

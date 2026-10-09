@@ -174,7 +174,7 @@ export class PortfolioReportService {
     const holdingsContext = holdings
       .map(
         (h) =>
-          `- **${h.symbol}** (${h.name}, ${h.assetType}): ${h.weightPercent}% weight | Day: ${h.dayChangePercent > 0 ? "+" : ""}${h.dayChangePercent}% | Total Gain: ${h.totalGainLossPercent > 0 ? "+" : ""}${h.totalGainLossPercent}% | SMA50: ${h.sma50 ?? "N/A"} | SMA200: ${h.sma200 ?? "N/A"} | RSI: ${h.rsi ?? "N/A"}`,
+          `- **${h.symbol}** (${h.name}, ${h.assetType}): ${h.weightPercent}% weight | Day: ${h.dayChangePercent > 0 ? "+" : ""}${h.dayChangePercent}% | Total Gain: ${h.totalGainLossPercent > 0 ? "+" : ""}${h.totalGainLossPercent}% | SMA50: ${h.sma50 ?? "N/A"} | SMA200: ${h.sma200 ?? "N/A"} | RSI: ${h.rsi ?? "N/A"}${h.isPrivate ? " | Private asset, no market price" : h.quoteMissing ? " | No market quote, valued at buy price" : ""}`,
       )
       .join("\n");
 
@@ -294,7 +294,7 @@ Analyze the following investment portfolio state for portfolio **"${portfolio.na
 - **Cash Liquidity**: ${summary.cashWeightPercent}%
 - **Lifetime Unrealized Gain**: ${summary.totalGainLossPercent >= 0 ? "+" : ""}${summary.totalGainLossPercent}%
 - **Day Change**: ${summary.dayGainLossPercent >= 0 ? "+" : ""}${summary.dayGainLossPercent}%
-- **Asset Breakdown**: Stocks ${summary.stockWeightPercent}%, ETFs ${summary.etfWeightPercent}%, Crypto ${summary.cryptoWeightPercent}%, Cash ${summary.cashWeightPercent}%
+- **Asset Breakdown**: Stocks ${summary.stockWeightPercent}%, ETFs ${summary.etfWeightPercent}%, Crypto ${summary.cryptoWeightPercent}%, Private & Other ${summary.otherWeightPercent ?? 0}%, Cash ${summary.cashWeightPercent}%
 
 ## Holdings Ledger
 ${holdingsContext}

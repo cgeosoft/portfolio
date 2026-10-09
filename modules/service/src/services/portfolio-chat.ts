@@ -9,7 +9,7 @@ import type { LlmService, LlmMessage } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as conversationRepo from "../db/conversation.repo.js";
-import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
+import type { PortfolioItem, FinancialPortfolioData, HoldingPerformance } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
 
 const TITLE_MAX_CHARS = 42;
@@ -17,6 +17,8 @@ const RECENT_TRANSACTIONS = 10;
 
 const pct = (value = 0) => `${value.toFixed(2)}%`;
 const signedPct = (value = 0) => `${value >= 0 ? "+" : ""}${pct(value)}`;
+const priceNote = (h: HoldingPerformance) =>
+  h.isPrivate ? " (private asset, no market price)" : h.quoteMissing ? " (no market quote, valued at buy price)" : "";
 const indicator = (value: number | undefined, digits: number) => (value !== undefined && !isNaN(value) ? value.toFixed(digits) : "N/A");
 
 export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData): string {
@@ -27,14 +29,15 @@ export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: Finan
       ?.map(
         (h) => `- **${h.symbol}** (${h.name}, Type: ${h.assetType}):
   - Portfolio Weight: ${pct(h.weightPercent)}
-  - Day Change: ${signedPct(h.dayChangePercent)} | Total Return: ${signedPct(h.totalGainLossPercent)}
+  - Day Change: ${signedPct(h.dayChangePercent)} | Total Return: ${signedPct(h.totalGainLossPercent)}${priceNote(h)}
   - Technical Indicators: RSI(14): ${indicator(h.rsi, 1)}, SMA50: ${indicator(h.sma50, 2)}, SMA200: ${indicator(h.sma200, 2)}`,
       )
       .join("\n") || "No active holdings.";
 
   const recentTransactions =
     data.transactions
-      ?.slice(0, RECENT_TRANSACTIONS)
+      ?.slice(-RECENT_TRANSACTIONS)
+      .reverse()
       .map((tx) => `- ${tx.date ? tx.date.slice(0, 10) : "Unknown date"} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol || ""}`.trim())
       .join("\n") || "No transaction history recorded.";
 
@@ -55,12 +58,13 @@ Today's Return: ${signedPct(summary?.dayGainLossPercent)}
 - Stocks: ${pct(summary?.stockWeightPercent)}
 - ETFs & Funds: ${pct(summary?.etfWeightPercent)}
 - Crypto: ${pct(summary?.cryptoWeightPercent)}
+- Private & Other: ${pct(summary?.otherWeightPercent)}
 - Cash: ${pct(summary?.cashWeightPercent)}
 
 === FULL HOLDINGS LEDGER ===
 ${holdingsLedger}
 
-=== RECENT TRANSACTIONS ===
+=== RECENT TRANSACTIONS (newest first) ===
 ${recentTransactions}
 
 === INSTRUCTIONS FOR ASSISTANT ===

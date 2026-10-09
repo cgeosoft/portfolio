@@ -16,6 +16,8 @@ export interface PortfolioHolding {
   name: string;
   assetType: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other";
   isPrivate?: boolean;
+  /** No market quote; the price falls back to the buy price. */
+  quoteMissing?: boolean;
   shares: number;
   buyPrice: number;
   currentPrice: number;

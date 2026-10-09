@@ -675,7 +675,7 @@ export class PortfolioService {
         else assetType = "Stock";
       }
 
-      if (assetType === "ETF") etfValue += itemValue;
+      if (assetType === "ETF" || assetType === "MutualFund") etfValue += itemValue;
       else if (assetType === "Crypto") cryptoValue += itemValue;
       else if (assetType === "Other") otherValue += itemValue;
       else stockValue += itemValue;
@@ -701,6 +701,7 @@ export class PortfolioService {
         name: config.name || quote?.longName || quote?.shortName || sym,
         assetType,
         isPrivate,
+        quoteMissing: !isPrivate && !quote ? true : undefined,
         shares,
         buyPrice,
         currentPrice: Number(currentPrice.toFixed(2)),

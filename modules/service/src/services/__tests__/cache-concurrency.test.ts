@@ -65,6 +65,24 @@ describe("extractQuoteFromChart", () => {
     expect(quote!.currency).toBe("USD");
   });
 
+  it("takes the previous close from the candle before the latest, not the range start", () => {
+    const yearChart: YahooChartData = {
+      symbol: "SXR8.DE",
+      currency: "EUR",
+      regularMarketPrice: 600,
+      previousClose: 500,
+      candles: [
+        { timestamp: 1000, date: "2025-10-09", open: 500, high: 500, low: 500, close: 500, volume: 0 },
+        { timestamp: 2000, date: "2026-10-08", open: 594, high: 596, low: 593, close: 595, volume: 0 },
+        { timestamp: 3000, date: "2026-10-09", open: 595, high: 601, low: 594, close: 600, volume: 0 },
+      ],
+    };
+
+    const quote = extractQuoteFromChart(yearChart);
+    expect(quote!.previousClose).toBe(595);
+    expect(quote!.regularMarketChangePercent).toBeCloseTo(0.84, 2);
+  });
+
   it("returns null for empty candle data", () => {
     const emptyChart: YahooChartData = {
       symbol: "TEST",
