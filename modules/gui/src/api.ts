@@ -192,6 +192,18 @@ export const api = {
     request<ManageTransactionResponse>(`/api/portfolios/${enc(body.portfolioId)}/transactions`, { method: "POST", body: json(body) }),
   searchSymbol: (query: string) => request<SearchSymbolResponse>(`/api/symbols/search?q=${enc(query)}`),
 
+  // ---- company intel (public company data per symbol)
+  getCompanyIntel: (symbol: string, include?: CompanyIntelPart[], assetType?: string) => {
+    const q = new URLSearchParams();
+    if (include?.length) q.set("include", include.join(","));
+    if (assetType) q.set("assetType", assetType);
+    const qs = q.toString();
+    return request<GetCompanyIntelResponse>(`/api/symbols/${enc(symbol)}/intel${qs ? `?${qs}` : ""}`, {}, { timeoutMs: 60_000 });
+  },
+  getTranscript: (symbol: string) => request<GetTranscriptResponse>(`/api/symbols/${enc(symbol)}/transcript`, {}, { timeoutMs: 60_000 }),
+  summarizeTranscript: (symbol: string, force = false) =>
+    request<SummarizeTranscriptResponse>(`/api/symbols/${enc(symbol)}/transcript/summary`, { method: "POST", body: json({ force }) }, { timeoutMs: 600_000 }),
+
   // ---- reports
   getReports: (portfolioId: string) => request<{ reports: PortfolioReport[]; latestReport?: PortfolioReport }>(`/api/portfolios/${enc(portfolioId)}/reports`),
   prepareReportPrompt: (body: PrepareReportPromptRequest) =>

@@ -294,6 +294,16 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/symbols/search", async (ctx) => ({ results: await marketData.searchSymbols(ctx.url.searchParams.get("q") || "") }));
 
+  // Company intel: public company data, best provider first (services/intel/company.ts).
+  router.get("/api/symbols/:symbol/intel", (ctx) =>
+    getCompanyIntel(services, ctx.params.symbol!, { include: parseIntelParts(ctx.url.searchParams.get("include")), assetType: ctx.url.searchParams.get("assetType") || undefined }),
+  );
+  router.get("/api/symbols/:symbol/transcript", (ctx) => getTranscriptResponse(services, ctx.params.symbol!));
+  router.post("/api/symbols/:symbol/transcript/summary", async (ctx) => {
+    const body = await ctx.body<{ force?: boolean }>();
+    return summarizeTranscriptResponse(services, ctx.params.symbol!, { force: body.force === true });
+  });
+
   // ── reports ─────────────────────────────────────────────────────────────
 
   router.get("/api/portfolios/:id/reports", (ctx) => reportService.getReports(ctx.params.id!));

@@ -966,3 +966,27 @@ export interface PortfolioExposureResponse {
   sources: DataProviderId[];
 }
 
+// ── company intelligence ────────────────────────────────────────────────────
+
+/** `GET /api/symbols/:symbol/intel?include=profile,analyst,...&assetType=Stock`. */
+export type GetCompanyIntelResponse = import("./company-intel").CompanyIntel;
+
+/** `GET /api/symbols/:symbol/transcript`: the latest earnings call (FMP only). */
+export interface GetTranscriptResponse {
+  transcript: import("./company-intel").EarningsTranscript | null;
+  source: DataProviderId | null;
+  /** The cached LLM summary of this call, when one exists. */
+  summary: import("./company-intel").TranscriptSummary | null;
+}
+
+/** `POST /api/symbols/:symbol/transcript/summary`. */
+export interface SummarizeTranscriptRequest {
+  /** Ask the model again instead of returning the cached summary. */
+  force?: boolean;
+}
+
+export interface SummarizeTranscriptResponse {
+  summary: import("./company-intel").TranscriptSummary | null;
+  /** Why there is no summary: no transcript, or the model failed. */
+  error?: string;
+}
