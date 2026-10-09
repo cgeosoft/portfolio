@@ -229,6 +229,8 @@ export const api = {
   runDailyBrief: () => request<RunAutomationResponse>("/api/automation/daily-brief/run", { method: "POST" }, { timeoutMs: 600_000 }),
   getWeeklyAnalysisStatus: () => request<AutomationStatus>("/api/automation/weekly-analysis"),
   runWeeklyAnalysis: () => request<RunAutomationResponse>("/api/automation/weekly-analysis/run", { method: "POST" }, { timeoutMs: 1_800_000 }),
+  getEventAlertsStatus: () => request<AutomationStatus>("/api/automation/event-alerts"),
+  runEventAlerts: () => request<RunAutomationResponse>("/api/automation/event-alerts/run", { method: "POST" }, { timeoutMs: 600_000 }),
 
   // ---- config and setup
   getConfig: () => request<DesktopConfig>("/api/config"),

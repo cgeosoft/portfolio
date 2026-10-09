@@ -466,6 +466,10 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/automation/weekly-analysis/run", () => weeklyAnalysis.run("manual"));
 
+  router.get("/api/automation/event-alerts", () => services.eventAlerts.status());
+
+  router.post("/api/automation/event-alerts/run", () => services.eventAlerts.run("manual"));
+
   router.post("/api/setup/complete", async (ctx) => {
     const body = await ctx.body<CompleteSetupRequest>();
     if (body.populateDemo) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { BellRing, Briefcase, CalendarDays, CalendarRange, Clock, History, Loader2, Newspaper, Play, ShieldCheck, type LucideIcon } from "lucide-react";
+import { BellRing, Briefcase, CalendarClock, CalendarDays, CalendarRange, Clock, History, Loader2, Newspaper, Play, ShieldCheck, type LucideIcon } from "lucide-react";
 import type { AutomationStatus, DailyBriefDays, DesktopConfig, NotificationChannel, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { api } from "../../api";
@@ -7,12 +7,13 @@ import { Select } from "../common/Select";
 import { SectionHeader, SettingItem, Toggle } from "./SettingsFields";
 import { ChoiceButton, StatusLine, type SidebarSection, type StatusResult } from "./SettingsPrimitives";
 
-export type AutomationId = "daily-brief" | "weekly-analysis";
+export type AutomationId = "daily-brief" | "weekly-analysis" | "event-alerts";
 
 /** The cards of the Automation section, listed as its submenu in the Preferences sidebar. */
 export const AUTOMATIONS: (SidebarSection & { id: AutomationId })[] = [
   { id: "daily-brief", label: "Daily brief", icon: Newspaper },
   { id: "weekly-analysis", label: "Weekly analysis", icon: CalendarRange },
+  { id: "event-alerts", label: "Event alerts", icon: CalendarClock },
 ];
 
 const DAILY_OPTIONS: { value: DailyBriefDays; label: string }[] = [
@@ -58,8 +59,8 @@ interface AutomationDefinition {
   runningText: string;
   loadStatus: () => Promise<AutomationStatus>;
   run: () => Promise<RunAutomationResponse>;
-  /** The row that picks the days. */
-  days: (config: DesktopConfig, save: (updates: Partial<DesktopConfig>) => void, saving: boolean) => ReactNode;
+  /** The row that picks the days; none for an automation that runs every day. */
+  days?: (config: DesktopConfig, save: (updates: Partial<DesktopConfig>) => void, saving: boolean) => ReactNode;
 }
 
 const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
@@ -142,6 +143,28 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
         </div>
       </SettingItem>
     ),
+  },
+  "event-alerts": {
+    icon: CalendarClock,
+    title: "Event Alerts",
+    blurb: "Each day a push notification names the holdings that go ex-dividend or report earnings on the next day.",
+    toggleTitle: "Send event alerts",
+    toggleDescription:
+      "Covers declared ex-dividend dates and earnings reports of held stocks and funds. On Friday and Saturday the alert covers the days up to Monday. Each event goes out once, even after a manual run.",
+    enabledKey: "eventAlertsEnabled",
+    timeKey: "eventAlertsTime",
+    portfolioKey: "eventAlertsPortfolioId",
+    timeDescription:
+      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the alert goes out when it starts.",
+    portfolioDescription: "One notification lists the events of every chosen portfolio.",
+    delivered: "Each alert goes",
+    stored: "The dates still show in the Income & events card",
+    privacy:
+      "The alert names tickers and dates only. Never quantities, balances or money amounts. The dates come from FMP, Yahoo Finance or Finnhub, whichever has them.",
+    noun: "alert",
+    runningText: "Checking the dividend and earnings dates of the next day...",
+    loadStatus: api.getEventAlertsStatus,
+    run: api.runEventAlerts,
   },
 };
 
@@ -269,7 +292,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenIntegra
           }
         />
 
-        {def.days(config, save, saving)}
+        {def.days?.(config, save, saving)}
 
         <SettingItem icon={Briefcase} title="Portfolios" description={def.portfolioDescription}>
           <Select

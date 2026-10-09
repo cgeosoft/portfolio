@@ -62,6 +62,10 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   weeklyAnalysisTime: "09:00",
   weeklyAnalysisPortfolioId: "",
   weeklyAnalysisLastRun: undefined,
+  eventAlertsEnabled: false,
+  eventAlertsTime: "18:00",
+  eventAlertsPortfolioId: "",
+  eventAlertsLastRun: undefined,
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */

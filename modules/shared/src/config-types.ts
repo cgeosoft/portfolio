@@ -167,6 +167,14 @@ export interface DesktopConfig {
   weeklyAnalysisPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled weekly analysis. Written by the service. */
   weeklyAnalysisLastRun?: string;
+  /** Whether a daily push names the ex-dividend dates and earnings reports of the next day for held symbols (Settings, Automation). */
+  eventAlertsEnabled: boolean;
+  /** Local time of day the event alerts run, "HH:MM". */
+  eventAlertsTime: string;
+  /** The portfolio whose holdings the event alerts cover; empty for every portfolio. */
+  eventAlertsPortfolioId: string;
+  /** Local date (YYYY-MM-DD) of the last scheduled event alert run. Written by the service. */
+  eventAlertsLastRun?: string;
 }
 
 /** "weekdays" runs Monday to Friday; the Monday brief covers the Friday session. */
@@ -185,7 +193,7 @@ export const DEFAULT_NTFY_PRIORITY = 3;
 export const DEFAULT_REMOTE_PORT = 5130;
 
 /** Settings the GUI cannot change through `PATCH /api/config`. */
-export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun", "weeklyAnalysisLastRun"] as const;
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
 
