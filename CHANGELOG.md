@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.2] - 2026-10-09
+
+### Fixed
+- Day change for holdings and portfolios now uses the correct previous close instead of a one-year-old value.
+- Allocation breakdown in chat and reports now includes a Private & Other category instead of leaving it out.
+- Mutual funds are now counted under ETFs & Funds instead of under stocks.
+- Holdings without a market price are now clearly labeled as valued at buy price in chat and reports.
+- Chat now shows the ten most recent transactions instead of the ten oldest.
+
+
 ## [0.8.1] - 2026-09-29
 
 - a88bc50 Show each start-up step on the starting page
