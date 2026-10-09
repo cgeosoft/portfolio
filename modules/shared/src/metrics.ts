@@ -19,8 +19,10 @@ export interface PortfolioMetricPreference {
   added: boolean;
   /** Dashboard slot. `null` means added, but not shown on the overview. */
   slot: MetricSlot | null;
-  /** Position in the list; also the order of the dashboard cards. */
+  /** Position in the list. */
   order: number;
+  /** Dashboard place within the slot, 0 to capacity - 1. Missing means the first free place. */
+  place?: number;
 }
 
 /** Ids of the metrics bundled with the application, in catalog order. */
@@ -66,6 +68,7 @@ export const DEFAULT_METRIC_PREFERENCES: readonly PortfolioMetricPreference[] = 
     added: true,
     slot: index < METRIC_SLOT_CAPACITY.large ? "large" : "compact",
     order: index,
+    place: index < METRIC_SLOT_CAPACITY.large ? index : index - METRIC_SLOT_CAPACITY.large,
   }),
 );
 
@@ -94,6 +97,10 @@ function readSlot(value: unknown): MetricSlot | null {
  * (`{id, added, slot, order}`) and the legacy shape (`{key, enabled, size}`).
  * Returns null for entries that do not name a valid metric.
  */
+function readPlace(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
 function readPreference(raw: unknown): Omit<PortfolioMetricPreference, "order"> | null {
   if (!raw || typeof raw !== "object") return null;
   const entry = raw as Record<string, unknown>;
@@ -107,7 +114,8 @@ function readPreference(raw: unknown): Omit<PortfolioMetricPreference, "order"> 
 
   if (!isMetricId(entry["id"])) return null;
   const added = typeof entry["added"] === "boolean" ? entry["added"] : true;
-  return { id: entry["id"], added, slot: added ? readSlot(entry["slot"]) : null };
+  const slot = added ? readSlot(entry["slot"]) : null;
+  return { id: entry["id"], added, slot, place: slot ? readPlace(entry["place"]) : undefined };
 }
 
 /**
@@ -115,8 +123,9 @@ function readPreference(raw: unknown): Omit<PortfolioMetricPreference, "order"> 
  * legacy entries are migrated, built-in metrics that the list does not
  * mention are appended as added but not slotted, and the dashboard capacity
  * (4 large, 6 compact) is enforced. Entries over the capacity keep their
- * place in the list with `slot: null`, so nothing is lost. The array order is
- * authoritative and controls display order; `order` is rewritten from it.
+ * place in the list with `slot: null`, so nothing is lost. `order` is
+ * rewritten from the array order. Every slotted entry gets a unique `place`:
+ * a valid stored one is kept, the others take the first free place.
  */
 export function normalizeMetricPreferences(input: unknown): PortfolioMetricPreference[] {
   const result: PortfolioMetricPreference[] = [];
@@ -132,7 +141,7 @@ export function normalizeMetricPreferences(input: unknown): PortfolioMetricPrefe
         used[slot] += 1;
       }
     }
-    result.push({ id: pref.id, added: pref.added, slot, order: result.length });
+    result.push({ id: pref.id, added: pref.added, slot, order: result.length, ...(slot ? { place: pref.place } : {}) });
     seen.add(pref.id);
   };
 
@@ -150,7 +159,33 @@ export function normalizeMetricPreferences(input: unknown): PortfolioMetricPrefe
     push(isFresh ? pref : { id: pref.id, added: true, slot: null });
   }
 
+  assignPlaces(result);
   return result;
+}
+
+/** Keep each valid, unique stored place; give the other slotted entries the first free place. */
+function assignPlaces(prefs: PortfolioMetricPreference[]): void {
+  const taken: Record<MetricSlot, Set<number>> = { large: new Set(), compact: new Set() };
+  const unplaced: PortfolioMetricPreference[] = [];
+  for (const pref of prefs) {
+    if (!pref.slot) {
+      delete pref.place;
+      continue;
+    }
+    const place = pref.place;
+    if (place !== undefined && place < METRIC_SLOT_CAPACITY[pref.slot] && !taken[pref.slot].has(place)) {
+      taken[pref.slot].add(place);
+    } else {
+      unplaced.push(pref);
+    }
+  }
+  for (const pref of unplaced) {
+    const used = taken[pref.slot!];
+    let place = 0;
+    while (used.has(place)) place += 1;
+    used.add(place);
+    pref.place = place;
+  }
 }
 
 /** Parse a stored JSON string. Invalid or empty values fall back to defaults. */
@@ -198,7 +233,9 @@ export function withMetricAdded(
 
 /** Remove a metric from the portfolio. The entry stays with `added: false` so it is not re-added. */
 export function withMetricRemoved(prefs: readonly PortfolioMetricPreference[], id: string): PortfolioMetricPreference[] {
-  return normalizeMetricPreferences(prefs.map((pref) => (pref.id === id ? { ...pref, added: false, slot: null } : pref)));
+  return normalizeMetricPreferences(
+    prefs.map((pref) => (pref.id === id ? { ...pref, added: false, slot: null, place: undefined } : pref)),
+  );
 }
 
 /** Move a metric to a dashboard slot, or off the dashboard with `null`. Returns null when the slot is full. */
@@ -210,7 +247,35 @@ export function withMetricSlot(
   const current = prefs.find((pref) => pref.id === id);
   if (!current || !current.added) return null;
   if (slot && current.slot !== slot && countMetricSlots(prefs)[slot] >= METRIC_SLOT_CAPACITY[slot]) return null;
-  return normalizeMetricPreferences(prefs.map((pref) => (pref.id === id ? { ...pref, slot } : pref)));
+  if (slot === current.slot) return normalizeMetricPreferences(prefs);
+  return normalizeMetricPreferences(prefs.map((pref) => (pref.id === id ? { ...pref, slot, place: undefined } : pref)));
+}
+
+/**
+ * Put a metric on dashboard `place` of `slot`, adding it to the portfolio when
+ * needed. A metric already on that place swaps with it: it takes the moved
+ * metric's old slot and place, or leaves the dashboard when the moved metric
+ * had none. Other metrics keep their places. Returns null when the place is
+ * out of range or the slot is full.
+ */
+export function withMetricPlaced(
+  prefs: readonly PortfolioMetricPreference[],
+  id: string,
+  slot: MetricSlot,
+  place: number,
+): PortfolioMetricPreference[] | null {
+  if (!Number.isInteger(place) || place < 0 || place >= METRIC_SLOT_CAPACITY[slot]) return null;
+  const current = prefs.find((pref) => pref.id === id);
+  const from = current?.added && current.slot ? { slot: current.slot, place: current.place } : null;
+  const occupant = prefs.find((pref) => pref.id !== id && pref.added && pref.slot === slot && pref.place === place);
+  if (!occupant && from?.slot !== slot && countMetricSlots(prefs)[slot] >= METRIC_SLOT_CAPACITY[slot]) return null;
+  const list = prefs.map((pref): PortfolioMetricPreference => {
+    if (pref.id === id) return { ...pref, added: true, slot, place };
+    if (pref === occupant) return from ? { ...pref, slot: from.slot, place: from.place } : { ...pref, slot: null, place: undefined };
+    return pref;
+  });
+  if (!current) list.push({ id, added: true, slot, place, order: list.length });
+  return normalizeMetricPreferences(list);
 }
 
 /** Move a metric one step among the entries that share its slot. */

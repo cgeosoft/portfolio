@@ -41,6 +41,7 @@ import type {
   PrepareReportPromptRequest,
   PreviewMetricInstallRequest,
   SavePortfolioMetricsRequest,
+  SuggestPortfolioMetricsRequest,
   StartReportStreamRequest,
   TestFinnhubConnectionRequest,
   TestFmpConnectionRequest,
@@ -227,6 +228,12 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const body = await ctx.body<EvaluatePortfolioMetricsRequest>();
     const results = await metricsService.evaluateForPortfolio({ ...body, portfolioId: ctx.params.id! });
     return { portfolioId: ctx.params.id!, results };
+  });
+
+  // Proposal only; the GUI saves it through PUT /metrics when the user confirms.
+  router.post("/api/portfolios/:id/metrics/suggest", async (ctx) => {
+    const body = await ctx.body<SuggestPortfolioMetricsRequest>();
+    return suggestMetricLayout({ llm, portfolioService, metricsService }, ctx.params.id!, body.baseCurrency);
   });
 
   router.get("/api/metrics/catalog", () => metricsService.getCatalog());

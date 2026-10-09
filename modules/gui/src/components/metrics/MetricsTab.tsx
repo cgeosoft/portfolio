@@ -1,35 +1,22 @@
-import { useMemo, useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  EyeOff,
-  Info,
-  LayoutGrid,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Store,
-  Trash2,
-  X,
-} from "lucide-react";
+import { useCallback, useMemo, useState, type DragEvent } from "react";
+import { GripHorizontal, LayoutGrid, Plus, RotateCcw, Sparkles, X } from "lucide-react";
 import type { MetricEvaluation, MetricListing, MetricRepositoryListing } from "portfolio-shared/api-types";
 import {
   METRIC_SLOT_CAPACITY,
   countMetricSlots,
-  withMetricMoved,
-  withMetricRemoved,
+  withMetricPlaced,
   withMetricSlot,
   type MetricSlot,
   type PortfolioMetricPreference,
 } from "portfolio-shared/metrics";
-import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
-import { MetricMarketplaceModal, VerifiedBadge, smallButton } from "./MetricMarketplaceModal";
+import { MetricLibrary, smallButton } from "./MetricLibrary";
 import { MetricCompactTile, MetricLargeCard } from "./MetricCard";
+import { MetricPickerModal } from "./MetricPickerModal";
+import { MetricSuggestModal } from "./MetricSuggestModal";
 import { displayMetric, metricTitle, type MetricDisplay } from "./metric-view";
 
 interface MetricsTabProps {
-  hasPortfolio: boolean;
+  portfolioId: string | null;
   prefs: PortfolioMetricPreference[];
   listings: MetricListing[];
   repository: MetricRepositoryListing[];
@@ -47,24 +34,16 @@ interface MetricsTabProps {
 
 const SLOT_LABEL: Record<MetricSlot, string> = { large: "Large cards", compact: "Compact tiles" };
 
-function SectionHeader({ icon: Icon, title, subtitle, actions }: { icon: typeof LayoutGrid; title: string; subtitle: string; actions?: React.ReactNode }) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-      <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
-          <Icon className="w-4 h-4 text-[#DD3C73] shrink-0" />
-          <span className="truncate">{title}</span>
-        </h2>
-        <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{subtitle}</p>
-      </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
-    </div>
-  );
+/** A dashboard place: the metric on it, or null when it is empty. */
+interface Place {
+  slot: MetricSlot;
+  index: number;
+  id: string | null;
 }
 
-/** Preferences → Metrics: dashboard slots and the installed metrics; the marketplace opens in a modal. */
+/** Preferences → Metrics: the dashboard places on top, every metric below. */
 export function MetricsTab({
-  hasPortfolio,
+  portfolioId,
   prefs,
   listings,
   repository,
@@ -79,53 +58,62 @@ export function MetricsTab({
   onUninstall,
   onRetry,
 }: MetricsTabProps) {
-  const [isMarketplaceOpen, setIsMarketplaceOpen] = useState(false);
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const [picking, setPicking] = useState<Place | null>(null);
+  const [dragging, setDragging] = useState<Place | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   const listingById = useMemo(() => new Map(listings.map((l) => [l.id, l])), [listings]);
   const used = countMetricSlots(prefs);
   const added = prefs.filter((pref) => pref.added && listingById.has(pref.id));
+  const isEmpty = !added.some((pref) => pref.slot);
   const ctx = { currency, hideValues };
   const display = (id: string): MetricDisplay => displayMetric(evaluations[id], ctx);
+  const closePicker = useCallback(() => setPicking(null), []);
 
-  const setSlot = (id: string, slot: MetricSlot | null) => {
-    const next = withMetricSlot(prefs, id, slot);
+  const placedIds = new Set(added.filter((pref) => pref.slot).map((pref) => pref.id));
+  const candidates = listings.filter((listing) => !placedIds.has(listing.id));
+
+  const placeKey = (place: Place) => `${place.slot}:${place.index}`;
+
+  const removeFromDashboard = (id: string) => {
+    const next = withMetricSlot(prefs, id, null);
     if (next) onSave(next);
   };
 
-  const renderSlotControls = (pref: PortfolioMetricPreference) => {
-    const canLarge = pref.slot === "large" || used.large < METRIC_SLOT_CAPACITY.large;
-    const canCompact = pref.slot === "compact" || used.compact < METRIC_SLOT_CAPACITY.compact;
-    return (
-      <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-900 border border-slate-800">
-        {([
-          { id: "large" as MetricSlot, label: "Large", icon: Maximize2, enabled: canLarge, title: canLarge ? "Show as a large card" : "All large slots are taken" },
-          { id: "compact" as MetricSlot, label: "Compact", icon: Minimize2, enabled: canCompact, title: canCompact ? "Show as a compact tile" : "All compact slots are taken" },
-          { id: null, label: "Off", icon: EyeOff, enabled: true, title: "Keep on this page, hide from the overview" },
-        ] as const).map((option) => {
-          const OptionIcon = option.icon;
-          const selected = pref.slot === option.id;
-          return (
-            <button
-              key={option.label}
-              type="button"
-              disabled={isSaving || !option.enabled}
-              onClick={() => setSlot(pref.id, option.id)}
-              aria-pressed={selected}
-              title={option.title}
-              className={`h-6 inline-flex items-center gap-1 px-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer font-mono disabled:opacity-40 disabled:cursor-not-allowed ${
-                selected ? "bg-slate-800 text-slate-100" : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              <OptionIcon className="w-3 h-3" />
-              <span>{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
+  const pick = (id: string) => {
+    if (!picking) return;
+    const next = withMetricPlaced(prefs, id, picking.slot, picking.index);
+    if (next) onSave(next);
+    setPicking(null);
   };
 
-  if (!hasPortfolio) {
+  /** Move the dragged metric onto a place. A metric already there swaps with it; the others stay put. */
+  const drop = (from: Place, to: Place) => {
+    if (!from.id || (from.slot === to.slot && from.index === to.index)) return;
+    const next = withMetricPlaced(prefs, from.id, to.slot, to.index);
+    if (next) onSave(next);
+  };
+
+  const dropHandlers = (place: Place) => ({
+    onDragOver: (e: DragEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dropTarget !== placeKey(place)) setDropTarget(placeKey(place));
+    },
+    onDragLeave: (e: DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropTarget(null);
+    },
+    onDrop: (e: DragEvent) => {
+      e.preventDefault();
+      if (dragging) drop(dragging, place);
+      setDragging(null);
+      setDropTarget(null);
+    },
+  });
+
+  if (!portfolioId) {
     return (
       <div className="cx-card p-10 text-center text-slate-500 font-mono text-xs">Create a portfolio first to choose its metrics.</div>
     );
@@ -133,163 +121,160 @@ export function MetricsTab({
 
   return (
     <div className="space-y-6 font-mono">
-      {/* 1. Dashboard slots */}
       <section className="cx-card p-5 sm:p-6 space-y-5">
-        <SectionHeader
-          icon={LayoutGrid}
-          title="Dashboard"
-          subtitle={`Shown on the Overview tab. ${used.large}/${METRIC_SLOT_CAPACITY.large} large cards and ${used.compact}/${METRIC_SLOT_CAPACITY.compact} compact tiles in use.`}
-          actions={
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
+              <LayoutGrid className="w-4 h-4 text-[#DD3C73] shrink-0" />
+              <span className="truncate">Dashboard</span>
+            </h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">Shown on the Overview tab. Drag a card by its header to move it, click an empty place to fill it.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={isSaving || added.length === 0}
+              onClick={() => setIsSuggestOpen(true)}
+              className={`${smallButton} border-[#DD3C73]/40 text-[#DD3C73] hover:text-[#DD3C73] hover:bg-[#DD3C73]/15 ${
+                isEmpty && !isSaving && added.length > 0 ? "cx-attention-pulse" : ""
+              }`}
+              title="Let the assistant choose cards and tiles from your allocation"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Auto choose</span>
+            </button>
             <button type="button" disabled={isSaving} onClick={onReset} className={smallButton} title="Restore the default dashboard">
               <RotateCcw className="w-3 h-3" />
               <span>Defaults</span>
             </button>
-          }
-        />
+          </div>
+        </div>
 
         {(["large", "compact"] as const).map((slot) => {
           const slotted = added.filter((pref) => pref.slot === slot);
-          const free = METRIC_SLOT_CAPACITY[slot] - slotted.length;
+          const places: Place[] = Array.from({ length: METRIC_SLOT_CAPACITY[slot] }, (_, index) => ({
+            slot,
+            index,
+            id: slotted.find((pref) => pref.place === index)?.id ?? null,
+          }));
+          const minHeight = slot === "large" ? "min-h-[120px]" : "min-h-[88px]";
           return (
             <div key={slot} className="space-y-3">
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                {SLOT_LABEL[slot]} · {slotted.length}/{METRIC_SLOT_CAPACITY[slot]}
+                {SLOT_LABEL[slot]} · {used[slot]}/{METRIC_SLOT_CAPACITY[slot]}
               </div>
-              <div className={slot === "large" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"}>
-                {slotted.map((pref, index) => {
-                  const listing = listingById.get(pref.id)!;
+              <div className={slot === "large" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"}>
+                {places.map((place) => {
+                  const key = placeKey(place);
+                  const isTarget = dropTarget === key && dragging !== null && placeKey(dragging) !== key;
+                  const listing = place.id ? listingById.get(place.id) : undefined;
+
+                  if (!place.id || !listing) {
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={isSaving}
+                        onClick={() => setPicking(place)}
+                        {...dropHandlers(place)}
+                        className={`${minHeight} rounded-xl border border-dashed flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                          isTarget
+                            ? "border-[#DD3C73]/70 bg-[#DD3C73]/10 text-[#DD3C73]"
+                            : "border-slate-800 text-slate-600 hover:border-[#DD3C73]/50 hover:text-[#DD3C73] hover:bg-[#DD3C73]/5"
+                        }`}
+                        aria-label={`Choose a metric for this ${slot === "large" ? "large card" : "compact tile"}`}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add metric</span>
+                      </button>
+                    );
+                  }
+
+                  const title = metricTitle(listing);
+                  const isDragged = dragging !== null && placeKey(dragging) === key;
                   return (
-                    <div key={pref.id} className="min-w-0 flex flex-col gap-1.5">
-                      {slot === "large" ? (
-                        <MetricLargeCard listing={listing} display={display(pref.id)} onInfo={() => onInfo(listing)} />
-                      ) : (
-                        <div className="p-3 rounded-xl bg-widget/60 border border-line text-xs">
-                          <MetricCompactTile listing={listing} display={display(pref.id)} onInfo={() => onInfo(listing)} />
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-0.5">
-                          <button type="button" disabled={isSaving || index === 0} onClick={() => onSave(withMetricMoved(prefs, pref.id, -1))} className={smallButton} title="Move earlier" aria-label={`Move ${metricTitle(listing)} earlier`}>
-                            <ChevronUp className="w-3 h-3" />
-                          </button>
-                          <button type="button" disabled={isSaving || index === slotted.length - 1} onClick={() => onSave(withMetricMoved(prefs, pref.id, 1))} className={smallButton} title="Move later" aria-label={`Move ${metricTitle(listing)} later`}>
-                            <ChevronDown className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <button type="button" disabled={isSaving} onClick={() => setSlot(pref.id, null)} className={smallButton} title="Remove from the dashboard" aria-label={`Remove ${metricTitle(listing)} from the dashboard`}>
+                    <div
+                      key={place.id}
+                      {...dropHandlers(place)}
+                      className={`cx-card overflow-hidden min-w-0 flex flex-col transition-all ${isDragged ? "opacity-40" : ""} ${
+                        isTarget ? "ring-2 ring-[#DD3C73]/70" : ""
+                      }`}
+                    >
+                      <div
+                        draggable={!isSaving}
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", place.id!);
+                          const card = e.currentTarget.parentElement;
+                          if (card) e.dataTransfer.setDragImage(card, 16, 12);
+                          setDragging(place);
+                        }}
+                        onDragEnd={() => {
+                          setDragging(null);
+                          setDropTarget(null);
+                        }}
+                        className="h-6 shrink-0 flex items-center justify-between gap-2 pl-2 pr-1 border-b border-line bg-slate-900/60 text-slate-500 cursor-grab active:cursor-grabbing hover:text-slate-300 transition-colors"
+                        title="Drag to move"
+                        aria-label={`Drag ${title} to another place`}
+                        role="button"
+                      >
+                        <GripHorizontal className="w-3.5 h-3.5" />
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          draggable={false}
+                          onClick={() => removeFromDashboard(listing.id)}
+                          className="w-4 h-4 inline-flex items-center justify-center rounded text-slate-500 cursor-pointer hover:text-rose-300 hover:bg-rose-500/15 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Remove from the dashboard"
+                          aria-label={`Remove ${title} from the dashboard`}
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
+                      {slot === "large" ? (
+                        <div className="flex-1 flex flex-col [&_.cx-card]:flex-1 [&_.cx-card]:border-0 [&_.cx-card]:rounded-none [&_.cx-card]:shadow-none">
+                          <MetricLargeCard listing={listing} display={display(place.id)} onInfo={() => onInfo(listing)} />
+                        </div>
+                      ) : (
+                        <div className="flex-1 p-3 text-xs">
+                          <MetricCompactTile listing={listing} display={display(place.id)} onInfo={() => onInfo(listing)} />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
-                {Array.from({ length: free }, (_, i) => (
-                  <div
-                    key={`free-${slot}-${i}`}
-                    className={`rounded-xl border border-dashed border-slate-800 text-slate-600 text-[10px] uppercase tracking-wider flex items-center justify-center ${
-                      slot === "large" ? "min-h-[96px]" : "min-h-[52px]"
-                    }`}
-                  >
-                    Free slot
-                  </div>
-                ))}
               </div>
             </div>
           );
         })}
       </section>
 
-      {/* 2. Installed on this portfolio */}
-      <section className="cx-card p-5 sm:p-6 space-y-4">
-        <SectionHeader
-          icon={Info}
-          title={`Installed metrics (${added.length})`}
-          subtitle="Every metric this portfolio runs. Choose which ones appear on the dashboard."
-          actions={
-            <button
-              type="button"
-              onClick={() => setIsMarketplaceOpen(true)}
-              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
-            >
-              <Store className="w-3.5 h-3.5" />
-              <span>Marketplace</span>
-            </button>
-          }
-        />
-        {added.length === 0 ? (
-          <div className="py-8 text-center text-slate-500 text-xs">No metrics installed yet. Add some from the marketplace.</div>
-        ) : (
-          <div className="divide-y divide-slate-800/80 -mt-2">
-            {added.map((pref) => {
-              const listing = listingById.get(pref.id)!;
-              const { manifest } = listing;
-              const Icon = getMetricIcon(manifest.icon);
-              const shown = display(pref.id);
-              return (
-                <div key={pref.id} className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <div className="flex items-center gap-3 min-w-0 flex-1 basis-64">
-                    <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                      <Icon className={`w-3.5 h-3.5 ${getMetricAccentClass(manifest.accent)}`} />
-                    </div>
-                    <div className="min-w-0" title={manifest.summary}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-200 truncate">{manifest.name}</span>
-                        <VerifiedBadge listing={listing} />
-                      </div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-500 truncate">
-                        {manifest.category} · v{manifest.version} · {manifest.developer.name}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="w-32 text-right shrink-0 min-w-0">
-                    {shown.kind === "ok" && (
-                      <>
-                        <div className={`text-xs font-bold truncate ${shown.valueClass}`}>{shown.value}</div>
-                        {shown.sub && <div className="text-[10px] text-slate-500 truncate">{shown.sub}</div>}
-                      </>
-                    )}
-                    {shown.kind === "pending" && <Loader2 className="w-4 h-4 animate-spin text-slate-600 ml-auto" />}
-                    {shown.kind === "failed" && (
-                      <div className="text-[10px] text-rose-400 truncate" title={shown.error}>
-                        {shown.status === "quarantined" ? "Stopped: " : "Error: "}
-                        {shown.error}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    {renderSlotControls(pref)}
-                    {shown.kind === "failed" && shown.status === "quarantined" && (
-                      <button type="button" onClick={() => onRetry(pref.id)} className={smallButton} title="Run this module again" aria-label={`Retry ${manifest.name}`}>
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    )}
-                    <button type="button" onClick={() => onInfo(listing)} className={smallButton} title="Details" aria-label={`Details of ${manifest.name}`}>
-                      <Info className="w-3 h-3" />
-                    </button>
-                    <button type="button" disabled={isSaving} onClick={() => onSave(withMetricRemoved(prefs, pref.id))} className={`${smallButton} hover:text-rose-300 hover:border-rose-500/40`} title="Remove from this portfolio" aria-label={`Remove ${manifest.name}`}>
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <MetricMarketplaceModal
-        isOpen={isMarketplaceOpen}
-        onClose={() => setIsMarketplaceOpen(false)}
-        prefs={prefs}
+      <MetricLibrary
         listings={listings}
         repository={repository}
-        isSaving={isSaving}
-        onSave={onSave}
+        display={display}
         onInfo={onInfo}
         onInstalled={onInstalled}
         onUninstall={onUninstall}
+        onRetry={onRetry}
+      />
+
+      <MetricPickerModal slot={picking?.slot ?? null} candidates={candidates} display={display} onPick={pick} onClose={closePicker} />
+
+      <MetricSuggestModal
+        isOpen={isSuggestOpen}
+        portfolioId={portfolioId}
+        prefs={prefs}
+        listings={listings}
+        evaluations={evaluations}
+        currency={currency}
+        hideValues={hideValues}
+        isSaving={isSaving}
+        onClose={() => setIsSuggestOpen(false)}
+        onReplace={(next) => {
+          onSave(next);
+          setIsSuggestOpen(false);
+        }}
       />
     </div>
   );

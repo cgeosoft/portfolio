@@ -18,25 +18,13 @@ interface MetricDashboardProps {
 export function MetricDashboard({ prefs, listings, evaluations, currency, hideValues, onInfo, onOpenMetrics }: MetricDashboardProps) {
   const listingById = new Map(listings.map((l) => [l.id, l]));
   const slotted = prefs.filter((pref) => pref.added && pref.slot && listingById.has(pref.id));
-  const large = slotted.filter((pref) => pref.slot === "large");
-  const compact = slotted.filter((pref) => pref.slot === "compact");
+  const byPlace = (a: PortfolioMetricPreference, b: PortfolioMetricPreference) => (a.place ?? 0) - (b.place ?? 0);
+  const large = slotted.filter((pref) => pref.slot === "large").sort(byPlace);
+  const compact = slotted.filter((pref) => pref.slot === "compact").sort(byPlace);
   const ctx = { currency, hideValues };
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 min-w-0">
-        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-mono truncate">Portfolio Metrics</div>
-        <button
-          type="button"
-          onClick={onOpenMetrics}
-          className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#DD3C73] hover:border-[#DD3C73]/40 hover:bg-[#DD3C73]/10 transition-all cursor-pointer shrink-0"
-          title="Choose the metrics of this portfolio"
-        >
-          <Sliders className="w-3 h-3" />
-          <span>Customize Metrics</span>
-        </button>
-      </div>
-
       {large.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {large.map((pref) => {

@@ -62,6 +62,24 @@ export interface SavePortfolioMetricsRequest {
   reset?: boolean;
 }
 
+export interface SuggestPortfolioMetricsRequest {
+  portfolioId: string;
+  baseCurrency?: string;
+}
+
+/** Dashboard layout the assistant proposes. Nothing is saved until the GUI sends `metrics` to savePortfolioMetrics. */
+export interface SuggestPortfolioMetricsResponse {
+  portfolioId: string;
+  /** Full preference list with the proposed slots applied. */
+  metrics: PortfolioMetricPreference[];
+  /** Proposed large cards, in display order. */
+  large: string[];
+  /** Proposed compact tiles, in display order. */
+  compact: string[];
+  /** Short explanation from the assistant. */
+  reason: string;
+}
+
 /** A metric module the application can run, as shown in the Metrics tab. */
 export interface MetricListing {
   id: string;

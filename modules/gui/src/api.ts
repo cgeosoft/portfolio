@@ -42,6 +42,8 @@ import type {
   RevokeOtherSessionsResponse,
   RunAutomationResponse,
   SavePortfolioMetricsRequest,
+  SuggestPortfolioMetricsRequest,
+  SuggestPortfolioMetricsResponse,
   SearchSymbolResponse,
   SendNotificationResponse,
   SessionsInfo,
@@ -164,6 +166,8 @@ export const api = {
   savePortfolioMetrics: (body: SavePortfolioMetricsRequest) => request<GetPortfolioMetricsResponse>(`/api/portfolios/${enc(body.portfolioId)}/metrics`, { method: "PUT", body: json(body) }),
   evaluatePortfolioMetrics: (body: EvaluatePortfolioMetricsRequest) =>
     request<EvaluatePortfolioMetricsResponse>(`/api/portfolios/${enc(body.portfolioId)}/metrics/evaluate`, { method: "POST", body: json(body) }),
+  suggestPortfolioMetrics: (body: SuggestPortfolioMetricsRequest) =>
+    request<SuggestPortfolioMetricsResponse>(`/api/portfolios/${enc(body.portfolioId)}/metrics/suggest`, { method: "POST", body: json(body) }, { timeoutMs: 300_000 }),
   getMetricCatalog: () => request<GetMetricCatalogResponse>("/api/metrics/catalog"),
   previewMetricInstall: (url: string) => request<PreviewMetricInstallResponse>("/api/metrics/preview", { method: "POST", body: json({ url }) }),
   installMetric: (url: string, grantedScopes: MetricScope[]) => request<InstallMetricResponse>("/api/metrics/install", { method: "POST", body: json({ url, grantedScopes }) }),
