@@ -10,7 +10,8 @@ import { appLogger } from "../logger";
 import { CONFIG_KEYS, loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
 import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
-import { findBundledFile, getLogDir } from "../paths";
+import { REPO_ROOT, findBundledFile, getLogDir } from "../paths";
+import { join } from "node:path";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
@@ -60,7 +61,7 @@ import type {
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
-const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login"]);
+const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/intro"]);
 /** Routes a signed-in client may call before accepting the Terms of Use. */
 const PRE_TERMS_PATHS = new Set(["/api/auth/me", "/api/auth/accept-terms", "/api/auth/logout"]);
 
@@ -125,6 +126,16 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   // ── health ──────────────────────────────────────────────────────────────
 
   router.get("/api/health", () => ({ status: "ok", version: getAppVersion(), env: getEnvironmentName() }));
+
+  // Preview of the desktop starting page with the vendor intro, for design review. Only in a
+  // checkout: it renders the page from the desktop shell source. Reload to replay.
+  router.get("/intro", async () => {
+    if (!REPO_ROOT) throw new HttpError(404, "Not found");
+    const pages = (await import(join(REPO_ROOT, "modules/desktop/src/bun/pages.ts"))) as { startingPage(hint: string): string };
+    return new Response(pages.startingPage("Starting the local service."), {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  });
 
   // ── auth ────────────────────────────────────────────────────────────────
 

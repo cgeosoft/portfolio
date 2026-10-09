@@ -43,6 +43,8 @@ export const APP = {
       devGui: "Starting the Vite dev server.",
       open: "Opening the dashboard.",
     },
+    /** Vendor intro played on the starting page before the brand; the shell holds the dashboard until it ends. */
+    intro: { rows: ["cgeo", "soft"], caption: "presents", durationMs: 3000 },
     failedHint: "Settings and API keys live in the database there; nothing is read from a .env file.",
     /** Brand mark from modules/gui/src/components/common/AppIcon.tsx: the trending-up line. */
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -59,6 +61,8 @@ export const APP = {
         "radial-gradient(circle 300px at 85% 85%, rgba(6, 182, 212, 0.08), transparent 70%)",
       ],
       tileFrame: "linear-gradient(to top right, #DD3C73, #a855f7, #22d3ee)",
+      /** Ring colours of the intro ripple, from the tile frame gradient. */
+      ripples: ["#DD3C73", "#a855f7", "#22d3ee"],
       tileFrameWidth: 1,
       tileFill: "#020617",
       tileShadow: "rgba(221, 60, 115, 0.35)",

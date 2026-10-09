@@ -112,7 +112,14 @@ async function main(): Promise<void> {
     startingHint = hint;
     mainWindow.webview.executeJavascript(startingHintScript(hint));
   };
+  // The intro on the starting page plays from its first DOM-ready; the dashboard waits for it.
+  let introEndsAt = Date.now() + APP.pages.intro.durationMs;
+  let introStarted = false;
   mainWindow.webview.on("dom-ready", () => {
+    if (!introStarted) {
+      introStarted = true;
+      introEndsAt = Date.now() + APP.pages.intro.durationMs;
+    }
     if (!appUrl) mainWindow.webview.executeJavascript(startingHintScript(startingHint));
   });
 
@@ -236,6 +243,8 @@ async function main(): Promise<void> {
     appUrl = `http://127.0.0.1:${service.port}`;
   }
   showStartingHint(APP.pages.starting.open);
+  const introLeft = introEndsAt - Date.now();
+  if (introLeft > 0) await Bun.sleep(introLeft);
   service.log(`window on ${appUrl}`);
   mainWindow.webview.loadURL(appUrl);
 }
