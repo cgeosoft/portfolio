@@ -233,6 +233,15 @@ export const api = {
   testYahooConnection: () => request<TestYahooConnectionResponse>("/api/providers/yahoo/test"),
   clearMarketCache: () => request<ClearMarketCacheResponse>("/api/market/cache/clear", { method: "POST" }),
   syncQuotes: () => request<SyncQuotesResponse>("/api/market/sync", { method: "POST" }),
+  getMacroSnapshot: (baseCurrency?: string, refresh = false) => {
+    const params = [baseCurrency ? `baseCurrency=${enc(baseCurrency)}` : "", refresh ? "refresh=true" : ""].filter(Boolean).join("&");
+    return request<MacroSnapshot>(`/api/market/macro${params ? `?${params}` : ""}`, {}, { timeoutMs: 60_000 });
+  },
+  getBenchmarkHistory: (symbol: string, range: string) => request<BenchmarkHistoryResponse>(`/api/market/benchmark?symbol=${enc(symbol)}&range=${enc(range)}`, {}, { timeoutMs: 30_000 }),
+  getBenchmarkComparison: (portfolioId: string, range: string, symbol?: string) =>
+    request<{ comparison: BenchmarkComparison | null }>(`/api/portfolios/${enc(portfolioId)}/benchmark?range=${enc(range)}${symbol ? `&symbol=${enc(symbol)}` : ""}`, {}, { timeoutMs: 60_000 }),
+  /** Whether any market of the held symbols is open; the timed quotes refresh skips a run when none is. */
+  getMarketStatus: () => request<MarketStatusResponse>("/api/market/status", {}, { timeoutMs: 15_000 }),
 
   // ---- integrations and automation
   testGotify: (body: TestGotifyRequest) => request<SendNotificationResponse>("/api/integrations/gotify/test", { method: "POST", body: json(body) }),

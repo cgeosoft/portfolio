@@ -24,6 +24,12 @@ import { telemetry } from "../services/telemetry";
 import { sendGotify } from "../services/gotify";
 import { sendNtfy } from "../services/ntfy";
 import * as portfolioMetrics from "../services/portfolio-metrics";
+import { suggestMetricLayout } from "../services/metric-advisor";
+import { getMacroSnapshot } from "../services/intel/macro";
+import { getBenchmarkComparison, getBenchmarkHistory, normalizeBenchmarkRange } from "../services/intel/benchmark";
+import { getHeldMarketStatus } from "../services/intel/market-hours";
+import { DEFAULT_BENCHMARK_SYMBOL } from "portfolio-shared/config-types";
+import { getCompanyIntel, getTranscriptResponse, parseIntelParts, summarizeTranscriptResponse } from "../services/intel/company";
 import { WEBPAGE_URL, SUPPORT_EMAIL } from "portfolio-shared/brand";
 import type { AppServices } from "../services/container";
 import type {
@@ -431,6 +437,26 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       return { success: false, lastSync: loadConfig().lastQuotesSync || "", error: msg };
     }
   });
+
+  // ── market intelligence: macro, benchmarks, market hours ────────────────
+
+  router.get("/api/market/macro", (ctx) =>
+    getMacroSnapshot(services, {
+      baseCurrency: ctx.url.searchParams.get("baseCurrency") || undefined,
+      forceFresh: ctx.url.searchParams.get("refresh") === "true",
+    }),
+  );
+
+  router.get("/api/market/benchmark", (ctx) =>
+    getBenchmarkHistory(services, ctx.url.searchParams.get("symbol") || DEFAULT_BENCHMARK_SYMBOL, normalizeBenchmarkRange(ctx.url.searchParams.get("range"))),
+  );
+
+  router.get("/api/portfolios/:id/benchmark", async (ctx) => {
+    const comparison = await getBenchmarkComparison(services, ctx.params.id!, normalizeBenchmarkRange(ctx.url.searchParams.get("range")), ctx.url.searchParams.get("symbol") || undefined);
+    return { comparison };
+  });
+
+  router.get("/api/market/status", () => getHeldMarketStatus(portfolioService, new Date(), fmp));
 
   // ── config ──────────────────────────────────────────────────────────────
 

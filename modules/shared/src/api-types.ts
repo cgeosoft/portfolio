@@ -834,6 +834,136 @@ export interface PortfolioEventsResponse {
   sources: DataProviderId[];
 }
 
+// ── market intelligence: macro context, benchmarks, market hours ────────────
+
+/** One maturity of the US Treasury yield curve. `yield` is in percent (4.25 = 4.25%). */
+export interface YieldCurvePoint {
+  /** "month3", "year2", "year10" and so on, the FMP field names. */
+  tenor: string;
+  /** Short label for the GUI: "3M", "2Y", "10Y". */
+  label: string;
+  /** Maturity in years, for ordering and plotting. */
+  years: number;
+  yield: number;
+}
+
+/** The yield curve on one date plus the history of its key maturities. */
+export interface YieldCurveSnapshot {
+  date: string;
+  points: YieldCurvePoint[];
+  /** Key maturities over the last year, one point a week, oldest first. Percent. */
+  history: Array<{ date: string; month3?: number; year2?: number; year10?: number; year30?: number }>;
+  source: DataProviderId;
+}
+
+export type EconomicIndicatorId = "gdp" | "cpi" | "inflationRate" | "unemploymentRate" | "federalFunds";
+
+/** The latest US reading of one economic indicator and the reading before it. */
+export interface EconomicIndicatorReading {
+  id: EconomicIndicatorId;
+  name: string;
+  /** "%" for rates, "index" for CPI, "bn USD" for GDP. */
+  unit: string;
+  value: number;
+  date: string;
+  previous?: number;
+  previousDate?: string;
+}
+
+/** One release of the economic calendar. `date` is UTC, "YYYY-MM-DD HH:mm:ss". */
+export interface EconomicEvent {
+  date: string;
+  country: string;
+  currency: string;
+  event: string;
+  impact: "High" | "Medium" | "Low" | string;
+  previous?: number | null;
+  estimate?: number | null;
+  actual?: number | null;
+  unit?: string | null;
+}
+
+/** Equity risk premium of a country, in percent. */
+export interface MarketRiskPremiumRow {
+  country: string;
+  totalEquityRiskPremium: number;
+  countryRiskPremium: number;
+}
+
+/** Average change of a sector on one day, in percent, and its P/E when known. */
+export interface SectorPerformanceRow {
+  sector: string;
+  changePercent: number;
+  pe?: number;
+  /** The sector ETF that stood in when FMP had no snapshot. */
+  etf?: string;
+}
+
+/** Macro context of `GET /api/market/macro`. Every piece is null when no provider had it. */
+export interface MacroSnapshot {
+  asOf: string;
+  baseCurrency: string;
+  yieldCurve: YieldCurveSnapshot | null;
+  indicators: { items: EconomicIndicatorReading[]; source: DataProviderId } | null;
+  /** Releases of the next 7 days, high impact or in the base currency (and USD). */
+  calendar: { from: string; to: string; events: EconomicEvent[]; source: DataProviderId } | null;
+  /** The base currency's country and the United States. */
+  riskPremium: { items: MarketRiskPremiumRow[]; source: DataProviderId } | null;
+  sectors: { date: string; items: SectorPerformanceRow[]; source: DataProviderId; peSource?: DataProviderId } | null;
+  /** The 3-month T-bill yield as a decimal (0.042), or the built-in default. */
+  riskFreeRate: { rate: number; source: DataProviderId | "default" };
+}
+
+/** One close of a benchmark. */
+export interface BenchmarkPoint {
+  date: string;
+  close: number;
+}
+
+/** `GET /api/market/benchmark?symbol=&range=`. `points` is empty when no provider had the symbol. */
+export interface BenchmarkHistoryResponse {
+  symbol: string;
+  label: string;
+  range: string;
+  points: BenchmarkPoint[];
+  source: DataProviderId | null;
+}
+
+/** Portfolio against a benchmark over one range, both in percent from the first common date. */
+export interface BenchmarkComparison {
+  symbol: string;
+  label: string;
+  range: string;
+  from: string;
+  to: string;
+  /** Time-weighted return of the invested holdings (cost-basis changes treated as cash flows). */
+  portfolioReturnPercent: number;
+  benchmarkReturnPercent: number;
+  /** Portfolio minus benchmark, in percentage points. */
+  excessReturnPercent: number;
+  series: Array<{ date: string; portfolio: number; benchmark: number }>;
+  source: DataProviderId | null;
+}
+
+/** Trading state of one exchange. */
+export interface ExchangeStatus {
+  exchange: string;
+  name: string;
+  timezone: string;
+  tradingDay: boolean;
+  open: boolean;
+  /** "fmp" when FMP supplied the hours or the holidays, "builtin" for the built-in table. */
+  source: DataProviderId | "builtin";
+}
+
+/** `GET /api/market/status`: the exchanges of the held symbols across every portfolio. */
+export interface MarketStatusResponse {
+  now: string;
+  /** True when any exchange is open (or within the sync grace window), or when no exchange applies. */
+  anyOpen: boolean;
+  markets: ExchangeStatus[];
+}
+
 // ── portfolio exposure: ETF and fund look-through (services/exposure.ts, services/intel/etf.ts) ──
 
 /** One bucket of an exposure breakdown. Percent of the whole portfolio value, cash included. */

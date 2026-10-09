@@ -66,6 +66,9 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   eventAlertsTime: "18:00",
   eventAlertsPortfolioId: "",
   eventAlertsLastRun: undefined,
+  // DEFAULT_BENCHMARK_SYMBOL of portfolio-shared/config-types.
+  benchmarkSymbol: "^GSPC",
+  chartRange: "1y",
 };
 
 /** Keys of the old config.json that are no longer settings of the service. */

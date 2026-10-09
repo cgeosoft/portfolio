@@ -175,7 +175,23 @@ export interface DesktopConfig {
   eventAlertsPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled event alert run. Written by the service. */
   eventAlertsLastRun?: string;
+  /** Benchmark drawn over the performance chart: a symbol of `BENCHMARK_OPTIONS`, or "none". */
+  benchmarkSymbol: string;
+  /** Timeframe of the performance chart: "1m", "3m", "6m", "1y" or "all". */
+  chartRange: string;
 }
+
+/** Benchmarks the performance chart offers. URTH (iShares MSCI World ETF) stands in for MSCI World. */
+export const BENCHMARK_OPTIONS: ReadonlyArray<{ symbol: string; label: string }> = [
+  { symbol: "^GSPC", label: "S&P 500" },
+  { symbol: "^NDX", label: "Nasdaq 100" },
+  { symbol: "URTH", label: "MSCI World (URTH)" },
+  { symbol: "^STOXX50E", label: "Euro Stoxx 50" },
+  { symbol: "VT", label: "FTSE All-World (VT)" },
+];
+
+/** The default benchmark: the S&P 500. */
+export const DEFAULT_BENCHMARK_SYMBOL = "^GSPC";
 
 /** "weekdays" runs Monday to Friday; the Monday brief covers the Friday session. */
 export type DailyBriefDays = "daily" | "weekdays";
