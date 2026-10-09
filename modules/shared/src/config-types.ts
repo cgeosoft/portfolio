@@ -4,8 +4,25 @@
  * through Settings in the GUI.
  */
 
-export type DataProviderId = "yahoo" | "finnhub";
+/**
+ * A market data provider. "fmp" is Financial Modeling Prep (paid key),
+ * "yahoo" needs no key, "finnhub" needs a free key.
+ */
+export type DataProviderId = "fmp" | "yahoo" | "finnhub";
 
+/** Display names of the providers, for the GUI and for citing sources in reports and chat. */
+export const DATA_PROVIDER_LABELS: Record<DataProviderId, string> = {
+  fmp: "Financial Modeling Prep",
+  yahoo: "Yahoo Finance",
+  finnhub: "Finnhub",
+};
+
+/**
+ * The preferred provider of each data category. The service tries it first
+ * and then the other configured providers in quality order
+ * (modules/service/src/services/providers/chain.ts), so a provider without a
+ * key is skipped.
+ */
 export interface DataProviderCategoryRouting {
   quotes: DataProviderId;
   news: DataProviderId;
@@ -13,15 +30,38 @@ export interface DataProviderCategoryRouting {
   fx: DataProviderId;
   fundamentals: DataProviderId;
   search: DataProviderId;
+  companyNews: DataProviderId;
+  dividends: DataProviderId;
+  splits: DataProviderId;
+  earnings: DataProviderId;
+  analyst: DataProviderId;
+  etfInfo: DataProviderId;
+  etfHoldings: DataProviderId;
+  etfSectors: DataProviderId;
+  etfAssetClasses: DataProviderId;
 }
 
+/**
+ * FMP first everywhere except ETF asset classes, where Yahoo splits stock,
+ * bond and cash. Without an FMP key each category falls back in its quality
+ * order (CATEGORY_QUALITY_ORDER in providers/chain.ts).
+ */
 export const DEFAULT_DATA_PROVIDER_ROUTING: DataProviderCategoryRouting = {
-  quotes: "yahoo",
-  news: "finnhub",
-  charts: "yahoo",
-  fx: "yahoo",
-  fundamentals: "finnhub",
-  search: "yahoo",
+  quotes: "fmp",
+  news: "fmp",
+  charts: "fmp",
+  fx: "fmp",
+  fundamentals: "fmp",
+  search: "fmp",
+  companyNews: "fmp",
+  dividends: "fmp",
+  splits: "fmp",
+  earnings: "fmp",
+  analyst: "fmp",
+  etfInfo: "fmp",
+  etfHoldings: "fmp",
+  etfSectors: "fmp",
+  etfAssetClasses: "yahoo",
 };
 
 /** Window geometry persisted by the desktop shell (not part of DesktopConfig). */
@@ -62,6 +102,8 @@ export interface DesktopConfig {
   llmModels?: Record<string, string>;
   /** Optional Finnhub API key for market intelligence in AI reports */
   finnhubApiKey?: string;
+  /** Optional Financial Modeling Prep API key. Masked like the other keys. */
+  fmpApiKey?: string;
   /** Provider assignments for each data category */
   dataProviderRouting: DataProviderCategoryRouting;
   /** ISO timestamp of the last market quotes synchronization */

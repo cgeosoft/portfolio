@@ -540,4 +540,161 @@ export class YahooFinanceService {
 
     return result;
   }
+
+  // ---------------------------------------------------------------- quoteSummary
+
+  /** Cookie and crumb that `/v10/finance/quoteSummary` requires; shared by every caller. */
+  private static summarySession: { cookie: string; crumb: string; expiresAt: number } | null = null;
+  private static summarySessionPromise: Promise<{ cookie: string; crumb: string } | null> | null = null;
+  private static readonly inFlightSummaries = new Map<string, Promise<Record<string, unknown> | null>>();
+
+  /** Gets a Yahoo cookie (fc.yahoo.com) and the crumb that goes with it, reused for an hour. */
+  private static async getSummarySession(forceNew = false): Promise<{ cookie: string; crumb: string } | null> {
+    const current = YahooFinanceService.summarySession;
+    if (!forceNew && current && Date.now() < current.expiresAt) return current;
+    if (YahooFinanceService.summarySessionPromise) return YahooFinanceService.summarySessionPromise;
+
+    YahooFinanceService.summarySessionPromise = (async () => {
+      try {
+        const res = await fetch("https://fc.yahoo.com", { headers: DEFAULT_HEADERS, redirect: "manual", signal: AbortSignal.timeout(8_000) });
+        const setCookies = typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [res.headers.get("set-cookie") ?? ""];
+        const cookie = setCookies.map((c) => c.split(";")[0]?.trim() ?? "").filter(Boolean).join("; ");
+        if (!cookie) return null;
+        for (const baseUrl of BASE_QUERY_URLS) {
+          const crumbRes = await fetch(`${baseUrl}/v1/test/getcrumb`, { headers: { ...DEFAULT_HEADERS, Cookie: cookie }, signal: AbortSignal.timeout(8_000) });
+          if (!crumbRes.ok) continue;
+          const crumb = (await crumbRes.text()).trim();
+          if (!crumb || crumb.includes("<")) continue;
+          YahooFinanceService.summarySession = { cookie, crumb, expiresAt: Date.now() + 60 * 60 * 1000 };
+          return { cookie, crumb };
+        }
+        return null;
+      } catch (e: unknown) {
+        appLogger.logStep("warning", "yahoo", "summary_session", `Could not open a Yahoo session (${e instanceof Error ? e.name : typeof e})`);
+        return null;
+      } finally {
+        YahooFinanceService.summarySessionPromise = null;
+      }
+    })();
+    return YahooFinanceService.summarySessionPromise;
+  }
+
+  /**
+   * `quoteSummary` modules for one symbol (for example `topHoldings`,
+   * `fundProfile`, `assetProfile`, `quoteType`), or null when Yahoo has none.
+   * Cached in `market_cache` under `yahoo:summary:` for `ttlMs`; a miss is
+   * cached for an hour so a symbol without data is not asked again at once.
+   */
+  public async getQuoteSummary(symbol: string, modules: string[], ttlMs = 24 * 60 * 60 * 1000): Promise<Record<string, unknown> | null> {
+    const sym = symbol.trim().toUpperCase();
+    if (!sym || modules.length === 0) return null;
+    const moduleList = Array.from(new Set(modules)).sort().join(",");
+    const cacheKey = `yahoo:summary:${sym}:${moduleList}`;
+    const cached = marketCache.get<Record<string, unknown> | null>(cacheKey);
+    if (cached && !cached.isExpired) return cached.data;
+
+    const existing = YahooFinanceService.inFlightSummaries.get(cacheKey);
+    if (existing) return existing;
+
+    const promise = (async (): Promise<Record<string, unknown> | null> => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const session = await YahooFinanceService.getSummarySession(attempt > 0);
+        if (!session) break;
+        let authFailed = false;
+        for (const baseUrl of BASE_QUERY_URLS) {
+          try {
+            const url = `${baseUrl}/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=${encodeURIComponent(moduleList)}&formatted=false&crumb=${encodeURIComponent(session.crumb)}`;
+            const res = await fetch(url, { headers: { ...DEFAULT_HEADERS, Cookie: session.cookie }, signal: AbortSignal.timeout(10_000) });
+            if (res.status === 401 || res.status === 403) {
+              authFailed = true;
+              break;
+            }
+            if (res.status === 404) {
+              marketCache.set(cacheKey, null, 60 * 60 * 1000);
+              return null;
+            }
+            if (!res.ok) continue;
+            const body = (await res.json()) as { quoteSummary?: { result?: Array<Record<string, unknown>> | null } };
+            const result = body.quoteSummary?.result?.[0] ?? null;
+            marketCache.set(cacheKey, result, result ? ttlMs : 60 * 60 * 1000);
+            return result;
+          } catch (e: unknown) {
+            // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+            appLogger.logStep("warning", "yahoo", "quote_summary", `quoteSummary request failed (${e instanceof Error ? e.name : typeof e})`);
+          }
+        }
+        if (!authFailed) break;
+        YahooFinanceService.summarySession = null;
+      }
+      return cached ? cached.data : null;
+    })().finally(() => {
+      YahooFinanceService.inFlightSummaries.delete(cacheKey);
+    });
+
+    YahooFinanceService.inFlightSummaries.set(cacheKey, promise);
+    return promise;
+  }
+
+  // ---------------------------------------------------------------- dividends and splits
+
+  /**
+   * Past dividends and splits from the chart endpoint (`events=div,splits`),
+   * oldest first. Dividend amounts are per share in `currency`, adjusted for
+   * later splits. Cached in `market_cache` under `yahoo:events:` for 12 hours;
+   * an expired copy is returned when Yahoo fails. Null when Yahoo has no chart
+   * for the symbol.
+   */
+  public async getCorporateEvents(symbol: string, range = "5y"): Promise<YahooCorporateEvents | null> {
+    const sym = symbol.trim().toUpperCase();
+    if (!sym) return null;
+    const cacheKey = `yahoo:events:${sym}:${range}`;
+    const cached = marketCache.get<YahooCorporateEvents | null>(cacheKey);
+    if (cached && !cached.isExpired) return cached.data;
+
+    for (const baseUrl of BASE_QUERY_URLS) {
+      try {
+        const url = `${baseUrl}/v8/finance/chart/${encodeURIComponent(sym)}?range=${encodeURIComponent(range)}&interval=1mo&events=div%2Csplits`;
+        const res = await fetch(url, { headers: DEFAULT_HEADERS, signal: AbortSignal.timeout(6_000) });
+        if (res.status === 404) {
+          marketCache.set(cacheKey, null, 60 * 60 * 1000);
+          return null;
+        }
+        if (!res.ok) continue;
+        const body = (await res.json()) as { chart?: { result?: Array<Record<string, unknown>> | null } };
+        const result = body.chart?.result?.[0];
+        if (!result) continue;
+        const meta = (result.meta ?? {}) as Record<string, unknown>;
+        const events = (result.events ?? {}) as {
+          dividends?: Record<string, { amount?: number; date?: number }>;
+          splits?: Record<string, { date?: number; numerator?: number; denominator?: number }>;
+        };
+        const day = (secs: number) => new Date(secs * 1000).toISOString().slice(0, 10);
+        const dividends = Object.values(events.dividends ?? {})
+          .filter((d) => typeof d.date === "number" && typeof d.amount === "number" && d.amount > 0)
+          .map((d) => ({ date: day(d.date!), amount: d.amount! }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+        const splits = Object.values(events.splits ?? {})
+          .filter((s) => typeof s.date === "number" && Number(s.numerator) > 0 && Number(s.denominator) > 0)
+          .map((s) => ({ date: day(s.date!), numerator: Number(s.numerator), denominator: Number(s.denominator) }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+        const data: YahooCorporateEvents = { symbol: sym, currency: (meta.currency as string) || "", dividends, splits };
+        marketCache.set(cacheKey, data, 12 * 60 * 60 * 1000);
+        return data;
+      } catch (e: unknown) {
+        // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+        appLogger.logStep("warning", "yahoo", "corporate_events", `Dividend and split request failed (${e instanceof Error ? e.name : typeof e})`);
+      }
+    }
+    return cached ? cached.data : null;
+  }
+}
+
+/** Past dividends and splits of a symbol from the Yahoo chart endpoint. */
+export interface YahooCorporateEvents {
+  symbol: string;
+  /** Trading currency of the dividend amounts ("GBp" for pence). */
+  currency: string;
+  /** Ex-date and amount per share, oldest first. */
+  dividends: { date: string; amount: number }[];
+  splits: { date: string; numerator: number; denominator: number }[];
 }

@@ -43,6 +43,7 @@ import type {
   SavePortfolioMetricsRequest,
   StartReportStreamRequest,
   TestFinnhubConnectionRequest,
+  TestFmpConnectionRequest,
   TestGotifyRequest,
   TestNtfyRequest,
   TestLlmRequest,
@@ -94,7 +95,7 @@ function sponsorFallbackFile(theme?: string): string | null {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, yahoo, dailyBrief, weeklyAnalysis } = services;
+  const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -360,6 +361,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.get("/api/llm/claude-cli/status", () => llm.claudeCliStatus());
 
   router.post("/api/providers/finnhub/test", async (ctx) => finnhub.testConnection(unmaskSecret((await ctx.body<TestFinnhubConnectionRequest>()).apiKey, loadConfig().finnhubApiKey)));
+  router.post("/api/providers/fmp/test", async (ctx) => fmp.testConnection(unmaskSecret((await ctx.body<TestFmpConnectionRequest>()).apiKey, loadConfig().fmpApiKey)));
   router.get("/api/providers/yahoo/test", () => yahoo.testConnection());
 
   router.post("/api/market/cache/clear", () => {

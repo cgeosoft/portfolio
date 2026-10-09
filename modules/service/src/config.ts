@@ -31,6 +31,7 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   llmBaseUrls: {},
   llmModels: {},
   finnhubApiKey: "",
+  fmpApiKey: "",
   dataProviderRouting: { ...DEFAULT_DATA_PROVIDER_ROUTING },
   lastQuotesSync: undefined,
   marketQuotesInterval: 15,
@@ -289,6 +290,7 @@ export function maskSecrets(cfg: DesktopConfig): DesktopConfig {
     ...cfg,
     llmApiKey: mask(cfg.llmApiKey),
     finnhubApiKey: mask(cfg.finnhubApiKey),
+    fmpApiKey: mask(cfg.fmpApiKey),
     gotifyToken: mask(cfg.gotifyToken),
     ntfyToken: mask(cfg.ntfyToken),
     llmApiKeys: Object.fromEntries(Object.entries(cfg.llmApiKeys || {}).map(([id, key]) => [id, mask(key)])),
@@ -311,6 +313,7 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
   const cfg = loadConfig();
   const out = { ...updates };
   if (out.finnhubApiKey === SECRET_MASK) delete out.finnhubApiKey;
+  if (out.fmpApiKey === SECRET_MASK) delete out.fmpApiKey;
   if (out.gotifyToken === SECRET_MASK) delete out.gotifyToken;
   if (out.ntfyToken === SECRET_MASK) delete out.ntfyToken;
   if (out.llmApiKeys) {

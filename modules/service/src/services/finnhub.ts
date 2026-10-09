@@ -12,6 +12,7 @@ import {
   type YahooQuote,
   type YahooSymbolSearchResult,
 } from "./yahoo-finance.js";
+import { RequestThrottle } from "./providers/throttle.js";
 
 export interface FinnhubNewsItem {
   category: string;
@@ -76,6 +77,19 @@ export interface FinnhubQuote {
   t: number;
 }
 
+/** `/stock/insider-transactions` row. `change` is positive for shares acquired. */
+export interface FinnhubInsiderTransaction {
+  name: string;
+  /** Shares held after the transaction. */
+  share?: number;
+  change?: number;
+  filingDate?: string;
+  transactionDate?: string;
+  transactionPrice?: number;
+  /** SEC Form 4 code: P purchase, S sale, A award, M option exercise, G gift, F tax withholding. */
+  transactionCode?: string;
+}
+
 export interface FinnhubHoldingIntelligence {
   symbol: string;
   profile?: {
@@ -131,9 +145,21 @@ const TTL_RECOMMENDATIONS_MS = 6 * 60 * 60 * 1000; // 6 hours
 const TTL_METRICS_MS = 6 * 60 * 60 * 1000; // 6 hours
 const TTL_PROFILE_MS = 24 * 60 * 60 * 1000; // 24 hours
 const TTL_QUOTE_MS = 5 * 60 * 1000; // 5 minutes
+const TTL_EARNINGS_CALENDAR_MS = 12 * 60 * 60 * 1000; // 12 hours
+const TTL_INSIDER_MS = 12 * 60 * 60 * 1000; // 12 hours
 const REQUEST_TIMEOUT_MS = 7_000;
 
+/**
+ * One throttle for every Finnhub API call. The free tier allows 60 calls a
+ * minute; 50 leaves room for the connection test and clock drift, so the
+ * provider-chain fallbacks without FMP never run into 429s.
+ */
+export const FINNHUB_THROTTLE = { maxConcurrent: 4, maxPerWindow: 50, windowMs: 60_000 } as const;
+/** How long queued calls wait after a 429. */
+const RATE_LIMIT_PAUSE_MS = 20_000;
+
 export class FinnhubService {
+  private static readonly throttle = new RequestThrottle(FINNHUB_THROTTLE);
   private readonly baseUrl: string;
 
   constructor(baseUrl: string = FINNHUB_BASE_URL) {
@@ -156,6 +182,11 @@ export class FinnhubService {
    */
   public isConfigured(overrideKey?: string): boolean {
     return this.getApiKey(overrideKey).length > 0;
+  }
+
+  /** Throttle state, for diagnostics. */
+  public throttleStats(): { active: number; queued: number; inWindow: number } {
+    return FinnhubService.throttle.stats();
   }
 
   /**
@@ -372,13 +403,16 @@ export class FinnhubService {
 
     try {
       const url = `${this.baseUrl}${relativeUrl}`;
-      const res = await fetch(url, {
-        headers: {
-          "X-Finnhub-Token": key,
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
+      // The timeout starts once the throttle lets the call through.
+      const res = await FinnhubService.throttle.run(() =>
+        fetch(url, {
+          headers: {
+            "X-Finnhub-Token": key,
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        }),
+      );
 
       if (res.status === 401 || res.status === 403) {
         appLogger.logStep("warning", "finnhub", "auth_error", "Finnhub authentication failed: invalid API key");
@@ -386,6 +420,7 @@ export class FinnhubService {
       }
       if (res.status === 429) {
         appLogger.logStep("warning", "finnhub", "rate_limit", "Finnhub API rate limit reached (429)");
+        FinnhubService.throttle.pause(RATE_LIMIT_PAUSE_MS);
         // If expired cache exists, fall back to it
         if (cached) return cached.data;
         return null;
@@ -539,6 +574,34 @@ export class FinnhubService {
   }
 
   /**
+   * Insider transactions (SEC Form 4 for US companies), newest first.
+   * Endpoint: GET /stock/insider-transactions?symbol=...&from=...&to=...
+   */
+  public async getInsiderTransactions(symbol: string, fromDate?: string, toDate?: string): Promise<FinnhubInsiderTransaction[]> {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return [];
+    const data = await this.request<{ data?: FinnhubInsiderTransaction[] }>(
+      "/stock/insider-transactions",
+      { symbol: cleanSymbol, from: fromDate, to: toDate },
+      TTL_INSIDER_MS,
+    );
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    return rows.filter((r) => r && typeof r.name === "string").sort((a, b) => (b.transactionDate || "").localeCompare(a.transactionDate || ""));
+  }
+
+  /**
+   * Symbols of companies in the same industry.
+   * Endpoint: GET /stock/peers?symbol=...
+   */
+  public async getPeers(symbol: string): Promise<string[]> {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return [];
+    const data = await this.request<string[]>("/stock/peers", { symbol: cleanSymbol }, TTL_PROFILE_MS);
+    if (!Array.isArray(data)) return [];
+    return data.filter((s) => typeof s === "string" && s.trim() && s.trim().toUpperCase() !== cleanSymbol);
+  }
+
+  /**
    * High-level aggregator to collect comprehensive market intelligence for portfolio reports.
    * Gathers macro market news plus holding-level news, analyst recommendations, and fundamentals.
    */
@@ -654,4 +717,35 @@ export class FinnhubService {
       },
     };
   }
+
+  /**
+   * Past and upcoming earnings reports of one symbol between two dates
+   * (YYYY-MM-DD), oldest first. Free plan.
+   * Endpoint: GET /calendar/earnings?symbol=...&from=...&to=...
+   */
+  public async getEarningsCalendar(symbol: string, fromDate: string, toDate: string): Promise<FinnhubEarningsRow[]> {
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return [];
+    const data = await this.request<{ earningsCalendar?: FinnhubEarningsRow[] }>(
+      "/calendar/earnings",
+      { symbol: cleanSymbol, from: fromDate, to: toDate },
+      TTL_EARNINGS_CALENDAR_MS,
+    );
+    const rows = Array.isArray(data?.earningsCalendar) ? data.earningsCalendar : [];
+    return rows.filter((r) => typeof r.date === "string" && r.date).sort((a, b) => a.date.localeCompare(b.date));
+  }
+}
+
+/** One row of `/calendar/earnings`. */
+export interface FinnhubEarningsRow {
+  symbol: string;
+  date: string;
+  epsActual?: number | null;
+  epsEstimate?: number | null;
+  /** "bmo", "amc" or "dmh". */
+  hour?: string;
+  quarter?: number;
+  year?: number;
+  revenueActual?: number | null;
+  revenueEstimate?: number | null;
 }

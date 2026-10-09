@@ -1,10 +1,12 @@
 /**
  * Market data coordinator service.
- * Routes market data requests to Yahoo Finance or Finnhub according to
- * user preferences in dataProviderRouting, with fault-isolated fallbacks.
+ * Resolves quotes, FX rates, charts, symbol search and market news through
+ * the provider chain (./providers/chain.ts): the provider picked in
+ * dataProviderRouting first, then the other configured providers in quality
+ * order (FMP, Yahoo Finance, Finnhub; Finnhub before Yahoo for news).
+ * Each `...WithSource` method also names the provider that supplied the data.
  */
 
-import { loadConfig, type DataProviderCategoryRouting, DEFAULT_DATA_PROVIDER_ROUTING } from "../config.js";
 import { appLogger } from "../logger.js";
 import * as marketCache from "../db/market-cache.repo.js";
 import {
@@ -14,118 +16,82 @@ import {
   YahooFinanceService,
 } from "./yahoo-finance.js";
 import { FinnhubService } from "./finnhub.js";
+import type { FmpService } from "./fmp.js";
+import { fillByKey, firstAvailable, type BatchChainResult, type ChainResult } from "./providers/chain.js";
+import { isCusip, isIsin } from "./providers/identifiers.js";
+import type { MarketNewsItem } from "./providers/types.js";
+
+export type { MarketNewsItem } from "./providers/types.js";
 
 export class MarketDataCoordinator {
   constructor(
     private readonly yahoo: YahooFinanceService,
     private readonly finnhub: FinnhubService,
+    private readonly fmp?: FmpService,
   ) {}
 
-  private getRouting(): DataProviderCategoryRouting {
-    const config = loadConfig();
-    return {
-      ...DEFAULT_DATA_PROVIDER_ROUTING,
-      ...(config.dataProviderRouting || {}),
-    };
+  private fmpReady(): boolean {
+    return Boolean(this.fmp?.isConfigured());
+  }
+
+  private finnhubReady(): boolean {
+    return this.finnhub.isConfigured();
   }
 
   /**
-   * Retrieve market quotes with category-based routing and safe fallback.
+   * Retrieve market quotes. Keys are the symbols trimmed and upper-cased.
    */
   public async getQuotes(symbols: string[], forceFresh = false): Promise<Map<string, YahooQuote>> {
-    if (symbols.length === 0) return new Map();
+    return (await this.getQuotesWithSource(symbols, forceFresh)).data;
+  }
 
-    const routing = this.getRouting();
-    const primaryProvider = routing.quotes;
-
-    // 1. If Finnhub is preferred and configured:
-    if (primaryProvider === "finnhub" && this.finnhub.isConfigured()) {
-      try {
-        const finnhubQuotes = await this.finnhub.getQuotes(symbols, forceFresh);
-        const missingSymbols = symbols.filter((s) => !finnhubQuotes.has(s.trim().toUpperCase()));
-
-        // If all resolved, return immediately
-        if (missingSymbols.length === 0) {
-          return finnhubQuotes;
-        }
-
-        // Otherwise fallback to Yahoo for remaining symbols without failing
-        appLogger.logStep(
-          "info",
-          "market_data",
-          "quotes_fallback",
-          `Falling back to Yahoo Finance for ${missingSymbols.length} missing symbols`,
-        );
-        const yahooQuotes = await this.yahoo.getQuotes(missingSymbols, forceFresh);
-        for (const [k, v] of yahooQuotes) {
-          finnhubQuotes.set(k, v);
-        }
-        return finnhubQuotes;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        appLogger.logStep(
-          "warning",
-          "market_data",
-          "finnhub_quotes_failed",
-          `Finnhub quotes failed, falling back to Yahoo: ${msg}`,
-        );
-        return this.yahoo.getQuotes(symbols, forceFresh);
-      }
-    }
-
-    // 2. Default: Yahoo Finance
-    try {
-      return await this.yahoo.getQuotes(symbols, forceFresh);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      appLogger.logStep("warning", "market_data", "yahoo_quotes_failed", `Yahoo quotes failed: ${msg}`);
-      if (this.finnhub.isConfigured()) {
-        appLogger.logStep("info", "market_data", "quotes_fallback", "Attempting Finnhub quotes fallback");
-        return await this.finnhub.getQuotes(symbols, forceFresh);
-      }
-      return new Map();
-    }
+  /** Quotes plus the provider of each symbol. Each provider only gets the symbols still missing. */
+  public async getQuotesWithSource(symbols: string[], forceFresh = false): Promise<BatchChainResult<YahooQuote>> {
+    const keys = Array.from(new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean)));
+    return fillByKey<YahooQuote>({
+      category: "quotes",
+      keys,
+      attempts: [
+        { provider: "fmp", isAvailable: () => this.fmpReady(), fetch: (missing) => this.fmp!.getQuotes(missing, forceFresh) },
+        { provider: "yahoo", fetch: (missing) => this.yahoo.getQuotes(missing, forceFresh) },
+        { provider: "finnhub", isAvailable: () => this.finnhubReady(), fetch: (missing) => this.finnhub.getQuotes(missing, forceFresh) },
+      ],
+    });
   }
 
   /**
-   * Retrieve exchange rates with category-based routing and safe fallback.
+   * Retrieve exchange rates: per target currency, the multiplier that turns
+   * an amount in that currency into `baseCurrency`.
    */
   public async getExchangeRates(
     baseCurrency: string,
     targetCurrencies: string[],
     forceFresh = false,
   ): Promise<Map<string, number>> {
-    const routing = this.getRouting();
-    const primaryProvider = routing.fx;
+    return (await this.getExchangeRatesWithSource(baseCurrency, targetCurrencies, forceFresh)).data;
+  }
 
-    if (primaryProvider === "finnhub" && this.finnhub.isConfigured()) {
-      try {
-        const rates = await this.finnhub.getExchangeRates(baseCurrency, targetCurrencies, forceFresh);
-        const missing = targetCurrencies.filter((c) => !rates.has(c));
-        if (missing.length === 0) return rates;
-
-        const fallback = await this.yahoo.getExchangeRates(baseCurrency, missing, forceFresh);
-        for (const [k, v] of fallback) {
-          rates.set(k, v);
-        }
-        return rates;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        appLogger.logStep(
-          "warning",
-          "market_data",
-          "finnhub_fx_failed",
-          `Finnhub FX failed, falling back to Yahoo: ${msg}`,
-        );
-        return this.yahoo.getExchangeRates(baseCurrency, targetCurrencies, forceFresh);
-      }
-    }
-
-    return this.yahoo.getExchangeRates(baseCurrency, targetCurrencies, forceFresh);
+  /** Exchange rates plus the provider of each currency. */
+  public async getExchangeRatesWithSource(
+    baseCurrency: string,
+    targetCurrencies: string[],
+    forceFresh = false,
+  ): Promise<BatchChainResult<number>> {
+    return fillByKey<number>({
+      category: "fx",
+      keys: targetCurrencies.map((c) => (c || "").trim()).filter(Boolean),
+      isValid: (rate) => Number.isFinite(rate) && rate > 0,
+      attempts: [
+        { provider: "fmp", isAvailable: () => this.fmpReady(), fetch: (missing) => this.fmp!.getExchangeRates(baseCurrency, missing, forceFresh) },
+        { provider: "yahoo", fetch: (missing) => this.yahoo.getExchangeRates(baseCurrency, missing, forceFresh) },
+        { provider: "finnhub", isAvailable: () => this.finnhubReady(), fetch: (missing) => this.finnhub.getExchangeRates(baseCurrency, missing, forceFresh) },
+      ],
+    });
   }
 
   /**
-   * Retrieve historical chart candle data.
+   * Retrieve historical chart candle data. Throws when no provider has the
+   * symbol, as the Yahoo client did.
    */
   public async getChart(
     symbol: string,
@@ -133,101 +99,87 @@ export class MarketDataCoordinator {
     interval = "1d",
     forceFresh = false,
   ): Promise<YahooChartData> {
-    return this.yahoo.getChart(symbol, range, interval, forceFresh);
+    const result = await this.getChartWithSource(symbol, range, interval, forceFresh);
+    if (result.data) return result.data;
+    throw result.error instanceof Error ? result.error : new Error("No chart data from any provider");
+  }
+
+  /** Chart plus the provider that supplied it. FMP serves daily intervals only. */
+  public async getChartWithSource(
+    symbol: string,
+    range = "1y",
+    interval = "1d",
+    forceFresh = false,
+  ): Promise<ChainResult<YahooChartData>> {
+    return firstAvailable<YahooChartData>({
+      category: "charts",
+      isEmpty: (chart) => !chart.candles || chart.candles.length === 0,
+      attempts: [
+        { provider: "fmp", isAvailable: () => this.fmpReady(), fetch: () => this.fmp!.getChart(symbol, range, interval, forceFresh) },
+        { provider: "yahoo", fetch: () => this.yahoo.getChart(symbol, range, interval, forceFresh) },
+      ],
+    });
   }
 
   /**
-   * Search symbols with category-based routing and safe fallback.
+   * Search symbols. An ISIN or CUSIP query resolves through FMP first when
+   * a key is set.
    */
   public async searchSymbols(query: string): Promise<YahooSymbolSearchResult[]> {
-    if (!query || !query.trim()) return [];
+    return (await this.searchSymbolsWithSource(query)).data ?? [];
+  }
 
-    const routing = this.getRouting();
-    const primaryProvider = routing.search;
+  /** Search results plus the provider that supplied them. */
+  public async searchSymbolsWithSource(query: string): Promise<ChainResult<YahooSymbolSearchResult[]>> {
+    if (!query || !query.trim()) return { data: [], source: null, tried: [] };
 
-    if (primaryProvider === "finnhub" && this.finnhub.isConfigured()) {
+    if ((isIsin(query) || isCusip(query)) && this.fmpReady()) {
       try {
-        const results = await this.finnhub.searchSymbols(query);
-        if (results.length > 0) return results;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        appLogger.logStep(
-          "warning",
-          "market_data",
-          "finnhub_search_failed",
-          `Finnhub search failed, falling back to Yahoo: ${msg}`,
-        );
+        const results = await this.fmp!.searchIdentifier(query);
+        if (results.length > 0) return { data: results, source: "fmp", tried: ["fmp"] };
+      } catch {
+        appLogger.logStep("warning", "market_data", "identifier_search_failed", "FMP identifier search failed; trying a plain search");
       }
-      return this.yahoo.searchSymbols(query);
     }
 
-    try {
-      const results = await this.yahoo.searchSymbols(query);
-      if (results.length > 0) return results;
-      if (this.finnhub.isConfigured()) {
-        return await this.finnhub.searchSymbols(query);
-      }
-      return [];
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      appLogger.logStep("warning", "market_data", "yahoo_search_failed", `Yahoo search failed: ${msg}`);
-      if (this.finnhub.isConfigured()) {
-        return await this.finnhub.searchSymbols(query);
-      }
-      return [];
-    }
+    return firstAvailable<YahooSymbolSearchResult[]>({
+      category: "search",
+      attempts: [
+        { provider: "fmp", isAvailable: () => this.fmpReady(), fetch: () => this.fmp!.searchSymbols(query) },
+        { provider: "yahoo", fetch: () => this.yahoo.searchSymbols(query) },
+        { provider: "finnhub", isAvailable: () => this.finnhubReady(), fetch: () => this.finnhub.searchSymbols(query) },
+      ],
+    });
   }
 
   /**
-   * Fetch market news with category-based routing.
+   * Fetch general market news.
    */
-  public async getMarketNews(
-    limit = 5,
-  ): Promise<Array<{ headline: string; summary: string; source: string; datetime: number; url?: string }>> {
-    const routing = this.getRouting();
-    const primaryProvider = routing.news;
+  public async getMarketNews(limit = 5): Promise<MarketNewsItem[]> {
+    return (await this.getMarketNewsWithSource(limit)).data ?? [];
+  }
 
-    if (primaryProvider === "finnhub" && this.finnhub.isConfigured()) {
-      try {
-        const news = await this.finnhub.getMarketNews("general", limit);
-        if (news.length > 0) {
-          return news.map((n) => ({
-            headline: n.headline,
-            summary: n.summary,
-            source: n.source,
-            datetime: n.datetime,
-            url: n.url,
-          }));
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        appLogger.logStep(
-          "warning",
-          "market_data",
-          "finnhub_news_failed",
-          `Finnhub news failed, falling back to Yahoo: ${msg}`,
-        );
-      }
-      return this.yahoo.getMarketNews(limit);
-    }
-
-    try {
-      const news = await this.yahoo.getMarketNews(limit);
-      if (news.length > 0) return news;
-      if (this.finnhub.isConfigured()) {
-        const fNews = await this.finnhub.getMarketNews("general", limit);
-        return fNews.map((n) => ({
-          headline: n.headline,
-          summary: n.summary,
-          source: n.source,
-          datetime: n.datetime,
-          url: n.url,
-        }));
-      }
-      return [];
-    } catch {
-      return [];
-    }
+  /** Market news plus the provider that supplied it. */
+  public async getMarketNewsWithSource(limit = 5): Promise<ChainResult<MarketNewsItem[]>> {
+    return firstAvailable<MarketNewsItem[]>({
+      category: "news",
+      attempts: [
+        { provider: "fmp", isAvailable: () => this.fmpReady(), fetch: () => this.fmp!.getMarketNews(limit) },
+        {
+          provider: "finnhub",
+          isAvailable: () => this.finnhubReady(),
+          fetch: async () =>
+            (await this.finnhub.getMarketNews("general", limit)).map((n) => ({
+              headline: n.headline,
+              summary: n.summary,
+              source: n.source,
+              datetime: n.datetime,
+              url: n.url,
+            })),
+        },
+        { provider: "yahoo", fetch: () => this.yahoo.getMarketNews(limit) },
+      ],
+    });
   }
 
   /**

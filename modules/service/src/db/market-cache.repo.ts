@@ -92,7 +92,7 @@ export function clearMarketData(): number {
   try {
     const db = getDatabase();
     const res = db.run(
-      "DELETE FROM market_cache WHERE key LIKE 'quote:%' OR key LIKE 'chart:%' OR key LIKE 'fx:%' OR key LIKE 'finnhub:%' OR key LIKE 'yahoo:%'",
+      "DELETE FROM market_cache WHERE key LIKE 'quote:%' OR key LIKE 'chart:%' OR key LIKE 'fx:%' OR key LIKE 'finnhub:%' OR key LIKE 'yahoo:%' OR key LIKE 'fmp:%'",
     );
     return res.changes;
   } catch {

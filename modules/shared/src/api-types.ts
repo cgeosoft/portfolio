@@ -211,6 +211,17 @@ export interface TestFinnhubConnectionResponse {
   latencyMs?: number;
 }
 
+export interface TestFmpConnectionRequest {
+  /** A key to test; empty or SECRET_MASK tests the stored key. */
+  apiKey?: string;
+}
+
+export interface TestFmpConnectionResponse {
+  success: boolean;
+  error?: string;
+  latencyMs?: number;
+}
+
 export interface TestYahooConnectionResponse {
   success: boolean;
   latencyMs?: number;
