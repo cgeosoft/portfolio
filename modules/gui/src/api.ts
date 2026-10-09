@@ -63,6 +63,11 @@ import type {
 } from "portfolio-shared/api-types";
 import type { PortfolioItem, PortfolioReport, PortfolioTransaction, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { MetricScope } from "portfolio-shared/metric-abi";
+import type { PortfolioExposureResponse } from "portfolio-shared/api-types";
+import type { PortfolioEventsResponse, PortfolioIncomeSummary } from "portfolio-shared/api-types";
+import type { GetCompanyIntelResponse, GetTranscriptResponse, SummarizeTranscriptResponse } from "portfolio-shared/api-types";
+import type { CompanyIntelPart } from "portfolio-shared/company-intel";
+import type { BenchmarkComparison, BenchmarkHistoryResponse, MacroSnapshot, MarketStatusResponse } from "portfolio-shared/api-types";
 
 export class ApiError extends Error {
   constructor(
@@ -160,6 +165,14 @@ export const api = {
   createPortfolio: (body: CreatePortfolioRequest) => request<PortfolioItem>("/api/portfolios", { method: "POST", body: json(body) }),
   updatePortfolio: (body: UpdatePortfolioRequest) => request<PortfolioItem>(`/api/portfolios/${enc(body.portfolioId)}`, { method: "PATCH", body: json(body) }),
   deletePortfolio: (portfolioId: string) => request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}`, { method: "DELETE" }),
+  /** Sector, country, asset-class and underlying-stock exposure after ETF and fund look-through. */
+  getPortfolioExposure: (portfolioId: string, refresh?: boolean) =>
+    request<PortfolioExposureResponse>(`/api/portfolios/${enc(portfolioId)}/exposure${refresh ? "?refresh=true" : ""}`, undefined, { timeoutMs: 120_000 }),
+  /** Expected and received dividend income, yields and split hints. */
+  getPortfolioIncome: (portfolioId: string) => request<PortfolioIncomeSummary>(`/api/portfolios/${enc(portfolioId)}/income`, undefined, { timeoutMs: 120_000 }),
+  /** Ex-dividend dates, pay dates, earnings and splits of held symbols in the next `days` days. */
+  getPortfolioEvents: (portfolioId: string, days = 30) =>
+    request<PortfolioEventsResponse>(`/api/portfolios/${enc(portfolioId)}/events?days=${days}`, undefined, { timeoutMs: 120_000 }),
 
   // ---- metrics
   getPortfolioMetrics: (portfolioId: string) => request<GetPortfolioMetricsResponse>(`/api/portfolios/${enc(portfolioId)}/metrics`),

@@ -679,3 +679,290 @@ export interface RunAutomationResponse {
   message?: string;
   error?: string;
 }
+
+// ── dividends, splits and earnings (services/intel/calendar.ts, services/income.ts) ──
+
+/** How often a symbol pays a dividend. */
+export type DividendFrequency = "monthly" | "quarterly" | "semiannual" | "annual" | "irregular";
+
+/** One dividend. Amounts are per share in the trading currency of the symbol, adjusted for later splits. */
+export interface DividendEvent {
+  /** Ex-dividend date, YYYY-MM-DD. */
+  exDate: string;
+  payDate?: string;
+  recordDate?: string;
+  declarationDate?: string;
+  amount: number;
+  /** True for a date and amount projected from the past pattern, not declared by the company. */
+  estimated?: boolean;
+}
+
+/** One stock split: `numerator` new shares for every `denominator` old shares. */
+export interface SplitEvent {
+  date: string;
+  numerator: number;
+  denominator: number;
+}
+
+/** One earnings report. EPS values are per share in the reporting currency. */
+export interface EarningsEvent {
+  date: string;
+  epsEstimate?: number | null;
+  epsActual?: number | null;
+  /** (actual - estimate) / |estimate| in percent. */
+  surprisePercent?: number | null;
+  revenueEstimate?: number | null;
+  revenueActual?: number | null;
+  /** "bmo" before the open, "amc" after the close, when the provider says. */
+  time?: string;
+}
+
+/** Dividends, splits and earnings of one symbol, each with the provider it came from. */
+export interface SymbolCalendar {
+  symbol: string;
+  dividends: {
+    /** Past and declared dividends, oldest first. */
+    history: DividendEvent[];
+    /** Declared dividends with an ex-date or pay date from today on. */
+    upcoming: DividendEvent[];
+    frequency?: DividendFrequency;
+    source: DataProviderId | null;
+  };
+  splits: {
+    history: SplitEvent[];
+    upcoming: SplitEvent[];
+    source: DataProviderId | null;
+  };
+  earnings: {
+    upcoming?: EarningsEvent;
+    last?: EarningsEvent;
+    source: DataProviderId | null;
+  };
+}
+
+/** Dividend income of one holding. Money amounts are in the portfolio base currency. */
+export interface DividendIncomeHolding {
+  symbol: string;
+  name: string;
+  /** Trading currency of the per-share amounts. */
+  currency: string;
+  frequency?: DividendFrequency;
+  /** Dividends per share expected over the next 12 months (declared plus projected), trading currency. */
+  forwardDividendPerShare: number;
+  /** Dividends per share with an ex-date in the last 12 months, trading currency. */
+  trailingDividendPerShare: number;
+  /** Expected income over the next 12 months, base currency. */
+  projectedIncome12m: number;
+  /** Dividends recorded as DIVIDEND transactions in the last 12 months, base currency. */
+  receivedIncome12m: number;
+  /** Forward income over the cost basis, percent. */
+  yieldOnCostPercent?: number;
+  /** Forward income over the current value, percent. */
+  currentYieldPercent?: number;
+  nextExDate?: string;
+  nextPayDate?: string;
+  /** Part of the projection follows the past pattern instead of a declared dividend. */
+  estimated: boolean;
+  /** No exchange rate for the trading currency; money amounts are 0. */
+  fxMissing?: boolean;
+  source: DataProviderId | null;
+}
+
+/** A split after the first purchase that the recorded quantities may not reflect. Only a hint; data is never changed. */
+export interface SplitWarning {
+  symbol: string;
+  name: string;
+  date: string;
+  numerator: number;
+  denominator: number;
+  message: string;
+  source: DataProviderId | null;
+}
+
+/** `GET /api/portfolios/:id/income`. Money amounts are in `baseCurrency`. */
+export interface PortfolioIncomeSummary {
+  portfolioId: string;
+  baseCurrency: string;
+  generatedAt: string;
+  projected12m: {
+    total: number;
+    /** 12 calendar months from the current one; income by pay date (ex-date when the pay date is unknown). */
+    months: { month: string; declared: number; estimated: number }[];
+  };
+  /** DIVIDEND transactions of the last 12 months. `count` 0 means none were recorded. */
+  received12m: { total: number; count: number };
+  yieldOnCostPercent?: number;
+  currentYieldPercent?: number;
+  /** Holdings with a dividend in the last two years or a declared one, by projected income. */
+  holdings: DividendIncomeHolding[];
+  splitWarnings: SplitWarning[];
+  /** Providers behind the data, in first-seen order. */
+  sources: DataProviderId[];
+}
+
+export type PortfolioEventKind = "exDividend" | "dividendPayment" | "earnings" | "split";
+
+/** One upcoming event of a held symbol. */
+export interface PortfolioEvent {
+  date: string;
+  kind: PortfolioEventKind;
+  symbol: string;
+  name: string;
+  /** Projected from the past pattern, not declared. */
+  estimated?: boolean;
+  /** Dividend per share, trading currency. */
+  amountPerShare?: number;
+  currency?: string;
+  /** Expected dividend income of the holding, base currency. */
+  expectedIncome?: number;
+  epsEstimate?: number | null;
+  /** Earnings time, "bmo" or "amc". */
+  time?: string;
+  numerator?: number;
+  denominator?: number;
+  source: DataProviderId | null;
+}
+
+/** `GET /api/portfolios/:id/events?days=30`. */
+export interface PortfolioEventsResponse {
+  portfolioId: string;
+  baseCurrency: string;
+  days: number;
+  from: string;
+  to: string;
+  events: PortfolioEvent[];
+  sources: DataProviderId[];
+}
+
+// ── portfolio exposure: ETF and fund look-through (services/exposure.ts, services/intel/etf.ts) ──
+
+/** One bucket of an exposure breakdown. Percent of the whole portfolio value, cash included. */
+export interface ExposureSlice {
+  name: string;
+  percent: number;
+  /** Value in the portfolio base currency. */
+  value: number;
+}
+
+/** Sector, country or asset-class exposure of a portfolio. */
+export interface ExposureBreakdown {
+  /** Largest first. */
+  items: ExposureSlice[];
+  /** Value that should have a bucket but no provider had the data. */
+  unknownPercent: number;
+  /** Value where the bucket does not apply (cash, crypto, private assets, bond parts of funds). */
+  notApplicablePercent: number;
+}
+
+/** Where one part of an underlying stock exposure comes from. */
+export interface ExposureStockPart {
+  /** "direct" for a holding of the portfolio, otherwise the fund symbol. */
+  via: string;
+  percent: number;
+  value: number;
+}
+
+/** One stock the portfolio holds directly, through funds or both. */
+export interface ExposureUnderlyingStock {
+  symbol: string;
+  name?: string;
+  isin?: string;
+  percent: number;
+  value: number;
+  directPercent: number;
+  viaFundsPercent: number;
+  /** Largest part first. */
+  breakdown: ExposureStockPart[];
+}
+
+/** One fund of the portfolio and what was found out about it. */
+export interface ExposureFund {
+  symbol: string;
+  name?: string;
+  /** Share of the portfolio value. */
+  percent: number;
+  value: number;
+  /** Annual expense ratio in percent (0.07 means 0.07 %). */
+  expenseRatio?: number;
+  /** Assets under management in `aumCurrency`. */
+  aum?: number;
+  aumCurrency?: string;
+  holdingsCount?: number;
+  /** False when only the top holdings are known (Yahoo). */
+  holdingsComplete: boolean;
+  /** Sum of the known holding weights, percent of the fund. */
+  holdingsKnownPercent: number;
+  sources: {
+    holdings: DataProviderId | null;
+    sectors: DataProviderId | null;
+    countries: DataProviderId | null;
+    assetClasses: DataProviderId | null;
+    info: DataProviderId | null;
+  };
+}
+
+/** How much two funds hold in common: the sum over shared holdings of the smaller weight. */
+export interface ExposureOverlap {
+  a: string;
+  b: string;
+  overlapPercent: number;
+  commonHoldings: number;
+  /** True when a fund's list is its top holdings only, so the real overlap can be higher. */
+  partial: boolean;
+}
+
+export type ExposureWarningKind = "stock" | "sector" | "country" | "overlap";
+
+export interface ExposureWarning {
+  kind: ExposureWarningKind;
+  /** The stock symbol, sector, country or "A / B" fund pair. */
+  name: string;
+  percent: number;
+  limit: number;
+  message: string;
+}
+
+/** Thresholds behind the warnings, in percent. */
+export interface ExposureLimits {
+  stockPercent: number;
+  sectorPercent: number;
+  countryPercent: number;
+  overlapPercent: number;
+}
+
+/** How much of the portfolio value the exposure is based on. Percent of the portfolio value. */
+export interface ExposureCoverage {
+  /** Held directly and classified: stocks with a profile, cash, crypto, private assets. */
+  directPercent: number;
+  /** Funds with holdings, sector or country data. */
+  lookedThroughPercent: number;
+  /** Funds and stocks no provider had data for. */
+  unknownPercent: number;
+  /** Value whose underlying single names are known (direct stocks plus known fund holdings). */
+  holdingsKnownPercent: number;
+}
+
+/** `GET /api/portfolios/:id/exposure`. */
+export interface PortfolioExposureResponse {
+  portfolioId: string;
+  baseCurrency: string;
+  totalValue: number;
+  /** ISO timestamp. */
+  generatedAt: string;
+  sectors: ExposureBreakdown;
+  countries: ExposureBreakdown;
+  assetClasses: ExposureBreakdown;
+  /** Largest first, at most 25. */
+  topStocks: ExposureUnderlyingStock[];
+  funds: ExposureFund[];
+  /** Largest first, pairs with any overlap. */
+  overlaps: ExposureOverlap[];
+  warnings: ExposureWarning[];
+  limits: ExposureLimits;
+  coverage: ExposureCoverage;
+  /** Value-weighted expense ratio of the funds with a known ratio. */
+  weightedExpenseRatio?: { percent: number; coveragePercent: number };
+  /** Providers behind the data, in quality order. */
+  sources: DataProviderId[];
+}
+

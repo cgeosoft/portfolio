@@ -213,6 +213,29 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     }
   });
 
+  // Exposure after ETF and fund look-through (services/exposure.ts).
+  router.get("/api/portfolios/:id/exposure", async (ctx) => {
+    if (!portfolioRepo.findById(ctx.params.id!)) throw new HttpError(404, "Portfolio not found");
+    return services.exposure.getExposure(ctx.params.id!, {
+      baseCurrency: ctx.url.searchParams.get("baseCurrency") || undefined,
+      refresh: ctx.url.searchParams.get("refresh") === "true",
+    });
+  });
+
+  // Dividend income, yields and split hints (services/income.ts).
+  router.get("/api/portfolios/:id/income", async (ctx) => {
+    if (!portfolioRepo.findById(ctx.params.id!)) throw new HttpError(404, "Portfolio not found");
+    return services.income.getIncomeSummary(ctx.params.id!);
+  });
+
+  // Ex-dividend dates, pay dates, earnings and splits of held symbols in the next `days` days (1 to 365, default 30).
+  router.get("/api/portfolios/:id/events", async (ctx) => {
+    if (!portfolioRepo.findById(ctx.params.id!)) throw new HttpError(404, "Portfolio not found");
+    const days = Number(ctx.url.searchParams.get("days") ?? 30);
+    if (!Number.isFinite(days) || days < 1 || days > 365) throw new HttpError(400, "days must be between 1 and 365");
+    return services.income.getUpcomingEvents(ctx.params.id!, days);
+  });
+
   // ── overview metrics and metric modules ─────────────────────────────────
 
   router.get("/api/portfolios/:id/metrics", (ctx) => ({ portfolioId: ctx.params.id!, metrics: portfolioMetrics.getPortfolioMetrics(ctx.params.id!) }));
