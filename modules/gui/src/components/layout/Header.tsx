@@ -4,7 +4,6 @@ import {
   PieChart,
   FileText,
   History,
-  Bot,
   Settings,
 } from "lucide-react";
 
@@ -41,8 +40,6 @@ export function Header({
   onOpenSettings,
   reportsCount = 0,
   transactionsCount = 0,
-  isAssistantOpen,
-  onToggleAssistant,
 }: HeaderProps) {
   const handlePageClick = (tabId: PortfolioTabKey) => {
     if (activeView !== "dashboard" && onNavigateDashboard) {
@@ -101,27 +98,6 @@ export function Header({
             </Fragment>
           );
         })}
-
-        {onToggleAssistant && (
-          <button
-            type="button"
-            onClick={onToggleAssistant}
-            className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              isAssistantOpen
-                ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
-            }`}
-            title={
-              isAssistantOpen
-                ? "Close Assistant (Ctrl+J)"
-                : "Open Assistant (Ctrl+J)"
-            }
-            aria-label="Toggle Assistant"
-          >
-            <Bot className="w-3 h-3" />
-            <span>Assistant</span>
-          </button>
-        )}
 
         {onOpenSettings && (
           <>

@@ -29,9 +29,7 @@ import {
   Sun,
   Moon,
   Lock,
-  ChevronDown,
-  TrendingUp,
-  Users,
+  Bot,
 } from "lucide-react";
 import type { AppTheme } from "portfolio-shared/api-types";
 
@@ -120,13 +118,11 @@ export function AppMenuBar({
 }: AppMenuBarProps) {
   const [activeMenu, setActiveMenu] = useState<MenuKey>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-  const [isPortfolioSwitchOpen, setIsPortfolioSwitchOpen] = useState(false);
   const menuBarRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => {
     setActiveMenu(null);
     setHighlightedIndex(-1);
-    setIsPortfolioSwitchOpen(false);
   }, []);
 
   // Dismiss on click outside
@@ -249,12 +245,6 @@ export function AppMenuBar({
         }
       }
 
-      if (isPortfolioSwitchOpen && e.key === "Escape") {
-        e.preventDefault();
-        closeMenu();
-        return;
-      }
-
       if (!activeMenu) return;
 
       if (e.key === "Escape") {
@@ -306,13 +296,12 @@ export function AppMenuBar({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeMenu, actionableItems, closeMenu, menus, highlightedIndex, isPortfolioSwitchOpen]);
+  }, [activeMenu, actionableItems, closeMenu, menus, highlightedIndex]);
 
   const handleMenuClick = (key: MenuKey) => {
     if (activeMenu === key) {
       closeMenu();
     } else {
-      setIsPortfolioSwitchOpen(false);
       setActiveMenu(key);
       setHighlightedIndex(-1);
     }
@@ -391,94 +380,6 @@ export function AppMenuBar({
         );
       })}
       <div className="ml-auto flex items-center gap-1">
-        {portfolios && portfolios.length > 1 && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isPortfolioSwitchOpen;
-                closeMenu();
-                setIsPortfolioSwitchOpen(next);
-              }}
-              className="app-menubar-trigger flex items-center gap-1.5 max-w-[200px] text-[#DD3C73]"
-              data-open={isPortfolioSwitchOpen}
-              aria-haspopup="listbox"
-              aria-expanded={isPortfolioSwitchOpen}
-              title="Switch Portfolio"
-            >
-              {activePortfolio?.isShared ? <Users className="w-3.5 h-3.5 shrink-0" /> : <TrendingUp className="w-3.5 h-3.5 shrink-0" />}
-              <span className="truncate">{activePortfolio?.name || "Main Portfolio"}</span>
-              <ChevronDown className="w-3 h-3 shrink-0 text-slate-400" />
-            </button>
-
-            {isPortfolioSwitchOpen && (
-              <div className="app-menu" style={{ left: "auto", right: 0, width: "16rem" }} role="listbox">
-                <div className="flex items-center justify-between px-2.5 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  <span>Portfolios ({portfolios.length})</span>
-                  <button
-                    type="button"
-                    onClick={run(onManagePortfolios)}
-                    className="text-[#DD3C73] hover:text-accent-bright hover:underline cursor-pointer"
-                  >
-                    Manage
-                  </button>
-                </div>
-                <div className="max-h-56 overflow-y-auto custom-scrollbar">
-                  {portfolios.map((p) => {
-                    const isActive = p.id === activePortfolio?.id;
-                    const Icon = p.isShared ? Users : TrendingUp;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        role="option"
-                        aria-selected={isActive}
-                        onClick={run(() => onSelectPortfolio?.(p.id))}
-                        className="app-menu-item group"
-                      >
-                        <span className="flex items-center gap-2.5 min-w-0 pr-3">
-                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-400"}`} />
-                          <span className="truncate">{p.name}</span>
-                          {p.isShared && <span className="text-[10px] text-slate-500 shrink-0">(shared)</span>}
-                        </span>
-                        {isActive && <Check className="w-3.5 h-3.5 text-accent-400 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {onToggleHideCurrency && (
-          <button
-            type="button"
-            onClick={() => {
-              closeMenu();
-              onToggleHideCurrency();
-            }}
-            className={`app-menubar-trigger flex items-center gap-1.5 ${
-              hideCurrencyValues ? "text-cream hover:text-[#f0f5db]" : ""
-            }`}
-            title={
-              hideCurrencyValues
-                ? "Show financial values (Privacy ON - Ctrl+H)"
-                : "Hide financial values for privacy (Ctrl+H)"
-            }
-            aria-label={
-              hideCurrencyValues
-                ? "Show financial values"
-                : "Hide financial values for privacy"
-            }
-          >
-            {hideCurrencyValues ? (
-              <EyeOff className="w-3.5 h-3.5 text-cream" />
-            ) : (
-              <Eye className="w-3.5 h-3.5" />
-            )}
-            <span>{hideCurrencyValues ? "privacy: on" : "privacy"}</span>
-          </button>
-        )}
         {pinEnabled && (
           <button
             type="button"
@@ -492,6 +393,22 @@ export function AppMenuBar({
           >
             <Lock className="w-3.5 h-3.5" />
             <span>lock</span>
+          </button>
+        )}
+        {onToggleAssistant && (
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              onToggleAssistant();
+            }}
+            className="app-menubar-trigger flex items-center"
+            data-open={!!isAssistantOpen}
+            title={isAssistantOpen ? "Close Assistant (Ctrl+J)" : "Open Assistant (Ctrl+J)"}
+            aria-label="Toggle Assistant"
+            aria-pressed={!!isAssistantOpen}
+          >
+            <Bot className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

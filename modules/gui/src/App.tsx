@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   FinancialPortfolioData,
   PortfolioTransaction,
@@ -11,8 +11,11 @@ import { CreatePortfolioModal } from "./components/portfolio/CreatePortfolioModa
 import { ExportPortfolioModal } from "./components/portfolio/ExportPortfolioModal";
 import { StatCard } from "./components/portfolio/StatCard";
 import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
+import { MarketsCard } from "./components/portfolio/MarketsCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
 import { HoldingsTableCard } from "./components/portfolio/HoldingsTableCard";
+import { ExposureCard } from "./components/portfolio/ExposureCard";
+import { IncomeEventsCard } from "./components/portfolio/IncomeEventsCard";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
@@ -21,8 +24,10 @@ import { AnalyzePortfolioModal } from "./components/portfolio/AnalyzePortfolioMo
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SetupWizardModal } from "./components/common/SetupWizardModal";
 import { UpdatePopover } from "./components/common/UpdatePopover";
+import { Toaster } from "./components/common/Toaster";
 import { ChangelogModal } from "./components/common/ChangelogModal";
 import { SettingsPage, type SettingsSection } from "./components/settings/SettingsPage";
+import { CONFIG_CHANGED_EVENT } from "./components/settings/SettingsFields";
 import { SupportTicketModal } from "./components/settings/SupportTicketModal";
 import { TermsPage } from "./components/common/TermsPage";
 import { BottomBar } from "./components/layout/BottomBar";
@@ -66,7 +71,20 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = ["general", "portfolios", "metrics", "assistant", "integrations", "automation", "about"];
+const SETTINGS_SECTIONS: readonly string[] = [
+  "general",
+  "portfolios",
+  "metrics",
+  "integrations",
+  "assistant",
+  "data-providers",
+  "gotify",
+  "ntfy",
+  "automation",
+  "daily-brief",
+  "weekly-analysis",
+  "about",
+];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
@@ -96,8 +114,8 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
         const raw = hash.replace("#settings/", "");
-        // Data providers moved into the Assistant section.
-        const sec = (raw === "providers" ? "assistant" : raw) as SettingsSection;
+        // Data providers became an Integrations page; keep old links working.
+        const sec = (raw === "providers" ? "data-providers" : raw) as SettingsSection;
         if (SETTINGS_SECTIONS.includes(sec)) {
           return sec;
         }
@@ -146,6 +164,17 @@ export default function App() {
     }
   }, []);
 
+  // Moving between Preferences sections replaces the URL so a reload reopens the same page.
+  const handleSettingsSectionChange = useCallback((section: SettingsSection) => {
+    setSettingsSection(section);
+    if (typeof window !== "undefined") {
+      const newHash = section === "general" ? "#settings" : `#settings/${section}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
+      }
+    }
+  }, []);
+
   const handleOpenManagePortfolios = useCallback(() => {
     handleOpenSettings("portfolios");
   }, [handleOpenSettings]);
@@ -188,7 +217,7 @@ export default function App() {
         setView("settings");
       } else if (hash.startsWith("#settings")) {
         const parts = hash.split("/");
-        const sec = parts[1] === "providers" ? "assistant" : parts[1];
+        const sec = parts[1] === "providers" ? "data-providers" : parts[1];
         if (sec && SETTINGS_SECTIONS.includes(sec)) {
           setSettingsSection(sec as SettingsSection);
         } else {
@@ -632,9 +661,18 @@ export default function App() {
 
   // App Info & Quotes Sync State
   const [appVersion, setAppVersion] = useState(APP_VERSION || "0.4.0");
+  const [isDevMode, setIsDevMode] = useState(false);
   const [webpageUrl, setWebpageUrl] = useState(WEBPAGE_URL);
   const [devEmail, setDevEmail] = useState<string | undefined>(undefined);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
+
+  // Window title: "Portfolio | <portfolio name> | Dev".
+  const activePortfolioName = portfolios.find((p) => p.id === activePortfolioId)?.name;
+  useEffect(() => {
+    document.title = ["Portfolio", activePortfolioName, isDevMode ? "Dev" : undefined].filter(Boolean).join(" | ");
+  }, [activePortfolioName, isDevMode]);
+  const [quotesIntervalMins, setQuotesIntervalMins] = useState<number | undefined>(undefined);
+  const [hideSponsorBanners, setHideSponsorBanners] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
 
@@ -724,15 +762,27 @@ export default function App() {
     }
   }, []);
 
+  // Opening the metrics settings re-reads the catalog, so a provider key added
+  // since start-up enables the metrics that need it.
+  const isMetricSettingsOpen = view === "settings" && settingsSection === "metrics";
   useEffect(() => {
     if (authState === "ready") void loadMetricCatalog();
-  }, [loadMetricCatalog, authState]);
+  }, [loadMetricCatalog, authState, isMetricSettingsOpen]);
 
-  const addedMetricIds = metricPreferences.filter((pref) => pref.added).map((pref) => pref.id).join(",");
+  // The metrics settings show a value for every installed metric; elsewhere only added ones run.
+  const addedMetricIds = (
+    isMetricSettingsOpen ? metricListings.map((listing) => listing.id) : metricPreferences.filter((pref) => pref.added).map((pref) => pref.id)
+  ).join(",");
   const portfolioDataStamp = portfolioData?.summary?.lastUpdated ?? "";
+  // Metrics that read provider data (FMP fundamentals) can take seconds on a cold cache.
+  const fundamentalMetricIds = metricListings
+    .filter((listing) => listing.scopesGranted.includes("market.fundamentals"))
+    .map((listing) => listing.id)
+    .join(",");
 
   // Re-run the modules whenever the data, the selection, or the currency changes.
   // Results are cached in the main process, so unchanged inputs cost nothing.
+  // Portfolio-only metrics come back first; provider-backed ones follow.
   useEffect(() => {
     if (!activePortfolioId || !portfolioData?.summary || !addedMetricIds) {
       setMetricEvaluations({});
@@ -740,18 +790,31 @@ export default function App() {
     }
     let cancelled = false;
     const retry = metricRetryIds;
+    const slow = new Set(fundamentalMetricIds ? fundamentalMetricIds.split(",") : []);
+    const added = addedMetricIds.split(",");
+    const fast = added.filter((id) => !slow.has(id));
+    const late = added.filter((id) => slow.has(id));
+    const evaluate = async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const res = await rpc.request.evaluatePortfolioMetrics({
+        portfolioId: activePortfolioId,
+        baseCurrency: currency,
+        ids,
+        retry: retry.length > 0 ? retry : undefined,
+      });
+      if (cancelled) return;
+      setMetricEvaluations((prev) => {
+        const next: Record<string, MetricEvaluation> = {};
+        for (const id of added) if (prev[id] && !ids.includes(id)) next[id] = prev[id];
+        for (const result of res.results) next[result.id] = result;
+        return next;
+      });
+    };
     void (async () => {
       try {
-        const res = await rpc.request.evaluatePortfolioMetrics({
-          portfolioId: activePortfolioId,
-          baseCurrency: currency,
-          retry: retry.length > 0 ? retry : undefined,
-        });
-        if (cancelled) return;
-        const next: Record<string, MetricEvaluation> = {};
-        for (const result of res.results) next[result.id] = result;
-        setMetricEvaluations(next);
-        if (retry.length > 0) {
+        await evaluate(fast);
+        await evaluate(late);
+        if (!cancelled && retry.length > 0) {
           setMetricRetryIds([]);
           void loadMetricCatalog();
         }
@@ -763,7 +826,7 @@ export default function App() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePortfolioId, portfolioDataStamp, addedMetricIds, currency, metricRetryNonce]);
+  }, [activePortfolioId, portfolioDataStamp, addedMetricIds, fundamentalMetricIds, currency, metricRetryNonce]);
 
   const handleSaveMetrics = useCallback(
     async (next: PortfolioMetricPreference[]) => {
@@ -927,6 +990,7 @@ export default function App() {
         if (config.dismissedUpdateVersion) {
           setDismissedUpdateVersion(config.dismissedUpdateVersion);
         }
+        setHideSponsorBanners(config.hideSponsorBanners === true);
       } catch (e) {
         clientLogger.log("error", "initApp:config_error", `Failed to load initial config: ${e}`);
         console.error("Failed to load initial config:", e);
@@ -937,6 +1001,7 @@ export default function App() {
         if (appInfo.version && appInfo.version !== "0.0.0") setAppVersion(appInfo.version);
         else if (appInfo.majorMinor && appInfo.majorMinor !== "0.0") setAppVersion(appInfo.majorMinor);
         else if (APP_VERSION) setAppVersion(APP_VERSION);
+        setIsDevMode(appInfo.isDev);
         if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
         if (appInfo.devEmail) setDevEmail(appInfo.devEmail);
         if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
@@ -1095,7 +1160,12 @@ export default function App() {
     [activePortfolioId, currency, loadReports],
   );
 
+  // One refresh at a time: a click while one runs does nothing.
+  const isSyncingRef = useRef(false);
+  isSyncingRef.current = isRefreshing;
   const handleSyncQuotes = useCallback(async () => {
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
     if (activePortfolioId) {
       await loadData(true);
     } else {
@@ -1128,9 +1198,17 @@ export default function App() {
         if (cfg.llmProvider) setAssistantProvider(cfg.llmProvider);
         if (cfg.llmModel) setAssistantModel(cfg.llmModel);
         const intervalMins = cfg.marketQuotesInterval ?? 15;
+        setQuotesIntervalMins(intervalMins);
         if (intervalMins > 0) {
           timer = setInterval(() => {
-            void loadData(true);
+            // Timed refresh only: skip it while every market of the holdings is closed. A manual refresh never asks.
+            void api
+              .getMarketStatus()
+              .catch(() => null)
+              .then((status) => {
+                if (status && !status.anyOpen) return;
+                void loadData(true);
+              });
           }, intervalMins * 60 * 1000);
         }
       } catch (err) {
@@ -1142,6 +1220,17 @@ export default function App() {
       if (timer) clearInterval(timer);
     };
   }, [loadData]);
+
+  // Catalog settings saved in Settings apply here without a reload.
+  useEffect(() => {
+    const onConfigChanged = (e: Event) => {
+      const detail = (e as CustomEvent<Partial<DesktopConfig>>).detail;
+      if (typeof detail?.hideSponsorBanners === "boolean") setHideSponsorBanners(detail.hideSponsorBanners);
+      if (typeof detail?.marketQuotesInterval === "number") setQuotesIntervalMins(detail.marketQuotesInterval);
+    };
+    window.addEventListener(CONFIG_CHANGED_EVENT, onConfigChanged);
+    return () => window.removeEventListener(CONFIG_CHANGED_EVENT, onConfigChanged);
+  }, []);
 
   // Portfolio Switching & Management
   const handleSelectPortfolio = (id: string) => {
@@ -1476,6 +1565,11 @@ export default function App() {
           onOpenTerms={handleOpenTerms}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
+          quotesIntervalMins={quotesIntervalMins}
+          portfolios={portfolios}
+          activePortfolio={activePortfolio}
+          onSelectPortfolio={handleSelectPortfolio}
+          onManagePortfolios={handleOpenManagePortfolios}
           hideCurrencyValues={hideCurrencyValues}
           onToggleHideCurrency={toggleHideCurrencyValues}
         />
@@ -1568,6 +1662,11 @@ export default function App() {
           onOpenTerms={handleOpenTerms}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
+          quotesIntervalMins={quotesIntervalMins}
+          portfolios={portfolios}
+          activePortfolio={activePortfolio}
+          onSelectPortfolio={handleSelectPortfolio}
+          onManagePortfolios={handleOpenManagePortfolios}
           hideCurrencyValues={hideCurrencyValues}
           onToggleHideCurrency={toggleHideCurrencyValues}
         />
@@ -1582,7 +1681,7 @@ export default function App() {
 
   const metricsPage = (
     <MetricsTab
-      hasPortfolio={Boolean(activePortfolioId)}
+      portfolioId={activePortfolioId || null}
       prefs={metricPreferences}
       listings={metricListings}
       repository={metricRepository}
@@ -1668,6 +1767,8 @@ export default function App() {
             onToggleAssistant={handleToggleAssistant}
           />
 
+          <Toaster />
+
           {/* Update Available Popover (bottom-right corner) */}
           <UpdatePopover
             isVisible={Boolean(showUpdatePopover)}
@@ -1698,6 +1799,7 @@ export default function App() {
           <SettingsPage
             onBack={() => handleNavigateDashboard()}
             initialSection={settingsSection}
+            onSectionChange={handleSettingsSectionChange}
             portfolios={portfolios}
             activePortfolio={activePortfolio}
             onSelectPortfolio={handleSelectPortfolio}
@@ -1762,7 +1864,7 @@ export default function App() {
               />
 
               {/* Sponsor Banner Box */}
-              <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />
+              {!hideSponsorBanners && <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />}
 
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1808,6 +1910,26 @@ export default function App() {
                 hideValues={hideCurrencyValues}
                 summary={summary}
               />
+
+              {/* Exposure after ETF and fund look-through */}
+              <ExposureCard
+                portfolioId={activePortfolioId}
+                currency={currency}
+                hideValues={hideCurrencyValues}
+                dataVersion={summary?.lastUpdated}
+              />
+
+              {/* Dividend income, yields and upcoming dividend, earnings and split dates */}
+              <IncomeEventsCard
+                portfolioId={activePortfolioId}
+                currency={currency}
+                hideValues={hideCurrencyValues}
+                theme={theme}
+                refreshStamp={summary?.lastUpdated}
+              />
+
+              {/* Markets: yield curve, sectors, upcoming economic releases */}
+              <MarketsCard baseCurrency={currency} />
             </>
           )}
 
@@ -1881,6 +2003,14 @@ export default function App() {
         onOpenTerms={handleOpenTerms}
         onSyncQuotes={handleSyncQuotes}
         isSyncingQuotes={isRefreshing}
+        quotesIntervalMins={quotesIntervalMins}
+        portfolios={portfolios}
+        activePortfolio={activePortfolio}
+        onSelectPortfolio={(id) => {
+          handleSelectPortfolio(id);
+          if (view !== "dashboard") handleNavigateDashboard();
+        }}
+        onManagePortfolios={handleOpenManagePortfolios}
         hideCurrencyValues={hideCurrencyValues}
         onToggleHideCurrency={toggleHideCurrencyValues}
         updateInfo={updateInfo}

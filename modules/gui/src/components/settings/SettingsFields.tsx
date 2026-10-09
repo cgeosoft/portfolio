@@ -5,6 +5,9 @@ import type { SettingSection, SettingView } from "portfolio-shared/api-types";
 import type { DesktopConfig } from "portfolio-shared/config-types";
 import { api } from "../../api";
 
+/** Fired on `window` after a catalog setting saves; `detail` holds the changed keys. */
+export const CONFIG_CHANGED_EVENT = "portfolio:config-changed";
+
 /** A switch. */
 export function Toggle({ checked, onChange, label, disabled = false }: { checked: boolean; onChange: () => void; label: string; disabled?: boolean }) {
   return (
@@ -174,6 +177,7 @@ export function SettingsFields({ section }: { section: SettingSection }) {
     setSettings((prev) => prev?.map((s) => (s.key === key ? { ...s, value, isSet: value !== "" } : s)) ?? prev);
     try {
       await api.saveConfig({ [key]: value } as Partial<DesktopConfig>);
+      window.dispatchEvent(new CustomEvent<Partial<DesktopConfig>>(CONFIG_CHANGED_EVENT, { detail: { [key]: value } }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       load();

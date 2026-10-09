@@ -435,6 +435,25 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
 }
 
 /* Three-dot "thinking" indicator: each dot pulses in turn */
+@keyframes cx-attention-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(var(--accent-rgb), 0);
+  }
+}
+
+.cx-attention-pulse {
+  animation: cx-attention-pulse 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-attention-pulse {
+    animation: none;
+  }
+}
+
 @keyframes cx-typing-pulse {
   0%,
   80%,
@@ -611,6 +630,15 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
   box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(221, 60, 115, 0.08);
   transform-origin: top;
   animation: app-menu-in 0.12s ease-out;
+}
+
+/* A menu that opens upward, for the status bar. */
+.app-menu.app-menu-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 0.375rem;
+  transform-origin: bottom;
 }
 
 .app-menu-separator {

@@ -53,7 +53,26 @@ import { openExternal, WEBPAGE_EMAIL } from "../../environment";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 
-export type SettingsSection = "general" | "portfolios" | "metrics" | "assistant" | "integrations" | "automation" | "about";
+type SettingsSectionId = "general" | "portfolios" | "metrics" | "integrations" | "automation" | "about";
+
+/** The pages of the Integrations submenu: the assistant and data providers, then the notification channels. */
+type IntegrationPageId = "assistant" | "data-providers" | IntegrationId;
+
+/** A Preferences section, or an Integrations or Automation page opened directly. */
+export type SettingsSection = SettingsSectionId | IntegrationPageId | AutomationId;
+
+const INTEGRATION_PAGES: (SidebarSection & { id: IntegrationPageId })[] = [
+  { id: "assistant", label: "Assistant", icon: Bot },
+  { id: "data-providers", label: "Data Providers", icon: Database },
+  ...INTEGRATIONS,
+];
+
+const isIntegrationPage = (section: SettingsSection): section is IntegrationPageId => INTEGRATION_PAGES.some((page) => page.id === section);
+const isAutomationPage = (section: SettingsSection): section is AutomationId => AUTOMATIONS.some((page) => page.id === section);
+
+/** The top-level section a page belongs to. */
+const sectionOf = (section: SettingsSection): SettingsSectionId =>
+  isIntegrationPage(section) ? "integrations" : isAutomationPage(section) ? "automation" : section;
 
 type LlmProviderId = "openai-compatible" | "claude-cli";
 
@@ -103,15 +122,9 @@ const SECTIONS = [
     icon: Gauge,
   },
   {
-    id: "assistant" as const,
-    label: "Assistant",
-    description: "LLM, market data & news",
-    icon: Bot,
-  },
-  {
     id: "integrations" as const,
     label: "Integrations",
-    description: "Gotify and ntfy push notifications",
+    description: "Assistant, data providers & notifications",
     icon: Plug,
   },
   {
@@ -147,6 +160,8 @@ const SHORTCUTS = [
 interface SettingsPageProps {
   onBack: () => void;
   initialSection?: SettingsSection;
+  /** Fires with the open page when the user moves between sections, so App can keep it in the URL. */
+  onSectionChange?: (section: SettingsSection) => void;
   portfolios?: PortfolioItem[];
   activePortfolio?: PortfolioItem | null;
   onSelectPortfolio?: (id: string) => void;
@@ -166,6 +181,7 @@ interface SettingsPageProps {
 export function SettingsPage({
   onBack,
   initialSection = "general",
+  onSectionChange,
   portfolios = [],
   activePortfolio = null,
   onSelectPortfolio,
@@ -178,10 +194,10 @@ export function SettingsPage({
   onReportIssue,
   metrics,
 }: SettingsPageProps) {
-  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>(sectionOf(initialSection));
   // The open card of the sections with a submenu.
-  const [activeIntegration, setActiveIntegration] = useState<IntegrationId>(INTEGRATIONS[0]!.id);
-  const [activeAutomation, setActiveAutomation] = useState<AutomationId>(AUTOMATIONS[0]!.id);
+  const [activeIntegration, setActiveIntegration] = useState<IntegrationPageId>(isIntegrationPage(initialSection) ? initialSection : INTEGRATION_PAGES[0]!.id);
+  const [activeAutomation, setActiveAutomation] = useState<AutomationId>(isAutomationPage(initialSection) ? initialSection : AUTOMATIONS[0]!.id);
 
   // General settings state
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
@@ -252,10 +268,17 @@ export function SettingsPage({
   };
 
   useEffect(() => {
-    if (initialSection) {
-      setActiveSection(initialSection);
-    }
+    setActiveSection(sectionOf(initialSection));
+    if (isIntegrationPage(initialSection)) setActiveIntegration(initialSection);
+    if (isAutomationPage(initialSection)) setActiveAutomation(initialSection);
   }, [initialSection]);
+
+  // The open page, down to the submenu card, goes to App for the URL.
+  const openPage: SettingsSection =
+    activeSection === "integrations" ? activeIntegration : activeSection === "automation" ? activeAutomation : activeSection;
+  useEffect(() => {
+    onSectionChange?.(openPage);
+  }, [openPage, onSectionChange]);
 
   useEffect(() => {
     rpc.request.getConfig({}).then((config: any) => {
@@ -370,13 +393,16 @@ export function SettingsPage({
   const showModelInput = isCustomModel || (!isClaudeCli && serverModels.length === 0);
 
   /** The submenu of a section: its cards and the one that shows, or null for a one-card section. */
-  const submenu = (id: SettingsSection): { items: SidebarSection[]; active: string; select: (id: string) => void } | null => {
-    if (id === "integrations") return { items: INTEGRATIONS, active: activeIntegration, select: (item) => setActiveIntegration(item as IntegrationId) };
+  const submenu = (id: SettingsSectionId): { items: SidebarSection[]; active: string; select: (id: string) => void } | null => {
+    if (id === "integrations") return { items: INTEGRATION_PAGES, active: activeIntegration, select: (item) => setActiveIntegration(item as IntegrationPageId) };
     if (id === "automation") return { items: AUTOMATIONS, active: activeAutomation, select: (item) => setActiveAutomation(item as AutomationId) };
     return null;
   };
 
-  const openIntegrations = () => setActiveSection("integrations");
+  const openIntegrations = () => {
+    setActiveSection("integrations");
+    setActiveIntegration(INTEGRATIONS[0]!.id);
+  };
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
@@ -637,7 +663,7 @@ export function SettingsPage({
           )}
 
           {/* SECTION 3: ASSISTANT */}
-          {activeSection === "assistant" && (
+          {activeSection === "integrations" && activeIntegration === "assistant" && (
             <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
               <SectionHeader
                 icon={Bot}
@@ -858,13 +884,13 @@ export function SettingsPage({
               </div>
             </div>
           )}
-          {activeSection === "assistant" && fullConfig && (
+          {activeSection === "integrations" && activeIntegration === "data-providers" && fullConfig && (
             <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
           )}
 
           {activeSection === "metrics" && metrics}
 
-          {activeSection === "integrations" && fullConfig && (
+          {activeSection === "integrations" && activeIntegration !== "assistant" && activeIntegration !== "data-providers" && fullConfig && (
             <IntegrationsSection integration={activeIntegration} config={fullConfig} onConfigChange={setFullConfig} />
           )}
 

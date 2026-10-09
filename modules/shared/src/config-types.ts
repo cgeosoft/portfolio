@@ -124,6 +124,8 @@ export interface DesktopConfig {
   zoomLevel?: number;
   /** UI theme mode: "dark" | "light" | "system" */
   theme?: AppTheme;
+  /** Hide sponsor banners, such as the one on the overview page. */
+  hideSponsorBanners: boolean;
   /**
    * Remote connections switch (Settings, General). Counts only while a PIN is
    * set. Changed through `/api/host/remote-access`, never `PATCH /api/config`.

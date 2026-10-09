@@ -35,6 +35,13 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
     ],
   },
   {
+    key: "hideSponsorBanners",
+    section: "general",
+    kind: "toggle",
+    label: "Hide sponsor banners",
+    description: "Remove the sponsor banner from the overview page.",
+  },
+  {
     key: "startWithBoot",
     section: "general",
     kind: "toggle",

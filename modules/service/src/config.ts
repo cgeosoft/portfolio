@@ -42,6 +42,7 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   dismissedUpdateVersion: undefined,
   zoomLevel: 1.0,
   theme: "dark",
+  hideSponsorBanners: false,
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
   closeToTray: true,
