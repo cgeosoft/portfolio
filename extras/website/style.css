@@ -30,6 +30,7 @@
   --green-rgb: 52, 211, 153;
   --font-sans: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Sansation', var(--font-sans);
   --container: 1120px;
   --radius: 16px;
 }
@@ -290,8 +291,9 @@ button {
 
 .hero-title {
   margin-top: 28px;
+  font-family: var(--font-display);
   font-size: clamp(40px, 7vw, 68px);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .gradient-text {
@@ -1038,6 +1040,7 @@ section {
 }
 
 .releases-title {
+  font-family: var(--font-display);
   font-size: 16px;
   margin-bottom: 4px;
 }
@@ -1240,6 +1243,7 @@ section {
 }
 
 .legal-hero h1 {
+  font-family: var(--font-display);
   font-size: 36px;
   margin: 12px 0;
 }
