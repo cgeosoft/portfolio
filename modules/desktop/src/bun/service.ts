@@ -45,7 +45,7 @@ export interface ServiceOptions {
  * never opens a log file. The last lines stay in memory for the failure page.
  */
 export class ServiceProcess {
-  private proc: Bun.Subprocess<"ignore", "pipe", "pipe"> | null = null;
+  private proc: Bun.Subprocess<"pipe", "pipe", "pipe"> | null = null;
   private readonly recent: string[] = [];
   private readonly portListeners: ((port: number) => void)[] = [];
   /** The port of the last `SERVICE_PORT=` line, or null before the first one. */
@@ -63,7 +63,7 @@ export class ServiceProcess {
   start(onExit?: (code: number | null) => void): void {
     const { command, cwd, logDir, echo } = this.options;
     mkdirSync(logDir, { recursive: true });
-    this.proc = Bun.spawn(command, { cwd, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+    this.proc = Bun.spawn(command, { cwd, stdin: "pipe", stdout: "pipe", stderr: "pipe" });
     void this.pump(this.proc.stdout, echo, true);
     void this.pump(this.proc.stderr, echo, false);
     void this.proc.exited.then((code) => {
@@ -97,6 +97,17 @@ export class ServiceProcess {
       await Bun.sleep(250);
     }
     return false;
+  }
+
+  /** Writes one line to the child's stdin (development: `GUI_URL=<vite url>`). */
+  send(line: string): void {
+    if (!this.proc || this.exited) return;
+    try {
+      this.proc.stdin.write(`${line}\n`);
+      this.proc.stdin.flush();
+    } catch {
+      // The child is gone; its exit is logged.
+    }
   }
 
   /** Last lines of output, for the failure page. */

@@ -122,6 +122,7 @@ async function main(): Promise<void> {
       : { command: [process.execPath, join(appDir, "service", "main.js")], cwd: join(appDir, "service"), logDir, echo },
   );
   const devGui = repoRoot ? new DevGuiServer(repoRoot, logDir) : null;
+  let devGuiUrl: string | null = null;
 
   let ready = false;
   let quitting = false;
@@ -193,8 +194,10 @@ async function main(): Promise<void> {
   service.onPort((port) => {
     service.log(`service listening on 127.0.0.1:${port}; waiting for /api/health`);
     if (!ready) showStartingHint(APP.pages.starting.health(port));
-    // A restart under --watch picks a new port; the Vite proxy follows it.
+    // A restart under --watch picks a new port; the Vite proxy follows it,
+    // and the new service learns the Vite URL again for devices on the LAN.
     devGui?.setServicePort(port);
+    if (devGuiUrl) service.send(`GUI_URL=${devGuiUrl}`);
   });
   service.start((code) => {
     if (quitting) return;
@@ -227,6 +230,8 @@ async function main(): Promise<void> {
       return;
     }
     appUrl = guiUrl;
+    devGuiUrl = guiUrl;
+    service.send(`GUI_URL=${guiUrl}`);
   } else {
     appUrl = `http://127.0.0.1:${service.port}`;
   }

@@ -28,6 +28,7 @@ import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess 
 import { Router, hostnameOf, isLoopbackHostname, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
+import { type DevGuiServer, devGuiWebSocket, serveDevGui, startDevGuiLink } from "./http/dev-gui";
 
 const LOOPBACK_HOST = "127.0.0.1";
 
@@ -103,6 +104,7 @@ const pruneTimer = setInterval(() => authService.prune(), 60 * 60 * 1000);
 
 const router = new Router();
 const site = new StaticSite(getGuiDir() ?? "");
+startDevGuiLink();
 
 registerRoutes(router, services, () => {
   shutdown().catch(() => process.exit(0));
@@ -118,7 +120,7 @@ function hostAllowed(req: Request, loopbackOnly: boolean): boolean {
   return isLoopbackHostname(hostnameOf(req.headers.get("host")));
 }
 
-async function fetchHandler(req: Request, srv: { requestIP(req: Request): { address: string } | null }, loopbackOnly: boolean): Promise<Response> {
+async function fetchHandler(req: Request, srv: DevGuiServer, loopbackOnly: boolean): Promise<Response | undefined> {
   const ip = srv.requestIP(req)?.address ?? "";
   const url = new URL(req.url);
   if (!hostAllowed(req, loopbackOnly)) return json({ statusCode: 403, message: "Invalid Host header" }, 403);
@@ -128,6 +130,8 @@ async function fetchHandler(req: Request, srv: { requestIP(req: Request): { addr
   }
   const res = await router.handle(req, ip);
   if (res) return res;
+  const dev = await serveDevGui(req, url, srv);
+  if (dev !== null) return dev;
   return site.serve(req, url) ?? new Response("Not found", { status: 404 });
 }
 
@@ -140,6 +144,7 @@ function serve(hostname: string, port: number): ReturnType<typeof Bun.serve> {
     idleTimeout: 120,
     development: false,
     fetch: (req, srv) => fetchHandler(req, srv, loopbackOnly),
+    websocket: devGuiWebSocket,
     error(err) {
       appLogger.logStep("error", "http", "unhandled", err.message);
       return json({ statusCode: 500, message: err.message }, 500);

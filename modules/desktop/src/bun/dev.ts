@@ -10,7 +10,8 @@
  *   window      on GUI_URL
  *
  * After a restart of the service the shell sends the new port to the dev server on its stdin,
- * so the window keeps its URL. `<bun>` is the runtime of this shell (`process.execPath`).
+ * so the window keeps its URL. The service gets `GUI_URL=<url>` on its stdin (again after each
+ * restart) and forwards the GUI and HMR to Vite for devices on the remote-connections listener. `<bun>` is the runtime of this shell (`process.execPath`).
  * Changes to the shell itself (`src/bun/`) need a restart of `bun start`.
  */
 import { existsSync, readFileSync } from "node:fs";
