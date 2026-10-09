@@ -31,8 +31,12 @@ export interface ReportMetrics {
   holdingsCount: number;
   topWinner?: { symbol: string; changePercent: number };
   topLoser?: { symbol: string; changePercent: number };
+  /** True when Finnhub supplied part of the market context. */
   finnhubEnriched?: boolean;
+  /** Market and company headlines in the prompt, from any provider. */
   finnhubNewsCount?: number;
+  /** Providers behind the market context of the prompt (fmp, yahoo, finnhub). */
+  intelSources?: string[];
 }
 
 export function findByPortfolio(portfolioId: string, limit = 52): ReportRow[] {

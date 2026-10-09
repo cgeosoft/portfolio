@@ -2,11 +2,17 @@
  * Portfolio chat: builds the system prompt from the live portfolio state
  * (weights, returns, indicators, recent transactions; never money amounts),
  * runs one turn through LlmService and stores the conversation.
+ *
+ * LlmService has no tool calling, so the market context is static: a small
+ * block with exposure after look-through, events of the next 14 days, a
+ * macro headline and the 1-year benchmark line (ai-context.ts). Each piece
+ * has a short time limit and is left out when it has no data.
  */
 
 import { loadConfig } from "../config.js";
 import type { LlmService, LlmMessage } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
+import { buildAssistantMarketContext, type AiContextDeps } from "./ai-context.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as conversationRepo from "../db/conversation.repo.js";
 import type { PortfolioItem, FinancialPortfolioData, HoldingPerformance } from "portfolio-shared/portfolio";
@@ -21,7 +27,7 @@ const priceNote = (h: HoldingPerformance) =>
   h.isPrivate ? " (private asset, no market price)" : h.quoteMissing ? " (no market quote, valued at buy price)" : "";
 const indicator = (value: number | undefined, digits: number) => (value !== undefined && !isNaN(value) ? value.toFixed(digits) : "N/A");
 
-export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData): string {
+export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData, marketContext = ""): string {
   const summary = data.summary;
 
   const holdingsLedger =
@@ -66,12 +72,17 @@ ${holdingsLedger}
 
 === RECENT TRANSACTIONS (newest first) ===
 ${recentTransactions}
-
+${marketContext ? `\n${marketContext}\n` : ""}
 === INSTRUCTIONS FOR ASSISTANT ===
 1. Analyze holdings, performance, risk concentration, technical indicators, and asset allocation based on the ledger.
 2. If asked about an asset not present in the portfolio, state that it is not currently in this portfolio.
 3. When providing tactical recommendations, rebalancing advice, or risk assessments, explain the quantitative reasoning using the numbers above.
-4. Format responses using clean Markdown with bold labels and lists.`;
+4. Format responses using clean Markdown with bold labels and lists.${
+    marketContext
+      ? `
+5. Use the exposure, events, macro and benchmark data above when they help the answer. Do not invent data that is not given, such as company fundamentals or news.`
+      : ""
+  }`;
 }
 
 /** First user message, shortened, or a generic title. */
@@ -93,6 +104,8 @@ export class PortfolioChatService {
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
+    /** Market context for the system prompt; without it the prompt holds the ledger only. */
+    private readonly aiContext?: AiContextDeps,
   ) {}
 
   /** The system prompt a new chat would receive, so the UI can show it. */
@@ -100,8 +113,11 @@ export class PortfolioChatService {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) throw new Error(`Portfolio with ID "${portfolioId}" not found`);
     const baseCurrency = portfolio.baseCurrency || loadConfig().baseCurrency || "EUR";
-    const data = await this.portfolioService.getPortfolioData(portfolio.id, baseCurrency);
-    return buildPortfolioSystemPrompt(portfolio, data);
+    const [data, marketContext] = await Promise.all([
+      this.portfolioService.getPortfolioData(portfolio.id, baseCurrency),
+      this.aiContext ? buildAssistantMarketContext(this.aiContext, portfolio.id, baseCurrency).catch(() => "") : Promise.resolve(""),
+    ]);
+    return buildPortfolioSystemPrompt(portfolio, data, marketContext);
   }
 
   public getConversations(portfolioId: string): AssistantConversation[] {

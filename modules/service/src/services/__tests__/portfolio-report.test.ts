@@ -3,7 +3,8 @@ import { getDatabase } from "../../db/database.js";
 import * as reportRepo from "../../db/report.repo.js";
 import * as portfolioRepo from "../../db/portfolio.repo.js";
 import { PortfolioReportService } from "../portfolio-report.js";
-import { FinnhubService } from "../finnhub.js";
+import { EMPTY_REPORT_INTEL, type ReportIntel } from "../ai-context.js";
+import type { CompanyIntel } from "portfolio-shared/company-intel";
 import type { LlmService } from "../llm.js";
 import type { PortfolioService } from "../portfolio.js";
 import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
@@ -155,7 +156,7 @@ describe("Portfolio Report Prompt Persistence", () => {
     expect(reports[0]!.prompt).toBe(result.prompt);
   });
 
-  it("PortfolioReportService integrates Finnhub market intelligence into prompt when configured", async () => {
+  it("PortfolioReportService adds the market context sections to the prompt", async () => {
     let capturedPrompt: string | undefined;
 
     const mockLlmService = {
@@ -219,54 +220,37 @@ describe("Portfolio Report Prompt Persistence", () => {
       getPortfolioData: async () => mockPortfolioData,
     } as unknown as PortfolioService;
 
-    const mockFinnhub = {
-      isConfigured: () => true,
-      getReportMarketIntelligence: async () => ({
-        configured: true,
-        marketNews: [
-          {
-            headline: "Fed Signals Steady Policy",
-            summary: "Central bank highlights economic resiliency",
-            source: "Financial Times",
-            datetime: 1700000000,
+    const intel: ReportIntel = {
+      ...EMPTY_REPORT_INTEL,
+      marketNews: {
+        source: "finnhub",
+        items: [{ headline: "Fed Signals Steady Policy", summary: "Central bank highlights economic resiliency", source: "Financial Times", datetime: 1700000000 }],
+      },
+      companies: [
+        {
+          symbol: "AAPL",
+          fetchedAt: new Date().toISOString(),
+          included: ["profile", "analyst", "metrics", "news"],
+          skipped: [],
+          profile: { source: "finnhub", data: { symbol: "AAPL", name: "Apple Inc", industry: "Technology" } },
+          analyst: {
+            source: "finnhub",
+            data: { recommendations: { strongBuy: 18, buy: 22, hold: 6, sell: 1, strongSell: 0, consensus: "Buy" }, grades: [] },
           },
-        ],
-        holdings: {
-          AAPL: {
-            symbol: "AAPL",
-            profile: { name: "Apple Inc", industry: "Technology" },
-            news: [
-              {
-                headline: "Apple Expands AI Services",
-                summary: "New intelligence platform released",
-                source: "Bloomberg",
-                datetime: 1700000000,
-              },
-            ],
-            recommendation: {
-              strongBuy: 18,
-              buy: 22,
-              hold: 6,
-              sell: 1,
-              strongSell: 0,
-              period: "2026-09-01",
-            },
-            metrics: {
-              peRatio: 31.2,
-              beta: 1.05,
-              fiftyTwoWeekHigh: 235,
-              fiftyTwoWeekLow: 165,
-            },
-          },
-        },
-        summaryStats: {
-          totalNewsArticles: 2,
-          enrichedSymbolsCount: 1,
-        },
-      }),
-    } as unknown as FinnhubService;
+          estimates: null,
+          scores: null,
+          dcf: null,
+          metrics: { source: "finnhub", data: { peRatio: 31.2 } },
+          insider: null,
+          press: null,
+          news: { source: "finnhub", data: [{ title: "Apple Expands AI Services", publisher: "Bloomberg", datetime: 1700000000 }] },
+          peers: null,
+          transcript: null,
+        } as unknown as CompanyIntel,
+      ],
+    };
 
-    const service = new PortfolioReportService(mockLlmService, mockPortfolioService, mockFinnhub);
+    const service = new PortfolioReportService(mockLlmService, mockPortfolioService, async () => intel);
 
     const portfolio: PortfolioItem = {
       id: testPortfolioId,
@@ -280,12 +264,16 @@ describe("Portfolio Report Prompt Persistence", () => {
     });
 
     expect(res.finnhubConfigured).toBe(true);
-    expect(res.finnhubNewsCount).toBe(2);
-    expect(res.fullPrompt).toContain("Financial Market & Macroeconomic News (Finnhub API)");
+    expect(res.newsCount).toBe(2);
+    expect(res.contextSources).toEqual(["finnhub"]);
+    expect(res.fullPrompt).toContain("Financial Market & Macroeconomic News [finnhub]");
     expect(res.fullPrompt).toContain("Fed Signals Steady Policy");
     expect(res.fullPrompt).toContain("Apple Expands AI Services");
-    expect(res.fullPrompt).toContain("Analyst Consensus: 18 Strong Buy, 22 Buy");
-    expect(res.fullPrompt).toContain("P/E: 31.2");
+    expect(res.fullPrompt).toContain("strong buy 18, buy 22");
+    expect(res.fullPrompt).toContain("P/E 31.2");
+    // Sections without data are left out.
+    expect(res.fullPrompt).not.toContain("Macro Snapshot");
+    expect(res.fullPrompt).not.toContain("Benchmark Comparison");
 
     const generated = await service.generateReport(portfolio, {
       portfolioData: mockPortfolioData,

@@ -8,6 +8,12 @@
  * The prompt carries percentages, weights, tickers and transaction types
  * only, never money amounts, like the assistant chat. A day the service was
  * not running at the set time catches up on its next start.
+ *
+ * Headlines of the largest movers come through the provider chain (FMP stock
+ * news, then Finnhub company news); earnings, ex-dividend dates and splits
+ * of held symbols today and tomorrow come from income.ts. The scheduled
+ * brief skips a portfolio when none of its markets traded since the last
+ * brief and none trades today (weekends, holidays). "Send now" always runs.
  */
 import { loadConfig, updateConfig } from "../config";
 import { appLogger } from "../logger";
@@ -15,7 +21,9 @@ import * as portfolioRepo from "../db/portfolio.repo";
 import * as conversationRepo from "../db/conversation.repo";
 import type { LlmService, LlmMessage } from "./llm";
 import type { PortfolioService } from "./portfolio";
-import type { FinnhubService } from "./finnhub";
+import { formatEventsForPrompt, type AiContextDeps } from "./ai-context";
+import { getCompanyNews } from "./intel/company";
+import { exchangeForSymbol, isTradingDay } from "./intel/market-hours";
 import { channelNames, configuredChannels, notifyAll } from "./notify";
 import type { AutomationStatus, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData, PortfolioItem } from "portfolio-shared/portfolio";
@@ -84,6 +92,8 @@ interface BriefContext {
   since: string;
   today: string;
   news: string[];
+  /** Earnings, ex-dividend dates and splits of held symbols today and tomorrow, as prompt lines. */
+  events?: string;
 }
 
 /** The holdings of the last session, largest gains first and largest losses last. */
@@ -103,7 +113,7 @@ function recentTransactions(data: FinancialPortfolioData, since: string, today: 
 }
 
 export function buildDailyBriefPrompt(ctx: BriefContext): LlmMessage[] {
-  const { portfolio, data, since, today, news } = ctx;
+  const { portfolio, data, since, today, news, events } = ctx;
   const s = data.summary;
   const { up, down, count } = movers(data);
   const line = (h: (typeof up)[number]) => `- ${h.symbol} (${h.name}): ${signedPct(h.dayChangePercent)} on the day, weight ${pct(h.weightPercent)}`;
@@ -128,7 +138,7 @@ ${down.map(line).join("\n") || "None."}
 ${txs.join("\n") || "None."}
 
 === NEWS OF THE LARGEST MOVERS ===
-${news.join("\n") || "No news available."}`;
+${news.join("\n") || "No news available."}${events ? `\n\n=== EVENTS OF HELD SYMBOLS TODAY AND TOMORROW ===\n${events}` : ""}`;
 
   return [
     {
@@ -139,7 +149,7 @@ Use only the data given. Never invent prices, amounts, news or events. Do not gi
 Output Markdown only, at most 120 words:
 - One bold first line with the portfolio return of the session.
 - Then 2 to 4 short bullet points: the largest moves and their weight, a news item that explains a move when one is given, and any transactions.
-- End with one short line on anything to watch, based only on the data.`,
+- End with one short line on anything to watch, based only on the data. Name the earnings reports and ex-dividend dates of today and tomorrow when they are given.`,
     },
     { role: "user", content: `Today is ${today}. Write the daily brief.\n\n${context}` },
   ];
@@ -154,6 +164,7 @@ export function fallbackBrief(ctx: BriefContext): string {
   if (down[0]) lines.push(`- Top decliner: ${down[0].symbol} ${signedPct(down[0].dayChangePercent)}`);
   const txs = recentTransactions(data, since, today).length;
   if (txs > 0) lines.push(`- ${txs} transaction${txs === 1 ? "" : "s"} since ${since}`);
+  if (ctx.events) lines.push(...ctx.events.split("\n").slice(0, 3));
   lines.push("", "_The assistant was not available, so this brief shows the numbers only._");
   return lines.join("\n");
 }
@@ -166,7 +177,7 @@ export class DailyBriefService {
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
-    private readonly finnhub: FinnhubService,
+    private readonly aiContext: AiContextDeps,
   ) {}
 
   public start(): void {
@@ -215,6 +226,7 @@ export class DailyBriefService {
     const errors: string[] = [];
     let delivered = 0;
     let written = 0;
+    let skipped = 0;
     const timer = appLogger.startTimer("brief", "run", `Writing the daily brief (${trigger}) for ${portfolios.length} portfolio(s)`);
 
     try {
@@ -223,7 +235,12 @@ export class DailyBriefService {
         try {
           const data = await this.portfolioService.getPortfolioData(row.id, row.baseCurrency || cfg.baseCurrency || "EUR", true);
           this.portfolioService.saveDailySnapshot(row.id, data);
-          const ctx: BriefContext = { portfolio, data, since, today, news: await this.news(data, since, today) };
+          if (trigger === "schedule" && !(await this.hadSession(data, since, today))) {
+            skipped++;
+            continue;
+          }
+          const [news, events] = await Promise.all([this.news(data, since), this.events(row.id, today)]);
+          const ctx: BriefContext = { portfolio, data, since, today, news, events };
 
           let content: string;
           try {
@@ -259,32 +276,73 @@ export class DailyBriefService {
     }
 
     const unique = [...new Set(errors)];
-    const success = written > 0 && delivered === (channels.length > 0 ? written : 0);
+    const allSkipped = skipped > 0 && written === 0 && unique.length === 0;
+    const success = allSkipped || (written > 0 && delivered === (channels.length > 0 ? written : 0));
+    const skippedNote = skipped > 0 ? ` Skipped ${skipped} portfolio(s): no held market traded since the last brief.` : "";
     const message =
       channels.length === 0
-        ? `Wrote ${written} brief(s) to the assistant. Set up Gotify or ntfy under Integrations to receive them as push notifications.`
-        : `Wrote ${written} brief(s) and delivered ${delivered} through ${channelNames(channels)}.`;
+        ? `Wrote ${written} brief(s) to the assistant. Set up Gotify or ntfy under Integrations to receive them as push notifications.${skippedNote}`
+        : `Wrote ${written} brief(s) and delivered ${delivered} through ${channelNames(channels)}.${skippedNote}`;
     this.last = { at: now.toISOString(), trigger, success, message, errors: unique };
-    timer.end(success ? "success" : "warning", `Daily brief: ${written} written, ${delivered} delivered, ${unique.length} problem(s)`);
+    timer.end(success ? "success" : "warning", `Daily brief: ${written} written, ${delivered} delivered, ${skipped} skipped, ${unique.length} problem(s)`);
     return { success, portfolios: written, delivered, message, error: unique[0] };
   }
 
-  /** Headlines of the largest movers since the last brief, when a Finnhub key is set. */
-  private async news(data: FinancialPortfolioData, since: string, today: string): Promise<string[]> {
-    if (!loadConfig().finnhubApiKey) return [];
+  /**
+   * Whether any market of the held symbols traded from `since` to today
+   * (exchange-local dates). Crypto trades every day. True when no holding
+   * maps to a known market, so nothing is skipped by mistake.
+   */
+  private async hadSession(data: FinancialPortfolioData, since: string, today: string): Promise<boolean> {
+    const codes = new Set<string>();
+    for (const h of data.holdings ?? []) {
+      if (h.isPrivate || h.assetType === "Cash" || !(h.shares > 0)) continue;
+      const code = exchangeForSymbol(h.symbol, h.assetType);
+      if (code) codes.add(code === "NASDAQ" || code === "AMEX" ? "NYSE" : code);
+    }
+    if (codes.size === 0) return true;
+    try {
+      for (let day = since; day <= today; day = addDays(day, 1)) {
+        for (const code of codes) if (await isTradingDay(code, day, this.aiContext.fmp)) return true;
+      }
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Headlines of the largest movers since the last brief, through the
+   * provider chain: FMP stock news, then Finnhub company news. Empty without
+   * a news provider.
+   */
+  private async news(data: FinancialPortfolioData, since: string): Promise<string[]> {
     const top = (data.holdings ?? [])
-      .filter((h) => h.assetType === "Stock" || h.assetType === "ETF")
+      .filter((h) => (h.assetType === "Stock" || h.assetType === "ETF") && !h.isPrivate)
       .sort((a, b) => Math.abs(b.dayChangePercent ?? 0) - Math.abs(a.dayChangePercent ?? 0))
       .slice(0, NEWS_SYMBOLS);
-    const out: string[] = [];
-    for (const h of top) {
-      try {
-        const items = await this.finnhub.getCompanyNews(h.symbol, since, today, NEWS_PER_SYMBOL);
-        for (const item of items) out.push(`- ${h.symbol}: ${item.headline}`);
-      } catch {
-        // News is optional.
-      }
+    const sinceUnix = Math.floor(new Date(`${since}T00:00:00`).getTime() / 1000);
+    const lists = await Promise.all(
+      top.map(async (h) => {
+        try {
+          const res = await getCompanyNews(this.aiContext, h.symbol);
+          const items = (res?.data ?? []).filter((n) => !n.datetime || n.datetime >= sinceUnix).slice(0, NEWS_PER_SYMBOL);
+          return items.map((n) => `- ${h.symbol}: ${n.title}${res ? ` [${res.source}]` : ""}`);
+        } catch {
+          return []; // News is optional.
+        }
+      }),
+    );
+    return lists.flat();
+  }
+
+  /** Earnings, ex-dividend dates and splits of held symbols today and tomorrow, or undefined when none. */
+  private async events(portfolioId: string, today: string): Promise<string | undefined> {
+    try {
+      const res = await this.aiContext.income.getUpcomingEvents(portfolioId, 2);
+      return formatEventsForPrompt(res, { kinds: ["earnings", "exDividend", "split"], maxLines: 8, from: today, to: addDays(today, 1) }) || undefined;
+    } catch {
+      return undefined; // Events are optional.
     }
-    return out;
   }
 }

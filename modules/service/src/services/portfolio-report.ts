@@ -11,8 +11,7 @@ import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
-import { FinnhubService, type FinnhubReportIntelligence } from "./finnhub.js";
-import type { YahooFinanceService } from "./yahoo-finance.js";
+import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type {
   PrepareReportPromptResponse,
@@ -75,15 +74,33 @@ interface ReportStreamSession {
   createdAt: number;
 }
 
+/** Collects the market context of a report. Tests pass a stub; without one a report has the ledger only. */
+export type ReportIntelLoader = (req: ReportIntelRequest) => Promise<ReportIntel>;
+
+/** A report week counts as current while it has not ended more than this many days ago. */
+const CURRENT_WEEK_GRACE_DAYS = 3;
+
 export class PortfolioReportService {
   private readonly streamSessions = new Map<string, ReportStreamSession>();
+  private readonly loadIntel: ReportIntelLoader;
 
+  /**
+   * `intel` is the service set of container.ts (provider chain: FMP, then
+   * Finnhub or Yahoo) or a loader function for tests.
+   */
   constructor(
     private readonly llm: LlmService,
     private readonly portfolioService: PortfolioService,
-    private readonly finnhub: FinnhubService = new FinnhubService(),
-    private readonly yahoo?: YahooFinanceService,
+    intel?: AiContextDeps | ReportIntelLoader,
   ) {
+    if (typeof intel === "function") {
+      this.loadIntel = intel;
+    } else if (intel) {
+      const deps = intel;
+      this.loadIntel = (req) => collectReportIntel(deps, req);
+    } else {
+      this.loadIntel = async () => EMPTY_REPORT_INTEL;
+    }
     // Periodically clean up stale sessions (older than 15 minutes)
     setInterval(() => {
       const now = Date.now();
@@ -178,106 +195,27 @@ export class PortfolioReportService {
       )
       .join("\n");
 
-    // Retrieve real-time market news and holding intelligence from Finnhub if configured
-    const isFinnhubConfigured = this.finnhub.isConfigured();
-    let finnhubIntelligence: FinnhubReportIntelligence | null = null;
-
-    if (isFinnhubConfigured) {
-      const targetSymbols = nonCashHoldings
-        .slice()
-        .sort((a, b) => b.weightPercent - a.weightPercent)
-        .map((h) => h.symbol);
-
-      try {
-        finnhubIntelligence = await this.finnhub.getReportMarketIntelligence({
-          symbols: targetSymbols,
-          fromDate: weekStartDate,
-          toDate: weekEndDate,
-          maxSymbols: 5,
-        });
-      } catch (finnhubErr) {
-        appLogger.logStep("warning", "report", "finnhub_enrichment_failed", "Failed to enrich report with Finnhub data", undefined, {
-          error: finnhubErr instanceof Error ? finnhubErr.message : String(finnhubErr),
-        });
-      }
+    // Market context through the provider chain (FMP first, then Finnhub or Yahoo). Every piece may be missing.
+    const today = new Date().toISOString().slice(0, 10);
+    const graceEnd = new Date(`${weekEndDate}T12:00:00Z`);
+    graceEnd.setUTCDate(graceEnd.getUTCDate() + CURRENT_WEEK_GRACE_DAYS);
+    const current = today >= weekStartDate && today <= graceEnd.toISOString().slice(0, 10);
+    let intelSections = buildReportIntelSections(EMPTY_REPORT_INTEL, { from: weekStartDate, to: weekEndDate });
+    try {
+      const intel = await this.loadIntel({ portfolioId: portfolio.id, holdings, baseCurrency, current });
+      intelSections = buildReportIntelSections(intel, { from: weekStartDate, to: weekEndDate });
+    } catch (err) {
+      appLogger.logStep("warning", "report", "intel_failed", `Report market context failed (${err instanceof Error ? err.name : typeof err})`);
     }
+    const intelContext = intelSections.text;
 
-    let finnhubContext = "";
-    const sections: string[] = [];
-    const routing = config.dataProviderRouting;
-
-    // Check if Yahoo market news is requested or needed as fallback
-    if ((routing?.news === "yahoo" || !finnhubIntelligence?.marketNews?.length) && this.yahoo) {
-      try {
-        const yahooNews = await this.yahoo.getMarketNews(4);
-        if (yahooNews.length > 0) {
-          const newsLines = yahooNews
-            .map((n) => `- **${n.headline}** (${n.source}): ${n.summary}`)
-            .join("\n");
-          sections.push(`### Financial Market & Macroeconomic News (Yahoo Finance)\n${newsLines}`);
-        }
-      } catch {
-        // Safe fallback, one provider does not affect the other
-      }
-    }
-
-    if (finnhubIntelligence && finnhubIntelligence.configured) {
-      if ((!routing || routing.news === "finnhub" || sections.length === 0) && finnhubIntelligence.marketNews.length > 0) {
-        const newsLines = finnhubIntelligence.marketNews
-          .map((n) => `- **${n.headline}** (${n.source}): ${n.summary}`)
-          .join("\n");
-        sections.push(`### Financial Market & Macroeconomic News (Finnhub API)\n${newsLines}`);
-      }
-
-      if (!routing || routing.fundamentals === "finnhub") {
-        const holdingSymbols = Object.keys(finnhubIntelligence.holdings);
-        if (holdingSymbols.length > 0) {
-          const holdingLines: string[] = [];
-          for (const sym of holdingSymbols) {
-            const intel = finnhubIntelligence.holdings[sym]!;
-            const parts: string[] = [];
-            if (intel.profile?.name && intel.profile?.industry) {
-              parts.push(`${intel.profile.name} (${intel.profile.industry})`);
-            }
-            if (intel.recommendation) {
-              const r = intel.recommendation;
-              parts.push(
-                `Analyst Consensus: ${r.strongBuy} Strong Buy, ${r.buy} Buy, ${r.hold} Hold, ${r.sell} Sell, ${r.strongSell} Strong Sell`,
-              );
-            }
-            if (intel.metrics) {
-              const m = intel.metrics;
-              const metricList: string[] = [];
-              if (m.peRatio !== undefined) metricList.push(`P/E: ${m.peRatio}`);
-              if (m.beta !== undefined) metricList.push(`Beta: ${m.beta}`);
-              if (m.fiftyTwoWeekHigh !== undefined && m.fiftyTwoWeekLow !== undefined) {
-                metricList.push(`52W: ${m.fiftyTwoWeekLow} - ${m.fiftyTwoWeekHigh}`);
-              }
-              if (m.dividendYield !== undefined) metricList.push(`Div Yield: ${m.dividendYield}%`);
-              if (metricList.length > 0) parts.push(metricList.join(" | "));
-            }
-            if (intel.news.length > 0) {
-              const newsList = intel.news.map((n) => `  * "${n.headline}" (${n.source})`).join("\n");
-              parts.push(`Recent Headlines:\n${newsList}`);
-            }
-
-            holdingLines.push(`- **${sym}**:\n  ${parts.join("\n  ")}`);
-          }
-          sections.push(`### Key Asset Intelligence & Analyst Consensus (Finnhub API)\n${holdingLines.join("\n")}`);
-        }
-      }
-    }
-
-    if (sections.length > 0) {
-      finnhubContext = `\n## Real-Time Market Intelligence\n${sections.join("\n\n")}\n`;
-    }
-
-    const structureInstructions = finnhubIntelligence?.configured
+    const structureInstructions = intelSections.sections.length > 0
       ? `Please structure your report as follows:
-1. **Executive Summary & Macro Overview** (2-3 concise paragraphs. Synthesize portfolio movement with the provided macroeconomic and financial market news.)
-2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI, incorporating relevant company headlines and analyst recommendations)
-3. **Risk Exposure & Allocation Assessment** (Sector/asset concentration, valuation multiples/beta, and cash buffer)
-4. **Tactical Action Items & Strategic Rebalancing** (Clear, bulleted recommendations)`
+1. **Executive Summary & Macro Overview** (2-3 concise paragraphs. Synthesize portfolio movement with the provided market news, macro snapshot and benchmark comparison when given.)
+2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI, incorporating relevant company headlines, analyst views and earnings call summaries when given)
+3. **Risk Exposure & Allocation Assessment** (Sector, country and single-stock concentration after ETF look-through when given, valuation multiples, cash buffer)
+4. **Income & Week Ahead** (Dividend yield and the upcoming earnings, ex-dividend dates and economic releases when given; leave this section out when no such data is given)
+5. **Tactical Action Items & Strategic Rebalancing** (Clear, bulleted recommendations)`
       : `Please structure your report as follows:
 1. **Executive Summary & Macro Overview** (2-3 concise paragraphs)
 2. **Key Asset Performance Highlights** (Winners, laggards, technical status with SMAs/RSI)
@@ -298,7 +236,7 @@ Analyze the following investment portfolio state for portfolio **"${portfolio.na
 
 ## Holdings Ledger
 ${holdingsContext}
-${finnhubContext}
+${intelContext}
 ${structureInstructions}
 
 ## General Rules
@@ -317,8 +255,9 @@ ${structureInstructions}
       holdingsCount: holdings.length,
       topWinner,
       topLoser,
-      finnhubEnriched: Boolean(finnhubIntelligence && finnhubIntelligence.configured),
-      finnhubNewsCount: finnhubIntelligence ? finnhubIntelligence.summaryStats.totalNewsArticles : 0,
+      finnhubEnriched: intelSections.sources.includes("finnhub"),
+      finnhubNewsCount: intelSections.newsCount,
+      intelSources: intelSections.sources,
     };
 
     return {
@@ -336,7 +275,7 @@ ${structureInstructions}
       userPrompt,
       fullPrompt: `### System Prompt\n${systemPrompt}\n\n### User Prompt\n${userPrompt.trim()}`,
       metrics,
-      finnhubIntelligence,
+      intelSections,
     };
   }
 
@@ -363,8 +302,11 @@ ${structureInstructions}
       model: ctx.model,
       holdingsCount: ctx.holdings.length,
       metrics: ctx.metrics,
-      finnhubConfigured: Boolean(ctx.finnhubIntelligence?.configured),
-      finnhubNewsCount: ctx.finnhubIntelligence ? ctx.finnhubIntelligence.summaryStats.totalNewsArticles : 0,
+      finnhubConfigured: ctx.intelSections.sources.includes("finnhub"),
+      finnhubNewsCount: ctx.intelSections.newsCount,
+      contextSources: ctx.intelSections.sources,
+      contextSections: ctx.intelSections.sections,
+      newsCount: ctx.intelSections.newsCount,
     };
   }
 

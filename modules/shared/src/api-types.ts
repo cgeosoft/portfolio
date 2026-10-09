@@ -214,10 +214,16 @@ export interface PrepareReportPromptResponse {
   model: string;
   holdingsCount: number;
   metrics: ReportMetrics;
-  /** Whether a Finnhub API key is configured and was queried for this prompt */
+  /** Whether Finnhub supplied part of the market context of this prompt */
   finnhubConfigured?: boolean;
-  /** Total Finnhub market and company news headlines gathered for this prompt */
+  /** Market and company headlines in this prompt (kept for older GUIs; same as `newsCount`) */
   finnhubNewsCount?: number;
+  /** Providers behind the market context sections, in first-seen order */
+  contextSources?: DataProviderId[];
+  /** Titles of the market context sections in the prompt; empty when only the ledger is sent */
+  contextSections?: string[];
+  /** Market and company headlines in this prompt */
+  newsCount?: number;
 }
 
 export interface TestFinnhubConnectionRequest {
