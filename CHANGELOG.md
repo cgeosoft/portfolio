@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.0] - 2026-10-09
+
+### Changed
+- Website headings now use the Sansation font.
+- Improved the metrics page on the website.
+
+### Fixed
+- Fixed a technical issue with the income chart type.
+
+
 ## [0.9.0] - 2026-10-09
 
 ### Added
