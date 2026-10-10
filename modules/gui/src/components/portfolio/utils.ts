@@ -152,20 +152,21 @@ export function formatTimeAgo(isoString?: string | null): string {
 export function maskFinancialValues(text: string | undefined): string {
   if (!text) return "";
   let result = text;
+  // An amount starts with a digit and stays on one line; a code inside a symbol (BTC-USD) is no currency.
   // 1. Preceding currency symbols: $1,234.56, €50,000, +$100, -$50.20, £50k, € 100
-  result = result.replace(/([+$−-]?\s*[$€£¥])\s*[\d,]+(?:\.\d+)?(?:\s*[kKmMbBtT]\b)?/g, "$1••••");
+  result = result.replace(/([+$−-]?[ \t]*[$€£¥])[ \t]*\d+(?:,\d+)*(?:\.\d+)?(?:[ \t]*[kKmMbBtT]\b)?/g, "$1••••");
   // 2. Trailing currency symbols: 1234.56 €, 500 $
-  result = result.replace(/([+$−-]?\s*)[\d,]+(?:\.\d+)?\s*([$€£¥])/g, "$1•••• $2");
+  result = result.replace(/([+$−-]?[ \t]*)\d+(?:,\d+)*(?:\.\d+)?[ \t]*([$€£¥])/g, "$1•••• $2");
   // 3. Preceding currency code and amounts: EUR12,345.67, USD 50,000, EUR: 1,800, Val: EUR1800
-  result = result.replace(/\b(USD|EUR|GBP|CHF|CAD|AUD|JPY)\s*([:=]?)\s*[+$−-]?\s*[\d,]+(?:\.\d+)?(?:\s*[kKmMbBtT]\b)?/g, "$1$2 ••••");
+  result = result.replace(/(?<![\w-])(USD|EUR|GBP|CHF|CAD|AUD|JPY)[ \t]*([:=]?)[ \t]*[+$−-]?[ \t]*\d+(?:,\d+)*(?:\.\d+)?(?:[ \t]*[kKmMbBtT]\b)?/g, "$1$2 ••••");
   // 4. Amounts followed by currency code: 150.00 USD, 1,200 EUR
-  result = result.replace(/([+$−-]?\s*)[\d,]+(?:\.\d+)?\s*(USD|EUR|GBP|CHF|CAD|AUD|JPY)\b/g, "$1•••• $2");
+  result = result.replace(/([+$−-]?[ \t]*)\d+(?:,\d+)*(?:\.\d+)?[ \t]*(USD|EUR|GBP|CHF|CAD|AUD|JPY)\b/g, "$1•••• $2");
   // 5. Swiss Franc: Fr 1,200.50 or Fr. 500
-  result = result.replace(/\b(Fr\.?)\s*[+$−-]?\s*[\d,]+(?:\.\d+)?/g, "$1 ••••");
+  result = result.replace(/\b(Fr\.?)[ \t]*[+$−-]?[ \t]*\d+(?:,\d+)*(?:\.\d+)?/g, "$1 ••••");
   // 6. Price expressions: @ 150.25, @ $150
-  result = result.replace(/(@\s*(?:[$€£¥]|(?:USD|EUR|GBP|CHF)\s*)?)\s*[\d,]+(?:\.\d+)?/g, "$1••••");
+  result = result.replace(/(@[ \t]*(?:[$€£¥]|(?:USD|EUR|GBP|CHF)[ \t]*)?)[ \t]*\d+(?:,\d+)*(?:\.\d+)?/g, "$1••••");
   // 7. Valuation and balance phrases: e.g. "portfolio value of 15000"
-  result = result.replace(/\b(valuation|balance|cost basis|market value|portfolio value)\s*(?:of|is|stands at)?\s*[:=]?\s*([+$−-]?)\s*[\d,]+(?:\.\d+)?/gi, "$1 $2••••");
+  result = result.replace(/\b(valuation|balance|cost basis|market value|portfolio value)[ \t]*(?:of|is|stands at)?[ \t]*[:=]?[ \t]*([+$−-]?)[ \t]*\d+(?:,\d+)*(?:\.\d+)?/gi, "$1 $2••••");
   return result;
 }
 

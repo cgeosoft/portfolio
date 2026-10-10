@@ -6,6 +6,10 @@ Instructions for agents: verify the assertions, current code behavior, and exist
 
 ### Inbox
 
+- [ ] [B] Charts are sized wrong when the app starts with a saved zoom other than 100%: at 110% the performance chart is 407px tall instead of about 267px, and a reset to 100% keeps it oversized. Chart.js 4.5.1 `getContainerSize` reads `getBoundingClientRect()` (zoomed pixels) at creation; resizes made while the app runs are correct
+- [ ] [B] Privacy mode leaves transaction quantities in the assistant system prompt ("[BUY] 0.008 BTC-USD", "[BUY] 6 NVDA") while the chart masks share counts
+- [ ] [T] Two dev instances on 127.0.0.1 share the session cookie (cookies ignore the port): the second login logs the first out and it shows the PIN screen
+
 ### Urgent
 
 None open.
