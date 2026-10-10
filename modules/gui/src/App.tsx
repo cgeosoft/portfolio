@@ -333,6 +333,11 @@ export default function App() {
     applyZoom(1.0);
   }, [applyZoom]);
 
+  const handleZoomSet = useCallback((zoom: number) => {
+    setZoomLevel(Math.min(2.5, Math.max(0.5, Math.round(zoom * 100) / 100)));
+    applyZoom(zoom);
+  }, [applyZoom]);
+
   // Theme State & Persistence ("dark" | "light" | "system")
   const [theme, setTheme] = useState<AppTheme>(() => {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
@@ -1808,6 +1813,8 @@ export default function App() {
             onPortfolioDeleted={handlePortfolioDeleted}
             theme={theme}
             onChangeTheme={handleThemeChange}
+            zoomLevel={zoomLevel}
+            onChangeZoom={handleZoomSet}
             onPinEnabledChange={setPinEnabled}
             onReportIssue={() => setIsSupportTicketOpen(true)}
             metrics={metricsPage}
@@ -1828,6 +1835,8 @@ export default function App() {
             onPortfolioDeleted={handlePortfolioDeleted}
             theme={theme}
             onChangeTheme={handleThemeChange}
+            zoomLevel={zoomLevel}
+            onChangeZoom={handleZoomSet}
             onPinEnabledChange={setPinEnabled}
             onReportIssue={() => setIsSupportTicketOpen(true)}
             metrics={metricsPage}
