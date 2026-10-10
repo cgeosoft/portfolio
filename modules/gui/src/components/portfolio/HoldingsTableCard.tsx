@@ -203,6 +203,22 @@ export function HoldingsTableCard({
                 {fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)}
               </span>
             )}
+            {!isCash && h.quoteMissing && (
+              <span
+                className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                title="No market quote. The price shown is the average buy price."
+              >
+                no quote
+              </span>
+            )}
+            {!isCash && h.fxMissing && (
+              <span
+                className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                title={`No exchange rate for ${h.nativeCurrency ?? "this currency"}. The value is not converted.`}
+              >
+                no FX
+              </span>
+            )}
           </div>
           <div className={isCash ? "text-[11px] text-slate-400 font-semibold" : "text-[11px] text-slate-50"}>
             {fmtCurrency(h.currentValue, h.currency || currency, hideValues)} ({h.weightPercent.toFixed(1)}%)

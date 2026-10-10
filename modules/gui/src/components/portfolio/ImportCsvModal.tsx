@@ -825,6 +825,11 @@ export function ImportCsvModal({
       return idx !== undefined && idx >= 0 ? (rowCols[idx] ?? "").trim() : "";
     };
 
+    // Stored tax is a cost: positive when paid, negative when refunded. Exports
+    // that write paid tax as a negative number (Trade Republic) also write a
+    // refund as a positive one, so flip the sign for those instead of using abs.
+    const taxPaidIsNegative = rows.some((rowCols) => (parseNumber(getVal(rowCols, "tax")) ?? 0) < 0);
+
     for (let r = 0; r < rows.length; r++) {
       const rowCols = rows[r]!;
 
@@ -865,7 +870,8 @@ export function ImportCsvModal({
       const price = parseNumber(getVal(rowCols, "price"));
       const amount = parseNumber(getVal(rowCols, "amount"));
       const fee = parseNumber(getVal(rowCols, "fee")) !== undefined ? Math.abs(parseNumber(getVal(rowCols, "fee"))!) : undefined;
-      const tax = parseNumber(getVal(rowCols, "tax")) !== undefined ? Math.abs(parseNumber(getVal(rowCols, "tax"))!) : undefined;
+      const rawTax = parseNumber(getVal(rowCols, "tax"));
+      const tax = rawTax === undefined ? undefined : taxPaidIsNegative ? 0 - rawTax || 0 : Math.abs(rawTax);
       const currency = getVal(rowCols, "currency") || customBaseCurrency || "EUR";
 
       const isPrivate =

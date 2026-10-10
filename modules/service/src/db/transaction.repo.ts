@@ -30,7 +30,7 @@ function generateId(): string {
 export function findByPortfolio(portfolioId: string): TransactionRow[] {
   const db = getDatabase();
   return db
-    .query("SELECT * FROM transactions WHERE portfolioId = ? ORDER BY date ASC, createdAt ASC")
+    .query("SELECT * FROM transactions WHERE portfolioId = ? ORDER BY date ASC, COALESCE(datetime, date) ASC, createdAt ASC")
     .all(portfolioId) as TransactionRow[];
 }
 

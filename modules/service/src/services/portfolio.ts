@@ -67,6 +67,35 @@ function absNum(val: number): number {
   return Math.abs(val);
 }
 
+const INFLOW_TYPES = new Set(["CUSTOMER_INBOUND", "TRANSFER_INBOUND", "DEPOSIT"]);
+const OUTFLOW_TYPES = new Set(["CUSTOMER_OUTBOUND", "TRANSFER_OUTBOUND", "WITHDRAWAL"]);
+
+/**
+ * True when the transaction adds shares at a cost. Trade Republic exports a
+ * stock perk as a cash credit with no shares followed by a regular BUY, so a
+ * STOCKPERK only counts as a buy when it carries shares itself.
+ */
+function isBuyTransaction(tx: txRepo.TransactionRow): boolean {
+  if (tx.type === "BUY" || tx.type === "PRIVATE_MARKET_BUY") return true;
+  return tx.type === "STOCKPERK" && (tx.shares ?? 0) > 0;
+}
+
+/**
+ * Cash effect of everything except the trade value of a BUY or SELL, in the
+ * transaction currency. Known credits and debits use the absolute amount; any
+ * other type (card payments, manual transfers, stock perks) uses the signed
+ * amount as exported. Fees are always a cost; a negative tax is a refund.
+ */
+function nonTradeCashFlow(tx: txRepo.TransactionRow): number {
+  const amount = tx.amount ?? 0;
+  let flow = 0;
+  if (INFLOW_TYPES.has(tx.type)) flow = absNum(amount);
+  else if (OUTFLOW_TYPES.has(tx.type)) flow = -absNum(amount);
+  else if (tx.type === "DIVIDEND" || tx.type === "INTEREST_PAYMENT" || tx.type === "STOCKPERK") flow = absNum(amount);
+  else if (tx.type !== "BUY" && tx.type !== "PRIVATE_MARKET_BUY" && tx.type !== "SELL") flow = amount;
+  return flow - absNum(tx.fee ?? 0) - (tx.tax ?? 0);
+}
+
 function normalizeComparisonValue(val: unknown): unknown {
   if (val === null || val === undefined || val === "") return undefined;
   if (typeof val === "string") {
@@ -376,7 +405,7 @@ export class PortfolioService {
       const price = tx.price ?? 0;
       const amount = tx.amount ?? 0;
 
-      if (tx.type === "BUY" || tx.type === "STOCKPERK" || tx.type === "PRIVATE_MARKET_BUY") {
+      if (isBuyTransaction(tx)) {
         if (sym && sym !== "CASH") {
           let entry = activeHoldingsMap.get(sym);
           const isPrivateTx =
@@ -480,6 +509,15 @@ export class PortfolioService {
     let totalTaxes = 0;
 
     const cumulativeCostMap = new Map<string, { shares: number; totalCost: number }>();
+    // Cash ledger per transaction currency, converted to the base currency once FX is known.
+    const cashByCurrency = new Map<string, number>();
+    const addCash = (tx: txRepo.TransactionRow, delta: number) => {
+      const curr = (tx.currency || baseCurrency).trim();
+      cashByCurrency.set(curr, (cashByCurrency.get(curr) ?? 0) + delta);
+    };
+    // Without any deposit the ledger is incomplete (a trades-only export), so
+    // cash is clamped at zero instead of showing every buy as an overdraft.
+    const hasFunding = transactions.some((tx) => INFLOW_TYPES.has(tx.type));
 
     for (const tx of transactions) {
       const amt = tx.amount ?? 0;
@@ -487,20 +525,19 @@ export class PortfolioService {
       const pr = tx.price ?? 0;
       const sym = (tx.symbol || "").toUpperCase();
 
-      const fee = absNum(tx.fee ?? 0);
-      const tax = absNum(tx.tax ?? 0);
-      totalFees += fee;
-      totalTaxes += tax;
+      totalFees += absNum(tx.fee ?? 0);
+      totalTaxes += tx.tax ?? 0;
+      addCash(tx, nonTradeCashFlow(tx));
 
-      if (tx.type === "CUSTOMER_INBOUND" || tx.type === "TRANSFER_INBOUND" || tx.type === "DEPOSIT") {
+      if (INFLOW_TYPES.has(tx.type)) {
         totalCashInjected += absNum(amt);
-      } else if (tx.type === "CUSTOMER_OUTBOUND" || tx.type === "TRANSFER_OUTBOUND" || tx.type === "WITHDRAWAL") {
+      } else if (OUTFLOW_TYPES.has(tx.type)) {
         totalCashWithdrawn += absNum(amt);
       } else if (tx.type === "DIVIDEND") {
         totalDividends += absNum(amt);
       } else if (tx.type === "INTEREST_PAYMENT") {
         totalInterest += absNum(amt);
-      } else if (tx.type === "BUY" || tx.type === "STOCKPERK" || tx.type === "PRIVATE_MARKET_BUY") {
+      } else if (isBuyTransaction(tx)) {
         if (sym && sym !== "CASH") {
           let pos = cumulativeCostMap.get(sym);
           if (!pos) {
@@ -517,14 +554,16 @@ export class PortfolioService {
           }
           pos.shares += sh;
           pos.totalCost += cost;
+          addCash(tx, -cost);
         }
       } else if (tx.type === "SELL") {
+        const proceeds = absNum(amt) > 0 ? absNum(amt) : pr * absNum(sh);
+        if (sym && sym !== "CASH") addCash(tx, proceeds);
         if (sym && sym !== "CASH" && cumulativeCostMap.has(sym)) {
           const pos = cumulativeCostMap.get(sym)!;
           if (pos.shares > 0) {
             const avgCost = pos.totalCost / pos.shares;
             const costBasisOfSold = absNum(sh) * avgCost;
-            const proceeds = absNum(amt) > 0 ? absNum(amt) : pr * absNum(sh);
             const tradePnL = proceeds - costBasisOfSold;
             realizedPnL += tradePnL;
 
@@ -633,6 +672,7 @@ export class PortfolioService {
         [
           ...Array.from(quotesMap.values()).map((q) => q.currency),
           ...holdingsConfig.map((h) => h.currency),
+          ...cashByCurrency.keys(),
         ].filter(Boolean) as string[]
       )
     );
@@ -662,7 +702,9 @@ export class PortfolioService {
       const buyPrice = config.buyPrice ?? 0;
 
       const nativeCurrency = quote?.currency || config.currency || baseCurrency;
-      const fxMultiplier = fxRates.get(nativeCurrency) ?? 1;
+      const fxRate = fxRates.get(nativeCurrency);
+      const fxMissing = fxRate === undefined && nativeCurrency.toUpperCase() !== baseCurrency.toUpperCase();
+      const fxMultiplier = fxRate ?? 1;
 
       const rawNativePrice = quote?.regularMarketPrice ?? buyPrice;
       const rawNativePrevClose = quote?.previousClose ?? rawNativePrice;
@@ -714,6 +756,7 @@ export class PortfolioService {
         assetType,
         isPrivate,
         quoteMissing: !isPrivate && !quote ? true : undefined,
+        fxMissing: fxMissing || undefined,
         shares,
         buyPrice,
         currentPrice: Number(currentPrice.toFixed(2)),
@@ -737,11 +780,10 @@ export class PortfolioService {
       });
     }
 
+    const toBase = (curr: string) => fxRates.get(curr) ?? 1;
     let cashBalance = 0;
-    if (transactions.length > 0) {
-      const netCash = (totalCashInjected - totalCashWithdrawn - totalCost) + realizedPnL + totalDividends + totalInterest - totalFees - totalTaxes;
-      cashBalance = Math.max(0, netCash);
-    }
+    for (const [curr, native] of cashByCurrency) cashBalance += native * toBase(curr);
+    if (!hasFunding) cashBalance = Math.max(0, cashBalance);
     cashBalance = Number(cashBalance.toFixed(2));
 
     const totalPortfolioValue = Number((totalValue + cashBalance).toFixed(2));
@@ -819,13 +861,7 @@ export class PortfolioService {
     }
 
     const activeSharesOnDate = new Map<string, { shares: number; cost: number }>();
-    let histCashInjected = 0;
-    let histCashWithdrawn = 0;
-    let histRealizedPnL = 0;
-    let histDividends = 0;
-    let histInterest = 0;
-    let histFees = 0;
-    let histTaxes = 0;
+    let histCash = 0;
     let txPointer = 0;
 
     for (const d of sortedDates) {
@@ -846,22 +882,12 @@ export class PortfolioService {
         const shares = tx.shares ?? 0;
         const amount = tx.amount ?? 0;
         const price = tx.price ?? 0;
-        const fee = absNum(tx.fee ?? 0);
-        const tax = absNum(tx.tax ?? 0);
         const txType = tx.type;
+        const txFx = toBase((tx.currency || baseCurrency).trim());
 
-        histFees += fee;
-        histTaxes += tax;
+        histCash += nonTradeCashFlow(tx) * txFx;
 
-        if (txType === "CUSTOMER_INBOUND" || txType === "TRANSFER_INBOUND" || txType === "DEPOSIT") {
-          histCashInjected += absNum(amount);
-        } else if (txType === "CUSTOMER_OUTBOUND" || txType === "TRANSFER_OUTBOUND" || txType === "WITHDRAWAL") {
-          histCashWithdrawn += absNum(amount);
-        } else if (txType === "DIVIDEND") {
-          histDividends += absNum(amount);
-        } else if (txType === "INTEREST_PAYMENT") {
-          histInterest += absNum(amount);
-        } else if (txType === "BUY" || txType === "STOCKPERK" || txType === "PRIVATE_MARKET_BUY") {
+        if (isBuyTransaction(tx)) {
           if (sym && sym !== "CASH") {
             let entry = activeSharesOnDate.get(sym);
             if (!entry) {
@@ -880,16 +906,16 @@ export class PortfolioService {
 
             entry.shares += shares;
             entry.cost += cost;
+            histCash -= cost * txFx;
           }
         } else if (txType === "SELL") {
           if (sym && sym !== "CASH") {
-            const proceeds = absNum(amount);
+            const proceeds = absNum(amount) > 0 ? absNum(amount) : price * absNum(shares);
+            histCash += proceeds * txFx;
             const entry = activeSharesOnDate.get(sym);
             if (entry && entry.shares > 0) {
               const avgCost = entry.cost / entry.shares;
               const costOfSold = absNum(shares) * avgCost;
-              const tradePnL = proceeds - costOfSold;
-              histRealizedPnL += tradePnL;
 
               entry.shares -= absNum(shares);
               entry.cost -= costOfSold;
@@ -917,8 +943,7 @@ export class PortfolioService {
         }
       }
 
-      let cashOnDate = (histCashInjected - histCashWithdrawn - costOnDate) + histRealizedPnL + histDividends + histInterest - histFees - histTaxes;
-      if (cashOnDate < 0) cashOnDate = 0;
+      const cashOnDate = hasFunding ? histCash : Math.max(0, histCash);
 
       if (valOnDate > 0 || costOnDate > 0 || cashOnDate > 0) {
         chartHistory.push({
