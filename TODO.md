@@ -6,8 +6,6 @@ Instructions for agents: verify the assertions, current code behavior, and exist
 
 ### Inbox
 
-- [ ] [T] Two dev instances on 127.0.0.1 share the session cookie (cookies ignore the port): the second login logs the first out and it shows the PIN screen
-
 ### Urgent
 
 None open.
