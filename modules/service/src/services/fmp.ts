@@ -86,6 +86,8 @@ const RATE_LIMIT_PAUSE_MS = 30_000;
 const AUTH_FAILURE_PAUSE_MS = 5 * MINUTE;
 /** Repeated warnings of the same kind and path are logged once per window. */
 const LOG_REPEAT_MS = 10 * MINUTE;
+/** How long `requestStatus()` remembers a failed request. */
+const FAILURE_MEMORY_MS = 10 * MINUTE;
 
 export type FmpParamValue = string | number | boolean | undefined | null;
 export type FmpParams = Record<string, FmpParamValue>;
@@ -308,6 +310,18 @@ type FetchOutcome<T> =
   | { kind: "rate_limited" }
   | { kind: "error"; message: string };
 
+/** Why the last `get()` of a request returned null, or "ok". See `FmpService.requestStatus`. */
+export type FmpRequestStatus = "ok" | "no_key" | "key_rejected" | "restricted" | "failed";
+
+/** Data endpoints the key test probes, with the intel each one feeds. */
+export const FMP_PROBE_ENDPOINTS: ReadonlyArray<{ path: string; label: string; params: FmpParams }> = [
+  { path: "/analyst-estimates", label: "analyst estimates", params: { symbol: "AAPL", period: "annual", page: 0, limit: 1 } },
+  { path: "/financial-scores", label: "financial scores", params: { symbol: "AAPL" } },
+  { path: "/discounted-cash-flow", label: "DCF valuation", params: { symbol: "AAPL" } },
+  { path: "/news/press-releases", label: "press releases", params: { symbols: "AAPL", page: 0, limit: 1 } },
+  { path: "/earning-call-transcript-dates", label: "earnings call transcripts", params: { symbol: "AAPL" } },
+];
+
 const RESTRICTED_PATTERN = /restricted|premium|subscription|upgrade your plan|exclusive endpoint|not available under/i;
 
 export class FmpService {
@@ -316,6 +330,8 @@ export class FmpService {
   private static readonly lastLogged = new Map<string, number>();
   private static authFailedKey = "";
   private static authFailedUntil = 0;
+  /** Recent failures per key fingerprint and request, for `requestStatus()`. */
+  private static readonly failures = new Map<string, { status: "key_rejected" | "failed"; at: number }>();
 
   private readonly baseUrl: string;
 
@@ -376,6 +392,8 @@ export class FmpService {
 
     const outcome = await pending;
     const stale = opts.staleOnError !== false && cached ? cached.data : null;
+    if (outcome.kind === "ok" || outcome.kind === "restricted") FmpService.failures.delete(flightKey);
+    else FmpService.failures.set(flightKey, { status: outcome.kind === "auth" ? "key_rejected" : "failed", at: Date.now() });
 
     switch (outcome.kind) {
       case "ok":
@@ -405,8 +423,31 @@ export class FmpService {
     }
   }
 
-  /** Test the stored key, or `apiKey` when given. Bypasses the cache and the plan markers. */
-  public async testConnection(apiKey?: string): Promise<{ success: boolean; latencyMs?: number; error?: string }> {
+  /**
+   * Why `get(path, params)` with the stored key last returned null: no key,
+   * a rejected key, an endpoint or symbol outside the plan, or a failed call
+   * in the last few minutes. "ok" otherwise (the call worked, or FMP had no
+   * data). Reads only memory and the cache; sends nothing.
+   */
+  public requestStatus(path: string, params: FmpParams = {}): FmpRequestStatus {
+    const key = this.getApiKey();
+    if (!key) return "no_key";
+    const fp = this.fingerprint(key);
+    const query = this.buildQuery(params);
+    const relative = query ? `${path}?${query}` : path;
+    if (this.isRestricted(fp, path, relative)) return "restricted";
+    if (FmpService.authFailedKey === fp && Date.now() < FmpService.authFailedUntil) return "key_rejected";
+    const failure = FmpService.failures.get(`${fp}:${relative}`);
+    if (failure && Date.now() - failure.at < FAILURE_MEMORY_MS) return failure.status;
+    return "ok";
+  }
+
+  /**
+   * Test the stored key, or `apiKey` when given. Bypasses the cache and the
+   * plan markers. After the key authenticates, probes the data endpoints in
+   * `FMP_PROBE_ENDPOINTS` and lists those the plan does not include.
+   */
+  public async testConnection(apiKey?: string): Promise<{ success: boolean; latencyMs?: number; error?: string; restricted?: string[] }> {
     const key = this.getApiKey(apiKey);
     if (!key) return { success: false, error: "FMP API key is not configured" };
     const start = performance.now();
@@ -416,10 +457,10 @@ export class FmpService {
       case "ok":
         if (!Array.isArray(outcome.data)) return { success: false, error: "Unexpected response format from FMP" };
         if (FmpService.authFailedKey === this.fingerprint(key)) FmpService.authFailedUntil = 0;
-        return { success: true, latencyMs };
+        return { success: true, latencyMs, restricted: await this.probeDataEndpoints(key) };
       case "restricted":
         // The key authenticated; only the test endpoint is outside the plan.
-        return { success: true, latencyMs };
+        return { success: true, latencyMs, restricted: await this.probeDataEndpoints(key) };
       case "auth":
         return { success: false, error: "Invalid FMP API key (authentication failed)" };
       case "rate_limited":
@@ -427,6 +468,24 @@ export class FmpService {
       case "error":
         return { success: false, error: `Connection failed: ${outcome.message}` };
     }
+  }
+
+  /**
+   * Labels of the probe endpoints the plan does not include. Updates the plan
+   * markers to match, so an upgraded plan takes effect at once.
+   */
+  private async probeDataEndpoints(key: string): Promise<string[]> {
+    const fp = this.fingerprint(key);
+    const results = await Promise.all(
+      FMP_PROBE_ENDPOINTS.map(async (probe) => {
+        const query = this.buildQuery(probe.params);
+        const outcome = await FmpService.throttle.run(() => this.fetchJson<unknown>(`${probe.path}?${query}`, key));
+        if (outcome.kind === "ok") marketCache.deleteKey(`fmp:restricted:${fp}:${probe.path}`);
+        if (outcome.kind === "restricted" && outcome.scope === "endpoint") marketCache.set(`fmp:restricted:${fp}:${probe.path}`, true, FMP_TTL.restricted);
+        return outcome.kind === "restricted" ? probe.label : null;
+      }),
+    );
+    return results.filter((label): label is string => label !== null);
   }
 
   private buildQuery(params: FmpParams): string {

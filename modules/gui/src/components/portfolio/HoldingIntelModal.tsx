@@ -74,11 +74,27 @@ function Section({ title, icon: Icon, source, children, className = "" }: { titl
   );
 }
 
+function unavailableText(part: CompanyIntelPart, intel: CompanyIntel): string {
+  const fmpOnly = FMP_ONLY.includes(part);
+  const reason = intel.unavailable?.[part] ?? (intel.skipped.includes(part) ? "not_applicable" : "no_data");
+  switch (reason) {
+    case "not_applicable":
+      return intel.included.length > 0 ? "Does not apply to ETFs and funds." : "Public company data does not apply to this holding.";
+    case "no_key":
+      return fmpOnly ? "Needs a Financial Modeling Prep key. Add one in Settings → Data Providers." : "Needs a Financial Modeling Prep or Finnhub key. Add one in Settings → Data Providers.";
+    case "key_rejected":
+      return "Financial Modeling Prep rejected the API key. Check it in Settings → Data Providers.";
+    case "restricted":
+      return "Your Financial Modeling Prep plan does not include this data.";
+    case "failed":
+      return "The request failed. Try again later.";
+    case "no_data":
+      return fmpOnly ? "Financial Modeling Prep has no data for this symbol." : "Your data providers have no data for this symbol.";
+  }
+}
+
 function Unavailable({ part, intel }: { part: CompanyIntelPart; intel: CompanyIntel }) {
-  let text = "Not available from your data providers.";
-  if (intel.skipped.includes(part)) text = "Does not apply to ETFs and funds.";
-  else if (FMP_ONLY.includes(part)) text = "Not available. This needs a Financial Modeling Prep key with access to this data.";
-  return <p className="text-[11px] text-slate-500">{text}</p>;
+  return <p className="text-[11px] text-slate-500">{unavailableText(part, intel)}</p>;
 }
 
 function Stat({ label, value, title }: { label: string; value: ReactNode; title?: string }) {
@@ -249,7 +265,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
     setLoading(true);
     setError(null);
     api
-      .getCompanyIntel(holding.symbol, undefined, holding.assetType)
+      .getCompanyIntel(holding.symbol, undefined, holding.assetType, holding.isPrivate)
       .then((data) => {
         if (!cancelled) setIntel(data);
       })
@@ -262,7 +278,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
     return () => {
       cancelled = true;
     };
-  }, [holding.symbol, holding.assetType]);
+  }, [holding.symbol, holding.assetType, holding.isPrivate]);
 
   useEffect(() => load(), [load]);
 

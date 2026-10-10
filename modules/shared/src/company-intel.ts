@@ -250,6 +250,17 @@ export interface TranscriptSummary extends TranscriptMeta {
 }
 
 /** Every part is null when no provider had it (or it was not asked for). */
+/**
+ * Why a part came back null:
+ * - `no_key`: no provider that has this data has a key;
+ * - `key_rejected`: the provider refused the key;
+ * - `restricted`: the key's plan does not include this data (or this symbol);
+ * - `failed`: the request failed (network, rate limit); try again later;
+ * - `no_data`: the providers answered but have nothing for this symbol;
+ * - `not_applicable`: the part does not apply to this asset (a fund, a private company, crypto).
+ */
+export type IntelUnavailableReason = "no_key" | "key_rejected" | "restricted" | "failed" | "no_data" | "not_applicable";
+
 export interface CompanyIntel {
   symbol: string;
   fetchedAt: string;
@@ -257,6 +268,8 @@ export interface CompanyIntel {
   included: CompanyIntelPart[];
   /** Parts skipped because they do not apply (an ETF has no insider trades). */
   skipped: CompanyIntelPart[];
+  /** Why each requested part without data is missing. */
+  unavailable?: Partial<Record<CompanyIntelPart, IntelUnavailableReason>>;
   profile: Sourced<CompanyProfile> | null;
   analyst: Sourced<CompanyAnalystView> | null;
   estimates: Sourced<CompanyEstimates> | null;

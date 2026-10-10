@@ -245,6 +245,8 @@ export interface TestFmpConnectionResponse {
   success: boolean;
   error?: string;
   latencyMs?: number;
+  /** Data the key's plan does not include (for example "analyst estimates"), when the key works. */
+  restricted?: string[];
 }
 
 export interface TestYahooConnectionResponse {
@@ -1104,7 +1106,7 @@ export interface PortfolioExposureResponse {
 
 // ── company intelligence ────────────────────────────────────────────────────
 
-/** `GET /api/symbols/:symbol/intel?include=profile,analyst,...&assetType=Stock`. */
+/** `GET /api/symbols/:symbol/intel?include=profile,analyst,...&assetType=Stock&private=1`. */
 export type GetCompanyIntelResponse = import("./company-intel").CompanyIntel;
 
 /** `GET /api/symbols/:symbol/transcript`: the latest earnings call (FMP only). */

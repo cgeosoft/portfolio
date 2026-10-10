@@ -27,7 +27,7 @@ function finnhubOnlyDeps() {
     getCompanyNews: mock(async () => [{ headline: "Example Corp ships", summary: "Details", source: "Wire", datetime: 1_790_000_000, url: "https://example.com/a" }]),
     getPeers: mock(async () => ["PEER1", "PEER2"]),
   };
-  const fmp = { isConfigured: () => false, getProfile: async () => null, get: async () => null, getStockNews: async () => null };
+  const fmp = { isConfigured: () => false, getProfile: async () => null, get: async () => null, getStockNews: async () => null, requestStatus: () => "no_key" };
   const deps: CompanyIntelDeps = { fmp: fmp as unknown as FmpService, finnhub: finnhub as unknown as FinnhubService };
   return { deps, finnhub };
 }
@@ -91,6 +91,8 @@ describe("getCompanyIntel", () => {
     expect(intel.scores).toBeNull();
     expect(intel.dcf).toBeNull();
     expect(intel.transcript).toBeNull();
+    expect(intel.unavailable?.dcf).toBe("no_key");
+    expect(intel.unavailable?.profile).toBeUndefined();
 
     const text = formatCompanyIntelForPrompt(intel);
     expect(text).toContain("### XMPL (Example Corp)");
@@ -107,6 +109,29 @@ describe("getCompanyIntel", () => {
     const crypto = await getCompanyIntel(deps, "BTC-USD");
     expect(crypto.included).toEqual([]);
     expect(crypto.profile).toBeNull();
+    expect(crypto.unavailable?.estimates).toBe("not_applicable");
+    expect(etf.unavailable?.insider).toBe("not_applicable");
+  });
+
+  it("skips a private company", async () => {
+    const { deps, finnhub } = finnhubOnlyDeps();
+    const intel = await getCompanyIntel(deps, "SPACEX", { assetType: "Stock", isPrivate: true });
+    expect(intel.included).toEqual([]);
+    expect(intel.unavailable?.profile).toBe("not_applicable");
+    expect(finnhub.getCompanyProfile).not.toHaveBeenCalled();
+  });
+
+  it("tells a plan restriction from missing data for FMP-only parts", async () => {
+    const { deps } = finnhubOnlyDeps();
+    const fmp = {
+      isConfigured: () => true,
+      getProfile: async () => null,
+      getStockNews: async () => null,
+      get: async (path: string) => (path === "/financial-scores" ? [] : null),
+      requestStatus: (path: string) => (path === "/discounted-cash-flow" ? "restricted" : path === "/news/press-releases" ? "failed" : "ok"),
+    };
+    const intel = await getCompanyIntel({ ...deps, fmp: fmp as unknown as FmpService }, "XMPL", { assetType: "Stock", include: ["scores", "dcf", "press", "news"] });
+    expect(intel.unavailable).toEqual({ scores: "no_data", dcf: "restricted", press: "failed" });
   });
 
   it("dedupes a batch and leaves out cash and crypto", async () => {
