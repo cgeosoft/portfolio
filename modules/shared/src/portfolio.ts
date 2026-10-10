@@ -18,6 +18,8 @@ export interface PortfolioHolding {
   isPrivate?: boolean;
   /** No market quote; the price falls back to the buy price. */
   quoteMissing?: boolean;
+  /** No exchange rate for the native currency; the value is not converted. */
+  fxMissing?: boolean;
   shares: number;
   buyPrice: number;
   currentPrice: number;

@@ -520,12 +520,15 @@ export class YahooFinanceService {
           if (staleDisk && staleDisk.data) {
             multiplier = staleDisk.data;
           } else {
+            // Leave the currency out so the next provider can fill it, and cache
+            // nothing so the next refresh tries again instead of keeping a rate of 1.
             appLogger.logStep(
               "warning",
               "yahoo",
               "fx_rates",
-              `Could not resolve FX pair ${item.pairSymbol} for base ${base}, falling back to 1`,
+              `Could not resolve FX pair ${item.pairSymbol} for base ${base}`,
             );
+            continue;
           }
         }
 
