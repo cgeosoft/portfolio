@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.10.0] - 2026-10-10
+
+### Added
+- A boot loader screen shows while the first screen loads its data, so there is no blank page.
+- You can add a manual price or NAV for private holdings.
+- A pencil button lets you set a holding's ticker by hand, and a Find tickers button resolves ISIN only holdings to tickers.
+- Importing Trade Republic files now looks up tickers for ISINs automatically using stored mappings and provider search.
+- Clicking an instrument name, symbol or ISIN in reports, chat or tables now opens that holding's details.
+- A Text size setting in Settings General changes the interface zoom from Small to Largest.
+- The holding details modal now explains the exact reason a piece of company data is missing.
+
+### Changed
+- Each data directory now gets its own session cookie, so running two instances on the same address no longer logs you out of each other.
+- The assistant and daily brief no longer include share quantities for recent transactions, only the type and ticker.
+- Charts now size correctly in pixels when the app starts already zoomed.
+- The saved ETF class for a holding is kept instead of being recalculated.
+- Cash balance is now computed from the full transaction history instead of being estimated from deposits and holding costs, so Trade Republic imports match better.
+- Transactions on the same day are now sorted by their exact time.
+- A failed currency conversion no longer gets stuck at a rate of 1, so it can be corrected on the next refresh.
+- Deleting a portfolio now clears its holdings, transactions and reports from the screen and from storage.
+- Importing the same broker file into a second portfolio no longer fails, duplicate transaction ids are kept separate per portfolio.
+- Newer AI models that reject a temperature setting are now detected automatically and the request adjusts to work with them.
+- The Analyze with AI feature now uses your saved API key instead of a placeholder, so it works correctly.
+- The intro and boot loader screens are each shown for two seconds before the dashboard appears.
+
+### Fixed
+- Transaction quantities are now hidden in privacy mode.
+- Amounts in the allocation chart, prompt preview and assistant chat are now hidden in privacy mode.
+- The saved zoom level is now applied again when the app starts.
+- Fixed some internal test failures related to market data and provider selection.
+
+
 ## [0.9.1] - 2026-10-10
 
 ### Changed
