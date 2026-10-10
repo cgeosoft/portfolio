@@ -37,6 +37,7 @@ None open.
 - [x] [B] Privacy mode masks the allocation chart (centre total, tooltip amounts, share counts), the assistant chat and system prompt, and the report prompt preview; percentages stay visible
 - [x] [B] Deleting the last portfolio clears its state and replaces it with an empty Main Portfolio; the same broker transaction ids import into two portfolios (scoped ids)
 - [x] [B] Temperature left out for models that reject it (Claude Opus 4.7 and later, OpenAI reasoning models, which also get `max_completion_tokens`); a 400 naming the field retries once without it and remembers the answer
+- [x] [B] A stored ETF class keeps a holding an ETF (only FUND mapped before, so SPY, QQQ and VWCE.DE showed as Stock); the Yahoo chart instrument type refines a Stock or missing class; the Yahoo session warning names the network error code
 - [x] [B] Company intel gives a reason per missing part (no key, rejected key, plan restriction, failed, no data, not applicable); private holdings skip the lookup; the FMP key test lists the data the plan does not include
 - [x] [F] ISINs resolve to tickers on import (stored `symbol_map`, then provider search, home listing first); a resolve button for older imports and a pencil to set the symbol by hand
 - [x] [F] Text size select in Settings → General, bound to the interface zoom; the saved zoom applies on startup

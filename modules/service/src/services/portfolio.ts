@@ -82,6 +82,47 @@ function isBuyTransaction(tx: txRepo.TransactionRow): boolean {
   return tx.type === "STOCKPERK" && (tx.shares ?? 0) > 0;
 }
 
+type HoldingAssetType = NonNullable<PortfolioHoldingConfig["assetType"]>;
+
+/**
+ * Asset type for a stored transaction asset class. The manual form saves
+ * EQUITY, FUND or CRYPTO; the demo and some imports save STOCK or ETF.
+ * Returns undefined for an empty or unknown class.
+ */
+export function assetTypeFromClass(assetClass: string | null | undefined): HoldingAssetType | undefined {
+  switch ((assetClass || "").trim().toUpperCase()) {
+    case "ETF":
+    case "FUND":
+      return "ETF";
+    case "MUTUALFUND":
+      return "MutualFund";
+    case "CRYPTO":
+    case "CRYPTOCURRENCY":
+      return "Crypto";
+    case "STOCK":
+    case "EQUITY":
+      return "Stock";
+    default:
+      return undefined;
+  }
+}
+
+/** Asset type for a Yahoo chart `instrumentType`, or undefined when there is none. */
+export function assetTypeFromInstrument(instrumentType: string | undefined): HoldingAssetType | undefined {
+  switch ((instrumentType || "").toUpperCase()) {
+    case "ETF":
+      return "ETF";
+    case "MUTUALFUND":
+      return "MutualFund";
+    case "CRYPTOCURRENCY":
+      return "Crypto";
+    case "EQUITY":
+      return "Stock";
+    default:
+      return undefined;
+  }
+}
+
 /**
  * Cash effect of everything except the trade value of a BUY or SELL, in the
  * transaction currency. Known credits and debits use the absolute amount; any
@@ -400,7 +441,7 @@ export class PortfolioService {
         isin?: string;
         shares: number;
         totalCost: number;
-        assetType: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other";
+        assetType: HoldingAssetType;
         currency?: string;
         isPrivate: boolean;
       }
@@ -427,15 +468,11 @@ export class PortfolioService {
             sym === "LU3176111881";
 
           if (!entry) {
-            let assetType: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other" = "Stock";
+            let assetType: HoldingAssetType = assetTypeFromClass(tx.assetClass) ?? "Stock";
             if (isPrivateTx) {
               assetType = "Other";
-            } else if (tx.assetClass === "FUND") {
-              assetType = "ETF";
-            } else if (tx.assetClass === "CRYPTO" || sym.includes("BTC")) {
+            } else if (assetType === "Stock" && sym.includes("BTC")) {
               assetType = "Crypto";
-            } else if (tx.assetClass === "MUTUALFUND") {
-              assetType = "MutualFund";
             }
 
             entry = {
@@ -453,6 +490,10 @@ export class PortfolioService {
             if (isPrivateTx) {
               entry.isPrivate = true;
               entry.assetType = "Other";
+            } else if (entry.assetType === "Stock") {
+              // A later transaction may name a more specific class than the first one.
+              const fromClass = assetTypeFromClass(tx.assetClass);
+              if (fromClass && fromClass !== "Stock") entry.assetType = fromClass;
             }
             if (tx.currency) {
               entry.currency = tx.currency;
@@ -731,10 +772,15 @@ export class PortfolioService {
       totalValue += itemValue;
       totalPreviousValue += itemPrevValue;
 
+      // A stored ETF, fund or crypto class wins. Stock is also the default for a
+      // missing class, so the provider's instrument type may refine it.
+      const providerType = assetTypeFromInstrument(quote?.instrumentType);
       let assetType = config.assetType;
+      if (assetType === "Stock" && !isPrivate && providerType) assetType = providerType;
       if (!assetType) {
         if (isPrivate) assetType = "Other";
-        else if (quote?.instrumentType === "ETF" || sym.endsWith(".DE")) assetType = "ETF";
+        else if (providerType) assetType = providerType;
+        else if (sym.endsWith(".DE")) assetType = "ETF";
         else if (sym.includes("BTC")) assetType = "Crypto";
         else assetType = "Stock";
       }
