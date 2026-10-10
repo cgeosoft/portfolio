@@ -20,7 +20,7 @@ None open.
 
 ### Low
 
-- [ ] [F] [Price or NAV for private holdings](#price-or-nav-for-private-holdings)
+None open.
 
 ### Postponed
 
@@ -42,6 +42,7 @@ None open.
 - [x] [F] Instrument references open the holding: report and chat Markdown, exposure, income, allocation chart slices, the holdings table; the LLM context names instruments as `SYMBOL (Name)`
 - [x] [T] Service typecheck and the provider chain test fixed (both failed before these changes)
 - [x] [B] Two instances on 127.0.0.1 no longer replace each other's session: the cookie name carries a hash of the data directory (the old name moves over once), and a lost session without a PIN logs in again instead of showing the PIN screen
+- [x] [F] Price or NAV for private holdings: a "set NAV" control on the holdings row stores a price per portfolio and symbol (`manual_prices`) that replaces the buy price, converted to the base currency, from the day it was set
 
 ## Check the Oct 10 user fixes in the app
 
@@ -59,12 +60,3 @@ The nine fixes above were checked by typecheck and the test suite (228 tests) on
 - A private holding (SpaceX) and a stock on a free FMP plan: the wording of each missing part; the FMP key test message.
 - Settings → General → Text size; the zoom kept across a restart.
 - Clicking a symbol, ISIN or name in a report, a chat answer, the exposure and income cards, and an allocation chart slice.
-
-## Price or NAV for private holdings
-
-```
-type: feature
-importance: low
-```
-
-Private market funds (Trade Republic `PRIVATE_MARKET_BUY`) and private companies have no public quote, so `buildPortfolioData` values them at cost, while TR shows the fund's NAV. Let the user enter a current price or NAV per private holding, stored on the service, and use it in place of the buy price.

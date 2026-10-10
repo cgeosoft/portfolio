@@ -50,6 +50,8 @@ import type {
   SessionsInfo,
   SetIsinSymbolRequest,
   SetIsinSymbolResponse,
+  SetManualPriceRequest,
+  ManualPriceResponse,
   StartReportStreamRequest,
   StartReportStreamResponse,
   SyncQuotesResponse,
@@ -198,6 +200,10 @@ export const api = {
     request<ResolvePortfolioSymbolsResponse>(`/api/portfolios/${enc(portfolioId)}/symbols/resolve`, { method: "POST" }),
   setIsinSymbol: (isin: string, body: SetIsinSymbolRequest) =>
     request<SetIsinSymbolResponse>(`/api/symbol-map/${enc(isin)}`, { method: "PUT", body: json(body) }),
+  setManualPrice: (portfolioId: string, symbol: string, body: SetManualPriceRequest) =>
+    request<ManualPriceResponse>(`/api/portfolios/${enc(portfolioId)}/manual-prices/${enc(symbol)}`, { method: "PUT", body: json(body) }),
+  clearManualPrice: (portfolioId: string, symbol: string) =>
+    request<ManualPriceResponse>(`/api/portfolios/${enc(portfolioId)}/manual-prices/${enc(symbol)}`, { method: "DELETE" }),
 
   // ---- company intel (public company data per symbol)
   getCompanyIntel: (symbol: string, include?: CompanyIntelPart[], assetType?: string, isPrivate?: boolean) => {

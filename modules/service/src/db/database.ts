@@ -176,6 +176,19 @@ function initializeSchema(database: Database): void {
     )
   `);
 
+  // Price or NAV the user entered for a private holding that has no quote
+  // (see manual-price.repo.ts). setAt is the day it was entered.
+  database.run(`
+    CREATE TABLE IF NOT EXISTS manual_prices (
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      symbol TEXT NOT NULL,
+      price REAL NOT NULL,
+      currency TEXT NOT NULL,
+      setAt TEXT NOT NULL,
+      PRIMARY KEY (portfolioId, symbol)
+    )
+  `);
+
   // User settings, one row per DesktopConfig key (see ../config.ts).
   database.run(`
     CREATE TABLE IF NOT EXISTS settings (

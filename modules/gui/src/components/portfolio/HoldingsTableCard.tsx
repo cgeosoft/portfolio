@@ -7,6 +7,7 @@ import { Select } from "../common/Select";
 import { showToast } from "../common/Toaster";
 import { api } from "../../api";
 import { SymbolEditModal } from "./SymbolEditModal";
+import { ManualPriceModal } from "./ManualPriceModal";
 import { hasCompanyIntel, openHolding } from "./holding-links";
 
 type HoldingWithIsin = PortfolioHolding & { isin: string };
@@ -23,7 +24,7 @@ interface HoldingsTableCardProps {
   summary?: PortfolioSummary;
   /** Needed to look up tickers for ISIN-only holdings. */
   portfolioId?: string | null;
-  /** Reload after a symbol changed. */
+  /** Reload after a symbol or a manual price changed. */
   onSymbolsChanged?: () => void | Promise<void>;
 }
 
@@ -39,6 +40,7 @@ export function HoldingsTableCard({
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
   const [symbolHolding, setSymbolHolding] = useState<HoldingWithIsin | null>(null);
+  const [priceHolding, setPriceHolding] = useState<PortfolioHolding | null>(null);
   const [resolving, setResolving] = useState(false);
 
   const isinOnlyCount = holdings.filter((h) => !h.isPrivate && showsIsin(h)).length;
@@ -186,6 +188,7 @@ export function HoldingsTableCard({
     const badgeClass = getAssetTypeBadgeClass(h.isPrivate ? "Private" : h.assetType);
     const canOpenIntel = !isCash && hasCompanyIntel(h);
     const canEditSymbol = !isCash && Boolean(h.isin) && Boolean(onSymbolsChanged);
+    const canSetPrice = !isCash && Boolean(h.isPrivate) && Boolean(portfolioId) && Boolean(onSymbolsChanged);
 
     return (
       <tr
@@ -259,6 +262,30 @@ export function HoldingsTableCard({
               >
                 no quote
               </span>
+            )}
+            {canSetPrice && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPriceHolding(h);
+                }}
+                onKeyDown={(e) => e.stopPropagation()}
+                className={`text-[10px] font-normal px-1 py-0.5 rounded border cursor-pointer flex items-center gap-1 ${
+                  h.manualPrice
+                    ? "border-mint/40 bg-mint/10 text-mint hover:bg-mint/20"
+                    : "border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                }`}
+                title={
+                  h.manualPrice
+                    ? `Price set by hand on ${h.manualPrice.setAt}. Edit or clear it.`
+                    : "No public quote. The price shown is the average buy price. Set the current price or NAV."
+                }
+                aria-label={`Set the price or NAV of ${h.symbol}`}
+              >
+                <Pencil className="w-2.5 h-2.5" />
+                {h.manualPrice ? `NAV ${h.manualPrice.setAt}` : "set NAV"}
+              </button>
             )}
             {!isCash && h.fxMissing && (
               <span
@@ -465,6 +492,18 @@ export function HoldingsTableCard({
 
       {symbolHolding && onSymbolsChanged && createPortal(
         <SymbolEditModal holding={symbolHolding} onClose={() => setSymbolHolding(null)} onSaved={onSymbolsChanged} />,
+        document.body,
+      )}
+
+      {priceHolding && portfolioId && onSymbolsChanged && createPortal(
+        <ManualPriceModal
+          portfolioId={portfolioId}
+          holding={priceHolding}
+          currency={currency}
+          hideValues={hideValues}
+          onClose={() => setPriceHolding(null)}
+          onSaved={onSymbolsChanged}
+        />,
         document.body,
       )}
     </div>
