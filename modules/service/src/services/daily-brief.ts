@@ -23,6 +23,7 @@ import type { LlmService, LlmMessage } from "./llm";
 import type { PortfolioService } from "./portfolio";
 import { formatEventsForPrompt, type AiContextDeps } from "./ai-context";
 import { getCompanyNews } from "./intel/company";
+import { instrumentLabel } from "./instrument-label";
 import { exchangeForSymbol, isTradingDay } from "./intel/market-hours";
 import { channelNames, configuredChannels, notifyAll } from "./notify";
 import type { AutomationStatus, RunAutomationResponse } from "portfolio-shared/api-types";
@@ -105,19 +106,20 @@ function movers(data: FinancialPortfolioData) {
   return { up, down, count: held.length };
 }
 
-/** Transactions dated from `since` up to yesterday: type, quantity and ticker, no amounts. */
+/** Transactions dated from `since` up to yesterday: type, quantity, ticker and name, no amounts. */
 function recentTransactions(data: FinancialPortfolioData, since: string, today: string): string[] {
   return (data.transactions ?? [])
     .filter((tx) => tx.date && tx.date.slice(0, 10) >= since && tx.date.slice(0, 10) < today)
-    .map((tx) => `- ${tx.date.slice(0, 10)} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol || ""}`.trim());
+    .map((tx) => `- ${tx.date.slice(0, 10)} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol ? instrumentLabel(tx.symbol, tx.name) : ""}`.trim());
 }
 
 export function buildDailyBriefPrompt(ctx: BriefContext): LlmMessage[] {
   const { portfolio, data, since, today, news, events } = ctx;
   const s = data.summary;
   const { up, down, count } = movers(data);
-  const line = (h: (typeof up)[number]) => `- ${h.symbol} (${h.name}): ${signedPct(h.dayChangePercent)} on the day, weight ${pct(h.weightPercent)}`;
+  const line = (h: (typeof up)[number]) => `- ${instrumentLabel(h.symbol, h.name)}: ${signedPct(h.dayChangePercent)} on the day, weight ${pct(h.weightPercent)}`;
   const txs = recentTransactions(data, since, today);
+  const named = (symbol: string) => instrumentLabel(symbol, data.holdings?.find((h) => h.symbol === symbol)?.name);
 
   const context = `=== PORTFOLIO ===
 Name: ${portfolio.name}
@@ -125,8 +127,8 @@ Holdings: ${count}
 Last session return of the whole portfolio: ${signedPct(s?.dayGainLossPercent)}
 Lifetime unrealized return: ${signedPct(s?.totalGainLossPercent)}
 Cash weight: ${pct(s?.cashWeightPercent)}
-Best performer of the session: ${s?.bestPerformer ? `${s.bestPerformer.symbol} ${signedPct(s.bestPerformer.changePercent)}` : "none"}
-Worst performer of the session: ${s?.worstPerformer ? `${s.worstPerformer.symbol} ${signedPct(s.worstPerformer.changePercent)}` : "none"}
+Best performer of the session: ${s?.bestPerformer ? `${named(s.bestPerformer.symbol)} ${signedPct(s.bestPerformer.changePercent)}` : "none"}
+Worst performer of the session: ${s?.worstPerformer ? `${named(s.worstPerformer.symbol)} ${signedPct(s.worstPerformer.changePercent)}` : "none"}
 
 === GAINERS OF THE LAST SESSION ===
 ${up.map(line).join("\n") || "None."}
@@ -160,8 +162,8 @@ export function fallbackBrief(ctx: BriefContext): string {
   const { data, since, today } = ctx;
   const { up, down } = movers(data);
   const lines = [`**Session return ${signedPct(data.summary?.dayGainLossPercent)}**`];
-  if (up[0]) lines.push(`- Top gainer: ${up[0].symbol} ${signedPct(up[0].dayChangePercent)}`);
-  if (down[0]) lines.push(`- Top decliner: ${down[0].symbol} ${signedPct(down[0].dayChangePercent)}`);
+  if (up[0]) lines.push(`- Top gainer: ${instrumentLabel(up[0].symbol, up[0].name)} ${signedPct(up[0].dayChangePercent)}`);
+  if (down[0]) lines.push(`- Top decliner: ${instrumentLabel(down[0].symbol, down[0].name)} ${signedPct(down[0].dayChangePercent)}`);
   const txs = recentTransactions(data, since, today).length;
   if (txs > 0) lines.push(`- ${txs} transaction${txs === 1 ? "" : "s"} since ${since}`);
   if (ctx.events) lines.push(...ctx.events.split("\n").slice(0, 3));
@@ -327,7 +329,7 @@ export class DailyBriefService {
         try {
           const res = await getCompanyNews(this.aiContext, h.symbol);
           const items = (res?.data ?? []).filter((n) => !n.datetime || n.datetime >= sinceUnix).slice(0, NEWS_PER_SYMBOL);
-          return items.map((n) => `- ${h.symbol}: ${n.title}${res ? ` [${res.source}]` : ""}`);
+          return items.map((n) => `- ${instrumentLabel(h.symbol, h.name)}: ${n.title}${res ? ` [${res.source}]` : ""}`);
         } catch {
           return []; // News is optional.
         }

@@ -36,6 +36,7 @@ import { formatExposureForPrompt, getPortfolioExposureSummary, type PortfolioExp
 import { getMacroSnapshot } from "./intel/macro.js";
 import { getBenchmarkComparison } from "./intel/benchmark.js";
 import { formatCompanyIntelListForPrompt, getCachedTranscriptSummary, getCompanyIntelBatch, isIntelEligible } from "./intel/company.js";
+import { instrumentLabel } from "./instrument-label.js";
 
 /** The services the AI context needs. `AppServices` (container.ts) satisfies it. */
 export interface AiContextDeps {
@@ -264,7 +265,7 @@ export function formatEventsForPrompt(
       detail = detail ? `, ${detail}` : "";
     }
     if (e.kind === "split") detail = `, ${e.numerator}-for-${e.denominator}`;
-    return `- ${e.date} ${e.symbol}: ${EVENT_TEXT[e.kind]}${detail}${e.estimated ? " (estimated from the past pattern)" : ""}`;
+    return `- ${e.date} ${instrumentLabel(e.symbol, e.name)}: ${EVENT_TEXT[e.kind]}${detail}${e.estimated ? " (estimated from the past pattern)" : ""}`;
   });
   if (events.length > max) lines.push(`- ${events.length - max} more events not listed.`);
   return lines.join("\n");
@@ -288,7 +289,7 @@ export function formatExposureCompact(s: PortfolioExposureSummary | null): strin
   const lines: string[] = [];
   if (s.sectors.length) lines.push(`- Sectors: ${list(s.sectors, 4)}${s.unknownSectorPercent > 0 ? `; unknown ${s.unknownSectorPercent.toFixed(1)}%` : ""}.`);
   if (s.countries.length) lines.push(`- Countries: ${list(s.countries, 4)}.`);
-  if (s.topStocks.length) lines.push(`- Largest underlying stocks: ${s.topStocks.slice(0, 5).map((t) => `${t.symbol} ${t.percent.toFixed(1)}%`).join(", ")}.`);
+  if (s.topStocks.length) lines.push(`- Largest underlying stocks: ${s.topStocks.slice(0, 5).map((t) => `${instrumentLabel(t.symbol, t.name)} ${t.percent.toFixed(1)}%`).join(", ")}.`);
   if (s.warnings.length) lines.push(`- Warnings: ${s.warnings.slice(0, 4).join(" ")}`);
   if (lines.length === 0) return "";
   return [`- Coverage: ${s.coverage.lookedThroughPercent.toFixed(1)}% looked through in funds, ${s.coverage.unknownPercent.toFixed(1)}% unknown.`, ...lines].join("\n");
@@ -305,7 +306,7 @@ export interface ReportIntel {
   income: PortfolioIncomeSummary | null;
   events: PortfolioEventsResponse | null;
   companies: CompanyIntel[];
-  transcripts: TranscriptSummary[];
+  transcripts: (TranscriptSummary & { name?: string })[];
 }
 
 export const EMPTY_REPORT_INTEL: ReportIntel = {
@@ -336,7 +337,7 @@ export async function collectReportIntel(deps: AiContextDeps, req: ReportIntelRe
   const fmpOn = deps.fmp.isConfigured();
   const cap = fmpOn ? REPORT_INTEL_SYMBOLS.fmp : deps.finnhub.isConfigured() ? REPORT_INTEL_SYMBOLS.finnhub : 0;
   const companyItems = ranked.slice(0, cap).map((h) => ({ symbol: h.symbol, assetType: h.assetType, isPrivate: h.isPrivate }));
-  const transcriptSymbols = fmpOn && req.current ? ranked.filter((h) => h.assetType === "Stock").slice(0, REPORT_TRANSCRIPT_SYMBOLS).map((h) => h.symbol) : [];
+  const transcriptHoldings = fmpOn && req.current ? ranked.filter((h) => h.assetType === "Stock").slice(0, REPORT_TRANSCRIPT_SYMBOLS) : [];
 
   const [marketNews, macro, benchmark, exposure, income, events, companies, transcripts] = await Promise.all([
     req.current
@@ -357,11 +358,16 @@ export async function collectReportIntel(deps: AiContextDeps, req: ReportIntelRe
           return companyItems.map((i) => map.get(i.symbol.trim().toUpperCase())).filter((x): x is CompanyIntel => Boolean(x));
         })
       : null,
-    transcriptSymbols.length > 0
+    transcriptHoldings.length > 0
       ? settleWithin("transcripts", REPORT_TIMEOUT_MS, async () => {
           // Cached summaries only: a report never starts a new transcript summary.
-          const found = await Promise.all(transcriptSymbols.map((s) => getCachedTranscriptSummary(deps, s).catch(() => null)));
-          return found.filter((t): t is TranscriptSummary => Boolean(t?.summary));
+          const found = await Promise.all(
+            transcriptHoldings.map(async (h) => {
+              const t = await getCachedTranscriptSummary(deps, h.symbol).catch(() => null);
+              return t?.summary ? { ...t, name: h.name } : null;
+            }),
+          );
+          return found.filter((t): t is TranscriptSummary & { name: string } => t !== null);
         })
       : null,
   ]);
@@ -450,7 +456,7 @@ export function buildReportIntelSections(intel: ReportIntel, week: { from: strin
   if (intel.transcripts.length > 0) {
     const body = intel.transcripts
       .slice(0, REPORT_BUDGET.transcripts)
-      .map((t) => `#### ${t.symbol} Q${t.quarter} FY${t.fiscalYear}${t.date ? ` (${t.date})` : ""}\n${cut(t.summary, REPORT_BUDGET.transcriptChars)}`)
+      .map((t) => `#### ${instrumentLabel(t.symbol, t.name)} Q${t.quarter} FY${t.fiscalYear}${t.date ? ` (${t.date})` : ""}\n${cut(t.summary, REPORT_BUDGET.transcriptChars)}`)
       .join("\n\n");
     addSource(sources, "fmp");
     out.push({ title: "Earnings Call Summaries (cached)", body });
@@ -490,7 +496,7 @@ export async function collectWeeklyFacts(deps: AiContextDeps, portfolioId: strin
   }
   const upcoming = (events?.events ?? []).filter((e) => e.kind === "earnings" || e.kind === "exDividend" || e.kind === "split");
   if (upcoming.length > 0) {
-    const shown = upcoming.slice(0, 5).map((e) => `${e.symbol} ${EVENT_TEXT[e.kind]} ${e.date.slice(5)}`);
+    const shown = upcoming.slice(0, 5).map((e) => `${instrumentLabel(e.symbol, e.name)} ${EVENT_TEXT[e.kind]} ${e.date.slice(5)}`);
     lines.push(`- Next 7 days: ${shown.join(", ")}${upcoming.length > 5 ? `, ${upcoming.length - 5} more` : ""}`);
   }
   const high = (macro?.calendar?.events ?? []).filter((e) => e.impact === "High").slice(0, 3);

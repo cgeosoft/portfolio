@@ -1,15 +1,9 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import type { PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
 import { Search, ArrowUpDown, Layers } from "lucide-react";
 import { Select } from "../common/Select";
-import { HoldingIntelModal } from "./HoldingIntelModal";
-
-/** Holdings with company data to show: not cash, crypto or private assets. */
-function hasCompanyIntel(h: PortfolioHolding): boolean {
-  return !h.isPrivate && h.assetType !== "Cash" && h.assetType !== "Crypto";
-}
+import { hasCompanyIntel, openHolding } from "./holding-links";
 
 interface HoldingsTableCardProps {
   holdings: PortfolioHolding[];
@@ -27,7 +21,6 @@ export function HoldingsTableCard({
   summary,
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
-  const [intelHolding, setIntelHolding] = useState<PortfolioHolding | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>(() => {
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem("portfolio_holdings_type_filter");
@@ -161,8 +154,8 @@ export function HoldingsTableCard({
             ? "bg-slate-900/60 hover:bg-slate-900/90"
             : "hover:bg-slate-800/30"
         }${canOpenIntel ? " cursor-pointer" : ""}`}
-        onClick={canOpenIntel ? () => setIntelHolding(h) : undefined}
-        onKeyDown={canOpenIntel ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIntelHolding(h); } } : undefined}
+        onClick={canOpenIntel ? () => openHolding(h.symbol) : undefined}
+        onKeyDown={canOpenIntel ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHolding(h.symbol); } } : undefined}
         tabIndex={canOpenIntel ? 0 : undefined}
         title={canOpenIntel ? `Show company details for ${h.symbol}` : undefined}
       >
@@ -384,8 +377,6 @@ export function HoldingsTableCard({
           </tbody>
         </table>
       </div>
-
-      {intelHolding && createPortal(<HoldingIntelModal holding={intelHolding} onClose={() => setIntelHolding(null)} />, document.body)}
     </div>
   );
 }

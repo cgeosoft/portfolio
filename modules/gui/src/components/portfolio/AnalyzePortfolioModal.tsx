@@ -29,6 +29,7 @@ import { Select } from "../common/Select";
 import type { FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type { PrepareReportPromptResponse } from "portfolio-shared/api-types";
 import { fmtCurrency } from "./utils";
+import { renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
 
 interface AnalyzePortfolioModalProps {
   isOpen: boolean;
@@ -136,6 +137,7 @@ export function AnalyzePortfolioModal({
   const [confirmationStatus, setConfirmationStatus] = useState<ConfirmationStatus>("success");
   const [generatedReport, setGeneratedReport] = useState<PortfolioReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const holdingLinkPlugin = useHoldingLinkPlugin();
 
   const isMountedRef = useRef(true);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -655,8 +657,10 @@ export function AnalyzePortfolioModal({
 
                     <div className="p-3.5 flex-1 min-h-0 overflow-y-auto text-slate-300 text-xs font-mono leading-relaxed select-text custom-scrollbar bg-black/40">
                       <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
+                        remarkPlugins={[remarkGfm, holdingLinkPlugin]}
                         components={{
+                          a: ({ node: _n, href, children, ...props }) =>
+                            renderHoldingAnchor(href, children, () => <a href={href} {...props}>{children}</a>),
                           h1: ({ node: _n, ...props }) => (
                             <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
                           ),

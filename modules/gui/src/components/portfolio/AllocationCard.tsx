@@ -9,6 +9,7 @@ import {
 import type { PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
 import type { AppTheme } from "portfolio-shared/api-types";
 import { fmtCurrency, fmtPercent } from "./utils";
+import { hasCompanyIntel, openHolding } from "./holding-links";
 import { PieChart } from "lucide-react";
 
 Chart.register(DoughnutController, ArcElement, Tooltip);
@@ -251,6 +252,18 @@ export function AllocationCard({
         interaction: {
           mode: "nearest",
           intersect: true,
+        },
+        // A holding slice on the outer ring opens that holding's details.
+        onHover: (event, elements) => {
+          const el = elements[0];
+          const h = el && el.datasetIndex === 0 ? outerHoldings[el.index]?.holding : undefined;
+          const target = event.native?.target;
+          if (target instanceof HTMLElement) target.style.cursor = h && hasCompanyIntel(h) ? "pointer" : "default";
+        },
+        onClick: (_event, elements) => {
+          const el = elements[0];
+          const h = el && el.datasetIndex === 0 ? outerHoldings[el.index]?.holding : undefined;
+          if (h && hasCompanyIntel(h)) openHolding(h.symbol);
         },
         plugins: {
           legend: {

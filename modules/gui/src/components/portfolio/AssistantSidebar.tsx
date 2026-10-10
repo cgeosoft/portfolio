@@ -7,6 +7,7 @@ import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shar
 import { cleanThinkTags, formatTimeAgo } from "./utils";
 import { rpc } from "../../rpc";
 import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
+import { renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
 import {
   Sparkles,
   Bot,
@@ -105,6 +106,7 @@ export function AssistantSidebar({
   const [systemPrompt, setSystemPrompt] = useState("");
   const [systemPromptLoading, setSystemPromptLoading] = useState(false);
   const [systemPromptError, setSystemPromptError] = useState<string | null>(null);
+  const holdingLinkPlugin = useHoldingLinkPlugin();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -491,7 +493,7 @@ export function AssistantSidebar({
                         ) : (
                           <div className="prose prose-invert prose-xs max-w-none space-y-2 text-xs">
                             <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
+                              remarkPlugins={[remarkGfm, holdingLinkPlugin]}
                               rehypePlugins={[rehypeSanitize]}
                               components={{
                                 h1: ({ children }) => (
@@ -527,16 +529,17 @@ export function AssistantSidebar({
                                 li: ({ children }) => (
                                   <li className="text-slate-300 text-xs">{children}</li>
                                 ),
-                                a: ({ href, children }) => (
-                                  <a
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
-                                  >
-                                    {children}
-                                  </a>
-                                ),
+                                a: ({ href, children }) =>
+                                  renderHoldingAnchor(href, children, () => (
+                                    <a
+                                      href={href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
+                                    >
+                                      {children}
+                                    </a>
+                                  )),
                                 strong: ({ children }) => (
                                   <strong className="font-bold text-slate-100">{children}</strong>
                                 ),

@@ -25,6 +25,7 @@ import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import type { MarketDataCoordinator } from "./market-data.js";
 import type { PortfolioService } from "./portfolio.js";
+import { instrumentLabel } from "./instrument-label.js";
 import { addDaysIso, addMonthsIso, daysBetween, isoDay, projectDividends, type CalendarService } from "./intel/calendar.js";
 import type {
   DataProviderId,
@@ -372,9 +373,9 @@ export function describeIncomeForAssistant(summary: PortfolioIncomeSummary): str
       h.nextPayDate ? `next pay date ${h.nextPayDate}` : "",
       h.estimated ? "partly estimated" : "",
     ].filter(Boolean);
-    lines.push(`- ${h.symbol}: ${parts.join(", ")}`);
+    lines.push(`- ${instrumentLabel(h.symbol, h.name)}: ${parts.join(", ")}`);
   }
-  for (const w of summary.splitWarnings) lines.push(`- Split hint: ${w.symbol} ${w.numerator}-for-${w.denominator} on ${w.date} may be missing from the transactions`);
+  for (const w of summary.splitWarnings) lines.push(`- Split hint: ${instrumentLabel(w.symbol, w.name)} ${w.numerator}-for-${w.denominator} on ${w.date} may be missing from the transactions`);
   return lines.join("\n");
 }
 
@@ -387,7 +388,7 @@ export function describeEventsForAssistant(res: PortfolioEventsResponse): string
     if (e.kind === "exDividend" || e.kind === "dividendPayment") detail = e.amountPerShare !== undefined ? ` ${e.amountPerShare} ${e.currency ?? ""} per share`.trimEnd() : "";
     if (e.kind === "earnings" && typeof e.epsEstimate === "number") detail = ` EPS estimate ${e.epsEstimate}`;
     if (e.kind === "split") detail = ` ${e.numerator}-for-${e.denominator}`;
-    lines.push(`- ${e.date} ${e.symbol} ${EVENT_LABELS[e.kind]}${detail}${e.estimated ? " (estimated)" : ""}`);
+    lines.push(`- ${e.date} ${instrumentLabel(e.symbol, e.name)} ${EVENT_LABELS[e.kind]}${detail}${e.estimated ? " (estimated)" : ""}`);
   }
   return lines.join("\n");
 }

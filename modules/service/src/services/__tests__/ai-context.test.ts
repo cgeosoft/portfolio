@@ -83,8 +83,8 @@ describe("ai-context", () => {
       ],
     };
     const text = formatEventsForPrompt(res, { kinds: ["earnings", "exDividend"], from: "2026-10-10", to: "2026-10-11" });
-    expect(text).toContain("AAA: earnings report, after the close, EPS estimate 1.2");
-    expect(text).toContain("BBB: ex-dividend date, 0.5 USD per share");
+    expect(text).toContain("AAA (A): earnings report, after the close, EPS estimate 1.2");
+    expect(text).toContain("BBB (B): ex-dividend date, 0.5 USD per share");
     expect(text).not.toContain("dividend payment");
     expect(text).not.toContain("CCC");
     expect(text).not.toContain("123");

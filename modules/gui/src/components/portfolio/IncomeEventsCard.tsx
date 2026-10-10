@@ -5,6 +5,7 @@ import type { AppTheme, DataProviderId, PortfolioEvent, PortfolioEventsResponse,
 import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { fmtCurrency } from "./utils";
+import { HoldingLink } from "./holding-links";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -241,7 +242,7 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
                 <span className="w-12 shrink-0 text-slate-400">{shortDate(e.date)}</span>
                 <span className={`shrink-0 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${EVENT_BADGES[e.kind]}`}>{EVENT_LABELS[e.kind]}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="font-bold text-slate-100">{e.symbol}</span>
+                  <span className="font-bold text-slate-100"><HoldingLink reference={e.symbol} /></span>
                   <span className="text-slate-500"> {eventDetail(e, baseCurrency, hideValues)}</span>
                   {e.estimated && <span className="text-slate-500 italic"> (estimated)</span>}
                 </span>
@@ -269,7 +270,7 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
               {income.holdings.map((h) => (
                 <tr key={h.symbol} className="text-slate-300">
                   <td className="py-1.5 pr-3 font-bold text-slate-100" title={h.name}>
-                    {h.symbol}
+                    <HoldingLink reference={h.symbol} />
                   </td>
                   <td className="py-1.5 pr-3">{h.frequency ? FREQUENCY_LABELS[h.frequency] : "n/a"}</td>
                   <td className="py-1.5 pr-3">
