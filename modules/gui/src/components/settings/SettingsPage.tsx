@@ -32,6 +32,7 @@ import {
   Gauge,
   Plug,
   Workflow,
+  Type,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
@@ -141,6 +142,15 @@ const SECTIONS = [
   },
 ];
 
+// Text size presets map onto the interface zoom level.
+const TEXT_SIZES: { value: number; label: string }[] = [
+  { value: 0.9, label: "Small (90%)" },
+  { value: 1, label: "Default (100%)" },
+  { value: 1.1, label: "Large (110%)" },
+  { value: 1.25, label: "Larger (125%)" },
+  { value: 1.5, label: "Largest (150%)" },
+];
+
 const SHORTCUTS = [
   { key: "Ctrl + N", desc: "Create New Portfolio" },
   { key: "Ctrl + T", desc: "Add Transaction" },
@@ -170,6 +180,9 @@ interface SettingsPageProps {
   onPortfolioDeleted?: (id: string) => void;
   theme?: AppTheme;
   onChangeTheme?: (theme: AppTheme) => void;
+  /** Interface zoom (CSS zoom on the root), shared with Ctrl +/- and the View menu. */
+  zoomLevel?: number;
+  onChangeZoom?: (zoom: number) => void;
   /** Fires when the app lock is turned on or off under Access. */
   onPinEnabledChange?: (enabled: boolean) => void;
   /** About → Report an Issue: opens the support ticket form (the Help menu has the same item). */
@@ -190,6 +203,8 @@ export function SettingsPage({
   onPortfolioDeleted,
   theme,
   onChangeTheme,
+  zoomLevel = 1,
+  onChangeZoom,
   onPinEnabledChange,
   onReportIssue,
   metrics,
@@ -445,7 +460,7 @@ export function SettingsPage({
               <SectionHeader
                 icon={Sliders}
                 title="General Configuration"
-                description="Manage interface theme, background quote updates, startup behavior, telemetry, the app lock and remote connections."
+                description="Manage interface theme, text size, background quote updates, startup behavior, telemetry, the app lock and remote connections."
               />
 
               <div className="divide-y divide-slate-800/80 -mt-2">
@@ -467,6 +482,29 @@ export function SettingsPage({
                     <option value="dark">Dark Theme (Terminal Default)</option>
                     <option value="light">Light Theme (Daylight)</option>
                     <option value="system">Follow System Appearance</option>
+                  </Select>
+                </SettingItem>
+
+                <SettingItem
+                  icon={Type}
+                  title="Text size"
+                  description="Scale all text and controls. Ctrl + and Ctrl - step through more sizes, Ctrl 0 resets."
+                >
+                  <Select
+                    value={String(zoomLevel)}
+                    onChange={(e) => onChangeZoom?.(Number(e.target.value))}
+                    selectSize="lg"
+                    icon={<Type className="w-4 h-4" />}
+                    aria-label="Text size"
+                  >
+                    {!TEXT_SIZES.some((size) => size.value === zoomLevel) && (
+                      <option value={String(zoomLevel)}>Custom ({Math.round(zoomLevel * 100)}%)</option>
+                    )}
+                    {TEXT_SIZES.map((size) => (
+                      <option key={size.value} value={String(size.value)}>
+                        {size.label}
+                      </option>
+                    ))}
                   </Select>
                 </SettingItem>
 
