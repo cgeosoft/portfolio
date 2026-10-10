@@ -31,6 +31,7 @@ import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/
 import { appLogger } from "../logger.js";
 import type { PortfolioService } from "./portfolio.js";
 import { mapWithConcurrencyLimit } from "./yahoo-finance.js";
+import { instrumentLabel } from "./instrument-label.js";
 import { EtfIntelService, type FundLookThrough, type SecurityProfile } from "./intel/etf.js";
 
 /** Warning thresholds in percent of the portfolio value. */
@@ -489,7 +490,7 @@ function buildWarnings(
   for (const s of stocks) {
     if (s.percent <= limits.stockPercent) continue;
     const via = s.viaFundsPercent > 0 ? `, ${fmtPct(s.viaFundsPercent)} through funds` : "";
-    out.push({ kind: "stock", name: s.symbol, percent: s.percent, limit: limits.stockPercent, message: `${s.symbol} is ${fmtPct(s.percent)} of the portfolio${via}. Limit: ${limits.stockPercent}%.` });
+    out.push({ kind: "stock", name: s.symbol, percent: s.percent, limit: limits.stockPercent, message: `${instrumentLabel(s.symbol, s.name)} is ${fmtPct(s.percent)} of the portfolio${via}. Limit: ${limits.stockPercent}%.` });
   }
   for (const s of sectors.items) {
     if (s.percent <= limits.sectorPercent) continue;
@@ -579,7 +580,7 @@ export function formatExposureForPrompt(s: PortfolioExposureSummary): string {
     `- Sectors: ${list(s.sectors)}; unknown ${s.unknownSectorPercent.toFixed(1)}%.`,
     `- Countries: ${list(s.countries)}; unknown ${s.unknownCountryPercent.toFixed(1)}%.`,
     `- Asset classes: ${list(s.assetClasses)}.`,
-    `- Largest underlying stocks: ${s.topStocks.map((t) => `${t.symbol} ${t.percent.toFixed(1)}%${t.viaFundsPercent > 0 ? ` (${t.viaFundsPercent.toFixed(1)}% via funds)` : ""}`).join(", ") || "none"}.`,
+    `- Largest underlying stocks: ${s.topStocks.map((t) => `${instrumentLabel(t.symbol, t.name)} ${t.percent.toFixed(1)}%${t.viaFundsPercent > 0 ? ` (${t.viaFundsPercent.toFixed(1)}% via funds)` : ""}`).join(", ") || "none"}.`,
   ];
   if (s.overlaps.length) lines.push(`- Fund overlap: ${s.overlaps.map((o) => `${o.a}/${o.b} ${o.overlapPercent.toFixed(1)}%${o.partial ? "+" : ""}`).join(", ")}.`);
   if (s.weightedExpenseRatioPercent !== undefined) lines.push(`- Weighted fund expense ratio: ${s.weightedExpenseRatioPercent.toFixed(2)}%.`);

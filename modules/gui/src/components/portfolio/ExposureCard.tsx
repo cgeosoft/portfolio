@@ -4,6 +4,7 @@ import type { ExposureBreakdown, ExposureUnderlyingStock, PortfolioExposureRespo
 import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { fmtCurrency } from "./utils";
+import { HoldingLink, HoldingText } from "./holding-links";
 
 interface ExposureCardProps {
   portfolioId: string | null | undefined;
@@ -67,7 +68,7 @@ function StockRow({ stock, currency, hideValues }: { stock: ExposureUnderlyingSt
   return (
     <tr className="border-t border-line">
       <td className="py-1.5 pr-2 min-w-0">
-        <div className="font-mono text-slate-200 truncate">{stock.symbol}</div>
+        <div className="font-mono text-slate-200 truncate"><HoldingLink reference={stock.symbol} /></div>
         {stock.name && <div className="text-[10px] text-slate-500 truncate max-w-[220px]" title={stock.name}>{stock.name}</div>}
       </td>
       <td className="py-1.5 pr-2 text-right font-mono text-slate-200 whitespace-nowrap">{pct(stock.percent, 2)}</td>
@@ -172,7 +173,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
               {data.warnings.map((w) => (
                 <li key={`${w.kind}:${w.name}`} className="flex items-start gap-2 text-[11px] rounded-md border border-accent-500/50 bg-accent-500/10 px-2.5 py-1.5 text-accent-bright">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
-                  <span>{w.message}</span>
+                  <span><HoldingText text={w.message} /></span>
                 </li>
               ))}
             </ul>
@@ -223,7 +224,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
                     {data.overlaps.slice(0, 6).map((o) => (
                       <li key={`${o.a}:${o.b}`} className="text-[11px]">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-slate-300 truncate">{o.a} / {o.b}</span>
+                          <span className="font-mono text-slate-300 truncate"><HoldingLink reference={o.a} /> / <HoldingLink reference={o.b} /></span>
                           <span className="font-mono text-slate-200 shrink-0" title={o.partial ? "Based on top holdings only; the real overlap can be higher" : undefined}>
                             {pct(o.overlapPercent)}{o.partial ? "+" : ""}
                           </span>
@@ -242,9 +243,10 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
                     {data.funds.map((f) => (
                       <li key={f.symbol} className="text-[11px]">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-slate-300 truncate" title={f.name}>{f.symbol}</span>
+                          <span className="font-mono text-slate-300 truncate" title={f.name}><HoldingLink reference={f.symbol} /></span>
                           <span className="font-mono text-slate-200 shrink-0">{pct(f.percent)}</span>
                         </div>
+                        {f.name && f.name !== f.symbol && <div className="text-[10px] text-slate-500 truncate" title={f.name}>{f.name}</div>}
                         <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
                           {f.expenseRatio !== undefined && <span>TER {pct(f.expenseRatio, 2)}</span>}
                           {f.holdingsCount !== undefined && <span>{f.holdingsCount} holdings</span>}

@@ -3,6 +3,7 @@ import type { PortfolioTransaction } from "portfolio-shared/portfolio";
 import { formatMoney, fmtCurrency } from "./utils";
 import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft } from "lucide-react";
 import { Select } from "../common/Select";
+import { HoldingLink } from "./holding-links";
 
 interface TransactionsCardProps {
   transactions: PortfolioTransaction[];
@@ -170,7 +171,7 @@ export function TransactionsCard({
                         {tx.type}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 font-bold text-slate-200">{tx.symbol}</td>
+                    <td className="py-2.5 px-3 font-bold text-slate-200" title={tx.name || undefined}><HoldingLink reference={tx.symbol} /></td>
                     <td className="py-2.5 px-3 text-right text-slate-300">
                       {tx.shares === undefined || tx.shares === null
                         ? "—"

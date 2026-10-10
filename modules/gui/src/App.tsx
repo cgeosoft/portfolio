@@ -36,6 +36,7 @@ import { MetricDashboard } from "./components/metrics/MetricDashboard";
 import { MetricsTab } from "./components/metrics/MetricsTab";
 import { MetricDetailsModal } from "./components/metrics/MetricDetailsModal";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
+import { HoldingLinksHost } from "./components/portfolio/holding-links";
 import { reloadPage } from "./components/portfolio/utils";
 import { WEBPAGE_URL } from "./environment";
 import type {
@@ -2099,6 +2100,9 @@ export default function App() {
       />
 
       <MetricDetailsModal listing={metricDetails} onClose={() => setMetricDetails(null)} />
+
+      {/* Holding details, opened from any instrument reference */}
+      <HoldingLinksHost holdings={portfolioData?.holdings} transactions={portfolioData?.transactions} />
 
       <CreatePortfolioModal
         isOpen={isCreateModalOpen}

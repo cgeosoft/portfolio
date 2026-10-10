@@ -6,19 +6,14 @@ import { Search, ArrowUpDown, Layers, Pencil, Wand2, Loader2 } from "lucide-reac
 import { Select } from "../common/Select";
 import { showToast } from "../common/Toaster";
 import { api } from "../../api";
-import { HoldingIntelModal } from "./HoldingIntelModal";
 import { SymbolEditModal } from "./SymbolEditModal";
+import { hasCompanyIntel, openHolding } from "./holding-links";
 
 type HoldingWithIsin = PortfolioHolding & { isin: string };
 
 /** A holding that still shows its ISIN because no ticker was found. */
 function showsIsin(h: PortfolioHolding): h is HoldingWithIsin {
   return Boolean(h.isin) && h.symbol.toUpperCase() === h.isin!.toUpperCase();
-}
-
-/** Holdings with company data to show: not cash, crypto or private assets. */
-function hasCompanyIntel(h: PortfolioHolding): boolean {
-  return !h.isPrivate && h.assetType !== "Cash" && h.assetType !== "Crypto";
 }
 
 interface HoldingsTableCardProps {
@@ -43,7 +38,6 @@ export function HoldingsTableCard({
   onSymbolsChanged,
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
-  const [intelHolding, setIntelHolding] = useState<PortfolioHolding | null>(null);
   const [symbolHolding, setSymbolHolding] = useState<HoldingWithIsin | null>(null);
   const [resolving, setResolving] = useState(false);
 
@@ -201,8 +195,8 @@ export function HoldingsTableCard({
             ? "bg-slate-900/60 hover:bg-slate-900/90"
             : "hover:bg-slate-800/30"
         }${canOpenIntel ? " cursor-pointer" : ""}`}
-        onClick={canOpenIntel ? () => setIntelHolding(h) : undefined}
-        onKeyDown={canOpenIntel ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIntelHolding(h); } } : undefined}
+        onClick={canOpenIntel ? () => openHolding(h.symbol) : undefined}
+        onKeyDown={canOpenIntel ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHolding(h.symbol); } } : undefined}
         tabIndex={canOpenIntel ? 0 : undefined}
         title={canOpenIntel ? `Show company details for ${h.symbol}` : undefined}
       >
@@ -473,7 +467,6 @@ export function HoldingsTableCard({
         <SymbolEditModal holding={symbolHolding} onClose={() => setSymbolHolding(null)} onSaved={onSymbolsChanged} />,
         document.body,
       )}
-      {intelHolding && createPortal(<HoldingIntelModal holding={intelHolding} onClose={() => setIntelHolding(null)} />, document.body)}
     </div>
   );
 }

@@ -31,6 +31,7 @@ import {
 import { AnalyzePortfolioModal } from "./AnalyzePortfolioModal";
 import { ReportPromptModal } from "./ReportPromptModal";
 import { DownloadReportModal } from "./DownloadReportModal";
+import { HoldingLink, HoldingText, renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
 
 interface ReportsCardProps {
   reports: PortfolioReport[];
@@ -95,6 +96,7 @@ export function ReportsCard({
   const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const holdingLinkPlugin = useHoldingLinkPlugin();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -338,13 +340,13 @@ export function ReportsCard({
                     <span>Executive Summary</span>
                   </div>
                   <p className="italic text-slate-200">
-                    {hideValues ? maskFinancialValues(activeReport.summary) : activeReport.summary}
+                    <HoldingText text={hideValues ? maskFinancialValues(activeReport.summary) : activeReport.summary} />
                   </p>
                 </div>
               )}
 
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, holdingLinkPlugin]}
                 rehypePlugins={[rehypeSanitize]}
                 components={{
                   h1: ({ node: _n, ...props }) => (
@@ -363,17 +365,18 @@ export function ReportsCard({
                   blockquote: ({ node: _n, ...props }) => (
                     <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-3 py-2 my-3 text-slate-400 italic rounded-r" {...props} />
                   ),
-                  a: ({ node: _n, href, children, ...props }) => (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
-                      {...props}
-                    >
-                      {children}
-                    </a>
-                  ),
+                  a: ({ node: _n, href, children, ...props }) =>
+                    renderHoldingAnchor(href, children, () => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
+                        {...props}
+                      >
+                        {children}
+                      </a>
+                    )),
                   table: ({ node: _n, ...props }) => (
                     <div className="my-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950">
                       <table className="w-full border-collapse font-mono text-xs" {...props} />
@@ -471,7 +474,7 @@ export function ReportsCard({
                             <span className="text-mint">★</span> Top Winner
                           </span>
                           <span className="font-bold text-mint">
-                            {activeReport.metrics.topWinner.symbol} {fmtPercent(activeReport.metrics.topWinner.changePercent)}
+                            <HoldingLink reference={activeReport.metrics.topWinner.symbol} /> {fmtPercent(activeReport.metrics.topWinner.changePercent)}
                           </span>
                         </div>
                       )}
@@ -481,7 +484,7 @@ export function ReportsCard({
                             <span className="text-[#DD3C73]">▼</span> Top Loser
                           </span>
                           <span className="font-bold text-[#DD3C73]">
-                            {activeReport.metrics.topLoser.symbol} {fmtPercent(activeReport.metrics.topLoser.changePercent)}
+                            <HoldingLink reference={activeReport.metrics.topLoser.symbol} /> {fmtPercent(activeReport.metrics.topLoser.changePercent)}
                           </span>
                         </div>
                       )}
