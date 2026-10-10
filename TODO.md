@@ -7,7 +7,6 @@ Instructions for agents: verify the assertions, current code behavior, and exist
 ### Inbox
 
 - [ ] [B] Charts are sized wrong when the app starts with a saved zoom other than 100%: at 110% the performance chart is 407px tall instead of about 267px, and a reset to 100% keeps it oversized. Chart.js 4.5.1 `getContainerSize` reads `getBoundingClientRect()` (zoomed pixels) at creation; resizes made while the app runs are correct
-- [ ] [B] Privacy mode leaves transaction quantities in the assistant system prompt ("[BUY] 0.008 BTC-USD", "[BUY] 6 NVDA") while the chart masks share counts
 - [ ] [T] Two dev instances on 127.0.0.1 share the session cookie (cookies ignore the port): the second login logs the first out and it shows the PIN screen
 
 ### Urgent
@@ -32,6 +31,7 @@ None open.
 
 ### Implemented
 
+- [x] [B] Privacy mode masks transaction quantities ("[BUY] •••• NVDA") and share or unit counts in the system prompt, prompt previews, chat and reports
 - [x] [B] Analyze with AI uses the stored LLM key: the report stream route unmasks the key and the modal no longer sends the masked one
 - [x] [B] Trade Republic imports: a stock perk is a cash credit (no double cost), every transaction type moves cash (card payments, manual transfers), a negative tax is a refund, rows sort by datetime, cash is kept per currency; a failed FX pair is left out and not cached as 1; holdings show "no quote" and "no FX" marks
 - [x] [B] Privacy mode masks the allocation chart (centre total, tooltip amounts, share counts), the assistant chat and system prompt, and the report prompt preview; percentages stay visible
