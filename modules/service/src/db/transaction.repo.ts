@@ -144,3 +144,24 @@ export function deleteByPortfolio(portfolioId: string): number {
   const result = db.run("DELETE FROM transactions WHERE portfolioId = ?", [portfolioId]);
   return result.changes;
 }
+
+/**
+ * Point every transaction of an ISIN at a new symbol, in all portfolios.
+ * Matches the ISIN column, and the symbol column for rows that still carry
+ * the ISIN as their symbol. A given name replaces the stored one.
+ * Returns the ids of the portfolios that changed.
+ */
+export function setSymbolForIsin(isin: string, symbol: string, name?: string | null): string[] {
+  const db = getDatabase();
+  const key = isin.toUpperCase();
+  const now = new Date().toISOString();
+  const portfolios = db
+    .query("SELECT DISTINCT portfolioId FROM transactions WHERE UPPER(isin) = ? OR UPPER(symbol) = ?")
+    .all(key, key) as { portfolioId: string }[];
+  if (portfolios.length === 0) return [];
+  db.transaction(() => {
+    db.run("UPDATE transactions SET symbol = ?, isin = ?, updatedAt = ? WHERE UPPER(isin) = ? OR UPPER(symbol) = ?", [symbol, key, now, key, key]);
+    if (name) db.run("UPDATE transactions SET name = ? WHERE isin = ?", [name, key]);
+  })();
+  return portfolios.map((p) => p.portfolioId);
+}

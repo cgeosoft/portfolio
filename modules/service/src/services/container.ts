@@ -5,6 +5,7 @@ import { FmpService } from "./fmp";
 import { MarketDataCoordinator } from "./market-data";
 import { LlmService } from "./llm";
 import { PortfolioService } from "./portfolio";
+import { SymbolResolver } from "./symbol-resolver";
 import { PortfolioReportService } from "./portfolio-report";
 import { PortfolioChatService } from "./portfolio-chat";
 import { MetricsService } from "./metrics/index";
@@ -47,7 +48,7 @@ export function createServices(): AppServices {
   const fmp = new FmpService();
   const marketData = new MarketDataCoordinator(yahoo, finnhub, fmp);
   const llm = new LlmService();
-  const portfolioService = new PortfolioService(marketData);
+  const portfolioService = new PortfolioService(marketData, new SymbolResolver(marketData));
   const etfIntel = new EtfIntelService(fmp, yahoo, finnhub);
   const exposure = new ExposureService(portfolioService, etfIntel);
   const calendar = new CalendarService(fmp, yahoo, finnhub);

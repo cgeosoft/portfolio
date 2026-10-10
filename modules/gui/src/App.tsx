@@ -1909,6 +1909,8 @@ export default function App() {
                 currency={currency}
                 hideValues={hideCurrencyValues}
                 summary={summary}
+                portfolioId={activePortfolioId}
+                onSymbolsChanged={() => loadData(true)}
               />
 
               {/* Exposure after ETF and fund look-through */}

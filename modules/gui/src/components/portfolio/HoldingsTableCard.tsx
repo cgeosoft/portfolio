@@ -2,9 +2,19 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
-import { Search, ArrowUpDown, Layers } from "lucide-react";
+import { Search, ArrowUpDown, Layers, Pencil, Wand2, Loader2 } from "lucide-react";
 import { Select } from "../common/Select";
+import { showToast } from "../common/Toaster";
+import { api } from "../../api";
 import { HoldingIntelModal } from "./HoldingIntelModal";
+import { SymbolEditModal } from "./SymbolEditModal";
+
+type HoldingWithIsin = PortfolioHolding & { isin: string };
+
+/** A holding that still shows its ISIN because no ticker was found. */
+function showsIsin(h: PortfolioHolding): h is HoldingWithIsin {
+  return Boolean(h.isin) && h.symbol.toUpperCase() === h.isin!.toUpperCase();
+}
 
 /** Holdings with company data to show: not cash, crypto or private assets. */
 function hasCompanyIntel(h: PortfolioHolding): boolean {
@@ -16,6 +26,10 @@ interface HoldingsTableCardProps {
   currency?: string;
   hideValues?: boolean;
   summary?: PortfolioSummary;
+  /** Needed to look up tickers for ISIN-only holdings. */
+  portfolioId?: string | null;
+  /** Reload after a symbol changed. */
+  onSymbolsChanged?: () => void | Promise<void>;
 }
 
 const VALID_ASSET_FILTERS = ["ALL", "Stock", "ETF", "Crypto", "Cash", "Other"] as const;
@@ -25,9 +39,34 @@ export function HoldingsTableCard({
   currency = "EUR",
   hideValues = false,
   summary,
+  portfolioId,
+  onSymbolsChanged,
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
   const [intelHolding, setIntelHolding] = useState<PortfolioHolding | null>(null);
+  const [symbolHolding, setSymbolHolding] = useState<HoldingWithIsin | null>(null);
+  const [resolving, setResolving] = useState(false);
+
+  const isinOnlyCount = holdings.filter((h) => !h.isPrivate && showsIsin(h)).length;
+
+  const handleResolveSymbols = async () => {
+    if (!portfolioId || resolving) return;
+    setResolving(true);
+    try {
+      const res = await api.resolvePortfolioSymbols(portfolioId);
+      if (!res.success) throw new Error(res.error || "Ticker lookup failed");
+      if (res.updated > 0) {
+        showToast(`Found tickers for ${res.updated} transactions`);
+        await onSymbolsChanged?.();
+      } else {
+        showToast("No tickers found. Set them by hand with the pencil button.", "error");
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Ticker lookup failed", "error");
+    } finally {
+      setResolving(false);
+    }
+  };
   const [typeFilter, setTypeFilter] = useState<string>(() => {
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem("portfolio_holdings_type_filter");
@@ -152,6 +191,7 @@ export function HoldingsTableCard({
     const rsiInfo = getRsiZone(h.rsi);
     const badgeClass = getAssetTypeBadgeClass(h.isPrivate ? "Private" : h.assetType);
     const canOpenIntel = !isCash && hasCompanyIntel(h);
+    const canEditSymbol = !isCash && Boolean(h.isin) && Boolean(onSymbolsChanged);
 
     return (
       <tr
@@ -170,7 +210,22 @@ export function HoldingsTableCard({
         <td className="px-4 py-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 font-bold text-slate-100">
-              <span>{h.symbol}</span>
+              <span title={h.isin && h.isin !== h.symbol ? `ISIN ${h.isin}` : undefined}>{h.symbol}</span>
+              {canEditSymbol && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSymbolHolding(h as HoldingWithIsin);
+                  }}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className={`p-0.5 rounded hover:bg-slate-800 cursor-pointer ${showsIsin(h) ? "text-cream" : "text-slate-600 hover:text-slate-300"}`}
+                  title={showsIsin(h) ? "No ticker found. Set one by hand" : "Change the ticker"}
+                  aria-label={`Set ticker for ${h.isin}`}
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
               <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border ${badgeClass}`}>
                 {h.isPrivate ? "Private" : h.assetType}
               </span>
@@ -293,6 +348,19 @@ export function HoldingsTableCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {isinOnlyCount > 0 && portfolioId && onSymbolsChanged && (
+            <button
+              type="button"
+              onClick={handleResolveSymbols}
+              disabled={resolving}
+              className="h-8 px-2.5 rounded-lg border border-cream/40 bg-cream/10 text-cream text-[11px] font-mono flex items-center gap-1.5 cursor-pointer hover:bg-cream/20 disabled:opacity-50 shrink-0"
+              title={`${isinOnlyCount} holdings show an ISIN. Search the data providers for their tickers.`}
+            >
+              {resolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+              Find tickers ({isinOnlyCount})
+            </button>
+          )}
+
           {/* Search bar */}
           <div className="relative flex-1 sm:w-48">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
@@ -385,6 +453,10 @@ export function HoldingsTableCard({
         </table>
       </div>
 
+      {symbolHolding && onSymbolsChanged && createPortal(
+        <SymbolEditModal holding={symbolHolding} onClose={() => setSymbolHolding(null)} onSaved={onSymbolsChanged} />,
+        document.body,
+      )}
       {intelHolding && createPortal(<HoldingIntelModal holding={intelHolding} onClose={() => setIntelHolding(null)} />, document.body)}
     </div>
   );

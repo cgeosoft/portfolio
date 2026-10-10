@@ -39,6 +39,7 @@ import type {
   PrepareReportPromptResponse,
   PreviewMetricInstallResponse,
   RemoteAccessInfo,
+  ResolvePortfolioSymbolsResponse,
   RevokeOtherSessionsResponse,
   RunAutomationResponse,
   SavePortfolioMetricsRequest,
@@ -47,6 +48,8 @@ import type {
   SearchSymbolResponse,
   SendNotificationResponse,
   SessionsInfo,
+  SetIsinSymbolRequest,
+  SetIsinSymbolResponse,
   StartReportStreamRequest,
   StartReportStreamResponse,
   SyncQuotesResponse,
@@ -191,6 +194,10 @@ export const api = {
   manageTransactions: (body: ManageTransactionRequest) =>
     request<ManageTransactionResponse>(`/api/portfolios/${enc(body.portfolioId)}/transactions`, { method: "POST", body: json(body) }),
   searchSymbol: (query: string) => request<SearchSymbolResponse>(`/api/symbols/search?q=${enc(query)}`),
+  resolvePortfolioSymbols: (portfolioId: string) =>
+    request<ResolvePortfolioSymbolsResponse>(`/api/portfolios/${enc(portfolioId)}/symbols/resolve`, { method: "POST" }),
+  setIsinSymbol: (isin: string, body: SetIsinSymbolRequest) =>
+    request<SetIsinSymbolResponse>(`/api/symbol-map/${enc(isin)}`, { method: "PUT", body: json(body) }),
 
   // ---- company intel (public company data per symbol)
   getCompanyIntel: (symbol: string, include?: CompanyIntelPart[], assetType?: string) => {
