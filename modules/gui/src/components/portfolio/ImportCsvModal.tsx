@@ -999,7 +999,7 @@ export function ImportCsvModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono overflow-y-auto">
-      <div className="relative w-full max-w-5xl flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] rounded-xl sm:rounded-2xl border border-slate-800 bg-widget shadow-2xl overflow-hidden text-slate-100 my-auto">
+      <div className="relative w-full max-w-5xl flex flex-col h-[calc(100dvh-1rem)] sm:h-[min(90dvh,820px)] rounded-xl sm:rounded-2xl border border-slate-800 bg-widget shadow-2xl overflow-hidden text-slate-100 my-auto">
         
         {/* Modal Header & Wizard Stepper */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-canvas px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 gap-2 sm:gap-3">
@@ -1060,7 +1060,7 @@ export function ImportCsvModal({
 
           {/* STAGE 1: UPLOAD DROPZONE */}
           {stage === "upload" && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 flex-1">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1074,7 +1074,7 @@ export function ImportCsvModal({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleBrowseClick}
-                className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 text-center cursor-pointer transition-all min-h-[200px] sm:min-h-[260px] ${
+                className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 text-center cursor-pointer transition-all flex-1 min-h-[200px] sm:min-h-[260px] ${
                   isDragging
                     ? "border-[#DD3C73] bg-[#DD3C73]/10 shadow-[0_0_24px_rgba(221,60,115,0.2)]"
                     : "border-slate-800 bg-canvas/60 hover:border-[#DD3C73]/50 hover:bg-card/60"
@@ -1129,7 +1129,7 @@ export function ImportCsvModal({
 
           {/* STAGE 2: COLUMN MAPPING & PREVIEW */}
           {stage === "mapping" && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 flex-1 min-h-0">
               {/* File Info & Template Controls Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl border border-slate-800 bg-canvas text-xs">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -1220,8 +1220,8 @@ export function ImportCsvModal({
               </div>
 
               {/* Mapping & Data Preview Table */}
-              <div className="rounded-xl border border-slate-800 bg-canvas overflow-hidden flex flex-col">
-                <div className="overflow-x-auto max-h-[380px] custom-scrollbar">
+              <div className="rounded-xl border border-slate-800 bg-canvas overflow-hidden flex flex-col flex-1 min-h-[220px]">
+                <div className="overflow-auto flex-1 min-h-0 custom-scrollbar">
                   <table className="w-full border-collapse text-xs font-mono">
                     <thead className="bg-card border-b border-slate-800 sticky top-0 z-10">
                       {/* Row 1: System Field Dropdowns */}
@@ -1362,7 +1362,7 @@ export function ImportCsvModal({
                   </div>
                 </div>
 
-                <div className="overflow-x-auto overflow-y-auto max-h-[480px] custom-scrollbar">
+                <div className="overflow-auto flex-1 min-h-0 custom-scrollbar">
                   <table className="w-full border-collapse text-xs font-mono">
                     <thead className="bg-widget text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800 sticky top-0 backdrop-blur z-10">
                       <tr>
@@ -1513,7 +1513,7 @@ export function ImportCsvModal({
 
           {/* STAGE 4: SUCCESS */}
           {stage === "success" && successInfo && (
-            <div className="py-12 px-4 flex flex-col items-center justify-center text-center gap-4">
+            <div className="flex-1 py-12 px-4 flex flex-col items-center justify-center text-center gap-4">
               <div className="w-16 h-16 rounded-2xl border border-mint/40 bg-mint/15 flex items-center justify-center text-mint shadow-lg shadow-mint/10">
                 <FileCheck2 className="w-8 h-8" />
               </div>
