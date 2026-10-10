@@ -106,11 +106,11 @@ function movers(data: FinancialPortfolioData) {
   return { up, down, count: held.length };
 }
 
-/** Transactions dated from `since` up to yesterday: type, quantity, ticker and name, no amounts. */
+/** Transactions dated from `since` up to yesterday: type, ticker and name, no quantities or amounts. */
 function recentTransactions(data: FinancialPortfolioData, since: string, today: string): string[] {
   return (data.transactions ?? [])
     .filter((tx) => tx.date && tx.date.slice(0, 10) >= since && tx.date.slice(0, 10) < today)
-    .map((tx) => `- ${tx.date.slice(0, 10)} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol ? instrumentLabel(tx.symbol, tx.name) : ""}`.trim());
+    .map((tx) => `- ${tx.date.slice(0, 10)} [${tx.type}] ${tx.symbol ? instrumentLabel(tx.symbol, tx.name) : ""}`.trim());
 }
 
 export function buildDailyBriefPrompt(ctx: BriefContext): LlmMessage[] {

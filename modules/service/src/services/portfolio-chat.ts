@@ -44,7 +44,7 @@ export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: Finan
     data.transactions
       ?.slice(-RECENT_TRANSACTIONS)
       .reverse()
-      .map((tx) => `- ${tx.date ? tx.date.slice(0, 10) : "Unknown date"} [${tx.type}] ${tx.shares ? `${tx.shares} ` : ""}${tx.symbol || ""}`.trim())
+      .map((tx) => `- ${tx.date ? tx.date.slice(0, 10) : "Unknown date"} [${tx.type}] ${tx.symbol || ""}`.trim())
       .join("\n") || "No transaction history recorded.";
 
   return `You are a quantitative investment portfolio analyst and tactical financial assistant.

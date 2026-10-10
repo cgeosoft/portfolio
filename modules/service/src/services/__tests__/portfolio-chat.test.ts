@@ -90,7 +90,8 @@ describe("PortfolioChatService & prompt builder", () => {
     expect(prompt).toContain("SMA200: 195.20");
     expect(prompt).toContain("Cash Allocation: 10.00%");
     expect(prompt).toContain("Stocks: 65.00%");
-    expect(prompt).toContain("[BUY] 100 AAPL");
+    expect(prompt).toContain("[BUY] AAPL");
+    expect(prompt).not.toContain("[BUY] 100");
 
     // Verify absence of monetary values and currencies
     expect(prompt).not.toContain("140,000");
