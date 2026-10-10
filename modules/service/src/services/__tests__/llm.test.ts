@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { LlmService, sanitizeLlmResponse, buildOpenAIUrl } from "../llm.js";
+import { LlmService, sanitizeLlmResponse, buildOpenAIUrl, requestShapeFor } from "../llm.js";
 
 describe("sanitizeLlmResponse: reasoning models", () => {
   it("keeps the answer that follows a closed thinking block", () => {
@@ -291,5 +291,69 @@ describe("LlmService diagnostic and configuration", () => {
         globalThis.fetch = originalFetch;
       }
     });
+  });
+});
+
+describe("requestShapeFor", () => {
+  it("leaves out the temperature for Claude models that reject it", () => {
+    for (const model of ["claude-opus-4-7", "claude-opus-4.7", "anthropic/claude-opus-4.8", "claude-opus-5-5", "claude-sonnet-5", "claude-haiku-5-5", "claude-fable-5-1", "us.anthropic.claude-opus-4-7"]) {
+      expect(requestShapeFor(model)).toEqual({ temperature: false, tokenField: "max_tokens" });
+    }
+  });
+
+  it("keeps the temperature for older Claude and other models", () => {
+    for (const model of ["claude-opus-4-6", "claude-sonnet-4-5-20250929", "claude-opus-4-20250514", "claude-3-5-sonnet-latest", "qwen3-14b", "gpt-4o", ""]) {
+      expect(requestShapeFor(model)).toEqual({ temperature: true, tokenField: "max_tokens" });
+    }
+  });
+
+  it("sends max_completion_tokens and no temperature to OpenAI reasoning models", () => {
+    for (const model of ["o1", "o3-mini", "o4-mini", "gpt-5", "gpt-5-mini", "openai/gpt-5.1"]) {
+      expect(requestShapeFor(model)).toEqual({ temperature: false, tokenField: "max_completion_tokens" });
+    }
+  });
+});
+
+describe("chat: rejected request fields", () => {
+  it("retries once without the temperature when the server names it", async () => {
+    const originalFetch = globalThis.fetch;
+    const bodies: Record<string, unknown>[] = [];
+    globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      if ("temperature" in body) {
+        return new Response(JSON.stringify({ error: { message: "Unsupported parameter: 'temperature'" } }), { status: 400 });
+      }
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ok" } }] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    try {
+      const service = new LlmService();
+      const options = { provider: "openai-compatible", model: "future-model-1", baseUrl: "http://127.0.0.1:19103" };
+      expect(await service.chat([{ role: "user", content: "hi" }], options)).toBe("ok");
+      expect(bodies.length).toBe(2);
+      expect("temperature" in bodies[1]!).toBe(false);
+      // The next request skips the rejected field straight away.
+      expect(await service.chat([{ role: "user", content: "hi" }], options)).toBe("ok");
+      expect(bodies.length).toBe(3);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("does not retry a 400 about something else", async () => {
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response("context length exceeded", { status: 400 });
+    }) as unknown as typeof fetch;
+    try {
+      const service = new LlmService();
+      const options = { provider: "openai-compatible", model: "local-model", baseUrl: "http://127.0.0.1:19104" };
+      await expect(service.chat([{ role: "user", content: "hi" }], options)).rejects.toThrow("status 400");
+      expect(calls).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
