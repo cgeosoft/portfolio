@@ -1874,6 +1874,7 @@ export default function App() {
                 <div className="min-w-0">
                   <AllocationCard
                     theme={theme}
+                    hideValues={hideCurrencyValues}
                     summary={summary || {
                       totalValue: 0,
                       totalCost: 0,
@@ -1993,6 +1994,7 @@ export default function App() {
           error={chatError}
           activeProvider={assistantProvider}
           activeModel={assistantModel}
+          hideValues={hideCurrencyValues}
         />
       </div>
 

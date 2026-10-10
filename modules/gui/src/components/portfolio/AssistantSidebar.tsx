@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
-import { cleanThinkTags, formatTimeAgo } from "./utils";
+import { cleanThinkTags, formatTimeAgo, maskFinancialValues } from "./utils";
 import { rpc } from "../../rpc";
 import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
 import {
@@ -52,6 +52,8 @@ interface AssistantSidebarProps {
   error?: string | null;
   activeProvider?: string;
   activeModel?: string;
+  /** Privacy mode: mask amounts in messages and the system prompt; percentages stay visible. */
+  hideValues?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -96,7 +98,9 @@ export function AssistantSidebar({
   error,
   activeProvider = "Local LLM",
   activeModel,
+  hideValues = false,
 }: AssistantSidebarProps) {
+  const mask = (text: string) => (hideValues ? maskFinancialValues(text) : text);
   const [currentView, setCurrentView] = useState<"chat" | "history">("chat");
   const [searchHistoryQuery, setSearchHistoryQuery] = useState("");
   const [inputText, setInputText] = useState("");
@@ -159,7 +163,7 @@ export function AssistantSidebar({
 
   const handleCopyMessage = async (content: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(cleanThinkTags(content, false));
+      await navigator.clipboard.writeText(mask(cleanThinkTags(content, false)));
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch {
@@ -233,9 +237,9 @@ export function AssistantSidebar({
                 {activeConversation?.title && (
                   <span
                     className="text-[10px] text-slate-400 font-normal truncate max-w-[130px] px-1.5 py-0.5 rounded bg-slate-800/60 border border-slate-700/50"
-                    title={activeConversation.title}
+                    title={mask(activeConversation.title)}
                   >
-                    {activeConversation.title}
+                    {mask(activeConversation.title)}
                   </span>
                 )}
               </div>
@@ -466,7 +470,7 @@ export function AssistantSidebar({
 
                 {messages.map((msg, index) => {
                   const isUser = msg.role === "user";
-                  const cleanedContent = cleanThinkTags(msg.content, false);
+                  const cleanedContent = mask(cleanThinkTags(msg.content, false));
                   const canRegenerate =
                     !isUser && index === messages.length - 1 && !isLoading && !!onRegenerateMessage;
 
@@ -487,7 +491,7 @@ export function AssistantSidebar({
                         }`}
                       >
                         {isUser ? (
-                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                          <div className="whitespace-pre-wrap">{mask(msg.content)}</div>
                         ) : (
                           <div className="prose prose-invert prose-xs max-w-none space-y-2 text-xs">
                             <ReactMarkdown
@@ -769,7 +773,7 @@ export function AssistantSidebar({
                               isActive ? "text-slate-100" : "text-slate-300 group-hover:text-slate-50"
                             }`}
                           >
-                            {c.title || "Untitled Conversation"}
+                            {c.title ? mask(c.title) : "Untitled Conversation"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
@@ -811,7 +815,7 @@ export function AssistantSidebar({
       <AssistantSystemPromptModal
         isOpen={isSystemPromptOpen}
         onClose={() => setIsSystemPromptOpen(false)}
-        systemPrompt={systemPrompt}
+        systemPrompt={mask(systemPrompt)}
         portfolioName={portfolio?.name || ""}
         isLoading={systemPromptLoading}
         error={systemPromptError}
