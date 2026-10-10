@@ -18,6 +18,7 @@
     "build:metrics": "bun run scripts/build-metrics.ts",
     "release": "bash scripts/release.sh release",
     "release:build": "bash scripts/release.sh build",
+    "website:start": "bun run --cwd extras/website dev",
     "website:metrics": "bun run scripts/build-metrics-site.ts",
     "website:publish": "bash scripts/release.sh publish-website"
   },
