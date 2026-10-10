@@ -22,7 +22,7 @@
  */
 import * as marketCache from "../../db/market-cache.repo.js";
 import { appLogger } from "../../logger.js";
-import { FMP_TTL, toFmpSymbol, type FmpNewsArticle, type FmpService } from "../fmp.js";
+import { FMP_TTL, toFmpSymbol, type FmpNewsArticle, type FmpParams, type FmpService } from "../fmp.js";
 import type { FinnhubBasicFinancials, FinnhubInsiderTransaction, FinnhubService } from "../finnhub.js";
 import type { MarketDataCoordinator } from "../market-data.js";
 import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "../llm.js";
@@ -50,6 +50,7 @@ import {
   type EarningsTranscript,
   type InsiderQuarterStats,
   type InsiderTrade,
+  type IntelUnavailableReason,
   type Sourced,
   type TranscriptMeta,
   type TranscriptSummary,
@@ -141,6 +142,22 @@ function normSymbol(symbol: string): string {
 }
 
 const fmpOn = (deps: CompanyIntelDeps) => () => deps.fmp.isConfigured();
+
+type FmpOnlyPart = "estimates" | "scores" | "dcf" | "press" | "transcript";
+
+/** The one FMP request behind each FMP-only part, shared by the fetcher and `unavailableReason()`. */
+const FMP_ONLY_REQUESTS: Record<FmpOnlyPart, (fmpSymbol: string) => { path: string; params: FmpParams }> = {
+  estimates: (symbol) => ({ path: "/analyst-estimates", params: { symbol, period: "annual", page: 0, limit: 10 } }),
+  scores: (symbol) => ({ path: "/financial-scores", params: { symbol } }),
+  dcf: (symbol) => ({ path: "/discounted-cash-flow", params: { symbol } }),
+  press: (symbol) => ({ path: "/news/press-releases", params: { symbols: symbol, page: 0, limit: 10 } }),
+  transcript: (symbol) => ({ path: "/earning-call-transcript-dates", params: { symbol } }),
+};
+
+function fmpOnlyGet<T>(deps: CompanyIntelDeps, part: FmpOnlyPart, sym: string, ttlMs: number): Promise<T | null> {
+  const { path, params } = FMP_ONLY_REQUESTS[part](toFmpSymbol(sym));
+  return deps.fmp.get<T>(path, params, ttlMs);
+}
 const finnhubOn = (deps: CompanyIntelDeps) => () => deps.finnhub.isConfigured();
 
 // ── eligibility ─────────────────────────────────────────────────────────────
@@ -421,7 +438,7 @@ export async function getEstimates(deps: CompanyIntelDeps, symbol: string): Prom
         provider: "fmp",
         isAvailable: fmpOn(deps),
         fetch: async () => {
-          const rows = await deps.fmp.get<FmpEstimateRow[]>("/analyst-estimates", { symbol: toFmpSymbol(sym), period: "annual", page: 0, limit: 10 }, FMP_TTL.fundamentals);
+          const rows = await fmpOnlyGet<FmpEstimateRow[]>(deps, "estimates", sym, FMP_TTL.fundamentals);
           if (!Array.isArray(rows)) return null;
           const since = isoDate(Date.now() - 365 * DAY_MS);
           const periods: CompanyEstimate[] = rows
@@ -462,7 +479,7 @@ export async function getFinancialScores(deps: CompanyIntelDeps, symbol: string)
         provider: "fmp",
         isAvailable: fmpOn(deps),
         fetch: async () => {
-          const row = first(await deps.fmp.get<Array<{ piotroskiScore?: number; altmanZScore?: number; reportedCurrency?: string }>>("/financial-scores", { symbol: toFmpSymbol(sym) }, FMP_TTL.fundamentals));
+          const row = first(await fmpOnlyGet<Array<{ piotroskiScore?: number; altmanZScore?: number; reportedCurrency?: string }>>(deps, "scores", sym, FMP_TTL.fundamentals));
           if (!row) return null;
           return compact({ piotroski: num(row.piotroskiScore), altmanZ: num(row.altmanZScore), reportedCurrency: str(row.reportedCurrency) });
         },
@@ -484,7 +501,7 @@ export async function getDcf(deps: CompanyIntelDeps, symbol: string): Promise<So
         provider: "fmp",
         isAvailable: fmpOn(deps),
         fetch: async () => {
-          const row = first(await deps.fmp.get<Array<Record<string, unknown>>>("/discounted-cash-flow", { symbol: toFmpSymbol(sym) }, FMP_TTL.fundamentals));
+          const row = first(await fmpOnlyGet<Array<Record<string, unknown>>>(deps, "dcf", sym, FMP_TTL.fundamentals));
           const dcfValue = num(row?.dcf);
           if (!row || dcfValue === undefined) return null;
           const quote = await currentQuote(deps, sym);
@@ -755,7 +772,7 @@ export async function getPressReleases(deps: CompanyIntelDeps, symbol: string): 
       {
         provider: "fmp",
         isAvailable: fmpOn(deps),
-        fetch: async () => fromFmpArticles(await deps.fmp.get<FmpNewsArticle[]>("/news/press-releases", { symbols: toFmpSymbol(sym), page: 0, limit: 10 }, FMP_TTL.news)),
+        fetch: async () => fromFmpArticles(await fmpOnlyGet<FmpNewsArticle[]>(deps, "press", sym, FMP_TTL.news)),
       },
     ],
   });
@@ -825,7 +842,7 @@ export async function getLatestTranscriptMeta(deps: CompanyIntelDeps, symbol: st
         provider: "fmp",
         isAvailable: fmpOn(deps),
         fetch: async () => {
-          const rows = await deps.fmp.get<Array<{ quarter?: number; fiscalYear?: number; date?: string }>>("/earning-call-transcript-dates", { symbol: toFmpSymbol(sym) }, FMP_TTL.calendar);
+          const rows = await fmpOnlyGet<Array<{ quarter?: number; fiscalYear?: number; date?: string }>>(deps, "transcript", sym, FMP_TTL.calendar);
           if (!Array.isArray(rows)) return null;
           const today = isoDate(Date.now());
           const latest = rows
@@ -1008,6 +1025,7 @@ function emptyIntel(symbol: string): CompanyIntel {
     fetchedAt: new Date().toISOString(),
     included: [],
     skipped: [],
+    unavailable: {},
     profile: null,
     analyst: null,
     estimates: null,
@@ -1022,13 +1040,31 @@ function emptyIntel(symbol: string): CompanyIntel {
   };
 }
 
-async function safe<T>(fn: () => Promise<T | null>): Promise<T | null> {
+/** Runs one part; a throw counts as "failed". */
+async function safe<T>(fn: () => Promise<T | null>): Promise<{ value: T | null; failed: boolean }> {
   try {
-    return await fn();
+    return { value: await fn(), failed: false };
   } catch (err) {
     appLogger.logStep("warning", "intel", "part_failed", `A company intel part failed (${err instanceof Error ? err.name : typeof err})`);
-    return null;
+    return { value: null, failed: true };
   }
+}
+
+/**
+ * Why a fetched part came back null. FMP-only parts ask the FMP client how
+ * their request ended (no key, rejected key, plan restriction, failure);
+ * an answered request means FMP has no data for the symbol. Parts with a
+ * Finnhub fallback report a missing key only when neither provider has one.
+ */
+export function unavailableReason(deps: CompanyIntelDeps, part: CompanyIntelPart, symbol: string): IntelUnavailableReason {
+  const request = FMP_ONLY_REQUESTS[part as FmpOnlyPart];
+  if (request) {
+    const { path, params } = request(toFmpSymbol(normSymbol(symbol)));
+    const status = deps.fmp.requestStatus(path, params);
+    return status === "ok" ? "no_data" : status;
+  }
+  if (!deps.fmp.isConfigured() && !deps.finnhub.isConfigured()) return "no_key";
+  return "no_data";
 }
 
 /**
@@ -1044,6 +1080,7 @@ export async function getCompanyIntel(deps: CompanyIntelDeps, symbol: string, op
   const include = options.include && options.include.length > 0 ? options.include : COMPANY_INTEL_PARTS;
   if (!isIntelEligible(sym, options.assetType, options.isPrivate)) {
     intel.skipped = Array.from(new Set(include));
+    intel.unavailable = Object.fromEntries(intel.skipped.map((p) => [p, "not_applicable" as const]));
     return intel;
   }
 
@@ -1052,8 +1089,11 @@ export async function getCompanyIntel(deps: CompanyIntelDeps, symbol: string, op
   const companyOnly = parts.some((p) => !FUND_INTEL_PARTS.includes(p));
   const knownType = options.assetType === "Stock" || fund;
 
+  let profileFailed = false;
   if (parts.includes("profile") || (companyOnly && !knownType)) {
-    intel.profile = await safe(() => getCompanyProfile(deps, sym));
+    const profile = await safe(() => getCompanyProfile(deps, sym));
+    intel.profile = profile.value;
+    profileFailed = profile.failed;
     if (!knownType && (intel.profile?.data.isEtf || intel.profile?.data.isFund)) {
       ({ parts, skipped } = applicableParts(include, true));
     }
@@ -1062,14 +1102,18 @@ export async function getCompanyIntel(deps: CompanyIntelDeps, symbol: string, op
 
   intel.included = parts;
   intel.skipped = skipped;
+  const unavailable: Partial<Record<CompanyIntelPart, IntelUnavailableReason>> = Object.fromEntries(skipped.map((p) => [p, "not_applicable" as const]));
+  if (parts.includes("profile") && !intel.profile) unavailable.profile = profileFailed ? "failed" : unavailableReason(deps, "profile", sym);
   await Promise.all(
     parts
       .filter((p): p is Exclude<CompanyIntelPart, "profile"> => p !== "profile")
       .map(async (part) => {
-        const value = await safe(() => FETCHERS[part](deps, sym) as Promise<unknown>);
+        const { value, failed } = await safe(() => FETCHERS[part](deps, sym) as Promise<unknown>);
         (intel as unknown as Record<string, unknown>)[part] = value;
+        if (value === null || value === undefined) unavailable[part] = failed ? "failed" : unavailableReason(deps, part, sym);
       }),
   );
+  intel.unavailable = unavailable;
   intel.fetchedAt = new Date().toISOString();
   return intel;
 }

@@ -193,10 +193,11 @@ export const api = {
   searchSymbol: (query: string) => request<SearchSymbolResponse>(`/api/symbols/search?q=${enc(query)}`),
 
   // ---- company intel (public company data per symbol)
-  getCompanyIntel: (symbol: string, include?: CompanyIntelPart[], assetType?: string) => {
+  getCompanyIntel: (symbol: string, include?: CompanyIntelPart[], assetType?: string, isPrivate?: boolean) => {
     const q = new URLSearchParams();
     if (include?.length) q.set("include", include.join(","));
     if (assetType) q.set("assetType", assetType);
+    if (isPrivate) q.set("private", "1");
     const qs = q.toString();
     return request<GetCompanyIntelResponse>(`/api/symbols/${enc(symbol)}/intel${qs ? `?${qs}` : ""}`, {}, { timeoutMs: 60_000 });
   },

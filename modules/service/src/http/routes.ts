@@ -313,7 +313,11 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   // Company intel: public company data, best provider first (services/intel/company.ts).
   router.get("/api/symbols/:symbol/intel", (ctx) =>
-    getCompanyIntel(services, ctx.params.symbol!, { include: parseIntelParts(ctx.url.searchParams.get("include")), assetType: ctx.url.searchParams.get("assetType") || undefined }),
+    getCompanyIntel(services, ctx.params.symbol!, {
+      include: parseIntelParts(ctx.url.searchParams.get("include")),
+      assetType: ctx.url.searchParams.get("assetType") || undefined,
+      isPrivate: ctx.url.searchParams.get("private") === "1",
+    }),
   );
   router.get("/api/symbols/:symbol/transcript", (ctx) => getTranscriptResponse(services, ctx.params.symbol!));
   router.post("/api/symbols/:symbol/transcript/summary", async (ctx) => {

@@ -411,7 +411,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       if (res.success) {
         reportTest(setFmpTestResult, {
           success: true,
-          message: "FMP connection verified",
+          message: res.restricted?.length ? `FMP key works. Your plan does not include: ${res.restricted.join(", ")}.` : "FMP connection verified",
           latencyMs: res.latencyMs,
         });
       } else {
