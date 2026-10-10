@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.1] - 2026-10-10
+
+### Changed
+- The public website was redesigned to match the app's own look, with a dark theme, rounded cards, and pink accents.
+- The website home page now shows an animated demo portfolio chart and rotating assistant suggestion examples.
+- The website now has sections explaining what data stays on your device and what leaves it, plus a feature list and a downloads table.
+- The website now reads the latest release info from GitHub, falling back to the local file if that is not available.
+- The CSV import dialog now keeps a fixed height instead of resizing as you move through its steps.
+
+### Fixed
+- The CSV import dialog no longer jumps around in size during import.
+
+
 ## [0.9.0] - 2026-10-09
 
 ### Added
