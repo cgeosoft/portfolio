@@ -308,6 +308,12 @@ export default function App() {
     rpc.request.saveConfig({ zoomLevel: clamped }).catch(() => {});
   }, []);
 
+  // Show the saved zoom at once; the config load may still change it.
+  useEffect(() => {
+    if (typeof document !== "undefined") document.documentElement.style.zoom = String(zoomLevel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleZoomIn = useCallback(() => {
     const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
     setZoomLevel((prev) => {
