@@ -175,6 +175,27 @@ export interface ManageTransactionResponse {
   error?: string;
 }
 
+/** `PUT /api/symbol-map/:isin`: the user's own ticker for an ISIN. */
+export interface SetIsinSymbolRequest {
+  symbol: string;
+  name?: string;
+}
+
+export interface SetIsinSymbolResponse {
+  success: boolean;
+  /** Portfolios whose transactions now use the symbol. */
+  portfolios: number;
+  error?: string;
+}
+
+/** `POST /api/portfolios/:id/symbols/resolve`: tickers looked up for ISIN-only transactions. */
+export interface ResolvePortfolioSymbolsResponse {
+  success: boolean;
+  /** Transactions that got a ticker. */
+  updated: number;
+  error?: string;
+}
+
 export interface SearchSymbolRequest {
   query: string;
 }

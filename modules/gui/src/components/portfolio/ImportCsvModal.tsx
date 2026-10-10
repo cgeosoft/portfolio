@@ -19,21 +19,8 @@ import { Select } from "../common/Select";
 import type { PortfolioTransaction } from "portfolio-shared/portfolio";
 import { fmtCurrency } from "./utils";
 
-export const DEFAULT_ISIN_SYMBOL_MAP: Record<string, string> = {
-  "US30303M1027": "META",
-  "IE00B4L5Y983": "EUNL.DE", // Core MSCI World UCITS ETF (EUR)
-  "US0231351067": "AMZN",
-  "US5949181045": "MSFT",
-  "IE00B5BMR087": "SXR8.DE", // Core S&P 500 UCITS ETF (EUR)
-  "IE00BK5BQT80": "VWCE.DE", // FTSE All-World UCITS ETF (EUR)
-  "IE00BP3QZJ36": "IQQ6.DE", // MSCI France UCITS ETF (EUR)
-  "DE0005933931": "EXS1.DE", // Core DAX UCITS ETF (EUR)
-  "DE0007030009": "RHM.DE", // Rheinmetall (EUR)
-  "FR0000121329": "HO.PA", // Thales (EUR)
-  "BTC": "BTC-EUR", // Bitcoin (EUR)
-  "US18915M1071": "NET", // Cloudflare (EUR)
-  "LU3176111881": "LU3176111881", // Private Equity
-};
+/** Shape of an ISIN. The service checks the check digit and looks up the ticker on import. */
+const ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 
 export type SystemFieldKey =
   | "none"
@@ -850,14 +837,13 @@ export function ImportCsvModal({
       const category = getVal(rowCols, "category");
       const rawAssetClass = getVal(rowCols, "asset_class");
 
-      const isin = rawIsin || rawSymbol || undefined;
+      // Trade Republic puts the ISIN in its symbol column. The service swaps an
+      // ISIN-only symbol for the ticker (stored ISIN map, then provider search).
+      const isinCandidate = (rawIsin || rawSymbol).toUpperCase();
+      const isin = ISIN_PATTERN.test(isinCandidate) ? isinCandidate : undefined;
       let symbol = rawSymbol;
 
-      if (rawSymbol && DEFAULT_ISIN_SYMBOL_MAP[rawSymbol.toUpperCase()]) {
-        symbol = DEFAULT_ISIN_SYMBOL_MAP[rawSymbol.toUpperCase()]!;
-      } else if (rawIsin && DEFAULT_ISIN_SYMBOL_MAP[rawIsin.toUpperCase()]) {
-        symbol = DEFAULT_ISIN_SYMBOL_MAP[rawIsin.toUpperCase()]!;
-      } else if (!symbol && isin) {
+      if (!symbol && isin) {
         symbol = isin;
       } else if (!symbol && (category === "PRIVATE_FUND" || rawAssetClass === "PRIVATE_FUND")) {
         symbol = "LU3176111881";
@@ -865,7 +851,7 @@ export function ImportCsvModal({
         symbol = "CASH";
       }
 
-      const name = getVal(rowCols, "name") || symbol;
+      const name = getVal(rowCols, "name") || undefined;
       const shares = parseNumber(getVal(rowCols, "shares"));
       const price = parseNumber(getVal(rowCols, "price"));
       const amount = parseNumber(getVal(rowCols, "amount"));

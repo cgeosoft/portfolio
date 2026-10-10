@@ -29,6 +29,7 @@ import { suggestMetricLayout } from "../services/metric-advisor";
 import { getMacroSnapshot } from "../services/intel/macro";
 import { getBenchmarkComparison, getBenchmarkHistory, normalizeBenchmarkRange } from "../services/intel/benchmark";
 import { getHeldMarketStatus } from "../services/intel/market-hours";
+import { isIsin } from "../services/providers/identifiers";
 import { DEFAULT_BENCHMARK_SYMBOL } from "portfolio-shared/config-types";
 import { getCompanyIntel, getTranscriptResponse, parseIntelParts, summarizeTranscriptResponse } from "../services/intel/company";
 import { WEBPAGE_URL, SUPPORT_EMAIL } from "portfolio-shared/brand";
@@ -44,6 +45,7 @@ import type {
   InstallMetricRequest,
   LogClientEventRequest,
   ManageTransactionRequest,
+  SetIsinSymbolRequest,
   OpenSupportTicketRequest,
   PrepareReportPromptRequest,
   PreviewMetricInstallRequest,
@@ -307,6 +309,17 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     });
     if (body.action === "import" && result.success && !body.dryRun) telemetry.capture("csv_imported", { count: result.newTransactionsCount });
     return result;
+  });
+
+  router.post("/api/portfolios/:id/symbols/resolve", (ctx) => portfolioService.resolvePortfolioSymbols(ctx.params.id!));
+
+  router.put("/api/symbol-map/:isin", async (ctx) => {
+    const body = await ctx.body<SetIsinSymbolRequest>();
+    const isin = ctx.params.isin!.trim().toUpperCase();
+    if (!isIsin(isin)) throw new HttpError(400, "Not a valid ISIN");
+    const symbol = str(body.symbol, "symbol").trim();
+    if (!/^[A-Za-z0-9.\-_=^]{1,32}$/.test(symbol)) throw new HttpError(400, "Invalid symbol");
+    return portfolioService.setSymbolForIsin(isin, symbol, typeof body.name === "string" ? body.name : undefined);
   });
 
   router.get("/api/symbols/search", async (ctx) => ({ results: await marketData.searchSymbols(ctx.url.searchParams.get("q") || "") }));

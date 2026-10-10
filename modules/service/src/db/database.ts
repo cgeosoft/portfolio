@@ -164,6 +164,18 @@ function initializeSchema(database: Database): void {
     )
   `);
 
+  // ISIN to ticker map shared by all portfolios (see symbol-map.repo.ts).
+  // source is "auto" (found by a provider search) or "manual" (set by the user).
+  database.run(`
+    CREATE TABLE IF NOT EXISTS symbol_map (
+      isin TEXT PRIMARY KEY,
+      symbol TEXT NOT NULL,
+      name TEXT,
+      source TEXT NOT NULL DEFAULT 'auto',
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   // User settings, one row per DesktopConfig key (see ../config.ts).
   database.run(`
     CREATE TABLE IF NOT EXISTS settings (

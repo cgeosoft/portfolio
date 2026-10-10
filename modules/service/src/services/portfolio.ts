@@ -26,6 +26,8 @@ import type {
 } from "portfolio-shared/portfolio";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
+import type { SymbolResolver } from "./symbol-resolver.js";
+import { isIsin } from "./providers/identifiers.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
@@ -116,7 +118,11 @@ export class PortfolioService {
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
   private cacheSweepHandle?: Timer;
 
-  constructor(private readonly yahoo: IMarketDataProvider) {
+  constructor(
+    private readonly yahoo: IMarketDataProvider,
+    /** ISIN to ticker lookup on import. Without it, imported symbols are kept as sent. */
+    private readonly symbols?: SymbolResolver,
+  ) {
     this.cacheSweepHandle = setInterval(() => this.sweepExpiredCacheEntries(), CACHE_TTL_MS);
     this.cacheSweepHandle.unref?.();
   }
@@ -391,6 +397,7 @@ export class PortfolioService {
       {
         symbol: string;
         name: string;
+        isin?: string;
         shares: number;
         totalCost: number;
         assetType: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other";
@@ -434,6 +441,7 @@ export class PortfolioService {
             entry = {
               symbol: sym,
               name: tx.name || sym,
+              isin: tx.isin && isIsin(tx.isin) ? tx.isin.toUpperCase() : undefined,
               shares: 0,
               totalCost: 0,
               assetType,
@@ -449,6 +457,7 @@ export class PortfolioService {
             if (tx.currency) {
               entry.currency = tx.currency;
             }
+            if (!entry.isin && tx.isin && isIsin(tx.isin)) entry.isin = tx.isin.toUpperCase();
           }
 
           let cost = 0;
@@ -485,6 +494,7 @@ export class PortfolioService {
       .map((h) => ({
         symbol: h.symbol,
         name: h.name,
+        isin: h.isin,
         shares: Number(h.shares.toFixed(6)),
         buyPrice: Number((h.shares > 0 ? h.totalCost / h.shares : 0).toFixed(4)),
         assetType: h.assetType,
@@ -753,6 +763,7 @@ export class PortfolioService {
       holdings.push({
         symbol: sym,
         name: config.name || quote?.longName || quote?.shortName || sym,
+        isin: config.isin,
         assetType,
         isPrivate,
         quoteMissing: !isPrivate && !quote ? true : undefined,
@@ -1020,6 +1031,41 @@ export class PortfolioService {
     });
   }
 
+  /** Replace ISIN-only symbols with tickers. A failed lookup leaves the ISIN in place. */
+  private async resolveImportSymbols(transactions: Partial<txRepo.TransactionInput>[], baseCurrency: string): Promise<void> {
+    if (!this.symbols) return;
+    try {
+      await this.symbols.applyToTransactions(transactions, baseCurrency || "EUR");
+    } catch {
+      appLogger.logStep("warning", "portfolio", "symbol_resolve", "ISIN lookup failed; imported symbols kept as sent");
+    }
+  }
+
+  /**
+   * Look up tickers for stored transactions that still carry an ISIN as their
+   * symbol (imports from before the lookup existed, or a provider that was down).
+   */
+  public async resolvePortfolioSymbols(portfolioId: string): Promise<{ success: boolean; updated: number; error?: string }> {
+    const portfolio = portfolioRepo.findById(portfolioId);
+    if (!portfolio) return { success: false, updated: 0, error: "Portfolio not found" };
+    if (!this.symbols) return { success: true, updated: 0 };
+    const transactions = txRepo.findByPortfolio(portfolio.id);
+    const changed = await this.symbols.applyToTransactions(transactions, portfolio.baseCurrency || "EUR");
+    if (changed.length > 0) {
+      txRepo.bulkUpdate(changed.map((t) => ({ id: t.id, data: { symbol: t.symbol, isin: t.isin, name: t.name } })));
+      this.clearPortfolioCache(portfolio.id);
+    }
+    return { success: true, updated: changed.length };
+  }
+
+  /** Set the ticker of an ISIN by hand, for every portfolio that holds it. */
+  public setSymbolForIsin(isin: string, symbol: string, name?: string | null): { success: boolean; portfolios: number; error?: string } {
+    if (!this.symbols) return { success: false, portfolios: 0, error: "Symbol lookup unavailable" };
+    const changed = this.symbols.setManualSymbol(isin, symbol, name);
+    for (const id of changed) this.clearPortfolioCache(id);
+    return { success: true, portfolios: changed.length };
+  }
+
   public async manageTransactions(
     portfolioOrId: string | portfolioRepo.PortfolioRow,
     payload: any
@@ -1046,6 +1092,7 @@ export class PortfolioService {
     const targetId = payload?.transactionId || txData?.id;
 
     if (action === "add" && txData) {
+      await this.resolveImportSymbols([txData], portfolio.baseCurrency);
       const id = this.mintPortfolioTransactionId(txData.id, portfolio.id);
       const dataToSave = { ...txData, id, portfolioId: portfolio.id } as Parameters<typeof txRepo.create>[0];
       let entity = txData as txRepo.TransactionRow;
@@ -1089,6 +1136,8 @@ export class PortfolioService {
       if (!Array.isArray(batchList)) {
         return { success: false, action: "import", totalTransactions: 0, error: "No transactions list provided" };
       }
+
+      await this.resolveImportSymbols(batchList, portfolio.baseCurrency);
 
       const existingTransactions = await this.getTransactions(portfolio);
       const existingTxMap = new Map<string, txRepo.TransactionRow>();
@@ -1140,6 +1189,8 @@ export class PortfolioService {
             const vOld = existing[f];
             const normNew = normalizeComparisonValue(vNew);
             const normOld = normalizeComparisonValue(vOld);
+            // An empty incoming field keeps the stored value (txRepo.update), so it is no change.
+            if (normNew === undefined) continue;
 
             if (normNew !== normOld) {
               if (typeof normNew === "number" && typeof normOld === "number" && Math.abs(normNew - normOld) < 1e-6) {

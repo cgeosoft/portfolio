@@ -14,6 +14,8 @@ export interface PortfolioItem {
 export interface PortfolioHolding {
   symbol: string;
   name: string;
+  /** ISIN of the instrument when the transactions carry one. */
+  isin?: string;
   assetType: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other";
   isPrivate?: boolean;
   /** No market quote; the price falls back to the buy price. */
@@ -147,6 +149,7 @@ export interface FinancialPortfolioData {
 export interface PortfolioHoldingConfig {
   symbol: string;
   name?: string;
+  isin?: string;
   shares: number;
   buyPrice: number;
   assetType?: "Stock" | "ETF" | "MutualFund" | "Crypto" | "Cash" | "Other";
