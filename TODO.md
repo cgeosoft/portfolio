@@ -38,6 +38,7 @@ None open.
 - [x] [F] Text size select in Settings → General, bound to the interface zoom; the saved zoom applies on startup
 - [x] [F] Instrument references open the holding: report and chat Markdown, exposure, income, allocation chart slices, the holdings table; the LLM context names instruments as `SYMBOL (Name)`
 - [x] [T] Service typecheck and the provider chain test fixed (both failed before these changes)
+- [x] [B] Two instances on 127.0.0.1 no longer replace each other's session: the cookie name carries a hash of the data directory (the old name moves over once), and a lost session without a PIN logs in again instead of showing the PIN screen
 
 ## Check the Oct 10 user fixes in the app
 
