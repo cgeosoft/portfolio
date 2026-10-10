@@ -1,6 +1,6 @@
 # TODO
 
-Instructions for agents: verify the assertions, current code behavior, and existing implementations for each item before implementing it. Check relevant modules and test suites first to confirm the problem still exists and requires changes.
+Instructions for agents: verify the assertions, current code behavior, and existing implementations for each item before implementing it. Check relevant modules and test suites first to confirm the problem still exists and requires changes. Implement each task on its own develop/<task-slug> branch.
 
 ## Tasks
 
