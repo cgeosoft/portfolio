@@ -249,7 +249,6 @@ export interface TranscriptSummary extends TranscriptMeta {
   trimmed: boolean;
 }
 
-/** Every part is null when no provider had it (or it was not asked for). */
 /**
  * Why a part came back null:
  * - `no_key`: no provider that has this data has a key;
@@ -261,6 +260,7 @@ export interface TranscriptSummary extends TranscriptMeta {
  */
 export type IntelUnavailableReason = "no_key" | "key_rejected" | "restricted" | "failed" | "no_data" | "not_applicable";
 
+/** Every part is null when no provider had it (or it was not asked for). */
 export interface CompanyIntel {
   symbol: string;
   fetchedAt: string;
