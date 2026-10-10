@@ -332,7 +332,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios/:id/reports/stream", async (ctx) => {
     const body = await ctx.body<StartReportStreamRequest>();
-    const res = await reportService.startReportStream({ ...body, portfolioId: ctx.params.id! });
+    const res = await reportService.startReportStream({ ...body, apiKey: unmaskLlmKey(body.apiKey), portfolioId: ctx.params.id! });
     telemetry.capture("report_generated", { provider: body.provider, streaming: true });
     return res;
   });
