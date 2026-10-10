@@ -161,7 +161,7 @@ export function DeletePortfolioModal({
           {/* Note if it's the only portfolio */}
           {isLastPortfolio && (
             <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-950/20 text-[11px] text-amber-300 leading-relaxed">
-              <span className="font-bold text-amber-200">Note:</span> Deleting your only portfolio will reset your data and generate a fresh default portfolio.
+              <span className="font-bold text-amber-200">Note:</span> This is your only portfolio. An empty portfolio named Main Portfolio replaces it.
             </div>
           )}
 

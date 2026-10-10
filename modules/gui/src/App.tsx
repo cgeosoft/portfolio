@@ -1065,6 +1065,13 @@ export default function App() {
         }
       } else {
         clientLogger.log("warning", "loadPortfolios:empty", "No portfolios found in database");
+        if (activePortfolioId) {
+          setActivePortfolioId(null);
+          setPortfolioData(null);
+          if (typeof localStorage !== "undefined") {
+            localStorage.removeItem("selected_portfolio_id");
+          }
+        }
       }
     } catch (e) {
       clientLogger.log("error", "loadPortfolios:error", `Error loading portfolios: ${e}`);
@@ -1261,12 +1268,24 @@ export default function App() {
 
   const handlePortfolioDeleted = async (id: string) => {
     const remaining = portfolios.filter((p) => p.id !== id);
+    setPortfolios(remaining);
+    if (activePortfolioId !== id) return;
+    setReports([]);
     if (remaining.length > 0) {
-      setPortfolios(remaining);
-      if (activePortfolioId === id) {
-        handleSelectPortfolio(remaining[0]!.id);
-      }
-    } else {
+      handleSelectPortfolio(remaining[0]!.id);
+      return;
+    }
+    // The last portfolio is gone: drop its state, then replace it with an empty one.
+    setActivePortfolioId(null);
+    setPortfolioData(null);
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("selected_portfolio_id");
+    }
+    try {
+      const fresh = await rpc.request.createPortfolio({ name: "Main Portfolio", baseCurrency: currency });
+      handlePortfolioCreated(fresh);
+    } catch (e) {
+      console.error("Error creating replacement portfolio:", e);
       await loadPortfolios();
     }
   };
