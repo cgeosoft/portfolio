@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { installChartZoomFix } from "./components/common/chart-zoom";
 import { clientLogger } from "./rpc";
 // Self-hosted fonts: no network round trip for a LAN-only app.
 import "@fontsource/inter/400.css";
@@ -31,6 +32,9 @@ try {
 } catch {
   // localStorage unavailable
 }
+
+// Chart.js measures new charts in zoomed pixels; size them in CSS pixels like its resizes.
+installChartZoomFix();
 
 clientLogger.log("debug", "mount", "GUI script loaded", undefined, { url: window.location.href });
 
