@@ -1,15 +1,5 @@
 # Changelog
 
-## [0.10.0] - 2026-10-09
-
-### Changed
-- Website headings now use the Sansation font.
-- Improved the metrics page on the website.
-
-### Fixed
-- Fixed a technical issue with the income chart type.
-
-
 ## [0.9.0] - 2026-10-09
 
 ### Added
@@ -46,6 +36,11 @@
 - Replaced the metric marketplace with a metric library and picker, keeping each slotted metric in its place when another is removed.
 - The analyze dialog now names the data providers behind the context it uses.
 - Market data requests now route automatically between providers in quality order, falling back when one lacks a key or data.
+- Website headings now use the Sansation font.
+- Improved the metrics page on the website.
+
+### Fixed
+- Fixed a technical issue with the income chart type.
 
 
 ## [0.8.2] - 2026-10-09
