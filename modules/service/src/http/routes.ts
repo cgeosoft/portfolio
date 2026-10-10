@@ -14,7 +14,7 @@ import { REPO_ROOT, findBundledFile, getLogDir } from "../paths";
 import { join } from "node:path";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
-import { authService, clearSessionCookie, readSessionCookie, sessionCookie } from "../services/auth";
+import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
@@ -104,6 +104,11 @@ function sponsorFallbackFile(theme?: string): string | null {
   return findBundledFile("sponsor.html", "extras/website/sponsor/index.html") ?? null;
 }
 
+/** True behind a TLS proxy, where the session cookie gets `Secure`. */
+function isHttps(req: Request): boolean {
+  return req.headers.get("x-forwarded-proto") === "https";
+}
+
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
   const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
 
@@ -117,9 +122,16 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.use((ctx) => {
     if (PUBLIC_PATHS.has(ctx.url.pathname)) return;
-    const sessionId = readSessionCookie(ctx.req);
+    const session = readSession(ctx.req);
+    const sessionId = session?.id ?? null;
     if (!authService.validateSession(sessionId)) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
     ctx.sessionId = sessionId;
+    // A valid session under the old shared name is ours: move it to the new
+    // name. Another instance's old cookie fails the check above and stays.
+    if (session?.legacy) {
+      ctx.responseHeaders.append("Set-Cookie", sessionCookie(session.id, isHttps(ctx.req)));
+      ctx.responseHeaders.append("Set-Cookie", clearLegacySessionCookie());
+    }
     if (!authService.hasAcceptedTerms() && !PRE_TERMS_PATHS.has(ctx.url.pathname)) {
       throw new HttpError(403, "Terms of Use must be accepted before using the application");
     }
@@ -146,8 +158,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/auth/login", async (ctx) => {
     const body = await ctx.body<{ pin?: string }>();
     const id = authService.login(body.pin);
-    const secure = ctx.req.headers.get("x-forwarded-proto") === "https";
-    ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, secure));
+    ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, isHttps(ctx.req)));
     return { success: true, ...authStatus() };
   });
 

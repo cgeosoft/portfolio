@@ -6,9 +6,11 @@
  * `kv_entries`.
  */
 import * as crypto from "node:crypto";
+import { resolve } from "node:path";
 import { getDatabase } from "../db/database";
 import { appLogger } from "../logger";
 import { HttpError } from "../http/router";
+import { DATA_DIR } from "../paths";
 
 const PIN_RULE = /^[0-9]{6}$/;
 const PIN_ATTEMPTS_LIMIT = 5;
@@ -20,7 +22,20 @@ const PIN_KEY = "auth:pinHash";
 const ATTEMPTS_KEY = "rate-limit:pin";
 const TERMS_KEY = "auth:acceptedTermsAt";
 
-export const SESSION_COOKIE = "portfolio_session";
+/** The old cookie name, shared by every instance on the same host. Read only as a fallback. */
+export const LEGACY_SESSION_COOKIE = "portfolio_session";
+
+/**
+ * The session cookie name for a data directory. Browsers scope cookies by
+ * host and ignore the port, so two instances on 127.0.0.1 overwrote each
+ * other's cookie under one name. The name carries a short hash of the data
+ * directory: instances on one database share sessions anyway, and the name
+ * survives restarts, random ports and the remote-access port.
+ */
+export function sessionCookieName(dataDir: string = DATA_DIR): string {
+  const hash = crypto.createHash("sha256").update(resolve(dataDir)).digest("hex").slice(0, 12);
+  return `${LEGACY_SESSION_COOKIE}_${hash}`;
+}
 
 interface KvRow {
   value: string;
@@ -177,24 +192,49 @@ export class AuthService {
   }
 }
 
-/** Reads the session cookie from a request. */
-export function readSessionCookie(req: Request): string | null {
+function readCookie(req: Request, cookieName: string): string | null {
   const header = req.headers.get("cookie");
   if (!header) return null;
   for (const part of header.split(";")) {
     const [name, ...rest] = part.trim().split("=");
-    if (name === SESSION_COOKIE) return decodeURIComponent(rest.join("="));
+    if (name !== cookieName) continue;
+    try {
+      return decodeURIComponent(rest.join("=")) || null;
+    } catch {
+      return null;
+    }
   }
   return null;
 }
 
+/**
+ * The session id a request carries. `legacy` is true when it came under the
+ * old shared name; the auth middleware then moves it to the new name.
+ */
+export function readSession(req: Request): { id: string; legacy: boolean } | null {
+  const current = readCookie(req, sessionCookieName());
+  if (current) return { id: current, legacy: false };
+  const legacy = readCookie(req, LEGACY_SESSION_COOKIE);
+  return legacy ? { id: legacy, legacy: true } : null;
+}
+
+/** Reads the session cookie from a request. */
+export function readSessionCookie(req: Request): string | null {
+  return readSession(req)?.id ?? null;
+}
+
 export function sessionCookie(id: string, secure: boolean): string {
   const maxAge = Math.floor(SESSION_TTL_MS / 1000);
-  return `${SESSION_COOKIE}=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+  return `${sessionCookieName()}=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
 }
 
 export function clearSessionCookie(): string {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `${sessionCookieName()}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+}
+
+/** Expires the old shared cookie once its session moved to the new name. */
+export function clearLegacySessionCookie(): string {
+  return `${LEGACY_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
 export const authService = new AuthService();

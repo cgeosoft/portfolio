@@ -598,9 +598,47 @@ export default function App() {
   /** Whether the app lock is on; drives the lock button in the menu bar. */
   const [pinEnabled, setPinEnabled] = useState(false);
 
+  const authStateRef = useRef(authState);
+  authStateRef.current = authState;
+  /** Silent re-logins after a lost session; more than a few a minute means the cookie does not stick. */
+  const silentLogins = useRef<number[]>([]);
+  const recovering = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
-    setUnauthorizedHandler(() => setAuthState((s) => (s === "ready" ? "locked" : s)));
+    // A 401 while ready: the session is gone (expired, revoked, or the cookie
+    // was replaced). Lock only when a PIN is set; without one, log in again.
+    setUnauthorizedHandler(() => {
+      if (authStateRef.current !== "ready" || recovering.current) return;
+      recovering.current = true;
+      void (async () => {
+        try {
+          const status = await api.authStatus();
+          if (cancelled) return;
+          setPinEnabled(status.pinEnabled);
+          if (status.pinEnabled) {
+            setAuthState("locked");
+            return;
+          }
+          const now = Date.now();
+          silentLogins.current = silentLogins.current.filter((t) => now - t < 60_000);
+          if (silentLogins.current.length >= 3) {
+            setAuthError("The session keeps getting lost. Another tab or instance on this address may be replacing the cookie.");
+            setAuthState("error");
+            return;
+          }
+          silentLogins.current.push(now);
+          const session = await api.login();
+          if (!cancelled && !session.hasAcceptedTerms) setAuthState("terms");
+        } catch (err) {
+          if (cancelled) return;
+          setAuthError(err instanceof Error ? err.message : String(err));
+          setAuthState("error");
+        } finally {
+          recovering.current = false;
+        }
+      })();
+    });
     (async () => {
       setAuthState("loading");
       setAuthError(null);
