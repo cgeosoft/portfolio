@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { reloadPage } from "../portfolio/utils.js";
+import { hideBootLoader } from "../../bootLoader";
 
 interface Props {
   children: ReactNode;
@@ -25,6 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    hideBootLoader();
     console.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
     this.setState({ errorInfo });
   }

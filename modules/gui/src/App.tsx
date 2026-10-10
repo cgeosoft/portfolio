@@ -55,6 +55,7 @@ import { rpc, ensureRpcReady, clientLogger, onUpdateAvailable } from "./rpc";
 import { api, setUnauthorizedHandler } from "./api";
 import { LockScreen } from "./components/common/LockScreen";
 import { APP_VERSION } from "./environment";
+import { hideBootLoader } from "./bootLoader";
 import {
   getDefaultMetricPreferences,
   type PortfolioMetricPreference,
@@ -245,6 +246,8 @@ export default function App() {
 
   // Multi-portfolio state
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
+  /** Set once the first portfolios list request has finished, with or without portfolios. */
+  const [portfoliosLoaded, setPortfoliosLoaded] = useState(false);
   const [activePortfolioId, setActivePortfolioId] = useState<string | null>(() => {
     if (typeof localStorage !== "undefined") {
       return localStorage.getItem("selected_portfolio_id") || null;
@@ -1126,6 +1129,8 @@ export default function App() {
     } catch (e) {
       clientLogger.log("error", "loadPortfolios:error", `Error loading portfolios: ${e}`);
       console.error("Error loading portfolios:", e);
+    } finally {
+      setPortfoliosLoaded(true);
     }
   }, [activePortfolioId]);
 
@@ -1523,6 +1528,23 @@ export default function App() {
       if (timer) clearTimeout(timer);
     };
   }, [isLoading, portfolioData]);
+
+  // The boot loader of index.html stays until the first screen has its data: the lock or terms
+  // screen, or the dashboard with its portfolio (or its error, the empty state, or the slow
+  // market data prompt). Other views need no portfolio data.
+  const firstScreenReady =
+    authState === "locked" ||
+    authState === "terms" ||
+    authState === "error" ||
+    (authState === "ready" &&
+      (view !== "dashboard" ||
+        portfolioData !== null ||
+        loadError !== null ||
+        loadingSlowWarning ||
+        (portfoliosLoaded && !activePortfolioId)));
+  useEffect(() => {
+    if (firstScreenReady) hideBootLoader();
+  }, [firstScreenReady]);
 
   if (authState !== "ready") {
     if (authState === "loading") {
