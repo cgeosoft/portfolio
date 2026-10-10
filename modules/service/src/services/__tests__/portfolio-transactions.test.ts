@@ -41,6 +41,21 @@ describe("transactions stay inside their portfolio", () => {
     expect(txRepo.findById(tx.id)).toBeNull();
   });
 
+  it("imports the same broker ids into two portfolios and dedupes a re-import", async () => {
+    const brokerId = `broker-${crypto.randomUUID()}`;
+    const rows = [{ id: brokerId, date: "2026-01-05", type: "BUY", symbol: "DUP", shares: 1, price: 5, amount: 5, currency: "EUR" }];
+    const first = await service.manageTransactions(a.id, { action: "import", transactions: rows });
+    expect(first.newTransactionsCount).toBe(1);
+    const second = await service.manageTransactions(b.id, { action: "import", transactions: rows });
+    expect(second.success).toBe(true);
+    expect(second.newTransactionsCount).toBe(1);
+    const again = await service.manageTransactions(b.id, { action: "import", transactions: rows });
+    expect(again.newTransactionsCount).toBe(0);
+    expect(again.unchangedTransactionsCount).toBe(1);
+    expect(txRepo.findById(brokerId)?.portfolioId).toBe(a.id);
+    expect(txRepo.findByPortfolio(b.id).filter((t) => t.symbol === "DUP").length).toBe(1);
+  });
+
   it("bulkCreate returns the inserted rows and bulkUpdate applies every change", () => {
     const rows = txRepo.bulkCreate([
       { portfolioId: a.id, date: "2026-01-03", type: "BUY", symbol: "ONE", shares: 1, price: 1, amount: 1 },

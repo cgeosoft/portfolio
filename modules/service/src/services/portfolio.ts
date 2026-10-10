@@ -134,6 +134,18 @@ export class PortfolioService {
     return `tx_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
   }
 
+  // Transaction ids are a global key, but brokers reuse their own ids when the same export goes into
+  // a second portfolio. Such an id gets the portfolio id appended, so each portfolio keeps one copy.
+  private scopedTransactionId(candidateId: string, portfolioId: string): string {
+    return `${candidateId}@${portfolioId}`;
+  }
+
+  private mintPortfolioTransactionId(candidateId: string | undefined | null, portfolioId: string): string {
+    const id = this.mintTransactionId(candidateId);
+    const taken = txRepo.findById(id);
+    return taken && taken.portfolioId !== portfolioId ? this.scopedTransactionId(id, portfolioId) : id;
+  }
+
   public async createDemoPortfolio(customBaseCurrency?: string): Promise<portfolioRepo.PortfolioRow> {
     const config = loadConfig();
     const baseCurrency = customBaseCurrency || config.baseCurrency || "EUR";
@@ -1009,7 +1021,7 @@ export class PortfolioService {
     const targetId = payload?.transactionId || txData?.id;
 
     if (action === "add" && txData) {
-      const id = this.mintTransactionId(txData.id);
+      const id = this.mintPortfolioTransactionId(txData.id, portfolio.id);
       const dataToSave = { ...txData, id, portfolioId: portfolio.id } as Parameters<typeof txRepo.create>[0];
       let entity = txData as txRepo.TransactionRow;
       if (!isDryRun) {
@@ -1086,9 +1098,10 @@ export class PortfolioService {
 
       for (const t of batchList) {
         const candidateId = t.id || `tx_${t.date || "nodate"}_${t.type || "notype"}_${t.symbol || "nosym"}_${t.amount ?? ""}_${t.shares ?? ""}`;
-        const existing = existingTxMap.get(candidateId);
-        
-        const id = existing ? candidateId : this.mintTransactionId(candidateId);
+        const existing =
+          existingTxMap.get(candidateId) ?? existingTxMap.get(this.scopedTransactionId(candidateId, portfolio.id));
+
+        const id = existing ? existing.id : this.mintPortfolioTransactionId(candidateId, portfolio.id);
         const formattedTx = { ...t, id, portfolioId: portfolio.id } as txRepo.TransactionRow;
 
         if (!existing) {
