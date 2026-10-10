@@ -51,6 +51,8 @@ export interface YahooChartData {
   fiftyTwoWeekLow?: number;
   shortName?: string;
   longName?: string;
+  /** Yahoo `meta.instrumentType`: EQUITY, ETF, MUTUALFUND, CRYPTOCURRENCY and so on. */
+  instrumentType?: string;
   candles: YahooChartCandle[];
 }
 
@@ -113,6 +115,7 @@ export function extractQuoteFromChart(chart: YahooChartData): YahooQuote | null 
     fiftyTwoWeekHigh: chart.fiftyTwoWeekHigh,
     fiftyTwoWeekLow: chart.fiftyTwoWeekLow,
     currency: chart.currency,
+    instrumentType: chart.instrumentType,
     previousClose: prevClose,
     updatedAt: new Date().toISOString(),
   };
@@ -369,6 +372,7 @@ export class YahooFinanceService {
             fiftyTwoWeekLow: meta.fiftyTwoWeekLow as number | undefined,
             shortName: meta.shortName as string | undefined,
             longName: (meta.longName as string) || (meta.shortName as string) || cleanSymbol,
+            instrumentType: typeof meta.instrumentType === "string" ? meta.instrumentType : undefined,
             candles,
           };
 
@@ -573,7 +577,11 @@ export class YahooFinanceService {
         }
         return null;
       } catch (e: unknown) {
-        appLogger.logStep("warning", "yahoo", "summary_session", `Could not open a Yahoo session (${e instanceof Error ? e.name : typeof e})`);
+        // Bun's fetch rejects with a TypeError on network failures; the code
+        // (ENOTFOUND, ConnectionRefused, ...) says which one.
+        const errCode = e instanceof Error ? (e as Error & { code?: unknown }).code : undefined;
+        const code = typeof errCode === "string" ? `, ${errCode}` : "";
+        appLogger.logStep("warning", "yahoo", "summary_session", `Could not open a Yahoo session (${e instanceof Error ? e.name : typeof e}${code})`);
         return null;
       } finally {
         YahooFinanceService.summarySessionPromise = null;
