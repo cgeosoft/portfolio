@@ -153,6 +153,10 @@ export function maskFinancialValues(text: string | undefined): string {
   if (!text) return "";
   let result = text;
   // An amount starts with a digit and stays on one line; a code inside a symbol (BTC-USD) is no currency.
+  // 0a. Transaction quantities in the prompt line format "[BUY] 0.008 BTC-USD", "[SELL] 1,200 VWCE.DE"
+  result = result.replace(/(\[[A-Za-z][\w -]*\][ \t]+)[+−-]?\d+(?:,\d+)*(?:\.\d+)?(?:e[+-]?\d+)?(?=[ \t]+\S)/g, "$1••••");
+  // 0b. Share and unit counts in free text: "6 shares", "0.5 units"
+  result = result.replace(/(?<![\w.,])\d+(?:,\d+)*(?:\.\d+)?([ \t]+(?:shares?|units?)\b)/gi, "••••$1");
   // 1. Preceding currency symbols: $1,234.56, €50,000, +$100, -$50.20, £50k, € 100
   result = result.replace(/([+$−-]?[ \t]*[$€£¥])[ \t]*\d+(?:,\d+)*(?:\.\d+)?(?:[ \t]*[kKmMbBtT]\b)?/g, "$1••••");
   // 2. Trailing currency symbols: 1234.56 €, 500 $
