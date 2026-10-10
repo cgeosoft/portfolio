@@ -144,6 +144,51 @@ async function readLines(body: ReadableStream<Uint8Array>, signal: AbortSignal |
   if (buffer) onLine(buffer);
 }
 
+// ── request parameters per model ────────────────────────────────────────────
+
+/** Which sampling and length fields a chat completion request carries. */
+export interface RequestShape {
+  temperature: boolean;
+  tokenField: "max_tokens" | "max_completion_tokens";
+}
+
+/**
+ * Request fields the model accepts, judged from its name. Claude Opus 4.7 and
+ * every Claude model from generation 5 on (Fable and Mythos included) reject a
+ * temperature; Sonnet 5.5 and Haiku 5.5 accept only the default, so leaving it
+ * out is correct there too. OpenAI reasoning models (o1, o3, o4-mini, GPT-5)
+ * take no temperature and want `max_completion_tokens`. Gateways prefix the
+ * name (`anthropic/`, `us.anthropic.`, `openai/`), so only the last path
+ * segment counts and the Claude match is not anchored.
+ */
+export function requestShapeFor(model: string): RequestShape {
+  const name = (model.split("/").pop() ?? "").toLowerCase();
+  if (/^(o\d+)(-|$)|^gpt-5/.test(name)) return { temperature: false, tokenField: "max_completion_tokens" };
+  return { temperature: !rejectsClaudeSampling(name), tokenField: "max_tokens" };
+}
+
+function rejectsClaudeSampling(name: string): boolean {
+  // Family-first ids only: the older `claude-3-5-sonnet` style all accept a temperature.
+  const match = /claude-(opus|sonnet|haiku|fable|mythos)(?:-(\d+)(?:[-.](\d{1,2})(?!\d))?)?/.exec(name);
+  if (!match) return false;
+  if (match[1] === "fable" || match[1] === "mythos") return true;
+  const major = Number(match[2] ?? 0);
+  const minor = Number(match[3] ?? 0);
+  return major >= 5 || (major === 4 && minor >= 7);
+}
+
+/**
+ * The shape to retry with when a 400 names a field the model refuses, or
+ * null when the error is about something else. Covers models the name match
+ * above does not know yet.
+ */
+function shapeAfterRejection(shape: RequestShape, error: string): RequestShape | null {
+  const text = error.toLowerCase();
+  if (shape.temperature && text.includes("temperature")) return { ...shape, temperature: false };
+  if (shape.tokenField === "max_tokens" && text.includes("max_completion_tokens")) return { ...shape, tokenField: "max_completion_tokens" };
+  return null;
+}
+
 interface ModelList {
   data?: Array<{ id?: string; status?: { value?: string } }>;
 }
@@ -197,6 +242,8 @@ function stripThinkTags(input: string): string {
 export class LlmService {
   /** Model auto-detected per server base URL, see detectServerModel(). */
   private static readonly detectedModels = new Map<string, { model: string; at: number }>();
+  /** Request fields learned from a rejected request, per server base URL and model. */
+  private static readonly learnedShapes = new Map<string, RequestShape>();
 
   /**
    * Merges request options, the stored settings and the defaults. The single
@@ -250,20 +297,38 @@ export class LlmService {
     }
 
     if (!target.model) target.model = await this.detectServerModel(target);
-    const res = await fetch(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
-      method: "POST",
-      headers: requestHeaders(target.apiKey),
-      body: JSON.stringify({
-        model: target.model || undefined, // omitted when empty: llama.cpp answers with the model it was started with
-        messages,
-        temperature: target.temperature,
-        max_tokens: options.maxTokens ?? 3000,
-        stream: Boolean(onChunk),
-      }),
-      signal: options.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-    if (!res.ok) {
-      throw new Error(`${target.name} API request failed with status ${res.status}: ${await res.text().catch(() => "")}`);
+    const signal = options.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    const shapeKey = `${target.baseUrl}\n${target.model}`;
+    let shape = LlmService.learnedShapes.get(shapeKey) ?? requestShapeFor(target.model);
+    const send = (s: RequestShape) =>
+      fetch(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
+        method: "POST",
+        headers: requestHeaders(target.apiKey),
+        body: JSON.stringify({
+          model: target.model || undefined, // omitted when empty: llama.cpp answers with the model it was started with
+          messages,
+          ...(s.temperature ? { temperature: target.temperature } : {}),
+          [s.tokenField]: options.maxTokens ?? 3000,
+          stream: Boolean(onChunk),
+        }),
+        signal,
+      });
+
+    let res = await send(shape);
+    // A model the name match missed rejects the field with a 400 that names it. Retry
+    // once without it and remember the answer for this server and model.
+    for (let attempt = 0; !res.ok; attempt++) {
+      const detail = await res.text().catch(() => "");
+      const retry = res.status === 400 && attempt === 0 ? shapeAfterRejection(shape, detail) : null;
+      if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${detail}`);
+      appLogger.logStep("warning", "llm", "chat", "Model rejected a request field, retrying without it", undefined, {
+        model: target.model || "default",
+        temperature: retry.temperature,
+        tokenField: retry.tokenField,
+      });
+      shape = retry;
+      LlmService.learnedShapes.set(shapeKey, shape);
+      res = await send(shape);
     }
 
     if (!onChunk) {
