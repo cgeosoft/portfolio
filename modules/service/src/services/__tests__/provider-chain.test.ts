@@ -7,7 +7,7 @@ describe("provider chain", () => {
   it("puts the preferred provider first, then the quality order", () => {
     expect(providerOrder({ category: "quotes", preferred: "finnhub" })).toEqual(["finnhub", "fmp", "yahoo"]);
     expect(providerOrder({ category: "news", preferred: "yahoo" })).toEqual(["yahoo", "fmp", "finnhub"]);
-    expect(providerOrder({ category: "etfHoldings", preferred: null })).toEqual(["fmp", "yahoo", "finnhub"]);
+    expect(providerOrder({ category: "etfHoldings", preferred: null })).toEqual(["fmp", "yahoo"]);
   });
 
   it("skips unavailable providers and treats throw and empty as a miss", async () => {

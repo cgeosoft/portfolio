@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { MarketDataCoordinator } from "../market-data.js";
 import { YahooFinanceService, type YahooQuote, type YahooChartData } from "../yahoo-finance.js";
 import { FinnhubService } from "../finnhub.js";
-import { saveConfig, loadConfig } from "../../config.js";
+import { saveConfig, loadConfig, DEFAULT_DATA_PROVIDER_ROUTING } from "../../config.js";
 import { getDatabase } from "../../db/database.js";
 import * as marketCache from "../../db/market-cache.repo.js";
 
@@ -16,6 +16,7 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
       ...originalConfig,
       finnhubApiKey: "test-finnhub-key",
       dataProviderRouting: {
+        ...DEFAULT_DATA_PROVIDER_ROUTING,
         quotes: "yahoo",
         news: "finnhub",
         charts: "yahoo",
@@ -66,6 +67,7 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
     saveConfig({
       ...loadConfig(),
       dataProviderRouting: {
+        ...DEFAULT_DATA_PROVIDER_ROUTING,
         quotes: "finnhub",
         news: "finnhub",
         charts: "yahoo",
@@ -108,6 +110,7 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
     saveConfig({
       ...loadConfig(),
       dataProviderRouting: {
+        ...DEFAULT_DATA_PROVIDER_ROUTING,
         quotes: "finnhub",
         news: "finnhub",
         charts: "yahoo",
@@ -151,6 +154,7 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
     saveConfig({
       ...loadConfig(),
       dataProviderRouting: {
+        ...DEFAULT_DATA_PROVIDER_ROUTING,
         quotes: "yahoo",
         news: "finnhub",
         charts: "yahoo",
@@ -188,6 +192,7 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
     saveConfig({
       ...loadConfig(),
       dataProviderRouting: {
+        ...DEFAULT_DATA_PROVIDER_ROUTING,
         quotes: "yahoo",
         news: "finnhub",
         charts: "yahoo",

@@ -196,7 +196,7 @@ async function fmpYieldCurve(fmp: FmpService, forceFresh: boolean): Promise<Yiel
   const from = `${now.getUTCFullYear() - 1}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
   const rows = await fmp.get<TreasuryRow[]>("/treasury-rates", { from }, { ttlMs: TREASURY_TTL_MS, forceFresh });
   if (!Array.isArray(rows) || rows.length === 0) return null;
-  const valid = rows.filter((r) => typeof r.date === "string").map((r) => ({ ...r, date: r.date.slice(0, 10) }));
+  const valid: TreasuryRow[] = rows.filter((r) => typeof r.date === "string").map((r) => ({ ...r, date: r.date.slice(0, 10) }));
   const latest = valid.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
   if (!latest) return null;
   const points: YieldCurvePoint[] = [];
