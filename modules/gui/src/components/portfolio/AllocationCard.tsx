@@ -300,7 +300,7 @@ export function AllocationCard({
                     lines.push(`Portfolio Weight: ${weightPct.toFixed(1)}%`);
                     if (h.shares > 0 && h.currentPrice > 0 && h.symbol !== "CASH") {
                       lines.push(
-                        `Holdings: ${h.shares.toLocaleString()} @ ${fmtCurrency(h.currentPrice, currency, hideValues)}`
+                        `Holdings: ${hideValues ? "••••" : h.shares.toLocaleString()} @ ${fmtCurrency(h.currentPrice, currency, hideValues)}`
                       );
                     }
                     if (h.totalGainLossDollar !== 0 && h.symbol !== "CASH") {

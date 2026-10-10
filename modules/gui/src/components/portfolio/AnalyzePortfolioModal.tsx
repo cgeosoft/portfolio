@@ -28,7 +28,7 @@ import {
 import { Select } from "../common/Select";
 import type { FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type { PrepareReportPromptResponse } from "portfolio-shared/api-types";
-import { fmtCurrency } from "./utils";
+import { fmtCurrency, maskFinancialValues } from "./utils";
 
 interface AnalyzePortfolioModalProps {
   isOpen: boolean;
@@ -240,7 +240,7 @@ export function AnalyzePortfolioModal({
   const handleCopyPrompt = useCallback(async () => {
     if (!promptData?.fullPrompt) return;
     try {
-      await navigator.clipboard.writeText(promptData.fullPrompt);
+      await navigator.clipboard.writeText(hideCurrencyValues ? maskFinancialValues(promptData.fullPrompt) : promptData.fullPrompt);
       setCopiedPrompt(true);
       setTimeout(() => {
         if (isMountedRef.current) setCopiedPrompt(false);
@@ -679,7 +679,7 @@ export function AnalyzePortfolioModal({
                           ),
                         }}
                       >
-                        {promptData.fullPrompt}
+                        {hideCurrencyValues ? maskFinancialValues(promptData.fullPrompt) : promptData.fullPrompt}
                       </ReactMarkdown>
                     </div>
                   </div>
