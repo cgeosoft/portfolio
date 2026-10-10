@@ -6,11 +6,11 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 
 <p align="center">
   <img src="extras/website/assets/screenshot.png" width="900"
-       alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a portfolio performance history chart, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+       alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a performance history chart benchmarked against the S&amp;P 500, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
 </p>
 
 <p align="center">
-  <sub>The overview dashboard on the built-in demo portfolio &mdash; customizable metric cards, performance history against invested capital, asset allocation by class and weight, and live positions with technical gauges.</sub>
+  <sub>The overview dashboard on the built-in demo portfolio: metric cards, performance history against invested capital and the S&amp;P 500, asset allocation by class and weight, and live positions with technical gauges.</sub>
 </p>
 
 ---
