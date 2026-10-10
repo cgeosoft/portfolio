@@ -43,8 +43,11 @@ export const APP = {
       devGui: "Starting the Vite dev server.",
       open: "Opening the dashboard.",
     },
-    /** Vendor intro played on the starting page before the brand; the shell holds the dashboard until it ends. */
-    intro: { rows: ["cgeo", "soft"], caption: "presents", durationMs: 3000 },
+    /**
+     * Vendor intro played on the starting page before the brand. The shell holds the dashboard
+     * until the intro ends and the brand has shown for `brandMs`, however fast the service starts.
+     */
+    intro: { rows: ["cgeo", "soft"], caption: "presents", durationMs: 2000, brandMs: 2000 },
     failedHint: "Settings and API keys live in the database there; nothing is read from a .env file.",
     /** Brand mark from modules/gui/src/components/common/AppIcon.tsx: the trending-up line. */
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
