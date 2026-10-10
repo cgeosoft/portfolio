@@ -46,6 +46,7 @@ import type {
   LogClientEventRequest,
   ManageTransactionRequest,
   SetIsinSymbolRequest,
+  SetManualPriceRequest,
   OpenSupportTicketRequest,
   PrepareReportPromptRequest,
   PreviewMetricInstallRequest,
@@ -321,6 +322,21 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if (!/^[A-Za-z0-9.\-_=^]{1,32}$/.test(symbol)) throw new HttpError(400, "Invalid symbol");
     return portfolioService.setSymbolForIsin(isin, symbol, typeof body.name === "string" ? body.name : undefined);
   });
+
+  router.put("/api/portfolios/:id/manual-prices/:symbol", async (ctx) => {
+    const body = await ctx.body<SetManualPriceRequest>();
+    if (typeof body.price !== "number" || !Number.isFinite(body.price) || body.price <= 0) {
+      throw new HttpError(400, "price must be a positive number");
+    }
+    let currency: string | undefined;
+    if (body.currency !== undefined) {
+      currency = str(body.currency, "currency").toUpperCase();
+      if (!/^[A-Z]{3}$/.test(currency)) throw new HttpError(400, "Invalid currency");
+    }
+    return portfolioService.setManualPrice(ctx.params.id!, ctx.params.symbol!, body.price, currency);
+  });
+
+  router.delete("/api/portfolios/:id/manual-prices/:symbol", (ctx) => portfolioService.clearManualPrice(ctx.params.id!, ctx.params.symbol!));
 
   router.get("/api/symbols/search", async (ctx) => ({ results: await marketData.searchSymbols(ctx.url.searchParams.get("q") || "") }));
 

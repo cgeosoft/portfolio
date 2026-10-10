@@ -3,6 +3,7 @@ import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as txRepo from "../db/transaction.repo.js";
 import * as snapshotRepo from "../db/snapshot.repo.js";
 import * as marketCache from "../db/market-cache.repo.js";
+import * as manualPriceRepo from "../db/manual-price.repo.js";
 import {
   YahooFinanceService,
   mapWithConcurrencyLimit,
@@ -20,6 +21,7 @@ import { generateDemoTransactions, DEMO_ASSETS } from "./demo-portfolio.js";
 import type {
   FinancialPortfolioData,
   HoldingPerformance,
+  ManualPrice,
   PortfolioHoldingConfig,
   PortfolioSummary,
   PortfolioHistoricalPoint,
@@ -30,6 +32,11 @@ import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
+
+/** A private holding has no public quote; it is valued at cost or at the user's price. */
+function isPrivateHolding(config: PortfolioHoldingConfig): boolean {
+  return Boolean(config.isPrivate || config.assetType === "Other" || config.symbol.toUpperCase() === "LU3176111881");
+}
 
 function computeSMA(closes: number[], period: number): number | undefined {
   if (closes.length < period) return undefined;
@@ -504,7 +511,7 @@ export class PortfolioService {
   }
 
   public async buildPortfolioData(
-    _portfolio: portfolioRepo.PortfolioRow,
+    portfolio: portfolioRepo.PortfolioRow,
     holdingsConfig: PortfolioHoldingConfig[],
     transactions: txRepo.TransactionRow[],
     baseCurrency = "EUR",
@@ -626,6 +633,12 @@ export class PortfolioService {
     const publicHoldings = holdingsConfig.filter(
       (h) => !h.isPrivate && h.assetType !== "Other" && h.symbol !== "CASH"
     );
+    // The user's price or NAV per private holding, in place of the buy price.
+    const manualPrices = new Map<string, ManualPrice>();
+    const privateSymbols = new Set(holdingsConfig.filter(isPrivateHolding).map((h) => h.symbol.toUpperCase()));
+    for (const row of manualPriceRepo.findByPortfolio(portfolio.id)) {
+      if (privateSymbols.has(row.symbol)) manualPrices.set(row.symbol, { price: row.price, currency: row.currency, setAt: row.setAt });
+    }
     const publicSymbols = publicHoldings.map((h) => h.symbol);
 
     const individualCharts: Record<string, { date: string; close: number }[]> = {};
@@ -682,6 +695,7 @@ export class PortfolioService {
         [
           ...Array.from(quotesMap.values()).map((q) => q.currency),
           ...holdingsConfig.map((h) => h.currency),
+          ...Array.from(manualPrices.values()).map((m) => m.currency),
           ...cashByCurrency.keys(),
         ].filter(Boolean) as string[]
       )
@@ -706,23 +720,26 @@ export class PortfolioService {
 
     for (const config of holdingsConfig) {
       const sym = config.symbol.toUpperCase();
-      const isPrivate = Boolean(config.isPrivate || config.assetType === "Other" || sym === "LU3176111881");
+      const isPrivate = isPrivateHolding(config);
       const quote = isPrivate ? undefined : quotesMap.get(sym);
+      const manualPrice = isPrivate ? manualPrices.get(sym) : undefined;
       const shares = config.shares ?? 0;
       const buyPrice = config.buyPrice ?? 0;
 
-      const nativeCurrency = quote?.currency || config.currency || baseCurrency;
+      const nativeCurrency = manualPrice?.currency || quote?.currency || config.currency || baseCurrency;
       const fxRate = fxRates.get(nativeCurrency);
       const fxMissing = fxRate === undefined && nativeCurrency.toUpperCase() !== baseCurrency.toUpperCase();
       const fxMultiplier = fxRate ?? 1;
 
-      const rawNativePrice = quote?.regularMarketPrice ?? buyPrice;
+      const rawNativePrice = manualPrice?.price ?? quote?.regularMarketPrice ?? buyPrice;
       const rawNativePrevClose = quote?.previousClose ?? rawNativePrice;
 
       const currentPrice = rawNativePrice * fxMultiplier;
       const prevClose = isPrivate ? currentPrice : rawNativePrevClose * fxMultiplier;
 
-      const costMultiplier = (!config.currency || config.currency === baseCurrency) ? 1 : fxMultiplier;
+      // The cost stays in the buy currency, which a manual price may not share.
+      const costFx = manualPrice ? fxRates.get(config.currency || baseCurrency) ?? 1 : fxMultiplier;
+      const costMultiplier = (!config.currency || config.currency === baseCurrency) ? 1 : costFx;
       const itemCost = shares * buyPrice * costMultiplier;
       const itemValue = shares * currentPrice;
       const itemPrevValue = shares * prevClose;
@@ -768,6 +785,7 @@ export class PortfolioService {
         isPrivate,
         quoteMissing: !isPrivate && !quote ? true : undefined,
         fxMissing: fxMissing || undefined,
+        manualPrice,
         shares,
         buyPrice,
         currentPrice: Number(currentPrice.toFixed(2)),
@@ -945,9 +963,14 @@ export class PortfolioService {
       for (const [sym, holding] of activeSharesOnDate.entries()) {
         if (holding.shares > 0) {
           const quote = quotesMap.get(sym);
-          const nativeCurr = quote?.currency || baseCurrency;
+          // A manual price counts from the day it was entered; before that the holding stays at cost.
+          const manual = manualPrices.get(sym);
+          const manualApplies = manual !== undefined && d >= manual.setAt;
+          const nativeCurr = manualApplies ? manual.currency : quote?.currency || baseCurrency;
           const fxMult = fxRates.get(nativeCurr) ?? 1;
-          const rawPrice = currentPriceMap.get(sym) ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
+          const rawPrice = manualApplies
+            ? manual.price
+            : currentPriceMap.get(sym) ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
           const price = rawPrice * fxMult;
           valOnDate += holding.shares * price;
           costOnDate += holding.cost;
@@ -1064,6 +1087,51 @@ export class PortfolioService {
     const changed = this.symbols.setManualSymbol(isin, symbol, name);
     for (const id of changed) this.clearPortfolioCache(id);
     return { success: true, portfolios: changed.length };
+  }
+
+  /**
+   * Store the user's price or NAV for a private holding. `buildPortfolioData`
+   * values the holding with it in place of the buy price.
+   */
+  public setManualPrice(
+    portfolioId: string,
+    symbol: string,
+    price: number,
+    currency?: string,
+  ): { success: boolean; manualPrice?: ManualPrice; error?: string } {
+    const portfolio = portfolioRepo.findById(portfolioId);
+    if (!portfolio) return { success: false, error: "Portfolio not found" };
+    if (!Number.isFinite(price) || price <= 0) return { success: false, error: "The price must be a positive number" };
+    const sym = symbol.trim().toUpperCase();
+    const holding = this.computeHoldingsFromTransactions(txRepo.findByPortfolio(portfolio.id)).find((h) => h.symbol === sym);
+    if (!holding) return { success: false, error: "Holding not found" };
+    if (!isPrivateHolding(holding)) return { success: false, error: "Only a private holding takes a manual price" };
+
+    const row = manualPriceRepo.upsert({
+      portfolioId: portfolio.id,
+      symbol: sym,
+      price,
+      currency: (currency || holding.currency || portfolio.baseCurrency || "EUR").trim().toUpperCase(),
+      setAt: new Date().toISOString().slice(0, 10),
+    });
+    this.clearPortfolioCache(portfolio.id);
+    appLogger.logStep("info", "portfolio", "manual_price_set", "Manual price saved for one private holding", undefined, {
+      portfolioId: portfolio.id,
+    });
+    return { success: true, manualPrice: { price: row.price, currency: row.currency, setAt: row.setAt } };
+  }
+
+  /** Drop the user's price; the holding goes back to its buy price. */
+  public clearManualPrice(portfolioId: string, symbol: string): { success: boolean; error?: string } {
+    const portfolio = portfolioRepo.findById(portfolioId);
+    if (!portfolio) return { success: false, error: "Portfolio not found" };
+    if (manualPriceRepo.remove(portfolio.id, symbol.trim())) {
+      this.clearPortfolioCache(portfolio.id);
+      appLogger.logStep("info", "portfolio", "manual_price_clear", "Manual price cleared for one private holding", undefined, {
+        portfolioId: portfolio.id,
+      });
+    }
+    return { success: true };
   }
 
   public async manageTransactions(

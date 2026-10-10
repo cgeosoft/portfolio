@@ -12,6 +12,7 @@ import type {
   PortfolioReport,
   ReportMetrics,
   FinancialPortfolioData,
+  ManualPrice,
 } from "./portfolio";
 import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, AppTheme } from "./config-types";
 import type { PortfolioMetricPreference } from "./metrics";
@@ -185,6 +186,21 @@ export interface SetIsinSymbolResponse {
   success: boolean;
   /** Portfolios whose transactions now use the symbol. */
   portfolios: number;
+  error?: string;
+}
+
+/** `PUT /api/portfolios/:id/manual-prices/:symbol`: the user's price or NAV for a private holding. */
+export interface SetManualPriceRequest {
+  price: number;
+  /** Currency of the price; defaults to the holding's currency. */
+  currency?: string;
+}
+
+/** Answer of the set and clear calls (`DELETE` on the same path clears it). */
+export interface ManualPriceResponse {
+  success: boolean;
+  /** The stored price; absent after a clear. */
+  manualPrice?: ManualPrice;
   error?: string;
 }
 

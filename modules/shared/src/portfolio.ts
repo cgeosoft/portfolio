@@ -11,6 +11,15 @@ export interface PortfolioItem {
   updatedAt?: string;
 }
 
+/** A price or NAV the user entered for a holding without a public quote. */
+export interface ManualPrice {
+  /** Price per share in `currency`. */
+  price: number;
+  currency: string;
+  /** Day it was entered, `YYYY-MM-DD`. */
+  setAt: string;
+}
+
 export interface PortfolioHolding {
   symbol: string;
   name: string;
@@ -22,6 +31,8 @@ export interface PortfolioHolding {
   quoteMissing?: boolean;
   /** No exchange rate for the native currency; the value is not converted. */
   fxMissing?: boolean;
+  /** Price or NAV the user entered for a private holding; it replaces the buy price. */
+  manualPrice?: ManualPrice;
   shares: number;
   buyPrice: number;
   currentPrice: number;
