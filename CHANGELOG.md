@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.0] - 2026-10-12
+
+### Added
+- Added a new Suggestions page with actionable rebalancing ideas
+- The app suggests target weights for your portfolio based on current prices, without using your account amounts
+- Each suggestion shows the target shares and money value calculated from live prices
+- Suggestions automatically tick as done when their target weight is reached
+- Suggestions are automatically cancelled if a validity rule fails
+- The page shows a target portfolio view with cash covering the remaining difference
+- Added a menu entry and header link to open the Suggestions page
+
+### Changed
+- New suggestions update existing open ones instead of duplicating them
+- Dismissed suggestions are skipped unless the weight has moved by at least 5 points
+- Older suggestions are replaced by newer ones when a new list is generated
+- The suggestions list is marked as outdated after a transaction change, and the user must manually recalculate it
+
+
 ## [0.10.0] - 2026-10-10
 
 ### Added
