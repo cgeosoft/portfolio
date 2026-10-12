@@ -634,7 +634,8 @@ export class PortfolioService {
     let totalFees = 0;
     let totalTaxes = 0;
 
-    const cumulativeCostMap = new Map<string, { shares: number; totalCost: number }>();
+    // costByCurrency splits totalCost by trade currency, so the summary converts each part at its own rate.
+    const cumulativeCostMap = new Map<string, { shares: number; totalCost: number; costByCurrency: Map<string, number> }>();
     // Cash ledger per transaction currency, converted to the base currency once FX is known.
     const cashByCurrency = new Map<string, number>();
     const addCash = (tx: txRepo.TransactionRow, delta: number) => {
@@ -667,7 +668,7 @@ export class PortfolioService {
         if (sym && sym !== "CASH") {
           let pos = cumulativeCostMap.get(sym);
           if (!pos) {
-            pos = { shares: 0, totalCost: 0 };
+            pos = { shares: 0, totalCost: 0, costByCurrency: new Map() };
             cumulativeCostMap.set(sym, pos);
           }
           let cost = 0;
@@ -680,6 +681,8 @@ export class PortfolioService {
           }
           pos.shares += sh;
           pos.totalCost += cost;
+          const curr = (tx.currency || baseCurrency).trim();
+          pos.costByCurrency.set(curr, (pos.costByCurrency.get(curr) ?? 0) + cost);
           addCash(tx, -cost);
         }
       } else if (tx.type === "SELL") {
@@ -692,12 +695,14 @@ export class PortfolioService {
             const costBasisOfSold = absNum(sh) * avgCost;
             const tradePnL = proceeds - costBasisOfSold;
             realizedPnL += tradePnL;
+            for (const [curr, cost] of pos.costByCurrency) pos.costByCurrency.set(curr, cost - absNum(sh) * (cost / pos.shares));
 
             pos.shares -= absNum(sh);
             pos.totalCost -= costBasisOfSold;
             if (pos.shares <= 0.000001) {
               pos.shares = 0;
               pos.totalCost = 0;
+              pos.costByCurrency.clear();
             }
           }
         }
@@ -837,6 +842,19 @@ export class PortfolioService {
     const fxRates = await this.yahoo.getExchangeRates(baseCurrency, quoteCurrencies, forceFresh);
     fxTimer.end("info", `FX rates resolved for ${fxRates.size} currency pairs`);
 
+    const toBase = (curr: string) => fxRates.get(curr) ?? 1;
+    // The rate of the trade currencies, as the history converts each trade. One currency takes its rate;
+    // several take the blend of their converted cost. Holdings without trades fall back to the holding's currency.
+    const tradeCostRate = (sym: string): number | undefined => {
+      const pos = cumulativeCostMap.get(sym);
+      if (!pos || pos.costByCurrency.size === 0) return undefined;
+      if (pos.costByCurrency.size === 1) return toBase(pos.costByCurrency.keys().next().value!);
+      if (!(pos.totalCost > 0)) return undefined;
+      let baseCost = 0;
+      for (const [curr, cost] of pos.costByCurrency) baseCost += cost * toBase(curr);
+      return baseCost / pos.totalCost;
+    };
+
     let totalValue = 0;
     let totalCost = 0;
     let totalPreviousValue = 0;
@@ -866,9 +884,9 @@ export class PortfolioService {
       const currentPrice = rawNativePrice * fxMultiplier;
       const prevClose = isPrivate ? currentPrice : rawNativePrevClose * fxMultiplier;
 
-      // The cost stays in the buy currency, which a manual price may not share.
+      // The cost stays in the trade currency, which the quote or a manual price may not share.
       const costFx = manualPrice ? fxRates.get(config.currency || baseCurrency) ?? 1 : fxMultiplier;
-      const costMultiplier = (!config.currency || config.currency === baseCurrency) ? 1 : costFx;
+      const costMultiplier = tradeCostRate(sym) ?? ((!config.currency || config.currency === baseCurrency) ? 1 : costFx);
       const itemCost = shares * buyPrice * costMultiplier;
       const itemValue = shares * currentPrice;
       const itemPrevValue = shares * prevClose;
@@ -943,7 +961,6 @@ export class PortfolioService {
       });
     }
 
-    const toBase = (curr: string) => fxRates.get(curr) ?? 1;
     let cashBalance = 0;
     for (const [curr, native] of cashByCurrency) cashBalance += native * toBase(curr);
     if (!hasFunding) cashBalance = Math.max(0, cashBalance);
@@ -1018,16 +1035,28 @@ export class PortfolioService {
       const m = new Map<string, number>();
       for (const p of points) m.set(p.date, p.close);
       dateCloseMaps.set(sym, m);
-      if (points.length > 0) {
-        currentPriceMap.set(sym, points[0]!.close);
-      }
     }
 
-    const activeSharesOnDate = new Map<string, { shares: number; cost: number }>();
+    // The charts cover the last year. A day inside it before a symbol's first close (a holiday, another
+    // exchange's calendar) takes that close. Before the year the price is unknown, so a holding counts at cost.
+    const yearAgo = new Date();
+    yearAgo.setUTCFullYear(yearAgo.getUTCFullYear() - 1);
+    const chartStart = yearAgo.toISOString().split("T")[0]!;
+    let chartStarted = false;
+
+    // cost is in the transaction currency. baseCost converts it to the base currency like the cash ledger;
+    // the history's value and cost both use it.
+    const activeSharesOnDate = new Map<string, { shares: number; cost: number; baseCost: number }>();
     let histCash = 0;
     let txPointer = 0;
 
     for (const d of sortedDates) {
+      if (!chartStarted && d >= chartStart) {
+        chartStarted = true;
+        for (const [sym, points] of chartHistories.entries()) {
+          if (points.length > 0 && !currentPriceMap.has(sym)) currentPriceMap.set(sym, points[0]!.close);
+        }
+      }
       for (const [sym, dateMap] of dateCloseMaps.entries()) {
         const close = dateMap.get(d);
         if (close !== undefined) {
@@ -1054,7 +1083,7 @@ export class PortfolioService {
           if (sym && sym !== "CASH") {
             let entry = activeSharesOnDate.get(sym);
             if (!entry) {
-              entry = { shares: 0, cost: 0 };
+              entry = { shares: 0, cost: 0, baseCost: 0 };
               activeSharesOnDate.set(sym, entry);
             }
 
@@ -1069,6 +1098,7 @@ export class PortfolioService {
 
             entry.shares += shares;
             entry.cost += cost;
+            entry.baseCost += cost * txFx;
             histCash -= cost * txFx;
           }
         } else if (txType === "SELL") {
@@ -1079,12 +1109,14 @@ export class PortfolioService {
             if (entry && entry.shares > 0) {
               const avgCost = entry.cost / entry.shares;
               const costOfSold = absNum(shares) * avgCost;
+              entry.baseCost -= absNum(shares) * (entry.baseCost / entry.shares);
 
               entry.shares -= absNum(shares);
               entry.cost -= costOfSold;
               if (entry.shares <= 0.000001) {
                 entry.shares = 0;
                 entry.cost = 0;
+                entry.baseCost = 0;
               }
             }
           }
@@ -1102,12 +1134,12 @@ export class PortfolioService {
           const manualApplies = manual !== undefined && d >= manual.setAt;
           const nativeCurr = manualApplies ? manual.currency : quote?.currency || baseCurrency;
           const fxMult = fxRates.get(nativeCurr) ?? 1;
-          const rawPrice = manualApplies
-            ? manual.price
-            : currentPriceMap.get(sym) ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
-          const price = rawPrice * fxMult;
-          valOnDate += holding.shares * price;
-          costOnDate += holding.cost;
+          const close = currentPriceMap.get(sym);
+          // Without a price (before its chart starts, no chart, no manual price yet) the holding counts at cost.
+          const priced = manualApplies || close !== undefined;
+          const price = (manualApplies ? manual.price : close ?? 0) * fxMult;
+          valOnDate += priced ? holding.shares * price : holding.baseCost;
+          costOnDate += holding.baseCost;
         }
       }
 
