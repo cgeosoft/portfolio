@@ -13,7 +13,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       nsis genisoimage p7zip-full zip icnsutils icoutils \
     && rm -rf /var/lib/apt/lists/*
 
+# Bun from its release zip, checked against a pinned SHA-256. The digests are
+# copied from SHASUMS256.txt of that release, which Bun signs in
+# SHASUMS256.txt.asc (key F3DCC08A8572C0749B3E18888EAB4D40A7B22B59). A mismatch
+# fails the build. Update both digests whenever BUN_VERSION changes. amd64 uses
+# the baseline build, which needs no AVX2, like the official oven/bun image.
 ARG BUN_VERSION=1.4.2
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
+ARG BUN_X64_BASELINE_SHA256=c678040f14fe0440eb839d37cbd0ce4c051a32da72806ac97de6a6aab6bf728f
+ARG BUN_AARCH64_SHA256=54328bbc2d9c8e0c9f892c544d66c57a83b84139e34909e5ee81758f1ac8fda7
+RUN set -eu; \
+    case "$(dpkg --print-architecture)" in \
+      amd64) target=linux-x64-baseline; sha256="${BUN_X64_BASELINE_SHA256}" ;; \
+      arm64) target=linux-aarch64; sha256="${BUN_AARCH64_SHA256}" ;; \
+      *) echo "error: no pinned Bun build for $(dpkg --print-architecture)" >&2; exit 1 ;; \
+    esac; \
+    tmp="$(mktemp -d)"; cd "${tmp}"; \
+    curl -fsSL -o "bun-${target}.zip" \
+      "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-${target}.zip"; \
+    echo "${sha256}  bun-${target}.zip" | sha256sum -c -; \
+    unzip -q "bun-${target}.zip"; \
+    install -m 0755 "bun-${target}/bun" /usr/local/bin/bun; \
+    cd /; rm -rf "${tmp}"; \
+    bun --version
 
 WORKDIR /work
