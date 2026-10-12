@@ -4,13 +4,12 @@
  * followed). Paths are grouped by resource; the GUI client is
  * modules/gui/src/api.ts.
  */
-import { readFileSync } from "node:fs";
 import { HttpError, Router, json, type RequestContext } from "./router";
-import { appLogger } from "../logger";
-import { CONFIG_KEYS, loadConfig, maskSecrets, unmaskLlmKey, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
+import { appLogger, logClientEvent } from "../logger";
+import { CONFIG_KEYS, loadConfig, maskSecrets, requestSecret, unmaskSecret, unmaskUpdates, updateConfig } from "../config";
 import { listSettings } from "../services/settings-catalog";
 import { getAppVersion, getEnvironmentName, isDev } from "../environment";
-import { REPO_ROOT, findBundledFile, getLogDir } from "../paths";
+import { REPO_ROOT, getLogDir } from "../paths";
 import { join } from "node:path";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
@@ -19,6 +18,7 @@ import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAcce
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
 import { createDatabaseBackup } from "../services/backup";
+import { loadSponsorPage, sponsorFrameResponse, sponsorTheme } from "../services/sponsor";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
 import { telemetry } from "../services/telemetry";
@@ -38,13 +38,13 @@ import type {
   ChatWithPortfolioRequest,
   CompleteSetupRequest,
   CreatePortfolioRequest,
+  GetReportPromptResponse,
   GetSettingsResponse,
   EvaluatePortfolioMetricsRequest,
   GenerateReportRequest,
   GenerateSuggestionsRequest,
   GetProviderModelsRequest,
   InstallMetricRequest,
-  LogClientEventRequest,
   ManageTransactionRequest,
   SetIsinSymbolRequest,
   SetManualPriceRequest,
@@ -66,7 +66,12 @@ import type {
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
-const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/intro"]);
+/**
+ * Routes that need no session. The sponsor frame serves only the public
+ * website page, in its own sandbox; a frame request then works even where a
+ * webview withholds the cookie from a sandboxed frame.
+ */
+const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/api/app/sponsor/frame", "/intro"]);
 /** Routes a signed-in client may call before accepting the Terms of Use. */
 const PRE_TERMS_PATHS = new Set(["/api/auth/me", "/api/auth/accept-terms", "/api/auth/logout"]);
 
@@ -83,28 +88,20 @@ function str(value: unknown, name: string): string {
   return value.trim();
 }
 
+/**
+ * An optional currency code from a request: three letters, or undefined for
+ * the portfolio's own. Each value becomes a cache key and an FX lookup, so
+ * anything else is refused.
+ */
+function currencyParam(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const code = String(value).trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) throw new HttpError(400, "Invalid currency");
+  return code;
+}
+
 function toItem(row: portfolioRepo.PortfolioRow) {
   return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, createdAt: row.createdAt, updatedAt: row.updatedAt };
-}
-
-/** True for a page on the Portfolio website; the sponsor route fetches nothing else on the client's behalf. */
-function isWebsiteUrl(value: string): boolean {
-  try {
-    return new URL(value).origin === new URL(WEBPAGE_URL).origin;
-  } catch {
-    return false;
-  }
-}
-
-/** Offline sponsor page: next to the service bundle, or the website source in a checkout. */
-function sponsorFallbackFile(theme?: string): string | null {
-  if (theme === "light") {
-    const light =
-      findBundledFile("sponsor-light.html", "extras/website/sponsor/light/index.html") ??
-      findBundledFile("sponsor-light.html", "extras/website/sponsor/light.html");
-    if (light) return light;
-  }
-  return findBundledFile("sponsor.html", "extras/website/sponsor/index.html") ?? null;
 }
 
 /** True behind a TLS proxy, where the session cookie gets `Secure`. */
@@ -159,8 +156,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.get("/api/auth/status", () => authStatus());
 
   router.post("/api/auth/login", async (ctx) => {
-    const body = await ctx.body<{ pin?: string }>();
-    const id = authService.login(body.pin);
+    // The one body read before a session exists: a PIN needs a few bytes, not 30 MB.
+    const body = await ctx.body<{ pin?: unknown }>(4096);
+    const id = authService.login(typeof body.pin === "string" ? body.pin : undefined);
     ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, isHttps(ctx.req)));
     return { success: true, ...authStatus() };
   });
@@ -218,14 +216,14 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios", async (ctx) => {
     const body = await ctx.body<CreatePortfolioRequest>();
-    const row = portfolioService.createPortfolio(body);
+    const row = portfolioService.createPortfolio({ ...body, baseCurrency: currencyParam(body.baseCurrency) });
     telemetry.capture("portfolio_created");
     return toItem(row);
   });
 
   router.patch("/api/portfolios/:id", async (ctx) => {
     const body = await ctx.body<UpdatePortfolioRequest>();
-    const row = portfolioService.updatePortfolio(ctx.params.id!, { name: body.name, description: body.description, baseCurrency: body.baseCurrency });
+    const row = portfolioService.updatePortfolio(ctx.params.id!, { name: body.name, description: body.description, baseCurrency: currencyParam(body.baseCurrency) });
     if (!row) throw new HttpError(404, "Portfolio not found");
     return toItem(row);
   });
@@ -235,7 +233,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.get("/api/portfolios/:id/data", async (ctx) => {
     const timer = appLogger.startTimer("api", "portfolioData");
     try {
-      const baseCurrency = ctx.url.searchParams.get("baseCurrency") || undefined;
+      const baseCurrency = currencyParam(ctx.url.searchParams.get("baseCurrency"));
       const refresh = ctx.url.searchParams.get("refresh") === "true";
       const data = await portfolioService.getPortfolioData(ctx.params.id!, baseCurrency, refresh);
       timer.end("info", `Returned ${data.holdings?.length ?? 0} holdings`, { refresh });
@@ -250,7 +248,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.get("/api/portfolios/:id/exposure", async (ctx) => {
     if (!portfolioRepo.findById(ctx.params.id!)) throw new HttpError(404, "Portfolio not found");
     return services.exposure.getExposure(ctx.params.id!, {
-      baseCurrency: ctx.url.searchParams.get("baseCurrency") || undefined,
+      baseCurrency: currencyParam(ctx.url.searchParams.get("baseCurrency")),
       refresh: ctx.url.searchParams.get("refresh") === "true",
     });
   });
@@ -289,7 +287,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   // Proposal only; the GUI saves it through PUT /metrics when the user confirms.
   router.post("/api/portfolios/:id/metrics/suggest", async (ctx) => {
     const body = await ctx.body<SuggestPortfolioMetricsRequest>();
-    return suggestMetricLayout({ llm, portfolioService, metricsService }, ctx.params.id!, body.baseCurrency);
+    return suggestMetricLayout({ llm, portfolioService, metricsService }, ctx.params.id!, currencyParam(body.baseCurrency));
   });
 
   router.get("/api/metrics/catalog", () => metricsService.getCatalog());
@@ -301,7 +299,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/metrics/install", async (ctx) => {
     const body = await ctx.body<InstallMetricRequest>();
-    const metric = await metricsService.install(str(body.url, "url"), body.grantedScopes ?? []);
+    if (body.sha256 !== undefined && (typeof body.sha256 !== "string" || !/^[0-9a-f]{64}$/i.test(body.sha256))) throw new HttpError(400, "Invalid sha256");
+    const sha256 = body.sha256?.toLowerCase();
+    const metric = await metricsService.install(str(body.url, "url"), body.grantedScopes ?? [], sha256);
     telemetry.capture("metric_installed");
     return { metric };
   });
@@ -378,7 +378,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios/:id/reports/stream", async (ctx) => {
     const body = await ctx.body<StartReportStreamRequest>();
-    const res = await reportService.startReportStream({ ...body, apiKey: unmaskLlmKey(body.apiKey), portfolioId: ctx.params.id! });
+    const res = await reportService.startReportStream({ ...body, apiKey: requestSecret(body.apiKey), portfolioId: ctx.params.id! });
     telemetry.capture("report_generated", { provider: body.provider, streaming: true });
     return res;
   });
@@ -392,23 +392,25 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if (!portfolio) throw new HttpError(404, "Portfolio not found");
     const report = await reportService.generateReport(
       { id: portfolio.id, name: portfolio.name, baseCurrency: portfolio.baseCurrency },
-      { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, weekKey: body.weekKey },
+      { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, weekKey: body.weekKey },
     );
     telemetry.capture("report_generated", { provider: body.provider });
     return report;
   });
+
+  router.get("/api/portfolios/:id/reports/:reportId/prompt", (ctx): GetReportPromptResponse => reportService.getReportPrompt(ctx.params.id!, ctx.params.reportId!));
 
   router.delete("/api/portfolios/:id/reports/:reportId", (ctx) => ({ success: reportService.deleteReport(ctx.params.id!, ctx.params.reportId!) }));
 
   // ── suggestions ─────────────────────────────────────────────────────────
 
   router.get("/api/portfolios/:id/suggestions", (ctx) =>
-    suggestionService.getSuggestions(ctx.params.id!, ctx.url.searchParams.get("baseCurrency") || undefined),
+    suggestionService.getSuggestions(ctx.params.id!, currencyParam(ctx.url.searchParams.get("baseCurrency"))),
   );
 
   router.post("/api/portfolios/:id/suggestions/generate", async (ctx) => {
     const body = await ctx.body<Partial<GenerateSuggestionsRequest>>();
-    const generation = suggestionService.startGeneration(ctx.params.id!, body.baseCurrency);
+    const generation = suggestionService.startGeneration(ctx.params.id!, currencyParam(body.baseCurrency));
     telemetry.capture("suggestions_generated");
     return generation;
   });
@@ -417,7 +419,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const body = await ctx.body<Partial<UpdateSuggestionStatusRequest> & { baseCurrency?: string }>();
     const status = body.status;
     if (status !== "active" && status !== "done" && status !== "dismissed") throw new HttpError(400, "status must be active, done or dismissed");
-    return suggestionService.updateStatus(ctx.params.id!, ctx.params.suggestionId!, status, body.baseCurrency);
+    return suggestionService.updateStatus(ctx.params.id!, ctx.params.suggestionId!, status, currencyParam(body.baseCurrency));
   });
 
   // ── assistant ───────────────────────────────────────────────────────────
@@ -455,7 +457,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
         ],
-        { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, maxTokens: 50 },
+        { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, maxTokens: 50 },
       );
       return { success: true, message: result.slice(0, 200) };
     } catch (err) {
@@ -466,7 +468,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/llm/test-step", async (ctx) => {
     const body = await ctx.body<TestLlmStepRequest>();
     try {
-      return await llm.testStep(body.step, { provider: body.provider, model: body.model, apiKey: unmaskLlmKey(body.apiKey), baseUrl: body.baseUrl, previousOutput: body.previousOutput });
+      return await llm.testStep(body.step, { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, previousOutput: body.previousOutput });
     } catch (err) {
       return { success: false, message: err instanceof Error ? err.message : String(err) };
     }
@@ -475,7 +477,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/llm/models", async (ctx) => {
     const body = await ctx.body<GetProviderModelsRequest>();
     try {
-      return { models: await llm.getAvailableModels(body.provider, body.baseUrl, unmaskLlmKey(body.apiKey)) };
+      return { models: await llm.getAvailableModels(body.provider, body.baseUrl, requestSecret(body.apiKey)) };
     } catch {
       return { models: [] };
     }
@@ -502,7 +504,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
           const data = await portfolioService.getPortfolioData(portfolio.id, portfolio.baseCurrency, true);
           portfolioService.saveDailySnapshot(portfolio.id, data);
         } catch (err) {
-          appLogger.logStep("warning", "market", "sync", `Quotes refresh failed for one portfolio: ${err}`);
+          appLogger.logStep("warning", "market", "sync", `Quotes refresh failed for one portfolio (${err instanceof Error ? err.name : typeof err})`);
         }
       }
       updateConfig({ lastQuotesSync: now });
@@ -519,7 +521,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/market/macro", (ctx) =>
     getMacroSnapshot(services, {
-      baseCurrency: ctx.url.searchParams.get("baseCurrency") || undefined,
+      baseCurrency: currencyParam(ctx.url.searchParams.get("baseCurrency")),
       forceFresh: ctx.url.searchParams.get("refresh") === "true",
     }),
   );
@@ -559,7 +561,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const body = await ctx.body<TestGotifyRequest>();
     return sendGotify(
       { title: "Portfolio", message: "Test message from Portfolio. Daily briefs will arrive here." },
-      { url: body.url, token: unmaskSecret(body.token, loadConfig().gotifyToken), priority: body.priority },
+      { url: body.url, token: requestSecret(body.token), priority: body.priority },
     );
   });
 
@@ -567,7 +569,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const body = await ctx.body<TestNtfyRequest>();
     return sendNtfy(
       { title: "Portfolio", message: "Test message from Portfolio. Daily briefs and weekly analyses will arrive here." },
-      { url: body.url, topic: body.topic, token: unmaskSecret(body.token, loadConfig().ntfyToken), priority: body.priority },
+      { url: body.url, topic: body.topic, token: requestSecret(body.token), priority: body.priority },
     );
   });
 
@@ -617,36 +619,18 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/app/update/download", async (ctx) => appUpdateService.downloadUpdate(str((await ctx.body<{ version?: string }>()).version, "version")));
 
   router.post("/api/app/logs", async (ctx) => {
-    const p = await ctx.body<LogClientEventRequest>();
-    appLogger.logStep(p.level || "info", p.source || "gui", p.step || "client_event", String(p.message ?? ""), p.durationMs, p.data);
+    logClientEvent(await ctx.body<Record<string, unknown>>(64 * 1024));
     return { success: true };
   });
 
   router.get("/api/app/sponsor", async (ctx) => {
     const rawUrl = (ctx.url.searchParams.get("url") || "").trim();
-    const themeParam = (ctx.url.searchParams.get("theme") || "").trim().toLowerCase();
-    const isLight = themeParam === "light" || rawUrl.includes("/sponsor/light");
-    let targetUrl: string;
-    if (rawUrl && isWebsiteUrl(rawUrl)) {
-      const clean = rawUrl.replace(/\/+$/, "");
-      targetUrl = clean.endsWith(".html") ? clean : `${clean}/`;
-    } else {
-      const base = WEBPAGE_URL.replace(/\/+$/, "");
-      targetUrl = isLight ? `${base}/sponsor/light/` : `${base}/sponsor/`;
-    }
-    try {
-      const res = await fetch(targetUrl, { headers: { Accept: "text/html" }, signal: AbortSignal.timeout(4000) });
-      if (res.ok) {
-        const html = await res.text();
-        if (html.trim()) return { success: true, html };
-      }
-    } catch {
-      // offline: fall back to the bundled page
-    }
-    const file = sponsorFallbackFile(isLight ? "light" : "dark");
-    if (file) return { success: true, html: readFileSync(file, "utf-8") };
-    return { success: false, html: "", error: "Failed to load sponsor banner" };
+    const html = await loadSponsorPage(sponsorTheme(ctx.url.searchParams.get("theme"), rawUrl), rawUrl);
+    return html ? { success: true, html } : { success: false, html: "", error: "Failed to load sponsor banner" };
   });
+
+  // The banner as its own sandboxed document (services/sponsor.ts): the overview frames this URL.
+  router.get("/api/app/sponsor/frame", async (ctx) => sponsorFrameResponse(await loadSponsorPage(sponsorTheme(ctx.url.searchParams.get("theme")))));
 
   router.post("/api/app/support", async (ctx) => {
     const body = await ctx.body<OpenSupportTicketRequest>();

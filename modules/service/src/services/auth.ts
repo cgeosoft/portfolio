@@ -2,8 +2,9 @@
  * One local account, optionally locked with a PIN (Settings → General).
  * Sessions are cookies stored in the `sessions` table so a phone on the LAN
  * (remote connections) gets its own session and the PIN applies to it too.
- * The PIN hash, the attempt counter and the Terms of Use acceptance live in
- * `kv_entries`.
+ * The table keeps the SHA-256 of each session id, not the id, so a copy of
+ * the database (a backup in Downloads) opens no session. The PIN hash, the
+ * attempt counter and the Terms of Use acceptance live in `kv_entries`.
  */
 import * as crypto from "node:crypto";
 import { resolve } from "node:path";
@@ -42,9 +43,19 @@ interface KvRow {
   expiresAt: number | null;
 }
 
+/** The `sessions` key of a session id. The id is random (122 bits), so a plain SHA-256 is enough. */
+function sessionKey(id: string): string {
+  return crypto.createHash("sha256").update(id).digest("hex");
+}
+
+/** Length of a `sessionKey()`; rows of another length hold a raw id from an earlier release. */
+const SESSION_KEY_LENGTH = 64;
+
 export class AuthService {
   /** The Terms of Use timestamp, read once: it is checked on every request and written once. */
   private termsCache: string | null | undefined;
+  /** True once the sessions stored with raw ids (releases up to 0.11) are hashed. */
+  private sessionsHashed = false;
 
   private kvGet(key: string): string | null {
     const row = getDatabase().query("SELECT value, expiresAt FROM kv_entries WHERE key = ?").get(key) as KvRow | null;
@@ -142,38 +153,57 @@ export class AuthService {
 
   // ----------------------------------------------------------- sessions ----
 
+  /** Replaces the raw ids that earlier releases stored with their hashes, once, so nobody has to sign in again. */
+  private hashStoredSessions(): void {
+    if (this.sessionsHashed) return;
+    const db = getDatabase();
+    const rows = db.query("SELECT id FROM sessions WHERE length(id) != ?").all(SESSION_KEY_LENGTH) as { id: string }[];
+    if (rows.length > 0) {
+      const update = db.prepare("UPDATE OR IGNORE sessions SET id = ? WHERE id = ?");
+      db.transaction(() => {
+        for (const row of rows) update.run(sessionKey(row.id), row.id);
+      })();
+    }
+    this.sessionsHashed = true;
+  }
+
   /** Opens a session. Without a PIN this is automatic; with one it must match. */
   login(pin?: string): string {
     this.checkPin(pin);
+    this.hashStoredSessions();
     const id = crypto.randomUUID();
-    getDatabase().run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", [id, Date.now() + SESSION_TTL_MS]);
+    getDatabase().run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", [sessionKey(id), Date.now() + SESSION_TTL_MS]);
     return id;
   }
 
   /** True for a live session; extends it at most once per hour. */
   validateSession(id: string | null | undefined): boolean {
     if (!id) return false;
-    const row = getDatabase().query("SELECT expiresAt FROM sessions WHERE id = ?").get(id) as { expiresAt: number } | null;
+    this.hashStoredSessions();
+    const key = sessionKey(id);
+    const row = getDatabase().query("SELECT expiresAt FROM sessions WHERE id = ?").get(key) as { expiresAt: number } | null;
     if (!row) return false;
     const now = Date.now();
     if (row.expiresAt < now) {
-      this.deleteSession(id);
+      getDatabase().run("DELETE FROM sessions WHERE id = ?", [key]);
       return false;
     }
     if (row.expiresAt - now < SESSION_TTL_MS - SESSION_REFRESH_MS) {
-      getDatabase().run("UPDATE sessions SET expiresAt = ? WHERE id = ?", [now + SESSION_TTL_MS, id]);
+      getDatabase().run("UPDATE sessions SET expiresAt = ? WHERE id = ?", [now + SESSION_TTL_MS, key]);
     }
     return true;
   }
 
   deleteSession(id: string): void {
-    getDatabase().run("DELETE FROM sessions WHERE id = ?", [id]);
+    this.hashStoredSessions();
+    getDatabase().run("DELETE FROM sessions WHERE id = ?", [sessionKey(id)]);
   }
 
   /** Ends every session except `keep` (after a PIN change, or on request from Settings). Returns how many ended. */
   revokeOtherSessions(keep: string | null): number {
+    this.hashStoredSessions();
     const db = getDatabase();
-    const result = keep ? db.run("DELETE FROM sessions WHERE id != ?", [keep]) : db.run("DELETE FROM sessions");
+    const result = keep ? db.run("DELETE FROM sessions WHERE id != ?", [sessionKey(keep)]) : db.run("DELETE FROM sessions");
     if (result.changes > 0) appLogger.logStep("info", "auth", "sessions", `Revoked ${result.changes} other session(s)`);
     return result.changes;
   }
@@ -223,18 +253,23 @@ export function readSessionCookie(req: Request): string | null {
   return readSession(req)?.id ?? null;
 }
 
+/**
+ * The session cookie. `SameSite=Strict`: a link or redirect from another site
+ * opens the app without the session, so no request a foreign page starts
+ * carries it, a GET included. The app's own requests carry it as before.
+ */
 export function sessionCookie(id: string, secure: boolean): string {
   const maxAge = Math.floor(SESSION_TTL_MS / 1000);
-  return `${sessionCookieName()}=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+  return `${sessionCookieName()}=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
 }
 
 export function clearSessionCookie(): string {
-  return `${sessionCookieName()}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `${sessionCookieName()}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`;
 }
 
 /** Expires the old shared cookie once its session moved to the new name. */
 export function clearLegacySessionCookie(): string {
-  return `${LEGACY_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `${LEGACY_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`;
 }
 
 export const authService = new AuthService();

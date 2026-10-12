@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getDatabase } from "../../db/database";
 import * as portfolioRepo from "../../db/portfolio.repo";
+import * as marketCache from "../../db/market-cache.repo";
 import { backupFileName, createDatabaseBackup } from "../backup";
 
 describe("backupFileName", () => {
@@ -35,6 +36,33 @@ describe("createDatabaseBackup", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
       portfolioRepo.deleteById(created.id);
+    }
+  });
+
+  it("leaves out the market cache and the sessions but keeps the call summaries", () => {
+    const db = getDatabase();
+    const summaryKey = "intel:transcript-summary:BKUP:2026Q3";
+    marketCache.set("fmp:backup-test", { rows: [1, 2, 3] }, 60_000);
+    marketCache.set(summaryKey, { summary: "kept" }, 60_000);
+    db.run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", ["backup-test-session", Date.now() + 60_000]);
+    const dir = mkdtempSync(join(tmpdir(), "portfolio-backup-test-"));
+    try {
+      const file = join(dir, "copy.sqlite");
+      writeFileSync(file, createDatabaseBackup().bytes);
+      const copy = new Database(file, { readonly: true });
+      const keys = (copy.query("SELECT key FROM market_cache").all() as { key: string }[]).map((r) => r.key);
+      expect(keys).toContain(summaryKey);
+      expect(keys.every((key) => key.startsWith("intel:transcript-summary:"))).toBe(true);
+      expect((copy.query("SELECT COUNT(*) AS n FROM sessions").get() as { n: number }).n).toBe(0);
+      copy.close();
+      // The live database keeps both.
+      expect(marketCache.get("fmp:backup-test")).not.toBeNull();
+      expect(db.query("SELECT id FROM sessions WHERE id = ?").get("backup-test-session")).not.toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+      marketCache.deleteKey("fmp:backup-test");
+      marketCache.deleteKey(summaryKey);
+      db.run("DELETE FROM sessions WHERE id = ?", ["backup-test-session"]);
     }
   });
 });

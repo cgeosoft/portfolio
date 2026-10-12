@@ -7,11 +7,13 @@
  * Two transport checks run before any route: a request that changes state
  * (POST, PUT, PATCH, DELETE) must come from the app's own origin, and API
  * responses are never cached by the browser. Large JSON bodies are gzipped
- * for clients that accept it (a phone on the LAN loads the portfolio data
- * several times faster).
+ * for remote clients that accept it (a phone on the LAN loads the portfolio
+ * data several times faster); the desktop window on loopback gets them as
+ * they are, since compressing costs more than the transfer saves.
  */
 import { randomUUID } from "node:crypto";
 import { appLogger } from "../logger";
+import { isDev } from "../environment";
 
 export class HttpError extends Error {
   constructor(
@@ -34,8 +36,8 @@ export interface RequestContext {
   /** Session id of a logged-in client, set by the auth middleware. */
   sessionId: string | null;
   requestId: string;
-  /** Parsed JSON body; `{}` when the request has none. */
-  body<T = Record<string, unknown>>(): Promise<T>;
+  /** Parsed JSON body; `{}` when the request has none. A body over `maxBytes` (default `MAX_BODY_BYTES`) is refused with 413. */
+  body<T = Record<string, unknown>>(maxBytes?: number): Promise<T>;
   /** Set-Cookie and other headers merged into the JSON response. */
   responseHeaders: Headers;
 }
@@ -50,10 +52,13 @@ interface Route {
   handler: Handler;
 }
 
-const MAX_BODY_BYTES = 30 * 1024 * 1024;
+/** Largest request body a route reads; `Bun.serve` refuses a longer one before it is buffered (main.ts). */
+export const MAX_BODY_BYTES = 30 * 1024 * 1024;
 /** JSON bodies at least this long are gzipped when the client accepts it. */
 const COMPRESS_MIN_BYTES = 4 * 1024;
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+/** Longest error message a response or a log line carries. */
+const MAX_ERROR_MESSAGE = 1000;
 
 function compile(path: string): { pattern: RegExp; keys: string[] } {
   const keys: string[] = [];
@@ -96,24 +101,27 @@ export function isLoopbackHostname(hostname: string): boolean {
 /**
  * True when a request that changes state may proceed. Browsers send `Origin`
  * on every cross-site request and on same-site POSTs, so a request that
- * carries one must name this app: the host of the request itself, or a
- * loopback name for the desktop window and the Vite dev server (which proxy
- * `/api` from another loopback port). A request without `Origin` comes from
- * the app's own scripts or a non-browser client. This closes cross-site
- * request forgery from a web page against the loopback and LAN listeners.
+ * carries one must name this app: the host and port of the request itself.
+ * The port counts because cookies ignore it: a page served by another program
+ * on this machine (`http://127.0.0.1:3000`) is same-site with the app and its
+ * requests carry the session cookie. A development run also accepts the other
+ * loopback origins, for the Vite dev server that proxies `/api` from its own
+ * port. A request without `Origin` comes from the app's own scripts or a
+ * non-browser client. This closes cross-site request forgery from a web page
+ * against the loopback and LAN listeners.
  */
-export function isAllowedOrigin(req: Request): boolean {
+export function isAllowedOrigin(req: Request, allowLoopbackOrigins: boolean = isDev()): boolean {
   const origin = req.headers.get("origin");
   if (origin === null) return true;
-  let originHost: string;
+  let parsed: URL;
   try {
-    originHost = new URL(origin).hostname.replace(/^\[|\]$/g, "").toLowerCase();
+    parsed = new URL(origin);
   } catch {
     return false;
   }
-  if (!originHost) return false;
-  if (isLoopbackHostname(originHost)) return true;
-  return originHost === hostnameOf(req.headers.get("host"));
+  if (!parsed.host) return false;
+  if (parsed.host === (req.headers.get("host") || "").trim().toLowerCase()) return true;
+  return allowLoopbackOrigins && isLoopbackHostname(parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase());
 }
 
 /** JSON response. API answers carry no-store so a shared browser never keeps balances. */
@@ -125,19 +133,52 @@ export function json(data: unknown, status = 200, headers?: Headers): Response {
   return new Response(JSON.stringify(data ?? null), { status, headers: h });
 }
 
+/**
+ * The request body as text, at most `limit` bytes. A declared length over the
+ * limit is refused before anything is read; a chunked body without one is
+ * counted while it arrives and refused once it passes the limit, so it is
+ * never buffered whole first.
+ */
+async function readBodyText(req: Request, limit: number): Promise<string> {
+  const declared = req.headers.get("content-length");
+  if (declared !== null) {
+    if (Number(declared) > limit) throw new HttpError(413, "Request body is too large");
+    return req.text();
+  }
+  if (!req.body) return "";
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = req.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      reader.cancel().catch(() => {});
+      throw new HttpError(413, "Request body is too large");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf-8");
+}
+
 function acceptsGzip(req: Request): boolean {
   const accept = req.headers.get("accept-encoding") || "";
   return /(^|,)\s*gzip\s*(;|,|$)/i.test(accept);
 }
 
-/** Like `json()`, gzipped when the body is large and the client accepts it. */
-export function jsonFor(req: Request, data: unknown, status = 200, headers?: Headers): Response {
+/**
+ * Like `json()`, gzipped when the body is large and the client accepts it.
+ * `compress` is false for a loopback client: the copy costs nothing there
+ * and gzip would block the event loop for nothing.
+ */
+export function jsonFor(req: Request, data: unknown, status = 200, headers?: Headers, compress = true): Response {
   const body = JSON.stringify(data ?? null);
   const h = new Headers(headers);
   h.set("Content-Type", "application/json; charset=utf-8");
   h.set("Cache-Control", "no-store");
   h.set("X-Content-Type-Options", "nosniff");
-  if (body.length < COMPRESS_MIN_BYTES || req.method === "HEAD" || !acceptsGzip(req)) {
+  if (!compress || body.length < COMPRESS_MIN_BYTES || req.method === "HEAD" || !acceptsGzip(req)) {
     return new Response(body, { status, headers: h });
   }
   h.set("Content-Encoding", "gzip");
@@ -175,8 +216,12 @@ export class Router {
     this.add("DELETE", path, handler);
   }
 
-  /** Returns null when no route matches (the caller serves static files). */
-  async handle(req: Request, ip: string): Promise<Response | null> {
+  /**
+   * Returns null when no route matches (the caller serves static files).
+   * `isLocal` defaults to a loopback client address; main.ts passes false
+   * for every request on the LAN listener.
+   */
+  async handle(req: Request, ip: string, isLocal: boolean = isLoopbackAddress(ip)): Promise<Response | null> {
     const url = new URL(req.url);
     const method = req.method.toUpperCase();
     let matched: Route | null = null;
@@ -208,16 +253,13 @@ export class Router {
       url,
       params,
       ip,
-      isLocal: isLoopbackAddress(ip),
+      isLocal,
       sessionId: null,
       requestId,
       responseHeaders: new Headers({ "X-Request-Id": requestId }),
-      body: async <T,>() => {
+      body: async <T,>(maxBytes = MAX_BODY_BYTES) => {
         if (parsedBody !== undefined) return parsedBody as T;
-        const length = Number(req.headers.get("content-length") || 0);
-        if (length > MAX_BODY_BYTES) throw new HttpError(413, "Request body is too large");
-        const text = await req.text();
-        if (text.length > MAX_BODY_BYTES) throw new HttpError(413, "Request body is too large");
+        const text = await readBodyText(req, Math.min(maxBytes, MAX_BODY_BYTES));
         if (!text.trim()) {
           parsedBody = {};
           return parsedBody as T;
@@ -243,17 +285,20 @@ export class Router {
         if (!result.headers.has("Cache-Control")) result.headers.set("Cache-Control", "no-store");
         return result;
       }
-      return jsonFor(req, result ?? { success: true }, 200, ctx.responseHeaders);
+      return jsonFor(req, result ?? { success: true }, 200, ctx.responseHeaders, !isLoopbackAddress(ip));
     } catch (err) {
       const status = err instanceof HttpError ? err.status : 500;
-      const message = err instanceof Error ? err.message : String(err);
+      // A message can carry text a client, a module or a remote server chose: keep it bounded.
+      const raw = err instanceof Error ? err.message : String(err);
+      const message = raw.length > MAX_ERROR_MESSAGE ? `${raw.slice(0, MAX_ERROR_MESSAGE - 1)}…` : raw;
       const durationMs = Math.round(performance.now() - started);
       if (status >= 500) {
         appLogger.logStep("error", "http", requestId, `${method} ${url.pathname} -> ${status} ${message}`, durationMs, {
           stack: err instanceof Error ? err.stack?.split("\n").slice(1, 4).join(" | ") : undefined,
         });
       } else if (status !== 401 && status !== 404) {
-        appLogger.logStep("warning", "http", requestId, `${method} ${url.pathname} -> ${status} ${message}`, durationMs);
+        // Without a session anyone who reaches the port could fill the log file: only a debug record then.
+        appLogger.logStep(ctx.sessionId ? "warning" : "debug", "http", requestId, `${method} ${url.pathname} -> ${status} ${message}`, durationMs);
       }
       return json({ statusCode: status, message, requestId }, status, ctx.responseHeaders);
     }

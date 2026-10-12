@@ -66,6 +66,20 @@ const DEFAULT_HEADERS = {
 const FX_CACHE_TTL_MS = 60 * 60 * 1000;
 const CHART_CACHE_TTL_MS = 60 * 60 * 1000;
 const FETCH_CONCURRENCY_LIMIT = 8;
+/** After HTTP 429 no call goes to Yahoo for this long; callers get the stale copy. */
+const RATE_LIMIT_PAUSE_MS = 60 * 1000;
+/** A failed cookie and crumb lookup is not repeated for this long. */
+const SESSION_RETRY_MS = 60 * 1000;
+
+/**
+ * An error's type and code for a log line ("TypeError, ConnectionRefused").
+ * Never the message: request URLs carry the symbol or the search query.
+ */
+function errorKind(e: unknown): string {
+  if (!(e instanceof Error)) return typeof e;
+  const code = (e as Error & { code?: unknown }).code;
+  return typeof code === "string" ? `${e.name}, ${code}` : e.name;
+}
 
 /** Run async work over items with at most `limit` operations in flight */
 export async function mapWithConcurrencyLimit<T, R>(
@@ -125,6 +139,20 @@ export class YahooFinanceService {
   private static readonly fxCache = new Map<string, { multiplier: number; expiresAt: number }>();
   private static readonly chartCache = new Map<string, { data: YahooChartData; expiresAt: number }>();
   private static readonly inFlightCharts = new Map<string, Promise<YahooChartData>>();
+  /** No call goes to Yahoo before this time (epoch ms). Set by HTTP 429; shared by every call. */
+  private static pausedUntil = 0;
+
+  private static isPaused(): boolean {
+    return Date.now() < YahooFinanceService.pausedUntil;
+  }
+
+  /** Pauses every Yahoo call after HTTP 429, so no other host or symbol adds to the limit. Logs once per pause. */
+  private static pauseAfterRateLimit(): void {
+    if (!YahooFinanceService.isPaused()) {
+      appLogger.logStep("warning", "yahoo", "rate_limit", `Yahoo Finance rate limit reached (HTTP 429); pausing Yahoo calls for ${RATE_LIMIT_PAUSE_MS / 1000}s`);
+    }
+    YahooFinanceService.pausedUntil = Date.now() + RATE_LIMIT_PAUSE_MS;
+  }
 
   // Periodic eviction of expired in-memory cache entries to prevent unbounded growth.
   // Runs every 5 minutes and sweeps entries older than their TTL.
@@ -176,6 +204,7 @@ export class YahooFinanceService {
     if (cached && !cached.isExpired) {
       return cached.data;
     }
+    if (YahooFinanceService.isPaused()) return cached ? cached.data : [];
 
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
@@ -184,6 +213,10 @@ export class YahooFinanceService {
           headers: DEFAULT_HEADERS,
           signal: AbortSignal.timeout(6_000),
         });
+        if (res.status === 429) {
+          YahooFinanceService.pauseAfterRateLimit();
+          break;
+        }
         if (!res.ok) continue;
 
         const data = (await res.json()) as {
@@ -223,6 +256,7 @@ export class YahooFinanceService {
 
   public async searchSymbols(query: string): Promise<YahooSymbolSearchResult[]> {
     if (!query || !query.trim()) return [];
+    if (YahooFinanceService.isPaused()) return [];
 
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
@@ -232,6 +266,10 @@ export class YahooFinanceService {
           signal: AbortSignal.timeout(10_000),
         });
 
+        if (res.status === 429) {
+          YahooFinanceService.pauseAfterRateLimit();
+          return [];
+        }
         if (!res.ok) continue;
 
         const data = (await res.json()) as {
@@ -264,10 +302,8 @@ export class YahooFinanceService {
             typeDisp: q.typeDisp || q.quoteType || "Equity",
           }));
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        appLogger.logStep("warning", "yahoo", "search", `Search failed on ${baseUrl}: ${msg}`, undefined, {
-          query,
-        });
+        // The query can be a ticker or an ISIN; log the error type only (AGENTS.md rule 3).
+        appLogger.logStep("warning", "yahoo", "search", `Search failed on ${baseUrl} (${errorKind(e)})`);
       }
     }
     return [];
@@ -276,23 +312,23 @@ export class YahooFinanceService {
   public async getChart(symbol: string, range = "1y", interval = "1d", forceFresh = false): Promise<YahooChartData> {
     const cleanSymbol = symbol.trim().toUpperCase();
     const cacheKey = `${cleanSymbol}:${range}:${interval}`;
+    // Logs and errors below never name the symbol (AGENTS.md rule 3): callers log the errors again.
 
-    const diskCached = marketCache.get<YahooChartData>(`chart:${cacheKey}`);
-
+    // 1. Check in-memory cache, before any disk read
     if (!forceFresh) {
-      // 1. Check in-memory cache
       const cached = YahooFinanceService.chartCache.get(cacheKey);
       if (cached && Date.now() < cached.expiresAt) {
-        appLogger.logStep("debug", "yahoo", "chart_cache_mem", `In-memory chart cache hit for ${cleanSymbol}`);
+        appLogger.logStep("debug", "yahoo", "chart_cache_mem", "Chart served from the memory cache");
         return cached.data;
       }
+    }
 
-      // 2. Check persistent SQLite cache
-      if (diskCached && !diskCached.isExpired) {
-        YahooFinanceService.chartCache.set(cacheKey, { data: diskCached.data, expiresAt: diskCached.expiresAt });
-        appLogger.logStep("debug", "yahoo", "chart_cache_disk", `Disk chart cache hit for ${cleanSymbol}`);
-        return diskCached.data;
-      }
+    // 2. Check persistent SQLite cache; an expired copy is the offline fallback below
+    const diskCached = marketCache.get<YahooChartData>(`chart:${cacheKey}`);
+    if (!forceFresh && diskCached && !diskCached.isExpired) {
+      YahooFinanceService.chartCache.set(cacheKey, { data: diskCached.data, expiresAt: diskCached.expiresAt });
+      appLogger.logStep("debug", "yahoo", "chart_cache_disk", "Chart served from the disk cache");
+      return diskCached.data;
     }
 
     // 3. Check in-flight request deduplication
@@ -301,8 +337,16 @@ export class YahooFinanceService {
       return existing;
     }
 
+    // 4. Paused after HTTP 429: the stale copy, without a request
+    if (YahooFinanceService.isPaused()) {
+      if (diskCached?.data) return diskCached.data;
+      throw new Error("Yahoo Finance is paused after a rate limit (HTTP 429)");
+    }
+
     const fetchPromise = (async (): Promise<YahooChartData> => {
       let lastError: Error | null = null;
+      /** What went wrong, for the log: an HTTP status, a Yahoo error code or an error type. */
+      let failure = "no response";
       const fetchStart = performance.now();
 
       for (const baseUrl of BASE_QUERY_URLS) {
@@ -313,9 +357,17 @@ export class YahooFinanceService {
             signal: AbortSignal.timeout(4_000),
           });
 
+          if (res.status === 429) {
+            // The other host shares the limit: stop here.
+            YahooFinanceService.pauseAfterRateLimit();
+            failure = "HTTP 429";
+            lastError = new Error("Yahoo Finance rate limit reached (HTTP 429)");
+            break;
+          }
           if (!res.ok) {
-            lastError = new Error(`Yahoo Finance API error (${res.status}) on ${baseUrl} for symbol ${cleanSymbol}`);
-            appLogger.logStep("warning", "yahoo", "chart_http_error", `${cleanSymbol} got HTTP ${res.status} from ${baseUrl}`);
+            failure = `HTTP ${res.status}`;
+            lastError = new Error(`Yahoo Finance chart request failed with HTTP ${res.status}`);
+            appLogger.logStep("warning", "yahoo", "chart_http_error", `Chart request got HTTP ${res.status} from ${baseUrl}`);
             continue;
           }
 
@@ -324,10 +376,12 @@ export class YahooFinanceService {
           const resultArr = chart?.result as Array<Record<string, unknown>> | undefined;
           const result = resultArr?.[0];
           if (!result || !result.meta) {
-            const errObj = chart?.error as Record<string, string> | undefined;
-            const err = errObj?.description ?? `No chart data returned for ${cleanSymbol}`;
-            lastError = new Error(err);
-            appLogger.logStep("warning", "yahoo", "chart_empty_result", `${cleanSymbol}: ${err}`);
+            // Yahoo's error description can name the symbol; keep the code only.
+            const errObj = chart?.error as Record<string, unknown> | undefined;
+            const code = typeof errObj?.code === "string" ? errObj.code : "empty";
+            failure = `no chart data, ${code}`;
+            lastError = new Error(`Yahoo Finance returned no chart data (${code})`);
+            appLogger.logStep("warning", "yahoo", "chart_empty_result", `Chart response held no data (${code})`);
             continue;
           }
 
@@ -386,21 +440,22 @@ export class YahooFinanceService {
           }
 
           const dur = Math.round(performance.now() - fetchStart);
-          appLogger.logStep("debug", "yahoo", "chart_fetched", `Chart fetched for ${cleanSymbol} in ${dur}ms`, dur);
+          appLogger.logStep("debug", "yahoo", "chart_fetched", `Chart fetched in ${dur}ms`, dur);
           return chartData;
         } catch (e: unknown) {
           lastError = e instanceof Error ? e : new Error(String(e));
+          failure = errorKind(e);
         }
       }
 
       // Network query failed, check if we have stale disk cache for offline use
       if (diskCached && diskCached.data) {
-        appLogger.logStep("warning", "yahoo", "chart_stale_fallback", `Using stale cached chart data for ${cleanSymbol}`);
+        appLogger.logStep("warning", "yahoo", "chart_stale_fallback", `Chart request failed (${failure}); using the stale cached copy`);
         return diskCached.data;
       }
 
-      appLogger.logStep("error", "yahoo", "chart_failed", `Failed to fetch chart data for ${cleanSymbol}: ${lastError?.message}`);
-      throw lastError || new Error(`Failed to fetch chart data for ${cleanSymbol}`);
+      appLogger.logStep("error", "yahoo", "chart_failed", `Chart request failed (${failure})`);
+      throw lastError || new Error("Yahoo Finance returned no chart");
     })().finally(() => {
       YahooFinanceService.inFlightCharts.delete(cacheKey);
     });
@@ -436,8 +491,10 @@ export class YahooFinanceService {
           results.set(sym, diskQuote.data);
           return;
         }
-        const msg = e instanceof Error ? e.message : String(e);
-        appLogger.logStep("warning", "yahoo", "get_quote", `Failed to fetch a quote: ${msg}`);
+        // A pause after HTTP 429 was logged once; it needs no line per symbol.
+        if (!YahooFinanceService.isPaused()) {
+          appLogger.logStep("warning", "yahoo", "get_quote", `Failed to fetch a quote (${errorKind(e)})`);
+        }
       }
     });
 
@@ -507,7 +564,8 @@ export class YahooFinanceService {
 
     if (pairsToFetch.length > 0) {
       const pairSymbols = Array.from(new Set(pairsToFetch.map((p) => p.pairSymbol)));
-      const fxQuotes = await this.getQuotes(pairSymbols);
+      // Pass forceFresh on: a cached pair quote lives 24 hours, far longer than an FX rate.
+      const fxQuotes = await this.getQuotes(pairSymbols, forceFresh);
 
       for (const item of pairsToFetch) {
         const quote = fxQuotes.get(item.pairSymbol);
@@ -526,12 +584,8 @@ export class YahooFinanceService {
           } else {
             // Leave the currency out so the next provider can fill it, and cache
             // nothing so the next refresh tries again instead of keeping a rate of 1.
-            appLogger.logStep(
-              "warning",
-              "yahoo",
-              "fx_rates",
-              `Could not resolve FX pair ${item.pairSymbol} for base ${base}`,
-            );
+            // The pair names the user's currencies; the log does not.
+            appLogger.logStep("warning", "yahoo", "fx_rates", "Could not resolve an FX pair; leaving it to the next provider");
             continue;
           }
         }
@@ -554,11 +608,20 @@ export class YahooFinanceService {
   private static summarySession: { cookie: string; crumb: string; expiresAt: number } | null = null;
   private static summarySessionPromise: Promise<{ cookie: string; crumb: string } | null> | null = null;
   private static readonly inFlightSummaries = new Map<string, Promise<Record<string, unknown> | null>>();
+  /** When the last cookie and crumb lookup failed (epoch ms). */
+  private static sessionFailedAt = 0;
+
+  /** Notes a failed cookie and crumb lookup, so the next `SESSION_RETRY_MS` ask for none. */
+  private static sessionFailed(): null {
+    YahooFinanceService.sessionFailedAt = Date.now();
+    return null;
+  }
 
   /** Gets a Yahoo cookie (fc.yahoo.com) and the crumb that goes with it, reused for an hour. */
   private static async getSummarySession(forceNew = false): Promise<{ cookie: string; crumb: string } | null> {
     const current = YahooFinanceService.summarySession;
     if (!forceNew && current && Date.now() < current.expiresAt) return current;
+    if (Date.now() - YahooFinanceService.sessionFailedAt < SESSION_RETRY_MS) return null;
     if (YahooFinanceService.summarySessionPromise) return YahooFinanceService.summarySessionPromise;
 
     YahooFinanceService.summarySessionPromise = (async () => {
@@ -566,23 +629,25 @@ export class YahooFinanceService {
         const res = await fetch("https://fc.yahoo.com", { headers: DEFAULT_HEADERS, redirect: "manual", signal: AbortSignal.timeout(8_000) });
         const setCookies = typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [res.headers.get("set-cookie") ?? ""];
         const cookie = setCookies.map((c) => c.split(";")[0]?.trim() ?? "").filter(Boolean).join("; ");
-        if (!cookie) return null;
+        if (!cookie) return YahooFinanceService.sessionFailed();
         for (const baseUrl of BASE_QUERY_URLS) {
           const crumbRes = await fetch(`${baseUrl}/v1/test/getcrumb`, { headers: { ...DEFAULT_HEADERS, Cookie: cookie }, signal: AbortSignal.timeout(8_000) });
+          if (crumbRes.status === 429) {
+            YahooFinanceService.pauseAfterRateLimit();
+            break;
+          }
           if (!crumbRes.ok) continue;
           const crumb = (await crumbRes.text()).trim();
           if (!crumb || crumb.includes("<")) continue;
           YahooFinanceService.summarySession = { cookie, crumb, expiresAt: Date.now() + 60 * 60 * 1000 };
           return { cookie, crumb };
         }
-        return null;
+        return YahooFinanceService.sessionFailed();
       } catch (e: unknown) {
         // Bun's fetch rejects with a TypeError on network failures; the code
         // (ENOTFOUND, ConnectionRefused, ...) says which one.
-        const errCode = e instanceof Error ? (e as Error & { code?: unknown }).code : undefined;
-        const code = typeof errCode === "string" ? `, ${errCode}` : "";
-        appLogger.logStep("warning", "yahoo", "summary_session", `Could not open a Yahoo session (${e instanceof Error ? e.name : typeof e}${code})`);
-        return null;
+        appLogger.logStep("warning", "yahoo", "summary_session", `Could not open a Yahoo session (${errorKind(e)})`);
+        return YahooFinanceService.sessionFailed();
       } finally {
         YahooFinanceService.summarySessionPromise = null;
       }
@@ -603,6 +668,7 @@ export class YahooFinanceService {
     const cacheKey = `yahoo:summary:${sym}:${moduleList}`;
     const cached = marketCache.get<Record<string, unknown> | null>(cacheKey);
     if (cached && !cached.isExpired) return cached.data;
+    if (YahooFinanceService.isPaused()) return cached ? cached.data : null;
 
     const existing = YahooFinanceService.inFlightSummaries.get(cacheKey);
     if (existing) return existing;
@@ -616,6 +682,10 @@ export class YahooFinanceService {
           try {
             const url = `${baseUrl}/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=${encodeURIComponent(moduleList)}&formatted=false&crumb=${encodeURIComponent(session.crumb)}`;
             const res = await fetch(url, { headers: { ...DEFAULT_HEADERS, Cookie: session.cookie }, signal: AbortSignal.timeout(10_000) });
+            if (res.status === 429) {
+              YahooFinanceService.pauseAfterRateLimit();
+              return cached ? cached.data : null;
+            }
             if (res.status === 401 || res.status === 403) {
               authFailed = true;
               break;
@@ -631,7 +701,7 @@ export class YahooFinanceService {
             return result;
           } catch (e: unknown) {
             // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
-            appLogger.logStep("warning", "yahoo", "quote_summary", `quoteSummary request failed (${e instanceof Error ? e.name : typeof e})`);
+            appLogger.logStep("warning", "yahoo", "quote_summary", `quoteSummary request failed (${errorKind(e)})`);
           }
         }
         if (!authFailed) break;
@@ -661,11 +731,16 @@ export class YahooFinanceService {
     const cacheKey = `yahoo:events:${sym}:${range}`;
     const cached = marketCache.get<YahooCorporateEvents | null>(cacheKey);
     if (cached && !cached.isExpired) return cached.data;
+    if (YahooFinanceService.isPaused()) return cached ? cached.data : null;
 
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
         const url = `${baseUrl}/v8/finance/chart/${encodeURIComponent(sym)}?range=${encodeURIComponent(range)}&interval=1mo&events=div%2Csplits`;
         const res = await fetch(url, { headers: DEFAULT_HEADERS, signal: AbortSignal.timeout(6_000) });
+        if (res.status === 429) {
+          YahooFinanceService.pauseAfterRateLimit();
+          break;
+        }
         if (res.status === 404) {
           marketCache.set(cacheKey, null, 60 * 60 * 1000);
           return null;
@@ -693,7 +768,7 @@ export class YahooFinanceService {
         return data;
       } catch (e: unknown) {
         // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
-        appLogger.logStep("warning", "yahoo", "corporate_events", `Dividend and split request failed (${e instanceof Error ? e.name : typeof e})`);
+        appLogger.logStep("warning", "yahoo", "corporate_events", `Dividend and split request failed (${errorKind(e)})`);
       }
     }
     return cached ? cached.data : null;

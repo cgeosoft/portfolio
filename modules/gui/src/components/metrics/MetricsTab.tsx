@@ -68,7 +68,7 @@ export function MetricsTab({
   const added = prefs.filter((pref) => pref.added && listingById.has(pref.id));
   const isEmpty = !added.some((pref) => pref.slot);
   const ctx = { currency, hideValues };
-  const display = (id: string): MetricDisplay => displayMetric(evaluations[id], ctx);
+  const display = (id: string): MetricDisplay => displayMetric(evaluations[id], ctx, listingById.get(id));
   const closePicker = useCallback(() => setPicking(null), []);
 
   const placedIds = new Set(added.filter((pref) => pref.slot).map((pref) => pref.id));

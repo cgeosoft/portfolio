@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import type { PortfolioReport } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, cleanThinkTags, maskFinancialValues } from "./utils";
 
@@ -62,6 +61,8 @@ export async function generateReportPdf(
   portfolioName?: string,
   hideValues: boolean = false
 ): Promise<Blob> {
+  // jsPDF is a few hundred KB: it loads on the first PDF download instead of with the app.
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/portfolio";
+import * as portfolioRepo from "../../db/portfolio.repo.js";
+import * as suggestionRepo from "../../db/suggestion.repo.js";
 import {
   evaluateSuggestion,
   marketForSymbol,
@@ -227,6 +229,37 @@ describe("mergeSuggestions", () => {
     const res = mergeSuggestions("p1", [reached], [proposal()], market, 10000, NOW);
     expect(res.suggestions.find((s) => s.id === "sg_1")?.status).toBe("done");
     expect(res.suggestions.filter((s) => s.status === "active").length).toBe(1);
+  });
+});
+
+describe("suggestionRepo.saveGeneration", () => {
+  const run = (portfolioId: string, summary: string) => ({
+    portfolioId,
+    generatedAt: NOW.toISOString(),
+    txFingerprint: "fp",
+    summary,
+    notes: ["note"],
+    provider: "test",
+    model: null,
+  });
+
+  it("stores the rows and the run together, and neither when one row fails", () => {
+    const portfolioId = portfolioRepo.create({ name: "Suggestion save", baseCurrency: "EUR" }).id;
+    try {
+      suggestionRepo.saveGeneration([suggestion({ id: "sg_save_1", portfolioId })], run(portfolioId, "first"));
+      expect(suggestionRepo.findById(portfolioId, "sg_save_1")?.title).toBe("Trim");
+      expect(suggestionRepo.findRun(portfolioId)?.summary).toBe("first");
+
+      // A NOT NULL column without a value fails the second row: the first row and the run roll back.
+      const broken = suggestion({ id: "sg_save_3", portfolioId, title: null as unknown as string });
+      expect(() =>
+        suggestionRepo.saveGeneration([suggestion({ id: "sg_save_2", portfolioId }), broken], run(portfolioId, "second")),
+      ).toThrow();
+      expect(suggestionRepo.findById(portfolioId, "sg_save_2")).toBeNull();
+      expect(suggestionRepo.findRun(portfolioId)?.summary).toBe("first");
+    } finally {
+      portfolioRepo.deleteById(portfolioId);
+    }
   });
 });
 

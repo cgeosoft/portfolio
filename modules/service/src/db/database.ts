@@ -72,11 +72,13 @@ function initializeSchema(database: Database): void {
     )
   `);
 
-  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio ON transactions(portfolioId)`);
-  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)`);
-  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_symbol ON transactions(symbol)`);
-  // Covers the ledger read (`WHERE portfolioId = ? ORDER BY date, createdAt`) without a sort step.
+  // Serves every portfolioId lookup, the delete cascade and the date order of the ledger read.
   database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio_date ON transactions(portfolioId, date, createdAt)`);
+  // No query filters on date or symbol alone, and the index above leads with portfolioId:
+  // these three only cost a B-tree write per imported row.
+  database.run("DROP INDEX IF EXISTS idx_transactions_portfolio");
+  database.run("DROP INDEX IF EXISTS idx_transactions_date");
+  database.run("DROP INDEX IF EXISTS idx_transactions_symbol");
 
   database.run(`
     CREATE TABLE IF NOT EXISTS reports (
@@ -124,7 +126,8 @@ function initializeSchema(database: Database): void {
     )
   `);
 
-  database.run(`CREATE INDEX IF NOT EXISTS idx_snapshots_portfolio ON snapshots(portfolioId)`);
+  // UNIQUE(portfolioId, date) already indexes portfolioId.
+  database.run("DROP INDEX IF EXISTS idx_snapshots_portfolio");
 
   database.run(`
     CREATE TABLE IF NOT EXISTS market_cache (

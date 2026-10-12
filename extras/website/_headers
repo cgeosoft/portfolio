@@ -1,0 +1,18 @@
+# Cloudflare Pages response headers. Conservative on purpose: no script-src or
+# connect-src policy, so PostHog, the GitHub API and the Binance quotes keep
+# working. Only transport, sniffing, referrer and framing are constrained.
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+
+# The app shows the Terms page in an iframe, from a loopback port in the
+# desktop window and from the LAN address in a browser on the network. Pages
+# joins the values of a header that two rules set, so this rule removes the
+# frame block (`!`) instead of setting a second policy next to it.
+/terms
+  ! X-Frame-Options
+
+/terms/*
+  ! X-Frame-Options

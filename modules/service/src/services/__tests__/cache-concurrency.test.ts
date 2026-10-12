@@ -1,6 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mapWithConcurrencyLimit, extractQuoteFromChart, type YahooChartData } from "../yahoo-finance.js";
+import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test";
+import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
+import { appLogger } from "../../logger.js";
+import { mapWithConcurrencyLimit, extractQuoteFromChart, type YahooChartData, type YahooQuote } from "../yahoo-finance.js";
+import { PortfolioService, type IMarketDataProvider } from "../portfolio.js";
 import * as marketCache from "../../db/market-cache.repo.js";
+import * as portfolioRepo from "../../db/portfolio.repo.js";
 import { getDatabase } from "../../db/database.js";
 
 describe("mapWithConcurrencyLimit", () => {
@@ -125,6 +129,255 @@ describe("marketCache SQLite repository", () => {
     expect(entry!.isExpired).toBe(true);
 
     marketCache.deleteKey(testKey);
+  });
+
+  it("prunes entries expired longer than the grace, but no portfolio entry", () => {
+    marketCache.set("test:prune:old", { v: 1 }, -10_000);
+    marketCache.set("test:prune:recent", { v: 1 }, -1_000);
+    marketCache.set("test:prune:fresh", { v: 1 }, 60_000);
+    marketCache.set("portfolio:prune-test_EUR", { v: 1 }, -10_000);
+
+    expect(marketCache.pruneExpired(5_000)).toBeGreaterThanOrEqual(1);
+    expect(marketCache.get("test:prune:old")).toBeNull();
+    expect(marketCache.get("test:prune:recent")).not.toBeNull();
+    expect(marketCache.get("test:prune:fresh")).not.toBeNull();
+    expect(marketCache.get("portfolio:prune-test_EUR")).not.toBeNull();
+
+    for (const key of ["test:prune:recent", "test:prune:fresh", "portfolio:prune-test_EUR"]) marketCache.deleteKey(key);
+  });
+
+  it("reads the expiry of an entry without its data", () => {
+    marketCache.set("test:expiry", { big: "x".repeat(10_000) }, 60_000);
+    const expiresAt = marketCache.getExpiresAt("test:expiry");
+    expect(expiresAt).not.toBeNull();
+    expect(expiresAt! - Date.now()).toBeGreaterThan(50_000);
+    expect(marketCache.getExpiresAt("test:expiry:missing")).toBeNull();
+    marketCache.deleteKey("test:expiry");
+  });
+
+  it("deletes a key prefix and nothing next to it", () => {
+    const keys = ["portfolio:pfx_EUR", "portfolio:pfx_USD", "portfolio:pfx", "portfolio:pfx-EUR", "portfolio:pfxa_EUR", "portfolio:pfw_EUR", "portfolio:pfx`"];
+    for (const key of keys) marketCache.set(key, { ok: 1 }, 60_000);
+
+    expect(marketCache.deleteByPrefix("portfolio:pfx_")).toBe(2);
+    expect(keys.filter((key) => marketCache.get(key) !== null)).toEqual([
+      "portfolio:pfx",
+      "portfolio:pfx-EUR",
+      "portfolio:pfxa_EUR",
+      "portfolio:pfw_EUR",
+      "portfolio:pfx`",
+    ]);
+    expect(marketCache.deleteByPrefix("")).toBe(0);
+
+    for (const key of keys) marketCache.deleteKey(key);
+  });
+
+  it("logs a failed write with the kind of key, not the key", () => {
+    const logSpy = spyOn(appLogger, "logStep").mockImplementation(() => {});
+    try {
+      // JSON cannot hold a BigInt, so the write fails.
+      marketCache.set("fmp:quote:ZZCACHESYM", { volume: 1n }, 60_000);
+      const logged = JSON.stringify(logSpy.mock.calls);
+      expect(logged).toContain("market_cache_set");
+      expect(logged).toContain('\\"fmp\\" entry');
+      expect(logged).not.toContain("ZZCACHESYM");
+    } finally {
+      logSpy.mockRestore();
+    }
+    expect(marketCache.get("fmp:quote:ZZCACHESYM")).toBeNull();
+  });
+});
+
+const today = new Date().toISOString().slice(0, 10);
+const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+
+function chartOf(symbol: string, closes: Array<[string, number]>): YahooChartData {
+  return {
+    symbol,
+    currency: "EUR",
+    regularMarketPrice: closes[closes.length - 1]![1],
+    candles: closes.map(([date, close], i) => ({ timestamp: i, date, open: close, high: close, low: close, close, volume: 0 })),
+  };
+}
+
+function gate(): { promise: Promise<void>; open: () => void } {
+  let open: () => void = () => {};
+  const promise = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  return { promise, open };
+}
+
+async function waitFor(condition: () => boolean): Promise<void> {
+  for (let i = 0; i < 500 && !condition(); i++) await new Promise((resolve) => setTimeout(resolve, 1));
+  expect(condition()).toBe(true);
+}
+
+const buy = (date: string, symbol: string, shares: number, price: number) => ({
+  date,
+  type: "BUY",
+  symbol,
+  shares,
+  price,
+  amount: shares * price,
+  currency: "EUR",
+});
+
+describe("PortfolioService forced refresh and stale builds", () => {
+  it("refreshes the quotes in one call and puts the live price on the cached charts", async () => {
+    const quoteCalls: Array<{ symbols: string[]; forceFresh?: boolean }> = [];
+    const chartForce: Array<boolean | undefined> = [];
+    const provider: IMarketDataProvider = {
+      getQuotes: async (symbols, forceFresh) => {
+        quoteCalls.push({ symbols: [...symbols].sort(), forceFresh });
+        const quote = (symbol: string): YahooQuote => ({
+          symbol,
+          regularMarketPrice: 110,
+          regularMarketChange: 10,
+          regularMarketChangePercent: 10,
+          previousClose: 100,
+          currency: "EUR",
+          updatedAt: `${today}T15:00:00.000Z`,
+        });
+        return new Map(symbols.map((s) => [s, quote(s)]));
+      },
+      getExchangeRates: async () => new Map(),
+      getChart: async (symbol, _range, _interval, forceFresh) => {
+        chartForce.push(forceFresh);
+        // AAA's cached chart ends on the previous session, BBB's on today's.
+        return chartOf(symbol, [
+          ["2026-01-02", 90],
+          symbol === "AAA" ? [yesterday, 100] : [today, 105],
+        ]);
+      },
+    };
+    const service = new PortfolioService(provider);
+    const id = portfolioRepo.create({ name: "Forced refresh", baseCurrency: "EUR" }).id;
+    try {
+      await service.manageTransactions(id, { action: "batch_add", transactions: [buy("2026-01-02", "AAA", 1, 90), buy("2026-01-03", "BBB", 2, 90)] });
+      const data = await service.getPortfolioData(id, "EUR", true);
+
+      expect(quoteCalls).toEqual([{ symbols: ["AAA", "BBB"], forceFresh: true }]);
+      expect(chartForce.length).toBe(2);
+      expect(chartForce.every((force) => !force)).toBe(true);
+      expect(data.holdings.find((h) => h.symbol === "AAA")?.currentPrice).toBe(110);
+      // A chart that ended on the previous session gets today's point; today's point takes the live price.
+      expect(data.individualCharts["AAA"]?.slice(-2)).toEqual([
+        { date: yesterday, close: 100 },
+        { date: today, close: 110 },
+      ]);
+      expect(data.individualCharts["BBB"]).toEqual([
+        { date: "2026-01-02", close: 90 },
+        { date: today, close: 110 },
+      ]);
+    } finally {
+      portfolioRepo.deleteById(id);
+      service.clearPortfolioCache(id);
+      service.destroy();
+    }
+  });
+
+  it("logs a failed chart without the symbol", async () => {
+    const provider: IMarketDataProvider = {
+      getQuotes: async () => {
+        throw new Error("No quote for ZZLOGSYM");
+      },
+      getExchangeRates: async () => new Map(),
+      getChart: async (symbol) => {
+        throw new Error(`No chart data returned for ${symbol}`);
+      },
+    };
+    const service = new PortfolioService(provider);
+    const id = portfolioRepo.create({ name: "Quiet logs", baseCurrency: "EUR" }).id;
+    try {
+      await service.manageTransactions(id, { action: "add", transaction: buy("2026-01-02", "ZZLOGSYM", 1, 90) });
+      const logSpy = spyOn(appLogger, "logStep").mockImplementation(() => {});
+      try {
+        await service.getPortfolioData(id, "EUR", true);
+        const logged = JSON.stringify(logSpy.mock.calls);
+        expect(logged).toContain("chart_fetch_error");
+        expect(logged).not.toContain("ZZLOGSYM");
+      } finally {
+        logSpy.mockRestore();
+      }
+    } finally {
+      portfolioRepo.deleteById(id);
+      service.clearPortfolioCache(id);
+      service.destroy();
+    }
+  });
+
+  it("neither caches nor returns a build that started before the transactions changed", async () => {
+    const first = gate();
+    let chartCalls = 0;
+    const provider: IMarketDataProvider = {
+      getQuotes: async () => new Map(),
+      getExchangeRates: async () => new Map(),
+      getChart: async (symbol) => {
+        chartCalls++;
+        if (chartCalls === 1) await first.promise;
+        return chartOf(symbol, [[yesterday, 100]]);
+      },
+    };
+    const service = new PortfolioService(provider);
+    const id = portfolioRepo.create({ name: "Stale build", baseCurrency: "EUR" }).id;
+    try {
+      await service.manageTransactions(id, { action: "add", transaction: buy("2026-01-02", "AAA", 1, 90) });
+      const stale = service.getPortfolioData(id, "EUR");
+      await waitFor(() => chartCalls === 1);
+      await service.manageTransactions(id, { action: "add", transaction: buy("2026-01-03", "AAA", 2, 95) });
+      first.open();
+
+      const data = await stale;
+      expect(data.holdings.find((h) => h.symbol === "AAA")?.shares).toBe(3);
+      const disk = marketCache.get<FinancialPortfolioData>(`portfolio:${id}_EUR`);
+      expect(disk?.data.holdings.find((h) => h.symbol === "AAA")?.shares).toBe(3);
+    } finally {
+      portfolioRepo.deleteById(id);
+      service.clearPortfolioCache(id);
+      service.destroy();
+    }
+  });
+
+  it("leaves a newer in-flight build in place when an older one fails", async () => {
+    const first = gate();
+    const second = gate();
+    let fxCalls = 0;
+    const provider: IMarketDataProvider = {
+      getQuotes: async () => new Map(),
+      getExchangeRates: async () => {
+        fxCalls++;
+        if (fxCalls === 1) {
+          await first.promise;
+          throw new Error("offline");
+        }
+        if (fxCalls === 2) await second.promise;
+        return new Map();
+      },
+      getChart: async (symbol) => chartOf(symbol, [[yesterday, 100]]),
+    };
+    const service = new PortfolioService(provider);
+    const id = portfolioRepo.create({ name: "In-flight build", baseCurrency: "EUR" }).id;
+    try {
+      await service.manageTransactions(id, { action: "add", transaction: buy("2026-01-02", "AAA", 1, 90) });
+      const older = service.getPortfolioData(id, "EUR");
+      await waitFor(() => fxCalls === 1);
+      service.clearPortfolioCache(id);
+      const newer = service.getPortfolioData(id, "EUR");
+      await waitFor(() => fxCalls === 2);
+
+      first.open();
+      await expect(older).rejects.toThrow("offline");
+      // The failed build must not drop the newer one: this call joins it.
+      const joined = service.getPortfolioData(id, "EUR");
+      second.open();
+      expect(await joined).toBe(await newer);
+      expect(fxCalls).toBe(2);
+    } finally {
+      portfolioRepo.deleteById(id);
+      service.clearPortfolioCache(id);
+      service.destroy();
+    }
   });
 });
 

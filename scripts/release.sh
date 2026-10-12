@@ -187,9 +187,16 @@ docker_build() {
   log "ensuring Docker builder image ${DOCKER_IMAGE}"
   docker build -q -t "${DOCKER_IMAGE}" -f "${SCRIPT_DIR}/docker/Dockerfile.linux" "${SCRIPT_DIR}/docker" >/dev/null
   mkdir -p "${out}"
+  # The whole repo is mounted into a container that runs third-party build code, so hide the
+  # git-ignored dotenv secrets: only POSTHOG_API_KEY is needed and it is passed with -e below.
+  local env_mask=() dotenv
+  for dotenv in "${ROOT}"/.env "${ROOT}"/.env.*; do
+    [[ -f "${dotenv}" && "${dotenv}" != *.example ]] && env_mask+=(-v "/dev/null:/work/$(basename "${dotenv}"):ro")
+  done
   log "building ${APP_NAME} ${version} for [${targets[*]}] in Docker"
   docker run --rm \
     -v "${ROOT}:/work" \
+    "${env_mask[@]}" \
     -v "${DOCKER_IMAGE}-hutch:/root/.hutch" \
     -e POSTHOG_API_KEY="${POSTHOG_API_KEY:-}" \
     -e HOME=/root \
@@ -252,9 +259,17 @@ console.log(m ? m[1].trim() : '');
 
   local files=()
   for f in "${out}"/*; do
-    [[ -f "$f" ]] && files+=("$f")
+    [[ -f "$f" && "$(basename "$f")" != "SHA256SUMS" ]] && files+=("$f")
   done
   [[ ${#files[@]} -eq 0 ]] && { echo "error: no release artifacts found in ${out}" >&2; exit 1; }
+
+  # Publish a checksum file next to the binaries so a downloader can verify them.
+  local sums="${out}/SHA256SUMS"
+  : > "${sums}"
+  for f in "${files[@]}"; do
+    ( cd "${out}" && sha256sum --binary "$(basename "$f")" ) >> "${sums}"
+  done
+  files+=("${sums}")
 
   log "publishing ${#files[@]} artifact(s) to GitHub release ${tag}"
   if gh release view "${tag}" >/dev/null 2>&1; then

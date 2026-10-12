@@ -93,6 +93,9 @@ fi
 mkdir -p "${APP_DIR}/.tmp"
 STAGE_DIR="$(mktemp -d -p "${APP_DIR}/.tmp" deb-pkg.XXXXXX)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
+# mktemp makes the staging root 0700; the package root must be world-readable (0755),
+# or unpacking the .deb onto / would make / owner-only.
+chmod 0755 "${STAGE_DIR}"
 
 echo "[DEB BUILD] Staging tree: ${STAGE_DIR}"
 

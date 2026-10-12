@@ -14,7 +14,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DATA_DIR, LEGACY_DATA_DIR, getDatabaseFile } from "./paths";
 
@@ -22,11 +22,29 @@ const SIDE_FILE = /\.sqlite-(shm|wal|journal)$/;
 
 let done = false;
 
+/**
+ * Closes a directory to everyone but its owner (mode 0700). The data
+ * directory holds the database with the API keys in plain text and the logs;
+ * the files inside keep the default mode, so the directory is what stops
+ * another account on the computer from reading them. Applied on every start:
+ * earlier releases and the desktop shell (which may create `logs/` first)
+ * made it with the default mode. Windows keeps `%APPDATA%` per user already.
+ */
+function restrictToOwner(dir: string): void {
+  if (process.platform === "win32") return;
+  try {
+    if ((statSync(dir).mode & 0o077) !== 0) chmodSync(dir, 0o700);
+  } catch {
+    // A file system without modes, or a directory we do not own: leave it as it is.
+  }
+}
+
 /** Creates `DATA_DIR` and imports the old data directory into it on the first run. Idempotent. */
 export function ensureDataDir(): string | undefined {
   if (done) return undefined;
   done = true;
   mkdirSync(DATA_DIR, { recursive: true });
+  restrictToOwner(DATA_DIR);
 
   const dbFile = getDatabaseFile();
   if (existsSync(dbFile) || !LEGACY_DATA_DIR) return undefined;

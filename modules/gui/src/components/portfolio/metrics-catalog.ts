@@ -106,8 +106,9 @@ const METRIC_ICONS: Record<string, LucideIcon> = {
 
 export const METRIC_ICON_NAMES: readonly string[] = Object.keys(METRIC_ICONS);
 
+/** Own keys only: a manifest may name `constructor`, which a plain lookup resolves to `Object` and React cannot render. */
 export function getMetricIcon(name: string): LucideIcon {
-  return METRIC_ICONS[name] ?? Gauge;
+  return Object.hasOwn(METRIC_ICONS, name) ? METRIC_ICONS[name] : Gauge;
 }
 
 /** Tailwind text color class of each design accent. */

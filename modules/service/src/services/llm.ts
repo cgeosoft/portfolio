@@ -8,7 +8,7 @@
  * given by the caller win over the settings, which win over the defaults.
  */
 
-import { loadConfig } from "../config.js";
+import { isSameServer, loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
@@ -81,6 +81,30 @@ const REQUEST_TIMEOUT_MS = 120_000;
 
 /** The CLI starts a fresh session per request, so it gets more time than an HTTP call. */
 const CLAUDE_CLI_TIMEOUT_MS = 300_000;
+
+/** A request with the caller's own signal (a report stream) lives at most as long as its session, 15 minutes (portfolio-report.ts). */
+const CALLER_SIGNAL_LIMIT_MS = 15 * 60_000;
+
+/** The caller's signal capped at the session lifetime, else the request's own limit: a stalled server never holds a request forever. */
+function requestSignal(signal: AbortSignal | undefined, limitMs: number): AbortSignal {
+  return signal ? AbortSignal.any([signal, AbortSignal.timeout(CALLER_SIGNAL_LIMIT_MS)]) : AbortSignal.timeout(limitMs);
+}
+
+/** Only http(s) servers: Bun's fetch also reads `file:` and `data:` URLs, and a base URL can come from a request. */
+function isHttpUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** A provider's error body as one short line: some echo the request back, some send a whole HTML page. */
+function shortDetail(body: string): string {
+  const line = body.replace(/\s+/g, " ").trim();
+  return line.length > 300 ? `${line.slice(0, 299)}…` : line;
+}
 
 // ── URLs, headers and reply shapes ──────────────────────────────────────────
 
@@ -248,7 +272,9 @@ export class LlmService {
   /**
    * Merges request options, the stored settings and the defaults. The single
    * `llmModel` / `llmApiKey` / `llmBaseUrl` settings mirror the provider
-   * chosen in Settings; the per-provider maps hold the other one.
+   * chosen in Settings; the per-provider maps hold the other one. The stored
+   * key goes only to the stored server: options that name another server
+   * (Test, model list) must carry their own key.
    */
   public resolve(options: LlmChatOptions = {}): LlmTarget {
     const config = loadConfig();
@@ -257,14 +283,15 @@ export class LlmService {
     const stored = (map: Record<string, string> | undefined) => map?.[provider]?.trim() || "";
     const current = (value: string | undefined) => (isCurrent ? value?.trim() : "");
     const isCli = provider === "claude-cli";
+    const storedUrl = stored(config.llmBaseUrls) || current(config.llmBaseUrl) || DEFAULT_OPENAI_COMPATIBLE_URL;
+    const baseUrl = (options.baseUrl?.trim() || storedUrl).replace(/\/+$/, "");
+    const storedKey = isSameServer(baseUrl, storedUrl) ? stored(config.llmApiKeys) || current(config.llmApiKey) || "" : "";
     return {
       provider,
       name: PROVIDER_NAMES[provider],
       model: options.model?.trim() || stored(config.llmModels) || current(config.llmModel) || "",
-      apiKey: isCli ? "" : options.apiKey?.trim() || stored(config.llmApiKeys) || current(config.llmApiKey) || "",
-      baseUrl: isCli
-        ? ""
-        : (options.baseUrl?.trim() || stored(config.llmBaseUrls) || current(config.llmBaseUrl) || DEFAULT_OPENAI_COMPATIBLE_URL).replace(/\/+$/, ""),
+      apiKey: isCli ? "" : options.apiKey?.trim() || storedKey,
+      baseUrl: isCli ? "" : baseUrl,
       temperature: options.temperature ?? config.llmTemperature ?? 0.3,
     };
   }
@@ -291,13 +318,14 @@ export class LlmService {
     if (target.provider === "claude-cli") {
       return claudeCliComplete(messages, {
         model: target.model,
-        signal: options.signal ?? AbortSignal.timeout(CLAUDE_CLI_TIMEOUT_MS),
+        signal: requestSignal(options.signal, CLAUDE_CLI_TIMEOUT_MS),
         onChunk,
       });
     }
 
+    if (!isHttpUrl(target.baseUrl)) throw new Error(`${target.name} server URL must start with http:// or https://`);
     if (!target.model) target.model = await this.detectServerModel(target);
-    const signal = options.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    const signal = requestSignal(options.signal, REQUEST_TIMEOUT_MS);
     const shapeKey = `${target.baseUrl}\n${target.model}`;
     let shape = LlmService.learnedShapes.get(shapeKey) ?? requestShapeFor(target.model);
     const send = (s: RequestShape) =>
@@ -320,7 +348,7 @@ export class LlmService {
     for (let attempt = 0; !res.ok; attempt++) {
       const detail = await res.text().catch(() => "");
       const retry = res.status === 400 && attempt === 0 ? shapeAfterRejection(shape, detail) : null;
-      if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${detail}`);
+      if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
       appLogger.logStep("warning", "llm", "chat", "Model rejected a request field, retrying without it", undefined, {
         model: target.model || "default",
         temperature: retry.temperature,
@@ -338,7 +366,7 @@ export class LlmService {
     }
     if (!res.body) throw new Error(`No response body returned from ${target.name}`);
     let full = "";
-    await readLines(res.body, options.signal, (line) => {
+    await readLines(res.body, signal, (line) => {
       const delta = streamDelta(line);
       if (!delta) return;
       full += delta;
@@ -376,6 +404,7 @@ export class LlmService {
   public async getAvailableModels(provider: string, baseUrl?: string, apiKey?: string): Promise<string[]> {
     const target = this.resolve({ provider, baseUrl, apiKey });
     if (target.provider === "claude-cli") return [...CLAUDE_CLI_MODELS];
+    if (!isHttpUrl(target.baseUrl)) return [];
     try {
       const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
         headers: requestHeaders(target.apiKey),
@@ -402,11 +431,7 @@ export class LlmService {
     if (step === "config") {
       // The model may stay empty: the server or the CLI then picks its default.
       if (isCli) return { success: true, message: `Claude CLI with ${target.model ? `model "${target.model}"` : "its default model"}.` };
-      try {
-        new URL(target.baseUrl);
-      } catch {
-        return fail(`Invalid server URL format: ${target.baseUrl}`);
-      }
+      if (!isHttpUrl(target.baseUrl)) return fail(`Invalid server URL format: ${target.baseUrl}. Use an http:// or https:// address.`);
       return { success: true, message: "Configuration parameters and credentials validated." };
     }
 
@@ -417,6 +442,7 @@ export class LlmService {
         if (!status.installed || !status.loggedIn) return fail(status.message);
         return { success: true, message: status.message, latencyMs: Date.now() - started };
       }
+      if (!isHttpUrl(target.baseUrl)) return fail(`Invalid server URL format: ${target.baseUrl}. Use an http:// or https:// address.`);
       const headers = requestHeaders(target.apiKey);
       let res: Response | undefined;
       let failure = "";

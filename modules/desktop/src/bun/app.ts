@@ -10,6 +10,8 @@ export const APP = {
   bundleName: "Portfolio",
   identifier: "cgeosoft.portfolio.desktop",
   description: "Personal Investment Tracker",
+  /** Vendor website origin. The window may navigate here (the embedded Terms page is an iframe on it). Keep in step with WEBPAGE_URL in modules/shared/src/brand.ts. */
+  websiteOrigin: "https://portfolio.cgeosoft.com",
   /** `name` of the root `package.json`; marks the checkout root for a development run. */
   rootPackageName: "portfolio",
   /** Folder of the user data directory. Same as `APP_DIR_NAME` in `modules/service/src/paths.ts`. */

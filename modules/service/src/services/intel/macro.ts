@@ -469,12 +469,15 @@ const snapshotInFlight = new Map<string, Promise<MacroSnapshot>>();
 /**
  * Every macro piece in one call, for the Markets card, reports and the
  * assistant. `baseCurrency` defaults to the settings; it picks the calendar
- * currencies and the risk premium country. Kept in memory for 10 minutes.
+ * currencies and the risk premium country. Kept in memory for 10 minutes,
+ * for a three-letter currency code only: the value can come from a query
+ * string, and other values must not grow the cache.
  */
 export async function getMacroSnapshot(deps: MacroDeps, options: { baseCurrency?: string; forceFresh?: boolean } = {}): Promise<MacroSnapshot> {
   const baseCurrency = (options.baseCurrency || loadConfig().baseCurrency || "USD").trim().toUpperCase();
   const forceFresh = Boolean(options.forceFresh);
-  const cached = snapshotCache.get(baseCurrency);
+  const cacheable = /^[A-Z]{3}$/.test(baseCurrency);
+  const cached = cacheable ? snapshotCache.get(baseCurrency) : undefined;
   if (!forceFresh && cached && Date.now() - cached.at < SNAPSHOT_TTL_MS) return cached.data;
   const pending = snapshotInFlight.get(baseCurrency);
   if (pending) return pending;
@@ -489,7 +492,7 @@ export async function getMacroSnapshot(deps: MacroDeps, options: { baseCurrency?
     ]);
     const riskFreeRate = await getRiskFreeRate(deps, yieldCurve);
     const data: MacroSnapshot = { asOf: new Date().toISOString(), baseCurrency, yieldCurve, indicators, calendar, riskPremium, sectors, riskFreeRate };
-    snapshotCache.set(baseCurrency, { at: Date.now(), data });
+    if (cacheable) snapshotCache.set(baseCurrency, { at: Date.now(), data });
     return data;
   })().finally(() => snapshotInFlight.delete(baseCurrency));
   snapshotInFlight.set(baseCurrency, run);

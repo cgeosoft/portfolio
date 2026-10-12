@@ -571,12 +571,10 @@ export class PortfolioSuggestionService {
     const oldSymbols = existing.filter((s) => s.status === "active" && !findHolding(data, s.symbol)).map((s) => s.symbol);
     const allQuotes = [...quotes, ...(await this.quotesFor(oldSymbols, baseCurrency))];
     const merged = mergeSuggestions(portfolioId, existing, parsed.proposals, (symbol) => marketForSymbol(symbol, holdings, allQuotes), totalValueOf(data), now);
-    for (const s of merged.suggestions) suggestionRepo.upsert(s);
-    suggestionRepo.pruneHistory(portfolioId);
 
     const notes = [...parsed.notes];
     if (merged.skippedDismissed > 0) notes.push(`${merged.skippedDismissed} dismissed ${merged.skippedDismissed === 1 ? "suggestion was" : "suggestions were"} left out.`);
-    suggestionRepo.saveRun({
+    suggestionRepo.saveGeneration(merged.suggestions, {
       portfolioId,
       generatedAt: now.toISOString(),
       txFingerprint: fingerprint,

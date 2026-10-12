@@ -22,6 +22,8 @@ import type { MetricRuntime } from "./runtime.js";
 export const MAX_MODULE_BYTES = 2 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 20_000;
 const PREVIEW_TTL_MS = 10 * 60 * 1000;
+/** Previews kept for a later install. Each one holds the module bytes. */
+const MAX_PREVIEWS = 8;
 
 interface Fetched {
   url: string;
@@ -96,7 +98,7 @@ export class MetricInstaller {
   /** Download and validate everything without installing. The result is kept for a later install. */
   async preview(rawUrl: string): Promise<PreviewMetricInstallResponse> {
     const fetched = await this.fetchAndValidate(rawUrl);
-    this.previews.set(fetched.url, fetched);
+    this.keepPreview(fetched);
 
     const response: PreviewMetricInstallResponse = {
       url: fetched.url,
@@ -114,12 +116,19 @@ export class MetricInstaller {
     return response;
   }
 
-  /** Install a previously previewed URL. Fetches again when the preview expired. */
-  async install(rawUrl: string, grantedScopes: readonly MetricScope[]): Promise<string> {
+  /**
+   * Install a previously previewed URL. Fetches again when the preview expired.
+   * `expectedSha256` is the module hash the user saw in the preview; the
+   * install fails when the module behind the URL changed since.
+   */
+  async install(rawUrl: string, grantedScopes: readonly MetricScope[], expectedSha256?: string): Promise<string> {
     const url = parseHttpUrl(rawUrl, "Manifest URL").toString();
     let fetched = this.previews.get(url);
     if (!fetched || Date.now() - fetched.fetchedAt > PREVIEW_TTL_MS) {
       fetched = await this.fetchAndValidate(url);
+    }
+    if (expectedSha256 !== undefined && fetched.sha256 !== expectedSha256.trim().toLowerCase()) {
+      throw new Error("The module changed since the preview. Fetch it again and review it before you install.");
     }
     const { manifest } = fetched;
 
@@ -193,14 +202,29 @@ export class MetricInstaller {
     }
 
     // Compile in the sandbox: rejects forbidden imports, missing exports, and other ABI versions.
+    // The probe runs the module's start code, so it gets the module's own time budget.
     const probeId = `preview:${manifest.id}:${sha256.slice(0, 12)}`;
     try {
-      const abi = await this.runtime.load(probeId, bytes);
+      const abi = await this.runtime.load(probeId, bytes, manifest.runtime);
       if (abi !== manifest.abi) throw new Error(`Module targets ABI ${abi}, manifest declares abi ${manifest.abi}`);
     } finally {
-      await this.runtime.unload(probeId);
+      await this.runtime.unload(probeId, true);
     }
 
     return { url: manifestUrl.toString(), manifestYaml, manifest, bytes, sha256, fetchedAt: Date.now() };
+  }
+
+  /** Keep a preview for the install that may follow. Expired previews go first, then the oldest past the cap. */
+  private keepPreview(fetched: Fetched): void {
+    const now = Date.now();
+    for (const [url, entry] of this.previews) {
+      if (now - entry.fetchedAt > PREVIEW_TTL_MS) this.previews.delete(url);
+    }
+    this.previews.delete(fetched.url);
+    this.previews.set(fetched.url, fetched);
+    for (const url of this.previews.keys()) {
+      if (this.previews.size <= MAX_PREVIEWS) break;
+      this.previews.delete(url);
+    }
   }
 }

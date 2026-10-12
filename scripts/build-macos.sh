@@ -14,6 +14,9 @@ ASSETS_DIR="${DESKTOP_DIR}/assets"
 APP_ID="portfolio"
 ELECTROBUN_VERSION="2.0.1"
 MAC_CORE_URL="https://github.com/blackboardsh/electrobun/releases/download/v${ELECTROBUN_VERSION}/electrobun-core-darwin-arm64.tar.gz"
+# SHA-256 of electrobun-core-darwin-arm64 v2.0.1. Taken from this repo's build cache; confirm it
+# against the official release before trusting it, then bump it when ELECTROBUN_VERSION changes.
+MAC_CORE_SHA256="2d10d46a7716e3fafee9a9fecb13eb8d78531e312fd0d792db85a1d7899a12b2"
 CACHE_DIR="${APP_DIR}/.tmp/cache"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 CUSTOM_VERSION=""
@@ -63,6 +66,15 @@ MAC_CORE_TAR="${CACHE_DIR}/electrobun-core-darwin-arm64-v${ELECTROBUN_VERSION}.t
 if [[ ! -f "${MAC_CORE_TAR}" ]]; then
   echo "[MAC BUILD] Downloading Electrobun macOS runtime..."
   curl -fsSL -o "${MAC_CORE_TAR}" "${MAC_CORE_URL}"
+fi
+
+# Verify the runtime (fresh download or cache hit) before it ships inside the app.
+if ! echo "${MAC_CORE_SHA256}  ${MAC_CORE_TAR}" | sha256sum -c - >/dev/null 2>&1; then
+  echo "Error: checksum mismatch for ${MAC_CORE_TAR}" >&2
+  echo "  expected ${MAC_CORE_SHA256}" >&2
+  echo "  actual   $(sha256sum "${MAC_CORE_TAR}" | cut -d' ' -f1)" >&2
+  rm -f "${MAC_CORE_TAR}"
+  exit 1
 fi
 
 mkdir -p "${APP_DIR}/.tmp"

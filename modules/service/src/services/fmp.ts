@@ -734,6 +734,9 @@ export class FmpService {
   /**
    * End-of-day bars, oldest first. `from`/`to` are "YYYY-MM-DD"; FMP picks
    * its default window when both are omitted. Null when FMP has no answer.
+   * Without `to`, FMP is asked from the first of the month of `from` and the
+   * earlier bars are dropped: the cache key then changes once a month, not
+   * every day.
    */
   public async getEodChart(
     fmpSymbol: string,
@@ -744,13 +747,15 @@ export class FmpService {
     const adjustment = options.adjustment ?? "split";
     const path =
       adjustment === "dividend" ? "/historical-price-eod/dividend-adjusted" : adjustment === "none" ? "/historical-price-eod/non-split-adjusted" : "/historical-price-eod/full";
-    const rows = await this.get<Array<Record<string, unknown>>>(path, { symbol, from: options.from ?? undefined, to: options.to }, { ttlMs: FMP_TTL.chart, forceFresh: options.forceFresh });
+    const from = options.from ?? undefined;
+    const askFrom = from && !options.to ? `${from.slice(0, 7)}-01` : from;
+    const rows = await this.get<Array<Record<string, unknown>>>(path, { symbol, from: askFrom, to: options.to }, { ttlMs: FMP_TTL.chart, forceFresh: options.forceFresh });
     if (!Array.isArray(rows)) return null;
     const bars: FmpEodBar[] = [];
     for (const r of rows) {
       const date = typeof r.date === "string" ? r.date.slice(0, 10) : "";
       const close = num(r.close) ?? num(r.adjClose);
-      if (!date || close === undefined) continue;
+      if (!date || close === undefined || (from !== undefined && date < from)) continue;
       bars.push({
         date,
         open: num(r.open) ?? num(r.adjOpen) ?? close,

@@ -1,4 +1,18 @@
-export { fmtCurrency, formatMoney, fmtPercent } from "portfolio-shared/format";
+export { fmtCurrency, formatMoney, fmtPercent, numberFormat } from "portfolio-shared/format";
+
+/**
+ * One CSV cell (RFC 4180 quoting). Text that starts with `=`, `+`, `-`, `@`, a tab
+ * or a carriage return gets a leading apostrophe, so a spreadsheet shows it instead
+ * of running it as a formula: names and symbols come from imported CSV files.
+ * Numbers stay as they are, negative amounts included.
+ */
+export function escapeCsvField(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  let str = String(val);
+  if (typeof val === "string" && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+  if (/[",\r\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
 
 export function getDeltaColorClass(val: number | undefined): string {
   if (val === undefined || isNaN(val) || Math.abs(val) < 0.001) return "text-slate-400";
@@ -153,24 +167,29 @@ export function maskFinancialValues(text: string | undefined): string {
   if (!text) return "";
   let result = text;
   // An amount starts with a digit and stays on one line; a code inside a symbol (BTC-USD) is no currency.
+  // Amounts take either separator (1,234.56 and 1.234,56), so no cents stay visible.
+  // The patterns stay linear on long runs in model output: a run of spaces is matched by one
+  // quantifier at a time, and rules 1, 2 and 4 start only at the edge of a run of spaces and
+  // at the first digit of a number. Overlapping quantifiers backtrack polynomially: 500 spaces
+  // after "valuation" took seconds.
   // 0a. Transaction quantities in the prompt line format "[BUY] 0.008 BTC-USD", "[SELL] 1,200 VWCE.DE"
   result = result.replace(/(\[[A-Za-z][\w -]*\][ \t]+)[+−-]?\d+(?:,\d+)*(?:\.\d+)?(?:e[+-]?\d+)?(?=[ \t]+\S)/g, "$1••••");
   // 0b. Share and unit counts in free text: "6 shares", "0.5 units"
-  result = result.replace(/(?<![\w.,])\d+(?:,\d+)*(?:\.\d+)?([ \t]+(?:shares?|units?)\b)/gi, "••••$1");
+  result = result.replace(/(?<![\w.,])\d+(?:[.,]\d+)*([ \t]+(?:shares?|units?)\b)/gi, "••••$1");
   // 1. Preceding currency symbols: $1,234.56, €50,000, +$100, -$50.20, £50k, € 100
-  result = result.replace(/([+$−-]?[ \t]*[$€£¥])[ \t]*\d+(?:,\d+)*(?:\.\d+)?(?:[ \t]*[kKmMbBtT]\b)?/g, "$1••••");
-  // 2. Trailing currency symbols: 1234.56 €, 500 $
-  result = result.replace(/([+$−-]?[ \t]*)\d+(?:,\d+)*(?:\.\d+)?[ \t]*([$€£¥])/g, "$1•••• $2");
+  result = result.replace(/(?<![ \t])([+$−-]?[ \t]*[$€£¥])[ \t]*\d+(?:[.,]\d+)*(?:[ \t]*[kKmMbBtT]\b)?/g, "$1••••");
+  // 2. Trailing currency symbols: 1234.56 €, 500 $, 1.234,56 €
+  result = result.replace(/(?<![ \t])([+$−-]?[ \t]*)(?<!\d[.,]?)\d+(?:[.,]\d+)*[ \t]*([$€£¥])/g, "$1•••• $2");
   // 3. Preceding currency code and amounts: EUR12,345.67, USD 50,000, EUR: 1,800, Val: EUR1800
-  result = result.replace(/(?<![\w-])(USD|EUR|GBP|CHF|CAD|AUD|JPY)[ \t]*([:=]?)[ \t]*[+$−-]?[ \t]*\d+(?:,\d+)*(?:\.\d+)?(?:[ \t]*[kKmMbBtT]\b)?/g, "$1$2 ••••");
-  // 4. Amounts followed by currency code: 150.00 USD, 1,200 EUR
-  result = result.replace(/([+$−-]?[ \t]*)\d+(?:,\d+)*(?:\.\d+)?[ \t]*(USD|EUR|GBP|CHF|CAD|AUD|JPY)\b/g, "$1•••• $2");
+  result = result.replace(/(?<![\w-])(USD|EUR|GBP|CHF|CAD|AUD|JPY)[ \t]*(?:([:=])[ \t]*)?(?:[+$−-][ \t]*)?\d+(?:[.,]\d+)*(?:[ \t]*[kKmMbBtT]\b)?/g, "$1$2 ••••");
+  // 4. Amounts followed by currency code: 150.00 USD, 1,200 EUR, 3.200,50 EUR
+  result = result.replace(/(?<![ \t])([+$−-]?[ \t]*)(?<!\d[.,]?)\d+(?:[.,]\d+)*[ \t]*(USD|EUR|GBP|CHF|CAD|AUD|JPY)\b/g, "$1•••• $2");
   // 5. Swiss Franc: Fr 1,200.50 or Fr. 500
-  result = result.replace(/\b(Fr\.?)[ \t]*[+$−-]?[ \t]*\d+(?:,\d+)*(?:\.\d+)?/g, "$1 ••••");
-  // 6. Price expressions: @ 150.25, @ $150
-  result = result.replace(/(@[ \t]*(?:[$€£¥]|(?:USD|EUR|GBP|CHF)[ \t]*)?)[ \t]*\d+(?:,\d+)*(?:\.\d+)?/g, "$1••••");
+  result = result.replace(/\b(Fr\.?)[ \t]*(?:[+$−-][ \t]*)?\d+(?:[.,]\d+)*/g, "$1 ••••");
+  // 6. Price expressions: @ 150.25, @ $150, @ $ 150
+  result = result.replace(/(@[ \t]*(?:[$€£¥]|(?:USD|EUR|GBP|CHF)[ \t]*)?)(?:(?<=[$€£¥])[ \t]*)?\d+(?:[.,]\d+)*/g, "$1••••");
   // 7. Valuation and balance phrases: e.g. "portfolio value of 15000"
-  result = result.replace(/\b(valuation|balance|cost basis|market value|portfolio value)[ \t]*(?:of|is|stands at)?[ \t]*[:=]?[ \t]*([+$−-]?)[ \t]*\d+(?:,\d+)*(?:\.\d+)?/gi, "$1 $2••••");
+  result = result.replace(/\b(valuation|balance|cost basis|market value|portfolio value)[ \t]*(?:(?:of|is|stands at)[ \t]*)?(?:[:=][ \t]*)?(?:([+$−-])[ \t]*)?\d+(?:[.,]\d+)*/gi, "$1 $2••••");
   return result;
 }
 

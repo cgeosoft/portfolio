@@ -1,6 +1,9 @@
 import { getDatabase } from "./database.js";
 import { appLogger } from "../logger.js";
 
+/** How long `pruneExpired()` keeps an expired entry: providers fall back to it when a call fails. */
+export const STALE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+
 export interface CacheEntry<T = unknown> {
   key: string;
   data: T;
@@ -53,9 +56,23 @@ export function set<T = unknown>(key: string, data: T, ttlMs: number): void {
       [key, serialized, now, expiresAt],
     );
   } catch (err) {
-    appLogger.logStep("warning", "db", "market_cache_set", `Failed to cache key "${key}"`, undefined, {
+    // The key can name a symbol (AGENTS.md rule 3), so the log names its kind only.
+    appLogger.logStep("warning", "db", "market_cache_set", `Failed to cache a "${key.split(":", 1)[0]}" entry`, undefined, {
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+}
+
+/**
+ * Expiry of an entry in ms since the epoch, or null when there is none.
+ * Reads no data, so a large entry (a portfolio) is not parsed.
+ */
+export function getExpiresAt(key: string): number | null {
+  try {
+    const row = getDatabase().query("SELECT expiresAt FROM market_cache WHERE key = ?").get(key) as { expiresAt: number } | null;
+    return row ? row.expiresAt : null;
+  } catch {
+    return null;
   }
 }
 
@@ -68,23 +85,33 @@ export function deleteKey(key: string): void {
   }
 }
 
-/** Removes every entry whose key starts with `prefix` (a portfolio's cached data in every currency). */
+/**
+ * Removes every entry whose key starts with `prefix` (a portfolio's cached
+ * data in every currency). The key range uses the primary key index, where
+ * LIKE would scan the whole table. Prefixes are ASCII.
+ */
 export function deleteByPrefix(prefix: string): number {
+  if (!prefix) return 0;
   try {
-    const db = getDatabase();
-    const escaped = prefix.replace(/[\\%_]/g, (c) => `\\${c}`);
-    return db.run("DELETE FROM market_cache WHERE key LIKE ? ESCAPE '\\'", [`${escaped}%`]).changes;
+    const end = prefix.slice(0, -1) + String.fromCharCode(prefix.charCodeAt(prefix.length - 1) + 1);
+    return getDatabase().run("DELETE FROM market_cache WHERE key >= ? AND key < ?", [prefix, end]).changes;
   } catch {
     return 0;
   }
 }
 
-export function clearExpired(): void {
+/**
+ * Deletes the entries that expired more than `graceMs` ago and returns how
+ * many. Some keys carry a date (the `from` of an FMP chart, a Finnhub news
+ * window), so without this the table grows every day. `portfolio:` entries
+ * stay: there is one per portfolio and currency, and it shows the last data
+ * at start.
+ */
+export function pruneExpired(graceMs = STALE_GRACE_MS): number {
   try {
-    const db = getDatabase();
-    db.run("DELETE FROM market_cache WHERE expiresAt < ?", [Date.now()]);
+    return getDatabase().run("DELETE FROM market_cache WHERE expiresAt < ? AND key NOT LIKE 'portfolio:%'", [Date.now() - graceMs]).changes;
   } catch {
-    // ignore
+    return 0;
   }
 }
 

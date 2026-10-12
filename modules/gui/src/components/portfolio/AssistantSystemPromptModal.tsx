@@ -1,8 +1,65 @@
 import { useState, useEffect, useCallback } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import type { Components } from "react-markdown";
 import { Terminal, Copy, CheckCheck, X, Bot, AlertCircle, Loader2, FileCode } from "lucide-react";
+import { SafeMarkdown } from "../common/SafeMarkdown";
+
+/** Styles of the system prompt view; module level, so the elements are not remounted on every render. */
+const PROMPT_MARKDOWN: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-xs font-bold text-slate-200 mt-2 mb-1 uppercase tracking-wider">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-xs font-semibold text-slate-300 mt-1.5 mb-0.5">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p className="my-1.5 leading-relaxed text-slate-300 text-xs whitespace-pre-wrap">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="text-slate-300 text-xs">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-bold text-slate-100">{children}</strong>
+  ),
+  code: ({ children }) => (
+    <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
+      {children}
+    </code>
+  ),
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-2 border border-slate-800 rounded">
+      <table className="w-full text-left text-[11px] border-collapse">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="bg-slate-900/80 px-2 py-1 border-b border-slate-800 font-semibold text-slate-300">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-2 py-1 border-b border-slate-800/60 text-slate-300 font-mono">
+      {children}
+    </td>
+  ),
+};
 
 interface AssistantSystemPromptModalProps {
   isOpen: boolean;
@@ -163,78 +220,7 @@ export function AssistantSystemPromptModal({
               </div>
 
               <div className="flex-1 min-h-0 p-4 overflow-auto custom-scrollbar select-text prose prose-invert max-w-none space-y-1 text-xs">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeSanitize]}
-                  components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
-                        {children}
-                      </h1>
-                    ),
-                    h2: ({ children }) => (
-                      <h2 className="text-xs font-bold text-slate-200 mt-2 mb-1 uppercase tracking-wider">
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-xs font-semibold text-slate-300 mt-1.5 mb-0.5">
-                        {children}
-                      </h3>
-                    ),
-                    p: ({ children }) => (
-                      <p className="my-1.5 leading-relaxed text-slate-300 text-xs whitespace-pre-wrap">
-                        {children}
-                      </p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
-                        {children}
-                      </ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children }) => <li className="text-slate-300 text-xs">{children}</li>,
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
-                      >
-                        {children}
-                      </a>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-bold text-slate-100">{children}</strong>
-                    ),
-                    code: ({ children }) => (
-                      <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
-                        {children}
-                      </code>
-                    ),
-                    table: ({ children }) => (
-                      <div className="overflow-x-auto my-2 border border-slate-800 rounded">
-                        <table className="w-full text-left text-[11px] border-collapse">{children}</table>
-                      </div>
-                    ),
-                    th: ({ children }) => (
-                      <th className="bg-slate-900/80 px-2 py-1 border-b border-slate-800 font-semibold text-slate-300">
-                        {children}
-                      </th>
-                    ),
-                    td: ({ children }) => (
-                      <td className="px-2 py-1 border-b border-slate-800/60 text-slate-300 font-mono">
-                        {children}
-                      </td>
-                    ),
-                  }}
-                >
-                  {systemPrompt}
-                </ReactMarkdown>
+                <SafeMarkdown components={PROMPT_MARKDOWN}>{systemPrompt}</SafeMarkdown>
               </div>
             </div>
           )}

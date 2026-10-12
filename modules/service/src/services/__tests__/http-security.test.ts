@@ -30,13 +30,21 @@ describe("isAllowedOrigin", () => {
     expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000" }))).toBe(true);
   });
 
-  it("allows a loopback origin on another port (Vite dev server)", () => {
-    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://127.0.0.1:5173" }))).toBe(true);
-    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://localhost:5173" }))).toBe(true);
+  it("allows a loopback origin on another port in a development run (Vite dev server)", () => {
+    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://127.0.0.1:5173" }), true)).toBe(true);
+    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://localhost:5173" }), true)).toBe(true);
   });
 
-  it("allows an origin that matches the request host (a phone on the LAN)", () => {
-    expect(isAllowedOrigin(req("POST", { host: "192.168.1.10:5130", origin: "http://192.168.1.10:5130" }))).toBe(true);
+  it("rejects another port of the same host in the installed app (another program's page)", () => {
+    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://127.0.0.1:5173" }), false)).toBe(false);
+    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://localhost:4000" }), false)).toBe(false);
+    expect(isAllowedOrigin(req("POST", { host: "192.168.1.10:5130", origin: "http://192.168.1.10:8080" }), false)).toBe(false);
+  });
+
+  it("allows an origin that matches the request host and port (the window, a phone on the LAN)", () => {
+    expect(isAllowedOrigin(req("POST", { host: "127.0.0.1:4000", origin: "http://127.0.0.1:4000" }), false)).toBe(true);
+    expect(isAllowedOrigin(req("POST", { host: "192.168.1.10:5130", origin: "http://192.168.1.10:5130" }), false)).toBe(true);
+    expect(isAllowedOrigin(req("POST", { host: "MyPC.local:5130", origin: "http://mypc.local:5130" }), false)).toBe(true);
   });
 
   it("rejects a foreign origin, an opaque origin and garbage", () => {
@@ -65,17 +73,61 @@ describe("Router", () => {
     expect(refused?.status).toBe(403);
   });
 
-  it("gzips a large body only for a client that accepts it", async () => {
+  it("gzips a large body only for a remote client that accepts it", async () => {
     const router = build();
-    const plain = await router.handle(req("GET", { host: "127.0.0.1:4000" }, "http://127.0.0.1:4000/api/big"), "127.0.0.1");
+    const lan = "192.168.1.20";
+    const plain = await router.handle(req("GET", { host: "192.168.1.10:5130" }, "http://192.168.1.10:5130/api/big"), lan);
     expect(plain?.headers.get("Content-Encoding")).toBeNull();
-    const gz = await router.handle(req("GET", { host: "127.0.0.1:4000", "accept-encoding": "gzip, deflate, br" }, "http://127.0.0.1:4000/api/big"), "127.0.0.1");
+    const gz = await router.handle(req("GET", { host: "192.168.1.10:5130", "accept-encoding": "gzip, deflate, br" }, "http://192.168.1.10:5130/api/big"), lan);
     expect(gz?.headers.get("Content-Encoding")).toBe("gzip");
     const bytes = new Uint8Array(await gz!.arrayBuffer());
     const parsed = JSON.parse(Buffer.from(Bun.gunzipSync(bytes)).toString("utf-8")) as { items: unknown[] };
     expect(parsed.items.length).toBe(2000);
-    const small = await router.handle(req("GET", { host: "127.0.0.1:4000", "accept-encoding": "gzip" }, "http://127.0.0.1:4000/api/small"), "127.0.0.1");
+    const small = await router.handle(req("GET", { host: "192.168.1.10:5130", "accept-encoding": "gzip" }, "http://192.168.1.10:5130/api/small"), lan);
     expect(small?.headers.get("Content-Encoding")).toBeNull();
+  });
+
+  it("sends a large body uncompressed to the desktop window on loopback", async () => {
+    const router = build();
+    const res = await router.handle(req("GET", { host: "127.0.0.1:4000", "accept-encoding": "gzip, deflate, br" }, "http://127.0.0.1:4000/api/big"), "127.0.0.1");
+    expect(res?.headers.get("Content-Encoding")).toBeNull();
+    expect(((await res!.json()) as { items: unknown[] }).items.length).toBe(2000);
+  });
+
+  it("refuses a body over the route's limit, with or without a declared length", async () => {
+    const router = new Router();
+    router.post("/api/tiny", async (ctx) => ctx.body(64));
+    const text = JSON.stringify({ pin: "x".repeat(200) });
+    const declared = await router.handle(
+      new Request("http://127.0.0.1:4000/api/tiny", { method: "POST", headers: { host: "127.0.0.1:4000", "content-length": String(text.length) }, body: text }),
+      "127.0.0.1",
+    );
+    expect(declared?.status).toBe(413);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(text));
+        controller.close();
+      },
+    });
+    const chunked = await router.handle(
+      new Request("http://127.0.0.1:4000/api/tiny", { method: "POST", headers: { host: "127.0.0.1:4000" }, body: stream }),
+      "127.0.0.1",
+    );
+    expect(chunked?.status).toBe(413);
+    const ok = await router.handle(
+      new Request("http://127.0.0.1:4000/api/tiny", { method: "POST", headers: { host: "127.0.0.1:4000" }, body: JSON.stringify({ pin: "123456" }) }),
+      "127.0.0.1",
+    );
+    expect(await ok?.json()).toEqual({ pin: "123456" });
+  });
+
+  it("treats a loopback address as remote when the caller says so (the LAN listener)", async () => {
+    const router = new Router();
+    router.get("/api/where", (ctx) => ({ isLocal: ctx.isLocal }));
+    const window = await router.handle(req("GET", { host: "127.0.0.1:4000" }, "http://127.0.0.1:4000/api/where"), "127.0.0.1");
+    expect(await window?.json()).toEqual({ isLocal: true });
+    const lanPort = await router.handle(req("GET", { host: "127.0.0.1:5130" }, "http://127.0.0.1:5130/api/where"), "127.0.0.1", false);
+    expect(await lanPort?.json()).toEqual({ isLocal: false });
   });
 
   it("answers 400 for a malformed path parameter instead of crashing", async () => {

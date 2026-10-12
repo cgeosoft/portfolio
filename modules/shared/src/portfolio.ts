@@ -117,6 +117,8 @@ export interface PortfolioTransaction {
 
 export interface PortfolioReport {
   id: string;
+  /** The portfolio the report belongs to, as the service sends it. */
+  portfolioId?: string;
   createdAt: string;
   period: string;
   weekStartDate: string;
@@ -125,6 +127,7 @@ export interface PortfolioReport {
   title: string;
   summary: string;
   content: string;
+  /** The exact prompt; null in the reports list, which leaves it out (`GET /api/portfolios/:id/reports/:reportId/prompt`). */
   prompt?: string | null;
   metrics: {
     totalPortfolioValue: number;

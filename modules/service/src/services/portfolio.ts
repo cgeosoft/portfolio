@@ -26,12 +26,50 @@ import type {
   PortfolioSummary,
   PortfolioHistoricalPoint,
 } from "portfolio-shared/portfolio";
-import { loadConfig } from "../config.js";
+import type { DesktopConfig } from "portfolio-shared/config-types";
+import { loadConfig, updateConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
+
+/** The setting that aims an automation at one portfolio ("" runs it for every portfolio), with its switch. */
+const AUTOMATION_TARGETS = [
+  ["dailyBriefPortfolioId", "dailyBriefEnabled"],
+  ["weeklyAnalysisPortfolioId", "weeklyAnalysisEnabled"],
+  ["eventAlertsPortfolioId", "eventAlertsEnabled"],
+] as const;
+
+/** An error for a log line: the message can carry a symbol (AGENTS.md rule 3), the name cannot. */
+function errorName(err: unknown): string {
+  return err instanceof Error ? err.name : typeof err;
+}
+
+/**
+ * Puts a live price on the last point of a daily close series, as a
+ * provider's daily chart shows the current session. When the last close
+ * equals the quote's previous close and the price has moved, the last point
+ * is the previous session and the price starts a new point.
+ */
+function applyLiveClose(points: { date: string; close: number }[], quote: YahooQuote): void {
+  const last = points[points.length - 1];
+  const price = quote.regularMarketPrice;
+  if (!last || !(price > 0)) return;
+  const prev = quote.previousClose;
+  const previousSession = prev !== undefined && prev > 0 && Math.abs(last.close - prev) <= prev * 1e-6 && price !== prev;
+  if (!previousSession) {
+    last.close = price;
+    return;
+  }
+  let date = (quote.updatedAt || "").slice(0, 10);
+  if (!(date > last.date)) {
+    const next = new Date(`${last.date}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    date = next.toISOString().slice(0, 10);
+  }
+  points.push({ date, close: price });
+}
 
 /** A private holding has no public quote; it is valued at cost or at the user's price. */
 function isPrivateHolding(config: PortfolioHoldingConfig): boolean {
@@ -165,6 +203,12 @@ export class PortfolioService {
   private cache = new Map<string, { data: FinancialPortfolioData; timestamp: number }>();
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
   private cacheSweepHandle?: Timer;
+  /**
+   * Bumped by clearPortfolioCache, per portfolio and for all of them. A build
+   * that started before a bump read old transactions: it caches nothing.
+   */
+  private readonly generations = new Map<string, number>();
+  private allGeneration = 0;
 
   constructor(
     private readonly yahoo: IMarketDataProvider,
@@ -190,13 +234,19 @@ export class PortfolioService {
     }
   }
 
+  private generationOf(portfolioId: string): string {
+    return `${this.allGeneration}:${this.generations.get(portfolioId) ?? 0}`;
+  }
+
   public clearPortfolioCache(portfolioId?: string) {
     if (!portfolioId) {
+      this.allGeneration++;
       this.cache.clear();
       this.inFlightRequests.clear();
       marketCache.deleteByPrefix("portfolio:");
       return;
     }
+    this.generations.set(portfolioId, (this.generations.get(portfolioId) ?? 0) + 1);
     for (const key of this.cache.keys()) {
       if (key === portfolioId || key.startsWith(`${portfolioId}_`)) this.cache.delete(key);
     }
@@ -265,7 +315,7 @@ export class PortfolioService {
           "warning",
           "portfolio",
           "demo_quotes",
-          `Could not fetch live quotes for the demo portfolio (${err.message}); using reference prices`,
+          `Could not fetch live quotes for the demo portfolio (${errorName(err)}); using reference prices`,
         );
       }
 
@@ -330,6 +380,14 @@ export class PortfolioService {
     }
 
     portfolioRepo.deleteById(portfolioId);
+    // The rows go with the portfolio (ON DELETE CASCADE). An automation aimed at it is switched off:
+    // a cleared id means "every portfolio", and its pushes must not start to cover the others.
+    const cfg = loadConfig();
+    const reset: Partial<DesktopConfig> = {};
+    for (const [idKey, enabledKey] of AUTOMATION_TARGETS) {
+      if (cfg[idKey] === portfolioId) Object.assign(reset, { [idKey]: "", [enabledKey]: false });
+    }
+    if (Object.keys(reset).length > 0) updateConfig(reset);
     appLogger.logStep("success", "portfolio", "delete", "Deleted portfolio and all associated data", undefined, {
       portfolioId,
     });
@@ -404,7 +462,9 @@ export class PortfolioService {
       { portfolioId: portfolio.id, currency: effectiveCurrency },
     );
 
-    const computePromise = (async (): Promise<FinancialPortfolioData> => {
+    // Taken before the transactions are read: a clear during the build changes it.
+    const generation = this.generationOf(portfolio.id);
+    const computePromise: Promise<FinancialPortfolioData> = (async (): Promise<FinancialPortfolioData> => {
       const txTimer = appLogger.startTimer("portfolio", "get_transactions", "Fetching transactions");
       const transactions = await this.getTransactions(portfolio);
       txTimer.end("info", `Retrieved ${transactions.length} transactions`, { count: transactions.length });
@@ -415,14 +475,11 @@ export class PortfolioService {
       });
 
       const buildTimer = appLogger.startTimer("portfolio", "build_data", "Building portfolio metrics and market quotes");
+      let data: FinancialPortfolioData;
       try {
-        const data = await this.buildPortfolioData(portfolio, holdings, transactions, effectiveCurrency, forceFresh);
-        this.cache.set(cacheKey, { data, timestamp: Date.now() });
-        marketCache.set(`portfolio:${cacheKey}`, data, CACHE_TTL_MS);
-        buildTimer.end("success", "Portfolio built", { holdingsCount: data.holdings?.length ?? 0 });
-        return data;
+        data = await this.buildPortfolioData(portfolio, holdings, transactions, effectiveCurrency, forceFresh);
       } catch (err) {
-        buildTimer.fail(err, "Build failed");
+        buildTimer.end("error", `Build failed (${errorName(err)})`);
         // If calculation/network failed, check if we have a stale disk cache to use offline
         const staleDisk = marketCache.get<FinancialPortfolioData>(`portfolio:${cacheKey}`);
         if (staleDisk && staleDisk.data) {
@@ -431,8 +488,19 @@ export class PortfolioService {
         }
         throw err;
       }
+      if (this.generationOf(portfolio.id) !== generation) {
+        // The transactions, a manual price or the portfolio changed while this build ran, or the
+        // portfolio was deleted: the result is stale, so it is not cached and every caller gets a new build.
+        buildTimer.end("info", "The portfolio changed during the build; building it again");
+        return this.getPortfolioData(portfolio.id, baseCurrency, forceFresh);
+      }
+      this.cache.set(cacheKey, { data, timestamp: Date.now() });
+      marketCache.set(`portfolio:${cacheKey}`, data, CACHE_TTL_MS);
+      buildTimer.end("success", "Portfolio built", { holdingsCount: data.holdings?.length ?? 0 });
+      return data;
     })().finally(() => {
-      this.inFlightRequests.delete(cacheKey);
+      // A clear during the build may have let a newer build in under the same key: that one stays.
+      if (this.inFlightRequests.get(cacheKey) === computePromise) this.inFlightRequests.delete(cacheKey);
     });
 
     this.inFlightRequests.set(cacheKey, computePromise);
@@ -686,32 +754,52 @@ export class PortfolioService {
     const chartHistories: Map<string, { date: string; close: number }[]> = new Map();
     const quotesMap = new Map<string, YahooQuote>();
 
-    // 1. Fetch 1y daily chart first; extract quote from chart directly to avoid redundant 5d queries
+    // 1. A forced refresh asks only for fresh quotes, in batches (FMP: 50 symbols a call). Daily
+    // history changes once a day, so the charts below come from their caches and get the live price.
+    let liveQuotes = new Map<string, YahooQuote>();
+    if (forceFresh && publicSymbols.length > 0) {
+      const liveTimer = appLogger.startTimer("portfolio", "fetch_live_quotes", `Refreshing quotes for ${publicSymbols.length} symbols`);
+      try {
+        liveQuotes = await this.yahoo.getQuotes(publicSymbols, true);
+        liveTimer.end("info", `Quotes refreshed (${liveQuotes.size}/${publicSymbols.length})`);
+      } catch (e) {
+        liveTimer.end("warning", `Quote refresh failed (${errorName(e)})`);
+      }
+    }
+
+    // 2. The 1y daily chart of each symbol; without a live quote, its last candle gives the quote.
     const chartFetchTimer = appLogger.startTimer(
       "portfolio",
       "fetch_charts",
       `Fetching 1y daily charts for ${publicSymbols.length} symbols`,
     );
     await mapWithConcurrencyLimit(publicSymbols, 8, async (sym) => {
+      const live = liveQuotes.get(sym);
+      if (live) quotesMap.set(sym, live);
       try {
-        const chart = await this.yahoo.getChart(sym, "1y", "1d", forceFresh);
+        const chart = await this.yahoo.getChart(sym, "1y", "1d");
         const points = chart?.candles?.map((c) => ({ date: c.date, close: c.close })) || [];
+        if (live) applyLiveClose(points, live);
         chartHistories.set(sym, points);
         individualCharts[sym] = points;
 
-        const extracted = extractQuoteFromChart(chart);
-        if (extracted) {
-          quotesMap.set(sym, extracted);
+        if (live) {
+          // The instrument type refines the asset type; an FMP quote has none, a Yahoo chart does.
+          if (!live.instrumentType && chart?.instrumentType) quotesMap.set(sym, { ...live, instrumentType: chart.instrumentType });
+        } else {
+          const extracted = extractQuoteFromChart(chart);
+          if (extracted) quotesMap.set(sym, extracted);
         }
       } catch (e) {
-        appLogger.logStep("warning", "portfolio", "chart_fetch_error", `Chart fetch failed for one symbol: ${e}`);
+        appLogger.logStep("warning", "portfolio", "chart_fetch_error", `Chart fetch failed for one symbol (${errorName(e)})`);
         chartHistories.set(sym, []);
         individualCharts[sym] = [];
       }
     });
-    chartFetchTimer.end("info", `Completed charts fetch (${quotesMap.size}/${publicSymbols.length} quotes extracted)`);
+    chartFetchTimer.end("info", `Completed charts fetch (${quotesMap.size}/${publicSymbols.length} quotes)`);
 
-    // 2. For any symbols where 1y chart didn't yield a quote, fall back to getQuotes (checks SQLite cache first)
+    // 3. Symbols still without a quote: the quote caches, then the providers. A forced refresh
+    // already asked the providers for every symbol above, so this pass does not force again.
     const missingSymbols = publicSymbols.filter((sym) => !quotesMap.has(sym));
     if (missingSymbols.length > 0) {
       const fallbackTimer = appLogger.startTimer(
@@ -720,13 +808,13 @@ export class PortfolioService {
         `Fetching fallback quotes for ${missingSymbols.length} symbols`,
       );
       try {
-        const fallbackQuotes = await this.yahoo.getQuotes(missingSymbols, forceFresh);
+        const fallbackQuotes = await this.yahoo.getQuotes(missingSymbols);
         for (const [sym, q] of fallbackQuotes) {
           quotesMap.set(sym, q);
         }
         fallbackTimer.end("info", `Fallback quotes resolved (${fallbackQuotes.size}/${missingSymbols.length})`);
       } catch (e) {
-        fallbackTimer.fail(e, "Fallback quotes fetch failed");
+        fallbackTimer.end("error", `Fallback quotes fetch failed (${errorName(e)})`);
         // Continue with available quotes or transaction cost basis
       }
     }
@@ -1326,10 +1414,7 @@ export class PortfolioService {
       }
 
       if (!isDryRun) {
-        if (toSaveNew.length > 0) {
-          txRepo.bulkCreate(toSaveNew as any);
-        }
-        txRepo.bulkUpdate(toSaveUpdate);
+        txRepo.saveImport(toSaveNew, toSaveUpdate);
         if (toSaveNew.length > 0 || toSaveUpdate.length > 0) {
           this.clearPortfolioCache(portfolio.id);
         }

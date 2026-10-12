@@ -120,6 +120,15 @@ export function saveRun(run: Omit<SuggestionRunRow, "notes"> & { notes: string[]
   );
 }
 
+/** Stores one generation in one transaction: the changed rows, the trimmed history and the run. */
+export function saveGeneration(changed: readonly PortfolioSuggestion[], run: Omit<SuggestionRunRow, "notes"> & { notes: string[] }): void {
+  getDatabase().transaction(() => {
+    for (const s of changed) upsert(s);
+    pruneHistory(run.portfolioId);
+    saveRun(run);
+  })();
+}
+
 /**
  * Changes when a transaction is added, edited, imported or deleted. Price
  * moves do not change it, so they never mark the suggestions as outdated.

@@ -92,7 +92,7 @@ export function MetricSuggestModal({
 
   const renderItem = (id: string, slot: MetricSlot, mark: Mark) => {
     const listing = listingById.get(id)!;
-    const display = displayMetric(evaluations[id], ctx);
+    const display = displayMetric(evaluations[id], ctx, listing);
     const ring = mark === "new" ? "ring-1 ring-[#DD3C73]/70" : mark === "out" ? "opacity-40" : "";
     return (
       <div key={id} className={`relative min-w-0 rounded-xl ${ring}`}>

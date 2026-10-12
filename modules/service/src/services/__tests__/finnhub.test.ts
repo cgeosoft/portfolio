@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
 import { FinnhubService } from "../finnhub.js";
 import * as marketCache from "../../db/market-cache.repo.js";
 import { getDatabase } from "../../db/database.js";
 import { saveConfig, loadConfig } from "../../config.js";
+import { appLogger } from "../../logger.js";
 
 describe("FinnhubService", () => {
   const originalFetch = globalThis.fetch;
@@ -94,6 +95,56 @@ describe("FinnhubService", () => {
     const news2 = await service.getMarketNews("general", 5);
     expect(news2.length).toBe(2);
     expect(fetchCount).toBe(1);
+  });
+
+  it("shares one request between identical concurrent calls", async () => {
+    let fetchCount = 0;
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    globalThis.fetch = mock(async () => {
+      fetchCount++;
+      await gate;
+      return new Response(JSON.stringify({ name: "Apple Inc", ticker: "AAPL" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as any;
+
+    const service = new FinnhubService();
+    const first = service.getCompanyProfile("AAPL");
+    const second = service.getCompanyProfile(" aapl ");
+    const other = service.getCompanyProfile("MSFT");
+    release();
+    const [a, b, c] = await Promise.all([first, second, other]);
+
+    expect(a?.name).toBe("Apple Inc");
+    expect(b?.name).toBe("Apple Inc");
+    expect(c?.name).toBe("Apple Inc");
+    // One request for AAPL, shared by both callers, and one for MSFT.
+    expect(fetchCount).toBe(2);
+
+    // The answer is cached now; the in-flight entry is gone.
+    await service.getCompanyProfile("AAPL");
+    expect(fetchCount).toBe(2);
+  });
+
+  it("logs a failed request without the symbol", async () => {
+    globalThis.fetch = mock(async (url: string | URL | Request) => {
+      throw new TypeError(`Unable to connect to ${String(url)}`);
+    }) as any;
+    const logSpy = spyOn(appLogger, "logStep").mockImplementation(() => {});
+
+    try {
+      const service = new FinnhubService();
+      expect(await service.getCompanyProfile("ZZLOGSYM")).toBeNull();
+      const logged = JSON.stringify(logSpy.mock.calls);
+      expect(logged).toContain("request_exception");
+      expect(logged).not.toContain("ZZLOGSYM");
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 
   it("getCompanyNews retrieves news for a specific symbol", async () => {

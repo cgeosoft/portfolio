@@ -341,9 +341,9 @@ export function SettingsPage({
     }
   };
 
-  const saveConfig = async (updates: any) => {
+  const saveConfig = async (updates: any): Promise<DesktopConfig> => {
     setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
-    await rpc.request.saveConfig(updates);
+    return rpc.request.saveConfig(updates);
   };
 
   const currentTheme: AppTheme = theme ?? (fullConfig?.theme as AppTheme) ?? "dark";
@@ -862,8 +862,18 @@ export function SettingsPage({
                       onChange={(e) => setReportBaseUrl(e.target.value)}
                       onBlur={(e) => {
                         const val = e.target.value.trim();
-                        saveConfig({ llmBaseUrl: val, llmBaseUrls: { ...(fullConfig?.llmBaseUrls || {}), [reportProvider]: val } });
-                        fetchServerModels(val, reportApiKey);
+                        // A stored key goes only to the server it was saved for: the service drops it when the
+                        // URL names another server. Save first, then list the models with the key it kept.
+                        void saveConfig({ llmBaseUrl: val, llmBaseUrls: { ...(fullConfig?.llmBaseUrls || {}), [reportProvider]: val } })
+                          .then((saved) => {
+                            const key = saved?.llmApiKeys?.[reportProvider] ?? reportApiKey;
+                            if (key !== reportApiKey) {
+                              setReportApiKey(key);
+                              setFullConfig((prev) => (prev ? { ...prev, llmApiKey: saved.llmApiKey, llmApiKeys: saved.llmApiKeys } : prev));
+                            }
+                            fetchServerModels(val, key);
+                          })
+                          .catch(() => {});
                       }}
                       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                       placeholder={DEFAULT_OPENAI_COMPATIBLE_URL}

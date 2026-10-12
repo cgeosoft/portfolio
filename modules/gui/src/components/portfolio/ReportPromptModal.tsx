@@ -10,6 +10,7 @@ import {
   FileCode,
 } from "lucide-react";
 import type { PortfolioReport } from "portfolio-shared/portfolio";
+import { api } from "../../api";
 import { maskFinancialValues } from "./utils";
 
 interface ReportPromptModalProps {
@@ -41,7 +42,29 @@ export function ReportPromptModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const rawPrompt = report?.prompt ?? "";
+  // The reports list leaves the prompts out (they are large): fetch this one when the modal opens.
+  const reportId = report?.id;
+  const portfolioId = report?.portfolioId;
+  const listedPrompt = report?.prompt;
+  const [fetched, setFetched] = useState<{ reportId: string; prompt: string | null } | null>(null);
+  useEffect(() => {
+    if (!isOpen || !reportId || !portfolioId || listedPrompt) return;
+    let cancelled = false;
+    api
+      .getReportPrompt(portfolioId, reportId)
+      .then((res) => {
+        if (!cancelled) setFetched({ reportId, prompt: res.prompt });
+      })
+      .catch(() => {
+        if (!cancelled) setFetched({ reportId, prompt: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, reportId, portfolioId, listedPrompt]);
+
+  const rawPrompt = listedPrompt || (fetched?.reportId === reportId ? fetched?.prompt : null) || "";
+  const isLoadingPrompt = Boolean(isOpen && reportId && portfolioId && !listedPrompt && fetched?.reportId !== reportId);
 
   // Parse sections if present
   const { systemPrompt, userPrompt, hasSections } = useMemo(() => {
@@ -202,7 +225,11 @@ export function ReportPromptModal({
 
         {/* Modal Content */}
         <div className="p-4 sm:p-5 flex-1 min-h-0 overflow-hidden flex flex-col">
-          {!rawPrompt ? (
+          {!rawPrompt && isLoadingPrompt ? (
+            <div className="flex-1 flex items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
+              <p className="text-[11px] text-slate-400">Loading the prompt…</p>
+            </div>
+          ) : !rawPrompt ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
               <AlertCircle className="w-8 h-8 text-cream mb-3 opacity-80" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-1">

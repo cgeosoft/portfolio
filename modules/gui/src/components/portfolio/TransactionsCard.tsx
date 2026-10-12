@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import type { PortfolioTransaction } from "portfolio-shared/portfolio";
-import { formatMoney, fmtCurrency } from "./utils";
+import { formatMoney, fmtCurrency, numberFormat } from "./utils";
 import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft } from "lucide-react";
 import { Select } from "../common/Select";
 import { HoldingLink } from "./holding-links";
+
+/** Rows rendered before "Show all": thousands of rows make every search keystroke slow. */
+const ROW_LIMIT = 200;
+
+/** Sort key of a transaction: its time, else its date; 0 (sorted last) without a valid one. */
+function transactionTime(tx: PortfolioTransaction): number {
+  const time = tx.datetime ? Date.parse(tx.datetime) : tx.date ? Date.parse(tx.date) : 0;
+  return isNaN(time) ? 0 : time;
+}
 
 interface TransactionsCardProps {
   transactions: PortfolioTransaction[];
@@ -39,20 +48,30 @@ export function TransactionsCard({
     }
   };
 
-  const filtered = (transactions || [])
-    .filter((tx) => {
-      const matchSearch =
-        tx.symbol.toLowerCase().includes(search.toLowerCase()) ||
-        (tx.name || "").toLowerCase().includes(search.toLowerCase()) ||
-        tx.date.includes(search);
-      const matchType = typeFilter === "ALL" || tx.type === typeFilter;
-      return matchSearch && matchType;
-    })
-    .sort((a, b) => {
-      const timeA = a.datetime ? new Date(a.datetime).getTime() : (a.date ? new Date(a.date).getTime() : 0);
-      const timeB = b.datetime ? new Date(b.datetime).getTime() : (b.date ? new Date(b.date).getTime() : 0);
-      return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
-    });
+  // Sorted once per ledger, with the search keys lower-cased up front; the search then only filters.
+  const sorted = useMemo(
+    () =>
+      (transactions || [])
+        .map((tx) => ({ tx, time: transactionTime(tx), symbol: tx.symbol.toLowerCase(), name: (tx.name || "").toLowerCase() }))
+        .sort((a, b) => b.time - a.time),
+    [transactions],
+  );
+
+  // Typing stays responsive: the table follows the search box a moment later on a long ledger.
+  const deferredSearch = useDeferredValue(search);
+  const filtered = useMemo(() => {
+    const query = deferredSearch.toLowerCase();
+    return sorted
+      .filter((entry) => {
+        const matchSearch = entry.symbol.includes(query) || entry.name.includes(query) || entry.tx.date.includes(deferredSearch);
+        const matchType = typeFilter === "ALL" || entry.tx.type === typeFilter;
+        return matchSearch && matchType;
+      })
+      .map((entry) => entry.tx);
+  }, [sorted, deferredSearch, typeFilter]);
+
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? filtered : filtered.slice(0, ROW_LIMIT);
 
   const getTypeBadge = (type: string) => {
     switch (type) {
@@ -163,7 +182,7 @@ export function TransactionsCard({
                   </td>
                 </tr>
               ) : (
-                filtered.map((tx) => (
+                visible.map((tx) => (
                   <tr key={tx.id} className="hover:bg-slate-800/20 transition-colors group">
                     <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{tx.date}</td>
                     <td className="py-2.5 px-3">
@@ -178,7 +197,7 @@ export function TransactionsCard({
                         : hideValues
                         ? "••••"
                         : typeof tx.shares === "number"
-                        ? tx.shares.toLocaleString("en-US", { maximumFractionDigits: 4 })
+                        ? numberFormat("en-US", 0, 4).format(tx.shares)
                         : tx.shares}
                     </td>
                     <td className="py-2.5 px-3 text-right text-slate-400">
@@ -210,6 +229,19 @@ export function TransactionsCard({
                     </td>
                   </tr>
                 ))
+              )}
+              {visible.length < filtered.length && (
+                <tr>
+                  <td colSpan={8} className="py-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAll(true)}
+                      className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer uppercase tracking-wider font-mono"
+                    >
+                      Show all {filtered.length} transactions
+                    </button>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

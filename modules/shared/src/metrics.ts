@@ -79,6 +79,15 @@ export function isMetricId(value: unknown): value is string {
   return typeof value === "string" && value.length >= 3 && value.length <= 64 && METRIC_ID_PATTERN.test(value);
 }
 
+/** Most metric ids one request may name: every built-in plus room for many URL installs. */
+export const MAX_METRIC_IDS_PER_REQUEST = 128;
+
+/** Metric ids of a request body: valid ids only, each once, capped. Undefined when the value is not a list. */
+export function readMetricIds(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return [...new Set(value.filter(isMetricId))].slice(0, MAX_METRIC_IDS_PER_REQUEST);
+}
+
 export function isBuiltinMetricId(value: unknown): value is BuiltinMetricId {
   return typeof value === "string" && (BUILTIN_METRIC_IDS as readonly string[]).includes(value);
 }

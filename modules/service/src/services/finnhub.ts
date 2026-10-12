@@ -160,6 +160,8 @@ const RATE_LIMIT_PAUSE_MS = 20_000;
 
 export class FinnhubService {
   private static readonly throttle = new RequestThrottle(FINNHUB_THROTTLE);
+  /** Requests in flight by cache key: identical concurrent calls share one request and one slot of the budget. */
+  private static readonly inFlight = new Map<string, Promise<unknown>>();
   private readonly baseUrl: string;
 
   constructor(baseUrl: string = FINNHUB_BASE_URL) {
@@ -401,6 +403,17 @@ export class FinnhubService {
       return cached.data;
     }
 
+    const pending = FinnhubService.inFlight.get(cacheKey) as Promise<T | null> | undefined;
+    if (pending) return pending;
+    const fetching = this.fetchAndCache<T>(relativeUrl, cacheKey, key, ttlMs, cached).finally(() => {
+      FinnhubService.inFlight.delete(cacheKey);
+    });
+    FinnhubService.inFlight.set(cacheKey, fetching);
+    return fetching;
+  }
+
+  /** One request through the throttle. Caches the answer; on failure returns the expired copy, if any. */
+  private async fetchAndCache<T>(relativeUrl: string, cacheKey: string, key: string, ttlMs: number, cached: marketCache.CacheEntry<T> | null): Promise<T | null> {
     try {
       const url = `${this.baseUrl}${relativeUrl}`;
       // The timeout starts once the throttle lets the call through.
@@ -435,8 +448,8 @@ export class FinnhubService {
       marketCache.set(cacheKey, json, ttlMs);
       return json;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      appLogger.logStep("warning", "finnhub", "request_exception", `Finnhub request error: ${msg}`);
+      // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+      appLogger.logStep("warning", "finnhub", "request_exception", `Finnhub request error (${err instanceof Error ? err.name : typeof err})`);
       if (cached) return cached.data;
       return null;
     }

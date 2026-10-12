@@ -1,13 +1,12 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import { forwardRef, memo, useState, useRef, useEffect, useCallback, useImperativeHandle, useMemo } from "react";
+import type { Components } from "react-markdown";
 import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
 import { cleanThinkTags, formatTimeAgo, maskFinancialValues } from "./utils";
 import { rpc } from "../../rpc";
 import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
 import { renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
+import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
 import {
   Sparkles,
   Bot,
@@ -80,6 +79,249 @@ const SUGGESTIONS = [
   },
 ];
 
+/** Styles of the assistant's Markdown replies; module level, so the elements are not remounted on every render. */
+const REPLY_MARKDOWN: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-xs font-bold text-slate-200 mt-2 mb-1 uppercase tracking-wider">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-xs font-semibold text-slate-300 mt-1.5 mb-0.5">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p className="my-1.5 leading-relaxed text-slate-300 font-sans text-xs">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="text-slate-300 text-xs">{children}</li>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-bold text-slate-100">{children}</strong>
+  ),
+  code: ({ children }) => (
+    <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
+      {children}
+    </code>
+  ),
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-2 border border-slate-800 rounded">
+      <table className="w-full text-left text-[11px] border-collapse">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="bg-slate-900/80 px-2 py-1 border-b border-slate-800 font-semibold text-slate-300">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-2 py-1 border-b border-slate-800/60 text-slate-300 font-mono">
+      {children}
+    </td>
+  ),
+};
+
+/** Holding references in a reply open the holding; other links follow the SafeMarkdown rules. */
+const renderHoldingLink: InAppLinkRenderer = (href, children) => renderHoldingAnchor(href, children, () => null);
+
+interface ChatMessageProps {
+  content: string;
+  isUser: boolean;
+  index: number;
+  hideValues: boolean;
+  holdingLinkPlugin: ReturnType<typeof useHoldingLinkPlugin>;
+  copied: boolean;
+  onCopy: (content: string, index: number) => void;
+  /** Set on the last reply while it can be asked again. */
+  onRegenerate?: () => void;
+}
+
+/**
+ * One chat bubble. Memoized: a new reply, the loading state or the copy feedback
+ * re-renders the bubbles whose props changed, not the Markdown of the whole conversation.
+ */
+const ChatMessage = memo(function ChatMessage({
+  content,
+  isUser,
+  index,
+  hideValues,
+  holdingLinkPlugin,
+  copied,
+  onCopy,
+  onRegenerate,
+}: ChatMessageProps) {
+  const text = useMemo(() => {
+    const visible = isUser ? content : cleanThinkTags(content, false);
+    return hideValues ? maskFinancialValues(visible) : visible;
+  }, [content, isUser, hideValues]);
+
+  return (
+    <div className={`flex flex-col ${isUser ? "items-end" : "items-start"} group`}>
+      <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-500 uppercase tracking-wider">
+        <span>{isUser ? "You" : "Analyst"}</span>
+      </div>
+
+      <div
+        className={`relative rounded-xl text-xs leading-relaxed max-w-[92%] px-3.5 py-2.5 break-words ${
+          isUser
+            ? "bg-[#DD3C73]/15 border border-[#DD3C73]/40 text-slate-100 font-mono shadow-sm"
+            : "bg-widget border border-slate-800 text-slate-200 shadow-md"
+        }`}
+      >
+        {isUser ? (
+          <div className="whitespace-pre-wrap">{text}</div>
+        ) : (
+          <div className="prose prose-invert prose-xs max-w-none space-y-2 text-xs">
+            <SafeMarkdown components={REPLY_MARKDOWN} remarkPlugin={holdingLinkPlugin} renderInAppLink={renderHoldingLink}>
+              {text}
+            </SafeMarkdown>
+
+            {/* Regenerate: absolutely positioned below the bubble so the timeline never shifts */}
+            {onRegenerate && (
+              <button
+                onClick={() => onRegenerate()}
+                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
+                title="Regenerate response"
+                type="button"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Regenerate</span>
+              </button>
+            )}
+
+            {/* Copy message button */}
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => onCopy(content, index)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer"
+                title="Copy response"
+                type="button"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+interface ChatInputHandle {
+  /** Puts a suggested question in the box and focuses it. */
+  fill: (text: string) => void;
+  focus: () => void;
+}
+
+interface ChatInputProps {
+  isLoading: boolean;
+  baseCurrency?: string;
+  onSend: (text: string) => Promise<void>;
+}
+
+/** The message box. The draft lives here, so typing re-renders the box and not the conversation. */
+const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({ isLoading, baseCurrency, onSend }, ref) {
+  const [inputText, setInputText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      fill: (text: string) => {
+        setInputText(text);
+        textareaRef.current?.focus();
+      },
+      focus: () => textareaRef.current?.focus(),
+    }),
+    [],
+  );
+
+  const handleSend = async () => {
+    const trimmed = inputText.trim();
+    if (!trimmed || isLoading) return;
+    setInputText("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+    await onSend(trimmed);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
+  return (
+    <div className="px-4 py-3 border-t border-slate-800/80 bg-canvas shrink-0">
+      <div className="relative flex items-end gap-2 bg-widget border border-slate-700/80 focus-within:border-[#DD3C73]/70 focus-within:ring-1 focus-within:ring-[#DD3C73]/40 rounded-xl p-2 transition-all shadow-inner">
+        <textarea
+          ref={textareaRef}
+          value={inputText}
+          onChange={handleTextareaInput}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about your holdings, risks, metrics..."
+          rows={1}
+          disabled={isLoading}
+          className="flex-1 bg-transparent border-0 resize-none text-xs text-slate-100 placeholder-slate-500 focus:outline-none custom-scrollbar max-h-[120px] py-1 font-mono leading-relaxed"
+        />
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!inputText.trim() || isLoading}
+          className="h-8 w-8 rounded-lg bg-[#DD3C73] hover:bg-[#c93264] disabled:opacity-40 disabled:hover:bg-[#DD3C73] disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer shadow-md"
+          title="Send Message (Enter)"
+        >
+          <Send className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="flex items-center justify-between mt-1.5 px-1 text-[10px] text-slate-500">
+        <span>Enter to send, Shift+Enter for newline</span>
+        {baseCurrency && (
+          <span className="font-semibold text-slate-400">
+            Grounded in {baseCurrency}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+});
+
 export function AssistantSidebar({
   isOpen,
   onClose,
@@ -104,7 +346,6 @@ export function AssistantSidebar({
   const mask = (text: string) => (hideValues ? maskFinancialValues(text) : text);
   const [currentView, setCurrentView] = useState<"chat" | "history">("chat");
   const [searchHistoryQuery, setSearchHistoryQuery] = useState("");
-  const [inputText, setInputText] = useState("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isSystemPromptOpen, setIsSystemPromptOpen] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -112,8 +353,13 @@ export function AssistantSidebar({
   const [systemPromptError, setSystemPromptError] = useState<string | null>(null);
   const holdingLinkPlugin = useHoldingLinkPlugin();
 
+  // The app loads the latest conversation at start-up while the sidebar is closed:
+  // render its replies only once the sidebar has been opened.
+  const [hasOpened, setHasOpened] = useState(isOpen);
+  if (isOpen && !hasOpened) setHasOpened(true);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
 
   // Reset to chat view when sidebar is opened
   useEffect(() => {
@@ -134,44 +380,30 @@ export function AssistantSidebar({
   useEffect(() => {
     if (isOpen && currentView === "chat") {
       const timer = setTimeout(() => {
-        textareaRef.current?.focus();
+        chatInputRef.current?.focus();
       }, 150);
       return () => clearTimeout(timer);
     }
   }, [isOpen, currentView]);
 
-  const handleSend = useCallback(async () => {
-    const trimmed = inputText.trim();
-    if (!trimmed || isLoading) return;
-    setInputText("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-    await onSendMessage(trimmed);
-  }, [inputText, isLoading, onSendMessage]);
+  const handleCopyMessage = useCallback(
+    async (content: string, index: number) => {
+      try {
+        const text = cleanThinkTags(content, false);
+        await navigator.clipboard.writeText(hideValues ? maskFinancialValues(text) : text);
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+      } catch {
+        // Ignore clipboard error
+      }
+    },
+    [hideValues],
+  );
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-  };
-
-  const handleCopyMessage = async (content: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(mask(cleanThinkTags(content, false)));
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    } catch {
-      // Ignore clipboard error
-    }
-  };
+  const maskedSystemPrompt = useMemo(
+    () => (hideValues ? maskFinancialValues(systemPrompt) : systemPrompt),
+    [systemPrompt, hideValues],
+  );
 
   const handleOpenSystemPrompt = useCallback(async () => {
     if (!portfolio?.id) return;
@@ -430,10 +662,7 @@ export function AssistantSidebar({
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => {
-                          setInputText(item.prompt);
-                          textareaRef.current?.focus();
-                        }}
+                        onClick={() => chatInputRef.current?.fill(item.prompt)}
                         className="w-full p-2.5 rounded-lg bg-widget/80 hover:bg-card border border-slate-800 hover:border-[#DD3C73]/40 text-left transition-all cursor-pointer group flex items-center gap-2.5"
                       >
                         <Icon className="w-3.5 h-3.5 text-[#DD3C73] shrink-0 group-hover:scale-110 transition-transform" />
@@ -470,148 +699,25 @@ export function AssistantSidebar({
                   </button>
                 </div>
 
-                {messages.map((msg, index) => {
-                  const isUser = msg.role === "user";
-                  const cleanedContent = mask(cleanThinkTags(msg.content, false));
-                  const canRegenerate =
-                    !isUser && index === messages.length - 1 && !isLoading && !!onRegenerateMessage;
-
-                  return (
-                    <div
-                      key={index}
-                      className={`flex flex-col ${isUser ? "items-end" : "items-start"} group`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-500 uppercase tracking-wider">
-                        <span>{isUser ? "You" : "Analyst"}</span>
-                      </div>
-
-                      <div
-                        className={`relative rounded-xl text-xs leading-relaxed max-w-[92%] px-3.5 py-2.5 break-words ${
-                          isUser
-                            ? "bg-[#DD3C73]/15 border border-[#DD3C73]/40 text-slate-100 font-mono shadow-sm"
-                            : "bg-widget border border-slate-800 text-slate-200 shadow-md"
-                        }`}
-                      >
-                        {isUser ? (
-                          <div className="whitespace-pre-wrap">{mask(msg.content)}</div>
-                        ) : (
-                          <div className="prose prose-invert prose-xs max-w-none space-y-2 text-xs">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm, holdingLinkPlugin]}
-                              rehypePlugins={[rehypeSanitize]}
-                              components={{
-                                h1: ({ children }) => (
-                                  <h1 className="text-sm font-bold text-[#DD3C73] mt-2 mb-1 uppercase tracking-wider border-b border-slate-800 pb-1">
-                                    {children}
-                                  </h1>
-                                ),
-                                h2: ({ children }) => (
-                                  <h2 className="text-xs font-bold text-slate-200 mt-2 mb-1 uppercase tracking-wider">
-                                    {children}
-                                  </h2>
-                                ),
-                                h3: ({ children }) => (
-                                  <h3 className="text-xs font-semibold text-slate-300 mt-1.5 mb-0.5">
-                                    {children}
-                                  </h3>
-                                ),
-                                p: ({ children }) => (
-                                  <p className="my-1.5 leading-relaxed text-slate-300 font-sans text-xs">
-                                    {children}
-                                  </p>
-                                ),
-                                ul: ({ children }) => (
-                                  <ul className="list-disc pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
-                                    {children}
-                                  </ul>
-                                ),
-                                ol: ({ children }) => (
-                                  <ol className="list-decimal pl-4 space-y-1 my-1.5 text-slate-300 text-xs">
-                                    {children}
-                                  </ol>
-                                ),
-                                li: ({ children }) => (
-                                  <li className="text-slate-300 text-xs">{children}</li>
-                                ),
-                                a: ({ href, children }) =>
-                                  renderHoldingAnchor(href, children, () => (
-                                    <a
-                                      href={href}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[#DD3C73] underline underline-offset-2 hover:text-accent-bright transition-colors"
-                                    >
-                                      {children}
-                                    </a>
-                                  )),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-slate-100">{children}</strong>
-                                ),
-                                code: ({ children }) => (
-                                  <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
-                                    {children}
-                                  </code>
-                                ),
-                                table: ({ children }) => (
-                                  <div className="overflow-x-auto my-2 border border-slate-800 rounded">
-                                    <table className="w-full text-left text-[11px] border-collapse">{children}</table>
-                                  </div>
-                                ),
-                                th: ({ children }) => (
-                                  <th className="bg-slate-900/80 px-2 py-1 border-b border-slate-800 font-semibold text-slate-300">
-                                    {children}
-                                  </th>
-                                ),
-                                td: ({ children }) => (
-                                  <td className="px-2 py-1 border-b border-slate-800/60 text-slate-300 font-mono">
-                                    {children}
-                                  </td>
-                                ),
-                              }}
-                            >
-                              {cleanedContent}
-                            </ReactMarkdown>
-
-                            {/* Regenerate: absolutely positioned below the bubble so the timeline never shifts */}
-                            {canRegenerate && (
-                              <button
-                                onClick={() => onRegenerateMessage()}
-                                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
-                                title="Regenerate response"
-                                type="button"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                                <span>Regenerate</span>
-                              </button>
-                            )}
-
-                            {/* Copy message button */}
-                            <div className="flex justify-end pt-1">
-                              <button
-                                onClick={() => handleCopyMessage(msg.content, index)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer"
-                                title="Copy response"
-                                type="button"
-                              >
-                                {copiedIndex === index ? (
-                                  <>
-                                    <Check className="w-3 h-3 text-emerald-400" />
-                                    <span className="text-emerald-400">Copied</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-3 h-3" />
-                                    <span>Copy</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {hasOpened &&
+                  messages.map((msg, index) => {
+                    const isUser = msg.role === "user";
+                    const canRegenerate =
+                      !isUser && index === messages.length - 1 && !isLoading && !!onRegenerateMessage;
+                    return (
+                      <ChatMessage
+                        key={index}
+                        content={msg.content}
+                        isUser={isUser}
+                        index={index}
+                        hideValues={hideValues}
+                        holdingLinkPlugin={holdingLinkPlugin}
+                        copied={copiedIndex === index}
+                        onCopy={handleCopyMessage}
+                        onRegenerate={canRegenerate ? onRegenerateMessage : undefined}
+                      />
+                    );
+                  })}
               </>
             )}
 
@@ -659,37 +765,7 @@ export function AssistantSidebar({
           </div>
 
           {/* Input Area */}
-          <div className="px-4 py-3 border-t border-slate-800/80 bg-canvas shrink-0">
-            <div className="relative flex items-end gap-2 bg-widget border border-slate-700/80 focus-within:border-[#DD3C73]/70 focus-within:ring-1 focus-within:ring-[#DD3C73]/40 rounded-xl p-2 transition-all shadow-inner">
-              <textarea
-                ref={textareaRef}
-                value={inputText}
-                onChange={handleTextareaInput}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about your holdings, risks, metrics..."
-                rows={1}
-                disabled={isLoading}
-                className="flex-1 bg-transparent border-0 resize-none text-xs text-slate-100 placeholder-slate-500 focus:outline-none custom-scrollbar max-h-[120px] py-1 font-mono leading-relaxed"
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!inputText.trim() || isLoading}
-                className="h-8 w-8 rounded-lg bg-[#DD3C73] hover:bg-[#c93264] disabled:opacity-40 disabled:hover:bg-[#DD3C73] disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer shadow-md"
-                title="Send Message (Enter)"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="flex items-center justify-between mt-1.5 px-1 text-[10px] text-slate-500">
-              <span>Enter to send, Shift+Enter for newline</span>
-              {portfolio?.baseCurrency && (
-                <span className="font-semibold text-slate-400">
-                  Grounded in {portfolio.baseCurrency}
-                </span>
-              )}
-            </div>
-          </div>
+          <ChatInput ref={chatInputRef} isLoading={isLoading} baseCurrency={portfolio?.baseCurrency} onSend={onSendMessage} />
         </div>
 
         {/* History Panel View */}
@@ -818,7 +894,7 @@ export function AssistantSidebar({
       <AssistantSystemPromptModal
         isOpen={isSystemPromptOpen}
         onClose={() => setIsSystemPromptOpen(false)}
-        systemPrompt={mask(systemPrompt)}
+        systemPrompt={maskedSystemPrompt}
         portfolioName={portfolio?.name || ""}
         isLoading={systemPromptLoading}
         error={systemPromptError}

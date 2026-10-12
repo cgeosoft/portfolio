@@ -14,6 +14,9 @@ ASSETS_DIR="${DESKTOP_DIR}/assets"
 APP_ID="portfolio"
 ELECTROBUN_VERSION="2.0.1"
 WIN_CORE_URL="https://github.com/blackboardsh/electrobun/releases/download/v${ELECTROBUN_VERSION}/electrobun-core-win-x64.tar.gz"
+# SHA-256 of electrobun-core-win-x64 v2.0.1. Taken from this repo's build cache; confirm it
+# against the official release before trusting it, then bump it when ELECTROBUN_VERSION changes.
+WIN_CORE_SHA256="b0251163afc64c622a92c26fa37281d637ae83503e89396e581e618572494e0a"
 CACHE_DIR="${APP_DIR}/.tmp/cache"
 DIST_DIR="${DIST_DIR:-${APP_DIR}/dist}"
 CUSTOM_VERSION=""
@@ -63,6 +66,15 @@ WIN_CORE_TAR="${CACHE_DIR}/electrobun-core-win-x64-v${ELECTROBUN_VERSION}.tar.gz
 if [[ ! -f "${WIN_CORE_TAR}" ]]; then
   echo "[WIN BUILD] Downloading Electrobun Windows runtime..."
   curl -fsSL -o "${WIN_CORE_TAR}" "${WIN_CORE_URL}"
+fi
+
+# Verify the runtime (fresh download or cache hit) before it ships inside the app.
+if ! echo "${WIN_CORE_SHA256}  ${WIN_CORE_TAR}" | sha256sum -c - >/dev/null 2>&1; then
+  echo "Error: checksum mismatch for ${WIN_CORE_TAR}" >&2
+  echo "  expected ${WIN_CORE_SHA256}" >&2
+  echo "  actual   $(sha256sum "${WIN_CORE_TAR}" | cut -d' ' -f1)" >&2
+  rm -f "${WIN_CORE_TAR}"
+  exit 1
 fi
 
 mkdir -p "${APP_DIR}/.tmp"

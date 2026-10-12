@@ -25,7 +25,7 @@ import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
 import { writeDesktopSettingsFile } from "./services/desktop-settings";
 import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
-import { Router, hostnameOf, isLoopbackHostname, json } from "./http/router";
+import { MAX_BODY_BYTES, Router, hostnameOf, isLoopbackAddress, isLoopbackHostname, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
 import { type DevGuiServer, devGuiWebSocket, serveDevGui, startDevGuiLink } from "./http/dev-gui";
@@ -69,9 +69,10 @@ async function refreshMarketDataOnStart(): Promise<void> {
       return;
     }
   }
+  // The expiry only: parsing each cached portfolio just to read it is wasted work at start.
   const stale = portfolios.filter((p) => {
-    const cached = marketCache.get(`portfolio:${p.id}_${p.baseCurrency || "EUR"}`);
-    return !cached || cached.isExpired;
+    const expiresAt = marketCache.getExpiresAt(`portfolio:${p.id}_${p.baseCurrency || "EUR"}`);
+    return expiresAt === null || Date.now() > expiresAt;
   });
   if (stale.length === 0) {
     appLogger.logStep("info", "market", "startup", "Every portfolio has fresh cached market data; skipping startup sync");
@@ -83,27 +84,37 @@ async function refreshMarketDataOnStart(): Promise<void> {
       const data = await services.portfolioService.getPortfolioData(p.id, p.baseCurrency, true);
       services.portfolioService.saveDailySnapshot(p.id, data);
     } catch (err) {
-      appLogger.logStep("warning", "market", "startup", `Refresh failed for one portfolio: ${err instanceof Error ? err.message : err}`);
+      appLogger.logStep("warning", "market", "startup", `Refresh failed for one portfolio (${err instanceof Error ? err.name : typeof err})`);
     }
   }
   updateConfig({ lastQuotesSync: new Date().toISOString() });
   appLogger.logStep("success", "market", "startup", "Market data refresh complete");
 }
 
+/** Expired market cache rows: some keys carry a date, so without this the table grows every day. */
+function pruneMarketCache(): void {
+  const removed = marketCache.pruneExpired();
+  if (removed > 0) appLogger.logStep("info", "db", "market_cache_prune", `Removed ${removed} expired market cache entries`);
+}
+
 setTimeout(() => {
-  refreshMarketDataOnStart().catch((err) => appLogger.logStep("error", "market", "startup", `Market data refresh failed: ${err}`));
+  pruneMarketCache();
+  refreshMarketDataOnStart().catch((err) => appLogger.logStep("error", "market", "startup", `Market data refresh failed (${err instanceof Error ? err.name : typeof err})`));
 }, 10_000);
 appUpdateService.startPeriodicChecks();
 void services.metricsService.warmUp();
 services.dailyBrief.start();
 services.weeklyAnalysis.start();
 services.eventAlerts.start();
-const pruneTimer = setInterval(() => authService.prune(), 60 * 60 * 1000);
+const pruneTimer = setInterval(() => {
+  authService.prune();
+  pruneMarketCache();
+}, 60 * 60 * 1000);
 
 // ── HTTP ────────────────────────────────────────────────────────────────────
 
 const router = new Router();
-const site = new StaticSite(getGuiDir() ?? "");
+const site = new StaticSite(getGuiDir());
 startDevGuiLink();
 
 registerRoutes(router, services, () => {
@@ -120,15 +131,22 @@ function hostAllowed(req: Request, loopbackOnly: boolean): boolean {
   return isLoopbackHostname(hostnameOf(req.headers.get("host")));
 }
 
+/**
+ * Only the loopback listener serves the desktop window. A request on the LAN
+ * listener is remote even from this machine (a browser here on the LAN port,
+ * or a page that rebinds its domain to it), so the routes reserved for the
+ * desktop window refuse it.
+ */
 async function fetchHandler(req: Request, srv: DevGuiServer, loopbackOnly: boolean): Promise<Response | undefined> {
   const ip = srv.requestIP(req)?.address ?? "";
+  const isLocal = loopbackOnly && isLoopbackAddress(ip);
   const url = new URL(req.url);
   if (!hostAllowed(req, loopbackOnly)) return json({ statusCode: 403, message: "Invalid Host header" }, 403);
   if (url.pathname.startsWith("/api/")) {
-    const res = await router.handle(req, ip);
+    const res = await router.handle(req, ip, isLocal);
     return res ?? json({ statusCode: 404, message: `No route for ${req.method} ${url.pathname}` }, 404);
   }
-  const res = await router.handle(req, ip);
+  const res = await router.handle(req, ip, isLocal);
   if (res) return res;
   const dev = await serveDevGui(req, url, srv);
   if (dev !== null) return dev;
@@ -142,6 +160,7 @@ function serve(hostname: string, port: number): ReturnType<typeof Bun.serve> {
     hostname,
     port,
     idleTimeout: 120,
+    maxRequestBodySize: MAX_BODY_BYTES,
     development: false,
     fetch: (req, srv) => fetchHandler(req, srv, loopbackOnly),
     websocket: devGuiWebSocket,

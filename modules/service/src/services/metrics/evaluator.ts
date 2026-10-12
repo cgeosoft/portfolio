@@ -27,6 +27,11 @@ function sha256Hex(input: Uint8Array | string): string {
   return new Bun.CryptoHasher("sha256").update(input).digest("hex");
 }
 
+/** Log text of a failure. An abort carries text the module wrote, which can hold portfolio data, so only its kind is logged. */
+function logReason(message: string): string {
+  return message.startsWith("abort") ? "abort" : message;
+}
+
 export class MetricEvaluator {
   private cache = new Map<string, MetricOutput>();
 
@@ -95,7 +100,7 @@ export class MetricEvaluator {
         appLogger.logStep("warning", "metrics", "module_failed", "Metric module did not produce a result", undefined, {
           id,
           status,
-          error: message,
+          error: logReason(message),
         });
         results.push({ id, status, error: message });
       }

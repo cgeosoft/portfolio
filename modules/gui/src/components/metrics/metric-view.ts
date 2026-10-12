@@ -3,7 +3,7 @@
  * currency and privacy settings of the UI, and describe failures.
  */
 
-import { renderMetricOutput, type RenderedMetric } from "portfolio-shared/metric-output";
+import { hideDigits, renderMetricOutput, type RenderedMetric } from "portfolio-shared/metric-output";
 import type { MetricEvaluation, MetricListing } from "portfolio-shared/api-types";
 import { fmtCurrency, fmtPercent } from "../portfolio/utils";
 
@@ -19,15 +19,28 @@ export type MetricDisplay =
   | { kind: "unavailable"; reason: string }
   | { kind: "failed"; status: "error" | "quarantined" | "missing"; error: string };
 
-/** Turn the evaluation of a metric into display strings. Missing evaluations render as pending. */
-export function displayMetric(evaluation: MetricEvaluation | undefined, ctx: MetricViewContext): MetricDisplay {
+/**
+ * Turn the evaluation of a metric into display strings. Missing evaluations
+ * render as pending. While values are hidden, a metric that is not verified
+ * (or has no listing) shows no figure at all: the host masks currency amounts
+ * only, and an unverified module could print a balance as a number or text.
+ */
+export function displayMetric(
+  evaluation: MetricEvaluation | undefined,
+  ctx: MetricViewContext,
+  listing: Pick<MetricListing, "verified"> | null | undefined,
+): MetricDisplay {
   if (!evaluation) return { kind: "pending" };
+  const hideFigures = ctx.hideValues && !listing?.verified;
   if (evaluation.status === "unavailable") return { kind: "unavailable", reason: evaluation.error };
-  if (evaluation.status !== "ok") return { kind: "failed", status: evaluation.status, error: evaluation.error };
+  if (evaluation.status !== "ok") {
+    return { kind: "failed", status: evaluation.status, error: hideFigures ? hideDigits(evaluation.error) : evaluation.error };
+  }
   const rendered = renderMetricOutput(evaluation.output, {
     currency: (amount) => fmtCurrency(amount, ctx.currency, ctx.hideValues),
     percent: fmtPercent,
     number: (value) => (value === undefined ? "0" : value.toLocaleString("en-US", { maximumFractionDigits: 2 })),
+    hideFigures,
   });
   return { kind: "ok", ...rendered };
 }

@@ -5,7 +5,7 @@
  * public server the topic name is the only protection, so the GUI asks for a
  * hard-to-guess one; a protected topic takes an access token.
  */
-import { loadConfig } from "../config";
+import { isSameServer, loadConfig } from "../config";
 import { appLogger } from "../logger";
 import type { SendNotificationResponse } from "portfolio-shared/api-types";
 import type { PushMessage } from "./notify";
@@ -36,13 +36,14 @@ export function isNtfyConfigured(): boolean {
 
 /**
  * Publishes one message. The target falls back to the stored settings, so the
- * Test button can try a topic before it is saved.
+ * Test button can try a topic before it is saved. The stored token goes only
+ * to the stored server.
  */
 export async function sendNtfy(msg: PushMessage, target: NtfyTarget = {}): Promise<SendNotificationResponse> {
   const cfg = loadConfig();
   const url = (target.url?.trim() || cfg.ntfyUrl).trim();
   const topic = (target.topic?.trim() || cfg.ntfyTopic).trim();
-  const token = (target.token?.trim() || cfg.ntfyToken).trim();
+  const token = (target.token?.trim() || (isSameServer(url, cfg.ntfyUrl) ? cfg.ntfyToken : "")).trim();
   if (!topic) return { success: false, error: "Set the ntfy topic first." };
   if (!isValidNtfyTopic(topic)) return { success: false, error: "An ntfy topic has only letters, digits, - and _ (up to 64 characters)." };
   if (!/^https?:\/\//i.test(url)) return { success: false, error: "The ntfy server URL must start with http:// or https://." };

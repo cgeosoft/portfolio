@@ -22,6 +22,9 @@ import { fmtCurrency } from "./utils";
 /** Shape of an ISIN. The service checks the check digit and looks up the ticker on import. */
 const ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 
+/** Dry-run rows rendered before "Show all": a long broker history renders thousands of rows. */
+const PREVIEW_LIMIT = 200;
+
 export type SystemFieldKey =
   | "none"
   | "transaction_id"
@@ -667,6 +670,7 @@ export function ImportCsvModal({
   const [stage, setStage] = useState<"upload" | "mapping" | "confirmation" | "success">("upload");
   const [dryRunData, setDryRunData] = useState<DryRunResult | null>(null);
   const [previewFilter, setPreviewFilter] = useState<"all" | "new" | "modified" | "unchanged">("all");
+  const [showAllPreview, setShowAllPreview] = useState(false);
   const [successInfo, setSuccessInfo] = useState<{ total: number; newCount: number } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -913,6 +917,7 @@ export function ImportCsvModal({
 
       setDryRunData(json);
       setPreviewFilter("all");
+      setShowAllPreview(false);
       setStage("confirmation");
     } catch (err) {
       console.error("[ImportCsvModal] Dry run error:", err);
@@ -1369,7 +1374,7 @@ export function ImportCsvModal({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40 font-mono">
-                      {previewItems.map(({ tx, status, diffs }, idx) => {
+                      {(showAllPreview ? previewItems : previewItems.slice(0, PREVIEW_LIMIT)).map(({ tx, status, diffs }, idx) => {
                         const isNew = status === "new";
                         const isModified = status === "modified";
                         const isUnchanged = status === "unchanged";
@@ -1496,6 +1501,19 @@ export function ImportCsvModal({
                           </tr>
                         );
                       })}
+                      {!showAllPreview && previewItems.length > PREVIEW_LIMIT && (
+                        <tr>
+                          <td colSpan={8} className="px-3 py-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setShowAllPreview(true)}
+                              className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer uppercase tracking-wider"
+                            >
+                              Show all {previewItems.length} rows
+                            </button>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

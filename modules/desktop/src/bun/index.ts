@@ -19,13 +19,14 @@
  * menu and File > Quit end the app. Without a tray the close button quits.
  */
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Tray, Utils } from "electrobun/bun";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { APP, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
+import { classifyExternalUrl, encodeForShell } from "./external-url";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
 import { failedPage, startingHintScript, startingPage } from "./pages";
-import { ServiceProcess } from "./service";
+import { ServiceProcess, pruneDailyLogs } from "./service";
 import { WindowStateManager, normalizeWindowState, readWindowState, writeWindowState } from "./window-state";
 
 const STARTUP_TIMEOUT_MS = 60_000;
@@ -52,12 +53,55 @@ function trayIconPath(appDir: string, repoRoot: string | undefined): string | un
   return candidates.find((p) => existsSync(p));
 }
 
+/**
+ * The navigation allow-list for the app window: deny everything (`^*`), then
+ * allow the app's own origin and the vendor website (the embedded Terms page
+ * loads it in an iframe, and that iframe is a navigation too). `*` is a glob,
+ * so these cover every path. Without a rule the webview navigates anywhere,
+ * which would let a hostile page replace the whole window.
+ */
+function appNavigationRules(appOrigin: string): string[] {
+  return ["^*", `${appOrigin}/*`, appOrigin, `${APP.websiteOrigin}/*`, APP.websiteOrigin, "blob:*"];
+}
+
+/**
+ * Hands an external link to the system. On Linux the shell runs `xdg-open`
+ * itself with an argv array, so Electrobun's `openExternal`, which can reach a
+ * shell, is bypassed; the fallback and the other platforms get the dangerous
+ * characters percent-encoded.
+ */
+function openExternalUrl(href: string): void {
+  if (process.platform === "linux") {
+    try {
+      Bun.spawn(["xdg-open", href], { stdin: "ignore", stdout: "ignore", stderr: "ignore" });
+      return;
+    } catch {
+      // Fall through to Electrobun's opener (which may use a shell on Linux).
+    }
+  }
+  try {
+    Utils.openExternal(process.platform === "linux" ? encodeForShell(href) : href);
+  } catch {
+    // Best effort.
+  }
+}
+
 async function main(): Promise<void> {
   const build = await BuildConfig.get();
   const appDir = join(PATHS.RESOURCES_FOLDER, "app");
   const dataDir = userDataDir();
   const logDir = join(dataDir, "logs");
-  mkdirSync(logDir, { recursive: true });
+  // The data directory holds the database and API keys in plain text; keep it owner-only.
+  mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  mkdirSync(logDir, { recursive: true, mode: 0o700 });
+  if (process.platform !== "win32") {
+    try {
+      chmodSync(dataDir, 0o700);
+    } catch {
+      // Best effort; a pre-existing directory may be owned differently.
+    }
+  }
+  pruneDailyLogs(logDir);
   // An unpackaged shell inside a checkout runs everything from source (dev.ts). Without a
   // checkout it falls back to the staged bundle.
   const repoRoot = build.isPackaged ? undefined : findRepoRoot(appDir);
@@ -68,9 +112,14 @@ async function main(): Promise<void> {
   const windowState = normalizeWindowState(savedWindowState);
   const windowStateManager = new WindowStateManager(savedWindowState, (state) => writeWindowState(windowStateFile, state));
 
+  // Sandbox the webview: the GUI talks to the service over HTTP and uses no
+  // Electrobun bridge, so an untrusted page that ends up here cannot reach the
+  // main process. The navigation rules are set below, right before the app
+  // loads, so the trusted starting page still renders.
   const mainWindow = new BrowserWindow({
     title: APP.windowTitle,
     html: startingPage(APP.pages.starting.service),
+    sandbox: true,
     frame: { width: windowState.frame.width, height: windowState.frame.height, x: windowState.frame.x, y: windowState.frame.y },
   });
   if (windowState.isMaximized) {
@@ -92,15 +141,22 @@ async function main(): Promise<void> {
   let appUrl: string | null = null;
 
   // target=_blank and ctrl/cmd-click: keep app routes in a window of their own, hand
-  // everything else (https, mailto) to the system.
+  // an http(s) or mailto link to the system, and drop anything else (a crafted
+  // scheme must not reach the opener).
   Electrobun.events.on("new-window-open", (event: { data: { detail: string | { url: string } } }) => {
     const detail = event.data.detail;
-    const url = typeof detail === "string" ? detail : detail?.url;
-    if (!url) return;
-    if (appUrl && url.startsWith(`${appUrl}/`)) {
-      new BrowserWindow({ title: APP.windowTitle, url, frame: { width: APP.popup.width, height: APP.popup.height } });
-    } else if (/^(https?:|mailto:)/i.test(url)) {
-      Utils.openExternal(url);
+    const raw = typeof detail === "string" ? detail : detail?.url;
+    const decision = classifyExternalUrl(raw, appUrl);
+    if (decision.kind === "app") {
+      new BrowserWindow({
+        title: APP.windowTitle,
+        url: decision.url,
+        sandbox: true,
+        navigationRules: appNavigationRules(appUrl as string),
+        frame: { width: APP.popup.width, height: APP.popup.height },
+      });
+    } else if (decision.kind === "external") {
+      openExternalUrl(decision.url);
     }
   });
 
@@ -127,14 +183,25 @@ async function main(): Promise<void> {
 
   const service = new ServiceProcess(
     repoRoot
-      ? { ...devServiceCommand(repoRoot), logDir, echo }
-      : { command: [process.execPath, join(appDir, "service", "main.js")], cwd: join(appDir, "service"), logDir, echo },
+      ? { ...devServiceCommand(repoRoot), logDir, echo, singlePort: false }
+      : { command: [process.execPath, join(appDir, "service", "main.js")], cwd: join(appDir, "service"), logDir, echo, singlePort: true },
   );
   const devGui = repoRoot ? new DevGuiServer(repoRoot, logDir) : null;
   let devGuiUrl: string | null = null;
 
   let ready = false;
   let quitting = false;
+
+  // The failure page is trusted local HTML. Clear the navigation rules first, so a run that had
+  // already locked the window to the app origin can still load it.
+  function showFailure(html: string): void {
+    try {
+      mainWindow.webview.setNavigationRules([]);
+    } catch {
+      // The webview may be gone.
+    }
+    mainWindow.webview.loadHTML(html);
+  }
 
   function shutdown(): void {
     windowStateManager.flushSave();
@@ -215,7 +282,7 @@ async function main(): Promise<void> {
       quit(0);
     } else if (ready) {
       showWindow();
-      mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, service.tail(), dataDir));
+      showFailure(failedPage(service.serviceLogFile, service.tail(), dataDir));
     }
   });
   service.log(`${repoRoot ? `development run from ${repoRoot}` : "starting the bundled service"} (data ${dataDir})`);
@@ -225,7 +292,7 @@ async function main(): Promise<void> {
   ready = await service.waitUntilReady(repoRoot ? Number.POSITIVE_INFINITY : STARTUP_TIMEOUT_MS);
   if (!ready || service.port === null) {
     service.stop();
-    mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, service.tail(), dataDir));
+    showFailure(failedPage(service.serviceLogFile, service.tail(), dataDir));
     return;
   }
 
@@ -235,7 +302,7 @@ async function main(): Promise<void> {
     const guiUrl = await devGui.waitForUrl(DEV_GUI_TIMEOUT_MS);
     if (!guiUrl) {
       service.log("the Vite dev server did not report its URL");
-      mainWindow.webview.loadHTML(failedPage(service.serviceLogFile, devGui.tail(), dataDir, "The Vite dev server did not start."));
+      showFailure(failedPage(service.serviceLogFile, devGui.tail(), dataDir, "The Vite dev server did not start."));
       return;
     }
     appUrl = guiUrl;
@@ -248,6 +315,8 @@ async function main(): Promise<void> {
   const startingLeft = startingEndsAt - Date.now();
   if (startingLeft > 0) await Bun.sleep(startingLeft);
   service.log(`window on ${appUrl}`);
+  // Lock the window to the app origin before the app loads, so no page can navigate it away.
+  mainWindow.webview.setNavigationRules(appNavigationRules(appUrl));
   mainWindow.webview.loadURL(appUrl);
 }
 

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "bun:test";
+import { createHash, randomUUID } from "node:crypto";
 import {
+  AuthService,
   LEGACY_SESSION_COOKIE,
   authService,
   clearLegacySessionCookie,
@@ -11,6 +13,7 @@ import {
 } from "../auth";
 import { Router } from "../../http/router";
 import { registerRoutes } from "../../http/routes";
+import { getDatabase } from "../../db/database";
 import type { AppServices } from "../container";
 
 function withCookie(cookie: string | null, path = "/api/auth/me", method = "GET"): Request {
@@ -38,8 +41,32 @@ describe("session cookie name", () => {
     expect(sessionCookie("abc", false).startsWith(`${name}=abc;`)).toBe(true);
     expect(sessionCookie("abc", true)).toContain("; Secure");
     expect(sessionCookie("abc", false)).toContain("HttpOnly");
+    expect(sessionCookie("abc", false)).toContain("SameSite=Strict");
     expect(clearSessionCookie().startsWith(`${name}=;`)).toBe(true);
     expect(clearLegacySessionCookie().startsWith(`${LEGACY_SESSION_COOKIE}=;`)).toBe(true);
+  });
+});
+
+describe("stored sessions", () => {
+  const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+  const storedIds = () => (getDatabase().query("SELECT id FROM sessions").all() as { id: string }[]).map((row) => row.id);
+
+  it("keeps the hash of a session id, never the id", () => {
+    const id = authService.login();
+    expect(storedIds()).not.toContain(id);
+    expect(storedIds()).toContain(sha256(id));
+    expect(authService.validateSession(id)).toBe(true);
+    expect(authService.validateSession(sha256(id))).toBe(false);
+    authService.deleteSession(id);
+    expect(authService.validateSession(id)).toBe(false);
+  });
+
+  it("hashes a session an earlier release stored as a raw id, and keeps it valid", () => {
+    const raw = randomUUID();
+    getDatabase().run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", [raw, Date.now() + 60_000]);
+    expect(new AuthService().validateSession(raw)).toBe(true);
+    expect(storedIds()).not.toContain(raw);
+    expect(storedIds()).toContain(sha256(raw));
   });
 });
 

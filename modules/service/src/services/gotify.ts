@@ -4,7 +4,7 @@
  * Gotify server; the Gotify apps show it on the phone and the desktop.
  * Messages carry Markdown, which the Gotify clients render.
  */
-import { loadConfig } from "../config";
+import { isSameServer, loadConfig } from "../config";
 import { appLogger } from "../logger";
 import type { SendNotificationResponse } from "portfolio-shared/api-types";
 import type { PushMessage } from "./notify";
@@ -31,12 +31,13 @@ export function isGotifyConfigured(): boolean {
 
 /**
  * Sends one message. The target falls back to the stored settings, so the
- * Test button can try a URL and token before they are saved.
+ * Test button can try a URL and token before they are saved. The stored
+ * token goes only to the stored server.
  */
 export async function sendGotify(msg: PushMessage, target: GotifyTarget = {}): Promise<SendNotificationResponse> {
   const cfg = loadConfig();
   const url = (target.url?.trim() || cfg.gotifyUrl).trim();
-  const token = (target.token?.trim() || cfg.gotifyToken).trim();
+  const token = (target.token?.trim() || (isSameServer(url, cfg.gotifyUrl) ? cfg.gotifyToken : "")).trim();
   if (!url || !token) return { success: false, error: "Set the Gotify server URL and application token first." };
   if (!/^https?:\/\//i.test(url)) return { success: false, error: "The Gotify server URL must start with http:// or https://." };
 

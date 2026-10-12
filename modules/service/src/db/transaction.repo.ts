@@ -57,25 +57,24 @@ export function create(data: Partial<TransactionInput> & { portfolioId: string; 
   return findById(id)!;
 }
 
-export function update(id: string, data: Partial<TransactionInput>): TransactionRow | null {
-  const db = getDatabase();
-  const existing = findById(id);
-  if (!existing) return null;
+/** A field the update leaves out (null or undefined) keeps its stored value. */
+const UPDATE_SQL = `UPDATE transactions SET date = COALESCE(?, date), datetime = COALESCE(?, datetime), type = COALESCE(?, type),
+  assetClass = COALESCE(?, assetClass), name = COALESCE(?, name), symbol = COALESCE(?, symbol), isin = COALESCE(?, isin),
+  shares = COALESCE(?, shares), price = COALESCE(?, price), amount = COALESCE(?, amount), fee = COALESCE(?, fee),
+  tax = COALESCE(?, tax), currency = COALESCE(?, currency), updatedAt = ?
+  WHERE id = ?`;
 
-  const now = new Date().toISOString();
-  db.run(
-    `UPDATE transactions SET date = ?, datetime = ?, type = ?, assetClass = ?, name = ?, symbol = ?,
-     isin = ?, shares = ?, price = ?, amount = ?, fee = ?, tax = ?, currency = ?, updatedAt = ?
-     WHERE id = ?`,
-    [
-      data.date ?? existing.date, data.datetime ?? existing.datetime, data.type ?? existing.type,
-      data.assetClass ?? existing.assetClass, data.name ?? existing.name, data.symbol ?? existing.symbol,
-      data.isin ?? existing.isin, data.shares ?? existing.shares, data.price ?? existing.price,
-      data.amount ?? existing.amount, data.fee ?? existing.fee, data.tax ?? existing.tax,
-      data.currency ?? existing.currency, now, id,
-    ],
-  );
-  return findById(id);
+function updateParams(id: string, data: Partial<TransactionInput>, now: string) {
+  return [
+    data.date ?? null, data.datetime ?? null, data.type ?? null, data.assetClass ?? null, data.name ?? null,
+    data.symbol ?? null, data.isin ?? null, data.shares ?? null, data.price ?? null, data.amount ?? null,
+    data.fee ?? null, data.tax ?? null, data.currency ?? null, now, id,
+  ];
+}
+
+export function update(id: string, data: Partial<TransactionInput>): TransactionRow | null {
+  const changed = getDatabase().query(UPDATE_SQL).run(...updateParams(id, data, new Date().toISOString())).changes;
+  return changed > 0 ? findById(id) : null;
 }
 
 export function deleteById(id: string): boolean {
@@ -114,17 +113,33 @@ export function bulkCreate(transactions: Array<Partial<TransactionInput> & { por
   return rows;
 }
 
-/** Applies several updates atomically: one fsync for a whole CSV import instead of one per row. */
+/**
+ * Applies several updates atomically: one fsync for a whole CSV import
+ * instead of one per row, and one compiled statement for every row.
+ */
 export function bulkUpdate(updates: Array<{ id: string; data: Partial<TransactionInput> }>): number {
   if (updates.length === 0) return 0;
   const db = getDatabase();
+  const stmt = db.query(UPDATE_SQL);
+  const now = new Date().toISOString();
   let changed = 0;
   db.transaction(() => {
-    for (const { id, data } of updates) {
-      if (update(id, data)) changed++;
-    }
+    for (const { id, data } of updates) changed += stmt.run(...updateParams(id, data, now)).changes;
   })();
   return changed;
+}
+
+/** The new and the changed rows of one import in one transaction: a failure leaves the ledger as it was. */
+export function saveImport(
+  creates: Parameters<typeof bulkCreate>[0],
+  updates: Parameters<typeof bulkUpdate>[0],
+): { created: TransactionRow[]; updated: number } {
+  const result: { created: TransactionRow[]; updated: number } = { created: [], updated: 0 };
+  getDatabase().transaction(() => {
+    if (creates.length > 0) result.created = bulkCreate(creates);
+    result.updated = bulkUpdate(updates);
+  })();
+  return result;
 }
 
 export function countByPortfolio(portfolioId: string): number {

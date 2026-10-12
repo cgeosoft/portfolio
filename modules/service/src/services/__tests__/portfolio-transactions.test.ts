@@ -3,6 +3,7 @@ import { getDatabase } from "../../db/database";
 import * as portfolioRepo from "../../db/portfolio.repo";
 import * as txRepo from "../../db/transaction.repo";
 import * as marketCache from "../../db/market-cache.repo";
+import { loadConfig, updateConfig } from "../../config";
 import { PortfolioService, type IMarketDataProvider } from "../portfolio";
 
 const offline: IMarketDataProvider = {
@@ -70,6 +71,53 @@ describe("transactions stay inside their portfolio", () => {
     expect(txRepo.bulkUpdate([])).toBe(0);
   });
 
+  it("drops the transaction and snapshot indexes no query uses", () => {
+    const names = (getDatabase().query("SELECT name FROM sqlite_master WHERE type = 'index'").all() as { name: string }[]).map((r) => r.name);
+    expect(names).toContain("idx_transactions_portfolio_date");
+    for (const dropped of ["idx_transactions_portfolio", "idx_transactions_date", "idx_transactions_symbol", "idx_snapshots_portfolio"]) {
+      expect(names).not.toContain(dropped);
+    }
+  });
+
+  it("an update keeps the fields it leaves out and counts only stored rows", () => {
+    const [row] = txRepo.bulkCreate([
+      { portfolioId: a.id, date: "2026-01-05", type: "BUY", symbol: "KEEP", name: "Keep Co", shares: 3, price: 2, amount: 6, fee: 1 },
+    ]);
+    const changed = txRepo.bulkUpdate([
+      { id: row!.id, data: { price: 4, name: undefined, fee: null } },
+      { id: "missing-transaction", data: { price: 1 } },
+    ]);
+    expect(changed).toBe(1);
+    const stored = txRepo.findById(row!.id)!;
+    expect(stored.price).toBe(4);
+    expect(stored.name).toBe("Keep Co");
+    expect(stored.fee).toBe(1);
+    expect(stored.shares).toBe(3);
+    expect(txRepo.update("missing-transaction", { price: 1 })).toBeNull();
+    expect(txRepo.update(row!.id, { amount: 0 })?.amount).toBe(0);
+  });
+
+  it("saveImport writes the new and the changed rows together, or none of them", () => {
+    txRepo.bulkCreate([{ id: "import-update", portfolioId: a.id, date: "2026-01-06", type: "BUY", symbol: "IMP", shares: 1, price: 5, amount: 5 }]);
+    const creates = [{ id: "import-new", portfolioId: a.id, date: "2026-01-07", type: "BUY", symbol: "IMPNEW", shares: 1, price: 1, amount: 1 }];
+    const updates = [{ id: "import-update", data: { price: 6 } }];
+    const db = getDatabase();
+    // The update fails after the insert of the same import ran.
+    db.run("CREATE TEMP TRIGGER fail_import_update BEFORE UPDATE ON transactions WHEN OLD.id = 'import-update' BEGIN SELECT RAISE(ABORT, 'update refused'); END");
+    try {
+      expect(() => txRepo.saveImport(creates, updates)).toThrow("update refused");
+    } finally {
+      db.run("DROP TRIGGER IF EXISTS fail_import_update");
+    }
+    expect(txRepo.findById("import-new")).toBeNull();
+    expect(txRepo.findById("import-update")?.price).toBe(5);
+
+    const saved = txRepo.saveImport(creates, updates);
+    expect(saved.created.map((r) => r.id)).toEqual(["import-new"]);
+    expect(saved.updated).toBe(1);
+    expect(txRepo.findById("import-update")?.price).toBe(6);
+  });
+
   it("clearing a portfolio's cache drops its disk entries in every currency", () => {
     marketCache.set(`portfolio:${a.id}_EUR`, { ok: 1 }, 60_000);
     marketCache.set(`portfolio:${a.id}_USD`, { ok: 1 }, 60_000);
@@ -88,5 +136,43 @@ describe("transactions stay inside their portfolio", () => {
     expect(marketCache.deleteByPrefix("quote:A_")).toBe(1);
     expect(marketCache.get("quote:AXB")).not.toBeNull();
     marketCache.deleteKey("quote:AXB");
+  });
+});
+
+describe("deleting a portfolio", () => {
+  it("switches off the automations aimed at it and leaves the others alone", () => {
+    const service = new PortfolioService(offline);
+    const original = loadConfig();
+    const gone = portfolioRepo.create({ name: "Gone", baseCurrency: "EUR" });
+    const kept = portfolioRepo.create({ name: "Kept", baseCurrency: "EUR" });
+    try {
+      updateConfig({
+        dailyBriefPortfolioId: gone.id,
+        dailyBriefEnabled: true,
+        eventAlertsPortfolioId: gone.id,
+        eventAlertsEnabled: true,
+        weeklyAnalysisPortfolioId: kept.id,
+        weeklyAnalysisEnabled: true,
+      });
+      expect(service.deletePortfolio(gone.id)).toBe(true);
+      const cfg = loadConfig();
+      expect(cfg.dailyBriefPortfolioId).toBe("");
+      expect(cfg.dailyBriefEnabled).toBe(false);
+      expect(cfg.eventAlertsPortfolioId).toBe("");
+      expect(cfg.eventAlertsEnabled).toBe(false);
+      expect(cfg.weeklyAnalysisPortfolioId).toBe(kept.id);
+      expect(cfg.weeklyAnalysisEnabled).toBe(true);
+    } finally {
+      updateConfig({
+        dailyBriefPortfolioId: original.dailyBriefPortfolioId,
+        eventAlertsPortfolioId: original.eventAlertsPortfolioId,
+        weeklyAnalysisPortfolioId: original.weeklyAnalysisPortfolioId,
+        dailyBriefEnabled: original.dailyBriefEnabled,
+        eventAlertsEnabled: original.eventAlertsEnabled,
+        weeklyAnalysisEnabled: original.weeklyAnalysisEnabled,
+      });
+      portfolioRepo.deleteById(kept.id);
+      service.destroy();
+    }
   });
 });

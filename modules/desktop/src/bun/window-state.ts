@@ -60,7 +60,7 @@ export function readWindowState(file: string): WindowStateConfig | undefined {
 }
 
 export function writeWindowState(file: string, state: WindowStateConfig): void {
-  mkdirSync(dirname(file), { recursive: true });
+  mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
   writeFileSync(file, JSON.stringify(state, null, 2) + "\n", "utf-8");
 }
 

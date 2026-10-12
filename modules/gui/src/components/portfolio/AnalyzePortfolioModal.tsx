@@ -1,7 +1,6 @@
 import { rpc } from "../../rpc";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 import {
   AlertCircle,
   AlertTriangle,
@@ -30,6 +29,34 @@ import type { FinancialPortfolioData, PortfolioReport } from "portfolio-shared/p
 import type { PrepareReportPromptResponse } from "portfolio-shared/api-types";
 import { fmtCurrency, maskFinancialValues } from "./utils";
 import { renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
+import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
+
+/** Styles of the prompt viewer; module level, so the elements are not remounted on every render. */
+const PROMPT_MARKDOWN: Components = {
+  h1: ({ node: _n, ...props }) => (
+    <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
+  ),
+  h2: ({ node: _n, ...props }) => (
+    <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-3 mb-1.5" {...props} />
+  ),
+  h3: ({ node: _n, ...props }) => (
+    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mt-2.5 mb-1" {...props} />
+  ),
+  p: ({ node: _n, ...props }) => <p className="mb-2 text-slate-300 leading-relaxed text-xs" {...props} />,
+  ul: ({ node: _n, ...props }) => <ul className="list-disc list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
+  ol: ({ node: _n, ...props }) => <ol className="list-decimal list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
+  li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
+  blockquote: ({ node: _n, ...props }) => (
+    <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-2.5 py-1.5 my-2 text-slate-400 italic rounded-r text-xs" {...props} />
+  ),
+  strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
+  code: ({ node: _n, ...props }) => (
+    <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
+  ),
+};
+
+/** Holding references open the holding. Provider headlines in the prompt follow the SafeMarkdown link rules. */
+const renderHoldingLink: InAppLinkRenderer = (href, children) => renderHoldingAnchor(href, children, () => null);
 
 interface AnalyzePortfolioModalProps {
   isOpen: boolean;
@@ -139,6 +166,12 @@ export function AnalyzePortfolioModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const holdingLinkPlugin = useHoldingLinkPlugin();
 
+  // The prompt as shown and copied, masked once per prompt instead of on every render.
+  const promptText = useMemo(() => {
+    const prompt = promptData?.fullPrompt ?? "";
+    return hideCurrencyValues ? maskFinancialValues(prompt) : prompt;
+  }, [promptData, hideCurrencyValues]);
+
   const isMountedRef = useRef(true);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -242,7 +275,7 @@ export function AnalyzePortfolioModal({
   const handleCopyPrompt = useCallback(async () => {
     if (!promptData?.fullPrompt) return;
     try {
-      await navigator.clipboard.writeText(hideCurrencyValues ? maskFinancialValues(promptData.fullPrompt) : promptData.fullPrompt);
+      await navigator.clipboard.writeText(promptText);
       setCopiedPrompt(true);
       setTimeout(() => {
         if (isMountedRef.current) setCopiedPrompt(false);
@@ -250,7 +283,7 @@ export function AnalyzePortfolioModal({
     } catch (err) {
       console.error("Failed to copy prompt to clipboard:", err);
     }
-  }, [promptData]);
+  }, [promptData, promptText]);
 
   // Start LLM streaming generation (Step 3)
   const handleStartProcessing = useCallback(async () => {
@@ -654,35 +687,14 @@ export function AnalyzePortfolioModal({
                     </div>
 
                     <div className="p-3.5 flex-1 min-h-0 overflow-y-auto text-slate-300 text-xs font-mono leading-relaxed select-text custom-scrollbar bg-black/40">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, holdingLinkPlugin]}
-                        components={{
-                          a: ({ node: _n, href, children, ...props }) =>
-                            renderHoldingAnchor(href, children, () => <a href={href} {...props}>{children}</a>),
-                          h1: ({ node: _n, ...props }) => (
-                            <h1 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1 mt-3 mb-1.5" {...props} />
-                          ),
-                          h2: ({ node: _n, ...props }) => (
-                            <h2 className="text-xs font-bold uppercase tracking-wider text-[#DD3C73] mt-3 mb-1.5" {...props} />
-                          ),
-                          h3: ({ node: _n, ...props }) => (
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mt-2.5 mb-1" {...props} />
-                          ),
-                          p: ({ node: _n, ...props }) => <p className="mb-2 text-slate-300 leading-relaxed text-xs" {...props} />,
-                          ul: ({ node: _n, ...props }) => <ul className="list-disc list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
-                          ol: ({ node: _n, ...props }) => <ol className="list-decimal list-outside pl-4 mb-2 space-y-0.5 text-slate-300 text-xs" {...props} />,
-                          li: ({ node: _n, ...props }) => <li className="text-slate-300 leading-relaxed" {...props} />,
-                          blockquote: ({ node: _n, ...props }) => (
-                            <blockquote className="border-l-2 border-[#DD3C73] bg-[#DD3C73]/5 px-2.5 py-1.5 my-2 text-slate-400 italic rounded-r text-xs" {...props} />
-                          ),
-                          strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
-                          code: ({ node: _n, ...props }) => (
-                            <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
-                          ),
-                        }}
+                      <SafeMarkdown
+                        components={PROMPT_MARKDOWN}
+                        remarkPlugin={holdingLinkPlugin}
+                        renderInAppLink={renderHoldingLink}
+                        linkClassName=""
                       >
-                        {hideCurrencyValues ? maskFinancialValues(promptData.fullPrompt) : promptData.fullPrompt}
-                      </ReactMarkdown>
+                        {promptText}
+                      </SafeMarkdown>
                     </div>
                   </div>
                 </div>

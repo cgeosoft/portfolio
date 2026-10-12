@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import JSZip from "jszip";
 import type { PortfolioItem, PortfolioTransaction, PortfolioReport, PortfolioSummary } from "portfolio-shared/portfolio";
 import { rpc } from "../../rpc";
 import {
@@ -15,21 +14,12 @@ import {
   Check,
   Coins,
 } from "lucide-react";
-import { fmtCurrency, cleanThinkTags } from "./utils";
+import { fmtCurrency, cleanThinkTags, escapeCsvField } from "./utils";
 
 interface ExportPortfolioModalProps {
   isOpen: boolean;
   onClose: () => void;
   portfolio: PortfolioItem | null;
-}
-
-function escapeCsvField(val: unknown): string {
-  if (val === null || val === undefined) return "";
-  const str = String(val);
-  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
 }
 
 function generateTransactionsCsv(transactions: PortfolioTransaction[]): string {
@@ -213,6 +203,8 @@ export function ExportPortfolioModal({
     setExportSuccess(false);
 
     try {
+      // JSZip loads on first export instead of with the app.
+      const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
       let transactions: PortfolioTransaction[] = [];
       let reports: PortfolioReport[] = [];

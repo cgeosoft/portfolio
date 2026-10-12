@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
 import type {
   FinancialPortfolioData,
   PortfolioTransaction,
@@ -20,14 +20,12 @@ import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
 import { SuggestionsPage } from "./components/portfolio/SuggestionsPage";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
-import { ImportCsvModal } from "./components/portfolio/ImportCsvModal";
-import { AnalyzePortfolioModal } from "./components/portfolio/AnalyzePortfolioModal";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SetupWizardModal } from "./components/common/SetupWizardModal";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { Toaster } from "./components/common/Toaster";
 import { ChangelogModal } from "./components/common/ChangelogModal";
-import { SettingsPage, type SettingsSection } from "./components/settings/SettingsPage";
+import type { SettingsSection } from "./components/settings/SettingsPage";
 import { CONFIG_CHANGED_EVENT } from "./components/settings/SettingsFields";
 import { SupportTicketModal } from "./components/settings/SupportTicketModal";
 import { TermsPage } from "./components/common/TermsPage";
@@ -62,6 +60,34 @@ import {
   type PortfolioMetricPreference,
 } from "portfolio-shared/metrics";
 import { RefreshCw, AlertTriangle } from "lucide-react";
+
+// The largest views that most sessions never open load on first use, not with the app.
+const SettingsPage = lazy(() => import("./components/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const ImportCsvModal = lazy(() => import("./components/portfolio/ImportCsvModal").then((m) => ({ default: m.ImportCsvModal })));
+const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
+
+/** Shown while the code of a lazy page loads. */
+function PageLoading() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <RefreshCw className="w-5 h-5 text-accent-400 animate-spin" />
+    </div>
+  );
+}
+
+/** True from the first time `open` is true: a lazy modal mounts on first use and keeps its state after. */
+function useOpenedOnce(open: boolean): boolean {
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) setOpened(true);
+  return opened;
+}
+
+/**
+ * How `loadData` fetches: `initial` is the first load of a portfolio, `reload` re-reads it
+ * after an edit (the service clears its caches itself), `refresh` also asks the providers
+ * for new quotes.
+ */
+type LoadMode = "initial" | "reload" | "refresh";
 
 const VALID_TABS: readonly string[] = ["overview", "reports", "suggestions", "transactions"];
 const INFO_MODAL_KEYS: readonly string[] = [
@@ -275,14 +301,10 @@ export default function App() {
     }
   }, [currency]);
 
-  // Privacy Mode Toggle State
-  const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("portfolio_privacy_mode");
-      if (saved !== null) return saved === "true";
-    }
-    return false;
-  });
+  // Privacy Mode Toggle State. Masked until the saved setting arrives with the config: the
+  // desktop window gets a new origin (random port) on every start, so localStorage is empty,
+  // and a failed config load keeps the values masked instead of showing them.
+  const [hideCurrencyValues, setHideCurrencyValues] = useState<boolean>(true);
 
   // Zoom State & Persistence (50% to 250%)
   const [zoomLevel, setZoomLevel] = useState<number>(() => {
@@ -733,9 +755,6 @@ export default function App() {
   const toggleHideCurrencyValues = () => {
     setHideCurrencyValues((prev) => {
       const next = !prev;
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem("portfolio_privacy_mode", String(next));
-      }
       rpc.request.saveConfig({ hideCurrencyValues: next }).catch(() => {});
       return next;
     });
@@ -756,6 +775,7 @@ export default function App() {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const importModalMounted = useOpenedOnce(isImportModalOpen);
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
   const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -963,10 +983,12 @@ export default function App() {
     }
   }, []);
 
-  // Reusable retry wrapper for startup RPC calls with per-attempt timeout and logging
+  // Reusable retry wrapper for startup RPC calls with per-attempt timeout and logging.
+  // A timed-out attempt is aborted (when `fn` passes the signal on), so a slow service
+  // does not get a second and third copy of the same request while the first still runs.
   const callWithRetry = async <T,>(
     name: string,
-    fn: () => Promise<T>,
+    fn: (signal: AbortSignal) => Promise<T>,
     retries = 3,
     delayMs = 250,
     attemptTimeoutMs = 3500,
@@ -974,17 +996,22 @@ export default function App() {
     let lastError: unknown;
     for (let i = 0; i < retries; i++) {
       const attemptStart = performance.now();
+      const attempt = new AbortController();
+      const timer = setTimeout(
+        () => attempt.abort(new Error(`RPC "${name}" attempt timed out after ${attemptTimeoutMs}ms`)),
+        attemptTimeoutMs,
+      );
       try {
         clientLogger.log(
           "info",
           `${name}:attempt`,
           `Starting RPC "${name}" (attempt ${i + 1}/${retries}, timeout=${attemptTimeoutMs}ms)`,
         );
-        const attemptPromise = fn();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`RPC "${name}" attempt timed out after ${attemptTimeoutMs}ms`)), attemptTimeoutMs)
-        );
-        const res = await Promise.race([attemptPromise, timeoutPromise]);
+        // Calls that ignore the signal still give up on time.
+        const timedOut = new Promise<never>((_, reject) => {
+          attempt.signal.addEventListener("abort", () => reject(attempt.signal.reason), { once: true });
+        });
+        const res = await Promise.race([fn(attempt.signal), timedOut]);
         const dur = Math.round(performance.now() - attemptStart);
         clientLogger.log("success", `${name}:success`, `RPC "${name}" succeeded on attempt ${i + 1} in ${dur}ms`, dur);
         return res;
@@ -993,10 +1020,11 @@ export default function App() {
         lastError = err;
         const msg = err instanceof Error ? err.message : String(err);
         clientLogger.log("warning", `${name}:retry`, `RPC "${name}" attempt ${i + 1}/${retries} failed after ${dur}ms: ${msg}`, dur);
-        
-        if (i < retries - 1) {
-          await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
-        }
+      } finally {
+        clearTimeout(timer);
+      }
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
       }
     }
     const finalMsg = lastError instanceof Error ? lastError.message : String(lastError);
@@ -1012,14 +1040,10 @@ export default function App() {
       try {
         const config = await callWithRetry<DesktopConfig>("getConfig", () => rpc.request.getConfig({}), 3, 200, 3000);
         if (config.baseCurrency) setCurrency(config.baseCurrency);
-        if (config.hideCurrencyValues !== undefined) {
-          setHideCurrencyValues(config.hideCurrencyValues);
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem("portfolio_privacy_mode", String(config.hideCurrencyValues));
-          }
-        }
+        setHideCurrencyValues(config.hideCurrencyValues === true);
         if (config.llmProvider) setAssistantProvider(config.llmProvider);
         if (config.llmModel) setAssistantModel(config.llmModel);
+        setQuotesIntervalMins(config.marketQuotesInterval ?? 15);
         if (config.zoomLevel !== undefined && Number.isFinite(config.zoomLevel)) {
           const clamped = Math.min(2.5, Math.max(0.5, Math.round(config.zoomLevel * 100) / 100));
           setZoomLevel(clamped);
@@ -1075,17 +1099,7 @@ export default function App() {
     if (authState === "ready") initApp();
   }, [authState]);
 
-  // Periodic update check every 1 hour in webview
-  useEffect(() => {
-    const updateTimer = setInterval(() => {
-      rpc.request.getUpdateInfo({}).then((uInfo: AppUpdateInfo) => {
-        if (uInfo) setUpdateInfo(uInfo);
-      }).catch(() => {});
-    }, 60 * 60 * 1000);
-    return () => clearInterval(updateTimer);
-  }, []);
-
-  // Listen for push messages from Bun when a new update is detected
+  // A newer version found later: rpc.ts polls the update info every 10 minutes.
   useEffect(() => {
     onUpdateAvailable((info: AppUpdateInfo) => {
       setUpdateInfo(info);
@@ -1100,8 +1114,9 @@ export default function App() {
       const data = await callWithRetry<GetPortfoliosResponse>("getPortfolios", () => rpc.request.getPortfolios({}), 3, 200, 3000);
       const list: PortfolioItem[] = data.portfolios || [];
       setPortfolios(list);
+      // Ids only: portfolio names are personal data and stay out of the logs.
       clientLogger.log("info", "loadPortfolios:received", `Received ${list.length} portfolio(s)`, undefined, {
-        portfolios: list.map((p) => ({ id: p.id, name: p.name })),
+        portfolioIds: list.map((p) => p.id),
         activePortfolioId,
       });
 
@@ -1153,19 +1168,21 @@ export default function App() {
 
   // Fetch portfolio data
   const loadData = useCallback(
-    async (forceRefresh = false) => {
+    async (mode: LoadMode = "initial") => {
       if (!activePortfolioId) {
         clientLogger.log("warning", "loadData:skipped", "loadData called but activePortfolioId is null");
         return;
       }
-      if (forceRefresh) setIsRefreshing(true);
+      // A reload after an edit or a refresh keeps the data on screen and shows the refresh spinner.
+      const inBackground = mode !== "initial";
+      if (inBackground) setIsRefreshing(true);
       else setIsLoading(true);
 
       const loadStart = performance.now();
       clientLogger.log(
         "info",
         "loadData:start",
-        `Loading portfolio data (id=${activePortfolioId}, currency=${currency}, forceRefresh=${forceRefresh})`,
+        `Loading portfolio data (id=${activePortfolioId}, currency=${currency}, mode=${mode})`,
       );
 
       setLoadError(null);
@@ -1173,33 +1190,34 @@ export default function App() {
         await ensureRpcReady();
         const data = await callWithRetry<FinancialPortfolioData>(
           `getPortfolioData:${activePortfolioId.slice(0, 8)}`,
-          () =>
+          (signal) =>
             rpc.request.getPortfolioData({
               portfolioId: activePortfolioId,
               baseCurrency: currency,
-              refresh: forceRefresh,
+              refresh: mode === "refresh",
+              signal,
             }),
-          forceRefresh ? 2 : 3,
+          inBackground ? 2 : 3,
           250,
-          forceRefresh ? 30000 : 4000,
+          inBackground ? 30000 : 4000,
         );
         const dur = Math.round(performance.now() - loadStart);
         setPortfolioData(data);
         setLoadError(null);
+        // Counts only: balances never go to the logs.
         clientLogger.log(
           "success",
           "loadData:success",
-          `Portfolio data loaded (${data.holdings?.length ?? 0} holdings, totalValue=${data.summary?.totalValue}) in ${dur}ms`,
+          `Portfolio data loaded (${data.holdings?.length ?? 0} holdings) in ${dur}ms`,
           dur,
           {
             portfolioId: activePortfolioId,
             holdingsCount: data.holdings?.length ?? 0,
-            totalValue: data.summary?.totalValue,
           },
         );
         if (data.summary?.lastUpdated) {
           setLastQuotesSync(data.summary.lastUpdated);
-          if (forceRefresh) {
+          if (mode === "refresh") {
             rpc.request.saveConfig({ lastQuotesSync: data.summary.lastUpdated }).catch(() => {});
           }
         }
@@ -1230,7 +1248,7 @@ export default function App() {
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
     if (activePortfolioId) {
-      await loadData(true);
+      await loadData("refresh");
     } else {
       setIsRefreshing(true);
       try {
@@ -1251,38 +1269,25 @@ export default function App() {
     }
   }, [activePortfolioId, currency, loadData]);
 
-  // Background quotes refresh timer based on configured interval
+  // Background quotes refresh timer based on configured interval. The interval comes from the
+  // config initApp loads and from Settings (CONFIG_CHANGED_EVENT below); the timer calls the
+  // current loadData through a ref, so switching portfolio or currency does not restart it.
+  const loadDataRef = useRef(loadData);
+  loadDataRef.current = loadData;
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | null = null;
-    void (async () => {
-      try {
-        await ensureRpcReady();
-        const cfg = await rpc.request.getConfig({});
-        if (cfg.llmProvider) setAssistantProvider(cfg.llmProvider);
-        if (cfg.llmModel) setAssistantModel(cfg.llmModel);
-        const intervalMins = cfg.marketQuotesInterval ?? 15;
-        setQuotesIntervalMins(intervalMins);
-        if (intervalMins > 0) {
-          timer = setInterval(() => {
-            // Timed refresh only: skip it while every market of the holdings is closed. A manual refresh never asks.
-            void api
-              .getMarketStatus()
-              .catch(() => null)
-              .then((status) => {
-                if (status && !status.anyOpen) return;
-                void loadData(true);
-              });
-          }, intervalMins * 60 * 1000);
-        }
-      } catch (err) {
-        console.warn("Failed to schedule background quotes refresh:", err);
-      }
-    })();
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [loadData]);
+    if (authState !== "ready" || !quotesIntervalMins || quotesIntervalMins <= 0) return;
+    const timer = setInterval(() => {
+      // Timed refresh only: skip it while every market of the holdings is closed. A manual refresh never asks.
+      void api
+        .getMarketStatus()
+        .catch(() => null)
+        .then((status) => {
+          if (status && !status.anyOpen) return;
+          void loadDataRef.current("refresh");
+        });
+    }, quotesIntervalMins * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [authState, quotesIntervalMins]);
 
   // Catalog settings saved in Settings apply here without a reload.
   useEffect(() => {
@@ -1358,7 +1363,8 @@ export default function App() {
       transactionId: txData.id,
     });
 
-    await loadData(true);
+    // The service clears its caches on a change; a reload needs no new quotes from the providers.
+    await loadData("reload");
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -1371,7 +1377,7 @@ export default function App() {
       action: "delete",
       transactionId: id,
     });
-    await loadData(true);
+    await loadData("reload");
   };
 
   const handleDeleteReport = async (id: string) => {
@@ -1395,7 +1401,7 @@ export default function App() {
     setIsRefreshing(true);
     void reloadPage(() => {
       setLoadError(null);
-      void loadData(true);
+      void loadData("refresh");
     });
   }, [loadData]);
 
@@ -1597,7 +1603,7 @@ export default function App() {
           activeTab={activeTab}
           hideCurrencyValues={hideCurrencyValues}
           onToggleHideCurrency={toggleHideCurrencyValues}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => loadData("refresh")}
           isRefreshing={true}
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
@@ -1620,7 +1626,7 @@ export default function App() {
           portfolios={portfolios}
           onChangePortfolio={handleSelectPortfolio}
           onOpenManagePortfolios={handleOpenManagePortfolios}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => loadData("refresh")}
           isRefreshing={true}
           onOpenSettings={handleOpenSettings}
           activeTab={activeTab}
@@ -1689,7 +1695,7 @@ export default function App() {
           activeTab={activeTab}
           hideCurrencyValues={hideCurrencyValues}
           onToggleHideCurrency={toggleHideCurrencyValues}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => loadData("refresh")}
           isRefreshing={isRefreshing}
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
@@ -1712,7 +1718,7 @@ export default function App() {
           portfolios={portfolios}
           onChangePortfolio={handleSelectPortfolio}
           onOpenManagePortfolios={handleOpenManagePortfolios}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => loadData("refresh")}
           isRefreshing={isRefreshing}
           onOpenSettings={handleOpenSettings}
           activeTab={activeTab}
@@ -1733,7 +1739,7 @@ export default function App() {
           <div className="flex gap-2 pt-2">
             <button
               type="button"
-              onClick={() => void loadData(false)}
+              onClick={() => void loadData()}
               className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#DD3C73]/20"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -1813,7 +1819,7 @@ export default function App() {
         activeTab={activeTab}
         hideCurrencyValues={hideCurrencyValues}
         onToggleHideCurrency={toggleHideCurrencyValues}
-        onRefresh={() => loadData(true)}
+        onRefresh={() => loadData("refresh")}
         isRefreshing={isRefreshing}
         onReload={handleReload}
         onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
@@ -1845,7 +1851,7 @@ export default function App() {
             portfolios={portfolios}
             onChangePortfolio={handleSelectPortfolio}
             onOpenManagePortfolios={handleOpenManagePortfolios}
-            onRefresh={() => loadData(true)}
+            onRefresh={() => loadData("refresh")}
             isRefreshing={isRefreshing}
             onOpenSettings={handleOpenSettings}
             lastUpdated={summary?.lastUpdated}
@@ -1888,46 +1894,50 @@ export default function App() {
           {/* Main View Router */}
           {view === "settings" && (
         <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
-          <SettingsPage
-            onBack={() => handleNavigateDashboard()}
-            initialSection={settingsSection}
-            onSectionChange={handleSettingsSectionChange}
-            portfolios={portfolios}
-            activePortfolio={activePortfolio}
-            onSelectPortfolio={handleSelectPortfolio}
-            onPortfolioCreated={handlePortfolioCreated}
-            onPortfolioUpdated={handlePortfolioUpdated}
-            onPortfolioDeleted={handlePortfolioDeleted}
-            theme={theme}
-            onChangeTheme={handleThemeChange}
-            zoomLevel={zoomLevel}
-            onChangeZoom={handleZoomSet}
-            onPinEnabledChange={setPinEnabled}
-            onReportIssue={() => setIsSupportTicketOpen(true)}
-            metrics={metricsPage}
-          />
+          <Suspense fallback={<PageLoading />}>
+            <SettingsPage
+              onBack={() => handleNavigateDashboard()}
+              initialSection={settingsSection}
+              onSectionChange={handleSettingsSectionChange}
+              portfolios={portfolios}
+              activePortfolio={activePortfolio}
+              onSelectPortfolio={handleSelectPortfolio}
+              onPortfolioCreated={handlePortfolioCreated}
+              onPortfolioUpdated={handlePortfolioUpdated}
+              onPortfolioDeleted={handlePortfolioDeleted}
+              theme={theme}
+              onChangeTheme={handleThemeChange}
+              zoomLevel={zoomLevel}
+              onChangeZoom={handleZoomSet}
+              onPinEnabledChange={setPinEnabled}
+              onReportIssue={() => setIsSupportTicketOpen(true)}
+              metrics={metricsPage}
+            />
+          </Suspense>
         </main>
       )}
 
       {view === "portfolios" && (
         <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
-          <SettingsPage
-            onBack={() => handleNavigateDashboard()}
-            initialSection="portfolios"
-            portfolios={portfolios}
-            activePortfolio={activePortfolio}
-            onSelectPortfolio={handleSelectPortfolio}
-            onPortfolioCreated={handlePortfolioCreated}
-            onPortfolioUpdated={handlePortfolioUpdated}
-            onPortfolioDeleted={handlePortfolioDeleted}
-            theme={theme}
-            onChangeTheme={handleThemeChange}
-            zoomLevel={zoomLevel}
-            onChangeZoom={handleZoomSet}
-            onPinEnabledChange={setPinEnabled}
-            onReportIssue={() => setIsSupportTicketOpen(true)}
-            metrics={metricsPage}
-          />
+          <Suspense fallback={<PageLoading />}>
+            <SettingsPage
+              onBack={() => handleNavigateDashboard()}
+              initialSection="portfolios"
+              portfolios={portfolios}
+              activePortfolio={activePortfolio}
+              onSelectPortfolio={handleSelectPortfolio}
+              onPortfolioCreated={handlePortfolioCreated}
+              onPortfolioUpdated={handlePortfolioUpdated}
+              onPortfolioDeleted={handlePortfolioDeleted}
+              theme={theme}
+              onChangeTheme={handleThemeChange}
+              zoomLevel={zoomLevel}
+              onChangeZoom={handleZoomSet}
+              onPinEnabledChange={setPinEnabled}
+              onReportIssue={() => setIsSupportTicketOpen(true)}
+              metrics={metricsPage}
+            />
+          </Suspense>
         </main>
       )}
 
@@ -2007,7 +2017,7 @@ export default function App() {
                 hideValues={hideCurrencyValues}
                 summary={summary}
                 portfolioId={activePortfolioId}
-                onSymbolsChanged={() => loadData(true)}
+                onSymbolsChanged={() => loadData("reload")}
               />
 
               {/* Exposure after ETF and fund look-through */}
@@ -2148,25 +2158,35 @@ export default function App() {
         transaction={editingTx}
       />
 
-      <ImportCsvModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        portfolioId={activePortfolioId || undefined}
-        baseCurrency={currency}
-        onSuccess={() => loadData(true)}
-      />
+      {/* Mounted from the first open on: the import keeps its file and mapping when closed */}
+      {importModalMounted && (
+        <Suspense fallback={null}>
+          <ImportCsvModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            portfolioId={activePortfolioId || undefined}
+            baseCurrency={currency}
+            onSuccess={() => loadData("reload")}
+          />
+        </Suspense>
+      )}
 
-      <AnalyzePortfolioModal
-        isOpen={isAnalyzeModalOpen}
-        onClose={() => setIsAnalyzeModalOpen(false)}
-        portfolioData={portfolioData}
-        portfolioId={activePortfolioId || undefined}
-        hideCurrencyValues={hideCurrencyValues}
-        onReportGenerated={async () => {
-          await loadReports();
-          handleTabChange("reports");
-        }}
-      />
+      {/* Mounted while open; it starts a fresh wizard on every open anyway */}
+      {isAnalyzeModalOpen && (
+        <Suspense fallback={null}>
+          <AnalyzePortfolioModal
+            isOpen
+            onClose={() => setIsAnalyzeModalOpen(false)}
+            portfolioData={portfolioData}
+            portfolioId={activePortfolioId || undefined}
+            hideCurrencyValues={hideCurrencyValues}
+            onReportGenerated={async () => {
+              await loadReports();
+              handleTabChange("reports");
+            }}
+          />
+        </Suspense>
+      )}
 
       <MetricInfoModal
         isOpen={isMetricModalOpen}

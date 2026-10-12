@@ -181,6 +181,8 @@ export interface PreviewMetricInstallResponse {
 export interface InstallMetricRequest {
   url: string;
   grantedScopes: MetricScope[];
+  /** SHA-256 of the module the user reviewed in the preview; the install refuses any other bytes. */
+  sha256?: string;
 }
 
 export interface InstallMetricResponse {
@@ -272,6 +274,12 @@ export interface PrepareReportPromptRequest {
   provider?: string;
   model?: string;
   weekKey?: string;
+}
+
+/** `GET /api/portfolios/:id/reports/:reportId/prompt`: the reports list leaves the prompts out. */
+export interface GetReportPromptResponse {
+  /** The exact prompt the report was written from; null for a report from before prompts were stored. */
+  prompt: string | null;
 }
 
 export interface PrepareReportPromptResponse {

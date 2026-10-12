@@ -104,6 +104,21 @@ export interface MetricFormatters {
   currency: (amount: number | undefined) => string;
   percent: (value: number | undefined) => string;
   number?: (value: number | undefined) => string;
+  /**
+   * Hide every figure the currency formatter does not mask: percent, number
+   * and plain amounts, and the digits of text parts. The webview sets it for
+   * unverified modules while values are hidden, because such a module can
+   * print a balance in any format.
+   */
+  hideFigures?: boolean;
+}
+
+/** Shown in place of a hidden figure. */
+export const HIDDEN_FIGURE = "••••";
+
+/** Replace every digit, in any script, so a text cannot show a figure while values are hidden. */
+export function hideDigits(text: string): string {
+  return text.replace(/\p{N}/gu, "•");
 }
 
 function formatAmount(part: MetricAmountPart, fmt: MetricFormatters): string {
@@ -113,14 +128,17 @@ function formatAmount(part: MetricAmountPart, fmt: MetricFormatters): string {
     case "currency":
       return `${prefix}${fmt.currency(amount)}`;
     case "percent": {
+      if (fmt.hideFigures) return `${HIDDEN_FIGURE}%`;
       // The host percent formatter signs positive values; "never" is for levels such as a yield.
       const text = fmt.percent(amount);
       return part.sign === "never" ? text.replace(/^\+/, "") : text;
     }
     case "number":
+      if (fmt.hideFigures) return `${prefix}${HIDDEN_FIGURE}`;
       return `${prefix}${fmt.number ? fmt.number(amount) : String(amount ?? 0)}`;
     case "none":
-      return `${prefix}${amount === undefined ? "" : String(amount)}`;
+      if (amount === undefined) return prefix;
+      return `${prefix}${fmt.hideFigures ? HIDDEN_FIGURE : String(amount)}`;
   }
 }
 
@@ -134,7 +152,8 @@ export interface RenderedMetric {
 /** Turn a validated result into display strings, reproducing the legacy card rules. */
 export function renderMetricOutput(output: MetricOutput, fmt: MetricFormatters): RenderedMetric {
   const value = formatAmount(output.value, fmt);
-  const sub = output.sub?.map((part) => ("text" in part ? part.text : formatAmount(part, fmt))).join("");
+  const text = (part: MetricTextPart) => (fmt.hideFigures ? hideDigits(part.text) : part.text);
+  const sub = output.sub?.map((part) => ("text" in part ? text(part) : formatAmount(part, fmt))).join("");
   return { value, sub: sub === "" ? undefined : sub, valueClass: sentimentClass(output) };
 }
 

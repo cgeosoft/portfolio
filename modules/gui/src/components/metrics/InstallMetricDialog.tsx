@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, Download, Link, Loader2, ShieldAlert, X } from "lucide-react";
 import type { MetricListing, PreviewMetricInstallResponse } from "portfolio-shared/api-types";
+import { api } from "../../api";
 import { rpc } from "../../rpc";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
 import { ScopeConsentList } from "./ScopeBadges";
@@ -67,7 +68,8 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
     setIsInstalling(true);
     setError(null);
     try {
-      const res = await rpc.request.installMetric({ url: preview.url, grantedScopes: preview.manifest.scopes });
+      // The hash the user reviewed: the service refuses the install when the module changed since.
+      const res = await api.installMetric(preview.url, preview.manifest.scopes, preview.sha256);
       onInstalled(res.metric);
       onClose();
     } catch (err) {

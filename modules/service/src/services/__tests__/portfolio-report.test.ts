@@ -58,9 +58,14 @@ describe("Portfolio Report Prompt Persistence", () => {
     expect(fetched).not.toBeNull();
     expect(fetched!.prompt).toBe(testPrompt);
 
+    // The list leaves the prompt out; findPrompt reads it for one report of its portfolio.
     const list = reportRepo.findByPortfolio(testPortfolioId);
     expect(list.length).toBe(1);
-    expect(list[0]!.prompt).toBe(testPrompt);
+    expect(list[0]!.prompt).toBeUndefined();
+    expect(list[0]!.content).toBe("Detailed markdown analysis");
+    expect(reportRepo.findPrompt(testPortfolioId, "report-test-1")).toBe(testPrompt);
+    expect(reportRepo.findPrompt("another-portfolio", "report-test-1")).toBeNull();
+    expect(reportRepo.findPrompt(testPortfolioId, "missing-report")).toBeNull();
   });
 
   it("PortfolioReportService.generateReport stores full prompt with system and user sections", async () => {
@@ -150,10 +155,11 @@ describe("Portfolio Report Prompt Persistence", () => {
     expect(result.prompt).toContain("SAP");
     expect(result.prompt).toContain("Prompt Test Portfolio");
 
-    // Also verify getReports includes the prompt
+    // The reports list leaves the prompt out; it stays stored for the report.
     const { reports } = service.getReports(testPortfolioId);
     expect(reports.length).toBe(1);
-    expect(reports[0]!.prompt).toBe(result.prompt);
+    expect(reports[0]!.prompt).toBeNull();
+    expect(reportRepo.findPrompt(testPortfolioId, reports[0]!.id)).toBe(result.prompt);
   });
 
   it("PortfolioReportService adds the market context sections to the prompt", async () => {

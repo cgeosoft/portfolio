@@ -17,8 +17,10 @@ InstallDirRegKey HKCU "Software\${APP_IDENTIFIER}" "InstallDir"
 !define MUI_ICON "${ICON_FILE}"
 !define MUI_UNICON "${ICON_FILE}"
 
+; No directory page: install into the fixed per-user location below. Letting the
+; user pick the folder risks a shared, world-writable path that another user
+; could use to replace the launcher.
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE}"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch Portfolio"
@@ -52,7 +54,12 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
-  RMDir /r "$INSTDIR"
+  ; Remove only what the installer wrote, then the folder if it is now empty,
+  ; so a mistyped install path can never trigger a recursive wipe of other data.
+  RMDir /r "$INSTDIR\bin"
+  RMDir /r "$INSTDIR\Resources"
+  Delete "$INSTDIR\Uninstall.exe"
+  RMDir "$INSTDIR"
   Delete "$SMPROGRAMS\Portfolio\Portfolio.lnk"
   Delete "$SMPROGRAMS\Portfolio\Uninstall Portfolio.lnk"
   RMDir "$SMPROGRAMS\Portfolio"

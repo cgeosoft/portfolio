@@ -68,7 +68,7 @@ The host writes a binary payload into guest memory and calls `metric_run(ptr, le
 
 ABI 2 adds the fundamentals block and a 40-byte header. Modules built for ABI 1 still run and receive the ABI 1 layout, without fundamentals. Repository metrics must declare `abi: 2`.
 
-Required exports: `metric_abi_version()`, `metric_alloc(size)`, `metric_run(ptr, len)`. Allowed imports: `env.memory`, `env.abort`, `env.seed`, `env.trace`. Anything else is rejected at load.
+Required exports: `metric_abi_version()`, `metric_alloc(size)`, `metric_run(ptr, len)`. Allowed imports: `env.memory`, `env.abort`, `env.seed`, `env.trace`. Anything else is rejected at load. A module must import its memory and define none of its own, may declare only function types over numeric values (no GC types), and at most one table with a declared maximum of 65536 entries; the engine rejects anything else before it runs guest code.
 
 ## Build your own outside this repository
 
@@ -86,6 +86,7 @@ asc index.ts -o my-metric.wasm --runtime stub --optimize --importMemory --noExpo
 | Limit | Value |
 |---|---|
 | Guest memory | `runtime.memoryPages` x 64 KiB, at most 4 MiB |
-| Time per run | `runtime.timeoutMs`, at most 2000 ms, then the engine is killed and the module disabled for the session |
+| Time per run | `runtime.timeoutMs`, at most 2000 ms, then the engine is killed and the module disabled for the session. Start code (the load probe) gets the same budget |
+| Engine crash | the module that was running is disabled for the session |
 | Output | 4 KiB of JSON, at most 16 sub-line parts |
 | Module size (URL install) | 2 MiB |

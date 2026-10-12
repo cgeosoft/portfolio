@@ -126,7 +126,8 @@ export class WeeklyAnalysisService {
 
   private async tick(): Promise<void> {
     if (this.running || !isAnalysisDue(loadConfig(), new Date())) return;
-    await this.run("schedule").catch((err) => appLogger.logStep("error", "weekly", "run", `Weekly analysis failed: ${err instanceof Error ? err.message : err}`));
+    // Each portfolio's own errors go to the status. An unexpected one lands here; log its type only (AGENTS.md rule 3).
+    await this.run("schedule").catch((err) => appLogger.logStep("error", "weekly", "run", `Weekly analysis failed (${err instanceof Error ? err.name : typeof err})`));
   }
 
   /** Writes the weekly report of every chosen portfolio and pushes a summary of each. */

@@ -7,6 +7,8 @@
  *
  *   <data>/portfolio.sqlite       the database: portfolios, settings, sessions
  *   <data>/metrics/               the metric engine script and its modules
+ *   <data>/claude-cli/            working directory of the Claude CLI (mode 0700); holds a
+ *                                 system prompt file only while a request runs
  *   <data>/logs/                  service-YYYY-MM-DD.log and desktop-YYYY-MM-DD.log,
  *                                 written by the desktop shell from the service output
  *   <data>/desktop-settings.json  the switches the desktop shell reads (close to tray)

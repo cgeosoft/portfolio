@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
+import { DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { getDatabase } from "./db/database";
 import { DATA_DIR } from "./paths";
 
@@ -305,15 +306,37 @@ export function maskSecrets(cfg: DesktopConfig): DesktopConfig {
   };
 }
 
-/** A key from a request: SECRET_MASK stands for the stored key. */
+/** A key from a request: SECRET_MASK stands for the stored key. Only for services with a fixed server (FMP, Finnhub). */
 export function unmaskSecret(value: string | undefined, stored: string | undefined): string | undefined {
   return value === SECRET_MASK ? stored : value;
 }
 
-/** The stored key of the OpenAI-compatible provider, for a request that carries SECRET_MASK. */
-export function unmaskLlmKey(value: string | undefined): string | undefined {
-  const cfg = loadConfig();
-  return unmaskSecret(value, cfg.llmApiKeys?.["openai-compatible"] || cfg.llmApiKey);
+/**
+ * A key or token from a request whose server URL the request may name (LLM,
+ * Gotify, ntfy). SECRET_MASK becomes undefined, "use the stored one", and the
+ * service that sends it adds the stored secret only for the stored server
+ * (`isSameServer`).
+ */
+export function requestSecret(value: string | undefined): string | undefined {
+  return value === SECRET_MASK ? undefined : value;
+}
+
+/**
+ * True when `url` names the same server (scheme, host and port) as the stored
+ * URL. A stored key or token goes only to the server it was saved for: a
+ * request that names another server must bring its own, so no request can
+ * send a stored secret to a server of its choosing.
+ */
+export function isSameServer(url: string | undefined, stored: string | undefined): boolean {
+  const a = (url ?? "").trim().replace(/\/+$/, "");
+  const b = (stored ?? "").trim().replace(/\/+$/, "");
+  if (!a || !b) return false;
+  if (a === b) return true;
+  try {
+    return new URL(a).origin === new URL(b).origin;
+  } catch {
+    return false;
+  }
 }
 
 /** An update from the GUI with every SECRET_MASK put back to the stored key. */
@@ -331,7 +354,42 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
     const provider = out.llmProvider || cfg.llmProvider;
     out.llmApiKey = cfg.llmApiKeys?.[provider] || cfg.llmApiKey;
   }
+  dropSecretsOfMovedServers(updates, out, cfg);
   return out;
+}
+
+/**
+ * A stored key or token belongs to the server it was saved for. An update
+ * that points the LLM provider, Gotify or ntfy at another server (scheme,
+ * host or port) without a new key in the same update clears the stored one,
+ * so it is never sent to the new server and Settings asks for it again. Only
+ * a URL the user saved counts: a key entered before the first URL stays.
+ */
+function dropSecretsOfMovedServers(updates: Partial<DesktopConfig>, out: Partial<DesktopConfig>, cfg: DesktopConfig): void {
+  const brings = (value: string | undefined) => value !== undefined && value !== SECRET_MASK;
+  const moved = (next: string, stored: string | undefined) => Boolean(stored?.trim()) && !isSameServer(next, stored);
+
+  if (updates.gotifyUrl !== undefined && moved(updates.gotifyUrl, cfg.gotifyUrl) && !brings(updates.gotifyToken)) out.gotifyToken = "";
+  // loadConfig() fills in ntfy.sh when no server is saved; the row tells whether one is.
+  const savedNtfyUrl = readRows().ntfyUrl;
+  if (updates.ntfyUrl !== undefined && moved(updates.ntfyUrl, typeof savedNtfyUrl === "string" ? savedNtfyUrl : undefined) && !brings(updates.ntfyToken)) {
+    out.ntfyToken = "";
+  }
+
+  const provider = updates.llmProvider || cfg.llmProvider;
+  const savedUrl = (id: string) => cfg.llmBaseUrls?.[id] || (id === cfg.llmProvider ? cfg.llmBaseUrl : "");
+  const movedProviders = new Set<string>();
+  for (const [id, url] of Object.entries(updates.llmBaseUrls ?? {})) {
+    if (moved(url || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(id))) movedProviders.add(id);
+  }
+  if (updates.llmBaseUrl !== undefined && provider && moved(updates.llmBaseUrl || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(provider))) {
+    movedProviders.add(provider);
+  }
+  for (const id of movedProviders) {
+    if (brings(updates.llmApiKeys?.[id]) || (id === provider && brings(updates.llmApiKey))) continue;
+    out.llmApiKeys = { ...out.llmApiKeys, [id]: "" };
+    if (id === provider) out.llmApiKey = "";
+  }
 }
 
 /**

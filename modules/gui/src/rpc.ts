@@ -12,7 +12,8 @@ export const rpc = {
   request: {
     logClientEvent: (p: LogClientEventRequest) => api.logClientEvent(p),
     getPortfolios: (_p?: unknown) => api.getPortfolios(),
-    getPortfolioData: (p: { portfolioId: string; baseCurrency?: string; refresh?: boolean }) => api.getPortfolioData(p.portfolioId, p.baseCurrency, p.refresh),
+    getPortfolioData: (p: { portfolioId: string; baseCurrency?: string; refresh?: boolean; signal?: AbortSignal }) =>
+      api.getPortfolioData(p.portfolioId, p.baseCurrency, p.refresh, p.signal),
     createPortfolio: api.createPortfolio,
     updatePortfolio: api.updatePortfolio,
     deletePortfolio: (p: { portfolioId: string }) => api.deletePortfolio(p.portfolioId),
@@ -21,7 +22,7 @@ export const rpc = {
     getMetricCatalog: (_p?: unknown) => api.getMetricCatalog(),
     evaluatePortfolioMetrics: api.evaluatePortfolioMetrics,
     previewMetricInstall: (p: { url: string }) => api.previewMetricInstall(p.url),
-    installMetric: (p: Parameters<typeof api.installMetric> extends [infer U, infer S] ? { url: U; grantedScopes: S } : never) => api.installMetric(p.url, p.grantedScopes),
+    installMetric: (p: { url: string; grantedScopes: Parameters<typeof api.installMetric>[1]; sha256?: string }) => api.installMetric(p.url, p.grantedScopes, p.sha256),
     uninstallMetric: (p: { id: string }) => api.uninstallMetric(p.id),
     manageTransactions: api.manageTransactions,
     getTransactions: (p: { portfolioId: string }) => api.getTransactions(p.portfolioId),
@@ -181,8 +182,12 @@ class ClientLogger {
 
 export const clientLogger = new ClientLogger();
 
-/** Resolves once the service answers /api/health (false after `timeoutMs`). */
-export async function ensureRpcReady(timeoutMs = 15_000): Promise<boolean> {
+/** Set once the service has answered: the health check covers the start-up race only. */
+let serviceReady = false;
+/** The running check, shared by the callers that wait at the same time. */
+let readyCheck: Promise<boolean> | null = null;
+
+async function waitForHealth(timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
@@ -193,4 +198,20 @@ export async function ensureRpcReady(timeoutMs = 15_000): Promise<boolean> {
     }
   }
   return false;
+}
+
+/**
+ * Resolves once the service answers /api/health (false after `timeoutMs`). After the
+ * first answer it resolves at once, so a request no longer costs a health round trip.
+ */
+export function ensureRpcReady(timeoutMs = 15_000): Promise<boolean> {
+  if (serviceReady) return Promise.resolve(true);
+  if (!readyCheck) {
+    readyCheck = waitForHealth(timeoutMs).then((ready) => {
+      serviceReady = ready;
+      readyCheck = null;
+      return ready;
+    });
+  }
+  return readyCheck;
 }

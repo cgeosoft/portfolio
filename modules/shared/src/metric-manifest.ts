@@ -69,6 +69,17 @@ function fail(path: string, expectation: string): never {
   throw new Error(`manifest ${path} ${expectation}`);
 }
 
+/**
+ * A short rendering of an untrusted value for an error message. It never
+ * serializes a list or a mapping: a parsed manifest may share values through
+ * YAML aliases, and expanding them turns a few hundred bytes into megabytes.
+ */
+function describeValue(value: unknown): string {
+  if (typeof value === "string") return JSON.stringify(value.length > 40 ? `${value.slice(0, 40)}…` : value);
+  if (typeof value === "number" || typeof value === "boolean" || value === null) return String(value);
+  return Array.isArray(value) ? "a list" : typeof value === "object" ? "a mapping" : typeof value;
+}
+
 function readString(obj: Record<string, unknown>, key: string, path: string, max = TEXT_MAX): string {
   const value = obj[key];
   if (typeof value !== "string" || value.trim().length === 0) fail(`${path}${key}`, "must be a non-empty string");
@@ -142,7 +153,7 @@ export function validateMetricManifest(input: unknown): MetricManifest {
   if (!Array.isArray(scopesRaw) || scopesRaw.length === 0) fail("scopes", "must be a non-empty list");
   const scopes: MetricScope[] = [];
   for (const scope of scopesRaw) {
-    if (!isMetricScope(scope)) fail("scopes", `contains unknown scope ${JSON.stringify(scope)}`);
+    if (!isMetricScope(scope)) fail("scopes", `contains unknown scope ${describeValue(scope)}`);
     if (abi < METRIC_SCOPE_MIN_ABI[scope]) fail("scopes", `${scope} needs abi ${METRIC_SCOPE_MIN_ABI[scope]} or later`);
     if (!scopes.includes(scope)) scopes.push(scope);
   }

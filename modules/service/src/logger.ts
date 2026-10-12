@@ -73,3 +73,32 @@ export class AppLogger {
 }
 
 export const appLogger = new AppLogger();
+
+const LEVELS = new Set<string>(["debug", "info", "success", "warning", "error"]);
+/** C0 control characters and DEL except tab and newline: a GUI record cannot move the cursor or recolour a terminal. */
+const CONTROL_CHARS = /[\x00-\x08\x0b-\x1f\x7f]/g;
+const MAX_CLIENT_MESSAGE = 4000;
+const MAX_CLIENT_DATA_KEYS = 8;
+
+/** One short line: no newline in a source, step or data key can start a forged log line. */
+function oneLine(value: unknown, fallback: string, max = 60): string {
+  const text = typeof value === "string" ? value.replace(/[\x00-\x1f\x7f]+/g, " ").trim() : "";
+  return (text || fallback).slice(0, max);
+}
+
+/**
+ * Logs a record the GUI sent (`POST /api/app/logs`). The fields come from a
+ * client, so the level must be a known one, source, step and data keys stay
+ * on one line, and the message is cut at 4,000 characters.
+ */
+export function logClientEvent(entry: Record<string, unknown>): void {
+  const data = entry.data && typeof entry.data === "object" && !Array.isArray(entry.data) ? (entry.data as Record<string, unknown>) : undefined;
+  appLogger.logStep(
+    LEVELS.has(entry.level as string) ? (entry.level as LogLevel) : "info",
+    oneLine(entry.source, "gui"),
+    oneLine(entry.step, "client_event"),
+    String(entry.message ?? "").replace(CONTROL_CHARS, "").slice(0, MAX_CLIENT_MESSAGE),
+    typeof entry.durationMs === "number" ? entry.durationMs : undefined,
+    data && Object.fromEntries(Object.entries(data).slice(0, MAX_CLIENT_DATA_KEYS).map(([key, value]) => [oneLine(key, "key", 40), value])),
+  );
+}

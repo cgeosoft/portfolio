@@ -30,7 +30,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
           {large.map((pref) => {
             const listing = listingById.get(pref.id)!;
             return (
-              <MetricLargeCard key={pref.id} listing={listing} display={displayMetric(evaluations[pref.id], ctx)} onInfo={() => onInfo(listing)} />
+              <MetricLargeCard key={pref.id} listing={listing} display={displayMetric(evaluations[pref.id], ctx, listing)} onInfo={() => onInfo(listing)} />
             );
           })}
         </div>
@@ -41,7 +41,7 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
           {compact.map((pref) => {
             const listing = listingById.get(pref.id)!;
             return (
-              <MetricCompactTile key={pref.id} listing={listing} display={displayMetric(evaluations[pref.id], ctx)} onInfo={() => onInfo(listing)} />
+              <MetricCompactTile key={pref.id} listing={listing} display={displayMetric(evaluations[pref.id], ctx, listing)} onInfo={() => onInfo(listing)} />
             );
           })}
         </div>

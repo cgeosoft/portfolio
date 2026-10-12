@@ -60,6 +60,10 @@ function numOrNaN(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : Number.NaN;
 }
 
+function bySymbol(a: MetricFundamentalsRow, b: MetricFundamentalsRow): number {
+  return a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0;
+}
+
 class StringTable {
   private chunks: Uint8Array[] = [];
   private index = new Map<string, [number, number]>();
@@ -118,7 +122,8 @@ export function encodeMetricPayload(
   const historyRecord = HISTORY_FIELDS.length * 8;
   const historyBytes = granted.has("portfolio.history") ? align8(8 + history.length * historyRecord) : 0;
 
-  const fundamentals = granted.has("market.fundamentals") ? options.fundamentals ?? [] : [];
+  // Sorted by symbol: rows arrive in holdings order, which ranks positions by value, and this scope does not grant that.
+  const fundamentals = granted.has("market.fundamentals") ? [...(options.fundamentals ?? [])].sort(bySymbol) : [];
   const fundamentalRecord = FUNDAMENTAL_RECORD_PREFIX_BYTES + FUNDAMENTAL_FIELDS.length * 8;
   const fundamentalsBytes = granted.has("market.fundamentals") ? align8(8 + fundamentals.length * fundamentalRecord) : 0;
 

@@ -31,6 +31,7 @@ import type {
   GetPortfoliosResponse,
   GetProviderModelsRequest,
   GetProviderModelsResponse,
+  GetReportPromptResponse,
   GetSettingsResponse,
   InstallMetricResponse,
   LogClientEventRequest,
@@ -165,12 +166,13 @@ export const api = {
 
   // ---- portfolios
   getPortfolios: () => request<GetPortfoliosResponse>("/api/portfolios"),
-  getPortfolioData: (portfolioId: string, baseCurrency?: string, refresh?: boolean) => {
+  /** `signal` aborts the request (a retry that timed out). */
+  getPortfolioData: (portfolioId: string, baseCurrency?: string, refresh?: boolean, signal?: AbortSignal) => {
     const q = new URLSearchParams();
     if (baseCurrency) q.set("baseCurrency", baseCurrency);
     if (refresh) q.set("refresh", "true");
     const qs = q.toString();
-    return request<FinancialPortfolioData>(`/api/portfolios/${enc(portfolioId)}/data${qs ? `?${qs}` : ""}`);
+    return request<FinancialPortfolioData>(`/api/portfolios/${enc(portfolioId)}/data${qs ? `?${qs}` : ""}`, { signal });
   },
   createPortfolio: (body: CreatePortfolioRequest) => request<PortfolioItem>("/api/portfolios", { method: "POST", body: json(body) }),
   updatePortfolio: (body: UpdatePortfolioRequest) => request<PortfolioItem>(`/api/portfolios/${enc(body.portfolioId)}`, { method: "PATCH", body: json(body) }),
@@ -193,7 +195,8 @@ export const api = {
     request<SuggestPortfolioMetricsResponse>(`/api/portfolios/${enc(body.portfolioId)}/metrics/suggest`, { method: "POST", body: json(body) }, { timeoutMs: 300_000 }),
   getMetricCatalog: () => request<GetMetricCatalogResponse>("/api/metrics/catalog"),
   previewMetricInstall: (url: string) => request<PreviewMetricInstallResponse>("/api/metrics/preview", { method: "POST", body: json({ url }) }),
-  installMetric: (url: string, grantedScopes: MetricScope[]) => request<InstallMetricResponse>("/api/metrics/install", { method: "POST", body: json({ url, grantedScopes }) }),
+  installMetric: (url: string, grantedScopes: MetricScope[], sha256?: string) =>
+    request<InstallMetricResponse>("/api/metrics/install", { method: "POST", body: json({ url, grantedScopes, sha256 }) }),
   uninstallMetric: (id: string) => request<{ success: boolean }>(`/api/metrics/${enc(id)}`, { method: "DELETE" }),
 
   // ---- transactions
@@ -233,6 +236,9 @@ export const api = {
   cancelReportStream: (sessionId: string) => request<CancelReportStreamResponse>(`/api/reports/stream/${enc(sessionId)}`, { method: "DELETE" }),
   generateReport: (body: GenerateReportRequest) => request<PortfolioReport>(`/api/portfolios/${enc(body.portfolioId)}/reports`, { method: "POST", body: json(body) }),
   deleteReport: (portfolioId: string, reportId: string) => request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}/reports/${enc(reportId)}`, { method: "DELETE" }),
+  /** The prompt of one report; the reports list leaves it out. */
+  getReportPrompt: (portfolioId: string, reportId: string) =>
+    request<GetReportPromptResponse>(`/api/portfolios/${enc(portfolioId)}/reports/${enc(reportId)}/prompt`),
 
   // ---- suggestions
   getSuggestions: (portfolioId: string, baseCurrency?: string) =>
@@ -296,6 +302,8 @@ export const api = {
     const params = [url ? `url=${enc(url)}` : "", theme ? `theme=${enc(theme)}` : ""].filter(Boolean).join("&");
     return request<{ success: boolean; html: string; error?: string }>(`/api/app/sponsor${params ? `?${params}` : ""}`);
   },
+  /** URL of the sponsor banner as its own sandboxed document, for an iframe `src`. */
+  sponsorFrameUrl: (theme: "light" | "dark") => `/api/app/sponsor/frame?theme=${theme}`,
   openSupportTicket: (body: OpenSupportTicketRequest) => request<OpenSupportTicketResponse>("/api/app/support", { method: "POST", body: json(body) }),
   /** URL of the anonymised diagnostics zip (browser download for remote clients). */
   diagnosticsUrl: () => "/api/app/support/diagnostics",

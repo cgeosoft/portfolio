@@ -11,6 +11,7 @@ import { metricScopeProviders, type MetricScope } from "portfolio-shared/metric-
 import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
 import {
   normalizeMetricPreferences,
+  readMetricIds,
   serializeMetricPreferences,
   type PortfolioMetricPreference,
 } from "portfolio-shared/metrics";
@@ -56,7 +57,7 @@ export class MetricsService {
       let loaded = 0;
       for (const record of this.registry.list()) {
         try {
-          await this.runtime.load(record.id, record.bytes());
+          await this.runtime.load(record.id, record.bytes(), record.manifest.runtime);
           loaded += 1;
         } catch (err) {
           appLogger.logStep("warning", "metrics", "module_load_failed", "Metric module failed to load", undefined, {
@@ -92,9 +93,9 @@ export class MetricsService {
   }
 
   async evaluateForPortfolio(params: EvaluatePortfolioMetricsRequest): Promise<MetricEvaluation[]> {
-    for (const id of params.retry ?? []) this.runtime.clearQuarantine(id);
+    for (const id of readMetricIds(params.retry) ?? []) this.runtime.clearQuarantine(id);
     // Explicit ids run whether or not they are added: the metrics settings show every value.
-    const ids = params.ids ?? getPortfolioMetrics(params.portfolioId).filter((pref) => pref.added).map((pref) => pref.id);
+    const ids = readMetricIds(params.ids) ?? getPortfolioMetrics(params.portfolioId).filter((pref) => pref.added).map((pref) => pref.id);
     if (ids.length === 0) return [];
     const data = await this.portfolioService.getPortfolioData(params.portfolioId, params.baseCurrency, false);
     const needsFundamentals = ids.some((id) => {
@@ -109,8 +110,9 @@ export class MetricsService {
     return this.installer.preview(url);
   }
 
-  async install(url: string, grantedScopes: MetricScope[]): Promise<MetricListing> {
-    const id = await this.installer.install(url, grantedScopes);
+  /** `sha256` is the module hash shown in the preview; a module that changed since is refused. */
+  async install(url: string, grantedScopes: MetricScope[], sha256?: string): Promise<MetricListing> {
+    const id = await this.installer.install(url, grantedScopes, sha256);
     return this.getListing(id)!;
   }
 

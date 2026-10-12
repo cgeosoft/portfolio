@@ -39,11 +39,24 @@ export interface ReportMetrics {
   intelSources?: string[];
 }
 
+/**
+ * The newest reports of a portfolio without their prompts: a prompt holds
+ * the whole market context, many KB per report. See `findPrompt`.
+ */
 export function findByPortfolio(portfolioId: string, limit = 52): ReportRow[] {
   const db = getDatabase();
   return db
-    .query("SELECT * FROM reports WHERE portfolioId = ? ORDER BY weekStartDate DESC, createdAt DESC LIMIT ?")
+    .query(
+      `SELECT id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, metrics, model, provider, status, error, isFallback
+       FROM reports WHERE portfolioId = ? ORDER BY weekStartDate DESC, createdAt DESC LIMIT ?`,
+    )
     .all(portfolioId, limit) as ReportRow[];
+}
+
+/** The prompt of one report of a portfolio, or null when the report or its prompt is missing. */
+export function findPrompt(portfolioId: string, id: string): string | null {
+  const row = getDatabase().query("SELECT prompt FROM reports WHERE id = ? AND portfolioId = ?").get(id, portfolioId) as { prompt: string | null } | null;
+  return row?.prompt ?? null;
 }
 
 export function findById(id: string): ReportRow | null {

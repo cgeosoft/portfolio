@@ -1,19 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HelpCircle } from "lucide-react";
 import type { AppTheme } from "portfolio-shared/api-types";
-import { rpc, ensureRpcReady } from "../../rpc";
-import { WEBPAGE_URL } from "../../environment";
+import { api } from "../../api";
+import { openExternal } from "../../environment";
 import { SponsorInfoModal } from "./SponsorInfoModal";
 
 export interface SponsorBannerCardProps {
+  /** Unused: the service picks the banner page on the Portfolio website. */
   webpageUrl?: string;
   devEmail?: string;
   theme?: AppTheme;
 }
 
-export function SponsorBannerCard({ webpageUrl, devEmail, theme = "dark" }: SponsorBannerCardProps) {
-  const [htmlContent, setHtmlContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+/** How long the skeleton waits for the banner's first message before the card hides. */
+const SPONSOR_WAIT_MS = 8000;
+
+/**
+ * The sponsor banner is a page of the website with its own scripts. The
+ * service serves it as a separate document with its own sandbox policy
+ * (`/api/app/sponsor/frame`), so it runs in an opaque origin: no session
+ * cookie, no API, no access to this document. It talks to the app only by
+ * postMessage: its size, and the links the user clicks.
+ */
+export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCardProps) {
+  const [status, setStatus] = useState<"loading" | "ready" | "none">("loading");
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [bannerHeight, setBannerHeight] = useState(90);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -32,71 +42,30 @@ export function SponsorBannerCard({ webpageUrl, devEmail, theme = "dark" }: Spon
   }, []);
 
   const isLight = theme === "light" || (theme === "system" && !systemIsDark);
-  const cleanBase = (webpageUrl || WEBPAGE_URL).replace(/\/+$/, "");
-  const sponsorUrl = isLight ? `${cleanBase}/sponsor/light/` : `${cleanBase}/sponsor/`;
+  const frameUrl = api.sponsorFrameUrl(isLight ? "light" : "dark");
 
-  const fetchBanner = useCallback(async () => {
-    setIsLoading(true);
-    let loadedHtml = "";
-
-    // 1. Try RPC call to backend
-    try {
-      await ensureRpcReady();
-      const rpcPromise = rpc.request.getSponsorBanner({ url: sponsorUrl, theme: isLight ? "light" : "dark" });
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Sponsor banner timeout")), 2500)
-      );
-      const response = await Promise.race([rpcPromise, timeoutPromise]);
-      if (response && response.success && response.html) {
-        loadedHtml = response.html;
-      }
-    } catch {
-      // Best-effort RPC attempt
-    }
-
-    // 2. Direct browser fetch fallback if RPC did not return content
-    if (!loadedHtml) {
-      try {
-        const res = await fetch(sponsorUrl, {
-          headers: { Accept: "text/html,application/xhtml+xml" },
-        });
-        if (res.ok) {
-          const text = await res.text();
-          if (text.trim().length > 0) {
-            loadedHtml = text;
-          }
-        }
-      } catch {
-        // Fetch failed (network or CORS)
-      }
-    }
-
-    if (loadedHtml) {
-      setHtmlContent(loadedHtml);
-    }
-    setIsLoading(false);
-  }, [sponsorUrl, isLight]);
-
+  // A new page loads with each theme: show the skeleton until it reports its size, and
+  // hide the card when nothing arrives (the website and the bundled copy both missing).
   useEffect(() => {
-    void fetchBanner();
-  }, [fetchBanner]);
+    setStatus("loading");
+    const timer = setTimeout(() => setStatus((s) => (s === "loading" ? "none" : s)), SPONSOR_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [frameUrl]);
 
-  // Handle messages from iframe (external link clicks and resize)
+  // Messages from the banner frame only: its sandbox gives it an opaque origin, so the source is the check.
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (!iframeRef.current || event.source !== iframeRef.current.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
 
       if (event.data.type === "SPONSOR_CLICK" && typeof event.data.url === "string") {
-        const targetUrl = event.data.url;
-        rpc.request.openExternalUrl({ url: targetUrl }).catch(() => {
-          if (typeof window !== "undefined") {
-            window.open(targetUrl, "_blank", "noopener,noreferrer");
-          }
-        });
+        // A sponsor link opens in the system browser, and only as https.
+        if (/^https:\/\//i.test(event.data.url.trim())) openExternal(event.data.url);
       }
 
       if (event.data.type === "SPONSOR_RESIZE" && typeof event.data.height === "number" && event.data.height > 0) {
         const nextHeight = Math.max(70, Math.min(event.data.height, 300));
+        setStatus("ready");
         setBannerHeight((prev) => {
           // Ignore small height differences to prevent recursive resize loops
           if (Math.abs(prev - nextHeight) <= 4) {
@@ -111,29 +80,7 @@ export function SponsorBannerCard({ webpageUrl, devEmail, theme = "dark" }: Spon
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  if (isLoading && !htmlContent) {
-    return (
-      <div
-        className="w-full rounded-2xl bg-widget border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
-        style={{ height: `${bannerHeight}px` }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-yellow-500/10 border border-yellow-500/20" />
-          <div className="space-y-1.5">
-            <div className="w-28 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded" />
-            <div className="w-44 h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded" />
-          </div>
-        </div>
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
-          <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
-        </div>
-        <div className="w-28 h-8 bg-yellow-500/20 rounded-lg" />
-      </div>
-    );
-  }
-
-  if (!htmlContent) {
+  if (status === "none") {
     return null;
   }
 
@@ -147,25 +94,49 @@ export function SponsorBannerCard({ webpageUrl, devEmail, theme = "dark" }: Spon
         >
           <iframe
             ref={iframeRef}
-            srcDoc={htmlContent}
+            src={frameUrl}
             title="Sponsor Banner"
             className="w-full h-full block border-0 overflow-hidden"
             style={{ backgroundColor: isLight ? "#ffffff" : "#08080a" }}
-            sandbox="allow-scripts allow-popups allow-forms allow-same-origin"
+            sandbox="allow-scripts allow-popups"
+            referrerPolicy="no-referrer"
             scrolling="no"
           />
         </div>
 
+        {/* Skeleton over the frame until the banner reports its size */}
+        {status === "loading" && (
+          <div
+            className="absolute inset-0 w-full rounded-2xl bg-widget border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
+            style={{ height: `${bannerHeight}px` }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-yellow-500/10 border border-yellow-500/20" />
+              <div className="space-y-1.5">
+                <div className="w-28 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded" />
+                <div className="w-44 h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded" />
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-3">
+              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
+              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
+            </div>
+            <div className="w-28 h-8 bg-yellow-500/20 rounded-lg" />
+          </div>
+        )}
+
         {/* Top-left question mark button layered above the iframe content */}
-        <button
-          type="button"
-          onClick={() => setIsInfoModalOpen(true)}
-          className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
-          title="About sponsorship"
-          aria-label="About sponsorship"
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-        </button>
+        {status === "ready" && (
+          <button
+            type="button"
+            onClick={() => setIsInfoModalOpen(true)}
+            className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
+            title="About sponsorship"
+            aria-label="About sponsorship"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       <SponsorInfoModal

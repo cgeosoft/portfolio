@@ -205,7 +205,8 @@ export class DailyBriefService {
 
   private async tick(): Promise<void> {
     if (this.running || !isBriefDue(loadConfig(), new Date())) return;
-    await this.run("schedule").catch((err) => appLogger.logStep("error", "brief", "run", `Daily brief failed: ${err instanceof Error ? err.message : err}`));
+    // Each portfolio's own errors go to the status. An unexpected one lands here; log its type only (AGENTS.md rule 3).
+    await this.run("schedule").catch((err) => appLogger.logStep("error", "brief", "run", `Daily brief failed (${err instanceof Error ? err.name : typeof err})`));
   }
 
   /** Writes and sends the brief now. The Automation card's "Send now" button and the schedule both land here. */

@@ -101,15 +101,24 @@ export class PortfolioReportService {
     } else {
       this.loadIntel = async () => EMPTY_REPORT_INTEL;
     }
-    // Periodically clean up stale sessions (older than 15 minutes)
-    setInterval(() => {
-      const now = Date.now();
-      for (const [id, session] of this.streamSessions.entries()) {
-        if (now - session.createdAt > 15 * 60 * 1000) {
-          this.streamSessions.delete(id);
-        }
+    setInterval(() => this.pruneStreamSessions(), 5 * 60 * 1000).unref?.();
+  }
+
+  /**
+   * Ends and forgets stream sessions older than 15 minutes; runs every five
+   * minutes. The abort stops a model call or CLI process that is still
+   * running: once its session is gone, nothing can cancel it.
+   */
+  public pruneStreamSessions(now = Date.now()): number {
+    let pruned = 0;
+    for (const [id, session] of this.streamSessions.entries()) {
+      if (now - session.createdAt > 15 * 60 * 1000) {
+        session.abortController.abort();
+        this.streamSessions.delete(id);
+        pruned++;
       }
-    }, 5 * 60 * 1000).unref?.();
+    }
+    return pruned;
   }
 
   public getReports(portfolioId: string): { reports: PortfolioReport[]; latestReport?: PortfolioReport } {
@@ -126,6 +135,11 @@ export class PortfolioReportService {
       reports,
       latestReport: reports[0],
     };
+  }
+
+  /** The prompt of one report, which the reports list leaves out. Null for a report written before prompts were stored. */
+  public getReportPrompt(portfolioId: string, id: string): { prompt: string | null } {
+    return { prompt: reportRepo.findPrompt(portfolioId, id) };
   }
 
   public deleteReport(portfolioId: string, id: string): boolean {
@@ -493,7 +507,9 @@ ${structureInstructions}
       content = sanitizeLlmResponse(content, true);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      appLogger.logStep("error", "report", "generate_llm_report", `Failed to generate LLM report: ${errMsg}`);
+      // A provider's error text can echo the prompt, which names holdings: the log gets the kind and the HTTP status only.
+      const httpStatus = /status (\d{3})/.exec(errMsg)?.[1];
+      appLogger.logStep("error", "report", "generate_llm_report", `Failed to generate LLM report (${err instanceof Error ? err.name : typeof err}${httpStatus ? `, HTTP ${httpStatus}` : ""})`);
       reportStatus = "fallback";
       isFallback = true;
       errorMessage = errMsg;
