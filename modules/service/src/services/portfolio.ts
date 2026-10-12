@@ -930,16 +930,27 @@ export class PortfolioService {
       const m = new Map<string, number>();
       for (const p of points) m.set(p.date, p.close);
       dateCloseMaps.set(sym, m);
-      if (points.length > 0) {
-        currentPriceMap.set(sym, points[0]!.close);
-      }
     }
 
-    const activeSharesOnDate = new Map<string, { shares: number; cost: number }>();
+    // The charts cover the last year. A day inside it before a symbol's first close (a holiday, another
+    // exchange's calendar) takes that close. Before the year the price is unknown, so a holding counts at cost.
+    const yearAgo = new Date();
+    yearAgo.setUTCFullYear(yearAgo.getUTCFullYear() - 1);
+    const chartStart = yearAgo.toISOString().split("T")[0]!;
+    let chartStarted = false;
+
+    // cost is in the transaction currency. baseCost converts it to the base currency like the cash ledger.
+    const activeSharesOnDate = new Map<string, { shares: number; cost: number; baseCost: number }>();
     let histCash = 0;
     let txPointer = 0;
 
     for (const d of sortedDates) {
+      if (!chartStarted && d >= chartStart) {
+        chartStarted = true;
+        for (const [sym, points] of chartHistories.entries()) {
+          if (points.length > 0 && !currentPriceMap.has(sym)) currentPriceMap.set(sym, points[0]!.close);
+        }
+      }
       for (const [sym, dateMap] of dateCloseMaps.entries()) {
         const close = dateMap.get(d);
         if (close !== undefined) {
@@ -966,7 +977,7 @@ export class PortfolioService {
           if (sym && sym !== "CASH") {
             let entry = activeSharesOnDate.get(sym);
             if (!entry) {
-              entry = { shares: 0, cost: 0 };
+              entry = { shares: 0, cost: 0, baseCost: 0 };
               activeSharesOnDate.set(sym, entry);
             }
 
@@ -981,6 +992,7 @@ export class PortfolioService {
 
             entry.shares += shares;
             entry.cost += cost;
+            entry.baseCost += cost * txFx;
             histCash -= cost * txFx;
           }
         } else if (txType === "SELL") {
@@ -991,12 +1003,14 @@ export class PortfolioService {
             if (entry && entry.shares > 0) {
               const avgCost = entry.cost / entry.shares;
               const costOfSold = absNum(shares) * avgCost;
+              entry.baseCost -= absNum(shares) * (entry.baseCost / entry.shares);
 
               entry.shares -= absNum(shares);
               entry.cost -= costOfSold;
               if (entry.shares <= 0.000001) {
                 entry.shares = 0;
                 entry.cost = 0;
+                entry.baseCost = 0;
               }
             }
           }
@@ -1014,11 +1028,14 @@ export class PortfolioService {
           const manualApplies = manual !== undefined && d >= manual.setAt;
           const nativeCurr = manualApplies ? manual.currency : quote?.currency || baseCurrency;
           const fxMult = fxRates.get(nativeCurr) ?? 1;
+          const close = currentPriceMap.get(sym);
           const rawPrice = manualApplies
             ? manual.price
-            : currentPriceMap.get(sym) ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
+            : close ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
           const price = rawPrice * fxMult;
-          valOnDate += holding.shares * price;
+          // Held before its chart starts: no price yet, so the holding counts at cost.
+          const beforeChart = !manualApplies && close === undefined && Boolean(chartHistories.get(sym)?.length);
+          valOnDate += beforeChart ? holding.baseCost : holding.shares * price;
           costOnDate += holding.cost;
         }
       }
