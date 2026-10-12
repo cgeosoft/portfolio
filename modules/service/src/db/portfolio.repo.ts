@@ -7,6 +7,7 @@ export interface PortfolioRow {
   description: string | null;
   baseCurrency: string;
   metricsJson: string | null;
+  color: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,20 +22,20 @@ export function findById(id: string): PortfolioRow | null {
   return (db.query("SELECT * FROM portfolios WHERE id = ?").get(id) as PortfolioRow) ?? null;
 }
 
-export function create(data: { name: string; description?: string | null; baseCurrency?: string }): PortfolioRow {
+export function create(data: { name: string; description?: string | null; baseCurrency?: string; color?: string | null }): PortfolioRow {
   const db = getDatabase();
   const id = randomUUID();
   const now = new Date().toISOString();
   db.run(
-    "INSERT INTO portfolios (id, name, description, baseCurrency, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)",
-    [id, data.name, data.description ?? null, data.baseCurrency ?? "EUR", now, now],
+    "INSERT INTO portfolios (id, name, description, baseCurrency, color, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [id, data.name, data.description ?? null, data.baseCurrency ?? "EUR", data.color ?? null, now, now],
   );
   return findById(id)!;
 }
 
 export function update(
   id: string,
-  data: { name?: string; description?: string | null; baseCurrency?: string },
+  data: { name?: string; description?: string | null; baseCurrency?: string; color?: string | null },
 ): PortfolioRow | null {
   const db = getDatabase();
   const existing = findById(id);
@@ -43,12 +44,14 @@ export function update(
   const name = data.name ?? existing.name;
   const description = data.description !== undefined ? data.description : existing.description;
   const baseCurrency = data.baseCurrency ?? existing.baseCurrency;
+  const color = data.color !== undefined ? data.color : existing.color;
   const now = new Date().toISOString();
 
-  db.run("UPDATE portfolios SET name = ?, description = ?, baseCurrency = ?, updatedAt = ? WHERE id = ?", [
+  db.run("UPDATE portfolios SET name = ?, description = ?, baseCurrency = ?, color = ?, updatedAt = ? WHERE id = ?", [
     name,
     description,
     baseCurrency,
+    color,
     now,
     id,
   ]);

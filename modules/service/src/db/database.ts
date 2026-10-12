@@ -49,6 +49,10 @@ function initializeSchema(database: Database): void {
   if (!portfolioColumns.some((col) => col.name === "metricsJson")) {
     database.run("ALTER TABLE portfolios ADD COLUMN metricsJson TEXT");
   }
+  // The colour of the portfolio dot (`#rrggbb`); null means the default of the GUI.
+  if (!portfolioColumns.some((col) => col.name === "color")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN color TEXT");
+  }
 
   database.run(`
     CREATE TABLE IF NOT EXISTS transactions (

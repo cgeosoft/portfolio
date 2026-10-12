@@ -199,6 +199,14 @@ function normalizeComparisonValue(val: unknown): unknown {
 
 export { mapWithConcurrencyLimit, extractQuoteFromChart };
 
+/** A portfolio dot colour from a request: `#rrggbb` in lower case, null to clear it, undefined to keep it. */
+export function portfolioColor(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new Error("Portfolio colour must be #rrggbb");
+  return value.toLowerCase();
+}
+
 export class PortfolioService {
   private cache = new Map<string, { data: FinancialPortfolioData; timestamp: number }>();
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
@@ -346,7 +354,7 @@ export class PortfolioService {
     return portfolio;
   }
 
-  public createPortfolio(data: { name: string; description?: string; baseCurrency?: string }): portfolioRepo.PortfolioRow {
+  public createPortfolio(data: { name: string; description?: string; baseCurrency?: string; color?: string | null }): portfolioRepo.PortfolioRow {
     if (!data.name || !data.name.trim()) {
       throw new Error("Portfolio name is required");
     }
@@ -356,19 +364,20 @@ export class PortfolioService {
       name: data.name.trim(),
       description: data.description?.trim() || null,
       baseCurrency: data.baseCurrency || config.baseCurrency || "EUR",
+      color: portfolioColor(data.color) ?? null,
     });
   }
 
   public updatePortfolio(
     portfolioId: string,
-    data: { name?: string; description?: string; baseCurrency?: string }
+    data: { name?: string; description?: string; baseCurrency?: string; color?: string | null }
   ): portfolioRepo.PortfolioRow {
     const portfolio = this.getPortfolio(portfolioId);
     if (data.name !== undefined && !data.name.trim()) {
       throw new Error("Portfolio name cannot be empty");
     }
 
-    const saved = portfolioRepo.update(portfolioId, data);
+    const saved = portfolioRepo.update(portfolioId, { ...data, color: portfolioColor(data.color) });
     this.clearPortfolioCache(portfolioId);
     return saved!;
   }

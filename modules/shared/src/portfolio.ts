@@ -6,6 +6,8 @@ export interface PortfolioItem {
   name: string;
   description?: string | null;
   baseCurrency: string;
+  /** Colour of the portfolio dot, `#rrggbb`; null or absent for the default. */
+  color?: string | null;
   isShared?: boolean;
   createdAt?: string;
   updatedAt?: string;
