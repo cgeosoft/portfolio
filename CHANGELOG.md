@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.12.0] - 2026-10-12
+
+### Changed
+- Hardened the service, GUI and desktop shell after a security and performance review
+- State-changing requests now check the host and port, and only accept other loopback origins in development
+- Request bodies are now streamed with a size limit, and error messages are bounded
+- Tightened the GUI content security policy to block outside images, connections and framing
+- LLM and provider text is now rendered through a safer markdown renderer
+- The sponsor banner is now served as a sandboxed document
+- The desktop shell now validates new-window URLs and opens links more safely
+- Loopback clients no longer use gzip compression
+- Hardened the metric runtime, installer and manifest validation
+- Added security headers to the website
+- The portfolio summary now converts each holding's cost using the correct trade currency rate instead of a single rate
+- The portfolio history now converts cost to the base currency correctly for trades in another currency
+- Holdings bought before their price chart's start now show their cost correctly instead of an incorrect older price
+- The Linux build now installs Bun from a checksum verified release package instead of an unverified script
+- The Linux build now always uses the baseline Bun build on amd64
+
+### Fixed
+- Fixed incorrect cost and gain values in the summary for holdings traded in multiple currencies
+- Fixed incorrect cost, gain and return values in the portfolio history for trades in a non base currency
+- Fixed incorrect valuation in the all time chart for holdings bought before their price chart's data started
+
+
 ## [0.11.0] - 2026-10-12
 
 ### Added
