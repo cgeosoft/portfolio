@@ -566,7 +566,8 @@ export class PortfolioService {
     let totalFees = 0;
     let totalTaxes = 0;
 
-    const cumulativeCostMap = new Map<string, { shares: number; totalCost: number }>();
+    // costByCurrency splits totalCost by trade currency, so the summary converts each part at its own rate.
+    const cumulativeCostMap = new Map<string, { shares: number; totalCost: number; costByCurrency: Map<string, number> }>();
     // Cash ledger per transaction currency, converted to the base currency once FX is known.
     const cashByCurrency = new Map<string, number>();
     const addCash = (tx: txRepo.TransactionRow, delta: number) => {
@@ -599,7 +600,7 @@ export class PortfolioService {
         if (sym && sym !== "CASH") {
           let pos = cumulativeCostMap.get(sym);
           if (!pos) {
-            pos = { shares: 0, totalCost: 0 };
+            pos = { shares: 0, totalCost: 0, costByCurrency: new Map() };
             cumulativeCostMap.set(sym, pos);
           }
           let cost = 0;
@@ -612,6 +613,8 @@ export class PortfolioService {
           }
           pos.shares += sh;
           pos.totalCost += cost;
+          const curr = (tx.currency || baseCurrency).trim();
+          pos.costByCurrency.set(curr, (pos.costByCurrency.get(curr) ?? 0) + cost);
           addCash(tx, -cost);
         }
       } else if (tx.type === "SELL") {
@@ -624,12 +627,14 @@ export class PortfolioService {
             const costBasisOfSold = absNum(sh) * avgCost;
             const tradePnL = proceeds - costBasisOfSold;
             realizedPnL += tradePnL;
+            for (const [curr, cost] of pos.costByCurrency) pos.costByCurrency.set(curr, cost - absNum(sh) * (cost / pos.shares));
 
             pos.shares -= absNum(sh);
             pos.totalCost -= costBasisOfSold;
             if (pos.shares <= 0.000001) {
               pos.shares = 0;
               pos.totalCost = 0;
+              pos.costByCurrency.clear();
             }
           }
         }
@@ -749,6 +754,19 @@ export class PortfolioService {
     const fxRates = await this.yahoo.getExchangeRates(baseCurrency, quoteCurrencies, forceFresh);
     fxTimer.end("info", `FX rates resolved for ${fxRates.size} currency pairs`);
 
+    const toBase = (curr: string) => fxRates.get(curr) ?? 1;
+    // The rate of the trade currencies, as the history converts each trade. One currency takes its rate;
+    // several take the blend of their converted cost. Holdings without trades fall back to the holding's currency.
+    const tradeCostRate = (sym: string): number | undefined => {
+      const pos = cumulativeCostMap.get(sym);
+      if (!pos || pos.costByCurrency.size === 0) return undefined;
+      if (pos.costByCurrency.size === 1) return toBase(pos.costByCurrency.keys().next().value!);
+      if (!(pos.totalCost > 0)) return undefined;
+      let baseCost = 0;
+      for (const [curr, cost] of pos.costByCurrency) baseCost += cost * toBase(curr);
+      return baseCost / pos.totalCost;
+    };
+
     let totalValue = 0;
     let totalCost = 0;
     let totalPreviousValue = 0;
@@ -778,9 +796,9 @@ export class PortfolioService {
       const currentPrice = rawNativePrice * fxMultiplier;
       const prevClose = isPrivate ? currentPrice : rawNativePrevClose * fxMultiplier;
 
-      // The cost stays in the buy currency, which a manual price may not share.
+      // The cost stays in the trade currency, which the quote or a manual price may not share.
       const costFx = manualPrice ? fxRates.get(config.currency || baseCurrency) ?? 1 : fxMultiplier;
-      const costMultiplier = (!config.currency || config.currency === baseCurrency) ? 1 : costFx;
+      const costMultiplier = tradeCostRate(sym) ?? ((!config.currency || config.currency === baseCurrency) ? 1 : costFx);
       const itemCost = shares * buyPrice * costMultiplier;
       const itemValue = shares * currentPrice;
       const itemPrevValue = shares * prevClose;
@@ -855,7 +873,6 @@ export class PortfolioService {
       });
     }
 
-    const toBase = (curr: string) => fxRates.get(curr) ?? 1;
     let cashBalance = 0;
     for (const [curr, native] of cashByCurrency) cashBalance += native * toBase(curr);
     if (!hasFunding) cashBalance = Math.max(0, cashBalance);

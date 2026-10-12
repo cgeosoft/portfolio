@@ -180,3 +180,61 @@ describe("history cost in the base currency", () => {
     expect(points.length).toBe(10);
   });
 });
+
+describe("summary cost in the base currency", () => {
+  const service = new PortfolioService(provider);
+  afterAll(() => service.destroy());
+
+  const last = (points: { totalCost: number }[]) => points[points.length - 1]!;
+
+  it("converts GBP trades on a pence quote at the GBP rate", async () => {
+    const { summary, points } = await history(service, [
+      tx({ date: day(-100), type: "BUY", symbol: "LSE.L", shares: 10, price: 2, amount: -20, currency: "GBP" }),
+    ]);
+    // 20 GBP is 24 EUR, not 20 pence.
+    expect(summary.totalCost).toBe(24);
+    expect(last(points).totalCost).toBe(24);
+    // 250 pence a share is 3 EUR.
+    expect(summary).toMatchObject({ totalValue: 30, totalGainLossDollar: 6 });
+  });
+
+  it("converts USD trades on a pence quote at the USD rate", async () => {
+    const { summary, points } = await history(service, [
+      tx({ date: day(-100), type: "BUY", symbol: "LSE.L", shares: 10, price: 4, amount: -40, currency: "USD" }),
+    ]);
+    expect(summary.totalCost).toBe(20);
+    expect(last(points).totalCost).toBe(20);
+  });
+
+  it("converts each trade of a symbol traded in two currencies at its own rate", async () => {
+    const { summary, points } = await history(service, [
+      tx({ date: day(-364), type: "BUY", symbol: "USB", shares: 1, price: 100, amount: -100, currency: "USD" }),
+      tx({ date: day(-180), type: "BUY", symbol: "USB", shares: 1, price: 120, amount: -120, currency: "EUR" }),
+    ]);
+    // 100 USD is 50 EUR; the EUR trade, the last one, does not set the rate for both.
+    expect(summary.totalCost).toBe(170);
+    expect(last(points).totalCost).toBe(170);
+    expect(summary).toMatchObject({ totalValue: 150, totalGainLossDollar: -20 });
+  });
+
+  it("keeps the converted cost of the shares left after a sell", async () => {
+    const { summary, points } = await history(service, [
+      tx({ date: day(-364), type: "BUY", symbol: "USB", shares: 2, price: 100, amount: -200, currency: "USD" }),
+      tx({ date: day(-200), type: "BUY", symbol: "USB", shares: 2, price: 60, amount: -120, currency: "EUR" }),
+      tx({ date: day(-180), type: "SELL", symbol: "USB", shares: 2, price: 120, amount: 240, currency: "USD" }),
+    ]);
+    // 100 EUR + 120 EUR for 4 shares; half of it stays.
+    expect(summary.totalCost).toBe(110);
+    expect(last(points).totalCost).toBe(110);
+  });
+
+  it("agrees with the history for a base-currency portfolio on foreign quotes", async () => {
+    const { summary, points } = await history(service, [
+      tx({ date: day(-730), type: "BUY", symbol: "USQ", shares: 4, price: 100, amount: -400 }),
+      tx({ date: day(-100), type: "BUY", symbol: "LSE.L", shares: 3, price: 10, amount: -30 }),
+      tx({ date: day(-90), type: "BUY", symbol: "OLD", shares: 3, price: 100 / 3, amount: -100 }),
+    ]);
+    expect(summary.totalCost).toBe(530);
+    expect(last(points).totalCost).toBe(530);
+  });
+});
