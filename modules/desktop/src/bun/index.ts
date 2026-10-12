@@ -152,7 +152,8 @@ async function main(): Promise<void> {
         title: APP.windowTitle,
         url: decision.url,
         sandbox: true,
-        navigationRules: appNavigationRules(appUrl as string),
+        // The constructor takes the rules as JSON, as setNavigationRules() sends them.
+        navigationRules: JSON.stringify(appNavigationRules(appUrl as string)),
         frame: { width: APP.popup.width, height: APP.popup.height },
       });
     } else if (decision.kind === "external") {
