@@ -939,7 +939,8 @@ export class PortfolioService {
     const chartStart = yearAgo.toISOString().split("T")[0]!;
     let chartStarted = false;
 
-    // cost is in the transaction currency. baseCost converts it to the base currency like the cash ledger.
+    // cost is in the transaction currency. baseCost converts it to the base currency like the cash ledger;
+    // the history's value and cost both use it.
     const activeSharesOnDate = new Map<string, { shares: number; cost: number; baseCost: number }>();
     let histCash = 0;
     let txPointer = 0;
@@ -1029,14 +1030,11 @@ export class PortfolioService {
           const nativeCurr = manualApplies ? manual.currency : quote?.currency || baseCurrency;
           const fxMult = fxRates.get(nativeCurr) ?? 1;
           const close = currentPriceMap.get(sym);
-          const rawPrice = manualApplies
-            ? manual.price
-            : close ?? (holding.shares > 0 ? holding.cost / holding.shares : 0);
-          const price = rawPrice * fxMult;
-          // Held before its chart starts: no price yet, so the holding counts at cost.
-          const beforeChart = !manualApplies && close === undefined && Boolean(chartHistories.get(sym)?.length);
-          valOnDate += beforeChart ? holding.baseCost : holding.shares * price;
-          costOnDate += holding.cost;
+          // Without a price (before its chart starts, no chart, no manual price yet) the holding counts at cost.
+          const priced = manualApplies || close !== undefined;
+          const price = (manualApplies ? manual.price : close ?? 0) * fxMult;
+          valOnDate += priced ? holding.shares * price : holding.baseCost;
+          costOnDate += holding.baseCost;
         }
       }
 
