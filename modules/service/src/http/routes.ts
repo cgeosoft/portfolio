@@ -101,7 +101,7 @@ function currencyParam(value: unknown): string | undefined {
 }
 
 function toItem(row: portfolioRepo.PortfolioRow) {
-  return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, createdAt: row.createdAt, updatedAt: row.updatedAt };
+  return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, color: row.color, createdAt: row.createdAt, updatedAt: row.updatedAt };
 }
 
 /** True behind a TLS proxy, where the session cookie gets `Secure`. */
@@ -223,7 +223,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.patch("/api/portfolios/:id", async (ctx) => {
     const body = await ctx.body<UpdatePortfolioRequest>();
-    const row = portfolioService.updatePortfolio(ctx.params.id!, { name: body.name, description: body.description, baseCurrency: currencyParam(body.baseCurrency) });
+    const row = portfolioService.updatePortfolio(ctx.params.id!, { name: body.name, description: body.description, baseCurrency: currencyParam(body.baseCurrency), color: body.color });
     if (!row) throw new HttpError(404, "Portfolio not found");
     return toItem(row);
   });

@@ -39,6 +39,8 @@ export interface CreatePortfolioRequest {
   name: string;
   description?: string;
   baseCurrency?: string;
+  /** Colour of the portfolio dot, `#rrggbb`; null for the default. */
+  color?: string | null;
 }
 
 export interface UpdatePortfolioRequest {
@@ -46,6 +48,8 @@ export interface UpdatePortfolioRequest {
   name?: string;
   description?: string;
   baseCurrency?: string;
+  /** Colour of the portfolio dot, `#rrggbb`; null for the default; absent keeps it. */
+  color?: string | null;
 }
 
 export interface GetPortfolioMetricsRequest {
