@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, ExternalLink, ChevronUp, Check, TrendingUp, Users, Eye, EyeOff } from "lucide-react";
+import { RefreshCw, ExternalLink, ChevronUp, Check, Eye, EyeOff } from "lucide-react";
 import { openExternal, VENDOR_URL } from "../../environment";
 import { formatTimeAgo } from "../portfolio/utils";
+import { PortfolioDot } from "../portfolio/portfolioColor";
 
 import type { AppUpdateInfo } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
@@ -95,7 +96,8 @@ export function BottomBar({
         : quotesIntervalMins >= 60 && quotesIntervalMins % 60 === 0
           ? `Every ${quotesIntervalMins / 60} h`
           : `Every ${quotesIntervalMins} min`;
-  const showPortfolioPicker = !!portfolios && portfolios.length > 1;
+  // Like the organization chip of FintechCrafts Management: shown whenever a portfolio is open.
+  const showPortfolioPicker = !!portfolios && portfolios.length > 0 && !!activePortfolio;
 
   return (
     <footer
@@ -151,12 +153,12 @@ export function BottomBar({
             <button
               type="button"
               onClick={() => setIsPortfolioMenuOpen((open) => !open)}
-              className="px-1.5 py-0.5 rounded flex items-center gap-1.5 max-w-[200px] text-[#DD3C73] hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
+              className="px-1.5 py-0.5 rounded flex items-center gap-1.5 max-w-[200px] text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
               aria-haspopup="listbox"
               aria-expanded={isPortfolioMenuOpen}
               title="Switch Portfolio"
             >
-              {activePortfolio?.isShared ? <Users className="w-3 h-3 shrink-0" /> : <TrendingUp className="w-3 h-3 shrink-0" />}
+              <PortfolioDot portfolio={activePortfolio} />
               <span className="truncate">{activePortfolio?.name || "Main Portfolio"}</span>
               <ChevronUp className="w-3 h-3 shrink-0 text-slate-400" />
             </button>
@@ -181,7 +183,6 @@ export function BottomBar({
                 <div className="max-h-56 overflow-y-auto custom-scrollbar">
                   {portfolios.map((p) => {
                     const isActive = p.id === activePortfolio?.id;
-                    const Icon = p.isShared ? Users : TrendingUp;
                     return (
                       <button
                         key={p.id}
@@ -195,7 +196,7 @@ export function BottomBar({
                         className="app-menu-item group"
                       >
                         <span className="flex items-center gap-2.5 min-w-0 pr-3">
-                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#DD3C73]" : "text-slate-400"}`} />
+                          <PortfolioDot portfolio={p} />
                           <span className="truncate">{p.name}</span>
                           {p.isShared && <span className="text-[10px] text-slate-500 shrink-0">(shared)</span>}
                         </span>

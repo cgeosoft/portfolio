@@ -63,6 +63,7 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 
 // The largest views that most sessions never open load on first use, not with the app.
 const SettingsPage = lazy(() => import("./components/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
 const ImportCsvModal = lazy(() => import("./components/portfolio/ImportCsvModal").then((m) => ({ default: m.ImportCsvModal })));
 const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
 
@@ -102,7 +103,6 @@ const INFO_MODAL_KEYS: readonly string[] = [
 ];
 const SETTINGS_SECTIONS: readonly string[] = [
   "general",
-  "portfolios",
   "metrics",
   "integrations",
   "assistant",
@@ -129,7 +129,8 @@ export default function App() {
   const [view, setView] = useState<"dashboard" | "settings" | "portfolios" | "terms">(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
-      if (hash === "#portfolios") return "settings";
+      // The Portfolios page left Preferences; keep the old link working.
+      if (hash === "#portfolios" || hash === "#settings/portfolios") return "portfolios";
       // Metrics moved from a top-level tab to Preferences; keep old links working.
       if (hash === "#metrics") return "settings";
       if (hash.startsWith("#settings")) return "settings";
@@ -149,7 +150,6 @@ export default function App() {
           return sec;
         }
       }
-      if (hash === "#portfolios") return "portfolios";
       if (hash === "#metrics") return "metrics";
     }
     return "general";
@@ -204,9 +204,15 @@ export default function App() {
     }
   }, []);
 
+  // The Portfolios page sits above the open portfolio: Back returns to the page that opened it.
+  const portfoliosReturnHashRef = useRef<string | null>(null);
   const handleOpenManagePortfolios = useCallback(() => {
-    handleOpenSettings("portfolios");
-  }, [handleOpenSettings]);
+    setView("portfolios");
+    if (typeof window !== "undefined" && window.location.hash !== "#portfolios") {
+      portfoliosReturnHashRef.current = window.location.hash || null;
+      window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#portfolios`);
+    }
+  }, []);
 
   const handleOpenTerms = useCallback(() => {
     setView("terms");
@@ -233,13 +239,24 @@ export default function App() {
     }
   }, [activeTab]);
 
+  // Back from the Portfolios page: the page that opened it, else the dashboard.
+  const handleLeavePortfolios = useCallback(() => {
+    const back = portfoliosReturnHashRef.current;
+    portfoliosReturnHashRef.current = null;
+    if (back && back !== "#portfolios") {
+      window.location.hash = back;
+      return;
+    }
+    handleNavigateDashboard();
+  }, [handleNavigateDashboard]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handleRouting = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === "#portfolios") {
-        setSettingsSection("portfolios");
-        setView("settings");
+      if (hash === "#portfolios" || hash === "#settings/portfolios") {
+        if (hash !== "#portfolios") window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#portfolios`);
+        setView("portfolios");
       } else if (hash === "#metrics") {
         window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#settings/metrics`);
         setSettingsSection("metrics");
@@ -1798,7 +1815,8 @@ export default function App() {
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
-      {/* Application Menu Bar (Native HTML Menu for Linux) */}
+      {/* Application Menu Bar (Native HTML Menu for Linux); the Portfolios page sits above it */}
+      {view !== "portfolios" && (
       <AppMenuBar
         portfolios={portfolios}
         activePortfolio={activePortfolio}
@@ -1839,11 +1857,13 @@ export default function App() {
         pinEnabled={pinEnabled}
         onLock={handleLock}
       />
+      )}
 
       {/* Main Content Area & Assistant Sidebar */}
-      <div className="flex-1 flex min-h-0 overflow-hidden relative p-2 sm:p-3">
+      <div className={`flex-1 flex min-h-0 overflow-hidden relative ${view === "portfolios" ? "" : "p-2 sm:p-3"}`}>
         <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
-          {/* Main Menu / Navigation Bar (Header) - pushed when assistant sidebar is shown */}
+          {/* Main Menu / Navigation Bar (Header) - pushed when assistant sidebar is shown; hidden on the Portfolios page */}
+          {view !== "portfolios" && (
           <Header
             currency={currency}
             onChangeCurrency={setCurrency}
@@ -1864,6 +1884,7 @@ export default function App() {
             isAssistantOpen={isAssistantOpen}
             onToggleAssistant={handleToggleAssistant}
           />
+          )}
 
           <Toaster />
 
@@ -1900,11 +1921,6 @@ export default function App() {
               initialSection={settingsSection}
               onSectionChange={handleSettingsSectionChange}
               portfolios={portfolios}
-              activePortfolio={activePortfolio}
-              onSelectPortfolio={handleSelectPortfolio}
-              onPortfolioCreated={handlePortfolioCreated}
-              onPortfolioUpdated={handlePortfolioUpdated}
-              onPortfolioDeleted={handlePortfolioDeleted}
               theme={theme}
               onChangeTheme={handleThemeChange}
               zoomLevel={zoomLevel}
@@ -1918,27 +1934,18 @@ export default function App() {
       )}
 
       {view === "portfolios" && (
-        <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
-          <Suspense fallback={<PageLoading />}>
-            <SettingsPage
-              onBack={() => handleNavigateDashboard()}
-              initialSection="portfolios"
-              portfolios={portfolios}
-              activePortfolio={activePortfolio}
-              onSelectPortfolio={handleSelectPortfolio}
-              onPortfolioCreated={handlePortfolioCreated}
-              onPortfolioUpdated={handlePortfolioUpdated}
-              onPortfolioDeleted={handlePortfolioDeleted}
-              theme={theme}
-              onChangeTheme={handleThemeChange}
-              zoomLevel={zoomLevel}
-              onChangeZoom={handleZoomSet}
-              onPinEnabledChange={setPinEnabled}
-              onReportIssue={() => setIsSupportTicketOpen(true)}
-              metrics={metricsPage}
-            />
-          </Suspense>
-        </main>
+        <Suspense fallback={<PageLoading />}>
+          <ManagePortfoliosPage
+            portfolios={portfolios}
+            activePortfolio={activePortfolio}
+            onSelectPortfolio={handleSelectPortfolio}
+            onPortfolioCreated={handlePortfolioCreated}
+            onPortfolioUpdated={handlePortfolioUpdated}
+            onPortfolioDeleted={handlePortfolioDeleted}
+            onBack={handleLeavePortfolios}
+            onOpenDashboard={() => handleNavigateDashboard()}
+          />
+        </Suspense>
       )}
 
       {view === "terms" && (
@@ -2094,9 +2101,9 @@ export default function App() {
       )}
         </div>
 
-        {/* Assistant Sidebar (Persistent across all views & tabs) */}
+        {/* Assistant Sidebar (Persistent across all views & tabs, closed on the Portfolios page) */}
         <AssistantSidebar
-          isOpen={isAssistantOpen}
+          isOpen={isAssistantOpen && view !== "portfolios"}
           onClose={handleCloseAssistant}
           portfolio={activePortfolio}
           portfolioData={portfolioData}
