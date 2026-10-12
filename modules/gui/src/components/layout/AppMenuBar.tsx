@@ -12,6 +12,7 @@ import {
   Settings,
   PieChart,
   FileText,
+  Lightbulb,
   History,
   Eye,
   EyeOff,
@@ -43,7 +44,7 @@ export interface AppMenuBarProps {
   onAddTransaction: () => void;
   onManagePortfolios: () => void;
   onOpenSettings: (section?: any) => void;
-  onSelectTab: (tab: "overview" | "reports" | "transactions") => void;
+  onSelectTab: (tab: "overview" | "reports" | "suggestions" | "transactions") => void;
   activeTab: string;
   hideCurrencyValues: boolean;
   onToggleHideCurrency: () => void;
@@ -183,6 +184,7 @@ export function AppMenuBar({
     { label: "Overview", icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
     { label: "Transactions", icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
     { label: "Reports", icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
+    { label: "Suggestions", icon: Lightbulb, checked: activeTab === "suggestions", action: run(() => onSelectTab("suggestions")) },
     { type: "separator" },
     ...(onToggleAssistant
       ? [{ label: "Assistant Sidebar", shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]

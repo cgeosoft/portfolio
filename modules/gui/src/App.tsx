@@ -18,6 +18,7 @@ import { ExposureCard } from "./components/portfolio/ExposureCard";
 import { IncomeEventsCard } from "./components/portfolio/IncomeEventsCard";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
+import { SuggestionsPage } from "./components/portfolio/SuggestionsPage";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
 import { ImportCsvModal } from "./components/portfolio/ImportCsvModal";
 import { AnalyzePortfolioModal } from "./components/portfolio/AnalyzePortfolioModal";
@@ -62,7 +63,7 @@ import {
 } from "portfolio-shared/metrics";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 
-const VALID_TABS: readonly string[] = ["overview", "reports", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "reports", "suggestions", "transactions"];
 const INFO_MODAL_KEYS: readonly string[] = [
   "totalGain",
   "valuation",
@@ -1939,7 +1940,7 @@ export default function App() {
       {view === "dashboard" && (
         <main
           className={`flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
-            activeTab === "transactions" || activeTab === "reports"
+            activeTab === "transactions" || activeTab === "reports" || activeTab === "suggestions"
               ? "flex flex-col h-full min-h-0 pb-2 sm:pb-3 overflow-hidden"
               : "pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar"
           }`}
@@ -2042,6 +2043,18 @@ export default function App() {
                 portfolioName={activePortfolio?.name}
                 onRefreshReports={loadReports}
                 onDeleteReport={handleDeleteReport}
+                hideValues={hideCurrencyValues}
+              />
+            </div>
+          )}
+
+          {/* TAB: SUGGESTIONS */}
+          {activeTab === "suggestions" && (
+            <div className="flex-1 flex flex-col min-h-0">
+              <SuggestionsPage
+                portfolioId={activePortfolioId}
+                portfolioData={portfolioData}
+                currency={currency}
                 hideValues={hideCurrencyValues}
               />
             </div>

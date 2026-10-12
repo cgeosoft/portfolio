@@ -20,6 +20,10 @@ import type {
   EvaluatePortfolioMetricsRequest,
   EvaluatePortfolioMetricsResponse,
   GenerateReportRequest,
+  GenerateSuggestionsRequest,
+  GetSuggestionsResponse,
+  SuggestionGeneration,
+  UpdateSuggestionStatusRequest,
   GetAppInfoResponse,
   GetAssistantSystemPromptResponse,
   GetMetricCatalogResponse,
@@ -72,6 +76,7 @@ import type { PortfolioExposureResponse } from "portfolio-shared/api-types";
 import type { PortfolioEventsResponse, PortfolioIncomeSummary } from "portfolio-shared/api-types";
 import type { GetCompanyIntelResponse, GetTranscriptResponse, SummarizeTranscriptResponse } from "portfolio-shared/api-types";
 import type { CompanyIntelPart } from "portfolio-shared/company-intel";
+import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
 import type { BenchmarkComparison, BenchmarkHistoryResponse, MacroSnapshot, MarketStatusResponse } from "portfolio-shared/api-types";
 
 export class ApiError extends Error {
@@ -228,6 +233,14 @@ export const api = {
   cancelReportStream: (sessionId: string) => request<CancelReportStreamResponse>(`/api/reports/stream/${enc(sessionId)}`, { method: "DELETE" }),
   generateReport: (body: GenerateReportRequest) => request<PortfolioReport>(`/api/portfolios/${enc(body.portfolioId)}/reports`, { method: "POST", body: json(body) }),
   deleteReport: (portfolioId: string, reportId: string) => request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}/reports/${enc(reportId)}`, { method: "DELETE" }),
+
+  // ---- suggestions
+  getSuggestions: (portfolioId: string, baseCurrency?: string) =>
+    request<GetSuggestionsResponse>(`/api/portfolios/${enc(portfolioId)}/suggestions${baseCurrency ? `?baseCurrency=${enc(baseCurrency)}` : ""}`),
+  generateSuggestions: (body: GenerateSuggestionsRequest) =>
+    request<SuggestionGeneration>(`/api/portfolios/${enc(body.portfolioId)}/suggestions/generate`, { method: "POST", body: json(body) }),
+  updateSuggestionStatus: (body: UpdateSuggestionStatusRequest & { baseCurrency?: string }) =>
+    request<PortfolioSuggestion>(`/api/portfolios/${enc(body.portfolioId)}/suggestions/${enc(body.suggestionId)}/status`, { method: "POST", body: json(body) }),
 
   // ---- assistant
   getAssistantConversations: (portfolioId: string) => request<{ conversations: AssistantConversation[] }>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations`),

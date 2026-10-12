@@ -41,6 +41,7 @@ import type {
   GetSettingsResponse,
   EvaluatePortfolioMetricsRequest,
   GenerateReportRequest,
+  GenerateSuggestionsRequest,
   GetProviderModelsRequest,
   InstallMetricRequest,
   LogClientEventRequest,
@@ -61,6 +62,7 @@ import type {
   TestLlmStepRequest,
   UpdatePortfolioRequest,
   UpdateRemoteAccessRequest,
+  UpdateSuggestionStatusRequest,
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
@@ -111,7 +113,7 @@ function isHttps(req: Request): boolean {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
+  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -397,6 +399,26 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.delete("/api/portfolios/:id/reports/:reportId", (ctx) => ({ success: reportService.deleteReport(ctx.params.id!, ctx.params.reportId!) }));
+
+  // ── suggestions ─────────────────────────────────────────────────────────
+
+  router.get("/api/portfolios/:id/suggestions", (ctx) =>
+    suggestionService.getSuggestions(ctx.params.id!, ctx.url.searchParams.get("baseCurrency") || undefined),
+  );
+
+  router.post("/api/portfolios/:id/suggestions/generate", async (ctx) => {
+    const body = await ctx.body<Partial<GenerateSuggestionsRequest>>();
+    const generation = suggestionService.startGeneration(ctx.params.id!, body.baseCurrency);
+    telemetry.capture("suggestions_generated");
+    return generation;
+  });
+
+  router.post("/api/portfolios/:id/suggestions/:suggestionId/status", async (ctx) => {
+    const body = await ctx.body<Partial<UpdateSuggestionStatusRequest> & { baseCurrency?: string }>();
+    const status = body.status;
+    if (status !== "active" && status !== "done" && status !== "dismissed") throw new HttpError(400, "status must be active, done or dismissed");
+    return suggestionService.updateStatus(ctx.params.id!, ctx.params.suggestionId!, status, body.baseCurrency);
+  });
 
   // ── assistant ───────────────────────────────────────────────────────────
 

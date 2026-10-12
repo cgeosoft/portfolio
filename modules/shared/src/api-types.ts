@@ -19,6 +19,7 @@ import type { PortfolioMetricPreference } from "./metrics";
 import type { MetricManifest } from "./metric-manifest";
 import type { MetricScope } from "./metric-abi";
 import type { MetricOutput } from "./metric-output";
+import type { PortfolioSuggestion, SuggestionQuote } from "./suggestions";
 export type { DesktopConfig, DataProviderId, DataProviderCategoryRouting, ReportMetrics, AppTheme };
 export type { DailyBriefDays } from "./config-types";
 
@@ -79,6 +80,43 @@ export interface SuggestPortfolioMetricsResponse {
   compact: string[];
   /** Short explanation from the assistant. */
   reason: string;
+}
+
+// ── portfolio suggestions ───────────────────────────────────────────────────
+
+export interface SuggestionGeneration {
+  status: "idle" | "running" | "fail";
+  startedAt?: string;
+  error?: string;
+}
+
+export interface GetSuggestionsResponse {
+  portfolioId: string;
+  /** Every suggestion of the portfolio, active and past, by priority then age. */
+  suggestions: PortfolioSuggestion[];
+  /** Prices of suggestion symbols the portfolio does not hold. Held symbols use the holdings. */
+  quotes: SuggestionQuote[];
+  /** Time of the last successful generation. */
+  generatedAt?: string;
+  /** True when transactions changed after the last generation. */
+  stale: boolean;
+  /** Notes from the last generation, for example suggestions that were dropped. */
+  notes: string[];
+  /** Short overview from the model. */
+  summary?: string;
+  generation: SuggestionGeneration;
+}
+
+export interface GenerateSuggestionsRequest {
+  portfolioId: string;
+  baseCurrency?: string;
+}
+
+export interface UpdateSuggestionStatusRequest {
+  portfolioId: string;
+  suggestionId: string;
+  /** "active" undoes a dismissal or a manual "done". */
+  status: "active" | "done" | "dismissed";
 }
 
 /** A metric module the application can run, as shown in the Metrics tab. */

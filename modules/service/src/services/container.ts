@@ -8,6 +8,7 @@ import { PortfolioService } from "./portfolio";
 import { SymbolResolver } from "./symbol-resolver";
 import { PortfolioReportService } from "./portfolio-report";
 import { PortfolioChatService } from "./portfolio-chat";
+import { PortfolioSuggestionService } from "./portfolio-suggestions";
 import { MetricsService } from "./metrics/index";
 import { DailyBriefService } from "./daily-brief";
 import { WeeklyAnalysisService } from "./weekly-analysis";
@@ -27,6 +28,8 @@ export interface AppServices {
   portfolioService: PortfolioService;
   reportService: PortfolioReportService;
   chatService: PortfolioChatService;
+  /** Rebalancing suggestions from the model (portfolio-suggestions.ts). */
+  suggestionService: PortfolioSuggestionService;
   metricsService: MetricsService;
   dailyBrief: DailyBriefService;
   weeklyAnalysis: WeeklyAnalysisService;
@@ -58,8 +61,9 @@ export function createServices(): AppServices {
   const aiContext = { fmp, finnhub, yahoo, marketData, portfolioService, income };
   const reportService = new PortfolioReportService(llm, portfolioService, aiContext);
   const chatService = new PortfolioChatService(llm, portfolioService, aiContext);
+  const suggestionService = new PortfolioSuggestionService(llm, portfolioService, marketData, aiContext);
   const metricsService = new MetricsService(portfolioService, fmp);
   const dailyBrief = new DailyBriefService(llm, portfolioService, aiContext);
   const weeklyAnalysis = new WeeklyAnalysisService(llm, portfolioService, reportService, aiContext);
-  return { yahoo, finnhub, fmp, marketData, llm, portfolioService, reportService, chatService, metricsService, dailyBrief, weeklyAnalysis, etfIntel, exposure, calendar, income, eventAlerts };
+  return { yahoo, finnhub, fmp, marketData, llm, portfolioService, reportService, chatService, suggestionService, metricsService, dailyBrief, weeklyAnalysis, etfIntel, exposure, calendar, income, eventAlerts };
 }

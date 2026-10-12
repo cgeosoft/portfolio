@@ -189,6 +189,45 @@ function initializeSchema(database: Database): void {
     )
   `);
 
+  // Rebalancing suggestions from the model (see suggestion.repo.ts). Weights
+  // in percent only; validity and fundedBy are JSON.
+  database.run(`
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      key TEXT NOT NULL,
+      action TEXT NOT NULL,
+      symbol TEXT NOT NULL,
+      name TEXT NOT NULL,
+      fromWeight REAL NOT NULL,
+      targetWeight REAL NOT NULL,
+      title TEXT NOT NULL,
+      why TEXT NOT NULL,
+      priority INTEGER NOT NULL,
+      validity TEXT NOT NULL,
+      fundedBy TEXT NOT NULL,
+      status TEXT NOT NULL,
+      statusReason TEXT,
+      dismissedAtWeight REAL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      resolvedAt TEXT
+    )
+  `);
+  database.run("CREATE INDEX IF NOT EXISTS idx_suggestions_portfolio ON suggestions(portfolioId, status)");
+  // One row per portfolio: the last generation and the transaction state it saw.
+  database.run(`
+    CREATE TABLE IF NOT EXISTS suggestion_runs (
+      portfolioId TEXT PRIMARY KEY REFERENCES portfolios(id) ON DELETE CASCADE,
+      generatedAt TEXT NOT NULL,
+      txFingerprint TEXT NOT NULL,
+      summary TEXT,
+      notes TEXT NOT NULL,
+      provider TEXT,
+      model TEXT
+    )
+  `);
+
   // User settings, one row per DesktopConfig key (see ../config.ts).
   database.run(`
     CREATE TABLE IF NOT EXISTS settings (

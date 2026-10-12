@@ -4,10 +4,11 @@ import {
   PieChart,
   FileText,
   History,
+  Lightbulb,
   Settings,
 } from "lucide-react";
 
-export type PortfolioTabKey = "overview" | "reports" | "transactions";
+export type PortfolioTabKey = "overview" | "reports" | "suggestions" | "transactions";
 
 interface HeaderProps {
   currency?: string;
@@ -62,6 +63,12 @@ export function Header({
       label: "Reports",
       icon: FileText,
       badge: reportsCount > 0 ? reportsCount : null,
+    },
+    {
+      id: "suggestions" as PortfolioTabKey,
+      label: "Suggestions",
+      icon: Lightbulb,
+      badge: null,
     },
   ];
 
