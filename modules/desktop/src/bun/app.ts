@@ -93,6 +93,15 @@ export function startQuery(): string {
 }
 
 /**
+ * Development only: `PORTFOLIO_SIMULATE_VERSION=0.1.0 bun start` makes the service report that
+ * version, so the latest release shows as an update and the download flow can be tried.
+ */
+export function simulatedVersion(): string | undefined {
+  const version = process.env.PORTFOLIO_SIMULATE_VERSION?.trim().replace(/^[vV]/, "");
+  return version && /^\d+\.\d+\.\d+\S*$/.test(version) ? version : undefined;
+}
+
+/**
  * The user data directory, the same in development and in the installed app. It holds
  * `window-state.json`, `desktop-settings.json` (written by the service) and `logs/`. Keep it in
  * step with the data directory rule in `modules/service/src/paths.ts`: Linux

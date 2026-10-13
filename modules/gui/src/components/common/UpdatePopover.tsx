@@ -46,23 +46,13 @@ export function UpdatePopover({
               {t("layout.update.running", { version: currentVersion })}
             </p>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 mt-3">
-              <button
-                type="button"
-                onClick={onShowChangelog}
-                className="flex-1 px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer"
-              >
-                {t("layout.update.whatsNew")}
-              </button>
-              <button
-                type="button"
-                onClick={onDismiss}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-[11px] transition-colors cursor-pointer"
-              >
-                {t("common.dismiss")}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onShowChangelog}
+              className="w-full mt-3 px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer"
+            >
+              {t("layout.update.whatsNew")}
+            </button>
           </div>
         </div>
       </div>

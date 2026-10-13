@@ -1,7 +1,7 @@
 /**
  * File operations for the desktop window (a client on this machine): saving a
- * generated file into the user's Downloads folder and revealing it in the
- * file manager. Remote clients use browser downloads instead; the routes
+ * generated file into the user's Downloads folder, revealing it in the file
+ * manager and asking for a folder with the system dialog. Remote clients use browser downloads instead; the routes
  * refuse them.
  *
  * The files hold portfolio data (reports, a database backup with the API
@@ -46,6 +46,47 @@ export function saveBytesToDownloads(fileName: string, bytes: Uint8Array): strin
   const target = freeDownloadPath(fileName);
   writeFileSync(target, bytes, PRIVATE_FILE);
   return target;
+}
+
+/** Runs a dialog command; its trimmed stdout on exit code 0, null otherwise (cancelled). */
+async function runDialog(command: string[]): Promise<string | null> {
+  const proc = Bun.spawn(command, { stdin: "ignore", stdout: "pipe", stderr: "ignore" });
+  const [out, code] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+  const path = out.trim();
+  return code === 0 && path ? path : null;
+}
+
+/**
+ * Asks the user for a folder with the system dialog, opened on `startDir`.
+ * Null when the user cancels. Undefined when this system has no dialog the
+ * service can open (Linux without zenity or kdialog): the caller then uses
+ * `startDir`.
+ */
+export async function pickFolder(startDir: string, title: string): Promise<string | null | undefined> {
+  if (process.platform === "darwin") {
+    const quoted = (text: string) => `"${text.replace(/["\\]/g, "\\$&")}"`;
+    const script = `POSIX path of (choose folder with prompt ${quoted(title)} default location (POSIX file ${quoted(startDir)}))`;
+    return runDialog(["osascript", "-e", script]);
+  }
+  if (process.platform === "win32") {
+    const quoted = (text: string) => `'${text.replace(/'/g, "''")}'`;
+    const script = [
+      "Add-Type -AssemblyName System.Windows.Forms",
+      "$owner = New-Object System.Windows.Forms.Form -Property @{ TopMost = $true }",
+      "$dialog = New-Object System.Windows.Forms.FolderBrowserDialog",
+      `$dialog.Description = ${quoted(title)}`,
+      `$dialog.SelectedPath = ${quoted(startDir)}`,
+      "if ($dialog.ShowDialog($owner) -eq 'OK') { [Console]::Out.Write($dialog.SelectedPath) }",
+    ].join("; ");
+    return runDialog(["powershell", "-NoProfile", "-STA", "-Command", script]);
+  }
+  if (Bun.which("zenity")) {
+    return runDialog(["zenity", "--file-selection", "--directory", `--title=${title}`, `--filename=${startDir}${sep}`]);
+  }
+  if (Bun.which("kdialog")) {
+    return runDialog(["kdialog", "--title", title, "--getexistingdirectory", startDir]);
+  }
+  return undefined;
 }
 
 /**

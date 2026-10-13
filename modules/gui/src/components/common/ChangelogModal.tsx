@@ -67,7 +67,10 @@ interface ChangelogModalProps {
   releaseNotes: string;
 }
 
-type DownloadState = "idle" | "downloading" | "done" | "error";
+type DownloadState = "idle" | "picking" | "downloading" | "done" | "browser" | "error";
+
+/** How often the modal reads the progress of the service download. */
+const POLL_MS = 500;
 
 export function ChangelogModal({
   isOpen,
@@ -81,7 +84,14 @@ export function ChangelogModal({
   const [downloadState, setDownloadState] = useState<DownloadState>("idle");
   const [downloadError, setDownloadError] = useState("");
   const [downloadPath, setDownloadPath] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
   const notesRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) clearTimeout(pollRef.current);
+    pollRef.current = null;
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,28 +110,68 @@ export function ChangelogModal({
       setDownloadState("idle");
       setDownloadError("");
       setDownloadPath("");
+      setProgress(null);
+      // A download started before the modal was closed keeps running in the service.
+      api
+        .getUpdateDownload()
+        .then((state) => {
+          if (state.status === "picking" || state.status === "downloading") void poll();
+        })
+        .catch(() => {});
     }
+    return stopPolling;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const handleDownload = async () => {
-    setDownloadState("downloading");
-    setDownloadError("");
+  const fail = (message: string) => {
+    setDownloadError(message || t("layout.changelog.downloadFailed"));
+    setDownloadState("error");
+  };
+
+  /** Follows the download the service runs for the desktop window. */
+  const poll = async () => {
     try {
-      const result = await api.downloadUpdate(latestVersion);
-      if (result.success && result.url) {
-        openExternal(result.url);
-        setDownloadPath(result.fileName || result.url);
+      const state = await api.getUpdateDownload();
+      if (state.status === "picking" || state.status === "downloading") {
+        setDownloadState(state.status);
+        setProgress(state.totalBytes ? Math.round(((state.receivedBytes ?? 0) / state.totalBytes) * 100) : null);
+        pollRef.current = setTimeout(poll, POLL_MS);
+      } else if (state.status === "done") {
+        setDownloadPath(state.filePath || state.fileName || "");
         setDownloadState("done");
+      } else if (state.status === "cancelled") {
+        setDownloadState("idle");
       } else {
-        setDownloadError(result.error || t("layout.changelog.downloadFailed"));
-        setDownloadState("error");
+        fail(state.error || "");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setDownloadError(msg);
-      setDownloadState("error");
+      fail(err instanceof Error ? err.message : String(err));
     }
   };
+
+  const handleDownload = async () => {
+    stopPolling();
+    setDownloadState("picking");
+    setDownloadError("");
+    setProgress(null);
+    try {
+      const result = await api.downloadUpdate(latestVersion, t("layout.changelog.folderTitle"));
+      if (!result.success) {
+        fail(result.error || "");
+      } else if (result.started) {
+        void poll();
+      } else if (result.url) {
+        // Another device: its browser downloads the installer.
+        openExternal(result.url);
+        setDownloadPath(result.fileName || result.url);
+        setDownloadState("browser");
+      }
+    } catch (err: unknown) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const busy = downloadState === "picking" || downloadState === "downloading";
 
   if (!isOpen) return null;
 
@@ -183,10 +233,14 @@ export function ChangelogModal({
         </div>
 
         {/* Download status */}
-        {downloadState === "done" && (
+        {(downloadState === "done" || downloadState === "browser") && (
           <div className="mt-3 p-2.5 rounded-lg bg-mint/10 border border-mint/30 flex items-center gap-2 text-[10px] text-mint shrink-0">
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{t("layout.changelog.downloadStarted", { path: downloadPath })}</span>
+            <span className="truncate" title={downloadPath}>
+              {downloadState === "done"
+                ? t("layout.changelog.downloadSaved", { path: downloadPath })
+                : t("layout.changelog.downloadStarted", { path: downloadPath })}
+            </span>
           </div>
         )}
 
@@ -208,33 +262,28 @@ export function ChangelogModal({
             {t("layout.changelog.releasePage")}
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors cursor-pointer"
-            >
-              {t("common.dismiss")}
-            </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={downloadState === "downloading"}
-              className="px-3.5 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
-            >
-              {downloadState === "downloading" ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  {t("layout.changelog.downloading")}
-                </>
-              ) : (
-                <>
-                  <Download className="w-3 h-3" />
-                  {downloadState === "done" ? t("layout.changelog.downloadAgain") : t("layout.changelog.downloadLatest")}
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={busy}
+            className="px-3.5 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                {downloadState === "picking"
+                  ? t("layout.changelog.choosingFolder")
+                  : progress !== null
+                    ? t("layout.changelog.downloadingPercent", { percent: progress })
+                    : t("layout.changelog.downloading")}
+              </>
+            ) : (
+              <>
+                <Download className="w-3 h-3" />
+                {downloadState === "done" || downloadState === "browser" ? t("layout.changelog.downloadAgain") : t("layout.changelog.downloadLatest")}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

@@ -41,6 +41,15 @@ function readTrimmed(file: string): string | undefined {
   }
 }
 
+/**
+ * Development only: the version the service reports from now on. The shell
+ * sends it as an `APP_VERSION=` line (`PORTFOLIO_SIMULATE_VERSION`), so an
+ * older version sees the latest release as an update.
+ */
+export function simulateAppVersion(version: string): void {
+  cachedVersion = version;
+}
+
 /** Semver of the running application. */
 export function getAppVersion(): string {
   if (cachedVersion !== null) return cachedVersion;

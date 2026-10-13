@@ -7,12 +7,16 @@
  * forwarded to Vite. `/api` stays with the service and its PIN check.
  *
  * Only from a checkout: an installed app serves the built GUI (static.ts).
+ * The same stdin carries `APP_VERSION=<semver>` when the developer simulates
+ * an older version to try the update flow.
  */
 import type { Server, ServerWebSocket, WebSocketHandler } from "bun";
 import { appLogger } from "../logger";
 import { REPO_ROOT } from "../paths";
+import { simulateAppVersion } from "../environment";
 
 const URL_LINE = /^GUI_URL=(http:\/\/\S+)$/;
+const VERSION_LINE = /^APP_VERSION=(\d+\.\d+\.\d+\S*)$/;
 
 /** Headers that belong to one hop, not to the forwarded message. */
 const HOP_HEADERS = new Set(["connection", "keep-alive", "transfer-encoding", "content-length", "content-encoding", "host", "upgrade"]);
@@ -30,7 +34,7 @@ export type DevGuiServer = Server<SocketData>;
 
 let viteUrl: string | null = null;
 
-/** Reads `GUI_URL=` lines from stdin, from a checkout only. */
+/** Reads `GUI_URL=` and `APP_VERSION=` lines from stdin, from a checkout only. */
 export function startDevGuiLink(): void {
   if (!REPO_ROOT) return;
   void (async () => {
@@ -41,6 +45,12 @@ export function startDevGuiLink(): void {
         const lines = (partial + decoder.decode(chunk, { stream: true })).split("\n");
         partial = lines.pop() ?? "";
         for (const line of lines) {
+          const version = VERSION_LINE.exec(line.trim());
+          if (version) {
+            simulateAppVersion(version[1]);
+            appLogger.logStep("info", "http", "dev-gui", `Simulating version ${version[1]}`);
+            continue;
+          }
           const match = URL_LINE.exec(line.trim());
           if (!match || match[1] === viteUrl) continue;
           viteUrl = match[1].replace(/\/+$/, "");

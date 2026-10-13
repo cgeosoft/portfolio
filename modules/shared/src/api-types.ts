@@ -600,13 +600,34 @@ export interface CheckForUpdatesRequest {
 export interface DownloadUpdateRequest {
   /** Version tag to download (e.g. "v0.3.0") */
   version: string;
+  /** Title of the folder dialog, in the interface language. */
+  dialogTitle?: string;
 }
 
 export interface DownloadUpdateResponse {
   success: boolean;
-  /** Installer URL on the website; the GUI opens it in the browser. */
+  /**
+   * Desktop window: the service asks for a folder and downloads the installer
+   * there in the background; the GUI follows `GET /api/app/update/download`.
+   */
+  started?: boolean;
+  /** Other devices: the installer URL, which the GUI opens in the browser. */
   url?: string;
   fileName?: string;
+  error?: string;
+}
+
+export type UpdateDownloadStatus = "idle" | "picking" | "downloading" | "done" | "cancelled" | "error";
+
+/** Progress of the installer download the desktop window started. */
+export interface UpdateDownloadState {
+  status: UpdateDownloadStatus;
+  fileName?: string;
+  /** Where the installer was saved, once `status` is `done`. */
+  filePath?: string;
+  receivedBytes?: number;
+  /** Size from Content-Length; absent when the server does not send it. */
+  totalBytes?: number;
   error?: string;
 }
 

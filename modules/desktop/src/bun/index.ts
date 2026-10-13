@@ -21,7 +21,7 @@
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Tray, Utils } from "electrobun/bun";
 import { chmodSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { APP, startQuery, userDataDir } from "./app";
+import { APP, simulatedVersion, startQuery, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
 import { classifyExternalUrl, encodeForShell } from "./external-url";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
@@ -286,6 +286,8 @@ async function main(): Promise<void> {
     // and the new service learns the Vite URL again for devices on the LAN.
     devGui?.setServicePort(port);
     if (devGuiUrl) service.send(`GUI_URL=${devGuiUrl}`);
+    const version = repoRoot ? simulatedVersion() : undefined;
+    if (version) service.send(`APP_VERSION=${version}`);
   });
   service.start((code) => {
     if (quitting) return;

@@ -1,13 +1,17 @@
 /**
  * Update check against the release manifest the release script publishes on
  * the website (`<WEBPAGE_URL>/releases/latest.json`, see scripts/release.sh).
- * The GUI opens the download in the browser; nothing is written to disk here.
+ * The desktop window downloads the installer through the service into a
+ * folder the user picks; other devices open the download in their browser.
  */
+import { existsSync, renameSync, rmSync } from "node:fs";
+import { basename, join } from "node:path";
 import { appLogger } from "../logger";
 import { loadConfig, updateConfig } from "../config";
 import { getAppVersion } from "../environment";
+import { downloadsDir, pickFolder } from "./files";
 import { GITHUB_URL, RELEASE_MANIFEST_URL, WEBPAGE_URL } from "portfolio-shared/brand";
-import type { AppUpdateInfo, DownloadUpdateResponse, ReleaseManifest, ReleasePlatformKey } from "portfolio-shared/api-types";
+import type { AppUpdateInfo, DownloadUpdateResponse, ReleaseManifest, ReleasePlatformKey, UpdateDownloadState } from "portfolio-shared/api-types";
 
 export interface ParsedSemver {
   major: number;
@@ -69,6 +73,7 @@ export class AppUpdateService {
   private onUpdateAvailable: ((info: AppUpdateInfo) => void) | null = null;
   private cachedInfo: AppUpdateInfo;
   private manifest: ReleaseManifest | null = null;
+  private download: UpdateDownloadState = { status: "idle" };
 
   constructor(private readonly manifestUrl: string = RELEASE_MANIFEST_URL) {
     this.currentVersion = getAppVersion();
@@ -209,17 +214,78 @@ export class AppUpdateService {
     }
   }
 
-  /**
-   * Resolves the download URL of the installer for this platform. The GUI
-   * opens it in the system browser, which handles the download itself.
-   */
-  public async downloadUpdate(version: string): Promise<DownloadUpdateResponse> {
+  /** Installer name and URL of a version for this platform. */
+  private installerFor(version: string): { fileName: string; url: string } {
     const cleanVersion = version.replace(/^[vV]/, "");
     const platform = releasePlatformKey();
     const fromManifest = this.manifest?.version?.replace(/^[vV]/, "") === cleanVersion ? this.manifest?.files?.[platform]?.installer : undefined;
-    const fileName = fromManifest?.name || getReleaseAssetName(cleanVersion);
+    const fileName = basename(fromManifest?.name || getReleaseAssetName(cleanVersion));
     const url = fromManifest?.url || `${GITHUB_URL}/releases/download/v${cleanVersion}/${fileName}`;
-    return { success: true, url, fileName };
+    return { fileName, url };
+  }
+
+  /**
+   * Other devices get the installer URL for their browser. The desktop window
+   * gets a folder dialog (opened on Downloads) and the service downloads the
+   * installer there in the background; `getDownloadState()` reports progress.
+   */
+  public downloadUpdate(version: string, isLocal: boolean, dialogTitle: string): DownloadUpdateResponse {
+    const { fileName, url } = this.installerFor(version);
+    if (!isLocal) return { success: true, url, fileName };
+    if (this.download.status === "picking" || this.download.status === "downloading") {
+      return { success: false, error: "A download is already in progress" };
+    }
+    this.download = { status: "picking", fileName };
+    void this.runDownload(url, fileName, dialogTitle);
+    return { success: true, started: true, fileName };
+  }
+
+  public getDownloadState(): UpdateDownloadState {
+    return this.download;
+  }
+
+  private async runDownload(url: string, fileName: string, dialogTitle: string): Promise<void> {
+    const timer = appLogger.startTimer("update", "download");
+    let partPath = "";
+    try {
+      const startDir = downloadsDir();
+      const picked = await pickFolder(startDir, dialogTitle);
+      if (picked === null) {
+        this.download = { status: "cancelled", fileName };
+        timer.end("info", "Download cancelled in the folder dialog");
+        return;
+      }
+      const folder = picked ?? startDir;
+      let target = join(folder, fileName);
+      if (existsSync(target)) {
+        const dot = fileName.lastIndexOf(".");
+        target = join(folder, `${fileName.slice(0, dot)}-${Date.now()}${fileName.slice(dot)}`);
+      }
+
+      const response = await fetch(url, { headers: { "User-Agent": `Portfolio-Desktop/${this.currentVersion}` } });
+      if (!response.ok || !response.body) throw new Error(`Download returned HTTP ${response.status}`);
+      const totalBytes = Number(response.headers.get("content-length")) || undefined;
+      this.download = { status: "downloading", fileName, receivedBytes: 0, totalBytes };
+
+      partPath = `${target}.part`;
+      const writer = Bun.file(partPath).writer();
+      let receivedBytes = 0;
+      for await (const chunk of response.body) {
+        writer.write(chunk);
+        receivedBytes += chunk.byteLength;
+        this.download = { status: "downloading", fileName, receivedBytes, totalBytes };
+      }
+      await writer.end();
+      renameSync(partPath, target);
+      partPath = "";
+      this.download = { status: "done", fileName, filePath: target, receivedBytes, totalBytes };
+      timer.end("success", "Installer downloaded");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (partPath) rmSync(partPath, { force: true });
+      this.download = { status: "error", fileName, error: msg };
+      timer.end("warning", `Download failed: ${msg}`);
+    }
   }
 
   public getCachedInfo(): AppUpdateInfo {

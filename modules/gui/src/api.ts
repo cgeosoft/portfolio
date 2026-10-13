@@ -20,6 +20,7 @@ import type {
   AutomationStatus,
   DesktopConfig,
   DownloadUpdateResponse,
+  UpdateDownloadState,
   EvaluatePortfolioMetricsRequest,
   EvaluatePortfolioMetricsResponse,
   GenerateReportRequest,
@@ -302,7 +303,9 @@ export const api = {
   getAppInfo: () => request<GetAppInfoResponse>("/api/app/info"),
   getUpdateInfo: () => request<AppUpdateInfo>("/api/app/update"),
   checkForUpdates: (force = false) => request<AppUpdateInfo>("/api/app/update/check", { method: "POST", body: json({ force }) }),
-  downloadUpdate: (version: string) => request<DownloadUpdateResponse>("/api/app/update/download", { method: "POST", body: json({ version }) }),
+  downloadUpdate: (version: string, dialogTitle?: string) =>
+    request<DownloadUpdateResponse>("/api/app/update/download", { method: "POST", body: json({ version, dialogTitle }) }),
+  getUpdateDownload: () => request<UpdateDownloadState>("/api/app/update/download"),
   logClientEvent: (entry: LogClientEventRequest) => request<{ success: boolean }>("/api/app/logs", { method: "POST", body: json(entry) }, { timeoutMs: 2000 }),
   getSponsorBanner: (url?: string, theme?: string) => {
     const params = [url ? `url=${enc(url)}` : "", theme ? `theme=${enc(theme)}` : ""].filter(Boolean).join("&");

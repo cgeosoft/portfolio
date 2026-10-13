@@ -5,7 +5,6 @@ import { formatTimeAgo } from "../portfolio/utils";
 import { PortfolioDot } from "../portfolio/portfolioColor";
 import { getLocale, t } from "../../i18n";
 
-import type { AppUpdateInfo } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 
 export { formatTimeAgo };
@@ -24,8 +23,6 @@ export interface BottomBarProps {
   onManagePortfolios?: () => void;
   hideCurrencyValues?: boolean;
   onToggleHideCurrency?: () => void;
-  updateInfo?: AppUpdateInfo | null;
-  onOpenUpdate?: () => void;
 }
 
 export function BottomBar({
@@ -41,8 +38,6 @@ export function BottomBar({
   onManagePortfolios,
   hideCurrencyValues = false,
   onToggleHideCurrency,
-  updateInfo,
-  onOpenUpdate,
 }: BottomBarProps) {
   const [relativeTime, setRelativeTime] = useState<string>(() => formatTimeAgo(lastQuotesSync));
 
@@ -111,21 +106,6 @@ export function BottomBar({
         <span className="text-slate-300">
           portfolio v{version}
         </span>
-        {updateInfo?.hasUpdate && (
-          <button
-            type="button"
-            onClick={
-              onOpenUpdate ||
-              (() => {
-                if (updateInfo.releaseUrl) openExternal(updateInfo.releaseUrl);
-              })
-            }
-            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-500/20 text-accent-300 border border-accent-500/40 hover:bg-accent-500/30 transition-colors cursor-pointer inline-flex items-center gap-1"
-            title={t("layout.bottomBar.newVersionTitle", { version: updateInfo.latestVersion })}
-          >
-            <span>{t("layout.bottomBar.versionAvailable", { version: updateInfo.latestVersion })}</span>
-          </button>
-        )}
         <span className="text-slate-600">-</span>
         <button
           type="button"

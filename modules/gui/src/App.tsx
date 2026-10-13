@@ -2160,8 +2160,6 @@ export default function App() {
         onManagePortfolios={handleOpenManagePortfolios}
         hideCurrencyValues={hideCurrencyValues}
         onToggleHideCurrency={toggleHideCurrencyValues}
-        updateInfo={updateInfo}
-        onOpenUpdate={() => setIsChangelogModalOpen(true)}
       />
 
       {/* Modals */}

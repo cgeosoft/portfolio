@@ -638,7 +638,11 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/app/update", () => appUpdateService.getUpdateInfo());
   router.post("/api/app/update/check", async (ctx) => appUpdateService.checkForUpdates(Boolean((await ctx.body<{ force?: boolean }>()).force)));
-  router.post("/api/app/update/download", async (ctx) => appUpdateService.downloadUpdate(str((await ctx.body<{ version?: string }>()).version, "version")));
+  router.post("/api/app/update/download", async (ctx) => {
+    const body = await ctx.body<{ version?: string; dialogTitle?: string }>();
+    return appUpdateService.downloadUpdate(str(body.version, "version"), ctx.isLocal, (body.dialogTitle || "").trim() || "Download folder");
+  });
+  router.get("/api/app/update/download", () => appUpdateService.getDownloadState());
 
   router.post("/api/app/logs", async (ctx) => {
     logClientEvent(await ctx.body<Record<string, unknown>>(64 * 1024));
