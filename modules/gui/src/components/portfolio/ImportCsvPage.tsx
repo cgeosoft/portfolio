@@ -1,23 +1,22 @@
 import { rpc } from "../../rpc";
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
-  X,
   UploadCloud,
   FileSpreadsheet,
   Check,
+  CheckCircle2,
   RefreshCw,
   AlertTriangle,
   FileCheck2,
-  Trash2,
   HelpCircle,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
   Layers,
 } from "lucide-react";
 import { Select } from "../common/Select";
 import type { PortfolioTransaction } from "portfolio-shared/portfolio";
 import { fmtCurrency } from "./utils";
+import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./PortfolioCard";
 
 /** Shape of an ISIN. The service checks the check digit and looks up the ticker on import. */
 const ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
@@ -640,21 +639,78 @@ interface DryRunResult {
   unchanged?: PortfolioTransaction[];
 }
 
-interface ImportCsvModalProps {
+/** CSV rows shown under the column mapping as a sample. */
+const MAPPING_SAMPLE_ROWS = 20;
+
+const STEPS = [
+  { key: "upload", label: "Select file" },
+  { key: "mapping", label: "Map columns" },
+  { key: "confirmation", label: "Review" },
+  { key: "success", label: "Done" },
+] as const;
+
+type ImportStage = (typeof STEPS)[number]["key"];
+
+/** The wizard steps: done steps carry a check, the current one the accent. */
+function Stepper({ stage }: { stage: ImportStage }) {
+  const current = STEPS.findIndex((s) => s.key === stage);
+  return (
+    <ol className="flex items-center gap-2 sm:gap-3 min-w-0 w-full">
+      {STEPS.map((s, i) => {
+        const done = i < current || stage === "success";
+        const active = i === current && !done;
+        return (
+          <li key={s.key} className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 last:flex-none">
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className={`w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
+                  done
+                    ? "border-mint/50 bg-mint/15 text-mint"
+                    : active
+                      ? "border-accent-500 bg-accent-500/15 text-accent-bright"
+                      : "border-slate-700 text-slate-500"
+                }`}
+              >
+                {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+              </span>
+              <span
+                className={`${active ? "inline" : "hidden sm:inline"} text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap ${
+                  active ? "text-slate-100" : done ? "text-slate-300" : "text-slate-500"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && <span className={`h-px flex-1 min-w-3 ${done ? "bg-mint/40" : "bg-slate-800"}`} />}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+interface ImportCsvPageProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => Promise<void> | void;
   portfolioId?: string | undefined;
+  portfolioName?: string | undefined;
   baseCurrency?: string | undefined;
 }
 
-export function ImportCsvModal({
+/**
+ * Full-window wizard that imports a broker CSV into a portfolio: select the file, map its
+ * columns, review the dry run, save. It stays mounted while closed, so the file and the
+ * mapping survive closing and reopening.
+ */
+export function ImportCsvPage({
   isOpen,
   onClose,
   onSuccess,
   portfolioId,
+  portfolioName,
   baseCurrency = "EUR",
-}: ImportCsvModalProps) {
+}: ImportCsvPageProps) {
   const [fileName, setFileName] = useState<string>("");
   const [fileSize, setFileSize] = useState<number>(0);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -666,8 +722,7 @@ export function ImportCsvModal({
   const [error, setError] = useState<string | null>(null);
   const [customBaseCurrency, setCustomBaseCurrency] = useState(baseCurrency);
 
-  // Stage: "upload" | "mapping" | "confirmation" | "success"
-  const [stage, setStage] = useState<"upload" | "mapping" | "confirmation" | "success">("upload");
+  const [stage, setStage] = useState<ImportStage>("upload");
   const [dryRunData, setDryRunData] = useState<DryRunResult | null>(null);
   const [previewFilter, setPreviewFilter] = useState<"all" | "new" | "modified" | "unchanged">("all");
   const [showAllPreview, setShowAllPreview] = useState(false);
@@ -710,7 +765,7 @@ export function ImportCsvModal({
 
         setStage("mapping");
       } catch (err) {
-        console.error("[ImportCsvModal] Failed to parse CSV:", err);
+        console.error("[ImportCsvPage] Failed to parse CSV:", err);
         setError(err instanceof Error ? err.message : "Failed to parse CSV file.");
       }
   }, []);
@@ -754,7 +809,7 @@ export function ImportCsvModal({
         const content = await file.text();
         handleFileProcess({ name: file.name, content });
       } catch (err) {
-        console.error("[ImportCsvModal] Failed to read file:", err);
+        console.error("[ImportCsvPage] Failed to read file:", err);
         setError("Failed to read selected file.");
       }
     }
@@ -920,7 +975,7 @@ export function ImportCsvModal({
       setShowAllPreview(false);
       setStage("confirmation");
     } catch (err) {
-      console.error("[ImportCsvModal] Dry run error:", err);
+      console.error("[ImportCsvPage] Dry run error:", err);
       setError(err instanceof Error ? err.message : "Failed to execute dry run verification");
     } finally {
       setSubmitting(false);
@@ -948,7 +1003,7 @@ export function ImportCsvModal({
 
       await onSuccess();
     } catch (err) {
-      console.error("[ImportCsvModal] Final import commit error:", err);
+      console.error("[ImportCsvPage] Final import commit error:", err);
       setError(err instanceof Error ? err.message : "Failed to commit transactions");
     } finally {
       setSubmitting(false);
@@ -992,72 +1047,75 @@ export function ImportCsvModal({
     return items;
   }, [dryRunData, previewFilter, addedList, modifiedList, unchangedList]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented && !submitting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, submitting, onClose]);
+
   if (!isOpen) return null;
 
+  const reviewFilters = [
+    { key: "all", label: "In file", count: totalCount, tone: "text-slate-100", on: "border-slate-500 bg-slate-800/60" },
+    { key: "new", label: "New", count: newItemsCount, tone: "text-mint", on: "border-mint/60 bg-mint/10" },
+    { key: "modified", label: "Modified", count: modItemsCount, tone: "text-cream", on: "border-cream/60 bg-cream/10" },
+    { key: "unchanged", label: "Unchanged", count: unchItemsCount, tone: "text-slate-400", on: "border-slate-500 bg-slate-800/60" },
+  ] as const;
+
+  const missingFields = [
+    !mappedSummary.hasDate && "Date",
+    !mappedSummary.hasType && "Type",
+    !mappedSummary.hasSymbol && "Symbol or ISIN",
+  ].filter((f): f is string => Boolean(f));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono overflow-y-auto">
-      <div className="relative w-full max-w-5xl flex flex-col h-[calc(100dvh-1rem)] sm:h-[min(90dvh,820px)] rounded-xl sm:rounded-2xl border border-slate-800 bg-widget shadow-2xl overflow-hidden text-slate-100 my-auto">
-        
-        {/* Modal Header & Wizard Stepper */}
-        <div className="flex items-center justify-between border-b border-slate-800 bg-canvas px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73] shrink-0">
-              <FileSpreadsheet className="w-4 h-4" />
-            </div>
+    <div className="fixed inset-0 z-40 flex flex-col bg-canvas text-slate-100 font-mono animate-in fade-in duration-150">
+      {/* Page header: back, title, steps */}
+      <header className="shrink-0 border-b border-line bg-widget">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-4 flex flex-col lg:flex-row lg:items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button type="button" onClick={onClose} disabled={submitting} className={SECONDARY_BUTTON} title="Back (Escape)">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
+            </button>
             <div className="min-w-0">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200 truncate">
-                Import Portfolio CSV
-              </h2>
-              <p className="text-[10px] text-slate-500 font-mono truncate hidden sm:block">Multi-Broker Ledger Ingestion Wizard</p>
+              <h1 className="flex items-center gap-2 min-w-0 text-sm font-bold uppercase tracking-wider text-slate-50 whitespace-nowrap">
+                <FileSpreadsheet className="w-4 h-4 shrink-0 text-accent-500" />
+                <span className="truncate">Import transactions</span>
+              </h1>
+              <p className="text-[11px] text-slate-500 truncate">
+                {portfolioName ? (
+                  <>
+                    Into <span className="text-slate-300 font-semibold">{portfolioName}</span>. Nothing is saved before the last step.
+                  </>
+                ) : (
+                  "Nothing is saved before the last step."
+                )}
+              </p>
             </div>
           </div>
-
-          {/* Stepper Indicator - Mobile Badge vs Desktop Breadcrumbs */}
-          <div className="flex items-center gap-1.5">
-            <div className="sm:hidden text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] bg-[#DD3C73]/15 px-2 py-0.5 rounded border border-[#DD3C73]/30">
-              {stage === "upload" ? "1/4 Select" : stage === "mapping" ? "2/4 Map" : stage === "confirmation" ? "3/4 Review" : "4/4 Done"}
-            </div>
-
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] uppercase font-mono tracking-wider">
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "upload" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
-                1. Select
-              </span>
-              <span className="text-slate-600">➔</span>
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "mapping" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
-                2. Map Columns
-              </span>
-              <span className="text-slate-600">➔</span>
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "confirmation" ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold border border-[#DD3C73]/40" : "text-slate-500"}`}>
-                3. Review
-              </span>
-              <span className="text-slate-600">➔</span>
-              <span className={`px-2 py-0.5 rounded transition-colors ${stage === "success" ? "bg-mint/20 text-mint font-bold border border-mint/40" : "text-slate-500"}`}>
-                4. Done
-              </span>
-            </div>
+          <div className="lg:w-[560px] shrink-0">
+            <Stepper stage={stage} />
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer shrink-0"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
+      </header>
 
-        {/* Modal Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 flex flex-col gap-4 custom-scrollbar">
+      {/* Page body */}
+      <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+        <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-8 py-5 flex flex-col gap-4">
           {error && (
-            <div className="p-3 rounded-xl border border-rose-800/50 bg-rose-950/40 text-rose-400 text-xs flex items-center gap-2.5">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+            <div className="shrink-0 p-3 rounded-xl border border-rose-800/50 bg-rose-950/40 text-rose-400 text-xs flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* STAGE 1: UPLOAD DROPZONE */}
+          {/* STEP 1: SELECT FILE */}
           {stage === "upload" && (
-            <div className="flex flex-col gap-4 flex-1">
+            <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1067,174 +1125,154 @@ export function ImportCsvModal({
                 onChange={handleFileInputChange}
               />
               <div
+                role="button"
+                tabIndex={0}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleBrowseClick}
-                className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 text-center cursor-pointer transition-all flex-1 min-h-[200px] sm:min-h-[260px] ${
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleBrowseClick();
+                  }
+                }}
+                className={`flex-1 min-h-[260px] border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-4 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:border-accent-500 ${
                   isDragging
-                    ? "border-[#DD3C73] bg-[#DD3C73]/10 shadow-[0_0_24px_rgba(221,60,115,0.2)]"
-                    : "border-slate-800 bg-canvas/60 hover:border-[#DD3C73]/50 hover:bg-card/60"
+                    ? "border-accent-500 bg-accent-500/10"
+                    : "border-slate-800 bg-widget/60 hover:border-accent-500/50 hover:bg-widget"
                 }`}
               >
-                
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] shadow-lg shadow-[#DD3C73]/10">
-                  <UploadCloud className="w-6 h-6 sm:w-7 sm:h-7" />
+                <div className="w-14 h-14 rounded-2xl border border-accent-500/30 bg-accent-500/10 flex items-center justify-center text-accent-500">
+                  <UploadCloud className="w-7 h-7" />
                 </div>
-                <div>
-                  <span className="font-bold text-xs sm:text-sm uppercase tracking-wider block text-slate-200">
-                    Drop CSV file here or click to browse
-                  </span>
-                  <span className="text-[11px] sm:text-xs text-slate-500 mt-1 block">
-                    Upload broker statement CSV (Trade Republic, Scalable Capital, Interactive Brokers, Degiro, etc.)
-                  </span>
+                <div className="space-y-1">
+                  <span className="block font-bold text-sm uppercase tracking-wider text-slate-100">Drop a CSV file here</span>
+                  <span className="block text-xs text-slate-500">or click to choose one from your computer</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-800 bg-canvas text-[10px] sm:text-[11px] text-slate-400 mt-1">
-                  <span>Standard format: Header row + delimited records</span>
-                </div>
+                <span className={SECONDARY_BUTTON}>
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  Choose file
+                </span>
+                <span className="text-[11px] text-slate-500 max-w-md">
+                  The file needs a header row and one row per transaction. Map at least a date, a type and a symbol or ISIN column.
+                </span>
               </div>
 
-              {/* Supported Broker Templates List */}
-              <div className="p-3.5 sm:p-4 rounded-xl border border-slate-800 bg-canvas/60 flex flex-col gap-2.5">
-                <div className="text-xs uppercase font-bold text-slate-400 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#DD3C73]" />
-                  <span>Pre-Configured Broker Formats:</span>
+              {/* Known broker formats */}
+              <aside className="lg:w-80 shrink-0 cx-card rounded-2xl p-4 flex flex-col gap-3 min-h-0">
+                <div className="text-[11px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-accent-500" />
+                  Recognised formats
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
+                <p className="text-[11px] text-slate-500">The columns of these exports are mapped for you. Any other CSV can be mapped by hand.</p>
+                <ul className="flex flex-col gap-2 overflow-y-auto custom-scrollbar min-h-0">
                   {CSV_TEMPLATES.filter((t) => t.id !== "auto").map((tpl) => (
-                    <div
-                      key={tpl.id}
-                      className="p-2.5 sm:p-3 rounded-lg border border-slate-800 bg-widget flex flex-col gap-1 hover:border-slate-700 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-200">{tpl.name}</span>
+                    <li key={tpl.id} className="p-2.5 rounded-lg border border-line bg-card/60 flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-xs text-slate-200 truncate">{tpl.name}</span>
                         {tpl.badge && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-500/15 text-accent-bright border border-accent-500/30 shrink-0">
                             {tpl.badge}
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] sm:text-[11px] text-slate-500 truncate" title={tpl.description}>
+                      <span className="text-[11px] text-slate-500 line-clamp-2" title={tpl.description}>
                         {tpl.description}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </aside>
             </div>
           )}
 
-          {/* STAGE 2: COLUMN MAPPING & PREVIEW */}
+          {/* STEP 2: MAP COLUMNS */}
           {stage === "mapping" && (
             <div className="flex flex-col gap-4 flex-1 min-h-0">
-              {/* File Info & Template Controls Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl border border-slate-800 bg-canvas text-xs">
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-[#DD3C73]/10 border border-[#DD3C73]/30 flex items-center justify-center text-[#DD3C73] shrink-0">
+              {/* File and template controls */}
+              <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-xl border border-line bg-widget text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-accent-500/10 border border-accent-500/30 flex items-center justify-center text-accent-500 shrink-0">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 truncate">
-                    <span className="font-bold text-slate-200 truncate block sm:inline">{fileName}</span>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 sm:ml-2 block sm:inline">
-                      ({(fileSize / 1024).toFixed(1)} KB · {rows.length} rows · {headers.length} cols)
-                    </span>
+                  <div className="min-w-0">
+                    <div className="font-bold text-slate-200 truncate" title={fileName}>{fileName}</div>
+                    <div className="text-[11px] text-slate-500">
+                      {(fileSize / 1024).toFixed(1)} KB · {rows.length} rows · {headers.length} columns
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="ml-2 px-2.5 py-1 rounded-lg border border-slate-700/80 bg-widget text-[11px] font-bold text-slate-300 hover:text-slate-50 hover:border-slate-600 transition-colors cursor-pointer shrink-0"
-                  >
-                    Change File
+                  <button type="button" onClick={handleReset} className={SECONDARY_BUTTON}>
+                    Change file
                   </button>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* CSV Field Template Selector */}
-                  <div className="flex items-center gap-1.5 text-xs flex-1 sm:flex-initial">
-                    <span className="text-slate-400 font-bold flex items-center gap-1 text-[11px] sm:text-xs">
-                      <Layers className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span className="hidden sm:inline">Template:</span>
-                    </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-[11px] text-slate-400">
+                    <span className="font-semibold uppercase tracking-wider">Format</span>
                     <Select
                       value={selectedTemplate}
                       onChange={(e) => handleTemplateChange(e.target.value)}
                       selectSize="sm"
                       tone="accent"
-                      wrapperClassName="w-full sm:w-auto"
-                      aria-label="CSV field template"
+                      aria-label="CSV format"
                     >
                       {CSV_TEMPLATES.map((tpl) => (
                         <option key={tpl.id} value={tpl.id}>
                           {tpl.badge ? `[${tpl.badge}] ` : ""}{tpl.name}
                         </option>
                       ))}
-                      <option value="custom">
-                        [MANUAL] Custom Column Mapping
-                      </option>
+                      <option value="custom">[MANUAL] Custom Column Mapping</option>
                     </Select>
-                  </div>
-
-                  {/* Currency Selector */}
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-slate-400 text-[11px] sm:text-xs">Cur:</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-[11px] text-slate-400">
+                    <span className="font-semibold uppercase tracking-wider">Currency</span>
                     <Select
                       value={customBaseCurrency}
                       onChange={(e) => setCustomBaseCurrency(e.target.value)}
                       selectSize="sm"
                       wrapperClassName="shrink-0"
-                      aria-label="Base currency"
+                      aria-label="Default currency"
                     >
                       <option value="EUR">EUR (€)</option>
                       <option value="USD">USD ($)</option>
                       <option value="GBP">GBP (£)</option>
                       <option value="CHF">CHF (Fr)</option>
                     </Select>
-                  </div>
-
-                  <button
-                    onClick={handleReset}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-800/40 bg-rose-950/30 text-rose-400 text-xs hover:bg-rose-950/50 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Clear</span>
-                  </button>
+                  </label>
                 </div>
               </div>
 
-              {/* Instructions Bar & Template Hint */}
-              <div className="text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2 px-1">
-                <div className="flex items-center gap-1.5">
-                  <HelpCircle className="w-4 h-4 text-[#DD3C73] shrink-0" />
-                  <span className="text-[11px] sm:text-xs">
-                    {activeTemplateObj
-                      ? `Template: ${activeTemplateObj.name}. Adjust individual column dropdowns below as needed.`
-                      : "Custom mapping active. Use the dropdowns to map columns to system fields."}
-                  </span>
-                </div>
-                <div className="font-bold text-[#DD3C73] text-[11px] sm:text-xs">
+              <div className="shrink-0 text-[11px] text-slate-400 flex flex-wrap items-center justify-between gap-2 px-1">
+                <span className="flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-accent-500 shrink-0" />
+                  {activeTemplateObj
+                    ? `Mapped with the ${activeTemplateObj.name} format. Change any column below if it is wrong.`
+                    : "Custom mapping. Pick a field for every column you want to import."}
+                </span>
+                <span className="font-bold text-accent-bright">
                   {mappedSummary.count} of {headers.length} columns mapped
-                </div>
+                </span>
               </div>
 
-              {/* Mapping & Data Preview Table */}
-              <div className="rounded-xl border border-slate-800 bg-canvas overflow-hidden flex flex-col flex-1 min-h-[220px]">
+              {/* Mapping and sample rows */}
+              <div className="rounded-xl border border-line bg-widget overflow-hidden flex flex-col flex-1 min-h-[280px]">
                 <div className="overflow-auto flex-1 min-h-0 custom-scrollbar">
                   <table className="w-full border-collapse text-xs font-mono">
-                    <thead className="bg-card border-b border-slate-800 sticky top-0 z-10">
-                      {/* Row 1: System Field Dropdowns */}
-                      <tr className="border-b border-slate-800/80 bg-widget">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="bg-card border-b border-line">
                         {headers.map((_, colIdx) => {
                           const currentField = columnMappings[colIdx] || "none";
                           const isMapped = currentField !== "none";
                           return (
-                            <th key={`map-${colIdx}`} className="p-2.5 text-left align-top min-w-[180px] border-r border-slate-800/60 last:border-r-0">
+                            <th key={`map-${colIdx}`} className="p-2.5 text-left align-top min-w-[180px] border-r border-line/60 last:border-r-0">
                               <div className="flex flex-col gap-1.5">
-                                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-                                  <span>System Field</span>
+                                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold flex items-center justify-between">
+                                  <span>Field</span>
                                   {isMapped ? (
-                                    <span className="text-[9px] text-[#DD3C73] bg-[#DD3C73]/15 px-1.5 py-0.2 rounded font-bold border border-[#DD3C73]/30">MAPPED</span>
+                                    <span className="text-[9px] text-accent-bright bg-accent-500/15 px-1.5 rounded font-bold border border-accent-500/30">MAPPED</span>
                                   ) : (
-                                    <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">IGNORED</span>
+                                    <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 rounded border border-slate-800">IGNORED</span>
                                   )}
                                 </div>
                                 <Select
@@ -1255,13 +1293,11 @@ export function ImportCsvModal({
                           );
                         })}
                       </tr>
-
-                      {/* Row 2: Original CSV Column Headers */}
-                      <tr className="bg-card text-slate-400">
+                      <tr className="bg-widget border-b border-line">
                         {headers.map((h, colIdx) => (
                           <th
                             key={`h-${colIdx}`}
-                            className="px-3 py-2 text-left font-mono font-bold text-[11px] uppercase tracking-wider border-r border-slate-800/60 last:border-r-0 text-slate-200 truncate max-w-[200px]"
+                            className="px-3 py-2 text-left font-bold text-[11px] uppercase tracking-wider border-r border-line/60 last:border-r-0 text-slate-200 truncate max-w-[220px]"
                             title={h}
                           >
                             {h}
@@ -1269,99 +1305,63 @@ export function ImportCsvModal({
                         ))}
                       </tr>
                     </thead>
-
-                    {/* Preview Rows */}
-                    <tbody className="divide-y divide-slate-800/40 font-mono">
-                      {rows.slice(0, 6).map((rowCols, rIdx) => (
+                    <tbody className="divide-y divide-slate-800/40">
+                      {rows.slice(0, MAPPING_SAMPLE_ROWS).map((rowCols, rIdx) => (
                         <tr key={`r-${rIdx}`} className="hover:bg-slate-800/20">
-                          {rowCols.map((val, cIdx) => (
-                            <td
-                              key={`c-${rIdx}-${cIdx}`}
-                              className="px-3 py-2 whitespace-nowrap text-slate-400 border-r border-slate-800/30 last:border-r-0 text-xs truncate max-w-[200px]"
-                              title={val}
-                            >
-                              {val || <span className="opacity-30">—</span>}
-                            </td>
-                          ))}
+                          {headers.map((_, cIdx) => {
+                            const val = rowCols[cIdx] ?? "";
+                            const isMapped = (columnMappings[cIdx] || "none") !== "none";
+                            return (
+                              <td
+                                key={`c-${rIdx}-${cIdx}`}
+                                className={`px-3 py-2 whitespace-nowrap border-r border-line/30 last:border-r-0 truncate max-w-[220px] ${
+                                  isMapped ? "text-slate-300" : "text-slate-600"
+                                }`}
+                                title={val}
+                              >
+                                {val || <span className="opacity-30">-</span>}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-
-                {rows.length > 6 && (
-                  <div className="p-2.5 border-t border-slate-800 bg-widget text-center text-[11px] text-slate-500">
-                    Showing first 6 sample records of {rows.length} total rows.
+                {rows.length > MAPPING_SAMPLE_ROWS && (
+                  <div className="shrink-0 px-3 py-2 border-t border-line bg-card text-center text-[11px] text-slate-500">
+                    The first {MAPPING_SAMPLE_ROWS} of {rows.length} rows. The review step checks every row.
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* STAGE 3: CONFIRMATION / REVIEW */}
+          {/* STEP 3: REVIEW */}
           {stage === "confirmation" && dryRunData && (
             <div className="flex flex-col gap-4 flex-1 min-h-0">
-              {/* Changes Preview Table */}
-              <div className="rounded-xl border border-slate-800 bg-canvas overflow-hidden flex flex-col flex-1 min-h-0">
-                <div className="p-3 border-b border-slate-800 bg-card text-xs font-bold uppercase tracking-wider text-slate-400 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-200">
-                      Transactions Review ({previewItems.length} records shown)
-                    </span>
-                  </div>
+              {/* Counts double as filters */}
+              <div className="shrink-0 grid grid-cols-2 md:grid-cols-4 gap-3">
+                {reviewFilters.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setPreviewFilter(f.key)}
+                    aria-pressed={previewFilter === f.key}
+                    className={`text-left p-3 rounded-xl border transition-colors cursor-pointer ${
+                      previewFilter === f.key ? f.on : "border-line bg-widget hover:border-slate-600"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">{f.label}</div>
+                    <div className={`text-xl font-bold ${f.tone}`}>{f.count}</div>
+                  </button>
+                ))}
+              </div>
 
-                  {/* Filter Pill Tabs */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFilter("all")}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
-                        previewFilter === "all"
-                          ? "bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]"
-                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
-                      }`}
-                    >
-                      All ({totalCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFilter("new")}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
-                        previewFilter === "new"
-                          ? "bg-mint/20 text-mint border border-mint"
-                          : "bg-slate-900 text-mint/80 hover:text-mint border border-slate-800"
-                      }`}
-                    >
-                      + New ({newItemsCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFilter("modified")}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
-                        previewFilter === "modified"
-                          ? "bg-cream/20 text-cream border border-cream"
-                          : "bg-slate-900 text-cream/80 hover:text-cream border border-slate-800"
-                      }`}
-                    >
-                      ↺ Modified ({modItemsCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFilter("unchanged")}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
-                        previewFilter === "unchanged"
-                          ? "bg-slate-800 text-slate-200 border border-slate-700"
-                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
-                      }`}
-                    >
-                      ✓ Unchanged ({unchItemsCount})
-                    </button>
-                  </div>
-                </div>
-
+              <div className="rounded-xl border border-line bg-widget overflow-hidden flex flex-col flex-1 min-h-[280px]">
                 <div className="overflow-auto flex-1 min-h-0 custom-scrollbar">
                   <table className="w-full border-collapse text-xs font-mono">
-                    <thead className="bg-widget text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800 sticky top-0 backdrop-blur z-10">
+                    <thead className="bg-card text-slate-400 text-[11px] uppercase border-b border-line sticky top-0 z-10">
                       <tr>
                         <th className="px-3 py-2.5 text-left font-semibold">Status</th>
                         <th className="px-3 py-2.5 text-left font-semibold">Date</th>
@@ -1373,130 +1373,70 @@ export function ImportCsvModal({
                         <th className="px-3 py-2.5 text-right font-semibold">Fee / Tax</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/40 font-mono">
+                    <tbody className="divide-y divide-slate-800/40">
+                      {previewItems.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="px-3 py-10 text-center text-slate-500">
+                            No rows in this group.
+                          </td>
+                        </tr>
+                      )}
                       {(showAllPreview ? previewItems : previewItems.slice(0, PREVIEW_LIMIT)).map(({ tx, status, diffs }, idx) => {
                         const isNew = status === "new";
                         const isModified = status === "modified";
-                        const isUnchanged = status === "unchanged";
                         const diffFieldNames = new Set((diffs || []).map((d) => d.field));
+                        const changed = (field: string) => diffFieldNames.has(field);
 
                         return (
                           <tr
                             key={`${tx.id}-${status}-${idx}`}
                             className={`transition-colors ${
-                              isNew
-                                ? "bg-mint/10 hover:bg-mint/20"
-                                : isModified
-                                ? "bg-cream/10 hover:bg-cream/20"
-                                : "hover:bg-slate-800/20 opacity-75 hover:opacity-100"
+                              isNew ? "bg-mint/5 hover:bg-mint/10" : isModified ? "bg-cream/5 hover:bg-cream/10" : "hover:bg-slate-800/20 text-slate-500"
                             }`}
                           >
                             <td className="px-3 py-2 whitespace-nowrap">
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                                   isNew
-                                    ? "bg-mint/15 text-mint border border-mint/30"
+                                    ? "bg-mint/15 text-mint border-mint/30"
                                     : isModified
-                                    ? "bg-cream/15 text-cream border border-cream/30"
-                                    : "bg-slate-800 text-slate-400 border border-slate-700"
+                                      ? "bg-cream/15 text-cream border-cream/30"
+                                      : "bg-slate-800 text-slate-400 border-slate-700"
                                 }`}
                               >
-                                {isNew && "+ NEW"}
-                                {isModified && "↺ MODIFIED"}
-                                {isUnchanged && "✓ UNCHANGED"}
+                                {isNew ? "New" : isModified ? "Modified" : "Unchanged"}
                               </span>
                             </td>
-
-                            <td
-                              className={`px-3 py-2 whitespace-nowrap text-slate-400 ${
-                                diffFieldNames.has("date") ? "text-cream font-bold" : ""
-                              }`}
-                            >
-                              {tx.date}
-                            </td>
-
-                            <td
-                              className={`px-3 py-2 whitespace-nowrap font-bold ${
-                                diffFieldNames.has("type") ? "text-cream" : "text-slate-300"
-                              }`}
-                            >
-                              {tx.type}
-                            </td>
-
+                            <td className={`px-3 py-2 whitespace-nowrap ${changed("date") ? "text-cream font-bold" : "text-slate-400"}`}>{tx.date}</td>
+                            <td className={`px-3 py-2 whitespace-nowrap font-bold ${changed("type") ? "text-cream" : "text-slate-300"}`}>{tx.type}</td>
                             <td className="px-3 py-2 whitespace-nowrap">
-                              <span
-                                className={`font-bold text-slate-100 ${
-                                  diffFieldNames.has("symbol") || diffFieldNames.has("name")
-                                    ? "text-cream"
-                                    : ""
-                                }`}
-                              >
-                                {tx.symbol}
-                              </span>
-                              {tx.name && tx.name !== tx.symbol && (
-                                <span className="text-[11px] text-slate-500 ml-2 truncate">
-                                  · {tx.name}
-                                </span>
-                              )}
+                              <span className={`font-bold ${changed("symbol") || changed("name") ? "text-cream" : "text-slate-100"}`}>{tx.symbol}</span>
+                              {tx.name && tx.name !== tx.symbol && <span className="text-[11px] text-slate-500 ml-2">· {tx.name}</span>}
                               {diffs && diffs.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-1">
                                   {diffs.map((d, dIdx) => (
                                     <span
                                       key={`diff-${dIdx}`}
-                                      className="px-1.5 py-0.2 rounded text-[10px] bg-cream/15 text-cream border border-cream/30 font-mono"
-                                      title={`${d.field}: ${String(d.oldVal)} ➔ ${String(d.newVal)}`}
+                                      className="px-1.5 rounded text-[10px] bg-cream/15 text-cream border border-cream/30"
+                                      title={`${d.field}: ${String(d.oldVal)} → ${String(d.newVal)}`}
                                     >
-                                      {d.field}: {String(d.oldVal ?? "—")} ➔ {String(d.newVal ?? "—")}
+                                      {d.field}: {String(d.oldVal ?? "-")} → {String(d.newVal ?? "-")}
                                     </span>
                                   ))}
                                 </div>
                               )}
                             </td>
-
-                            <td
-                              className={`px-3 py-2 text-right ${
-                                diffFieldNames.has("shares")
-                                  ? "text-cream font-bold bg-cream/10"
-                                  : "text-slate-200"
-                              }`}
-                            >
-                              {tx.shares != null ? tx.shares.toFixed(4) : "—"}
+                            <td className={`px-3 py-2 text-right ${changed("shares") ? "text-cream font-bold bg-cream/10" : "text-slate-200"}`}>
+                              {tx.shares != null ? tx.shares.toFixed(4) : "-"}
                             </td>
-
-                            <td
-                              className={`px-3 py-2 text-right ${
-                                diffFieldNames.has("price")
-                                  ? "text-cream font-bold bg-cream/10"
-                                  : "text-slate-400"
-                              }`}
-                            >
-                              {tx.price != null
-                                ? fmtCurrency(tx.price, tx.currency || customBaseCurrency)
-                                : "—"}
+                            <td className={`px-3 py-2 text-right ${changed("price") ? "text-cream font-bold bg-cream/10" : "text-slate-400"}`}>
+                              {tx.price != null ? fmtCurrency(tx.price, tx.currency || customBaseCurrency) : "-"}
                             </td>
-
-                            <td
-                              className={`px-3 py-2 text-right font-bold ${
-                                diffFieldNames.has("amount")
-                                  ? "text-cream bg-cream/10"
-                                  : "text-slate-100"
-                              }`}
-                            >
-                              {tx.amount != null
-                                ? fmtCurrency(Math.abs(tx.amount), tx.currency || customBaseCurrency)
-                                : "—"}
+                            <td className={`px-3 py-2 text-right font-bold ${changed("amount") ? "text-cream bg-cream/10" : "text-slate-100"}`}>
+                              {tx.amount != null ? fmtCurrency(Math.abs(tx.amount), tx.currency || customBaseCurrency) : "-"}
                             </td>
-
-                            <td
-                              className={`px-3 py-2 text-right text-xs ${
-                                diffFieldNames.has("fee") || diffFieldNames.has("tax")
-                                  ? "text-cream font-bold bg-cream/10"
-                                  : "text-slate-500"
-                              }`}
-                            >
-                              {tx.fee || tx.tax
-                                ? fmtCurrency((tx.fee || 0) + (tx.tax || 0), tx.currency || customBaseCurrency)
-                                : "—"}
+                            <td className={`px-3 py-2 text-right ${changed("fee") || changed("tax") ? "text-cream font-bold bg-cream/10" : "text-slate-500"}`}>
+                              {tx.fee || tx.tax ? fmtCurrency((tx.fee || 0) + (tx.tax || 0), tx.currency || customBaseCurrency) : "-"}
                             </td>
                           </tr>
                         );
@@ -1504,11 +1444,7 @@ export function ImportCsvModal({
                       {!showAllPreview && previewItems.length > PREVIEW_LIMIT && (
                         <tr>
                           <td colSpan={8} className="px-3 py-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => setShowAllPreview(true)}
-                              className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-[11px] font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer uppercase tracking-wider"
-                            >
+                            <button type="button" onClick={() => setShowAllPreview(true)} className={SECONDARY_BUTTON}>
                               Show all {previewItems.length} rows
                             </button>
                           </td>
@@ -1521,124 +1457,96 @@ export function ImportCsvModal({
             </div>
           )}
 
-          {/* STAGE 4: SUCCESS */}
+          {/* STEP 4: DONE */}
           {stage === "success" && successInfo && (
-            <div className="flex-1 py-12 px-4 flex flex-col items-center justify-center text-center gap-4">
-              <div className="w-16 h-16 rounded-2xl border border-mint/40 bg-mint/15 flex items-center justify-center text-mint shadow-lg shadow-mint/10">
-                <FileCheck2 className="w-8 h-8" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base uppercase tracking-wider text-mint">
-                  CSV Ledger Imported Successfully
-                </h3>
-                <p className="text-xs text-slate-400 max-w-md mt-1.5 leading-relaxed">
-                  Synchronized <span className="text-slate-100 font-bold">{rows.length}</span> records from{" "}
-                  <span className="text-slate-100 font-bold">{fileName}</span>. Total transactions in portfolio:{" "}
-                  <span className="text-mint font-bold">{successInfo.total}</span> ({successInfo.newCount} new records saved).
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 mt-4">
-                <button
-                  onClick={handleReset}
-                  className="px-4 py-2 rounded-xl border border-slate-700 bg-canvas text-xs font-bold text-slate-300 hover:text-slate-50 cursor-pointer uppercase transition-colors"
-                >
-                  Import Another File
-                </button>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer uppercase"
-                >
-                  Done
-                </button>
+            <div className="flex-1 flex items-center justify-center py-10">
+              <div className="cx-card w-full max-w-lg rounded-2xl p-8 flex flex-col items-center text-center gap-4">
+                <div className="w-14 h-14 rounded-2xl border border-mint/40 bg-mint/15 flex items-center justify-center text-mint">
+                  <FileCheck2 className="w-7 h-7" />
+                </div>
+                <div className="space-y-1.5">
+                  <h2 className="font-bold text-sm uppercase tracking-wider text-mint">Import saved</h2>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Read <span className="text-slate-100 font-bold">{rows.length}</span> rows from{" "}
+                    <span className="text-slate-100 font-bold">{fileName}</span>. {successInfo.newCount} new transactions saved. The
+                    portfolio now holds <span className="text-mint font-bold">{successInfo.total}</span> transactions.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <button type="button" onClick={handleReset} className={SECONDARY_BUTTON}>
+                    Import another file
+                  </button>
+                  <button type="button" onClick={onClose} className={PRIMARY_BUTTON}>
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
+      </main>
 
-        {/* Modal Footer Controls */}
-        {stage === "mapping" && (
-          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-800 bg-canvas px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 gap-2.5">
-            <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-400 w-full sm:w-auto justify-between sm:justify-start">
-              {!mappedSummary.hasDate && (
-                <span className="text-cream flex items-center gap-1 text-[11px] sm:text-xs">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Missing Date
-                </span>
-              )}
-              {!mappedSummary.hasType && (
-                <span className="text-cream flex items-center gap-1 text-[11px] sm:text-xs">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Missing Type
-                </span>
-              )}
-              {!mappedSummary.hasSymbol && (
-                <span className="text-cream flex items-center gap-1 text-[11px] sm:text-xs">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Missing Symbol
+      {/* Step actions */}
+      {(stage === "mapping" || stage === "confirmation") && (
+        <footer className="shrink-0 border-t border-line bg-widget">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-[11px] min-w-0">
+              {stage === "mapping" &&
+                (missingFields.length > 0 ? (
+                  <span className="text-cream flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    Not mapped: {missingFields.join(", ")}
+                  </span>
+                ) : (
+                  <span className="text-mint flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    Date, type and symbol are mapped
+                  </span>
+                ))}
+              {stage === "confirmation" && (
+                <span className="text-slate-400">
+                  <span className="text-mint font-bold">{newItemsCount}</span> new, <span className="text-cream font-bold">{modItemsCount}</span>{" "}
+                  modified, {unchItemsCount} unchanged
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 justify-end">
               <button
                 type="button"
-                onClick={onClose}
-                className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-700 bg-widget text-xs font-bold text-slate-300 hover:text-slate-50 cursor-pointer transition-colors"
+                onClick={() => (stage === "confirmation" ? setStage("mapping") : handleReset())}
+                disabled={submitting}
+                className={SECONDARY_BUTTON}
               >
-                Cancel
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back
               </button>
-              <button
-                type="button"
-                disabled={submitting || rows.length === 0}
-                onClick={() => void handleProceedToDryRun()}
-                className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {submitting ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
-                )}
-                <span>Review <span className="hidden sm:inline">Transactions </span>(Step 3)</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              {stage === "mapping" ? (
+                <button
+                  type="button"
+                  disabled={submitting || rows.length === 0}
+                  onClick={() => void handleProceedToDryRun()}
+                  className={PRIMARY_BUTTON}
+                >
+                  {submitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  Review {rows.length} rows
+                  {!submitting && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={submitting || rows.length === 0}
+                  onClick={() => void handleFinalCommit()}
+                  className={PRIMARY_BUTTON}
+                >
+                  {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Import {rows.length} rows
+                </button>
+              )}
             </div>
           </div>
-        )}
-
-        {stage === "confirmation" && (
-          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-800 bg-canvas px-3.5 py-2.5 sm:px-5 sm:py-3.5 shrink-0 gap-2.5">
-            <button
-              type="button"
-              onClick={() => setStage("mapping")}
-              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-700 bg-widget text-xs font-bold text-slate-300 hover:text-slate-50 cursor-pointer transition-colors w-full sm:w-auto justify-center sm:justify-start"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Mapping</span>
-            </button>
-
-            <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-700 bg-widget text-xs font-bold text-slate-300 hover:text-slate-50 cursor-pointer transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={submitting || rows.length === 0}
-                onClick={() => void handleFinalCommit()}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl border border-[#DD3C73] bg-[#DD3C73] text-xs font-bold text-white hover:bg-[#c82f63] shadow-lg shadow-[#DD3C73]/25 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {submitting ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Check className="w-3.5 h-3.5" />
-                )}
-                <span>Confirm & Commit<span className="hidden sm:inline"> Import ({rows.length} Records)</span></span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+        </footer>
+      )}
     </div>
   );
 }

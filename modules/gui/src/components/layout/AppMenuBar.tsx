@@ -12,6 +12,7 @@ import {
   FolderCog,
   Settings,
   PieChart,
+  BarChart3,
   FileText,
   Lightbulb,
   History,
@@ -34,6 +35,7 @@ import {
   Bot,
 } from "lucide-react";
 import type { AppTheme } from "portfolio-shared/api-types";
+import type { PortfolioTabKey } from "./Header";
 
 export interface AppMenuBarProps {
   portfolios?: PortfolioItem[];
@@ -45,7 +47,7 @@ export interface AppMenuBarProps {
   onAddTransaction: () => void;
   onManagePortfolios: () => void;
   onOpenSettings: (section?: any) => void;
-  onSelectTab: (tab: "overview" | "reports" | "suggestions" | "transactions") => void;
+  onSelectTab: (tab: PortfolioTabKey) => void;
   activeTab: string;
   hideCurrencyValues: boolean;
   onToggleHideCurrency: () => void;
@@ -182,6 +184,7 @@ export function AppMenuBar({
   const zoom = zoomLevel ?? 1;
   const viewItems: MenuItemDef[] = [
     { label: t("layout.tabs.overview"), icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
+    { label: t("layout.tabs.analysis"), icon: BarChart3, checked: activeTab === "analysis", action: run(() => onSelectTab("analysis")) },
     { label: t("layout.tabs.transactions"), icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
     { label: t("layout.tabs.reports"), icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
     { label: t("layout.tabs.suggestions"), icon: Lightbulb, checked: activeTab === "suggestions", action: run(() => onSelectTab("suggestions")) },

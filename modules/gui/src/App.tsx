@@ -11,17 +11,15 @@ import { CreatePortfolioModal } from "./components/portfolio/CreatePortfolioModa
 import { ExportPortfolioModal } from "./components/portfolio/ExportPortfolioModal";
 import { StatCard } from "./components/portfolio/StatCard";
 import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
-import { MarketsCard } from "./components/portfolio/MarketsCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
 import { HoldingsTableCard } from "./components/portfolio/HoldingsTableCard";
-import { ExposureCard } from "./components/portfolio/ExposureCard";
-import { IncomeEventsCard } from "./components/portfolio/IncomeEventsCard";
+import { AnalysisPage } from "./components/portfolio/AnalysisPage";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
 import { SuggestionsPage } from "./components/portfolio/SuggestionsPage";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
-import { SetupWizardModal } from "./components/common/SetupWizardModal";
+import { SETUP_STEP_AFTER_TERMS, SetupWizardPage, type SetupStep } from "./components/common/SetupWizardPage";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { Toaster } from "./components/common/Toaster";
 import { ChangelogModal } from "./components/common/ChangelogModal";
@@ -66,8 +64,18 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 // The largest views that most sessions never open load on first use, not with the app.
 const SettingsPage = lazy(() => import("./components/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
-const ImportCsvModal = lazy(() => import("./components/portfolio/ImportCsvModal").then((m) => ({ default: m.ImportCsvModal })));
+const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
 const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
+
+/**
+ * `?onboarding` opens the setup wizard even when setup is complete. The desktop shell adds it
+ * when started with `PORTFOLIO_ONBOARDING=1`. Read once and dropped from the address, so a
+ * reload does not open the wizard again.
+ */
+const FORCE_ONBOARDING = new URLSearchParams(window.location.search).has("onboarding");
+if (FORCE_ONBOARDING) {
+  window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+}
 
 /** Shown while the code of a lazy page loads. */
 function PageLoading() {
@@ -92,7 +100,7 @@ function useOpenedOnce(open: boolean): boolean {
  */
 type LoadMode = "initial" | "reload" | "refresh";
 
-const VALID_TABS: readonly string[] = ["overview", "reports", "suggestions", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "analysis", "reports", "suggestions", "transactions"];
 const INFO_MODAL_KEYS: readonly string[] = [
   "totalGain",
   "valuation",
@@ -716,9 +724,13 @@ export default function App() {
     setAuthAttempt((n) => n + 1);
   }, []);
 
-  /** First run: record the acceptance, then load the workspace. */
+  /**
+   * First run, from the Terms of Use step of the setup wizard: record the acceptance, then load the workspace.
+   * The workspace reopens the wizard at the step after the Terms unless setup was completed before.
+   */
   const handleAcceptTerms = useCallback(async () => {
     await api.acceptTerms();
+    setSetupWizardStartStep(SETUP_STEP_AFTER_TERMS);
     setAuthState("ready");
     setAuthAttempt((n) => n + 1);
   }, []);
@@ -769,6 +781,12 @@ export default function App() {
 
   // Modals state
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
+  /** 2 once step 1 of the wizard accepted the Terms of Use, so the reopened wizard goes on from there. */
+  const [setupWizardStartStep, setSetupWizardStartStep] = useState<SetupStep>(1);
+  const openSetupWizard = useCallback(() => {
+    setSetupWizardStartStep(1);
+    setIsSetupWizardOpen(true);
+  }, []);
   const [isSupportTicketOpen, setIsSupportTicketOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
@@ -1060,7 +1078,7 @@ export default function App() {
           }
         }
 
-        if (!config.setupCompleted) {
+        if (!config.setupCompleted || FORCE_ONBOARDING) {
           setIsSetupWizardOpen(true);
         }
         if (config.dismissedUpdateVersion) {
@@ -1582,23 +1600,23 @@ export default function App() {
         </div>
       );
     }
-    if (authState === "terms" && view === "terms") {
+    if (authState === "terms") {
       return (
-        <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0 p-2 sm:p-3">
-          <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
-            <TermsPage onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
-          </main>
-        </div>
+        <SetupWizardPage
+          isOpen
+          termsPending
+          onAcceptTerms={handleAcceptTerms}
+          webpageUrl={webpageUrl}
+          onComplete={() => {}}
+          onClose={() => {}}
+        />
       );
     }
     return (
       <LockScreen
         locked={authState === "locked"}
-        termsPending={authState === "terms"}
         authError={authError}
         onUnlock={handleUnlock}
-        onAcceptTerms={handleAcceptTerms}
-        onOpenTerms={handleOpenTerms}
         onRetry={() => setAuthAttempt((n) => n + 1)}
       />
     );
@@ -1628,7 +1646,7 @@ export default function App() {
           isRefreshing={true}
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
-          onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+          onOpenSetupWizard={openSetupWizard}
           onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
@@ -1721,7 +1739,7 @@ export default function App() {
           isRefreshing={isRefreshing}
           onReload={handleReload}
           onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
-          onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+          onOpenSetupWizard={openSetupWizard}
           onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
           zoomLevel={zoomLevel}
@@ -1822,8 +1840,8 @@ export default function App() {
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
-      {/* Application Menu Bar (Native HTML Menu for Linux); the Portfolios page sits above it */}
-      {view !== "portfolios" && (
+      {/* Application Menu Bar (Native HTML Menu for Linux); hidden on the Portfolios page and the CSV import page */}
+      {view !== "portfolios" && !isImportModalOpen && (
       <AppMenuBar
         portfolios={portfolios}
         activePortfolio={activePortfolio}
@@ -1848,7 +1866,7 @@ export default function App() {
         isRefreshing={isRefreshing}
         onReload={handleReload}
         onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
-        onOpenSetupWizard={() => setIsSetupWizardOpen(true)}
+        onOpenSetupWizard={openSetupWizard}
         onReportIssue={() => setIsSupportTicketOpen(true)}
         onQuit={handleQuitApp}
         isAssistantOpen={isAssistantOpen}
@@ -2034,27 +2052,18 @@ export default function App() {
                 portfolioId={activePortfolioId}
                 onSymbolsChanged={() => loadData("reload")}
               />
-
-              {/* Exposure after ETF and fund look-through */}
-              <ExposureCard
-                portfolioId={activePortfolioId}
-                currency={currency}
-                hideValues={hideCurrencyValues}
-                dataVersion={summary?.lastUpdated}
-              />
-
-              {/* Dividend income, yields and upcoming dividend, earnings and split dates */}
-              <IncomeEventsCard
-                portfolioId={activePortfolioId}
-                currency={currency}
-                hideValues={hideCurrencyValues}
-                theme={theme}
-                refreshStamp={summary?.lastUpdated}
-              />
-
-              {/* Markets: yield curve, sectors, upcoming economic releases */}
-              <MarketsCard baseCurrency={currency} />
             </>
+          )}
+
+          {/* TAB: ANALYSIS (exposure, income and events, markets; one at a time) */}
+          {activeTab === "analysis" && (
+            <AnalysisPage
+              portfolioId={activePortfolioId}
+              currency={currency}
+              hideValues={hideCurrencyValues}
+              theme={theme}
+              dataVersion={summary?.lastUpdated}
+            />
           )}
 
           {/* TAB: REPORTS */}
@@ -2156,8 +2165,10 @@ export default function App() {
       />
 
       {/* Modals */}
-      <SetupWizardModal
+      <SetupWizardPage
         isOpen={isSetupWizardOpen}
+        startStep={setupWizardStartStep}
+        webpageUrl={webpageUrl}
         onComplete={handleSetupComplete}
         onClose={() => setIsSetupWizardOpen(false)}
       />
@@ -2177,10 +2188,11 @@ export default function App() {
       {/* Mounted from the first open on: the import keeps its file and mapping when closed */}
       {importModalMounted && (
         <Suspense fallback={null}>
-          <ImportCsvModal
+          <ImportCsvPage
             isOpen={isImportModalOpen}
             onClose={() => setIsImportModalOpen(false)}
             portfolioId={activePortfolioId || undefined}
+            portfolioName={activePortfolio?.name}
             baseCurrency={currency}
             onSuccess={() => loadData("reload")}
           />

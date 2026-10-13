@@ -70,6 +70,9 @@ export interface Screen {
   hotspots: Hotspot[];
 }
 
+/** The subtitle of the Income & Events card: unique to the card, while its title also labels the Analysis sidebar entry. */
+const INCOME_CARD = "Dividends of the next 12 months";
+
 /**
  * Scrolls the dashboard so the card holding `text` sits at the top. Cards
  * below it render as their data arrives, so it waits until the card stays put.
@@ -205,12 +208,16 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "income",
-    label: "Income",
+    label: "Analysis",
     title: "Dividends you got and dividends to come",
-    text: "Twelve months of expected income, yields and the next ex-dividend dates.",
-    hash: "overview",
+    text: "The Analysis tab: exposure, income and markets. Here, twelve months of expected income, yields and the next ex-dividend dates.",
+    hash: "analysis",
     ready: "Income & Events",
-    prepare: (page) => scrollToCard(page, "Income & Events"),
+    prepare: async (page) => {
+      // Analysis shows one card at a time; the sidebar picks it.
+      await page.getByRole("button", { name: "Income & Events" }).click();
+      await page.getByText(INCOME_CARD).waitFor({ timeout: 15_000 });
+    },
     hotspots: [
       {
         id: "summary",
@@ -224,8 +231,8 @@ export const SCREENS: Screen[] = [
         id: "calendar",
         title: "Monthly income",
         text: "Declared and estimated dividends, month by month.",
-        target: { css: "canvas", within: "Income & Events" },
-        crop: [{ text: "Declared", exact: true }, { css: "canvas", within: "Income & Events", sub: [0, 0, 0.55, 1] }],
+        target: { css: "canvas", within: INCOME_CARD },
+        crop: [{ text: "Declared", exact: true }, { css: "canvas", within: INCOME_CARD, sub: [0, 0, 0.55, 1] }],
         at: [0.55, 0.5],
       },
       {
@@ -243,6 +250,13 @@ export const SCREENS: Screen[] = [
         target: [{ text: "Symbol", exact: true, mode: "column", rows: 5 }, { text: "Next 12 months", mode: "column", rows: 5 }],
         crop: [{ text: "Symbol", exact: true, mode: "column", rows: 4 }, { text: "Next ex-date", mode: "column", rows: 4 }],
         at: [0.5, 0.5],
+      },
+      {
+        id: "sections",
+        title: "Three views",
+        text: "Exposure to sectors, countries and the stocks inside your funds, income and events, and the markets. One at a time.",
+        target: { css: "nav[aria-label='Analysis']" },
+        at: [0.85, 0.5],
       },
     ],
   },

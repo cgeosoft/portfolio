@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import {
+  BarChart3,
   PieChart,
   FileText,
   History,
@@ -9,7 +10,7 @@ import {
 } from "lucide-react";
 import { t } from "../../i18n";
 
-export type PortfolioTabKey = "overview" | "reports" | "suggestions" | "transactions";
+export type PortfolioTabKey = "overview" | "analysis" | "reports" | "suggestions" | "transactions";
 
 interface HeaderProps {
   currency?: string;
@@ -56,6 +57,7 @@ export function Header({
 
   const tabs = [
     { id: "overview" as PortfolioTabKey, label: t("layout.tabs.overview"), icon: PieChart },
+    { id: "analysis" as PortfolioTabKey, label: t("layout.tabs.analysis"), icon: BarChart3 },
     {
       id: "transactions" as PortfolioTabKey,
       label: t("layout.tabs.transactions"),

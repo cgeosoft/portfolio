@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Globe2, RefreshCw } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Building2, CalendarDays, Globe2, Landmark, Loader2, type LucideIcon } from "lucide-react";
 import type { EconomicEvent, EconomicIndicatorReading, MacroSnapshot, SectorPerformanceRow, YieldCurveSnapshot } from "portfolio-shared/api-types";
 import { DATA_PROVIDER_LABELS, type DataProviderId } from "portfolio-shared/config-types";
 import { api } from "../../api";
@@ -9,6 +9,8 @@ import { getLocale, t } from "../../i18n";
 interface MarketsCardProps {
   /** Picks the calendar currencies and the risk premium country. */
   baseCurrency?: string;
+  /** Changes when the portfolio data reloads (the global refresh), so the page reloads with it. */
+  refreshStamp?: string;
 }
 
 const MAX_EVENTS = 8;
@@ -43,15 +45,28 @@ function indicatorValue(item: EconomicIndicatorReading): string {
   return item.value.toFixed(1);
 }
 
-function Panel({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+/** Icon, uppercase title and subtitle, the head of every card on the page. */
+function CardHeading({ icon: Icon, title, subtitle, aside }: { icon: LucideIcon; title: string; subtitle: string; aside?: ReactNode }) {
   return (
-    <div className="bg-card border border-line rounded-lg p-3 min-w-0 flex flex-col">
-      <div className="flex items-baseline justify-between gap-2 mb-2 min-w-0">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate">{title}</div>
-        {note && <div className="text-[10px] text-slate-500 truncate shrink-0">{note}</div>}
+    <div className="flex items-start justify-between gap-2 min-w-0">
+      <div className="min-w-0">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
+          <Icon className="w-4 h-4 text-slate-400 shrink-0" />
+          <span className="truncate">{title}</span>
+        </div>
+        <p className="pl-[22px] text-[11px] text-slate-500 mt-0.5 truncate">{subtitle}</p>
       </div>
-      {children}
+      {aside}
     </div>
+  );
+}
+
+function Panel({ icon, title, subtitle, note, children }: { icon: LucideIcon; title: string; subtitle: string; note?: string; children: ReactNode }) {
+  return (
+    <section className="cx-card p-4 sm:p-5 min-w-0 space-y-4">
+      <CardHeading icon={icon} title={title} subtitle={subtitle} aside={note && <div className="text-[10px] text-slate-500 truncate shrink-0 mt-0.5">{note}</div>} />
+      <div className="min-w-0">{children}</div>
+    </section>
   );
 }
 
@@ -62,7 +77,7 @@ function Empty({ text }: { text: string }) {
 function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null; riskFree: MacroSnapshot["riskFreeRate"] }) {
   if (!curve || curve.points.length === 0) {
     return (
-      <Panel title={t("dashboard.markets.treasuryYields")}>
+      <Panel icon={Landmark} title={t("dashboard.markets.treasuryYields")} subtitle={t("dashboard.markets.yieldsSubtitle")}>
         <Empty text={t("dashboard.markets.noYieldData")} />
       </Panel>
     );
@@ -71,11 +86,10 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
   const min = Math.min(...pts.map((p) => p.yield));
   const max = Math.max(...pts.map((p) => p.yield));
   const span = Math.max(0.25, max - min);
-  const w = 240;
-  const h = 70;
-  const x = (i: number) => (pts.length === 1 ? w / 2 : 6 + (i / (pts.length - 1)) * (w - 12));
-  const y = (v: number) => 8 + (1 - (v - min) / span) * (h - 16);
-  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.yield).toFixed(1)}`).join(" ");
+  // Percent of the plot, so the curve stretches with the card; each point sits over its label column.
+  const x = (i: number) => ((i + 0.5) / pts.length) * 100;
+  const y = (v: number) => 10 + (1 - (v - min) / span) * 80;
+  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(2)},${y(p.yield).toFixed(2)}`).join(" ");
 
   const find = (tenor: string) => pts.find((p) => p.tenor === tenor)?.yield;
   const long = find("year10");
@@ -84,28 +98,29 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
   const shortLabel = find("year2") !== undefined ? "2Y" : "3M";
 
   return (
-    <Panel title={t("dashboard.markets.treasuryYields")} note={curve.date}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[70px] text-royal-bright" role="img" aria-label={t("dashboard.markets.yieldCurve")}>
-        <path d={path} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinejoin="round" />
+    <Panel icon={Landmark} title={t("dashboard.markets.treasuryYields")} subtitle={t("dashboard.markets.yieldsSubtitle")} note={curve.date}>
+      <div className="relative h-[140px] text-royal-bright">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" role="img" aria-label={t("dashboard.markets.yieldCurve")}>
+          <path d={path} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        </svg>
         {pts.map((p, i) => (
-          <circle key={p.tenor} cx={x(i)} cy={y(p.yield)} r={2} fill="currentColor">
-            <title>{`${p.label}: ${rate(p.yield)}`}</title>
-          </circle>
+          <span
+            key={p.tenor}
+            className="absolute w-2 h-2 -ml-1 -mt-1 rounded-full bg-current"
+            style={{ left: `${x(i)}%`, top: `${y(p.yield)}%` }}
+            title={`${p.label}: ${rate(p.yield)}`}
+          />
         ))}
-      </svg>
-      <div className="grid grid-cols-4 gap-1 mt-1 text-center">
-        {["month3", "year2", "year10", "year30"].map((t) => {
-          const p = pts.find((pt) => pt.tenor === t);
-          if (!p) return <div key={t} />;
-          return (
-            <div key={t} className="min-w-0">
-              <div className="text-[10px] text-slate-500">{p.label}</div>
-              <div className="font-mono text-xs text-slate-200">{rate(p.yield)}</div>
-            </div>
-          );
-        })}
       </div>
-      <div className="mt-2 pt-2 border-t border-line text-[10px] text-slate-400 font-mono flex flex-wrap gap-x-3 gap-y-0.5">
+      <div className="grid gap-1 mt-2 text-center" style={{ gridTemplateColumns: `repeat(${pts.length}, minmax(0, 1fr))` }}>
+        {pts.map((p) => (
+          <div key={p.tenor} className="min-w-0">
+            <div className="text-[10px] text-slate-500 truncate">{p.label}</div>
+            <div className="font-mono text-xs text-slate-200 truncate">{rate(p.yield)}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-line text-[10px] text-slate-400 font-mono flex flex-wrap gap-x-4 gap-y-0.5">
         {spread !== undefined && (
           <span className={spread < 0 ? "text-accent-bright" : ""} title={t("dashboard.markets.spreadHint", { short: shortLabel })}>
             {t(spread < 0 ? "dashboard.markets.spreadInverted" : "dashboard.markets.spread", {
@@ -123,7 +138,7 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
 function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
   if (!sectors || sectors.items.length === 0) {
     return (
-      <Panel title={t("dashboard.markets.sectorsToday")}>
+      <Panel icon={Building2} title={t("dashboard.markets.sectorsToday")} subtitle={t("dashboard.markets.sectorsSubtitle")}>
         <Empty text={t("dashboard.markets.noSectorData")} />
       </Panel>
     );
@@ -131,18 +146,18 @@ function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
   const maxAbs = Math.max(0.5, ...sectors.items.map((s) => Math.abs(s.changePercent)));
   const viaEtf = sectors.items.some((s) => s.etf);
   return (
-    <Panel title={t("dashboard.markets.sectorsToday")} note={viaEtf ? t("dashboard.markets.viaSectorEtfs") : sectors.date}>
-      <ul className="space-y-1">
+    <Panel icon={Building2} title={t("dashboard.markets.sectorsToday")} subtitle={t("dashboard.markets.sectorsSubtitle")} note={viaEtf ? t("dashboard.markets.viaSectorEtfs") : sectors.date}>
+      <ul className="space-y-1.5">
         {sectors.items.map((s: SectorPerformanceRow) => {
           const width = (Math.abs(s.changePercent) / maxAbs) * 50;
           const positive = s.changePercent >= 0;
           return (
-            <li key={s.sector} className="grid grid-cols-[minmax(0,1fr)_96px_52px] items-center gap-2 text-[11px]">
+            <li key={s.sector} className="grid grid-cols-[minmax(0,180px)_minmax(0,1fr)_60px] sm:grid-cols-[minmax(0,260px)_minmax(0,1fr)_72px] items-center gap-3 text-[11px]">
               <span className="truncate text-slate-300" title={s.etf ? `${s.sector} (${s.etf})` : s.sector}>
                 {s.sector}
                 {s.pe !== undefined && <span className="text-slate-500 font-mono"> {t("dashboard.markets.pe", { value: s.pe.toFixed(1) })}</span>}
               </span>
-              <span className="relative h-1.5 rounded-full bg-widget overflow-hidden">
+              <span className="relative h-2 rounded-full bg-widget overflow-hidden">
                 <span className="absolute inset-y-0 left-1/2 w-px bg-line" />
                 <span
                   className={`absolute inset-y-0 rounded-full ${positive ? "bg-mint" : "bg-rose-400"}`}
@@ -161,29 +176,29 @@ function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
 function CalendarPanel({ calendar }: { calendar: MacroSnapshot["calendar"] }) {
   const events: EconomicEvent[] = calendar?.events.slice(0, MAX_EVENTS) ?? [];
   return (
-    <Panel title={t("dashboard.markets.nextReleases")} note={calendar ? t("dashboard.markets.sevenDays") : undefined}>
+    <Panel icon={CalendarDays} title={t("dashboard.markets.nextReleases")} subtitle={t("dashboard.markets.releasesSubtitle")} note={calendar ? t("dashboard.markets.sevenDays") : undefined}>
       {!calendar ? (
         <Empty text={t("dashboard.markets.needsFmpKey")} />
       ) : events.length === 0 ? (
         <Empty text={t("dashboard.markets.noReleases")} />
       ) : (
-        <ul className="space-y-1.5">
+        <ul className="divide-y divide-line">
           {events.map((e) => (
-            <li key={`${e.date}:${e.currency}:${e.event}`} className="flex items-start gap-2 text-[11px] min-w-0">
-              <span
-                className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${e.impact === "High" ? "bg-accent-500" : "bg-cream"}`}
-                title={impactLabel(e.impact)}
-              />
-              <span className="font-mono text-slate-500 shrink-0 w-[92px] truncate">{eventTime(e.date)}</span>
-              <span className="font-mono text-slate-400 shrink-0 w-8">{e.currency}</span>
+            <li
+              key={`${e.date}:${e.currency}:${e.event}`}
+              className="grid grid-cols-[110px_36px_minmax(0,1fr)_auto] sm:grid-cols-[150px_48px_96px_minmax(0,1fr)_auto] items-center gap-3 py-1.5 text-[11px] min-w-0"
+            >
+              <span className="font-mono text-slate-500 truncate">{eventTime(e.date)}</span>
+              <span className="font-mono text-slate-400">{e.currency}</span>
+              <span className="hidden sm:flex items-center gap-1.5 text-slate-400 min-w-0">
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${e.impact === "High" ? "bg-accent-500" : "bg-cream"}`} />
+                <span className="truncate">{impactLabel(e.impact)}</span>
+              </span>
               <span className="text-slate-300 truncate min-w-0" title={e.event}>
                 {e.event}
-                {e.estimate !== null && e.estimate !== undefined && (
-                  <span className="text-slate-500 font-mono">
-                    {" "}
-                    {t("dashboard.markets.estimate", { value: `${e.estimate}${e.unit ?? ""}` })}
-                  </span>
-                )}
+              </span>
+              <span className="text-slate-500 font-mono text-right whitespace-nowrap">
+                {e.estimate !== null && e.estimate !== undefined ? t("dashboard.markets.estimate", { value: `${e.estimate}${e.unit ?? ""}` }) : ""}
               </span>
             </li>
           ))}
@@ -193,35 +208,32 @@ function CalendarPanel({ calendar }: { calendar: MacroSnapshot["calendar"] }) {
   );
 }
 
-/** Macro context: Treasury yields, sector moves and the next economic releases. */
-export function MarketsCard({ baseCurrency }: MarketsCardProps) {
+/** The Markets page of Analysis: Treasury yields, sector moves and the next economic releases, each a full-width card. */
+export function MarketsCard({ baseCurrency, refreshStamp }: MarketsCardProps) {
   const [data, setData] = useState<MacroSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(
-    async (refresh: boolean, isCancelled: () => boolean = () => false) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await api.getMacroSnapshot(baseCurrency, refresh);
-        if (!isCancelled()) setData(result);
-      } catch (err) {
-        if (!isCancelled()) setError(err instanceof Error ? err.message : t("dashboard.markets.loadFailed"));
-      } finally {
-        if (!isCancelled()) setLoading(false);
-      }
-    },
-    [baseCurrency],
-  );
-
+  // The service keeps the snapshot for a few minutes, so a timed quote refresh does not hit the providers each time.
   useEffect(() => {
     let cancelled = false;
-    void load(false, () => cancelled);
+    setLoading(true);
+    setError(null);
+    api
+      .getMacroSnapshot(baseCurrency)
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : t("dashboard.markets.loadFailed"));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [baseCurrency, refreshStamp]);
 
   const sources = data
     ? Array.from(
@@ -236,63 +248,49 @@ export function MarketsCard({ baseCurrency }: MarketsCardProps) {
     : "";
 
   return (
-    <div className="cx-card p-4 sm:p-5 font-mono w-full max-w-full min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-        <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
-            <Globe2 className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">{t("dashboard.markets.title")}</span>
+    <div className="font-mono w-full max-w-full min-w-0 space-y-4">
+      <section className="cx-card p-4 sm:p-5 min-w-0">
+        <CardHeading
+          icon={Globe2}
+          title={t("dashboard.markets.title")}
+          subtitle={t("dashboard.markets.subtitle")}
+          aside={loading && <Loader2 className="w-4 h-4 animate-spin text-accent-500 shrink-0" aria-label={t("dashboard.markets.loading")} />}
+        />
+        {data && (data.indicators || data.riskPremium) && (
+          <div className="mt-4 pt-3 border-t border-line flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-400">
+            {data.indicators?.items.map((i) => (
+              <span
+                key={i.id}
+                title={
+                  i.previous !== undefined
+                    ? t("dashboard.markets.indicatorHintPrevious", { name: i.name, date: i.date, previous: i.previous })
+                    : t("dashboard.markets.indicatorHint", { name: i.name, date: i.date })
+                }
+              >
+                <span className="text-slate-500">{t("dashboard.markets.usIndicator", { name: i.name })}</span> <span className="text-slate-200">{indicatorValue(i)}</span>
+              </span>
+            ))}
+            {data.riskPremium?.items.map((r) => (
+              <span key={r.country} title={t("dashboard.markets.riskPremium")}>
+                <span className="text-slate-500">{t("dashboard.markets.erp", { country: r.country })}</span> <span className="text-slate-200">{rate(r.totalEquityRiskPremium)}</span>
+              </span>
+            ))}
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.markets.subtitle")}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void load(true)}
-          disabled={loading}
-          className="p-1.5 rounded-md border border-line text-slate-400 hover:text-slate-200 disabled:opacity-50 shrink-0"
-          title={t("dashboard.markets.refresh")}
-          aria-label={t("dashboard.markets.refresh")}
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-        </button>
-      </div>
+        )}
+      </section>
 
       {error && !data ? (
-        <div className="text-xs text-accent-bright text-center py-10">{error}</div>
+        <div className="cx-card p-4 text-xs text-accent-bright text-center py-10">{error}</div>
       ) : !data ? (
-        <div className="text-xs text-slate-500 text-center py-10">{loading ? t("dashboard.markets.loading") : t("dashboard.markets.noData")}</div>
+        <div className="cx-card p-4 text-xs text-slate-500 text-center py-10">{loading ? t("dashboard.markets.loading") : t("dashboard.markets.noData")}</div>
       ) : (
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            <YieldCurvePanel curve={data.yieldCurve} riskFree={data.riskFreeRate} />
-            <SectorsPanel sectors={data.sectors} />
-            <CalendarPanel calendar={data.calendar} />
-          </div>
+        <>
+          <YieldCurvePanel curve={data.yieldCurve} riskFree={data.riskFreeRate} />
+          <SectorsPanel sectors={data.sectors} />
+          <CalendarPanel calendar={data.calendar} />
 
-          {(data.indicators || data.riskPremium) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
-              {data.indicators?.items.map((i) => (
-                <span
-                  key={i.id}
-                  title={
-                    i.previous !== undefined
-                      ? t("dashboard.markets.indicatorHintPrevious", { name: i.name, date: i.date, previous: i.previous })
-                      : t("dashboard.markets.indicatorHint", { name: i.name, date: i.date })
-                  }
-                >
-                  <span className="text-slate-500">{t("dashboard.markets.usIndicator", { name: i.name })}</span> <span className="text-slate-200">{indicatorValue(i)}</span>
-                </span>
-              ))}
-              {data.riskPremium?.items.map((r) => (
-                <span key={r.country} title={t("dashboard.markets.riskPremium")}>
-                  <span className="text-slate-500">{t("dashboard.markets.erp", { country: r.country })}</span> <span className="text-slate-200">{rate(r.totalEquityRiskPremium)}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {sources && <div className="text-[10px] text-slate-500">{t("dashboard.markets.sources", { sources })}</div>}
-        </div>
+          {sources && <div className="px-1 text-[10px] text-slate-500">{t("dashboard.markets.sources", { sources })}</div>}
+        </>
       )}
     </div>
   );
