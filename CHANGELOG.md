@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.13.0] - 2026-10-13
+
+### Added
+- Added an interactive screenshot tour of the app, available on the website home page and on its own tour page.
+- Portfolios now have their own full page, similar to the Organizations page, with card views, a colour per portfolio, and Open, Edit, and Export actions.
+- Each portfolio can now have a colour shown on its card and in the status bar portfolio picker.
+- Settings now has new sections: Appearance, Assistant, Your Data, Privacy and Security, Phone apps, and About, with a shared navigation list.
+- The Suggestions tab now shows the number of open suggestions.
+
+### Changed
+- The start-up loader now stays visible for at least two seconds and uses a new bundled heading font.
+- Preferences no longer has a Portfolios section; portfolios are managed from the new dedicated page.
+- The Integrations settings section was renamed to Phone apps.
+
+
 ## [0.12.0] - 2026-10-12
 
 ### Changed
