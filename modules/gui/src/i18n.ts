@@ -11,9 +11,20 @@
 import { DEFAULT_LANGUAGE, findLanguage, matchLanguage, parseMessages, translate, type Messages } from "portfolio-shared/i18n";
 import enSource from "../../../lang/en.yml?raw";
 
-// `import.meta.glob` is Vite's; under `bun test` it is missing and only English loads.
-const loaders: Record<string, () => Promise<string>> =
-  typeof import.meta.glob === "function" ? import.meta.glob<string>(["../../../lang/*.yml", "!../../../lang/en.yml"], { query: "?raw", import: "default" }) : {};
+/**
+ * `import.meta.glob` is Vite's: Vite replaces the call with the loader map. Under
+ * `bun test` it is missing, the call throws and only English loads. No `typeof`
+ * guard: Vite does not rewrite it, so it would read false in the app too.
+ */
+function languageLoaders(): Record<string, () => Promise<string>> {
+  try {
+    return import.meta.glob<string>(["../../../lang/*.yml", "!../../../lang/en.yml"], { query: "?raw", import: "default" });
+  } catch {
+    return {};
+  }
+}
+
+const loaders = languageLoaders();
 
 /** localStorage key of the chosen language on this device. */
 const STORAGE_KEY = "portfolio_language";
