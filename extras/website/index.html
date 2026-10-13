@@ -42,6 +42,7 @@
         <span class="brand-name">Portfolio</span>
       </a>
       <nav class="main-nav" aria-label="Primary">
+        <a href="/tour/">Tour</a>
         <a href="#privacy">Privacy</a>
         <a href="#ledger">Features</a>
         <a href="/metrics/">Metrics</a>
@@ -110,11 +111,15 @@
       </div>
     </section>
 
-    <section class="shot container" id="preview">
-      <button type="button" class="shot-frame" id="shot-zoom" aria-haspopup="dialog" aria-label="View the screenshot full size">
-        <img src="assets/screenshot.png" width="1600" height="1104" alt="Portfolio overview tab: total value, day gain and lifetime gain cards, a performance chart against the S&amp;P 500, an allocation donut and a positions table with indicators." loading="lazy" decoding="async">
-      </button>
-      <p class="caption mono">The overview tab with a demo portfolio. A real screenshot, click to enlarge.</p>
+    <section class="tour container" id="tour" data-tour>
+      <div class="tour-head">
+        <div>
+          <p class="label">Tour</p>
+          <h2 class="big-title">See it at work.</h2>
+        </div>
+        <p>Real screenshots of the app with a demo portfolio. Click a marker to look closer.</p>
+      </div>
+      <img class="tour-fallback" src="assets/screenshot.png" width="1600" height="900" alt="Portfolio overview tab: total value, day gain and lifetime gain cards, a performance chart against the S&amp;P 500 and an allocation donut." loading="lazy" decoding="async">
     </section>
 
     <section class="section container" id="privacy">
@@ -199,7 +204,7 @@
         </details>
         <details>
           <summary>Can I use it from my phone?</summary>
-          <p>On your home network, yes. Set a PIN in Settings, General, switch on remote connections, then open the address in your phone's browser.</p>
+          <p>On your home network, yes. Set a PIN in Settings, Privacy &amp; Security, switch on Open on other devices, then open the address in your phone's browser.</p>
         </details>
         <details>
           <summary>What does it cost?</summary>
@@ -222,10 +227,7 @@
     </div>
   </footer>
 
-  <dialog class="lightbox" id="shot-lightbox" aria-label="Screenshot, full size">
-    <img src="assets/screenshot.png" alt="Portfolio overview shown at full size.">
-  </dialog>
-
   <script src="script.js" defer></script>
+  <script src="tour.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,614 @@
+{
+  "version": "0.12.0",
+  "width": 1600,
+  "height": 900,
+  "screens": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "title": "The whole portfolio on one screen",
+      "text": "Value, returns, history and allocation, priced from live quotes in your base currency.",
+      "image": "/assets/tour/overview.webp",
+      "hotspots": [
+        {
+          "id": "value",
+          "title": "Total value",
+          "text": "Holdings plus cash in your base currency, with the gain since your first deposit.",
+          "x": 17.8,
+          "y": 17.16,
+          "box": {
+            "x": 3.63,
+            "y": 9.28,
+            "w": 23,
+            "h": 14.44
+          },
+          "image": "/assets/tour/overview-value.webp",
+          "width": 768,
+          "height": 292
+        },
+        {
+          "id": "day",
+          "title": "Today's move",
+          "text": "The day gain across every position, from live Yahoo Finance quotes.",
+          "x": 41.05,
+          "y": 17.16,
+          "box": {
+            "x": 26.88,
+            "y": 9.28,
+            "w": 23,
+            "h": 14.44
+          },
+          "image": "/assets/tour/overview-day.webp",
+          "width": 768,
+          "height": 292
+        },
+        {
+          "id": "tiles",
+          "title": "The fine print",
+          "text": "Invested capital, realized P&L, dividends, fees and taxes withheld. Pick the tiles under Metrics.",
+          "x": 50,
+          "y": 29.5,
+          "box": {
+            "x": 3.63,
+            "y": 25.06,
+            "w": 92.75,
+            "h": 8.89
+          },
+          "image": "/assets/tour/overview-tiles.webp",
+          "width": 1057,
+          "height": 192
+        },
+        {
+          "id": "benchmark",
+          "title": "Against a benchmark",
+          "text": "Draw the S&P 500, Nasdaq 100, MSCI World, Euro Stoxx 50 or FTSE All-World over your returns. Zoom from one month to all time.",
+          "x": 22.72,
+          "y": 41.65,
+          "box": {
+            "x": 4.94,
+            "y": 39.61,
+            "w": 58.77,
+            "h": 4.08
+          },
+          "image": "/assets/tour/overview-benchmark.webp",
+          "width": 874,
+          "height": 543
+        },
+        {
+          "id": "chart",
+          "title": "Performance history",
+          "text": "Value with cash, invested capital and cost basis, day by day since the first transaction.",
+          "x": 41.72,
+          "y": 62.11,
+          "box": {
+            "x": 3.63,
+            "y": 35.28,
+            "w": 61.58,
+            "h": 44.94
+          },
+          "image": "/assets/tour/overview-chart.webp",
+          "width": 951,
+          "height": 606
+        },
+        {
+          "id": "allocation",
+          "title": "Allocation",
+          "text": "Asset classes on the inner ring, single holdings on the outer one.",
+          "x": 81.17,
+          "y": 61.24,
+          "box": {
+            "x": 65.96,
+            "y": 35.28,
+            "w": 30.42,
+            "h": 44.94
+          },
+          "image": "/assets/tour/overview-allocation.webp",
+          "width": 777,
+          "height": 700
+        }
+      ]
+    },
+    {
+      "id": "positions",
+      "label": "Positions",
+      "title": "Every position, with indicators",
+      "text": "Stocks, ETFs and crypto in one table, in any listing currency.",
+      "image": "/assets/tour/positions.webp",
+      "hotspots": [
+        {
+          "id": "holding",
+          "title": "Positions",
+          "text": "Ticker, asset type, shares and average cost for each holding.",
+          "x": 12.06,
+          "y": 33.15,
+          "box": {
+            "x": 4.94,
+            "y": 18.06,
+            "w": 34.47,
+            "h": 33.39
+          },
+          "image": "/assets/tour/positions-holding.webp",
+          "width": 1100,
+          "height": 491
+        },
+        {
+          "id": "price",
+          "title": "Any currency",
+          "text": "The price in its own currency next to the value in yours, converted at live FX rates, with the portfolio weight.",
+          "x": 47.34,
+          "y": 33.15,
+          "box": {
+            "x": 38.66,
+            "y": 18.06,
+            "w": 17.36,
+            "h": 33.39
+          },
+          "image": "/assets/tour/positions-price.webp",
+          "width": 587,
+          "height": 633
+        },
+        {
+          "id": "returns",
+          "title": "Day and total return",
+          "text": "In percent and in money, for today and since you bought.",
+          "x": 65.85,
+          "y": 33.15,
+          "box": {
+            "x": 55.26,
+            "y": 18.06,
+            "w": 21.16,
+            "h": 33.39
+          },
+          "image": "/assets/tour/positions-returns.webp",
+          "width": 709,
+          "height": 633
+        },
+        {
+          "id": "range",
+          "title": "52-week range",
+          "text": "Where the price sits between the low and the high of the last year.",
+          "x": 81.96,
+          "y": 33.15,
+          "box": {
+            "x": 75.68,
+            "y": 18.06,
+            "w": 12.56,
+            "h": 33.39
+          },
+          "image": "/assets/tour/positions-range.webp",
+          "width": 434,
+          "height": 633
+        },
+        {
+          "id": "rsi",
+          "title": "RSI 14",
+          "text": "Momentum for each holding, marked oversold, neutral or overbought.",
+          "x": 91.27,
+          "y": 33.15,
+          "box": {
+            "x": 87.48,
+            "y": 18.06,
+            "w": 7.58,
+            "h": 33.39
+          },
+          "image": "/assets/tour/positions-rsi.webp",
+          "width": 275,
+          "height": 633
+        },
+        {
+          "id": "filter",
+          "title": "Search and filter",
+          "text": "Find a symbol or narrow the table to stocks, ETFs or crypto.",
+          "x": 84.53,
+          "y": 15.03,
+          "box": {
+            "x": 74,
+            "y": 12.58,
+            "w": 21.07,
+            "h": 4.89
+          },
+          "image": "/assets/tour/positions-filter.webp",
+          "width": 706,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "id": "income",
+      "label": "Income",
+      "title": "Dividends you got and dividends to come",
+      "text": "Twelve months of expected income, yields and the next ex-dividend dates.",
+      "image": "/assets/tour/income.webp",
+      "hotspots": [
+        {
+          "id": "summary",
+          "title": "Income at a glance",
+          "text": "Expected income for the next 12 months, what came in over the last 12, yield on cost and current yield.",
+          "x": 50,
+          "y": 22.61,
+          "box": {
+            "x": 4.94,
+            "y": 18.56,
+            "w": 90.13,
+            "h": 8.11
+          },
+          "image": "/assets/tour/income-summary.webp",
+          "width": 1100,
+          "height": 133
+        },
+        {
+          "id": "calendar",
+          "title": "Monthly income",
+          "text": "Declared and estimated dividends, month by month.",
+          "x": 37.87,
+          "y": 43,
+          "box": {
+            "x": 4.94,
+            "y": 30.11,
+            "w": 59.94,
+            "h": 25.78
+          },
+          "image": "/assets/tour/income-calendar.webp",
+          "width": 1098,
+          "height": 542
+        },
+        {
+          "id": "upcoming",
+          "title": "Next 30 days",
+          "text": "Ex-dividend dates coming up, with the amount per share.",
+          "x": 80.21,
+          "y": 41.72,
+          "box": {
+            "x": 65.35,
+            "y": 27.56,
+            "w": 29.71,
+            "h": 28.33
+          },
+          "image": "/assets/tour/income-upcoming.webp",
+          "width": 983,
+          "height": 241
+        },
+        {
+          "id": "table",
+          "title": "Per holding",
+          "text": "Payment frequency, the next ex-date, both yields and the income expected from each position.",
+          "x": 50,
+          "y": 67.11,
+          "box": {
+            "x": 4.94,
+            "y": 56.78,
+            "w": 90.13,
+            "h": 20.67
+          },
+          "image": "/assets/tour/income-table.webp",
+          "width": 1100,
+          "height": 297
+        }
+      ]
+    },
+    {
+      "id": "assistant",
+      "label": "Assistant",
+      "title": "An assistant that knows your portfolio",
+      "text": "Ask anything about your holdings. It runs on the model you pick: local, a cloud key or the Claude Code CLI.",
+      "image": "/assets/tour/assistant.webp",
+      "hotspots": [
+        {
+          "id": "brief",
+          "title": "Daily brief",
+          "text": "Each morning the assistant sums up the last session. The brief lands here, so you can ask a follow-up.",
+          "x": 85.84,
+          "y": 45.6,
+          "box": {
+            "x": 73.06,
+            "y": 23.03,
+            "w": 25.56,
+            "h": 41.17
+          },
+          "image": "/assets/tour/assistant-brief.webp",
+          "width": 850,
+          "height": 773
+        },
+        {
+          "id": "context",
+          "title": "See what it sees",
+          "text": "Open the exact context the model gets: weights, percentages and tickers. Money amounts stay home.",
+          "x": 94.53,
+          "y": 17.93,
+          "box": {
+            "x": 73.06,
+            "y": 15.39,
+            "w": 25.56,
+            "h": 5.08
+          },
+          "image": "/assets/tour/assistant-context.webp",
+          "width": 850,
+          "height": 124
+        },
+        {
+          "id": "model",
+          "title": "Your model",
+          "text": "Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude Code CLI.",
+          "x": 75.8,
+          "y": 12.11,
+          "box": {
+            "x": 73.06,
+            "y": 10.56,
+            "w": 8.64,
+            "h": 3.11
+          },
+          "image": "/assets/tour/assistant-model.webp",
+          "width": 308,
+          "height": 88
+        },
+        {
+          "id": "ask",
+          "title": "Ask anything",
+          "text": "Questions about holdings, risk or metrics, answered from your own numbers.",
+          "x": 83.36,
+          "y": 88.94,
+          "box": {
+            "x": 73.06,
+            "y": 85.5,
+            "w": 25.56,
+            "h": 6.89
+          },
+          "image": "/assets/tour/assistant-ask.webp",
+          "width": 850,
+          "height": 198
+        }
+      ]
+    },
+    {
+      "id": "reports",
+      "label": "Reports",
+      "title": "A written report every week",
+      "text": "The assistant reviews the week: movers, risks and what to watch. Missed one while the app was closed? It runs on the next start.",
+      "image": "/assets/tour/reports.webp",
+      "hotspots": [
+        {
+          "id": "summary",
+          "title": "Executive summary",
+          "text": "The week in one line, on top of the full review.",
+          "x": 40,
+          "y": 23.67,
+          "box": {
+            "x": 5.19,
+            "y": 19.33,
+            "w": 69.63,
+            "h": 8.67
+          },
+          "image": "/assets/tour/reports-summary.webp",
+          "width": 1100,
+          "height": 163
+        },
+        {
+          "id": "body",
+          "title": "The review",
+          "text": "Winners, laggards, macro context and risks, written from your holdings and live market data.",
+          "x": 40,
+          "y": 41.34,
+          "box": {
+            "x": 5.19,
+            "y": 27.77,
+            "w": 69.63,
+            "h": 33.6
+          },
+          "image": "/assets/tour/reports-body.webp",
+          "width": 1032,
+          "height": 515
+        },
+        {
+          "id": "week",
+          "title": "Any week",
+          "text": "Each report covers one week. Pick an earlier week or analyze the current one again.",
+          "x": 79.36,
+          "y": 12.08,
+          "box": {
+            "x": 67.89,
+            "y": 9.64,
+            "w": 28.49,
+            "h": 4.89
+          },
+          "image": "/assets/tour/reports-week.webp",
+          "width": 944,
+          "height": 120
+        },
+        {
+          "id": "stats",
+          "title": "The numbers",
+          "text": "Value, period return, cash and the top winner and loser of the week.",
+          "x": 85.97,
+          "y": 38.56,
+          "box": {
+            "x": 76.63,
+            "y": 18.44,
+            "w": 18.69,
+            "h": 40.22
+          },
+          "image": "/assets/tour/reports-stats.webp",
+          "width": 630,
+          "height": 756
+        },
+        {
+          "id": "prompt",
+          "title": "No black box",
+          "text": "The model, the time and the full prompt behind each report.",
+          "x": 85.97,
+          "y": 72.53,
+          "box": {
+            "x": 76.63,
+            "y": 58.67,
+            "w": 18.69,
+            "h": 34.33
+          },
+          "image": "/assets/tour/reports-prompt.webp",
+          "width": 630,
+          "height": 650
+        }
+      ]
+    },
+    {
+      "id": "suggestions",
+      "label": "Suggestions",
+      "title": "Rebalancing ideas, with the math done",
+      "text": "The assistant proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
+      "image": "/assets/tour/suggestions.webp",
+      "hotspots": [
+        {
+          "id": "idea",
+          "title": "A concrete trade",
+          "text": "Action, shares, amount and the weight before and after, with the reason and a price range.",
+          "x": 40.71,
+          "y": 33.33,
+          "box": {
+            "x": 3.63,
+            "y": 25.39,
+            "w": 67.5,
+            "h": 17.5
+          },
+          "image": "/assets/tour/suggestions-idea.webp",
+          "width": 1100,
+          "height": 285
+        },
+        {
+          "id": "private",
+          "title": "Weights only",
+          "text": "The model never sees money amounts. The app computes them on your machine.",
+          "x": 23.59,
+          "y": 12.08,
+          "box": {
+            "x": 3.63,
+            "y": 9.28,
+            "w": 39.94,
+            "h": 5.61
+          },
+          "image": "/assets/tour/suggestions-private.webp",
+          "width": 1100,
+          "height": 112
+        },
+        {
+          "id": "target",
+          "title": "Target portfolio",
+          "text": "Every holding now and after the selected suggestions, with the change in percentage points.",
+          "x": 84,
+          "y": 40.27,
+          "box": {
+            "x": 71.63,
+            "y": 16.56,
+            "w": 24.75,
+            "h": 78.17
+          },
+          "image": "/assets/tour/suggestions-target.webp",
+          "width": 824,
+          "height": 665
+        },
+        {
+          "id": "recalculate",
+          "title": "Fresh ideas",
+          "text": "Run it again after you trade. The list says when transactions changed since the last run.",
+          "x": 91.76,
+          "y": 12.08,
+          "box": {
+            "x": 87.14,
+            "y": 9.64,
+            "w": 9.24,
+            "h": 4.89
+          },
+          "image": "/assets/tour/suggestions-recalculate.webp",
+          "width": 328,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "id": "transactions",
+      "label": "Transactions",
+      "title": "Every trade, dividend and deposit",
+      "text": "Type them in or import a broker CSV. The ledger is the single source of every number.",
+      "image": "/assets/tour/transactions.webp",
+      "hotspots": [
+        {
+          "id": "import",
+          "title": "Broker CSV import",
+          "text": "Trade Republic, Scalable Capital, Interactive Brokers and Degiro, with a dry-run preview.",
+          "x": 81.19,
+          "y": 12.08,
+          "box": {
+            "x": 76.94,
+            "y": 9.64,
+            "w": 8.5,
+            "h": 4.89
+          },
+          "image": "/assets/tour/transactions-import.webp",
+          "width": 304,
+          "height": 120
+        },
+        {
+          "id": "add",
+          "title": "Add by hand",
+          "text": "Buys, sells, dividends, interest, deposits and withdrawals, with fees and taxes.",
+          "x": 90.78,
+          "y": 12.08,
+          "box": {
+            "x": 85.19,
+            "y": 9.64,
+            "w": 11.19,
+            "h": 4.89
+          },
+          "image": "/assets/tour/transactions-add.webp",
+          "width": 390,
+          "height": 120
+        },
+        {
+          "id": "search",
+          "title": "Search the ledger",
+          "text": "Filter by symbol or by transaction type.",
+          "x": 67.72,
+          "y": 12.08,
+          "box": {
+            "x": 58.26,
+            "y": 9.64,
+            "w": 18.93,
+            "h": 4.89
+          },
+          "image": "/assets/tour/transactions-search.webp",
+          "width": 638,
+          "height": 120
+        },
+        {
+          "id": "types",
+          "title": "Clear types",
+          "text": "Each entry carries its type, so dividends and sells stand out at a glance.",
+          "x": 20.18,
+          "y": 33.69,
+          "box": {
+            "x": 15.55,
+            "y": 16.67,
+            "w": 17.79,
+            "h": 34.06
+          },
+          "image": "/assets/tour/transactions-types.webp",
+          "width": 981,
+          "height": 473
+        },
+        {
+          "id": "costs",
+          "title": "Fees and taxes",
+          "text": "Kept per transaction and summed on the overview.",
+          "x": 81.33,
+          "y": 33.69,
+          "box": {
+            "x": 75.5,
+            "y": 16.67,
+            "w": 11.66,
+            "h": 34.06
+          },
+          "image": "/assets/tour/transactions-costs.webp",
+          "width": 839,
+          "height": 473
+        }
+      ]
+    }
+  ]
+}

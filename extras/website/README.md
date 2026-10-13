@@ -1,17 +1,18 @@
 # Portfolio Marketing Website
 
-Static landing page for Portfolio, deployed to Cloudflare Pages. Plain HTML, CSS and one script; no build step (the metrics catalog page is generated, see below).
+Static landing page for Portfolio, deployed to Cloudflare Pages. Plain HTML, CSS and two scripts; no build step (the metrics catalog page and the tour screenshots are generated, see below).
 
-The site uses vanilla HTML, `style.css` and `script.js`. `style.css` copies the app's tokens (canvas, cards, radius, mono labels) from `modules/gui/src/index.css`. `index.html` has a ticker tape, a hero with an animated demo (chart drawing in with a count-up, rotating assistant suggestions; made-up figures, off under reduced motion), the screenshot (click to enlarge), what stays home and what leaves, a feature ledger, downloads and FAQ. The hero download button follows the detected OS and shows the version and size of the latest installer.
+The site uses vanilla HTML, `style.css`, `script.js` and `tour.js`. `style.css` copies the app's tokens (canvas, cards, radius, mono labels) from `modules/gui/src/index.css`. `index.html` has a ticker tape, a hero with an animated demo (chart drawing in with a count-up, rotating assistant suggestions; made-up figures, off under reduced motion), the screenshot tour, what stays home and what leaves, a feature ledger, downloads and FAQ. The hero download button follows the detected OS and shows the version and size of the latest installer.
 
 ## Pages
 
-- `index.html` - hero with OS-detected download button, annotated screenshot (numbered markers with tooltips; click or "Expand" opens it full size; on narrow screens the markers become a list under the image), features, how it works, download matrix, FAQ.
+- `index.html` - hero with OS-detected download button, the screenshot tour, features, how it works, download matrix, FAQ.
+- `tour/index.html` - the screenshot tour on its own page, sized to fit the window. `#<screen id>` opens a screen.
 - `terms/index.html` - Terms of Use, including the "Analytics and Cookies" section (`#cookie-policy`).
 - `metrics/index.html` - the Metrics Marketplace catalog. **Generated** by `bun run website:metrics` from `extras/metrics/repository.yml` and each `manifest.yml`; it copies the `<head>`, header and footer of `terms/index.html`. Do not edit by hand; `deploy.sh` regenerates it.
 - `sponsor/index.html` - self-contained sponsor page (dark theme) with its own inline styles.
 - `sponsor/light/index.html` - self-contained sponsor page (light theme) for light mode.
-- `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x1104, the overview tab with the demo portfolio).
+- `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x900, the overview tab with the demo portfolio; README and og:image), `tour/` (generated, see Screenshots).
 
 ## Local preview
 
@@ -37,9 +38,19 @@ portfolio_<version>_amd64.deb            portfolio_<version>_linux-x64.tar.gz
 
 Until the manifest is read (or when it fails) every link points at the downloads section. If `scripts/release.sh` renames the artifacts, update the `ASSETS` map.
 
-## Screenshot
+## Screenshots and tour
 
-Capture the running app's overview tab at 1600x1104 with the demo portfolio and save it as `assets/screenshot.png`.
+`tour.js` mounts on every `[data-tour]` element and reads `assets/tour/tour.json`. Tabs switch between screens. Each screen has numbered markers; a click spotlights the region and opens a popover with a sharp close-up and a short text. A second click, a click on the screenshot or Escape closes it; arrow keys step through the markers. On narrow screens the popover sits under the screenshot. Without the JSON the `.tour-fallback` image stays.
+
+The images and the JSON are generated from the running app:
+
+```bash
+bun run website:screenshots --llm claude-cli      # fresh demo data, LLM report, suggestions and daily brief
+bun run website:screenshots --data <dir>          # reuse a data directory (keeps earlier LLM content)
+bun run website:screenshots --only reports --debug /tmp/shots
+```
+
+`scripts/screenshots/capture.ts` starts the service on a scratch data directory (never the real one), seeds the demo portfolio, opens the GUI in headless Chromium at 1600x900 (2x) and writes `assets/tour/<screen>.webp`, one close-up per hotspot, `tour.json` and `assets/screenshot.png`. The screens, hotspot targets and texts live in `scripts/screenshots/shots.ts`; targets are found by text in the page, so markers follow layout changes. `--debug <dir>` writes each screen with its crop boxes drawn on it. It needs Playwright's Chromium (`bunx playwright-core install chromium`) or Google Chrome.
 
 ## Deploy
 

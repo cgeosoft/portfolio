@@ -1,6 +1,6 @@
 /**
  * Marketing site script: OS detection, download links from the latest
- * release, screenshot lightbox and opt-in PostHog analytics.
+ * release and opt-in PostHog analytics. The screenshot tour is tour.js.
  */
 (function () {
   "use strict";
@@ -130,17 +130,6 @@
     }
   }
 
-  function initLightbox() {
-    const trigger = $("#shot-zoom");
-    const box = $("#shot-lightbox");
-    if (!trigger || !box || typeof box.showModal !== "function") return;
-    trigger.addEventListener("click", () => {
-      box.showModal();
-      track("screenshot_zoomed");
-    });
-    box.addEventListener("click", () => box.close());
-  }
-
   // Hero demo: the demo portfolio value counts up while the chart draws, then
   // the assistant card types a rotating set of example suggestions. The
   // figures are made up for the demo; reduced motion shows the final state.
@@ -259,7 +248,6 @@
       el.addEventListener("click", () => track("download_clicked", { os: el.dataset.os || activeOS, type: el.dataset.type || "installer" }))
     );
     $$("#current-year").forEach((el) => (el.textContent = String(new Date().getFullYear())));
-    initLightbox();
     initDemo();
     initCookieBanner();
     loadRelease();

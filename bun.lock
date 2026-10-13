@@ -7,12 +7,13 @@
       "devDependencies": {
         "assemblyscript": "0.28.20",
         "bun-types": "^1.3.14",
+        "playwright-core": "^1.64.0",
         "typescript": "^5.7.3",
       },
     },
     "modules/desktop": {
       "name": "portfolio-desktop",
-      "version": "0.3.0",
+      "version": "0.12.0",
       "devDependencies": {
         "bun-types": "^1.3.14",
         "electrobun": "^2.0.1",
@@ -21,11 +22,12 @@
     },
     "modules/gui": {
       "name": "portfolio-gui",
-      "version": "0.3.0",
+      "version": "0.12.0",
       "dependencies": {
         "@fontsource/inter": "^5.3.0",
         "@fontsource/jetbrains-mono": "^5.3.0",
         "@fontsource/plus-jakarta-sans": "^5.3.0",
+        "@fontsource/sansation": "^5.3.0",
         "chart.js": "^4.5.1",
         "jspdf": "^4.2.1",
         "jszip": "^3.10.1",
@@ -51,7 +53,7 @@
     },
     "modules/service": {
       "name": "portfolio-service",
-      "version": "0.3.0",
+      "version": "0.12.0",
       "dependencies": {
         "jszip": "^3.10.1",
         "portfolio-shared": "workspace:*",
@@ -65,7 +67,7 @@
     },
     "modules/shared": {
       "name": "portfolio-shared",
-      "version": "0.3.0",
+      "version": "0.12.0",
       "devDependencies": {
         "typescript": "^5.7.3",
       },
@@ -165,6 +167,8 @@
     "@fontsource/jetbrains-mono": ["@fontsource/jetbrains-mono@5.3.0", "", {}, "sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A=="],
 
     "@fontsource/plus-jakarta-sans": ["@fontsource/plus-jakarta-sans@5.3.0", "", {}, "sha512-9WRw3G74Ve4cyPApAZSXLPY5DiLOZXDn7Q7dIBjFBpA0Pj56ljDItEdy2UUajjJxRuTg2HkMLO5C3K2nAQORWg=="],
+
+    "@fontsource/sansation": ["@fontsource/sansation@5.3.0", "", {}, "sha512-Z35taJZuw2+pHu+I37V0zCSRJnLViP6vne92wpAjrRnrDEL0wj1SqJzzItD1wCy8jeK21sBBTWyCvJAnW2mzQA=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
@@ -621,6 +625,8 @@
     "picomatch": ["picomatch@2.3.2", "", {}, "sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA=="],
 
     "pirates": ["pirates@4.0.7", "", {}, "sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA=="],
+
+    "playwright-core": ["playwright-core@1.64.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-T9r+MZkTECl2+oUcZ26YgZzTrYidTsIhYYkJix+6iDOymOb1FB2RLLSOxRGnZGv5DStt+aduIVbt+E8WygXYpg=="],
 
     "portfolio-desktop": ["portfolio-desktop@workspace:modules/desktop"],
 
