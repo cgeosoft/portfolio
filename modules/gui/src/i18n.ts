@@ -26,6 +26,11 @@ export function t(key: string, params?: Record<string, string | number>): string
   return translate(messages, english, pluralRules, key, params);
 }
 
+/** Whether `key` has a text (in the active language or English); for text that falls back to one the service sent. */
+export function hasMessage(key: string): boolean {
+  return key in messages || key in english;
+}
+
 /** Code of the active language ("en", "el"). */
 export function getLanguage(): string {
   return language;
