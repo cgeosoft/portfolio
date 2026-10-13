@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sessione di chat"
+  report:
+    title: "{portfolio} - Briefing settimanale ({period})"
+    summary:
+      one: "Valutazione {currency}{value} con un rendimento cumulato del {change}% su {count} asset."
+      many: "Valutazione {currency}{value} con un rendimento cumulato del {change}% su {count} asset."
+      other: "Valutazione {currency}{value} con un rendimento cumulato del {change}% su {count} asset."
+    fallback:
+      heading: "Briefing automatico del portafoglio ({period})"
+      overviewLabel: "Panoramica di mercato"
+      overview: "La valutazione totale del portafoglio è di {currency}{value}, con un rendimento complessivo del {change}%."
+      note: "Nota: il modello LLM del report dettagliato non era temporaneamente raggiungibile ({error}). Le metriche tecniche e i valori del registro restano verificati."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} suggerimento è stato scartato: la risposta era incompleta."
+        many: "{count} suggerimenti sono stati scartati: la risposta era incompleta."
+        other: "{count} suggerimenti sono stati scartati: la risposta era incompleta."
+      notHeld:
+        one: "{count} suggerimento è stato scartato: modifica una posizione che il portafoglio non ha."
+        many: "{count} suggerimenti sono stati scartati: modificano una posizione che il portafoglio non ha."
+        other: "{count} suggerimenti sono stati scartati: modificano una posizione che il portafoglio non ha."
+      unknown:
+        one: "{count} suggerimento è stato scartato: i fornitori di dati non conoscono il simbolo."
+        many: "{count} suggerimenti sono stati scartati: i fornitori di dati non conoscono il simbolo."
+        other: "{count} suggerimenti sono stati scartati: i fornitori di dati non conoscono il simbolo."
+      privateAsset:
+        one: "{count} suggerimento è stato scartato: negozia una posizione privata."
+        many: "{count} suggerimenti sono stati scartati: negoziano una posizione privata."
+        other: "{count} suggerimenti sono stati scartati: negoziano una posizione privata."
+      misread:
+        one: "{count} suggerimento è stato scartato: l'assistente ha letto male il peso attuale."
+        many: "{count} suggerimenti sono stati scartati: l'assistente ha letto male il peso attuale."
+        other: "{count} suggerimenti sono stati scartati: l'assistente ha letto male il peso attuale."
+      noChange:
+        one: "{count} suggerimento è stato scartato: la variazione di peso era troppo piccola o nella direzione sbagliata."
+        many: "{count} suggerimenti sono stati scartati: la variazione di peso era troppo piccola o nella direzione sbagliata."
+        other: "{count} suggerimenti sono stati scartati: la variazione di peso era troppo piccola o nella direzione sbagliata."
+      duplicate:
+        one: "{count} suggerimento è stato scartato: ripeteva un simbolo."
+        many: "{count} suggerimenti sono stati scartati: ripetevano un simbolo."
+        other: "{count} suggerimenti sono stati scartati: ripetevano un simbolo."
+      extra:
+        one: "{count} suggerimento è stato scartato: ne vengono mantenuti solo {max}."
+        many: "{count} suggerimenti sono stati scartati: ne vengono mantenuti solo {max}."
+        other: "{count} suggerimenti sono stati scartati: ne vengono mantenuti solo {max}."
+    dismissedLeftOut:
+      one: "{count} suggerimento ignorato è stato escluso."
+      many: "{count} suggerimenti ignorati sono stati esclusi."
+      other: "{count} suggerimenti ignorati sono stati esclusi."
+  dailyBrief:
+    notificationTitle: "{portfolio}: brief giornaliero"
+    conversationTitle: "Brief giornaliero {date}"
+    question: "Brief giornaliero del {date}: cosa è successo nell'ultima seduta di borsa?"
+    fallback:
+      sessionReturn: "Rendimento della seduta {change}"
+      topGainer: "Miglior rialzo: {instrument} {change}"
+      topDecliner: "Peggior ribasso: {instrument} {change}"
+      transactions:
+        one: "{count} transazione dal {since}"
+        many: "{count} transazioni dal {since}"
+        other: "{count} transazioni dal {since}"
+      note: "L'assistente non era disponibile, quindi questo brief mostra solo i numeri."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: analisi settimanale"
+    openReports: "Apri Portfolio, Report, per l'analisi completa."
+    fallback:
+      heading: "Analisi settimanale {period}"
+      weekReturn: "Rendimento della settimana: {change}"
+      topGainer: "Miglior rialzo: {symbol} {change}"
+      topDecliner: "Peggior ribasso: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: prossimi eventi"
+    heading: "Eventi delle tue posizioni fino al {date}"
+    exDividend: "{symbol}: data di stacco del dividendo {date}"
+    earnings: "{symbol}: pubblicazione dei risultati {date}"
+    earningsBeforeOpen: "{symbol}: pubblicazione dei risultati {date}, prima dell'apertura del mercato"
+    earningsAfterClose: "{symbol}: pubblicazione dei risultati {date}, dopo la chiusura del mercato"
+    footer: "Apri Portfolio per la panoramica di proventi ed eventi."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Messaggio di prova da Portfolio. I brief giornalieri arriveranno qui."
+    ntfy: "Messaggio di prova da Portfolio. I brief giornalieri e le analisi settimanali arriveranno qui."

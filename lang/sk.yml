@@ -1890,4 +1890,98 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Relácia chatu"
+  report:
+    title: "{portfolio} - Týždenný prehľad ({period})"
+    summary:
+      one: "Ocenenie {currency}{value}, kumulatívny výnos {change} %, {count} aktívum."
+      few: "Ocenenie {currency}{value}, kumulatívny výnos {change} %, {count} aktíva."
+      many: "Ocenenie {currency}{value}, kumulatívny výnos {change} %, {count} aktíva."
+      other: "Ocenenie {currency}{value}, kumulatívny výnos {change} %, {count} aktív."
+    fallback:
+      heading: "Automatický prehľad portfólia ({period})"
+      overviewLabel: "Prehľad trhu"
+      overview: "Celkové ocenenie portfólia je {currency}{value}, celkový výnos {change} %."
+      note: "Poznámka: Model LLM pre podrobný report bol dočasne nedostupný ({error}). Technické ukazovatele a hodnoty z denníka transakcií zostávajú overené."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} návrh bol vyradený: odpoveď bola neúplná."
+        few: "{count} návrhy boli vyradené: odpoveď bola neúplná."
+        many: "{count} návrhu bolo vyradených: odpoveď bola neúplná."
+        other: "{count} návrhov bolo vyradených: odpoveď bola neúplná."
+      notHeld:
+        one: "{count} návrh bol vyradený: mení pozíciu, ktorú portfólio nemá."
+        few: "{count} návrhy boli vyradené: menia pozície, ktoré portfólio nemá."
+        many: "{count} návrhu bolo vyradených: menia pozície, ktoré portfólio nemá."
+        other: "{count} návrhov bolo vyradených: menia pozície, ktoré portfólio nemá."
+      unknown:
+        one: "{count} návrh bol vyradený: poskytovatelia dát tento ticker nepoznajú."
+        few: "{count} návrhy boli vyradené: poskytovatelia dát tieto tickery nepoznajú."
+        many: "{count} návrhu bolo vyradených: poskytovatelia dát tieto tickery nepoznajú."
+        other: "{count} návrhov bolo vyradených: poskytovatelia dát tieto tickery nepoznajú."
+      privateAsset:
+        one: "{count} návrh bol vyradený: navrhuje obchod so súkromnou pozíciou."
+        few: "{count} návrhy boli vyradené: navrhujú obchody so súkromnými pozíciami."
+        many: "{count} návrhu bolo vyradených: navrhujú obchody so súkromnými pozíciami."
+        other: "{count} návrhov bolo vyradených: navrhujú obchody so súkromnými pozíciami."
+      misread:
+        one: "{count} návrh bol vyradený: asistent nesprávne prečítal aktuálnu váhu."
+        few: "{count} návrhy boli vyradené: asistent nesprávne prečítal aktuálnu váhu."
+        many: "{count} návrhu bolo vyradených: asistent nesprávne prečítal aktuálnu váhu."
+        other: "{count} návrhov bolo vyradených: asistent nesprávne prečítal aktuálnu váhu."
+      noChange:
+        one: "{count} návrh bol vyradený: zmena váhy bola príliš malá alebo mala opačný smer."
+        few: "{count} návrhy boli vyradené: zmena váhy bola príliš malá alebo mala opačný smer."
+        many: "{count} návrhu bolo vyradených: zmena váhy bola príliš malá alebo mala opačný smer."
+        other: "{count} návrhov bolo vyradených: zmena váhy bola príliš malá alebo mala opačný smer."
+      duplicate:
+        one: "{count} návrh bol vyradený: opakoval ticker."
+        few: "{count} návrhy boli vyradené: opakovali tickery."
+        many: "{count} návrhu bolo vyradených: opakovali tickery."
+        other: "{count} návrhov bolo vyradených: opakovali tickery."
+      extra:
+        one: "{count} návrh bol vyradený: ponechá sa len {max}."
+        few: "{count} návrhy boli vyradené: ponechá sa len {max}."
+        many: "{count} návrhu bolo vyradených: ponechá sa len {max}."
+        other: "{count} návrhov bolo vyradených: ponechá sa len {max}."
+    dismissedLeftOut:
+      one: "{count} zamietnutý návrh bol vynechaný."
+      few: "{count} zamietnuté návrhy boli vynechané."
+      many: "{count} zamietnutého návrhu bolo vynechaných."
+      other: "{count} zamietnutých návrhov bolo vynechaných."
+  dailyBrief:
+    notificationTitle: "{portfolio}: denný prehľad"
+    conversationTitle: "Denný prehľad {date}"
+    question: "Denný prehľad za {date}: čo sa stalo počas poslednej obchodnej seansy?"
+    fallback:
+      sessionReturn: "Výnos seansy {change}"
+      topGainer: "Najväčší rast: {instrument} {change}"
+      topDecliner: "Najväčší pokles: {instrument} {change}"
+      transactions:
+        one: "{count} transakcia od {since}"
+        few: "{count} transakcie od {since}"
+        many: "{count} transakcie od {since}"
+        other: "{count} transakcií od {since}"
+      note: "Asistent nebol dostupný, preto prehľad ukazuje len čísla."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: týždenná analýza"
+    openReports: "Úplnú analýzu nájdete v Portfolio v sekcii Reporty."
+    fallback:
+      heading: "Týždenná analýza {period}"
+      weekReturn: "Výnos týždňa: {change}"
+      topGainer: "Najväčší rast: {symbol} {change}"
+      topDecliner: "Najväčší pokles: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: nadchádzajúce udalosti"
+    heading: "Udalosti vašich pozícií do {date}"
+    exDividend: "{symbol}: ex-dividendový deň {date}"
+    earnings: "{symbol}: zverejnenie výsledkov {date}"
+    earningsBeforeOpen: "{symbol}: zverejnenie výsledkov {date}, pred otvorením trhu"
+    earningsAfterClose: "{symbol}: zverejnenie výsledkov {date}, po zatvorení trhu"
+    footer: "Prehľad príjmov a udalostí nájdete v Portfolio."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testovacia správa z Portfolio. Sem budú chodiť denné prehľady."
+    ntfy: "Testovacia správa z Portfolio. Sem budú chodiť denné prehľady a týždenné analýzy."

@@ -1890,4 +1890,98 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Pokalbis"
+  report:
+    title: "{portfolio} - savaitės apžvalga ({period})"
+    summary:
+      one: "Vertė {currency}{value}, sukaupta grąža {change}%, {count} aktyvas."
+      few: "Vertė {currency}{value}, sukaupta grąža {change}%, {count} aktyvai."
+      many: "Vertė {currency}{value}, sukaupta grąža {change}%, {count} aktyvo."
+      other: "Vertė {currency}{value}, sukaupta grąža {change}%, {count} aktyvų."
+    fallback:
+      heading: "Automatinė portfelio apžvalga ({period})"
+      overviewLabel: "Rinkos apžvalga"
+      overview: "Bendra portfelio vertė yra {currency}{value}, bendra grąža {change}%."
+      note: "Pastaba: išsamios ataskaitos LLM modelis laikinai buvo nepasiekiamas ({error}). Techniniai rodikliai ir žurnalo vertės lieka patikrinti."
+  suggestions:
+    dropped:
+      invalid:
+        one: "Atmestas {count} pasiūlymas: atsakymas buvo neišsamus."
+        few: "Atmesti {count} pasiūlymai: atsakymas buvo neišsamus."
+        many: "Atmesta {count} pasiūlymo: atsakymas buvo neišsamus."
+        other: "Atmesta {count} pasiūlymų: atsakymas buvo neišsamus."
+      notHeld:
+        one: "Atmestas {count} pasiūlymas: jis keičia investiciją, kurios portfelyje nėra."
+        few: "Atmesti {count} pasiūlymai: jie keičia investiciją, kurios portfelyje nėra."
+        many: "Atmesta {count} pasiūlymo: jie keičia investiciją, kurios portfelyje nėra."
+        other: "Atmesta {count} pasiūlymų: jie keičia investiciją, kurios portfelyje nėra."
+      unknown:
+        one: "Atmestas {count} pasiūlymas: duomenų teikėjai nežino šio simbolio."
+        few: "Atmesti {count} pasiūlymai: duomenų teikėjai nežino šio simbolio."
+        many: "Atmesta {count} pasiūlymo: duomenų teikėjai nežino šio simbolio."
+        other: "Atmesta {count} pasiūlymų: duomenų teikėjai nežino šio simbolio."
+      privateAsset:
+        one: "Atmestas {count} pasiūlymas: jis susijęs su prekyba privačia investicija."
+        few: "Atmesti {count} pasiūlymai: jie susiję su prekyba privačia investicija."
+        many: "Atmesta {count} pasiūlymo: jie susiję su prekyba privačia investicija."
+        other: "Atmesta {count} pasiūlymų: jie susiję su prekyba privačia investicija."
+      misread:
+        one: "Atmestas {count} pasiūlymas: asistentas neteisingai perskaitė dabartinį svorį."
+        few: "Atmesti {count} pasiūlymai: asistentas neteisingai perskaitė dabartinį svorį."
+        many: "Atmesta {count} pasiūlymo: asistentas neteisingai perskaitė dabartinį svorį."
+        other: "Atmesta {count} pasiūlymų: asistentas neteisingai perskaitė dabartinį svorį."
+      noChange:
+        one: "Atmestas {count} pasiūlymas: svorio pokytis buvo per mažas arba neteisinga kryptimi."
+        few: "Atmesti {count} pasiūlymai: svorio pokytis buvo per mažas arba neteisinga kryptimi."
+        many: "Atmesta {count} pasiūlymo: svorio pokytis buvo per mažas arba neteisinga kryptimi."
+        other: "Atmesta {count} pasiūlymų: svorio pokytis buvo per mažas arba neteisinga kryptimi."
+      duplicate:
+        one: "Atmestas {count} pasiūlymas: jis kartojo simbolį."
+        few: "Atmesti {count} pasiūlymai: jie kartojo simbolį."
+        many: "Atmesta {count} pasiūlymo: jie kartojo simbolį."
+        other: "Atmesta {count} pasiūlymų: jie kartojo simbolį."
+      extra:
+        one: "Atmestas {count} pasiūlymas: paliekami tik {max}."
+        few: "Atmesti {count} pasiūlymai: paliekami tik {max}."
+        many: "Atmesta {count} pasiūlymo: paliekami tik {max}."
+        other: "Atmesta {count} pasiūlymų: paliekami tik {max}."
+    dismissedLeftOut:
+      one: "Neįtrauktas {count} atmestas pasiūlymas."
+      few: "Neįtraukti {count} atmesti pasiūlymai."
+      many: "Neįtraukta {count} atmesto pasiūlymo."
+      other: "Neįtraukta {count} atmestų pasiūlymų."
+  dailyBrief:
+    notificationTitle: "{portfolio}: dienos apžvalga"
+    conversationTitle: "Dienos apžvalga {date}"
+    question: "Dienos apžvalga už {date}: kas įvyko paskutinėje prekybos sesijoje?"
+    fallback:
+      sessionReturn: "Sesijos grąža {change}"
+      topGainer: "Labiausiai pakilo: {instrument} {change}"
+      topDecliner: "Labiausiai nukrito: {instrument} {change}"
+      transactions:
+        one: "{count} sandoris nuo {since}"
+        few: "{count} sandoriai nuo {since}"
+        many: "{count} sandorio nuo {since}"
+        other: "{count} sandorių nuo {since}"
+      note: "Asistentas nebuvo pasiekiamas, todėl šioje apžvalgoje pateikiami tik skaičiai."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: savaitės analizė"
+    openReports: "Visą analizę rasite Portfolio skiltyje Ataskaitos."
+    fallback:
+      heading: "Savaitės analizė {period}"
+      weekReturn: "Savaitės grąža: {change}"
+      topGainer: "Labiausiai pakilo: {symbol} {change}"
+      topDecliner: "Labiausiai nukrito: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: artėjantys įvykiai"
+    heading: "Jūsų investicijų įvykiai iki {date}"
+    exDividend: "{symbol}: ex-dividendų data {date}"
+    earnings: "{symbol}: rezultatų ataskaita {date}"
+    earningsBeforeOpen: "{symbol}: rezultatų ataskaita {date}, prieš atsidarant rinkai"
+    earningsAfterClose: "{symbol}: rezultatų ataskaita {date}, užsidarius rinkai"
+    footer: "Pajamų ir įvykių apžvalgą rasite Portfolio."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Bandomasis pranešimas iš Portfolio. Čia bus gaunamos dienos apžvalgos."
+    ntfy: "Bandomasis pranešimas iš Portfolio. Čia bus gaunamos dienos apžvalgos ir savaitės analizės."

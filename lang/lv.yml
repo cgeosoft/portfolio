@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Saruna"
+  report:
+    title: "{portfolio} - nedēļas apskats ({period})"
+    summary:
+      zero: "Vērtība {currency}{value}, kumulatīvais ienesīgums {change}% {count} aktīvos."
+      one: "Vērtība {currency}{value}, kumulatīvais ienesīgums {change}% {count} aktīvā."
+      other: "Vērtība {currency}{value}, kumulatīvais ienesīgums {change}% {count} aktīvos."
+    fallback:
+      heading: "Automātisks portfeļa apskats ({period})"
+      overviewLabel: "Tirgus pārskats"
+      overview: "Portfeļa kopējā vērtība ir {currency}{value}, kopējais ienesīgums {change}%."
+      note: "Piezīme: detalizētā pārskata LLM modelis īslaicīgi nebija sasniedzams ({error}). Tehniskie rādītāji un reģistra vērtības joprojām ir pārbaudītas."
+  suggestions:
+    dropped:
+      invalid:
+        zero: "Atmesti {count} ieteikumi: atbilde bija nepilnīga."
+        one: "Atmests {count} ieteikums: atbilde bija nepilnīga."
+        other: "Atmesti {count} ieteikumi: atbilde bija nepilnīga."
+      notHeld:
+        zero: "Atmesti {count} ieteikumi: tie maina ieguldījumu, kura portfelī nav."
+        one: "Atmests {count} ieteikums: tas maina ieguldījumu, kura portfelī nav."
+        other: "Atmesti {count} ieteikumi: tie maina ieguldījumu, kura portfelī nav."
+      unknown:
+        zero: "Atmesti {count} ieteikumi: datu sniedzēji nezina šo simbolu."
+        one: "Atmests {count} ieteikums: datu sniedzēji nezina šo simbolu."
+        other: "Atmesti {count} ieteikumi: datu sniedzēji nezina šo simbolu."
+      privateAsset:
+        zero: "Atmesti {count} ieteikumi: tie tirgo privātu ieguldījumu."
+        one: "Atmests {count} ieteikums: tas tirgo privātu ieguldījumu."
+        other: "Atmesti {count} ieteikumi: tie tirgo privātu ieguldījumu."
+      misread:
+        zero: "Atmesti {count} ieteikumi: asistents nepareizi nolasīja pašreizējo svaru."
+        one: "Atmests {count} ieteikums: asistents nepareizi nolasīja pašreizējo svaru."
+        other: "Atmesti {count} ieteikumi: asistents nepareizi nolasīja pašreizējo svaru."
+      noChange:
+        zero: "Atmesti {count} ieteikumi: svara izmaiņa bija pārāk maza vai nepareizā virzienā."
+        one: "Atmests {count} ieteikums: svara izmaiņa bija pārāk maza vai nepareizā virzienā."
+        other: "Atmesti {count} ieteikumi: svara izmaiņa bija pārāk maza vai nepareizā virzienā."
+      duplicate:
+        zero: "Atmesti {count} ieteikumi: tie atkārtoja simbolu."
+        one: "Atmests {count} ieteikums: tas atkārtoja simbolu."
+        other: "Atmesti {count} ieteikumi: tie atkārtoja simbolu."
+      extra:
+        zero: "Atmesti {count} ieteikumi: tiek saglabāti tikai {max}."
+        one: "Atmests {count} ieteikums: tiek saglabāti tikai {max}."
+        other: "Atmesti {count} ieteikumi: tiek saglabāti tikai {max}."
+    dismissedLeftOut:
+      zero: "Izlaisti {count} noraidīti ieteikumi."
+      one: "Izlaists {count} noraidīts ieteikums."
+      other: "Izlaisti {count} noraidīti ieteikumi."
+  dailyBrief:
+    notificationTitle: "{portfolio}: dienas kopsavilkums"
+    conversationTitle: "Dienas kopsavilkums {date}"
+    question: "Dienas kopsavilkums par {date}: kas notika pēdējā tirdzniecības sesijā?"
+    fallback:
+      sessionReturn: "Sesijas ienesīgums {change}"
+      topGainer: "Lielākais kāpums: {instrument} {change}"
+      topDecliner: "Lielākais kritums: {instrument} {change}"
+      transactions:
+        zero: "{count} darījumi kopš {since}"
+        one: "{count} darījums kopš {since}"
+        other: "{count} darījumi kopš {since}"
+      note: "Asistents nebija pieejams, tāpēc šajā kopsavilkumā ir tikai skaitļi."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: nedēļas analīze"
+    openReports: "Pilno analīzi atradīsiet Portfolio sadaļā Pārskati."
+    fallback:
+      heading: "Nedēļas analīze {period}"
+      weekReturn: "Nedēļas ienesīgums: {change}"
+      topGainer: "Lielākais kāpums: {symbol} {change}"
+      topDecliner: "Lielākais kritums: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: gaidāmie notikumi"
+    heading: "Jūsu ieguldījumu notikumi līdz {date}"
+    exDividend: "{symbol}: ex-dividendes datums {date}"
+    earnings: "{symbol}: rezultātu pārskats {date}"
+    earningsBeforeOpen: "{symbol}: rezultātu pārskats {date}, pirms tirgus atvēršanas"
+    earningsAfterClose: "{symbol}: rezultātu pārskats {date}, pēc tirgus slēgšanas"
+    footer: "Atveriet Portfolio, lai skatītu ienākumu un notikumu pārskatu."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testa ziņojums no Portfolio. Šeit pienāks dienas kopsavilkumi."
+    ntfy: "Testa ziņojums no Portfolio. Šeit pienāks dienas kopsavilkumi un nedēļas analīzes."

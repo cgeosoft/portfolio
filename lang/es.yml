@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sesión de chat"
+  report:
+    title: "{portfolio} - Informe semanal ({period})"
+    summary:
+      one: "Valoración {currency}{value} con una rentabilidad acumulada del {change}% en {count} activo."
+      many: "Valoración {currency}{value} con una rentabilidad acumulada del {change}% en {count} activos."
+      other: "Valoración {currency}{value} con una rentabilidad acumulada del {change}% en {count} activos."
+    fallback:
+      heading: "Informe automático de la cartera ({period})"
+      overviewLabel: "Resumen del mercado"
+      overview: "La valoración total de la cartera es de {currency}{value}, con una rentabilidad total del {change}%."
+      note: "Nota: el modelo LLM del informe detallado no estuvo disponible temporalmente ({error}). Las métricas técnicas y los valores del registro siguen verificados."
+  suggestions:
+    dropped:
+      invalid:
+        one: "Se eliminó {count} sugerencia: la respuesta estaba incompleta."
+        many: "Se eliminaron {count} sugerencias: la respuesta estaba incompleta."
+        other: "Se eliminaron {count} sugerencias: la respuesta estaba incompleta."
+      notHeld:
+        one: "Se eliminó {count} sugerencia: cambia una posición que la cartera no tiene."
+        many: "Se eliminaron {count} sugerencias: cambian una posición que la cartera no tiene."
+        other: "Se eliminaron {count} sugerencias: cambian una posición que la cartera no tiene."
+      unknown:
+        one: "Se eliminó {count} sugerencia: los proveedores de datos no conocen el símbolo."
+        many: "Se eliminaron {count} sugerencias: los proveedores de datos no conocen el símbolo."
+        other: "Se eliminaron {count} sugerencias: los proveedores de datos no conocen el símbolo."
+      privateAsset:
+        one: "Se eliminó {count} sugerencia: opera con una posición privada."
+        many: "Se eliminaron {count} sugerencias: operan con una posición privada."
+        other: "Se eliminaron {count} sugerencias: operan con una posición privada."
+      misread:
+        one: "Se eliminó {count} sugerencia: el asistente leyó mal el peso actual."
+        many: "Se eliminaron {count} sugerencias: el asistente leyó mal el peso actual."
+        other: "Se eliminaron {count} sugerencias: el asistente leyó mal el peso actual."
+      noChange:
+        one: "Se eliminó {count} sugerencia: el cambio de peso era demasiado pequeño o iba en la dirección equivocada."
+        many: "Se eliminaron {count} sugerencias: el cambio de peso era demasiado pequeño o iba en la dirección equivocada."
+        other: "Se eliminaron {count} sugerencias: el cambio de peso era demasiado pequeño o iba en la dirección equivocada."
+      duplicate:
+        one: "Se eliminó {count} sugerencia: repetía un símbolo."
+        many: "Se eliminaron {count} sugerencias: repetían un símbolo."
+        other: "Se eliminaron {count} sugerencias: repetían un símbolo."
+      extra:
+        one: "Se eliminó {count} sugerencia: solo se conservan {max}."
+        many: "Se eliminaron {count} sugerencias: solo se conservan {max}."
+        other: "Se eliminaron {count} sugerencias: solo se conservan {max}."
+    dismissedLeftOut:
+      one: "Se omitió {count} sugerencia descartada."
+      many: "Se omitieron {count} sugerencias descartadas."
+      other: "Se omitieron {count} sugerencias descartadas."
+  dailyBrief:
+    notificationTitle: "{portfolio}: resumen diario"
+    conversationTitle: "Resumen diario {date}"
+    question: "Resumen diario del {date}: ¿qué pasó en la última sesión bursátil?"
+    fallback:
+      sessionReturn: "Rentabilidad de la sesión {change}"
+      topGainer: "Mayor subida: {instrument} {change}"
+      topDecliner: "Mayor caída: {instrument} {change}"
+      transactions:
+        one: "{count} transacción desde {since}"
+        many: "{count} transacciones desde {since}"
+        other: "{count} transacciones desde {since}"
+      note: "El asistente no estaba disponible, así que este resumen solo muestra las cifras."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: análisis semanal"
+    openReports: "Abre Portfolio, Informes, para ver el análisis completo."
+    fallback:
+      heading: "Análisis semanal {period}"
+      weekReturn: "Rentabilidad de la semana: {change}"
+      topGainer: "Mayor subida: {symbol} {change}"
+      topDecliner: "Mayor caída: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: próximos eventos"
+    heading: "Eventos de tus posiciones hasta {date}"
+    exDividend: "{symbol}: fecha ex-dividendo {date}"
+    earnings: "{symbol}: presentación de resultados {date}"
+    earningsBeforeOpen: "{symbol}: presentación de resultados {date}, antes de la apertura del mercado"
+    earningsAfterClose: "{symbol}: presentación de resultados {date}, tras el cierre del mercado"
+    footer: "Abre Portfolio para ver el resumen de ingresos y eventos."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Mensaje de prueba de Portfolio. Los resúmenes diarios llegarán aquí."
+    ntfy: "Mensaje de prueba de Portfolio. Los resúmenes diarios y los análisis semanales llegarán aquí."

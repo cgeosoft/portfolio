@@ -1832,4 +1832,76 @@ setup:
 
 # ── service ──
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Vestlus"
+  report:
+    title: "{portfolio} - nädala ülevaade ({period})"
+    summary:
+      one: "Väärtus {currency}{value}, kumulatiivne tootlus {change}%, {count} vara."
+      other: "Väärtus {currency}{value}, kumulatiivne tootlus {change}%, {count} vara."
+    fallback:
+      heading: "Automaatne portfelli ülevaade ({period})"
+      overviewLabel: "Turu ülevaade"
+      overview: "Portfelli koguväärtus on {currency}{value}, kogutootlus {change}%."
+      note: "Märkus: üksikasjaliku aruande LLM-mudel polnud ajutiselt kättesaadav ({error}). Tehnilised näitajad ja tehinguraamatu väärtused on endiselt kontrollitud."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} soovitus jäeti välja: vastus oli puudulik."
+        other: "{count} soovitust jäeti välja: vastus oli puudulik."
+      notHeld:
+        one: "{count} soovitus jäeti välja: see muudab osalust, mida portfellis pole."
+        other: "{count} soovitust jäeti välja: need muudavad osalust, mida portfellis pole."
+      unknown:
+        one: "{count} soovitus jäeti välja: andmepakkujad ei tunne seda sümbolit."
+        other: "{count} soovitust jäeti välja: andmepakkujad ei tunne seda sümbolit."
+      privateAsset:
+        one: "{count} soovitus jäeti välja: see kaupleb erainvesteeringuga."
+        other: "{count} soovitust jäeti välja: need kauplevad erainvesteeringuga."
+      misread:
+        one: "{count} soovitus jäeti välja: assistent luges praeguse kaalu valesti."
+        other: "{count} soovitust jäeti välja: assistent luges praeguse kaalu valesti."
+      noChange:
+        one: "{count} soovitus jäeti välja: kaalu muutus oli liiga väike või vales suunas."
+        other: "{count} soovitust jäeti välja: kaalu muutus oli liiga väike või vales suunas."
+      duplicate:
+        one: "{count} soovitus jäeti välja: see kordas sümbolit."
+        other: "{count} soovitust jäeti välja: need kordasid sümbolit."
+      extra:
+        one: "{count} soovitus jäeti välja: alles jäetakse ainult {max}."
+        other: "{count} soovitust jäeti välja: alles jäetakse ainult {max}."
+    dismissedLeftOut:
+      one: "{count} loobutud soovitus jäeti välja."
+      other: "{count} loobutud soovitust jäeti välja."
+  dailyBrief:
+    notificationTitle: "{portfolio}: päeva ülevaade"
+    conversationTitle: "Päeva ülevaade {date}"
+    question: "Päeva ülevaade {date}: mis juhtus eelmisel kauplemispäeval?"
+    fallback:
+      sessionReturn: "Kauplemispäeva tootlus {change}"
+      topGainer: "Suurim tõusja: {instrument} {change}"
+      topDecliner: "Suurim langeja: {instrument} {change}"
+      transactions:
+        one: "{count} tehing alates {since}"
+        other: "{count} tehingut alates {since}"
+      note: "Assistent polnud saadaval, seega näitab see ülevaade ainult numbreid."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: nädala analüüs"
+    openReports: "Täieliku analüüsi leiad Portfolio jaotisest Aruanded."
+    fallback:
+      heading: "Nädala analüüs {period}"
+      weekReturn: "Nädala tootlus: {change}"
+      topGainer: "Suurim tõusja: {symbol} {change}"
+      topDecliner: "Suurim langeja: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: eelseisvad sündmused"
+    heading: "Sinu osaluste sündmused kuni {date}"
+    exDividend: "{symbol}: dividendi eraldamispäev {date}"
+    earnings: "{symbol}: tulemuste avaldamine {date}"
+    earningsBeforeOpen: "{symbol}: tulemuste avaldamine {date}, enne turu avanemist"
+    earningsAfterClose: "{symbol}: tulemuste avaldamine {date}, pärast turu sulgemist"
+    footer: "Tulu ja sündmuste ülevaate leiad Portfoliost."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testsõnum Portfoliost. Päeva ülevaated saabuvad siia."
+    ntfy: "Testsõnum Portfoliost. Päeva ülevaated ja nädala analüüsid saabuvad siia."

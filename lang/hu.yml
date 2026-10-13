@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Csevegés"
+  report:
+    title: "{portfolio} - Heti tájékoztató ({period})"
+    summary:
+      one: "Érték: {currency}{value}, kumulált hozam: {change}%, {count} eszköz."
+      other: "Érték: {currency}{value}, kumulált hozam: {change}%, {count} eszköz."
+    fallback:
+      heading: "Automatikus portfólió-tájékoztató ({period})"
+      overviewLabel: "Piaci áttekintés"
+      overview: "A portfólió teljes értéke {currency}{value}, a teljes hozam {change}%."
+      note: "Megjegyzés: A részletes jelentést készítő LLM-modell átmenetileg nem volt elérhető ({error}). A technikai mutatók és a naplóértékek továbbra is ellenőrzöttek."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} javaslat kimaradt: a válasz hiányos volt."
+        other: "{count} javaslat kimaradt: a válasz hiányos volt."
+      notHeld:
+        one: "{count} javaslat kimaradt: olyan tételt módosít, amely nincs a portfólióban."
+        other: "{count} javaslat kimaradt: olyan tételt módosítanak, amely nincs a portfólióban."
+      unknown:
+        one: "{count} javaslat kimaradt: az adatszolgáltatók nem ismerik a szimbólumot."
+        other: "{count} javaslat kimaradt: az adatszolgáltatók nem ismerik a szimbólumot."
+      privateAsset:
+        one: "{count} javaslat kimaradt: magántétellel kereskedik."
+        other: "{count} javaslat kimaradt: magántétellel kereskednek."
+      misread:
+        one: "{count} javaslat kimaradt: az asszisztens rosszul olvasta ki a jelenlegi súlyt."
+        other: "{count} javaslat kimaradt: az asszisztens rosszul olvasta ki a jelenlegi súlyt."
+      noChange:
+        one: "{count} javaslat kimaradt: a súlyváltozás túl kicsi volt, vagy rossz irányba mutatott."
+        other: "{count} javaslat kimaradt: a súlyváltozás túl kicsi volt, vagy rossz irányba mutatott."
+      duplicate:
+        one: "{count} javaslat kimaradt: egy szimbólum ismétlődött."
+        other: "{count} javaslat kimaradt: egy szimbólum ismétlődött."
+      extra:
+        one: "{count} javaslat kimaradt: csak {max} marad meg."
+        other: "{count} javaslat kimaradt: csak {max} marad meg."
+    dismissedLeftOut:
+      one: "{count} elvetett javaslat kimaradt."
+      other: "{count} elvetett javaslat kimaradt."
+  dailyBrief:
+    notificationTitle: "{portfolio}: napi összefoglaló"
+    conversationTitle: "Napi összefoglaló, {date}"
+    question: "Napi összefoglaló, {date}: mi történt az utolsó kereskedési napon?"
+    fallback:
+      sessionReturn: "A kereskedési nap hozama: {change}"
+      topGainer: "Legnagyobb nyertes: {instrument} {change}"
+      topDecliner: "Legnagyobb vesztes: {instrument} {change}"
+      transactions:
+        one: "{count} tranzakció {since} óta"
+        other: "{count} tranzakció {since} óta"
+      note: "Az asszisztens nem volt elérhető, ezért ez az összefoglaló csak a számokat mutatja."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: heti elemzés"
+    openReports: "A teljes elemzés a Portfolio Jelentések lapján található."
+    fallback:
+      heading: "Heti elemzés, {period}"
+      weekReturn: "A hét hozama: {change}"
+      topGainer: "Legnagyobb nyertes: {symbol} {change}"
+      topDecliner: "Legnagyobb vesztes: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: közelgő események"
+    heading: "Tételeinek eseményei (legkésőbb {date})"
+    exDividend: "{symbol}: osztalékfordulónap {date}"
+    earnings: "{symbol}: gyorsjelentés {date}"
+    earningsBeforeOpen: "{symbol}: gyorsjelentés {date}, piacnyitás előtt"
+    earningsAfterClose: "{symbol}: gyorsjelentés {date}, piaczárás után"
+    footer: "A jövedelem- és eseményáttekintést a Portfolióban találja."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Tesztüzenet a Portfoliótól. A napi összefoglalók ide érkeznek."
+    ntfy: "Tesztüzenet a Portfoliótól. A napi összefoglalók és a heti elemzések ide érkeznek."

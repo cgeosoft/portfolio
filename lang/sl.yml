@@ -1890,4 +1890,98 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Seja pogovora"
+  report:
+    title: "{portfolio} - Tedenski pregled ({period})"
+    summary:
+      one: "Vrednost {currency}{value}, kumulativni donos {change}%, {count} instrument."
+      two: "Vrednost {currency}{value}, kumulativni donos {change}%, {count} instrumenta."
+      few: "Vrednost {currency}{value}, kumulativni donos {change}%, {count} instrumenti."
+      other: "Vrednost {currency}{value}, kumulativni donos {change}%, {count} instrumentov."
+    fallback:
+      heading: "Samodejni pregled portfelja ({period})"
+      overviewLabel: "Pregled trga"
+      overview: "Skupna vrednost portfelja znaša {currency}{value}, skupni donos {change}%."
+      note: "Opomba: model LLM za podrobno poročilo začasno ni bil dosegljiv ({error}). Tehnični kazalniki in vrednosti iz dnevnika transakcij ostajajo preverjeni."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} predlog je bil izločen: odgovor ni bil popoln."
+        two: "{count} predloga sta bila izločena: odgovor ni bil popoln."
+        few: "{count} predlogi so bili izločeni: odgovor ni bil popoln."
+        other: "{count} predlogov je bilo izločenih: odgovor ni bil popoln."
+      notHeld:
+        one: "{count} predlog je bil izločen: spreminja naložbo, ki je portfelj nima."
+        two: "{count} predloga sta bila izločena: spreminjata naložbi, ki ju portfelj nima."
+        few: "{count} predlogi so bili izločeni: spreminjajo naložbe, ki jih portfelj nima."
+        other: "{count} predlogov je bilo izločenih: spreminjajo naložbe, ki jih portfelj nima."
+      unknown:
+        one: "{count} predlog je bil izločen: ponudniki podatkov te oznake ne poznajo."
+        two: "{count} predloga sta bila izločena: ponudniki podatkov teh oznak ne poznajo."
+        few: "{count} predlogi so bili izločeni: ponudniki podatkov teh oznak ne poznajo."
+        other: "{count} predlogov je bilo izločenih: ponudniki podatkov teh oznak ne poznajo."
+      privateAsset:
+        one: "{count} predlog je bil izločen: predlaga trgovanje z zasebno naložbo."
+        two: "{count} predloga sta bila izločena: predlagata trgovanje z zasebnimi naložbami."
+        few: "{count} predlogi so bili izločeni: predlagajo trgovanje z zasebnimi naložbami."
+        other: "{count} predlogov je bilo izločenih: predlagajo trgovanje z zasebnimi naložbami."
+      misread:
+        one: "{count} predlog je bil izločen: pomočnik je napačno prebral trenutni delež."
+        two: "{count} predloga sta bila izločena: pomočnik je napačno prebral trenutni delež."
+        few: "{count} predlogi so bili izločeni: pomočnik je napačno prebral trenutni delež."
+        other: "{count} predlogov je bilo izločenih: pomočnik je napačno prebral trenutni delež."
+      noChange:
+        one: "{count} predlog je bil izločen: sprememba deleža je bila premajhna ali v napačni smeri."
+        two: "{count} predloga sta bila izločena: sprememba deleža je bila premajhna ali v napačni smeri."
+        few: "{count} predlogi so bili izločeni: sprememba deleža je bila premajhna ali v napačni smeri."
+        other: "{count} predlogov je bilo izločenih: sprememba deleža je bila premajhna ali v napačni smeri."
+      duplicate:
+        one: "{count} predlog je bil izločen: oznaka se ponavlja."
+        two: "{count} predloga sta bila izločena: oznaki se ponavljata."
+        few: "{count} predlogi so bili izločeni: oznake se ponavljajo."
+        other: "{count} predlogov je bilo izločenih: oznake se ponavljajo."
+      extra:
+        one: "{count} predlog je bil izločen: ohrani se samo {max}."
+        two: "{count} predloga sta bila izločena: ohrani se samo {max}."
+        few: "{count} predlogi so bili izločeni: ohrani se samo {max}."
+        other: "{count} predlogov je bilo izločenih: ohrani se samo {max}."
+    dismissedLeftOut:
+      one: "{count} opuščeni predlog ni vključen."
+      two: "{count} opuščena predloga nista vključena."
+      few: "{count} opuščeni predlogi niso vključeni."
+      other: "{count} opuščenih predlogov ni vključenih."
+  dailyBrief:
+    notificationTitle: "{portfolio}: dnevni povzetek"
+    conversationTitle: "Dnevni povzetek {date}"
+    question: "Dnevni povzetek za {date}: kaj se je zgodilo na zadnji trgovalni seji?"
+    fallback:
+      sessionReturn: "Donos seje {change}"
+      topGainer: "Največja rast: {instrument} {change}"
+      topDecliner: "Največji padec: {instrument} {change}"
+      transactions:
+        one: "{count} transakcija od {since}"
+        two: "{count} transakciji od {since}"
+        few: "{count} transakcije od {since}"
+        other: "{count} transakcij od {since}"
+      note: "Pomočnik ni bil na voljo, zato povzetek prikazuje samo številke."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: tedenska analiza"
+    openReports: "Celotno analizo najdete v Portfolio v razdelku Poročila."
+    fallback:
+      heading: "Tedenska analiza {period}"
+      weekReturn: "Donos tedna: {change}"
+      topGainer: "Največja rast: {symbol} {change}"
+      topDecliner: "Največji padec: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: prihajajoči dogodki"
+    heading: "Dogodki vaših naložb do {date}"
+    exDividend: "{symbol}: ex-dividendni datum {date}"
+    earnings: "{symbol}: objava rezultatov {date}"
+    earningsBeforeOpen: "{symbol}: objava rezultatov {date}, pred odprtjem trga"
+    earningsAfterClose: "{symbol}: objava rezultatov {date}, po zaprtju trga"
+    footer: "Odprite Portfolio za pregled prihodkov in dogodkov."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Preizkusno sporočilo iz Portfolio. Sem bodo prihajali dnevni povzetki."
+    ntfy: "Preizkusno sporočilo iz Portfolio. Sem bodo prihajali dnevni povzetki in tedenske analize."

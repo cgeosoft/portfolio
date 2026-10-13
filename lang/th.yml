@@ -1785,4 +1785,65 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "เซสชันแชท"
+  report:
+    title: "{portfolio} - สรุปรายสัปดาห์ ({period})"
+    summary:
+      other: "มูลค่า {currency}{value} ผลตอบแทนสะสม {change}% จากสินทรัพย์ {count} รายการ"
+    fallback:
+      heading: "สรุปพอร์ตโฟลิโออัตโนมัติ ({period})"
+      overviewLabel: "ภาพรวมตลาด"
+      overview: "มูลค่ารวมของพอร์ตโฟลิโออยู่ที่ {currency}{value} ผลตอบแทนรวม {change}%"
+      note: "หมายเหตุ: ไม่สามารถเข้าถึงโมเดล LLM สำหรับรายงานฉบับละเอียดได้ชั่วคราว ({error}) ตัวชี้วัดทางเทคนิคและค่าในบัญชีแยกประเภทยังคงผ่านการตรวจสอบแล้ว"
+  suggestions:
+    dropped:
+      invalid:
+        other: "ตัดคำแนะนำออก {count} รายการ: คำตอบไม่ครบถ้วน"
+      notHeld:
+        other: "ตัดคำแนะนำออก {count} รายการ: คำแนะนำเปลี่ยนสินทรัพย์ที่พอร์ตโฟลิโอไม่ได้ถืออยู่"
+      unknown:
+        other: "ตัดคำแนะนำออก {count} รายการ: ผู้ให้บริการข้อมูลไม่รู้จักชื่อย่อนี้"
+      privateAsset:
+        other: "ตัดคำแนะนำออก {count} รายการ: คำแนะนำซื้อขายสินทรัพย์นอกตลาด"
+      misread:
+        other: "ตัดคำแนะนำออก {count} รายการ: ผู้ช่วยอ่านน้ำหนักปัจจุบันผิด"
+      noChange:
+        other: "ตัดคำแนะนำออก {count} รายการ: การเปลี่ยนน้ำหนักน้อยเกินไปหรือผิดทิศทาง"
+      duplicate:
+        other: "ตัดคำแนะนำออก {count} รายการ: ชื่อย่อซ้ำกัน"
+      extra:
+        other: "ตัดคำแนะนำออก {count} รายการ: เก็บไว้เพียง {max} รายการ"
+    dismissedLeftOut:
+      other: "ไม่รวมคำแนะนำที่ปิดแล้ว {count} รายการ"
+  dailyBrief:
+    notificationTitle: "{portfolio}: สรุปรายวัน"
+    conversationTitle: "สรุปรายวัน {date}"
+    question: "สรุปรายวันสำหรับ {date}: เกิดอะไรขึ้นในรอบการซื้อขายล่าสุด"
+    fallback:
+      sessionReturn: "ผลตอบแทนของรอบ {change}"
+      topGainer: "ขึ้นมากที่สุด: {instrument} {change}"
+      topDecliner: "ลงมากที่สุด: {instrument} {change}"
+      transactions:
+        other: "{count} ธุรกรรมตั้งแต่ {since}"
+      note: "ผู้ช่วยไม่พร้อมใช้งาน สรุปนี้จึงแสดงเฉพาะตัวเลข"
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: การวิเคราะห์รายสัปดาห์"
+    openReports: "เปิด Portfolio ที่หน้ารายงานเพื่อดูการวิเคราะห์ฉบับเต็ม"
+    fallback:
+      heading: "การวิเคราะห์รายสัปดาห์ {period}"
+      weekReturn: "ผลตอบแทนของสัปดาห์: {change}"
+      topGainer: "ขึ้นมากที่สุด: {symbol} {change}"
+      topDecliner: "ลงมากที่สุด: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: เหตุการณ์ที่กำลังจะมาถึง"
+    heading: "เหตุการณ์ของสินทรัพย์ที่ถือจนถึง {date}"
+    exDividend: "{symbol}: วันขึ้นเครื่องหมาย XD {date}"
+    earnings: "{symbol}: ประกาศผลประกอบการ {date}"
+    earningsBeforeOpen: "{symbol}: ประกาศผลประกอบการ {date} ก่อนตลาดเปิด"
+    earningsAfterClose: "{symbol}: ประกาศผลประกอบการ {date} หลังตลาดปิด"
+    footer: "เปิด Portfolio เพื่อดูภาพรวมรายได้และเหตุการณ์"
+  testNotification:
+    title: "Portfolio"
+    gotify: "ข้อความทดสอบจาก Portfolio สรุปรายวันจะส่งมาที่นี่"
+    ntfy: "ข้อความทดสอบจาก Portfolio สรุปรายวันและการวิเคราะห์รายสัปดาห์จะส่งมาที่นี่"

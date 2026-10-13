@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Chatsessie"
+  report:
+    title: "{portfolio} - Wekelijkse briefing ({period})"
+    summary:
+      one: "Waardering {currency}{value} met {change}% cumulatief rendement over {count} belegging."
+      other: "Waardering {currency}{value} met {change}% cumulatief rendement over {count} beleggingen."
+    fallback:
+      heading: "Automatische portfoliobriefing ({period})"
+      overviewLabel: "Marktoverzicht"
+      overview: "De totale portfoliowaarde bedraagt {currency}{value} met een totaalrendement van {change}%."
+      note: "Let op: het LLM-model voor het uitgebreide rapport was tijdelijk onbereikbaar ({error}). Technische kengetallen en registerwaarden blijven geverifieerd."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} suggestie is verwijderd: het antwoord was onvolledig."
+        other: "{count} suggesties zijn verwijderd: het antwoord was onvolledig."
+      notHeld:
+        one: "{count} suggestie is verwijderd: deze wijzigt een positie die niet in de portfolio zit."
+        other: "{count} suggesties zijn verwijderd: ze wijzigen een positie die niet in de portfolio zit."
+      unknown:
+        one: "{count} suggestie is verwijderd: de dataleveranciers kennen het symbool niet."
+        other: "{count} suggesties zijn verwijderd: de dataleveranciers kennen het symbool niet."
+      privateAsset:
+        one: "{count} suggestie is verwijderd: deze handelt in een privépositie."
+        other: "{count} suggesties zijn verwijderd: ze handelen in een privépositie."
+      misread:
+        one: "{count} suggestie is verwijderd: de assistent heeft de huidige weging verkeerd gelezen."
+        other: "{count} suggesties zijn verwijderd: de assistent heeft de huidige weging verkeerd gelezen."
+      noChange:
+        one: "{count} suggestie is verwijderd: de wijziging van de weging was te klein of in de verkeerde richting."
+        other: "{count} suggesties zijn verwijderd: de wijziging van de weging was te klein of in de verkeerde richting."
+      duplicate:
+        one: "{count} suggestie is verwijderd: deze herhaalde een symbool."
+        other: "{count} suggesties zijn verwijderd: ze herhaalden een symbool."
+      extra:
+        one: "{count} suggestie is verwijderd: er worden er maar {max} bewaard."
+        other: "{count} suggesties zijn verwijderd: er worden er maar {max} bewaard."
+    dismissedLeftOut:
+      one: "{count} genegeerde suggestie is weggelaten."
+      other: "{count} genegeerde suggesties zijn weggelaten."
+  dailyBrief:
+    notificationTitle: "{portfolio}: dagelijkse briefing"
+    conversationTitle: "Dagelijkse briefing {date}"
+    question: "Dagelijkse briefing voor {date}: wat gebeurde er op de laatste handelsdag?"
+    fallback:
+      sessionReturn: "Rendement van de handelsdag {change}"
+      topGainer: "Grootste stijger: {instrument} {change}"
+      topDecliner: "Grootste daler: {instrument} {change}"
+      transactions:
+        one: "{count} transactie sinds {since}"
+        other: "{count} transacties sinds {since}"
+      note: "De assistent was niet beschikbaar, dus deze briefing toont alleen de cijfers."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: wekelijkse analyse"
+    openReports: "Open Portfolio, Rapporten, voor de volledige analyse."
+    fallback:
+      heading: "Wekelijkse analyse {period}"
+      weekReturn: "Rendement van de week: {change}"
+      topGainer: "Grootste stijger: {symbol} {change}"
+      topDecliner: "Grootste daler: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: komende gebeurtenissen"
+    heading: "Gebeurtenissen van je posities tot en met {date}"
+    exDividend: "{symbol}: ex-dividenddatum {date}"
+    earnings: "{symbol}: kwartaalcijfers {date}"
+    earningsBeforeOpen: "{symbol}: kwartaalcijfers {date}, voor de opening van de beurs"
+    earningsAfterClose: "{symbol}: kwartaalcijfers {date}, na het sluiten van de beurs"
+    footer: "Open Portfolio voor het overzicht van inkomsten en gebeurtenissen."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testbericht van Portfolio. Dagelijkse briefings komen hier binnen."
+    ntfy: "Testbericht van Portfolio. Dagelijkse briefings en wekelijkse analyses komen hier binnen."

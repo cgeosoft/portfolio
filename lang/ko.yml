@@ -1785,4 +1785,65 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "채팅 세션"
+  report:
+    title: "{portfolio} - 주간 브리핑({period})"
+    summary:
+      other: "평가액 {currency}{value}, 자산 {count}개의 누적 수익률 {change}%."
+    fallback:
+      heading: "자동 포트폴리오 브리핑({period})"
+      overviewLabel: "시장 개요"
+      overview: "포트폴리오 총평가액은 {currency}{value}이며 전체 수익률은 {change}%입니다."
+      note: "참고: 상세 보고서용 LLM 모델에 일시적으로 연결할 수 없었습니다({error}). 기술 지표와 원장 값은 검증된 상태입니다."
+  suggestions:
+    dropped:
+      invalid:
+        other: "제안 {count}개를 제외했습니다: 응답이 불완전했습니다."
+      notHeld:
+        other: "제안 {count}개를 제외했습니다: 포트폴리오에 없는 보유 종목을 변경하는 제안이었습니다."
+      unknown:
+        other: "제안 {count}개를 제외했습니다: 데이터 제공업체가 해당 종목을 알지 못합니다."
+      privateAsset:
+        other: "제안 {count}개를 제외했습니다: 비상장 보유 종목을 거래하는 제안이었습니다."
+      misread:
+        other: "제안 {count}개를 제외했습니다: 어시스턴트가 현재 비중을 잘못 읽었습니다."
+      noChange:
+        other: "제안 {count}개를 제외했습니다: 비중 변경이 너무 작거나 방향이 잘못되었습니다."
+      duplicate:
+        other: "제안 {count}개를 제외했습니다: 종목이 중복되었습니다."
+      extra:
+        other: "제안 {count}개를 제외했습니다: {max}개만 유지합니다."
+    dismissedLeftOut:
+      other: "무시된 제안 {count}개를 제외했습니다."
+  dailyBrief:
+    notificationTitle: "{portfolio}: 일일 브리핑"
+    conversationTitle: "일일 브리핑 {date}"
+    question: "{date} 일일 브리핑: 지난 거래 세션에 무슨 일이 있었나요?"
+    fallback:
+      sessionReturn: "세션 수익률 {change}"
+      topGainer: "최대 상승: {instrument} {change}"
+      topDecliner: "최대 하락: {instrument} {change}"
+      transactions:
+        other: "{since} 이후 거래 {count}건"
+      note: "어시스턴트를 사용할 수 없어 이 브리핑에는 수치만 표시됩니다."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: 주간 분석"
+    openReports: "전체 분석은 Portfolio의 보고서에서 확인하세요."
+    fallback:
+      heading: "주간 분석 {period}"
+      weekReturn: "주간 수익률: {change}"
+      topGainer: "최대 상승: {symbol} {change}"
+      topDecliner: "최대 하락: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: 예정된 이벤트"
+    heading: "{date}까지의 보유 종목 이벤트"
+    exDividend: "{symbol}: 배당락일 {date}"
+    earnings: "{symbol}: 실적 발표 {date}"
+    earningsBeforeOpen: "{symbol}: 실적 발표 {date}, 장 시작 전"
+    earningsAfterClose: "{symbol}: 실적 발표 {date}, 장 마감 후"
+    footer: "수입 및 이벤트 개요는 Portfolio에서 확인하세요."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Portfolio에서 보낸 테스트 메시지입니다. 일일 브리핑이 여기로 전송됩니다."
+    ntfy: "Portfolio에서 보낸 테스트 메시지입니다. 일일 브리핑과 주간 분석이 여기로 전송됩니다."

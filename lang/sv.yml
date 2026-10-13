@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Chattsession"
+  report:
+    title: "{portfolio} - Veckogenomgång ({period})"
+    summary:
+      one: "Värde {currency}{value} med {change} % ackumulerad avkastning fördelat på {count} tillgång."
+      other: "Värde {currency}{value} med {change} % ackumulerad avkastning fördelat på {count} tillgångar."
+    fallback:
+      heading: "Automatisk portföljgenomgång ({period})"
+      overviewLabel: "Marknadsöversikt"
+      overview: "Portföljens totala värde är {currency}{value} med en total avkastning på {change} %."
+      note: "Obs: LLM-modellen för den detaljerade rapporten var tillfälligt otillgänglig ({error}). Tekniska nyckeltal och journalvärden är fortfarande verifierade."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} förslag togs bort: svaret var ofullständigt."
+        other: "{count} förslag togs bort: svaret var ofullständigt."
+      notHeld:
+        one: "{count} förslag togs bort: det ändrar ett innehav som portföljen inte har."
+        other: "{count} förslag togs bort: de ändrar ett innehav som portföljen inte har."
+      unknown:
+        one: "{count} förslag togs bort: dataleverantörerna känner inte till symbolen."
+        other: "{count} förslag togs bort: dataleverantörerna känner inte till symbolen."
+      privateAsset:
+        one: "{count} förslag togs bort: det handlar med ett privat innehav."
+        other: "{count} förslag togs bort: de handlar med ett privat innehav."
+      misread:
+        one: "{count} förslag togs bort: assistenten läste av den nuvarande vikten fel."
+        other: "{count} förslag togs bort: assistenten läste av den nuvarande vikten fel."
+      noChange:
+        one: "{count} förslag togs bort: viktändringen var för liten eller gick åt fel håll."
+        other: "{count} förslag togs bort: viktändringen var för liten eller gick åt fel håll."
+      duplicate:
+        one: "{count} förslag togs bort: det upprepade en symbol."
+        other: "{count} förslag togs bort: de upprepade en symbol."
+      extra:
+        one: "{count} förslag togs bort: bara {max} behålls."
+        other: "{count} förslag togs bort: bara {max} behålls."
+    dismissedLeftOut:
+      one: "{count} avvisat förslag utelämnades."
+      other: "{count} avvisade förslag utelämnades."
+  dailyBrief:
+    notificationTitle: "{portfolio}: dagsöversikt"
+    conversationTitle: "Dagsöversikt {date}"
+    question: "Dagsöversikt för {date}: vad hände under den senaste handelsdagen?"
+    fallback:
+      sessionReturn: "Handelsdagens avkastning {change}"
+      topGainer: "Största vinnare: {instrument} {change}"
+      topDecliner: "Största förlorare: {instrument} {change}"
+      transactions:
+        one: "{count} transaktion sedan {since}"
+        other: "{count} transaktioner sedan {since}"
+      note: "Assistenten var inte tillgänglig, så den här översikten visar bara siffrorna."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: veckoanalys"
+    openReports: "Öppna Portfolio, Rapporter, för hela analysen."
+    fallback:
+      heading: "Veckoanalys {period}"
+      weekReturn: "Veckans avkastning: {change}"
+      topGainer: "Största vinnare: {symbol} {change}"
+      topDecliner: "Största förlorare: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: kommande händelser"
+    heading: "Händelser för dina innehav till och med {date}"
+    exDividend: "{symbol}: X-dag {date}"
+    earnings: "{symbol}: resultatrapport {date}"
+    earningsBeforeOpen: "{symbol}: resultatrapport {date}, före börsens öppning"
+    earningsAfterClose: "{symbol}: resultatrapport {date}, efter börsens stängning"
+    footer: "Öppna Portfolio för översikten över inkomster och händelser."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testmeddelande från Portfolio. Dagsöversikterna kommer hit."
+    ntfy: "Testmeddelande från Portfolio. Dagsöversikterna och veckoanalyserna kommer hit."

@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sesiune de chat"
+  report:
+    title: "{portfolio} - Buletin săptămânal ({period})"
+    summary:
+      one: "Evaluare {currency}{value}, randament cumulat {change}%, {count} activ."
+      few: "Evaluare {currency}{value}, randament cumulat {change}%, {count} active."
+      other: "Evaluare {currency}{value}, randament cumulat {change}%, {count} de active."
+    fallback:
+      heading: "Buletin automat al portofoliului ({period})"
+      overviewLabel: "Prezentarea pieței"
+      overview: "Valoarea totală a portofoliului este {currency}{value}, cu un randament total de {change}%."
+      note: "Notă: modelul LLM pentru raportul detaliat a fost temporar indisponibil ({error}). Indicatorii tehnici și valorile din registrul tranzacțiilor rămân verificate."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} sugestie a fost eliminată: răspunsul a fost incomplet."
+        few: "{count} sugestii au fost eliminate: răspunsul a fost incomplet."
+        other: "{count} de sugestii au fost eliminate: răspunsul a fost incomplet."
+      notHeld:
+        one: "{count} sugestie a fost eliminată: modifică o deținere pe care portofoliul nu o are."
+        few: "{count} sugestii au fost eliminate: modifică dețineri pe care portofoliul nu le are."
+        other: "{count} de sugestii au fost eliminate: modifică dețineri pe care portofoliul nu le are."
+      unknown:
+        one: "{count} sugestie a fost eliminată: furnizorii de date nu cunosc tickerul."
+        few: "{count} sugestii au fost eliminate: furnizorii de date nu cunosc tickerele."
+        other: "{count} de sugestii au fost eliminate: furnizorii de date nu cunosc tickerele."
+      privateAsset:
+        one: "{count} sugestie a fost eliminată: tranzacționează o deținere privată."
+        few: "{count} sugestii au fost eliminate: tranzacționează dețineri private."
+        other: "{count} de sugestii au fost eliminate: tranzacționează dețineri private."
+      misread:
+        one: "{count} sugestie a fost eliminată: asistentul a citit greșit ponderea curentă."
+        few: "{count} sugestii au fost eliminate: asistentul a citit greșit ponderea curentă."
+        other: "{count} de sugestii au fost eliminate: asistentul a citit greșit ponderea curentă."
+      noChange:
+        one: "{count} sugestie a fost eliminată: modificarea ponderii a fost prea mică sau în direcția greșită."
+        few: "{count} sugestii au fost eliminate: modificarea ponderii a fost prea mică sau în direcția greșită."
+        other: "{count} de sugestii au fost eliminate: modificarea ponderii a fost prea mică sau în direcția greșită."
+      duplicate:
+        one: "{count} sugestie a fost eliminată: a repetat un ticker."
+        few: "{count} sugestii au fost eliminate: au repetat tickere."
+        other: "{count} de sugestii au fost eliminate: au repetat tickere."
+      extra:
+        one: "{count} sugestie a fost eliminată: se păstrează doar {max}."
+        few: "{count} sugestii au fost eliminate: se păstrează doar {max}."
+        other: "{count} de sugestii au fost eliminate: se păstrează doar {max}."
+    dismissedLeftOut:
+      one: "{count} sugestie respinsă a fost omisă."
+      few: "{count} sugestii respinse au fost omise."
+      other: "{count} de sugestii respinse au fost omise."
+  dailyBrief:
+    notificationTitle: "{portfolio}: buletin zilnic"
+    conversationTitle: "Buletin zilnic {date}"
+    question: "Buletin zilnic pentru {date}: ce s-a întâmplat în ultima sesiune de tranzacționare?"
+    fallback:
+      sessionReturn: "Randamentul sesiunii {change}"
+      topGainer: "Cea mai mare creștere: {instrument} {change}"
+      topDecliner: "Cea mai mare scădere: {instrument} {change}"
+      transactions:
+        one: "{count} tranzacție de la {since}"
+        few: "{count} tranzacții de la {since}"
+        other: "{count} de tranzacții de la {since}"
+      note: "Asistentul nu a fost disponibil, așa că buletinul arată doar cifrele."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: analiză săptămânală"
+    openReports: "Pentru analiza completă, deschideți Portfolio, Rapoarte."
+    fallback:
+      heading: "Analiză săptămânală {period}"
+      weekReturn: "Randamentul săptămânii: {change}"
+      topGainer: "Cea mai mare creștere: {symbol} {change}"
+      topDecliner: "Cea mai mare scădere: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: evenimente viitoare"
+    heading: "Evenimentele deținerilor dvs. până la {date}"
+    exDividend: "{symbol}: data ex-dividend {date}"
+    earnings: "{symbol}: raport de rezultate {date}"
+    earningsBeforeOpen: "{symbol}: raport de rezultate {date}, înainte de deschiderea pieței"
+    earningsAfterClose: "{symbol}: raport de rezultate {date}, după închiderea pieței"
+    footer: "Deschideți Portfolio pentru prezentarea veniturilor și evenimentelor."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Mesaj de test de la Portfolio. Buletinele zilnice vor sosi aici."
+    ntfy: "Mesaj de test de la Portfolio. Buletinele zilnice și analizele săptămânale vor sosi aici."

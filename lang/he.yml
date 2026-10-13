@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "שיחה"
+  report:
+    title: "{portfolio} - תדריך שבועי ({period})"
+    summary:
+      one: "שווי {currency}{value} עם תשואה מצטברת של {change}% בנכס אחד."
+      two: "שווי {currency}{value} עם תשואה מצטברת של {change}% בשני נכסים."
+      other: "שווי {currency}{value} עם תשואה מצטברת של {change}% ב-{count} נכסים."
+    fallback:
+      heading: "תדריך תיק אוטומטי ({period})"
+      overviewLabel: "סקירת שוק"
+      overview: "שווי התיק הכולל עומד על {currency}{value} עם תשואה כוללת של {change}%."
+      note: "הערה: מודל ה-LLM של הדוח המפורט לא היה זמין באופן זמני ({error}). המדדים הטכניים וערכי היומן נשארים מאומתים."
+  suggestions:
+    dropped:
+      invalid:
+        one: "הצעה אחת הוסרה: התשובה לא הייתה שלמה."
+        two: "שתי הצעות הוסרו: התשובה לא הייתה שלמה."
+        other: "{count} הצעות הוסרו: התשובה לא הייתה שלמה."
+      notHeld:
+        one: "הצעה אחת הוסרה: היא משנה אחזקה שאין בתיק."
+        two: "שתי הצעות הוסרו: הן משנות אחזקה שאין בתיק."
+        other: "{count} הצעות הוסרו: הן משנות אחזקה שאין בתיק."
+      unknown:
+        one: "הצעה אחת הוסרה: ספקי הנתונים לא מכירים את הסימול."
+        two: "שתי הצעות הוסרו: ספקי הנתונים לא מכירים את הסימול."
+        other: "{count} הצעות הוסרו: ספקי הנתונים לא מכירים את הסימול."
+      privateAsset:
+        one: "הצעה אחת הוסרה: היא כוללת מסחר באחזקה פרטית."
+        two: "שתי הצעות הוסרו: הן כוללות מסחר באחזקה פרטית."
+        other: "{count} הצעות הוסרו: הן כוללות מסחר באחזקה פרטית."
+      misread:
+        one: "הצעה אחת הוסרה: העוזר קרא לא נכון את המשקל הנוכחי."
+        two: "שתי הצעות הוסרו: העוזר קרא לא נכון את המשקל הנוכחי."
+        other: "{count} הצעות הוסרו: העוזר קרא לא נכון את המשקל הנוכחי."
+      noChange:
+        one: "הצעה אחת הוסרה: שינוי המשקל היה קטן מדי או בכיוון הלא נכון."
+        two: "שתי הצעות הוסרו: שינוי המשקל היה קטן מדי או בכיוון הלא נכון."
+        other: "{count} הצעות הוסרו: שינוי המשקל היה קטן מדי או בכיוון הלא נכון."
+      duplicate:
+        one: "הצעה אחת הוסרה: היא חזרה על סימול."
+        two: "שתי הצעות הוסרו: הן חזרו על סימול."
+        other: "{count} הצעות הוסרו: הן חזרו על סימול."
+      extra:
+        one: "הצעה אחת הוסרה: נשמרות רק {max}."
+        two: "שתי הצעות הוסרו: נשמרות רק {max}."
+        other: "{count} הצעות הוסרו: נשמרות רק {max}."
+    dismissedLeftOut:
+      one: "הצעה אחת שנדחתה לא נכללה."
+      two: "שתי הצעות שנדחו לא נכללו."
+      other: "{count} הצעות שנדחו לא נכללו."
+  dailyBrief:
+    notificationTitle: "{portfolio}: תדריך יומי"
+    conversationTitle: "תדריך יומי {date}"
+    question: "תדריך יומי ל-{date}: מה קרה ביום המסחר האחרון?"
+    fallback:
+      sessionReturn: "תשואת יום המסחר {change}"
+      topGainer: "העלייה הגדולה ביותר: {instrument} {change}"
+      topDecliner: "הירידה הגדולה ביותר: {instrument} {change}"
+      transactions:
+        one: "עסקה אחת מאז {since}"
+        two: "שתי עסקאות מאז {since}"
+        other: "{count} עסקאות מאז {since}"
+      note: "העוזר לא היה זמין, ולכן התדריך הזה מציג את המספרים בלבד."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: ניתוח שבועי"
+    openReports: "לניתוח המלא יש לפתוח את Portfolio ולעבור ל'דוחות'."
+    fallback:
+      heading: "ניתוח שבועי {period}"
+      weekReturn: "תשואת השבוע: {change}"
+      topGainer: "העלייה הגדולה ביותר: {symbol} {change}"
+      topDecliner: "הירידה הגדולה ביותר: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: אירועים קרובים"
+    heading: "אירועים של האחזקות שלך עד {date}"
+    exDividend: "{symbol}: יום אקס {date}"
+    earnings: "{symbol}: דוח רווח {date}"
+    earningsBeforeOpen: "{symbol}: דוח רווח {date}, לפני פתיחת המסחר"
+    earningsAfterClose: "{symbol}: דוח רווח {date}, אחרי סגירת המסחר"
+    footer: "לסקירת ההכנסות והאירועים יש לפתוח את Portfolio."
+  testNotification:
+    title: "Portfolio"
+    gotify: "הודעת בדיקה מ-Portfolio. התדריכים היומיים יגיעו לכאן."
+    ntfy: "הודעת בדיקה מ-Portfolio. התדריכים היומיים והניתוחים השבועיים יגיעו לכאן."

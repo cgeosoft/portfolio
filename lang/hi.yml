@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "चैट सत्र"
+  report:
+    title: "{portfolio} - साप्ताहिक ब्रीफ़िंग ({period})"
+    summary:
+      one: "मूल्यांकन {currency}{value}, {count} एसेट पर {change}% संचयी रिटर्न।"
+      other: "मूल्यांकन {currency}{value}, {count} एसेट पर {change}% संचयी रिटर्न।"
+    fallback:
+      heading: "स्वचालित पोर्टफोलियो ब्रीफ़िंग ({period})"
+      overviewLabel: "बाज़ार अवलोकन"
+      overview: "पोर्टफोलियो का कुल मूल्यांकन {currency}{value} है, कुल रिटर्न {change}%।"
+      note: "नोट: विस्तृत रिपोर्ट का LLM मॉडल अस्थायी रूप से उपलब्ध नहीं था ({error})। तकनीकी मेट्रिक्स और लेजर के मान सत्यापित हैं।"
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} सुझाव हटाया गया: जवाब अधूरा था।"
+        other: "{count} सुझाव हटाए गए: जवाब अधूरा था।"
+      notHeld:
+        one: "{count} सुझाव हटाया गया: यह ऐसी होल्डिंग बदलता है जो पोर्टफोलियो में नहीं है।"
+        other: "{count} सुझाव हटाए गए: ये ऐसी होल्डिंग बदलते हैं जो पोर्टफोलियो में नहीं है।"
+      unknown:
+        one: "{count} सुझाव हटाया गया: डेटा प्रदाता इस सिंबल को नहीं पहचानते।"
+        other: "{count} सुझाव हटाए गए: डेटा प्रदाता इस सिंबल को नहीं पहचानते।"
+      privateAsset:
+        one: "{count} सुझाव हटाया गया: यह प्राइवेट होल्डिंग का ट्रेड करता है।"
+        other: "{count} सुझाव हटाए गए: ये प्राइवेट होल्डिंग का ट्रेड करते हैं।"
+      misread:
+        one: "{count} सुझाव हटाया गया: असिस्टेंट ने मौजूदा भार गलत पढ़ा।"
+        other: "{count} सुझाव हटाए गए: असिस्टेंट ने मौजूदा भार गलत पढ़ा।"
+      noChange:
+        one: "{count} सुझाव हटाया गया: भार में बदलाव बहुत छोटा था या गलत दिशा में था।"
+        other: "{count} सुझाव हटाए गए: भार में बदलाव बहुत छोटा था या गलत दिशा में था।"
+      duplicate:
+        one: "{count} सुझाव हटाया गया: इसमें सिंबल दोहराया गया था।"
+        other: "{count} सुझाव हटाए गए: इनमें सिंबल दोहराया गया था।"
+      extra:
+        one: "{count} सुझाव हटाया गया: केवल {max} रखे जाते हैं।"
+        other: "{count} सुझाव हटाए गए: केवल {max} रखे जाते हैं।"
+    dismissedLeftOut:
+      one: "{count} खारिज सुझाव शामिल नहीं किया गया।"
+      other: "{count} खारिज सुझाव शामिल नहीं किए गए।"
+  dailyBrief:
+    notificationTitle: "{portfolio}: दैनिक ब्रीफ़"
+    conversationTitle: "दैनिक ब्रीफ़ {date}"
+    question: "{date} का दैनिक ब्रीफ़: पिछले ट्रेडिंग सत्र में क्या हुआ?"
+    fallback:
+      sessionReturn: "सत्र का रिटर्न {change}"
+      topGainer: "सबसे ज़्यादा बढ़त: {instrument} {change}"
+      topDecliner: "सबसे ज़्यादा गिरावट: {instrument} {change}"
+      transactions:
+        one: "{since} से {count} लेन-देन"
+        other: "{since} से {count} लेन-देन"
+      note: "असिस्टेंट उपलब्ध नहीं था, इसलिए यह ब्रीफ़ केवल आँकड़े दिखाता है।"
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: साप्ताहिक विश्लेषण"
+    openReports: "पूरे विश्लेषण के लिए Portfolio में रिपोर्ट खोलें।"
+    fallback:
+      heading: "साप्ताहिक विश्लेषण {period}"
+      weekReturn: "सप्ताह का रिटर्न: {change}"
+      topGainer: "सबसे ज़्यादा बढ़त: {symbol} {change}"
+      topDecliner: "सबसे ज़्यादा गिरावट: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: आने वाले इवेंट"
+    heading: "{date} तक आपकी होल्डिंग्स के इवेंट"
+    exDividend: "{symbol}: एक्स-डिविडेंड तारीख {date}"
+    earnings: "{symbol}: नतीजों की रिपोर्ट {date}"
+    earningsBeforeOpen: "{symbol}: नतीजों की रिपोर्ट {date}, बाज़ार खुलने से पहले"
+    earningsAfterClose: "{symbol}: नतीजों की रिपोर्ट {date}, बाज़ार बंद होने के बाद"
+    footer: "आय और इवेंट का अवलोकन देखने के लिए Portfolio खोलें।"
+  testNotification:
+    title: "Portfolio"
+    gotify: "Portfolio से टेस्ट संदेश। दैनिक ब्रीफ़ यहाँ आएँगे।"
+    ntfy: "Portfolio से टेस्ट संदेश। दैनिक ब्रीफ़ और साप्ताहिक विश्लेषण यहाँ आएँगे।"

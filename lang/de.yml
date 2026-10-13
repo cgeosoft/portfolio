@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Chat-Sitzung"
+  report:
+    title: "{portfolio} - Wochen-Briefing ({period})"
+    summary:
+      one: "Bewertung {currency}{value} mit {change} % kumulierter Rendite über {count} Wert."
+      other: "Bewertung {currency}{value} mit {change} % kumulierter Rendite über {count} Werte."
+    fallback:
+      heading: "Automatisches Portfolio-Briefing ({period})"
+      overviewLabel: "Marktüberblick"
+      overview: "Der Gesamtwert des Portfolios beträgt {currency}{value} bei einer Gesamtrendite von {change} %."
+      note: "Hinweis: Das LLM-Modell für den ausführlichen Bericht war vorübergehend nicht erreichbar ({error}). Technische Kennzahlen und Journalwerte bleiben geprüft."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} Vorschlag wurde entfernt: Die Antwort war unvollständig."
+        other: "{count} Vorschläge wurden entfernt: Die Antwort war unvollständig."
+      notHeld:
+        one: "{count} Vorschlag wurde entfernt: Er ändert eine Position, die das Portfolio nicht hat."
+        other: "{count} Vorschläge wurden entfernt: Sie ändern eine Position, die das Portfolio nicht hat."
+      unknown:
+        one: "{count} Vorschlag wurde entfernt: Die Datenanbieter kennen das Symbol nicht."
+        other: "{count} Vorschläge wurden entfernt: Die Datenanbieter kennen das Symbol nicht."
+      privateAsset:
+        one: "{count} Vorschlag wurde entfernt: Er handelt eine private Position."
+        other: "{count} Vorschläge wurden entfernt: Sie handeln eine private Position."
+      misread:
+        one: "{count} Vorschlag wurde entfernt: Der Assistent hat das aktuelle Gewicht falsch gelesen."
+        other: "{count} Vorschläge wurden entfernt: Der Assistent hat das aktuelle Gewicht falsch gelesen."
+      noChange:
+        one: "{count} Vorschlag wurde entfernt: Die Gewichtsänderung war zu klein oder ging in die falsche Richtung."
+        other: "{count} Vorschläge wurden entfernt: Die Gewichtsänderung war zu klein oder ging in die falsche Richtung."
+      duplicate:
+        one: "{count} Vorschlag wurde entfernt: Er wiederholte ein Symbol."
+        other: "{count} Vorschläge wurden entfernt: Sie wiederholten ein Symbol."
+      extra:
+        one: "{count} Vorschlag wurde entfernt: Nur {max} werden behalten."
+        other: "{count} Vorschläge wurden entfernt: Nur {max} werden behalten."
+    dismissedLeftOut:
+      one: "{count} verworfener Vorschlag wurde ausgelassen."
+      other: "{count} verworfene Vorschläge wurden ausgelassen."
+  dailyBrief:
+    notificationTitle: "{portfolio}: tägliches Briefing"
+    conversationTitle: "Tägliches Briefing {date}"
+    question: "Tägliches Briefing für {date}: Was ist am letzten Handelstag passiert?"
+    fallback:
+      sessionReturn: "Rendite des Handelstags {change}"
+      topGainer: "Größter Gewinner: {instrument} {change}"
+      topDecliner: "Größter Verlierer: {instrument} {change}"
+      transactions:
+        one: "{count} Transaktion seit {since}"
+        other: "{count} Transaktionen seit {since}"
+      note: "Der Assistent war nicht verfügbar, daher zeigt dieses Briefing nur die Zahlen."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: Wochenanalyse"
+    openReports: "Öffnen Sie Portfolio, Berichte, für die vollständige Analyse."
+    fallback:
+      heading: "Wochenanalyse {period}"
+      weekReturn: "Rendite der Woche: {change}"
+      topGainer: "Größter Gewinner: {symbol} {change}"
+      topDecliner: "Größter Verlierer: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: anstehende Termine"
+    heading: "Termine Ihrer Positionen bis {date}"
+    exDividend: "{symbol}: Ex-Dividende-Tag {date}"
+    earnings: "{symbol}: Quartalszahlen {date}"
+    earningsBeforeOpen: "{symbol}: Quartalszahlen {date}, vor Börseneröffnung"
+    earningsAfterClose: "{symbol}: Quartalszahlen {date}, nach Börsenschluss"
+    footer: "Öffnen Sie Portfolio für die Übersicht der Erträge und Termine."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testnachricht von Portfolio. Hier kommen die täglichen Briefings an."
+    ntfy: "Testnachricht von Portfolio. Hier kommen die täglichen Briefings und Wochenanalysen an."

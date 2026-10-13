@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Чат сесия"
+  report:
+    title: "{portfolio} - Седмичен обзор ({period})"
+    summary:
+      one: "Стойност {currency}{value}, натрупана доходност {change}% при {count} актив."
+      other: "Стойност {currency}{value}, натрупана доходност {change}% при {count} актива."
+    fallback:
+      heading: "Автоматичен обзор на портфейла ({period})"
+      overviewLabel: "Пазарен преглед"
+      overview: "Общата стойност на портфейла е {currency}{value}, общата доходност е {change}%."
+      note: "Забележка: моделът LLM за подробния отчет временно беше недостъпен ({error}). Техническите показатели и стойностите в дневника на транзакциите остават проверени."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} препоръка е премахната: отговорът беше непълен."
+        other: "{count} препоръки са премахнати: отговорът беше непълен."
+      notHeld:
+        one: "{count} препоръка е премахната: тя променя позиция, която портфейлът няма."
+        other: "{count} препоръки са премахнати: те променят позиции, които портфейлът няма."
+      unknown:
+        one: "{count} препоръка е премахната: доставчиците на данни не познават тикера."
+        other: "{count} препоръки са премахнати: доставчиците на данни не познават тикерите."
+      privateAsset:
+        one: "{count} препоръка е премахната: тя предлага сделка с частна позиция."
+        other: "{count} препоръки са премахнати: те предлагат сделки с частни позиции."
+      misread:
+        one: "{count} препоръка е премахната: асистентът е разчел грешно текущото тегло."
+        other: "{count} препоръки са премахнати: асистентът е разчел грешно текущото тегло."
+      noChange:
+        one: "{count} препоръка е премахната: промяната в теглото е твърде малка или в грешна посока."
+        other: "{count} препоръки са премахнати: промяната в теглото е твърде малка или в грешна посока."
+      duplicate:
+        one: "{count} препоръка е премахната: тикерът се повтаря."
+        other: "{count} препоръки са премахнати: тикерите се повтарят."
+      extra:
+        one: "{count} препоръка е премахната: запазват се само {max}."
+        other: "{count} препоръки са премахнати: запазват се само {max}."
+    dismissedLeftOut:
+      one: "{count} отхвърлена препоръка е пропусната."
+      other: "{count} отхвърлени препоръки са пропуснати."
+  dailyBrief:
+    notificationTitle: "{portfolio}: дневен обзор"
+    conversationTitle: "Дневен обзор {date}"
+    question: "Дневен обзор за {date}: какво се случи през последната търговска сесия?"
+    fallback:
+      sessionReturn: "Доходност за сесията {change}"
+      topGainer: "Най-голям ръст: {instrument} {change}"
+      topDecliner: "Най-голям спад: {instrument} {change}"
+      transactions:
+        one: "{count} транзакция от {since}"
+        other: "{count} транзакции от {since}"
+      note: "Асистентът не беше достъпен, затова обзорът показва само числата."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: седмичен анализ"
+    openReports: "Пълният анализ е в Portfolio, „Отчети“."
+    fallback:
+      heading: "Седмичен анализ {period}"
+      weekReturn: "Доходност за седмицата: {change}"
+      topGainer: "Най-голям ръст: {symbol} {change}"
+      topDecliner: "Най-голям спад: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: предстоящи събития"
+    heading: "Събития за вашите позиции до {date}"
+    exDividend: "{symbol}: екс-дивидентна дата {date}"
+    earnings: "{symbol}: финансови резултати {date}"
+    earningsBeforeOpen: "{symbol}: финансови резултати {date}, преди отварянето на пазара"
+    earningsAfterClose: "{symbol}: финансови резултати {date}, след затварянето на пазара"
+    footer: "Отворете Portfolio за преглед на доходите и събитията."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Тестово съобщение от Portfolio. Тук ще пристигат дневните обзори."
+    ntfy: "Тестово съобщение от Portfolio. Тук ще пристигат дневните обзори и седмичните анализи."

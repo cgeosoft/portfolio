@@ -1854,13 +1854,13 @@ service:
         other: "{count} suggestions were dropped: the answer was incomplete."
       notHeld:
         one: "{count} suggestion was dropped: it changes a holding the portfolio does not have."
-        other: "{count} suggestions were dropped: it changes a holding the portfolio does not have."
+        other: "{count} suggestions were dropped: they change holdings the portfolio does not have."
       unknown:
         one: "{count} suggestion was dropped: the data providers do not know the symbol."
         other: "{count} suggestions were dropped: the data providers do not know the symbol."
       privateAsset:
         one: "{count} suggestion was dropped: it trades a private holding."
-        other: "{count} suggestions were dropped: it trades a private holding."
+        other: "{count} suggestions were dropped: they trade private holdings."
       misread:
         one: "{count} suggestion was dropped: the assistant misread the current weight."
         other: "{count} suggestions were dropped: the assistant misread the current weight."

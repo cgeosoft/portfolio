@@ -1785,4 +1785,65 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sesi Obrolan"
+  report:
+    title: "{portfolio} - Ringkasan Mingguan ({period})"
+    summary:
+      other: "Valuasi {currency}{value} dengan imbal hasil kumulatif {change}% dari {count} aset."
+    fallback:
+      heading: "Ringkasan Portofolio Otomatis ({period})"
+      overviewLabel: "Ikhtisar Pasar"
+      overview: "Total valuasi portofolio sebesar {currency}{value} dengan imbal hasil keseluruhan {change}%."
+      note: "Catatan: Model LLM untuk laporan terperinci untuk sementara tidak dapat dijangkau ({error}). Metrik teknis dan nilai buku besar tetap terverifikasi."
+  suggestions:
+    dropped:
+      invalid:
+        other: "{count} saran dibuang: jawabannya tidak lengkap."
+      notHeld:
+        other: "{count} saran dibuang: saran mengubah kepemilikan yang tidak ada di portofolio."
+      unknown:
+        other: "{count} saran dibuang: penyedia data tidak mengenal simbol tersebut."
+      privateAsset:
+        other: "{count} saran dibuang: saran memperdagangkan kepemilikan privat."
+      misread:
+        other: "{count} saran dibuang: asisten salah membaca bobot saat ini."
+      noChange:
+        other: "{count} saran dibuang: perubahan bobot terlalu kecil atau arahnya salah."
+      duplicate:
+        other: "{count} saran dibuang: saran mengulang simbol yang sama."
+      extra:
+        other: "{count} saran dibuang: hanya {max} yang disimpan."
+    dismissedLeftOut:
+      other: "{count} saran yang diabaikan tidak disertakan."
+  dailyBrief:
+    notificationTitle: "{portfolio}: ringkasan harian"
+    conversationTitle: "Ringkasan harian {date}"
+    question: "Ringkasan harian untuk {date}: apa yang terjadi pada sesi perdagangan terakhir?"
+    fallback:
+      sessionReturn: "Imbal hasil sesi {change}"
+      topGainer: "Kenaikan tertinggi: {instrument} {change}"
+      topDecliner: "Penurunan terbesar: {instrument} {change}"
+      transactions:
+        other: "{count} transaksi sejak {since}"
+      note: "Asisten tidak tersedia, jadi ringkasan ini hanya menampilkan angka."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: analisis mingguan"
+    openReports: "Buka Portfolio, Laporan untuk analisis lengkap."
+    fallback:
+      heading: "Analisis mingguan {period}"
+      weekReturn: "Imbal hasil minggu ini: {change}"
+      topGainer: "Kenaikan tertinggi: {symbol} {change}"
+      topDecliner: "Penurunan terbesar: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: peristiwa mendatang"
+    heading: "Peristiwa kepemilikan Anda hingga {date}"
+    exDividend: "{symbol}: tanggal ex-dividen {date}"
+    earnings: "{symbol}: laporan laba {date}"
+    earningsBeforeOpen: "{symbol}: laporan laba {date}, sebelum pasar dibuka"
+    earningsAfterClose: "{symbol}: laporan laba {date}, setelah pasar ditutup"
+    footer: "Buka Portfolio untuk ikhtisar pendapatan dan peristiwa."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Pesan uji dari Portfolio. Ringkasan harian akan masuk ke sini."
+    ntfy: "Pesan uji dari Portfolio. Ringkasan harian dan analisis mingguan akan masuk ke sini."

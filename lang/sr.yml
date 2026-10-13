@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Сесија разговора"
+  report:
+    title: "{portfolio} - Недељни преглед ({period})"
+    summary:
+      one: "Вредност {currency}{value}, кумулативни принос {change}%, {count} инструмент."
+      few: "Вредност {currency}{value}, кумулативни принос {change}%, {count} инструмента."
+      other: "Вредност {currency}{value}, кумулативни принос {change}%, {count} инструмената."
+    fallback:
+      heading: "Аутоматски преглед портфолија ({period})"
+      overviewLabel: "Преглед тржишта"
+      overview: "Укупна вредност портфолија износи {currency}{value}, укупан принос {change}%."
+      note: "Напомена: LLM модел за детаљан извештај привремено није био доступан ({error}). Технички показатељи и вредности из дневника трансакција остају проверени."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} предлог је уклоњен: одговор није био потпун."
+        few: "{count} предлога су уклоњена: одговор није био потпун."
+        other: "{count} предлога је уклоњено: одговор није био потпун."
+      notHeld:
+        one: "{count} предлог је уклоњен: мења улагање које портфолио нема."
+        few: "{count} предлога су уклоњена: мењају улагања која портфолио нема."
+        other: "{count} предлога је уклоњено: мењају улагања која портфолио нема."
+      unknown:
+        one: "{count} предлог је уклоњен: добављачи података не познају ову ознаку."
+        few: "{count} предлога су уклоњена: добављачи података не познају ове ознаке."
+        other: "{count} предлога је уклоњено: добављачи података не познају ове ознаке."
+      privateAsset:
+        one: "{count} предлог је уклоњен: предлаже трговање приватним улагањем."
+        few: "{count} предлога су уклоњена: предлажу трговање приватним улагањима."
+        other: "{count} предлога је уклоњено: предлажу трговање приватним улагањима."
+      misread:
+        one: "{count} предлог је уклоњен: асистент је погрешно прочитао тренутни удео."
+        few: "{count} предлога су уклоњена: асистент је погрешно прочитао тренутни удео."
+        other: "{count} предлога је уклоњено: асистент је погрешно прочитао тренутни удео."
+      noChange:
+        one: "{count} предлог је уклоњен: промена удела је била премала или у погрешном смеру."
+        few: "{count} предлога су уклоњена: промена удела је била премала или у погрешном смеру."
+        other: "{count} предлога је уклоњено: промена удела је била премала или у погрешном смеру."
+      duplicate:
+        one: "{count} предлог је уклоњен: ознака се понавља."
+        few: "{count} предлога су уклоњена: ознаке се понављају."
+        other: "{count} предлога је уклоњено: ознаке се понављају."
+      extra:
+        one: "{count} предлог је уклоњен: задржава се само {max}."
+        few: "{count} предлога су уклоњена: задржава се само {max}."
+        other: "{count} предлога је уклоњено: задржава се само {max}."
+    dismissedLeftOut:
+      one: "{count} одбачени предлог је изостављен."
+      few: "{count} одбачена предлога су изостављена."
+      other: "{count} одбачених предлога је изостављено."
+  dailyBrief:
+    notificationTitle: "{portfolio}: дневни резиме"
+    conversationTitle: "Дневни резиме {date}"
+    question: "Дневни резиме за {date}: шта се догодило на последњој сесији трговања?"
+    fallback:
+      sessionReturn: "Принос сесије {change}"
+      topGainer: "Највећи раст: {instrument} {change}"
+      topDecliner: "Највећи пад: {instrument} {change}"
+      transactions:
+        one: "{count} трансакција од {since}"
+        few: "{count} трансакције од {since}"
+        other: "{count} трансакција од {since}"
+      note: "Асистент није био доступан, па резиме приказује само бројке."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: недељна анализа"
+    openReports: "Целу анализу погледајте у Portfolio, у одељку Извештаји."
+    fallback:
+      heading: "Недељна анализа {period}"
+      weekReturn: "Принос недеље: {change}"
+      topGainer: "Највећи раст: {symbol} {change}"
+      topDecliner: "Највећи пад: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: предстојећи догађаји"
+    heading: "Догађаји ваших улагања до {date}"
+    exDividend: "{symbol}: екс-дивиденд датум {date}"
+    earnings: "{symbol}: објава резултата {date}"
+    earningsBeforeOpen: "{symbol}: објава резултата {date}, пре отварања тржишта"
+    earningsAfterClose: "{symbol}: објава резултата {date}, после затварања тржишта"
+    footer: "Отворите Portfolio за преглед прихода и догађаја."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Пробна порука из Portfolio. Овде ће стизати дневни резимеи."
+    ntfy: "Пробна порука из Portfolio. Овде ће стизати дневни резимеи и недељне анализе."

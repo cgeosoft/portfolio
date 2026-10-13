@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "جلسه گفتگو"
+  report:
+    title: "{portfolio} - خلاصه هفتگی ({period})"
+    summary:
+      one: "ارزش {currency}{value} با بازده انباشته {change}% در {count} دارایی."
+      other: "ارزش {currency}{value} با بازده انباشته {change}% در {count} دارایی."
+    fallback:
+      heading: "خلاصه خودکار سبد ({period})"
+      overviewLabel: "نمای کلی بازار"
+      overview: "ارزش کل سبد {currency}{value} با بازده کلی {change}% است."
+      note: "توجه: مدل LLM گزارش تفصیلی موقتاً در دسترس نبود ({error}). معیارهای فنی و مقادیر دفتر همچنان تأییدشده هستند."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} پیشنهاد کنار گذاشته شد: پاسخ ناقص بود."
+        other: "{count} پیشنهاد کنار گذاشته شد: پاسخ ناقص بود."
+      notHeld:
+        one: "{count} پیشنهاد کنار گذاشته شد: دارایی‌ای را تغییر می‌دهد که در سبد نیست."
+        other: "{count} پیشنهاد کنار گذاشته شد: دارایی‌ای را تغییر می‌دهند که در سبد نیست."
+      unknown:
+        one: "{count} پیشنهاد کنار گذاشته شد: ارائه‌دهندگان داده این نماد را نمی‌شناسند."
+        other: "{count} پیشنهاد کنار گذاشته شد: ارائه‌دهندگان داده این نماد را نمی‌شناسند."
+      privateAsset:
+        one: "{count} پیشنهاد کنار گذاشته شد: یک دارایی خصوصی را معامله می‌کند."
+        other: "{count} پیشنهاد کنار گذاشته شد: یک دارایی خصوصی را معامله می‌کنند."
+      misread:
+        one: "{count} پیشنهاد کنار گذاشته شد: دستیار وزن فعلی را اشتباه خواند."
+        other: "{count} پیشنهاد کنار گذاشته شد: دستیار وزن فعلی را اشتباه خواند."
+      noChange:
+        one: "{count} پیشنهاد کنار گذاشته شد: تغییر وزن خیلی کوچک یا در جهت اشتباه بود."
+        other: "{count} پیشنهاد کنار گذاشته شد: تغییر وزن خیلی کوچک یا در جهت اشتباه بود."
+      duplicate:
+        one: "{count} پیشنهاد کنار گذاشته شد: نمادی را تکرار کرد."
+        other: "{count} پیشنهاد کنار گذاشته شد: نمادی را تکرار کردند."
+      extra:
+        one: "{count} پیشنهاد کنار گذاشته شد: فقط {max} مورد نگه داشته می‌شود."
+        other: "{count} پیشنهاد کنار گذاشته شد: فقط {max} مورد نگه داشته می‌شود."
+    dismissedLeftOut:
+      one: "{count} پیشنهاد ردشده لحاظ نشد."
+      other: "{count} پیشنهاد ردشده لحاظ نشد."
+  dailyBrief:
+    notificationTitle: "{portfolio}: خلاصه روزانه"
+    conversationTitle: "خلاصه روزانه {date}"
+    question: "خلاصه روزانه برای {date}: در آخرین جلسه معاملاتی چه اتفاقی افتاد؟"
+    fallback:
+      sessionReturn: "بازده جلسه {change}"
+      topGainer: "بیشترین رشد: {instrument} {change}"
+      topDecliner: "بیشترین افت: {instrument} {change}"
+      transactions:
+        one: "{count} تراکنش از {since}"
+        other: "{count} تراکنش از {since}"
+      note: "دستیار در دسترس نبود، بنابراین این خلاصه فقط اعداد را نشان می‌دهد."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: تحلیل هفتگی"
+    openReports: "برای تحلیل کامل، Portfolio را باز کنید و به «گزارش‌ها» بروید."
+    fallback:
+      heading: "تحلیل هفتگی {period}"
+      weekReturn: "بازده هفته: {change}"
+      topGainer: "بیشترین رشد: {symbol} {change}"
+      topDecliner: "بیشترین افت: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: رویدادهای پیش رو"
+    heading: "رویدادهای دارایی‌های شما تا {date}"
+    exDividend: "{symbol}: تاریخ بدون سود {date}"
+    earnings: "{symbol}: گزارش سود {date}"
+    earningsBeforeOpen: "{symbol}: گزارش سود {date}، پیش از باز شدن بازار"
+    earningsAfterClose: "{symbol}: گزارش سود {date}، پس از بسته شدن بازار"
+    footer: "برای نمای کلی درآمد و رویدادها، Portfolio را باز کنید."
+  testNotification:
+    title: "Portfolio"
+    gotify: "پیام آزمایشی از Portfolio. خلاصه‌های روزانه به اینجا می‌رسند."
+    ntfy: "پیام آزمایشی از Portfolio. خلاصه‌های روزانه و تحلیل‌های هفتگی به اینجا می‌رسند."

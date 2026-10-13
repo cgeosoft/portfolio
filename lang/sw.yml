@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Kipindi cha Gumzo"
+  report:
+    title: "{portfolio} - Taarifa ya Wiki ({period})"
+    summary:
+      one: "Thamani {currency}{value} na marejesho limbikizi ya {change}% kwenye mali {count}."
+      other: "Thamani {currency}{value} na marejesho limbikizi ya {change}% kwenye mali {count}."
+    fallback:
+      heading: "Taarifa ya Jalada ya Kiotomatiki ({period})"
+      overviewLabel: "Muhtasari wa Soko"
+      overview: "Thamani ya jumla ya jalada ni {currency}{value} na marejesho ya jumla ya {change}%."
+      note: "Kumbuka: Modeli ya LLM ya ripoti ya kina haikupatikana kwa muda ({error}). Vipimo vya kiufundi na thamani za leja bado vimethibitishwa."
+  suggestions:
+    dropped:
+      invalid:
+        one: "Pendekezo {count} limeondolewa: jibu halikuwa kamili."
+        other: "Mapendekezo {count} yameondolewa: jibu halikuwa kamili."
+      notHeld:
+        one: "Pendekezo {count} limeondolewa: linabadilisha umiliki ambao jalada halina."
+        other: "Mapendekezo {count} yameondolewa: yanabadilisha umiliki ambao jalada halina."
+      unknown:
+        one: "Pendekezo {count} limeondolewa: watoa data hawaijui alama hiyo."
+        other: "Mapendekezo {count} yameondolewa: watoa data hawaijui alama hiyo."
+      privateAsset:
+        one: "Pendekezo {count} limeondolewa: linafanya biashara ya umiliki binafsi."
+        other: "Mapendekezo {count} yameondolewa: yanafanya biashara ya umiliki binafsi."
+      misread:
+        one: "Pendekezo {count} limeondolewa: msaidizi alisoma vibaya uzito wa sasa."
+        other: "Mapendekezo {count} yameondolewa: msaidizi alisoma vibaya uzito wa sasa."
+      noChange:
+        one: "Pendekezo {count} limeondolewa: mabadiliko ya uzito yalikuwa madogo mno au kwa mwelekeo usio sahihi."
+        other: "Mapendekezo {count} yameondolewa: mabadiliko ya uzito yalikuwa madogo mno au kwa mwelekeo usio sahihi."
+      duplicate:
+        one: "Pendekezo {count} limeondolewa: lilirudia alama."
+        other: "Mapendekezo {count} yameondolewa: yalirudia alama."
+      extra:
+        one: "Pendekezo {count} limeondolewa: ni {max} tu yanayohifadhiwa."
+        other: "Mapendekezo {count} yameondolewa: ni {max} tu yanayohifadhiwa."
+    dismissedLeftOut:
+      one: "Pendekezo {count} lililoondolewa halikujumuishwa."
+      other: "Mapendekezo {count} yaliyoondolewa hayakujumuishwa."
+  dailyBrief:
+    notificationTitle: "{portfolio}: taarifa ya kila siku"
+    conversationTitle: "Taarifa ya kila siku {date}"
+    question: "Taarifa ya kila siku ya {date}: nini kilitokea katika kipindi cha mwisho cha biashara?"
+    fallback:
+      sessionReturn: "Marejesho ya kipindi {change}"
+      topGainer: "Iliyopanda zaidi: {instrument} {change}"
+      topDecliner: "Iliyoshuka zaidi: {instrument} {change}"
+      transactions:
+        one: "Muamala {count} tangu {since}"
+        other: "Miamala {count} tangu {since}"
+      note: "Msaidizi hakupatikana, kwa hivyo taarifa hii inaonyesha takwimu tu."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: uchambuzi wa kila wiki"
+    openReports: "Fungua Portfolio, Ripoti kwa uchambuzi kamili."
+    fallback:
+      heading: "Uchambuzi wa wiki {period}"
+      weekReturn: "Marejesho ya wiki: {change}"
+      topGainer: "Iliyopanda zaidi: {symbol} {change}"
+      topDecliner: "Iliyoshuka zaidi: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: matukio yajayo"
+    heading: "Matukio ya umiliki wako hadi {date}"
+    exDividend: "{symbol}: tarehe ya ex-dividend {date}"
+    earnings: "{symbol}: ripoti ya mapato {date}"
+    earningsBeforeOpen: "{symbol}: ripoti ya mapato {date}, kabla ya soko kufunguliwa"
+    earningsAfterClose: "{symbol}: ripoti ya mapato {date}, baada ya soko kufungwa"
+    footer: "Fungua Portfolio kwa muhtasari wa mapato na matukio."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Ujumbe wa majaribio kutoka Portfolio. Taarifa za kila siku zitafika hapa."
+    ntfy: "Ujumbe wa majaribio kutoka Portfolio. Taarifa za kila siku na uchambuzi wa kila wiki zitafika hapa."

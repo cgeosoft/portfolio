@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sesyon ng Chat"
+  report:
+    title: "{portfolio} - Lingguhang Briefing ({period})"
+    summary:
+      one: "Valuation na {currency}{value} na may {change}% na cumulative return sa {count} asset."
+      other: "Valuation na {currency}{value} na may {change}% na cumulative return sa {count} asset."
+    fallback:
+      heading: "Awtomatikong Briefing ng Portfolio ({period})"
+      overviewLabel: "Overview ng Market"
+      overview: "Ang kabuuang valuation ng portfolio ay {currency}{value} na may {change}% na kabuuang return."
+      note: "Paalala: Pansamantalang hindi maabot ang LLM model para sa detalyadong report ({error}). Beripikado pa rin ang mga teknikal na metric at ang mga halaga sa ledger."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} mungkahi ang inalis: hindi kumpleto ang sagot."
+        other: "{count} mungkahi ang inalis: hindi kumpleto ang sagot."
+      notHeld:
+        one: "{count} mungkahi ang inalis: binabago nito ang isang holding na wala sa portfolio."
+        other: "{count} mungkahi ang inalis: binabago ng mga ito ang holding na wala sa portfolio."
+      unknown:
+        one: "{count} mungkahi ang inalis: hindi kilala ng mga data provider ang simbolo."
+        other: "{count} mungkahi ang inalis: hindi kilala ng mga data provider ang simbolo."
+      privateAsset:
+        one: "{count} mungkahi ang inalis: nagte-trade ito ng pribadong holding."
+        other: "{count} mungkahi ang inalis: nagte-trade ang mga ito ng pribadong holding."
+      misread:
+        one: "{count} mungkahi ang inalis: mali ang pagbasa ng assistant sa kasalukuyang timbang."
+        other: "{count} mungkahi ang inalis: mali ang pagbasa ng assistant sa kasalukuyang timbang."
+      noChange:
+        one: "{count} mungkahi ang inalis: masyadong maliit ang pagbabago ng timbang o mali ang direksyon."
+        other: "{count} mungkahi ang inalis: masyadong maliit ang pagbabago ng timbang o mali ang direksyon."
+      duplicate:
+        one: "{count} mungkahi ang inalis: inulit nito ang isang simbolo."
+        other: "{count} mungkahi ang inalis: inulit ng mga ito ang isang simbolo."
+      extra:
+        one: "{count} mungkahi ang inalis: {max} lang ang itinatabi."
+        other: "{count} mungkahi ang inalis: {max} lang ang itinatabi."
+    dismissedLeftOut:
+      one: "Hindi isinama ang {count} na-dismiss na mungkahi."
+      other: "Hindi isinama ang {count} na-dismiss na mungkahi."
+  dailyBrief:
+    notificationTitle: "{portfolio}: pang-araw-araw na brief"
+    conversationTitle: "Pang-araw-araw na brief {date}"
+    question: "Pang-araw-araw na brief para sa {date}: ano ang nangyari sa huling trading session?"
+    fallback:
+      sessionReturn: "Return ng session {change}"
+      topGainer: "Pinakamalaking pagtaas: {instrument} {change}"
+      topDecliner: "Pinakamalaking pagbaba: {instrument} {change}"
+      transactions:
+        one: "{count} transaksyon mula {since}"
+        other: "{count} transaksyon mula {since}"
+      note: "Hindi available ang assistant, kaya mga numero lang ang ipinapakita ng brief na ito."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: lingguhang pagsusuri"
+    openReports: "Buksan ang Portfolio, Mga Report para sa buong pagsusuri."
+    fallback:
+      heading: "Lingguhang pagsusuri {period}"
+      weekReturn: "Return ng linggo: {change}"
+      topGainer: "Pinakamalaking pagtaas: {symbol} {change}"
+      topDecliner: "Pinakamalaking pagbaba: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: mga paparating na event"
+    heading: "Mga event ng iyong holdings hanggang {date}"
+    exDividend: "{symbol}: ex-dividend date {date}"
+    earnings: "{symbol}: earnings report {date}"
+    earningsBeforeOpen: "{symbol}: earnings report {date}, bago magbukas ang market"
+    earningsAfterClose: "{symbol}: earnings report {date}, pagkatapos magsara ang market"
+    footer: "Buksan ang Portfolio para sa overview ng kita at mga event."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Test message mula sa Portfolio. Dito darating ang mga pang-araw-araw na brief."
+    ntfy: "Test message mula sa Portfolio. Dito darating ang mga pang-araw-araw na brief at lingguhang pagsusuri."

@@ -437,7 +437,7 @@ dashboard:
       annual: "Co rok"
       irregular: "Nieregularnie"
     events:
-      exDividend: "Dzień ustalenia prawa"
+      exDividend: "Dzień odcięcia dywidendy"
       dividendPayment: "Wypłata"
       earnings: "Wyniki"
       split: "Split"
@@ -1713,7 +1713,7 @@ settings:
       title: "Alerty dywidend i wyników"
       blurb: "Każdego dnia twój telefon dowiaduje się, które pozycje następnego dnia wypłacają dywidendę lub publikują wyniki."
       toggleTitle: "Wysyłaj alerty o wydarzeniach"
-      toggleDescription: "Obejmuje dni ustalenia prawa do dywidendy (ostatni dzień posiadania akcji z prawem do dywidendy) oraz publikacje wyników (kwartalnych) posiadanych akcji i funduszy. W piątek i sobotę alert obejmuje dni do poniedziałku. Każde wydarzenie jest wysyłane raz, nawet po ręcznym uruchomieniu."
+      toggleDescription: "Obejmuje dni odcięcia dywidendy (ostatni dzień posiadania akcji z prawem do dywidendy) oraz publikacje wyników (kwartalnych) posiadanych akcji i funduszy. W piątek i sobotę alert obejmuje dni do poniedziałku. Każde wydarzenie jest wysyłane raz, nawet po ręcznym uruchomieniu."
       timeDescription: "Czas lokalny tego komputera. Portfolio musi działać, w oknie lub w zasobniku. Jeśli o tej porze nie działało, alert zostanie wysłany po uruchomieniu."
       nextRun: "Następny alert {when}."
       portfolioDescription: "Jedno powiadomienie zawiera wydarzenia wszystkich wybranych portfeli."
@@ -1837,7 +1837,7 @@ settings:
         description: "Sektor, branża, kraj i wskaźniki wyceny, takie jak cena do zysku."
       dividends:
         title: "Dywidendy"
-        description: "Wcześniejsze dywidendy, dni ustalenia prawa i wypłaty oraz częstotliwość wypłat."
+        description: "Wcześniejsze dywidendy, dni odcięcia i wypłaty oraz częstotliwość wypłat."
       splits:
         title: "Splity akcji"
         description: "Wcześniejsze podziały akcji każdej pozycji."
@@ -1890,4 +1890,98 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Sesja czatu"
+  report:
+    title: "{portfolio} - Przegląd tygodniowy ({period})"
+    summary:
+      one: "Wycena {currency}{value}, skumulowany zwrot {change}% dla {count} aktywa."
+      few: "Wycena {currency}{value}, skumulowany zwrot {change}% dla {count} aktywów."
+      many: "Wycena {currency}{value}, skumulowany zwrot {change}% dla {count} aktywów."
+      other: "Wycena {currency}{value}, skumulowany zwrot {change}% dla {count} aktywa."
+    fallback:
+      heading: "Automatyczny przegląd portfela ({period})"
+      overviewLabel: "Przegląd rynku"
+      overview: "Łączna wycena portfela wynosi {currency}{value}, łączny zwrot {change}%."
+      note: "Uwaga: model LLM do szczegółowego raportu był chwilowo niedostępny ({error}). Wskaźniki techniczne i wartości z rejestru transakcji pozostają zweryfikowane."
+  suggestions:
+    dropped:
+      invalid:
+        one: "Pominięto {count} sugestię: odpowiedź była niekompletna."
+        few: "Pominięto {count} sugestie: odpowiedź była niekompletna."
+        many: "Pominięto {count} sugestii: odpowiedź była niekompletna."
+        other: "Pominięto {count} sugestii: odpowiedź była niekompletna."
+      notHeld:
+        one: "Pominięto {count} sugestię: zmienia pozycję, której nie ma w portfelu."
+        few: "Pominięto {count} sugestie: zmieniają pozycje, których nie ma w portfelu."
+        many: "Pominięto {count} sugestii: zmieniają pozycje, których nie ma w portfelu."
+        other: "Pominięto {count} sugestii: zmieniają pozycje, których nie ma w portfelu."
+      unknown:
+        one: "Pominięto {count} sugestię: dostawcy danych nie znają tego tickera."
+        few: "Pominięto {count} sugestie: dostawcy danych nie znają tych tickerów."
+        many: "Pominięto {count} sugestii: dostawcy danych nie znają tych tickerów."
+        other: "Pominięto {count} sugestii: dostawcy danych nie znają tych tickerów."
+      privateAsset:
+        one: "Pominięto {count} sugestię: dotyczy transakcji na pozycji prywatnej."
+        few: "Pominięto {count} sugestie: dotyczą transakcji na pozycjach prywatnych."
+        many: "Pominięto {count} sugestii: dotyczą transakcji na pozycjach prywatnych."
+        other: "Pominięto {count} sugestii: dotyczą transakcji na pozycjach prywatnych."
+      misread:
+        one: "Pominięto {count} sugestię: asystent błędnie odczytał bieżącą wagę."
+        few: "Pominięto {count} sugestie: asystent błędnie odczytał bieżącą wagę."
+        many: "Pominięto {count} sugestii: asystent błędnie odczytał bieżącą wagę."
+        other: "Pominięto {count} sugestii: asystent błędnie odczytał bieżącą wagę."
+      noChange:
+        one: "Pominięto {count} sugestię: zmiana wagi była zbyt mała lub w złym kierunku."
+        few: "Pominięto {count} sugestie: zmiana wagi była zbyt mała lub w złym kierunku."
+        many: "Pominięto {count} sugestii: zmiana wagi była zbyt mała lub w złym kierunku."
+        other: "Pominięto {count} sugestii: zmiana wagi była zbyt mała lub w złym kierunku."
+      duplicate:
+        one: "Pominięto {count} sugestię: ticker się powtarzał."
+        few: "Pominięto {count} sugestie: tickery się powtarzały."
+        many: "Pominięto {count} sugestii: tickery się powtarzały."
+        other: "Pominięto {count} sugestii: tickery się powtarzały."
+      extra:
+        one: "Pominięto {count} sugestię: zachowywanych jest tylko {max}."
+        few: "Pominięto {count} sugestie: zachowywanych jest tylko {max}."
+        many: "Pominięto {count} sugestii: zachowywanych jest tylko {max}."
+        other: "Pominięto {count} sugestii: zachowywanych jest tylko {max}."
+    dismissedLeftOut:
+      one: "Nie uwzględniono {count} odrzuconej sugestii."
+      few: "Nie uwzględniono {count} odrzuconych sugestii."
+      many: "Nie uwzględniono {count} odrzuconych sugestii."
+      other: "Nie uwzględniono {count} odrzuconej sugestii."
+  dailyBrief:
+    notificationTitle: "{portfolio}: codzienne podsumowanie"
+    conversationTitle: "Codzienne podsumowanie {date}"
+    question: "Codzienne podsumowanie za {date}: co się wydarzyło na ostatniej sesji?"
+    fallback:
+      sessionReturn: "Zwrot z sesji {change}"
+      topGainer: "Największy wzrost: {instrument} {change}"
+      topDecliner: "Największy spadek: {instrument} {change}"
+      transactions:
+        one: "{count} transakcja od {since}"
+        few: "{count} transakcje od {since}"
+        many: "{count} transakcji od {since}"
+        other: "{count} transakcji od {since}"
+      note: "Asystent był niedostępny, więc podsumowanie pokazuje tylko liczby."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: analiza tygodniowa"
+    openReports: "Pełna analiza: Portfolio, sekcja Raporty."
+    fallback:
+      heading: "Analiza tygodniowa {period}"
+      weekReturn: "Zwrot w tygodniu: {change}"
+      topGainer: "Największy wzrost: {symbol} {change}"
+      topDecliner: "Największy spadek: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: nadchodzące wydarzenia"
+    heading: "Wydarzenia twoich pozycji do {date}"
+    exDividend: "{symbol}: dzień odcięcia dywidendy {date}"
+    earnings: "{symbol}: publikacja wyników {date}"
+    earningsBeforeOpen: "{symbol}: publikacja wyników {date}, przed otwarciem rynku"
+    earningsAfterClose: "{symbol}: publikacja wyników {date}, po zamknięciu rynku"
+    footer: "Przegląd dochodów i wydarzeń znajdziesz w Portfolio."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Wiadomość testowa z Portfolio. Tutaj będą trafiać codzienne podsumowania."
+    ntfy: "Wiadomość testowa z Portfolio. Tutaj będą trafiać codzienne podsumowania i analizy tygodniowe."

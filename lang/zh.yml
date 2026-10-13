@@ -1797,4 +1797,65 @@ setup:
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "聊天会话"
+  report:
+    title: "{portfolio} - 每周简报（{period}）"
+    summary:
+      other: "估值 {currency}{value}，{count} 项资产累计收益 {change}%。"
+    fallback:
+      heading: "投资组合自动简报（{period}）"
+      overviewLabel: "市场概览"
+      overview: "投资组合总估值为 {currency}{value}，总收益为 {change}%。"
+      note: "注意：详细报告所用的 LLM 模型暂时无法访问（{error}）。技术指标和账本数值仍经过核实。"
+  suggestions:
+    dropped:
+      invalid:
+        other: "已舍弃 {count} 条建议：回答不完整。"
+      notHeld:
+        other: "已舍弃 {count} 条建议：所更改的持仓不在该投资组合中。"
+      unknown:
+        other: "已舍弃 {count} 条建议：数据提供商无法识别该代码。"
+      privateAsset:
+        other: "已舍弃 {count} 条建议：所交易的是私人持仓。"
+      misread:
+        other: "已舍弃 {count} 条建议：助手误读了当前权重。"
+      noChange:
+        other: "已舍弃 {count} 条建议：权重变化过小或方向错误。"
+      duplicate:
+        other: "已舍弃 {count} 条建议：代码重复。"
+      extra:
+        other: "已舍弃 {count} 条建议：仅保留 {max} 条。"
+    dismissedLeftOut:
+      other: "已略去 {count} 条已忽略的建议。"
+  dailyBrief:
+    notificationTitle: "{portfolio}：每日简报"
+    conversationTitle: "每日简报 {date}"
+    question: "{date} 的每日简报：上一个交易时段发生了什么？"
+    fallback:
+      sessionReturn: "交易时段收益 {change}"
+      topGainer: "涨幅最大：{instrument} {change}"
+      topDecliner: "跌幅最大：{instrument} {change}"
+      transactions:
+        other: "自 {since} 以来 {count} 笔交易"
+      note: "助手不可用，因此本简报仅显示数据。"
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}：每周分析"
+    openReports: "打开 Portfolio 的“报告”查看完整分析。"
+    fallback:
+      heading: "每周分析 {period}"
+      weekReturn: "本周收益：{change}"
+      topGainer: "涨幅最大：{symbol} {change}"
+      topDecliner: "跌幅最大：{symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio：即将发生的事件"
+    heading: "截至 {date} 的持仓事件"
+    exDividend: "{symbol}：除息日 {date}"
+    earnings: "{symbol}：财报 {date}"
+    earningsBeforeOpen: "{symbol}：财报 {date}，开盘前"
+    earningsAfterClose: "{symbol}：财报 {date}，收盘后"
+    footer: "打开 Portfolio 查看收入与事件概览。"
+  testNotification:
+    title: "Portfolio"
+    gotify: "来自 Portfolio 的测试消息。每日简报将发送到这里。"
+    ntfy: "来自 Portfolio 的测试消息。每日简报和每周分析将发送到这里。"

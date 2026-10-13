@@ -1785,4 +1785,65 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Àkókò ìjíròrò"
+  report:
+    title: "{portfolio} - Àkópọ̀ ọ̀sẹ̀ ({period})"
+    summary:
+      other: "Ìdíyelé {currency}{value} pẹ̀lú èrè àkójọpọ̀ {change}% lórí dúkìá {count}."
+    fallback:
+      heading: "Àkópọ̀ àkójọ ìdókòwò aládàáṣe ({period})"
+      overviewLabel: "Ìwòye ọjà"
+      overview: "Àpapọ̀ ìdíyelé àkójọ ìdókòwò jẹ́ {currency}{value} pẹ̀lú èrè gbogbogbò {change}%."
+      note: "Àkíyèsí: Àwòṣe LLM fún ìjábọ̀ kíkún kò ṣeé dé fún ìgbà díẹ̀ ({error}). Àwọn ìwọ̀n ọjà àti iye inú ìwé àkọsílẹ̀ ṣì jẹ́ èyí tí a ti ṣàyẹ̀wò."
+  suggestions:
+    dropped:
+      invalid:
+        other: "A yọ àbá {count} kúrò: ìdáhùn náà kò pé."
+      notHeld:
+        other: "A yọ àbá {count} kúrò: ó ń yí ohun-ìní kan tí àkójọ ìdókòwò kò ní padà."
+      unknown:
+        other: "A yọ àbá {count} kúrò: àwọn olùpèsè dátà kò mọ àmì náà."
+      privateAsset:
+        other: "A yọ àbá {count} kúrò: ó ń ṣòwò ohun-ìní àdáni kan."
+      misread:
+        other: "A yọ àbá {count} kúrò: olùrànlọ́wọ́ ka ìwúwo lọ́wọ́lọ́wọ́ ní àṣìṣe."
+      noChange:
+        other: "A yọ àbá {count} kúrò: àyípadà ìwúwo kéré jù tàbí ó lọ sí ọ̀nà tí kò tọ́."
+      duplicate:
+        other: "A yọ àbá {count} kúrò: ó tún àmì kan sọ."
+      extra:
+        other: "A yọ àbá {count} kúrò: {max} nìkan ni a ń tọ́jú."
+    dismissedLeftOut:
+      other: "A kò fi àbá {count} tí a ti yọ kúrò kún un."
+  dailyBrief:
+    notificationTitle: "{portfolio}: àkópọ̀ ojoojúmọ́"
+    conversationTitle: "Àkópọ̀ ojoojúmọ́ {date}"
+    question: "Àkópọ̀ ojoojúmọ́ fún {date}: kí ló ṣẹlẹ̀ ní àkókò ọjà tó kẹ́yìn?"
+    fallback:
+      sessionReturn: "Èrè àkókò ọjà {change}"
+      topGainer: "Èyí tó gòkè jùlọ: {instrument} {change}"
+      topDecliner: "Èyí tó lọ sílẹ̀ jùlọ: {instrument} {change}"
+      transactions:
+        other: "Ìdúnàádúrà {count} láti {since}"
+      note: "Olùrànlọ́wọ́ kò sí lárọ̀ọ́wọ́tó, nítorí náà àkópọ̀ yìí ń fi àwọn nọ́ńbà nìkan hàn."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: àyẹ̀wò ọ̀sẹ̀"
+    openReports: "Ṣí Portfolio, Ìjábọ̀ fún àyẹ̀wò kíkún."
+    fallback:
+      heading: "Àyẹ̀wò ọ̀sẹ̀ {period}"
+      weekReturn: "Èrè ọ̀sẹ̀ náà: {change}"
+      topGainer: "Èyí tó gòkè jùlọ: {symbol} {change}"
+      topDecliner: "Èyí tó lọ sílẹ̀ jùlọ: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: àwọn ìṣẹ̀lẹ̀ tó ń bọ̀"
+    heading: "Àwọn ìṣẹ̀lẹ̀ ohun-ìní rẹ títí di {date}"
+    exDividend: "{symbol}: ọjọ́ ex-dividend {date}"
+    earnings: "{symbol}: ìjábọ̀ èrè ilé-iṣẹ́ {date}"
+    earningsBeforeOpen: "{symbol}: ìjábọ̀ èrè ilé-iṣẹ́ {date}, kí ọjà tó ṣí"
+    earningsAfterClose: "{symbol}: ìjábọ̀ èrè ilé-iṣẹ́ {date}, lẹ́yìn tí ọjà bá ti pa"
+    footer: "Ṣí Portfolio fún àkópọ̀ owó tó ń wọlé àti ìṣẹ̀lẹ̀."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Ìfiránṣẹ́ ìdánwò láti Portfolio. Àwọn àkópọ̀ ojoojúmọ́ yóò dé síbí."
+    ntfy: "Ìfiránṣẹ́ ìdánwò láti Portfolio. Àwọn àkópọ̀ ojoojúmọ́ àti àyẹ̀wò ọ̀sẹ̀ yóò dé síbí."

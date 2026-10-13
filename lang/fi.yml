@@ -1832,4 +1832,76 @@ setup:
 
 # ── service ──
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Keskusteluistunto"
+  report:
+    title: "{portfolio} - Viikkokatsaus ({period})"
+    summary:
+      one: "Arvo {currency}{value}, kumulatiivinen tuotto {change} %, {count} omaisuuserä."
+      other: "Arvo {currency}{value}, kumulatiivinen tuotto {change} %, {count} omaisuuserää."
+    fallback:
+      heading: "Automaattinen salkkukatsaus ({period})"
+      overviewLabel: "Markkinakatsaus"
+      overview: "Salkun kokonaisarvo on {currency}{value} ja kokonaistuotto {change} %."
+      note: "Huomautus: yksityiskohtaisen raportin LLM-malli ei ollut tilapäisesti tavoitettavissa ({error}). Tekniset tunnusluvut ja kirjanpidon arvot ovat edelleen varmennettuja."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} ehdotus poistettiin: vastaus oli puutteellinen."
+        other: "{count} ehdotusta poistettiin: vastaus oli puutteellinen."
+      notHeld:
+        one: "{count} ehdotus poistettiin: se muuttaa omistusta, jota salkussa ei ole."
+        other: "{count} ehdotusta poistettiin: ne muuttavat omistusta, jota salkussa ei ole."
+      unknown:
+        one: "{count} ehdotus poistettiin: tietolähteet eivät tunne tunnusta."
+        other: "{count} ehdotusta poistettiin: tietolähteet eivät tunne tunnusta."
+      privateAsset:
+        one: "{count} ehdotus poistettiin: se käy kauppaa yksityisellä omistuksella."
+        other: "{count} ehdotusta poistettiin: ne käyvät kauppaa yksityisellä omistuksella."
+      misread:
+        one: "{count} ehdotus poistettiin: avustaja luki nykyisen painon väärin."
+        other: "{count} ehdotusta poistettiin: avustaja luki nykyisen painon väärin."
+      noChange:
+        one: "{count} ehdotus poistettiin: painon muutos oli liian pieni tai väärään suuntaan."
+        other: "{count} ehdotusta poistettiin: painon muutos oli liian pieni tai väärään suuntaan."
+      duplicate:
+        one: "{count} ehdotus poistettiin: se toisti tunnuksen."
+        other: "{count} ehdotusta poistettiin: ne toistivat tunnuksen."
+      extra:
+        one: "{count} ehdotus poistettiin: vain {max} säilytetään."
+        other: "{count} ehdotusta poistettiin: vain {max} säilytetään."
+    dismissedLeftOut:
+      one: "{count} ohitettu ehdotus jätettiin pois."
+      other: "{count} ohitettua ehdotusta jätettiin pois."
+  dailyBrief:
+    notificationTitle: "{portfolio}: päivän katsaus"
+    conversationTitle: "Päivän katsaus {date}"
+    question: "Päivän katsaus {date}: mitä tapahtui edellisenä kaupankäyntipäivänä?"
+    fallback:
+      sessionReturn: "Päivän tuotto {change}"
+      topGainer: "Paras nousija: {instrument} {change}"
+      topDecliner: "Suurin laskija: {instrument} {change}"
+      transactions:
+        one: "{count} tapahtuma {since} lähtien"
+        other: "{count} tapahtumaa {since} lähtien"
+      note: "Avustaja ei ollut käytettävissä, joten tämä katsaus näyttää vain luvut."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: viikkoanalyysi"
+    openReports: "Avaa Portfolio, Raportit, nähdäksesi koko analyysin."
+    fallback:
+      heading: "Viikkoanalyysi {period}"
+      weekReturn: "Viikon tuotto: {change}"
+      topGainer: "Paras nousija: {symbol} {change}"
+      topDecliner: "Suurin laskija: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: tulevat tapahtumat"
+    heading: "Omistustesi tapahtumat {date} asti"
+    exDividend: "{symbol}: osingon irtoamispäivä {date}"
+    earnings: "{symbol}: tulosjulkistus {date}"
+    earningsBeforeOpen: "{symbol}: tulosjulkistus {date}, ennen pörssin avautumista"
+    earningsAfterClose: "{symbol}: tulosjulkistus {date}, pörssin sulkeuduttua"
+    footer: "Avaa Portfolio nähdäksesi tuottojen ja tapahtumien yleiskatsauksen."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testiviesti Portfolio-sovelluksesta. Päivän katsaukset saapuvat tänne."
+    ntfy: "Testiviesti Portfolio-sovelluksesta. Päivän katsaukset ja viikkoanalyysit saapuvat tänne."

@@ -1797,4 +1797,65 @@ setup:
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "チャットセッション"
+  report:
+    title: "{portfolio} - 週次ブリーフィング（{period}）"
+    summary:
+      other: "評価額 {currency}{value}、{count} 資産全体の累積リターンは {change}%。"
+    fallback:
+      heading: "ポートフォリオ自動ブリーフィング（{period}）"
+      overviewLabel: "市場概況"
+      overview: "ポートフォリオの総評価額は {currency}{value}、全体のリターンは {change}% です。"
+      note: "注：詳細レポート用の LLM モデルに一時的に接続できませんでした（{error}）。テクニカル指標と台帳の数値は検証済みです。"
+  suggestions:
+    dropped:
+      invalid:
+        other: "{count} 件の提案を除外しました：回答が不完全でした。"
+      notHeld:
+        other: "{count} 件の提案を除外しました：ポートフォリオにない保有銘柄を変更する内容でした。"
+      unknown:
+        other: "{count} 件の提案を除外しました：データプロバイダーがその銘柄を認識していません。"
+      privateAsset:
+        other: "{count} 件の提案を除外しました：非上場の保有資産を売買する内容でした。"
+      misread:
+        other: "{count} 件の提案を除外しました：アシスタントが現在のウェイトを読み違えました。"
+      noChange:
+        other: "{count} 件の提案を除外しました：ウェイトの変更が小さすぎるか、方向が逆でした。"
+      duplicate:
+        other: "{count} 件の提案を除外しました：銘柄が重複していました。"
+      extra:
+        other: "{count} 件の提案を除外しました：保持するのは {max} 件までです。"
+    dismissedLeftOut:
+      other: "却下済みの提案 {count} 件を除外しました。"
+  dailyBrief:
+    notificationTitle: "{portfolio}：デイリーブリーフ"
+    conversationTitle: "デイリーブリーフ {date}"
+    question: "{date} のデイリーブリーフ：前回の取引セッションで何がありましたか？"
+    fallback:
+      sessionReturn: "取引セッションのリターン {change}"
+      topGainer: "値上がり率トップ：{instrument} {change}"
+      topDecliner: "値下がり率トップ：{instrument} {change}"
+      transactions:
+        other: "{since} 以降の取引 {count} 件"
+      note: "アシスタントを利用できなかったため、このブリーフには数値のみを表示しています。"
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}：週次分析"
+    openReports: "詳しい分析は Portfolio の「レポート」を開いてください。"
+    fallback:
+      heading: "週次分析 {period}"
+      weekReturn: "今週のリターン：{change}"
+      topGainer: "値上がり率トップ：{symbol} {change}"
+      topDecliner: "値下がり率トップ：{symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio：今後のイベント"
+    heading: "{date} までの保有銘柄のイベント"
+    exDividend: "{symbol}：配当落ち日 {date}"
+    earnings: "{symbol}：決算発表 {date}"
+    earningsBeforeOpen: "{symbol}：決算発表 {date}、取引開始前"
+    earningsAfterClose: "{symbol}：決算発表 {date}、取引終了後"
+    footer: "インカムとイベントの概要は Portfolio を開いてご確認ください。"
+  testNotification:
+    title: "Portfolio"
+    gotify: "Portfolio からのテストメッセージです。デイリーブリーフはここに届きます。"
+    ntfy: "Portfolio からのテストメッセージです。デイリーブリーフと週次分析はここに届きます。"

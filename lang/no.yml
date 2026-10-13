@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Chatøkt"
+  report:
+    title: "{portfolio} - Ukentlig orientering ({period})"
+    summary:
+      one: "Verdi {currency}{value} med {change} % kumulativ avkastning fordelt på {count} aktivum."
+      other: "Verdi {currency}{value} med {change} % kumulativ avkastning fordelt på {count} aktiva."
+    fallback:
+      heading: "Automatisk porteføljeorientering ({period})"
+      overviewLabel: "Markedsoversikt"
+      overview: "Porteføljens samlede verdi er {currency}{value} med en samlet avkastning på {change} %."
+      note: "Merk: LLM-modellen for den detaljerte rapporten var midlertidig utilgjengelig ({error}). Tekniske nøkkeltall og journalverdier er fortsatt verifisert."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} forslag ble fjernet: svaret var ufullstendig."
+        other: "{count} forslag ble fjernet: svaret var ufullstendig."
+      notHeld:
+        one: "{count} forslag ble fjernet: det endrer en beholdning porteføljen ikke har."
+        other: "{count} forslag ble fjernet: de endrer en beholdning porteføljen ikke har."
+      unknown:
+        one: "{count} forslag ble fjernet: dataleverandørene kjenner ikke symbolet."
+        other: "{count} forslag ble fjernet: dataleverandørene kjenner ikke symbolet."
+      privateAsset:
+        one: "{count} forslag ble fjernet: det handler en privat beholdning."
+        other: "{count} forslag ble fjernet: de handler en privat beholdning."
+      misread:
+        one: "{count} forslag ble fjernet: assistenten leste den nåværende vekten feil."
+        other: "{count} forslag ble fjernet: assistenten leste den nåværende vekten feil."
+      noChange:
+        one: "{count} forslag ble fjernet: vektendringen var for liten eller gikk i feil retning."
+        other: "{count} forslag ble fjernet: vektendringen var for liten eller gikk i feil retning."
+      duplicate:
+        one: "{count} forslag ble fjernet: det gjentok et symbol."
+        other: "{count} forslag ble fjernet: de gjentok et symbol."
+      extra:
+        one: "{count} forslag ble fjernet: bare {max} beholdes."
+        other: "{count} forslag ble fjernet: bare {max} beholdes."
+    dismissedLeftOut:
+      one: "{count} avvist forslag ble utelatt."
+      other: "{count} avviste forslag ble utelatt."
+  dailyBrief:
+    notificationTitle: "{portfolio}: daglig orientering"
+    conversationTitle: "Daglig orientering {date}"
+    question: "Daglig orientering for {date}: hva skjedde på forrige handelsdag?"
+    fallback:
+      sessionReturn: "Avkastning i handelsdagen {change}"
+      topGainer: "Største vinner: {instrument} {change}"
+      topDecliner: "Største taper: {instrument} {change}"
+      transactions:
+        one: "{count} transaksjon siden {since}"
+        other: "{count} transaksjoner siden {since}"
+      note: "Assistenten var ikke tilgjengelig, så denne orienteringen viser bare tallene."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: ukentlig analyse"
+    openReports: "Åpne Portfolio, Rapporter, for hele analysen."
+    fallback:
+      heading: "Ukentlig analyse {period}"
+      weekReturn: "Ukens avkastning: {change}"
+      topGainer: "Største vinner: {symbol} {change}"
+      topDecliner: "Største taper: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: kommende hendelser"
+    heading: "Hendelser for beholdningene dine frem til {date}"
+    exDividend: "{symbol}: eks-utbyttedato {date}"
+    earnings: "{symbol}: resultatrapport {date}"
+    earningsBeforeOpen: "{symbol}: resultatrapport {date}, før markedet åpner"
+    earningsAfterClose: "{symbol}: resultatrapport {date}, etter at markedet stenger"
+    footer: "Åpne Portfolio for oversikten over inntekter og hendelser."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Testmelding fra Portfolio. Daglige orienteringer kommer hit."
+    ntfy: "Testmelding fra Portfolio. Daglige orienteringer og ukentlige analyser kommer hit."

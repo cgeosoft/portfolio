@@ -1785,4 +1785,65 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Phiên trò chuyện"
+  report:
+    title: "{portfolio} - Bản tin hằng tuần ({period})"
+    summary:
+      other: "Định giá {currency}{value}, lợi nhuận tích lũy {change}% trên {count} tài sản."
+    fallback:
+      heading: "Bản tin danh mục tự động ({period})"
+      overviewLabel: "Tổng quan thị trường"
+      overview: "Tổng định giá danh mục là {currency}{value}, lợi nhuận chung {change}%."
+      note: "Lưu ý: Tạm thời không truy cập được mô hình LLM cho báo cáo chi tiết ({error}). Các chỉ số kỹ thuật và giá trị sổ cái vẫn đã được xác minh."
+  suggestions:
+    dropped:
+      invalid:
+        other: "Đã loại {count} đề xuất: câu trả lời không đầy đủ."
+      notHeld:
+        other: "Đã loại {count} đề xuất: đề xuất thay đổi một khoản nắm giữ mà danh mục không có."
+      unknown:
+        other: "Đã loại {count} đề xuất: các nhà cung cấp dữ liệu không nhận ra mã này."
+      privateAsset:
+        other: "Đã loại {count} đề xuất: đề xuất giao dịch một khoản nắm giữ tư nhân."
+      misread:
+        other: "Đã loại {count} đề xuất: trợ lý đọc sai tỷ trọng hiện tại."
+      noChange:
+        other: "Đã loại {count} đề xuất: mức thay đổi tỷ trọng quá nhỏ hoặc sai hướng."
+      duplicate:
+        other: "Đã loại {count} đề xuất: đề xuất lặp lại một mã."
+      extra:
+        other: "Đã loại {count} đề xuất: chỉ giữ lại {max} đề xuất."
+    dismissedLeftOut:
+      other: "Không đưa vào {count} đề xuất đã bỏ qua."
+  dailyBrief:
+    notificationTitle: "{portfolio}: bản tin hằng ngày"
+    conversationTitle: "Bản tin hằng ngày {date}"
+    question: "Bản tin hằng ngày cho {date}: điều gì đã xảy ra trong phiên giao dịch gần nhất?"
+    fallback:
+      sessionReturn: "Lợi nhuận của phiên {change}"
+      topGainer: "Tăng mạnh nhất: {instrument} {change}"
+      topDecliner: "Giảm mạnh nhất: {instrument} {change}"
+      transactions:
+        other: "{count} giao dịch kể từ {since}"
+      note: "Trợ lý không khả dụng nên bản tin này chỉ hiển thị số liệu."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: phân tích hằng tuần"
+    openReports: "Mở Portfolio, mục Báo cáo để xem toàn bộ phân tích."
+    fallback:
+      heading: "Phân tích tuần {period}"
+      weekReturn: "Lợi nhuận của tuần: {change}"
+      topGainer: "Tăng mạnh nhất: {symbol} {change}"
+      topDecliner: "Giảm mạnh nhất: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: sự kiện sắp tới"
+    heading: "Sự kiện của các khoản nắm giữ đến {date}"
+    exDividend: "{symbol}: ngày giao dịch không hưởng quyền {date}"
+    earnings: "{symbol}: báo cáo kết quả kinh doanh {date}"
+    earningsBeforeOpen: "{symbol}: báo cáo kết quả kinh doanh {date}, trước giờ mở cửa thị trường"
+    earningsAfterClose: "{symbol}: báo cáo kết quả kinh doanh {date}, sau giờ đóng cửa thị trường"
+    footer: "Mở Portfolio để xem tổng quan thu nhập và sự kiện."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Tin nhắn thử từ Portfolio. Bản tin hằng ngày sẽ được gửi tới đây."
+    ntfy: "Tin nhắn thử từ Portfolio. Bản tin hằng ngày và phân tích hằng tuần sẽ được gửi tới đây."

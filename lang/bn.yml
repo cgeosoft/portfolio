@@ -1820,4 +1820,76 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "চ্যাট সেশন"
+  report:
+    title: "{portfolio} - সাপ্তাহিক ব্রিফিং ({period})"
+    summary:
+      one: "মূল্যায়ন {currency}{value}, {count}টি অ্যাসেটে {change}% ক্রমপুঞ্জিত রিটার্ন।"
+      other: "মূল্যায়ন {currency}{value}, {count}টি অ্যাসেটে {change}% ক্রমপুঞ্জিত রিটার্ন।"
+    fallback:
+      heading: "স্বয়ংক্রিয় পোর্টফোলিও ব্রিফিং ({period})"
+      overviewLabel: "বাজারের সারসংক্ষেপ"
+      overview: "পোর্টফোলিওর মোট মূল্যায়ন {currency}{value}, সামগ্রিক রিটার্ন {change}%।"
+      note: "দ্রষ্টব্য: বিস্তারিত রিপোর্টের LLM মডেলে সাময়িকভাবে পৌঁছানো যায়নি ({error})। টেকনিক্যাল মেট্রিক ও লেজারের মান যাচাই করা আছে।"
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: উত্তরটি অসম্পূর্ণ ছিল।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: উত্তরটি অসম্পূর্ণ ছিল।"
+      notHeld:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এটি এমন একটি হোল্ডিং বদলায় যা পোর্টফোলিওতে নেই।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এগুলো এমন হোল্ডিং বদলায় যা পোর্টফোলিওতে নেই।"
+      unknown:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: ডেটা প্রদানকারীরা সিম্বলটি চেনে না।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: ডেটা প্রদানকারীরা সিম্বলটি চেনে না।"
+      privateAsset:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এটি একটি প্রাইভেট হোল্ডিং ট্রেড করে।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এগুলো প্রাইভেট হোল্ডিং ট্রেড করে।"
+      misread:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: অ্যাসিস্ট্যান্ট বর্তমান ওজন ভুল পড়েছে।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: অ্যাসিস্ট্যান্ট বর্তমান ওজন ভুল পড়েছে।"
+      noChange:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: ওজনের পরিবর্তন খুব ছোট ছিল বা ভুল দিকে ছিল।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: ওজনের পরিবর্তন খুব ছোট ছিল বা ভুল দিকে ছিল।"
+      duplicate:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এতে একটি সিম্বল আবার এসেছে।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: এগুলোতে একটি সিম্বল আবার এসেছে।"
+      extra:
+        one: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: শুধু {max}টি রাখা হয়।"
+        other: "{count}টি পরামর্শ বাদ দেওয়া হয়েছে: শুধু {max}টি রাখা হয়।"
+    dismissedLeftOut:
+      one: "{count}টি সরানো পরামর্শ বাদ রাখা হয়েছে।"
+      other: "{count}টি সরানো পরামর্শ বাদ রাখা হয়েছে।"
+  dailyBrief:
+    notificationTitle: "{portfolio}: দৈনিক ব্রিফ"
+    conversationTitle: "দৈনিক ব্রিফ {date}"
+    question: "{date}-এর দৈনিক ব্রিফ: শেষ ট্রেডিং সেশনে কী ঘটেছে?"
+    fallback:
+      sessionReturn: "সেশনের রিটার্ন {change}"
+      topGainer: "সর্বোচ্চ বৃদ্ধি: {instrument} {change}"
+      topDecliner: "সর্বোচ্চ পতন: {instrument} {change}"
+      transactions:
+        one: "{since} থেকে {count}টি লেনদেন"
+        other: "{since} থেকে {count}টি লেনদেন"
+      note: "অ্যাসিস্ট্যান্ট উপলব্ধ ছিল না, তাই এই ব্রিফে শুধু সংখ্যাগুলো দেখানো হয়েছে।"
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: সাপ্তাহিক বিশ্লেষণ"
+    openReports: "পূর্ণ বিশ্লেষণের জন্য Portfolio-তে রিপোর্ট খুলুন।"
+    fallback:
+      heading: "সাপ্তাহিক বিশ্লেষণ {period}"
+      weekReturn: "সপ্তাহের রিটার্ন: {change}"
+      topGainer: "সর্বোচ্চ বৃদ্ধি: {symbol} {change}"
+      topDecliner: "সর্বোচ্চ পতন: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: আসন্ন ইভেন্ট"
+    heading: "{date} পর্যন্ত আপনার হোল্ডিংয়ের ইভেন্ট"
+    exDividend: "{symbol}: এক্স-ডিভিডেন্ড তারিখ {date}"
+    earnings: "{symbol}: আর্নিংস রিপোর্ট {date}"
+    earningsBeforeOpen: "{symbol}: আর্নিংস রিপোর্ট {date}, বাজার খোলার আগে"
+    earningsAfterClose: "{symbol}: আর্নিংস রিপোর্ট {date}, বাজার বন্ধ হওয়ার পরে"
+    footer: "আয় ও ইভেন্টের সারসংক্ষেপ দেখতে Portfolio খুলুন।"
+  testNotification:
+    title: "Portfolio"
+    gotify: "Portfolio থেকে পরীক্ষামূলক বার্তা। দৈনিক ব্রিফ এখানে আসবে।"
+    ntfy: "Portfolio থেকে পরীক্ষামূলক বার্তা। দৈনিক ব্রিফ ও সাপ্তাহিক বিশ্লেষণ এখানে আসবে।"

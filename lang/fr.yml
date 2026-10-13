@@ -1855,4 +1855,87 @@ setup:
   _section: "setup"
 
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Session de discussion"
+  report:
+    title: "{portfolio} - Briefing hebdomadaire ({period})"
+    summary:
+      one: "Valorisation {currency}{value}, rendement cumulé de {change} % sur {count} actif."
+      many: "Valorisation {currency}{value}, rendement cumulé de {change} % sur {count} actifs."
+      other: "Valorisation {currency}{value}, rendement cumulé de {change} % sur {count} actifs."
+    fallback:
+      heading: "Briefing automatique du portefeuille ({period})"
+      overviewLabel: "Aperçu du marché"
+      overview: "La valorisation totale du portefeuille s'élève à {currency}{value}, avec un rendement global de {change} %."
+      note: "Remarque : le modèle LLM du rapport détaillé était temporairement injoignable ({error}). Les indicateurs techniques et les valeurs du journal restent vérifiés."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} suggestion a été écartée : la réponse était incomplète."
+        many: "{count} suggestions ont été écartées : la réponse était incomplète."
+        other: "{count} suggestions ont été écartées : la réponse était incomplète."
+      notHeld:
+        one: "{count} suggestion a été écartée : elle modifie une position que le portefeuille ne détient pas."
+        many: "{count} suggestions ont été écartées : elles modifient une position que le portefeuille ne détient pas."
+        other: "{count} suggestions ont été écartées : elles modifient une position que le portefeuille ne détient pas."
+      unknown:
+        one: "{count} suggestion a été écartée : les fournisseurs de données ne connaissent pas le symbole."
+        many: "{count} suggestions ont été écartées : les fournisseurs de données ne connaissent pas le symbole."
+        other: "{count} suggestions ont été écartées : les fournisseurs de données ne connaissent pas le symbole."
+      privateAsset:
+        one: "{count} suggestion a été écartée : elle négocie une position privée."
+        many: "{count} suggestions ont été écartées : elles négocient une position privée."
+        other: "{count} suggestions ont été écartées : elles négocient une position privée."
+      misread:
+        one: "{count} suggestion a été écartée : l'assistant a mal lu le poids actuel."
+        many: "{count} suggestions ont été écartées : l'assistant a mal lu le poids actuel."
+        other: "{count} suggestions ont été écartées : l'assistant a mal lu le poids actuel."
+      noChange:
+        one: "{count} suggestion a été écartée : la variation de poids était trop faible ou dans le mauvais sens."
+        many: "{count} suggestions ont été écartées : la variation de poids était trop faible ou dans le mauvais sens."
+        other: "{count} suggestions ont été écartées : la variation de poids était trop faible ou dans le mauvais sens."
+      duplicate:
+        one: "{count} suggestion a été écartée : elle répétait un symbole."
+        many: "{count} suggestions ont été écartées : elles répétaient un symbole."
+        other: "{count} suggestions ont été écartées : elles répétaient un symbole."
+      extra:
+        one: "{count} suggestion a été écartée : seules {max} sont conservées."
+        many: "{count} suggestions ont été écartées : seules {max} sont conservées."
+        other: "{count} suggestions ont été écartées : seules {max} sont conservées."
+    dismissedLeftOut:
+      one: "{count} suggestion ignorée a été omise."
+      many: "{count} suggestions ignorées ont été omises."
+      other: "{count} suggestions ignorées ont été omises."
+  dailyBrief:
+    notificationTitle: "{portfolio} : brief quotidien"
+    conversationTitle: "Brief quotidien {date}"
+    question: "Brief quotidien du {date} : que s'est-il passé lors de la dernière séance de bourse ?"
+    fallback:
+      sessionReturn: "Rendement de la séance {change}"
+      topGainer: "Meilleure hausse : {instrument} {change}"
+      topDecliner: "Plus forte baisse : {instrument} {change}"
+      transactions:
+        one: "{count} transaction depuis le {since}"
+        many: "{count} transactions depuis le {since}"
+        other: "{count} transactions depuis le {since}"
+      note: "L'assistant n'était pas disponible : ce brief n'affiche donc que les chiffres."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio} : analyse hebdomadaire"
+    openReports: "Ouvrez Portfolio, Rapports, pour l'analyse complète."
+    fallback:
+      heading: "Analyse hebdomadaire {period}"
+      weekReturn: "Rendement de la semaine : {change}"
+      topGainer: "Meilleure hausse : {symbol} {change}"
+      topDecliner: "Plus forte baisse : {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio : événements à venir"
+    heading: "Événements de vos positions jusqu'au {date}"
+    exDividend: "{symbol} : date de détachement du dividende {date}"
+    earnings: "{symbol} : publication des résultats {date}"
+    earningsBeforeOpen: "{symbol} : publication des résultats {date}, avant l'ouverture du marché"
+    earningsAfterClose: "{symbol} : publication des résultats {date}, après la clôture du marché"
+    footer: "Ouvrez Portfolio pour l'aperçu des revenus et événements."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Message de test de Portfolio. Les briefs quotidiens arriveront ici."
+    ntfy: "Message de test de Portfolio. Les briefs quotidiens et les analyses hebdomadaires arriveront ici."
