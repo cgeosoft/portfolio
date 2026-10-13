@@ -1,4 +1,4 @@
-import { forwardRef, memo, useState, useRef, useEffect, useCallback, useImperativeHandle, useMemo } from "react";
+import { forwardRef, memo, useState, useRef, useEffect, useCallback, useImperativeHandle, useMemo, type ReactNode } from "react";
 import type { Components } from "react-markdown";
 import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
@@ -7,6 +7,7 @@ import { rpc } from "../../rpc";
 import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
 import { renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
 import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
+import { t } from "../../i18n";
 import {
   Sparkles,
   Bot,
@@ -56,27 +57,12 @@ interface AssistantSidebarProps {
   hideValues?: boolean;
 }
 
+/** Suggested questions; the label and the question are `assistant.quickPrompts.<key>.*`, read at render time. */
 const SUGGESTIONS = [
-  {
-    icon: TrendingUp,
-    label: "Portfolio health summary",
-    prompt: "Provide an executive summary of my portfolio health, total returns, and current valuation.",
-  },
-  {
-    icon: ShieldAlert,
-    label: "Risk & asset concentration",
-    prompt: "Assess my portfolio risk exposure and asset allocation concentration. Are there any overweight positions?",
-  },
-  {
-    icon: Activity,
-    label: "Technical indicators (RSI/SMA)",
-    prompt: "Review the technical indicators (RSI 14, SMA 50, SMA 200) for all my holdings. Which ones appear overbought or oversold?",
-  },
-  {
-    icon: Wallet,
-    label: "Cash liquidity & buffer",
-    prompt: "Analyze my cash liquidity buffer and explain whether my cash reserve is optimal given my current holdings.",
-  },
+  { icon: TrendingUp, key: "health" },
+  { icon: ShieldAlert, key: "risk" },
+  { icon: Activity, key: "technical" },
+  { icon: Wallet, key: "cash" },
 ];
 
 /** Styles of the assistant's Markdown replies; module level, so the elements are not remounted on every render. */
@@ -139,6 +125,28 @@ const REPLY_MARKDOWN: Components = {
   ),
 };
 
+/** A translated sentence with its `{name}` placeholder rendered as `node`, so the name keeps its own style. */
+function withName(text: string, node: ReactNode): ReactNode {
+  const at = text.indexOf("{name}");
+  if (at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      {node}
+      {text.slice(at + "{name}".length)}
+    </>
+  );
+}
+
+/** The sentence of the portfolio context card, `{name}` left in: base currency and cash share when known. */
+function groundingText(currency: string | undefined, cashPercent: number | undefined): string {
+  const cash = cashPercent !== undefined ? cashPercent.toFixed(1) : undefined;
+  if (currency && cash !== undefined) return t("assistant.context.groundedCurrencyCash", { currency, cash });
+  if (currency) return t("assistant.context.groundedCurrency", { currency });
+  if (cash !== undefined) return t("assistant.context.groundedCash", { cash });
+  return t("assistant.context.grounded");
+}
+
 /** Holding references in a reply open the holding; other links follow the SafeMarkdown rules. */
 const renderHoldingLink: InAppLinkRenderer = (href, children) => renderHoldingAnchor(href, children, () => null);
 
@@ -176,7 +184,7 @@ const ChatMessage = memo(function ChatMessage({
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"} group`}>
       <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-500 uppercase tracking-wider">
-        <span>{isUser ? "You" : "Analyst"}</span>
+        <span>{isUser ? t("assistant.chat.you") : t("assistant.chat.analyst")}</span>
       </div>
 
       <div
@@ -199,11 +207,11 @@ const ChatMessage = memo(function ChatMessage({
               <button
                 onClick={() => onRegenerate()}
                 className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
-                title="Regenerate response"
+                title={t("assistant.chat.regenerateTitle")}
                 type="button"
               >
                 <RefreshCw className="w-3 h-3" />
-                <span>Regenerate</span>
+                <span>{t("assistant.chat.regenerate")}</span>
               </button>
             )}
 
@@ -212,18 +220,18 @@ const ChatMessage = memo(function ChatMessage({
               <button
                 onClick={() => onCopy(content, index)}
                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer"
-                title="Copy response"
+                title={t("assistant.chat.copyTitle")}
                 type="button"
               >
                 {copied ? (
                   <>
                     <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400">Copied</span>
+                    <span className="text-emerald-400">{t("common.copied")}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3 h-3" />
-                    <span>Copy</span>
+                    <span>{t("common.copy")}</span>
                   </>
                 )}
               </button>
@@ -295,7 +303,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput
           value={inputText}
           onChange={handleTextareaInput}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about your holdings, risks, metrics..."
+          placeholder={t("assistant.input.placeholder")}
           rows={1}
           disabled={isLoading}
           className="flex-1 bg-transparent border-0 resize-none text-xs text-slate-100 placeholder-slate-500 focus:outline-none custom-scrollbar max-h-[120px] py-1 font-mono leading-relaxed"
@@ -305,16 +313,16 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput
           onClick={handleSend}
           disabled={!inputText.trim() || isLoading}
           className="h-8 w-8 rounded-lg bg-[#DD3C73] hover:bg-[#c93264] disabled:opacity-40 disabled:hover:bg-[#DD3C73] disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer shadow-md"
-          title="Send Message (Enter)"
+          title={t("assistant.input.send")}
         >
           <Send className="w-3.5 h-3.5" />
         </button>
       </div>
       <div className="flex items-center justify-between mt-1.5 px-1 text-[10px] text-slate-500">
-        <span>Enter to send, Shift+Enter for newline</span>
+        <span>{t("assistant.input.hint")}</span>
         {baseCurrency && (
           <span className="font-semibold text-slate-400">
-            Grounded in {baseCurrency}
+            {t("assistant.input.groundedIn", { currency: baseCurrency })}
           </span>
         )}
       </div>
@@ -339,7 +347,7 @@ export function AssistantSidebar({
   onClearMessages,
   isLoading,
   error,
-  activeProvider = "Local LLM",
+  activeProvider = t("assistant.localLlm"),
   activeModel,
   hideValues = false,
 }: AssistantSidebarProps) {
@@ -414,7 +422,7 @@ export function AssistantSidebar({
       const res = await rpc.request.getAssistantSystemPrompt({ portfolioId: portfolio.id });
       setSystemPrompt(res.systemPrompt);
     } catch (err) {
-      setSystemPromptError(err instanceof Error ? err.message : "Failed to load the system prompt.");
+      setSystemPromptError(err instanceof Error ? err.message : t("assistant.systemPrompt.loadError"));
     } finally {
       setSystemPromptLoading(false);
     }
@@ -449,7 +457,7 @@ export function AssistantSidebar({
 
   return (
     <aside
-      aria-label="AI Portfolio Assistant"
+      aria-label={t("assistant.ariaLabel")}
       className={`shrink-0 flex flex-col h-full bg-widget border-l border-slate-800/80 transition-all duration-300 ease-in-out font-mono text-slate-200 z-30 select-text ${
         isOpen
           ? "w-full sm:w-[400px] lg:w-[430px] opacity-100 visible"
@@ -466,7 +474,7 @@ export function AssistantSidebar({
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
-                  Assistant
+                  {t("assistant.title")}
                 </span>
                 {activeConversation?.title && (
                   <span
@@ -485,14 +493,14 @@ export function AssistantSidebar({
               type="button"
               onClick={() => setCurrentView("chat")}
               className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#DD3C73] py-1 px-2 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
-              title="Return to conversation"
+              title={t("assistant.history.returnTitle")}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
+              <span>{t("common.back")}</span>
             </button>
             <div className="flex items-center gap-1.5 ml-1">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
-                History
+                {t("assistant.history.title")}
               </span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 font-mono">
                 {conversations.length}
@@ -511,7 +519,7 @@ export function AssistantSidebar({
               <button
                 onClick={() => setCurrentView("history")}
                 className="p-1.5 rounded-md text-slate-400 hover:text-[#DD3C73] hover:bg-slate-800/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                title="View Conversation History"
+                title={t("assistant.header.historyTitle")}
                 type="button"
               >
                 <History className="w-3.5 h-3.5" />
@@ -525,7 +533,7 @@ export function AssistantSidebar({
                 <button
                   onClick={handleStartNewChat}
                   className="p-1.5 rounded-md text-slate-400 hover:text-[#DD3C73] hover:bg-slate-800/60 transition-colors cursor-pointer"
-                  title="Start New Chat"
+                  title={t("assistant.header.newChatTitle")}
                   type="button"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -535,7 +543,7 @@ export function AssistantSidebar({
                 <button
                   onClick={onClearMessages}
                   className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 transition-colors cursor-pointer"
-                  title="Delete current conversation"
+                  title={t("assistant.header.deleteTitle")}
                   type="button"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -545,7 +553,7 @@ export function AssistantSidebar({
                 <button
                   onClick={onOpenSettings}
                   className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors cursor-pointer"
-                  title="Assistant Settings"
+                  title={t("assistant.header.settingsTitle")}
                   type="button"
                 >
                   <Settings className="w-3.5 h-3.5" />
@@ -558,11 +566,11 @@ export function AssistantSidebar({
                 <button
                   onClick={handleStartNewChat}
                   className="px-2 py-1 text-[10.5px] font-bold tracking-wider rounded bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1 uppercase"
-                  title="Start New Chat"
+                  title={t("assistant.header.newChatTitle")}
                   type="button"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>New Chat</span>
+                  <span>{t("assistant.header.newChat")}</span>
                 </button>
               )}
             </>
@@ -571,7 +579,7 @@ export function AssistantSidebar({
           <button
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors cursor-pointer"
-            title="Close Assistant (Ctrl+J)"
+            title={t("assistant.header.closeTitle")}
             type="button"
           >
             <X className="w-4 h-4" />
@@ -594,11 +602,11 @@ export function AssistantSidebar({
             <div className="flex items-center gap-2 truncate min-w-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
               <Bot className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-              <span className="uppercase text-slate-500 font-semibold text-[10px] tracking-wider">Model:</span>
+              <span className="uppercase text-slate-500 font-semibold text-[10px] tracking-wider">{t("assistant.status.model")}</span>
               <span className="text-slate-300 truncate font-mono text-xs">{activeModel || activeProvider}</span>
             </div>
             <div className="text-[10px] text-slate-400 font-mono truncate max-w-[150px] px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700/50">
-              {portfolio?.name || "No active portfolio"}
+              {portfolio?.name || t("assistant.status.noPortfolio")}
             </div>
           </div>
 
@@ -611,10 +619,10 @@ export function AssistantSidebar({
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Portfolio Intelligence Assistant
+                    {t("assistant.empty.title")}
                   </h4>
                   <p className="text-[11px] text-slate-400 leading-relaxed max-w-[280px]">
-                    Ask questions about your asset allocation, technical indicators, unrealized gains, or risk exposure.
+                    {t("assistant.empty.description")}
                   </p>
                 </div>
 
@@ -623,38 +631,39 @@ export function AssistantSidebar({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-200">
                       <Cpu className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span>Portfolio Context</span>
+                      <span>{t("assistant.context.title")}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
-                      {holdingsCount} {holdingsCount === 1 ? "Holding" : "Holdings"}
+                      {t("assistant.context.holdings", { count: holdingsCount })}
                     </span>
                   </div>
 
                   <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                    Grounded in <span className="font-semibold text-slate-200">{portfolio?.name || "Active Portfolio"}</span>
-                    {portfolio?.baseCurrency ? ` (${portfolio.baseCurrency})` : ""}
-                    {cashPercent !== undefined ? ` with ${cashPercent.toFixed(1)}% cash allocation` : ""}.
+                    {withName(
+                      groundingText(portfolio?.baseCurrency, cashPercent),
+                      <span className="font-semibold text-slate-200">{portfolio?.name || t("assistant.context.activePortfolio")}</span>,
+                    )}
                   </p>
 
                   <button
                     type="button"
                     onClick={handleOpenSystemPrompt}
                     className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 hover:border-[#DD3C73]/40 text-[11px] font-medium text-slate-200 hover:text-slate-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                    title="Inspect the quantitative system prompt sent to the model"
+                    title={t("assistant.context.inspectTitle")}
                   >
                     {systemPromptLoading ? (
                       <Loader2 className="w-3.5 h-3.5 text-[#DD3C73] animate-spin" />
                     ) : (
                       <FileText className="w-3.5 h-3.5 text-[#DD3C73]" />
                     )}
-                    <span>Inspect System Prompt & Context</span>
+                    <span>{t("assistant.context.inspect")}</span>
                   </button>
                 </div>
 
                 {/* Quick Suggestions */}
                 <div className="w-full space-y-1.5 pt-1 text-left">
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider px-1">
-                    Suggested questions
+                    {t("assistant.quickPrompts.title")}
                   </div>
                   {SUGGESTIONS.map((item, idx) => {
                     const Icon = item.icon;
@@ -662,12 +671,12 @@ export function AssistantSidebar({
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => chatInputRef.current?.fill(item.prompt)}
+                        onClick={() => chatInputRef.current?.fill(t(`assistant.quickPrompts.${item.key}.prompt`))}
                         className="w-full p-2.5 rounded-lg bg-widget/80 hover:bg-card border border-slate-800 hover:border-[#DD3C73]/40 text-left transition-all cursor-pointer group flex items-center gap-2.5"
                       >
                         <Icon className="w-3.5 h-3.5 text-[#DD3C73] shrink-0 group-hover:scale-110 transition-transform" />
                         <span className="text-xs text-slate-300 group-hover:text-slate-100 font-medium">
-                          {item.label}
+                          {t(`assistant.quickPrompts.${item.key}.label`)}
                         </span>
                       </button>
                     );
@@ -681,21 +690,24 @@ export function AssistantSidebar({
                   <div className="flex items-center gap-1.5 truncate min-w-0">
                     <Cpu className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
                     <span className="truncate">
-                      Grounded in <strong className="font-semibold text-slate-300">{portfolio?.name || "Portfolio"}</strong> ({holdingsCount} assets)
+                      {withName(
+                        t("assistant.context.banner", { count: holdingsCount }),
+                        <strong className="font-semibold text-slate-300">{portfolio?.name || t("assistant.context.portfolio")}</strong>,
+                      )}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleOpenSystemPrompt}
                     className="shrink-0 text-[10px] text-slate-400 hover:text-[#DD3C73] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Inspect the quantitative prompt sent to the model"
+                    title={t("assistant.context.inspectShortTitle")}
                   >
                     {systemPromptLoading ? (
                       <Loader2 className="w-3.5 h-3.5 text-[#DD3C73] animate-spin" />
                     ) : (
                       <FileText className="w-3.5 h-3.5" />
                     )}
-                    <span>Inspect Context</span>
+                    <span>{t("assistant.context.inspectShort")}</span>
                   </button>
                 </div>
 
@@ -725,7 +737,7 @@ export function AssistantSidebar({
             {isLoading && (
               <div className="flex flex-col items-start space-y-1">
                 <span className="text-[10px] text-slate-500 uppercase tracking-wider px-1">
-                  Analyst
+                  {t("assistant.chat.analyst")}
                 </span>
                 <div className="rounded-xl px-3.5 py-3 bg-widget border border-slate-800 text-slate-300 text-xs flex items-center gap-2.5 shadow-md">
                   <div className="flex items-center gap-1" aria-hidden="true">
@@ -733,7 +745,7 @@ export function AssistantSidebar({
                     <span className="cx-typing-dot" />
                     <span className="cx-typing-dot" />
                   </div>
-                  <span className="text-slate-400 text-xs">Analyzing portfolio metrics...</span>
+                  <span className="text-slate-400 text-xs">{t("assistant.chat.thinking")}</span>
                 </div>
               </div>
             )}
@@ -744,7 +756,7 @@ export function AssistantSidebar({
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <div className="font-semibold">Assistant Request Failed</div>
+                    <div className="font-semibold">{t("assistant.chat.requestFailed")}</div>
                     <div className="text-[11px] leading-relaxed text-rose-300/90">{error}</div>
                   </div>
                 </div>
@@ -755,7 +767,7 @@ export function AssistantSidebar({
                     type="button"
                   >
                     <Settings className="w-3.5 h-3.5" />
-                    <span>Configure Assistant in Settings</span>
+                    <span>{t("assistant.chat.configure")}</span>
                   </button>
                 )}
               </div>
@@ -784,7 +796,7 @@ export function AssistantSidebar({
                 type="text"
                 value={searchHistoryQuery}
                 onChange={(e) => setSearchHistoryQuery(e.target.value)}
-                placeholder="Search saved conversations..."
+                placeholder={t("assistant.history.searchPlaceholder")}
                 className="w-full bg-widget border border-slate-800 focus:border-[#DD3C73]/60 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-colors font-mono"
               />
               {searchHistoryQuery && (
@@ -792,7 +804,7 @@ export function AssistantSidebar({
                   type="button"
                   onClick={() => setSearchHistoryQuery("")}
                   className="absolute right-2 text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
-                  title="Clear search"
+                  title={t("assistant.history.clearSearch")}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -807,12 +819,10 @@ export function AssistantSidebar({
                 <MessageSquareDashed className="w-8 h-8 text-slate-600" />
                 <div className="space-y-1">
                   <div className="text-xs font-semibold text-slate-300">
-                    {searchHistoryQuery ? "No matching conversations" : "No saved conversations yet"}
+                    {searchHistoryQuery ? t("assistant.history.noMatches") : t("assistant.history.empty")}
                   </div>
                   <p className="text-[11px] text-slate-500 max-w-[220px]">
-                    {searchHistoryQuery
-                      ? "Try a different search query."
-                      : "Start a conversation to analyze portfolio metrics."}
+                    {searchHistoryQuery ? t("assistant.history.noMatchesHint") : t("assistant.history.emptyHint")}
                   </p>
                 </div>
                 {onNewChat && (
@@ -822,7 +832,7 @@ export function AssistantSidebar({
                     className="mt-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Start New Chat</span>
+                    <span>{t("assistant.history.startNewChat")}</span>
                   </button>
                 )}
               </div>
@@ -852,20 +862,20 @@ export function AssistantSidebar({
                               isActive ? "text-slate-100" : "text-slate-300 group-hover:text-slate-50"
                             }`}
                           >
-                            {c.title ? mask(c.title) : "Untitled Conversation"}
+                            {c.title ? mask(c.title) : t("assistant.history.untitled")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
                           <span>{formatTimeAgo(c.updatedAt)}</span>
                           <span>•</span>
-                          <span>{c.messages?.length || 0} messages</span>
+                          <span>{t("assistant.history.messages", { count: c.messages?.length || 0 })}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0 pt-0.5">
                         {isActive && (
                           <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30">
-                            Active
+                            {t("assistant.history.active")}
                           </span>
                         )}
                         {onDeleteConversation && (
@@ -876,7 +886,7 @@ export function AssistantSidebar({
                               onDeleteConversation(c.id);
                             }}
                             className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition-all cursor-pointer"
-                            title="Delete conversation"
+                            title={t("assistant.history.deleteTitle")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

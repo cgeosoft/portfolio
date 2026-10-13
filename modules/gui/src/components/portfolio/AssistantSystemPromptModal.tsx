@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { Components } from "react-markdown";
 import { Terminal, Copy, CheckCheck, X, Bot, AlertCircle, Loader2, FileCode } from "lucide-react";
 import { SafeMarkdown } from "../common/SafeMarkdown";
+import { t } from "../../i18n";
 
 /** Styles of the system prompt view; module level, so the elements are not remounted on every render. */
 const PROMPT_MARKDOWN: Components = {
@@ -125,15 +126,15 @@ export function AssistantSystemPromptModal({
                 id="assistant-system-prompt-title"
                 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 truncate"
               >
-                Assistant System Prompt
+                {t("assistant.systemPrompt.title")}
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                 <span className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-[#DD3C73]" />
-                  <span className="truncate">{portfolioName || "Current Portfolio"}</span>
+                  <span className="truncate">{portfolioName || t("assistant.systemPrompt.currentPortfolio")}</span>
                 </span>
                 <span className="text-slate-600">•</span>
-                <span className="text-slate-400">Sent as the system message in each new chat</span>
+                <span className="text-slate-400">{t("assistant.systemPrompt.subtitle")}</span>
               </div>
             </div>
           </div>
@@ -142,7 +143,7 @@ export function AssistantSystemPromptModal({
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-            title="Close system prompt"
+            title={t("assistant.systemPrompt.closeTitle")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -152,16 +153,16 @@ export function AssistantSystemPromptModal({
         <div className="px-4 sm:px-5 py-2.5 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-2.5 shrink-0 text-xs">
           <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold uppercase tracking-wider">
             <FileCode className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>System Prompt Payload</span>
+            <span>{t("assistant.systemPrompt.payload")}</span>
           </div>
 
           {systemPrompt && (
             <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono ml-auto">
-              <span>{wordCount} words</span>
+              <span>{t("assistant.systemPrompt.words", { count: wordCount })}</span>
               <span>•</span>
-              <span>{charCount} chars</span>
+              <span>{t("assistant.systemPrompt.chars", { count: charCount })}</span>
               <span>•</span>
-              <span>~{approxTokens} tokens</span>
+              <span>{t("assistant.systemPrompt.tokens", { count: approxTokens })}</span>
             </div>
           )}
         </div>
@@ -172,17 +173,17 @@ export function AssistantSystemPromptModal({
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
               <Loader2 className="w-7 h-7 text-[#DD3C73] mb-3 animate-spin" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                Building system prompt...
+                {t("assistant.systemPrompt.building")}
               </div>
               <p className="max-w-md text-[11px] text-slate-400 leading-relaxed">
-                Compiling live portfolio metrics, holdings, and technical indicators.
+                {t("assistant.systemPrompt.buildingDescription")}
               </p>
             </div>
           ) : error ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-rose-500/30 bg-rose-500/5">
               <AlertCircle className="w-8 h-8 text-rose-400 mb-3 opacity-80" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-1">
-                Could Not Load System Prompt
+                {t("assistant.systemPrompt.loadFailed")}
               </div>
               <p className="max-w-md text-[11px] text-slate-400 leading-relaxed">{error}</p>
             </div>
@@ -190,10 +191,10 @@ export function AssistantSystemPromptModal({
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center rounded-xl border border-slate-800 bg-slate-950/60">
               <AlertCircle className="w-8 h-8 text-cream mb-3 opacity-80" />
               <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-1">
-                No System Prompt
+                {t("assistant.systemPrompt.empty")}
               </div>
               <p className="max-w-md text-[11px] text-slate-400 leading-relaxed">
-                Select a portfolio to view its assistant system prompt.
+                {t("assistant.systemPrompt.emptyDescription")}
               </p>
             </div>
           ) : (
@@ -203,17 +204,17 @@ export function AssistantSystemPromptModal({
                   type="button"
                   onClick={handleCopy}
                   className="h-7 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900/90 text-[11px] font-medium text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors shadow-lg cursor-pointer"
-                  title="Copy system prompt text"
+                  title={t("assistant.systemPrompt.copyTitle")}
                 >
                   {copied ? (
                     <>
                       <CheckCheck className="w-3.5 h-3.5 text-mint" />
-                      <span className="text-mint">Copied</span>
+                      <span className="text-mint">{t("common.copied")}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Copy</span>
+                      <span>{t("common.copy")}</span>
                     </>
                   )}
                 </button>
@@ -229,9 +230,7 @@ export function AssistantSystemPromptModal({
         {/* Modal Footer */}
         <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/70 px-4 py-2.5 sm:px-5 sm:py-3 shrink-0 gap-3">
           <div className="text-[10px] text-slate-500 truncate">
-            {systemPrompt
-              ? "The exact system message sent to the model in a new conversation."
-              : "System prompt preview"}
+            {systemPrompt ? t("assistant.systemPrompt.footer") : t("assistant.systemPrompt.preview")}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -244,12 +243,12 @@ export function AssistantSystemPromptModal({
                 {copied ? (
                   <>
                     <CheckCheck className="w-3.5 h-3.5 text-mint" />
-                    <span className="text-mint">Copied</span>
+                    <span className="text-mint">{t("common.copied")}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Copy Prompt</span>
+                    <span>{t("assistant.systemPrompt.copyPrompt")}</span>
                   </>
                 )}
               </button>
@@ -260,7 +259,7 @@ export function AssistantSystemPromptModal({
               onClick={onClose}
               className="px-3.5 py-1.5 rounded-lg bg-royal hover:bg-plum text-white text-xs font-bold transition-all cursor-pointer uppercase tracking-wider"
             >
-              Close
+              {t("common.close")}
             </button>
           </div>
         </div>
