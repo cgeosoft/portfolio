@@ -1473,9 +1473,6 @@ settings:
         30: "dak 30"
         60: "saa 1"
         240: "saa 4"
-    hideSponsorBanners:
-      title: "Ficha mabango ya wafadhili"
-      description: "Ondoa bango la mfadhili kwenye ukurasa wa muhtasari."
     startWithBoot:
       title: "Anza pamoja na kompyuta"
       description: "Fungua Portfolio chinichini kompyuta yako inapowaka."

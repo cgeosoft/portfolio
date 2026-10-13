@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Ocultar banners de patrocínio"
-      description: "Remove o banner de patrocínio da página de visão geral."
     startWithBoot:
       title: "Iniciar com o computador"
       description: "Abre o Portfolio em segundo plano quando o computador arranca."

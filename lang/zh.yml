@@ -1450,9 +1450,6 @@ settings:
         30: "30 分钟"
         60: "1 小时"
         240: "4 小时"
-    hideSponsorBanners:
-      title: "隐藏赞助横幅"
-      description: "从概览页面移除赞助横幅。"
     startWithBoot:
       title: "随电脑启动"
       description: "电脑启动时在后台打开 Portfolio。"

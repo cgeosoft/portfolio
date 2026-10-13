@@ -67,6 +67,9 @@ const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePor
 const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
 const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
 
+/** The overview sponsor banner. Off until the first sponsor signs; users cannot hide it. */
+const SPONSOR_BANNER_ENABLED = false;
+
 /**
  * `?onboarding` opens the setup wizard even when setup is complete. The desktop shell adds it
  * when started with `PORTFOLIO_ONBOARDING=1`. Read once and dropped from the address, so a
@@ -758,7 +761,6 @@ export default function App() {
     document.title = ["Portfolio", activePortfolioName, isDevMode ? "Dev" : undefined].filter(Boolean).join(" | ");
   }, [activePortfolioName, isDevMode]);
   const [quotesIntervalMins, setQuotesIntervalMins] = useState<number | undefined>(undefined);
-  const [hideSponsorBanners, setHideSponsorBanners] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
 
@@ -1084,7 +1086,6 @@ export default function App() {
         if (config.dismissedUpdateVersion) {
           setDismissedUpdateVersion(config.dismissedUpdateVersion);
         }
-        setHideSponsorBanners(config.hideSponsorBanners === true);
       } catch (e) {
         clientLogger.log("error", "initApp:config_error", `Failed to load initial config: ${e}`);
         console.error("Failed to load initial config:", e);
@@ -1331,7 +1332,6 @@ export default function App() {
   useEffect(() => {
     const onConfigChanged = (e: Event) => {
       const detail = (e as CustomEvent<Partial<DesktopConfig>>).detail;
-      if (typeof detail?.hideSponsorBanners === "boolean") setHideSponsorBanners(detail.hideSponsorBanners);
       if (typeof detail?.marketQuotesInterval === "number") setQuotesIntervalMins(detail.marketQuotesInterval);
     };
     window.addEventListener(CONFIG_CHANGED_EVENT, onConfigChanged);
@@ -2003,7 +2003,7 @@ export default function App() {
               />
 
               {/* Sponsor Banner Box */}
-              {!hideSponsorBanners && <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />}
+              {SPONSOR_BANNER_ENABLED && <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />}
 
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

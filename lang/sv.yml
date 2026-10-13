@@ -1473,9 +1473,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Dölj sponsorbanners"
-      description: "Ta bort sponsorbannern från översiktssidan."
     startWithBoot:
       title: "Starta med datorn"
       description: "Öppna Portfolio i bakgrunden när datorn startar."

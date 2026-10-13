@@ -1473,9 +1473,6 @@ settings:
         30: "۳۰ دقیقه"
         60: "۱ ساعت"
         240: "۴ ساعت"
-    hideSponsorBanners:
-      title: "پنهان کردن بنرهای حامی"
-      description: "بنر حامی را از صفحه نمای کلی بردارید."
     startWithBoot:
       title: "اجرا با روشن شدن رایانه"
       description: "با روشن شدن رایانه، Portfolio در پس‌زمینه باز شود."

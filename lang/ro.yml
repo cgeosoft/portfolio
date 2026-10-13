@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Ascundere bannere sponsori"
-      description: "Eliminați bannerul sponsorului de pe pagina de prezentare generală."
     startWithBoot:
       title: "Pornire odată cu computerul"
       description: "Deschideți Portfolio în fundal la pornirea computerului."

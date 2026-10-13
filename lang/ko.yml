@@ -1440,9 +1440,6 @@ settings:
         30: "30분"
         60: "1시간"
         240: "4시간"
-    hideSponsorBanners:
-      title: "스폰서 배너 숨기기"
-      description: "개요 페이지에서 스폰서 배너를 제거합니다."
     startWithBoot:
       title: "컴퓨터 시작 시 실행"
       description: "컴퓨터가 시작될 때 Portfolio를 백그라운드에서 엽니다."

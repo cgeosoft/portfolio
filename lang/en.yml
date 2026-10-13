@@ -1486,9 +1486,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Hide sponsor banners"
-      description: "Remove the sponsor banner from the overview page."
     startWithBoot:
       title: "Start with the computer"
       description: "Open Portfolio in the background when your computer starts."

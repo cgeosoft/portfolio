@@ -1473,9 +1473,6 @@ settings:
         30: "30 dk"
         60: "1 sa"
         240: "4 sa"
-    hideSponsorBanners:
-      title: "Sponsor afişlerini gizle"
-      description: "Sponsor afişini genel bakış sayfasından kaldırın."
     startWithBoot:
       title: "Bilgisayarla birlikte başlat"
       description: "Bilgisayarınız açıldığında Portfolio'yu arka planda açın."

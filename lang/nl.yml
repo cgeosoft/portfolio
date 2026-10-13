@@ -1473,9 +1473,6 @@ settings:
         30: "30 min"
         60: "1 u"
         240: "4 u"
-    hideSponsorBanners:
-      title: "Sponsorbanners verbergen"
-      description: "De sponsorbanner van de overzichtspagina verwijderen."
     startWithBoot:
       title: "Starten met de computer"
       description: "Portfolio op de achtergrond openen wanneer je computer opstart."

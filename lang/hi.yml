@@ -1473,9 +1473,6 @@ settings:
         30: "30 मिनट"
         60: "1 घंटा"
         240: "4 घंटे"
-    hideSponsorBanners:
-      title: "स्पॉन्सर बैनर छिपाएँ"
-      description: "अवलोकन पेज से स्पॉन्सर बैनर हटाएँ।"
     startWithBoot:
       title: "कंप्यूटर के साथ शुरू करें"
       description: "कंप्यूटर चालू होने पर Portfolio को बैकग्राउंड में खोलें।"

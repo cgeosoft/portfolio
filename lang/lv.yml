@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Slēpt sponsoru reklāmkarogus"
-      description: "Noņemt sponsora reklāmkarogu no pārskata lapas."
     startWithBoot:
       title: "Palaist kopā ar datoru"
       description: "Atvērt Portfolio fonā, kad dators tiek ieslēgts."

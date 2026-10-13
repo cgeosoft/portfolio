@@ -45,7 +45,6 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   zoomLevel: 1.0,
   theme: "dark",
   language: DEFAULT_LANGUAGE,
-  hideSponsorBanners: false,
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
   closeToTray: true,
@@ -75,8 +74,8 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   chartRange: "1y",
 };
 
-/** Keys of the old config.json that are no longer settings of the service. */
-const DROPPED_KEYS = new Set(["windowState", "lastImportDirectory", "webpageUrl"]);
+/** Keys that are no longer settings of the service: old config.json keys and removed settings. */
+const DROPPED_KEYS = new Set(["windowState", "lastImportDirectory", "webpageUrl", "hideSponsorBanners"]);
 
 /** Keys whose value is not a string, stored as JSON. Every other key is stored as plain text. */
 const JSON_KEYS = new Set(

@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Nascondi i banner degli sponsor"
-      description: "Rimuove il banner dello sponsor dalla pagina Panoramica."
     startWithBoot:
       title: "Avvia con il computer"
       description: "Apre Portfolio in background all'avvio del computer."

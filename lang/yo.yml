@@ -1440,9 +1440,6 @@ settings:
         30: "ìṣẹ́jú 30"
         60: "wákàtí 1"
         240: "wákàtí 4"
-    hideSponsorBanners:
-      title: "Fi àsíá onígbọ̀wọ́ pamọ́"
-      description: "Yọ àsíá onígbọ̀wọ́ kúrò lórí ojú-ìwé àkópọ̀."
     startWithBoot:
       title: "Bẹ̀rẹ̀ pẹ̀lú kọ̀ǹpútà"
       description: "Ṣí Portfolio lẹ́yìn nígbà tí kọ̀ǹpútà rẹ bá tàn."

@@ -1539,9 +1539,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Skryť bannery sponzorov"
-      description: "Odstrániť banner sponzora zo stránky prehľadu."
     startWithBoot:
       title: "Spúšťať s počítačom"
       description: "Otvárať Portfolio na pozadí pri spustení počítača."

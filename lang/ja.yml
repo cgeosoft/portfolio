@@ -1450,9 +1450,6 @@ settings:
         30: "30 分"
         60: "1 時間"
         240: "4 時間"
-    hideSponsorBanners:
-      title: "スポンサーバナーを隠す"
-      description: "概要ページからスポンサーバナーを削除します。"
     startWithBoot:
       title: "コンピューターの起動時に開始"
       description: "コンピューターの起動時に Portfolio をバックグラウンドで開きます。"

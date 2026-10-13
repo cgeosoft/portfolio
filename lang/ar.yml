@@ -1605,9 +1605,6 @@ settings:
         30: "30 د"
         60: "1 س"
         240: "4 س"
-    hideSponsorBanners:
-      title: "إخفاء لافتات الرعاة"
-      description: "إزالة لافتة الراعي من صفحة النظرة العامة."
     startWithBoot:
       title: "التشغيل مع بدء الكمبيوتر"
       description: "فتح Portfolio في الخلفية عند بدء تشغيل جهاز الكمبيوتر."

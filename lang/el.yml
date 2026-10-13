@@ -1473,9 +1473,6 @@ settings:
         30: "30 λεπ."
         60: "1 ώρα"
         240: "4 ώρες"
-    hideSponsorBanners:
-      title: "Απόκρυψη banner χορηγών"
-      description: "Αφαίρεση του banner χορηγού από τη σελίδα επισκόπησης."
     startWithBoot:
       title: "Εκκίνηση με τον υπολογιστή"
       description: "Άνοιγμα του Portfolio στο παρασκήνιο κατά την εκκίνηση του υπολογιστή σας."

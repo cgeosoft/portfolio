@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Masquer les bannières sponsor"
-      description: "Retirer la bannière sponsor de la page Vue d'ensemble."
     startWithBoot:
       title: "Démarrer avec l'ordinateur"
       description: "Ouvrir Portfolio en arrière-plan au démarrage de l'ordinateur."

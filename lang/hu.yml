@@ -1473,9 +1473,6 @@ settings:
         30: "30 percenként"
         60: "Óránként"
         240: "4 óránként"
-    hideSponsorBanners:
-      title: "Szponzori szalaghirdetések elrejtése"
-      description: "A szponzori szalaghirdetés eltávolítása az áttekintő oldalról."
     startWithBoot:
       title: "Indítás a számítógéppel"
       description: "A Portfolio megnyitása a háttérben a számítógép indulásakor."

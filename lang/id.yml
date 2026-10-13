@@ -1440,9 +1440,6 @@ settings:
         30: "30 menit"
         60: "1 jam"
         240: "4 jam"
-    hideSponsorBanners:
-      title: "Sembunyikan banner sponsor"
-      description: "Hapus banner sponsor dari halaman ringkasan."
     startWithBoot:
       title: "Mulai bersama komputer"
       description: "Buka Portfolio di latar belakang saat komputer Anda menyala."

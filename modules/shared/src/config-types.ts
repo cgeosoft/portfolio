@@ -126,8 +126,6 @@ export interface DesktopConfig {
   theme?: AppTheme;
   /** Interface language, an ISO 639-1 code of `LANGUAGES` (shared/i18n.ts). Reports, chat and notifications are written in it too. */
   language: string;
-  /** Hide sponsor banners, such as the one on the overview page. */
-  hideSponsorBanners: boolean;
   /**
    * Remote connections switch (Settings, Privacy & Security). Counts only while a PIN is
    * set. Changed through `/api/host/remote-access`, never `PATCH /api/config`.

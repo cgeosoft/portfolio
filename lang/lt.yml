@@ -1539,9 +1539,6 @@ settings:
         30: "30 min."
         60: "1 val."
         240: "4 val."
-    hideSponsorBanners:
-      title: "Slėpti rėmėjų reklamjuostes"
-      description: "Pašalinti rėmėjo reklamjuostę iš apžvalgos puslapio."
     startWithBoot:
       title: "Paleisti kartu su kompiuteriu"
       description: "Atidaryti Portfolio fone, kai įjungiamas kompiuteris."

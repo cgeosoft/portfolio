@@ -1473,9 +1473,6 @@ settings:
         30: "30 min"
         60: "1 oras"
         240: "4 na oras"
-    hideSponsorBanners:
-      title: "Itago ang mga sponsor banner"
-      description: "Alisin ang sponsor banner sa overview page."
     startWithBoot:
       title: "Simulan kasabay ng computer"
       description: "Buksan ang Portfolio sa background kapag nagsimula ang iyong computer."

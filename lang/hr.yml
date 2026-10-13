@@ -1506,9 +1506,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Sakrij sponzorske natpise"
-      description: "Uklanja sponzorski natpis sa stranice pregleda."
     startWithBoot:
       title: "Pokreni s računalom"
       description: "Otvara Portfolio u pozadini pri pokretanju računala."

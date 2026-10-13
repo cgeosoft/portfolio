@@ -1483,9 +1483,6 @@ settings:
         30: "30 min"
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Piilota sponsoribannerit"
-      description: "Poista sponsoribanneri yleiskatsaussivulta."
     startWithBoot:
       title: "Käynnistä tietokoneen mukana"
       description: "Avaa Portfolio taustalla, kun tietokone käynnistyy."

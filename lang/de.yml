@@ -1473,9 +1473,6 @@ settings:
         30: "30 Min."
         60: "1 h"
         240: "4 h"
-    hideSponsorBanners:
-      title: "Sponsorenbanner ausblenden"
-      description: "Das Sponsorenbanner von der Übersichtsseite entfernen."
     startWithBoot:
       title: "Mit dem Computer starten"
       description: "Portfolio beim Start des Computers im Hintergrund öffnen."

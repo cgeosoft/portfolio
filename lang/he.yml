@@ -1506,9 +1506,6 @@ settings:
         30: "30 דק׳"
         60: "שעה"
         240: "4 שע׳"
-    hideSponsorBanners:
-      title: "הסתרת באנרים של נותני חסות"
-      description: "הסרת באנר החסות מדף הסקירה."
     startWithBoot:
       title: "הפעלה עם המחשב"
       description: "פתיחת Portfolio ברקע כשהמחשב מופעל."

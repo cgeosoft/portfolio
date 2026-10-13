@@ -1440,9 +1440,6 @@ settings:
         30: "30 phút"
         60: "1 giờ"
         240: "4 giờ"
-    hideSponsorBanners:
-      title: "Ẩn biểu ngữ tài trợ"
-      description: "Gỡ biểu ngữ tài trợ khỏi trang tổng quan."
     startWithBoot:
       title: "Khởi động cùng máy tính"
       description: "Mở Portfolio ở chế độ nền khi máy tính khởi động."
