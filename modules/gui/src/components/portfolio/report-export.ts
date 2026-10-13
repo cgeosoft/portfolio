@@ -1,6 +1,50 @@
 import type { PortfolioReport } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, cleanThinkTags, maskFinancialValues } from "./utils";
 
+/**
+ * Headings and labels the export adds around the report body. The GUI passes
+ * them in the active language (`reportExportText()` in DownloadReportModal);
+ * this module stays free of the i18n loader, so it also runs under bun test.
+ */
+export interface ReportExportText {
+  markdownTitle: (period: string) => string;
+  markdownSummary: string;
+  pdfTitle: string;
+  pdfPortfolio: (name: string) => string;
+  pdfPeriod: (period: string) => string;
+  pdfModel: (model: string) => string;
+  pdfDate: (date: string) => string;
+  pdfAssets: (count: number) => string;
+  pdfValuation: string;
+  pdfPeriodReturn: string;
+  pdfCashLiquidity: string;
+  pdfPositionsTracked: string;
+  pdfSummary: string;
+  pdfFooter: string;
+  pdfPage: (page: number, total: number) => string;
+  /** Locale of the PDF date; undefined uses the system locale. */
+  locale?: string;
+}
+
+/** English export text, the default. */
+export const ENGLISH_REPORT_EXPORT_TEXT: ReportExportText = {
+  markdownTitle: (period) => `Portfolio Tactical Briefing (${period})`,
+  markdownSummary: "Executive Summary:",
+  pdfTitle: "Weekly Tactical Portfolio Briefing",
+  pdfPortfolio: (name) => `Portfolio: ${name}`,
+  pdfPeriod: (period) => `Period: ${period}`,
+  pdfModel: (model) => `Model: ${model}`,
+  pdfDate: (date) => `Date: ${date}`,
+  pdfAssets: (count) => `${count} Assets`,
+  pdfValuation: "PORTFOLIO VALUATION",
+  pdfPeriodReturn: "PERIOD RETURN",
+  pdfCashLiquidity: "CASH LIQUIDITY",
+  pdfPositionsTracked: "POSITIONS TRACKED",
+  pdfSummary: "EXECUTIVE SUMMARY",
+  pdfFooter: "Portfolio - Tactical Report",
+  pdfPage: (page, total) => `Page ${page} of ${total}`,
+};
+
 export function getDefaultReportFilename(
   report: PortfolioReport,
   format: "markdown" | "pdf",
@@ -18,7 +62,8 @@ export function getDefaultReportFilename(
 export function generateReportMarkdown(
   report: PortfolioReport,
   portfolioName?: string,
-  hideValues: boolean = false
+  hideValues: boolean = false,
+  text: ReportExportText = ENGLISH_REPORT_EXPORT_TEXT
 ): string {
   const frontmatter = [
     "---",
@@ -42,13 +87,13 @@ export function generateReportMarkdown(
     .filter(Boolean)
     .join("\n");
 
-  const titleHeader = `# ${report.title || `Portfolio Tactical Briefing (${report.period || report.id})`}\n`;
+  const titleHeader = `# ${report.title || text.markdownTitle(report.period || report.id)}\n`;
   const summaryText = report.summary
     ? hideValues
       ? maskFinancialValues(report.summary)
       : report.summary
     : "";
-  const summaryBlock = summaryText ? `> **Executive Summary:**\n> ${summaryText}\n\n` : "";
+  const summaryBlock = summaryText ? `> **${text.markdownSummary}**\n> ${summaryText}\n\n` : "";
 
   const rawContent = cleanThinkTags(report.content || "");
   const finalContent = hideValues ? maskFinancialValues(rawContent) : rawContent;
@@ -59,7 +104,8 @@ export function generateReportMarkdown(
 export async function generateReportPdf(
   report: PortfolioReport,
   portfolioName?: string,
-  hideValues: boolean = false
+  hideValues: boolean = false,
+  text: ReportExportText = ENGLISH_REPORT_EXPORT_TEXT
 ): Promise<Blob> {
   // jsPDF is a few hundred KB: it loads on the first PDF download instead of with the app.
   const { jsPDF } = await import("jspdf");
@@ -94,7 +140,7 @@ export async function generateReportPdf(
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  const title = report.title || "Weekly Tactical Portfolio Briefing";
+  const title = report.title || text.pdfTitle;
   const truncatedTitle = doc.splitTextToSize(title, contentWidth - 10)[0] || title;
   doc.text(truncatedTitle, margin + 5, y + 9);
 
@@ -103,10 +149,10 @@ export async function generateReportPdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   const subtitle = [
-    portfolioName ? `Portfolio: ${portfolioName}` : null,
-    report.period ? `Period: ${report.period}` : null,
-    report.model ? `Model: ${report.model}` : null,
-    `Date: ${new Date(report.createdAt).toLocaleDateString()}`,
+    portfolioName ? text.pdfPortfolio(portfolioName) : null,
+    report.period ? text.pdfPeriod(report.period) : null,
+    report.model ? text.pdfModel(report.model) : null,
+    text.pdfDate(new Date(report.createdAt).toLocaleDateString(text.locale)),
   ]
     .filter(Boolean)
     .join("  |  ");
@@ -121,13 +167,13 @@ export async function generateReportPdf(
   const returnDollar = report.metrics?.periodGainLossDollar ?? report.metrics?.weeklyGainLossDollar;
   const returnStr = `${fmtPercent(returnPercent)} (${returnPercent >= 0 ? "+" : ""}${fmtCurrency(returnDollar, baseCurrency, hideValues)})`;
   const cashStr = fmtCurrency(report.metrics?.cashBalance, baseCurrency, hideValues);
-  const holdingsStr = `${report.metrics?.holdingsCount ?? 0} Assets`;
+  const holdingsStr = text.pdfAssets(report.metrics?.holdingsCount ?? 0);
 
   const metricCards = [
-    { label: "PORTFOLIO VALUATION", value: valStr },
-    { label: "PERIOD RETURN", value: returnStr },
-    { label: "CASH LIQUIDITY", value: cashStr },
-    { label: "POSITIONS TRACKED", value: holdingsStr },
+    { label: text.pdfValuation, value: valStr },
+    { label: text.pdfPeriodReturn, value: returnStr },
+    { label: text.pdfCashLiquidity, value: cashStr },
+    { label: text.pdfPositionsTracked, value: holdingsStr },
   ];
 
   const colWidth = (contentWidth - 6) / 4;
@@ -168,7 +214,7 @@ export async function generateReportPdf(
     doc.setTextColor(221, 60, 115);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
-    doc.text("EXECUTIVE SUMMARY", margin + 4, y + 5);
+    doc.text(text.pdfSummary, margin + 4, y + 5);
 
     doc.setTextColor(45, 55, 72);
     doc.setFont("helvetica", "normal");
@@ -263,8 +309,8 @@ export async function generateReportPdf(
     doc.setDrawColor(226, 232, 240);
     doc.line(margin, pageHeight - 9, pageWidth - margin, pageHeight - 9);
 
-    doc.text("Portfolio - Tactical Report", margin, pageHeight - 5.5);
-    doc.text(`Page ${p} of ${totalPages}`, pageWidth - margin - 15, pageHeight - 5.5);
+    doc.text(text.pdfFooter, margin, pageHeight - 5.5);
+    doc.text(text.pdfPage(p, totalPages), pageWidth - margin - 15, pageHeight - 5.5);
   }
 
   return doc.output("blob");
