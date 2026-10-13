@@ -389,14 +389,14 @@ export function HoldingsTableCard({
   };
 
   return (
-    <div className="cx-card p-4 sm:p-5 w-full max-w-full min-w-0 overflow-hidden">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4 min-w-0">
+    <div className="cx-card w-full max-w-full min-w-0 overflow-hidden">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 sm:p-5 min-w-0">
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
             <Layers className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="truncate">{t("dashboard.holdings.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.holdings.subtitle", { count: totalAssetsCount })}>
+          <p className="pl-[22px] text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.holdings.subtitle", { count: totalAssetsCount })}>
             {t("dashboard.holdings.subtitle", { count: totalAssetsCount })}
           </p>
         </div>

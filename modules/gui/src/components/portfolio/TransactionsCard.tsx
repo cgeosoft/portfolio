@@ -106,7 +106,7 @@ export function TransactionsCard({
             <ArrowRightLeft className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">{t("transactions.ledger.title")}</span>
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5 font-mono" title={t("transactions.ledger.eventsCount", { count: transactions.length })}>
+          <p className="pl-6 text-[11px] text-slate-400 mt-0.5 font-mono" title={t("transactions.ledger.eventsCount", { count: transactions.length })}>
             {t("transactions.ledger.eventsCount", { count: transactions.length })}
           </p>
         </div>

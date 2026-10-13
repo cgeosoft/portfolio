@@ -359,7 +359,7 @@ export function AllocationCard({
             <PieChart className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="truncate">{t("dashboard.allocation.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.allocation.subtitle")}>
+          <p className="pl-[22px] text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.allocation.subtitle")}>
             {t("dashboard.allocation.subtitle")}
           </p>
         </div>

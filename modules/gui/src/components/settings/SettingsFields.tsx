@@ -100,7 +100,7 @@ export function SectionHeader({
           <Icon className="w-4 h-4 text-[#DD3C73] shrink-0" />
           <span className="truncate">{title}</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1 truncate" title={description}>
+        <p className="pl-6 text-[11px] text-slate-400 mt-1 truncate" title={description}>
           {description}
         </p>
       </div>

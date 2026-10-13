@@ -130,7 +130,7 @@ export function MetricsTab({
               <LayoutGrid className="w-4 h-4 text-[#DD3C73] shrink-0" />
               <span className="truncate">{t("metrics.tab.title")}</span>
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="pl-6 text-[11px] text-slate-400 mt-0.5">
               {portfolioName ? t("metrics.tab.descriptionNamed", { name: portfolioName }) : t("metrics.tab.description")}
             </p>
           </div>

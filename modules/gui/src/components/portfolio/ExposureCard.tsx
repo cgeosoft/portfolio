@@ -129,7 +129,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
             <Layers className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="truncate">{t("dashboard.exposure.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.exposure.subtitle")}</p>
+          <p className="pl-[22px] text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.exposure.subtitle")}</p>
         </div>
         <button
           type="button"

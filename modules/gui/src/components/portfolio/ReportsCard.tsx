@@ -229,7 +229,7 @@ export function ReportsCard({
             <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">{t("reports.card.title")}</span>
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+          <p className="pl-6 text-[11px] text-slate-400 mt-0.5 font-mono">
             {t("reports.card.subtitle")}
           </p>
         </div>

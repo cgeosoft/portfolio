@@ -439,7 +439,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
             <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
             <span>{t("settings.market.sources")}</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{t("settings.market.sourcesHint")}</p>
+          <p className="pl-[22px] text-[11px] text-slate-400 mt-1 leading-relaxed">{t("settings.market.sourcesHint")}</p>
         </div>
 
         <div className="flex flex-col divide-y divide-slate-800">
@@ -542,7 +542,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
             <ChevronRight className="w-3.5 h-3.5 text-[#DD3C73] transition-transform group-open:rotate-90" />
             <span>{t("settings.market.advanced")}</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">{t("settings.market.advancedHint")}</p>
+          <p className="pl-[22px] text-[11px] text-slate-400 mt-1">{t("settings.market.advancedHint")}</p>
         </summary>
 
         <div className="flex flex-col">

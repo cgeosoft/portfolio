@@ -105,7 +105,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
             <Library className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">{t("metrics.library.title")}</span>
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+          <p className="pl-6 text-[11px] text-slate-400 mt-0.5 font-mono">
             {t("metrics.library.description")}
           </p>
         </div>

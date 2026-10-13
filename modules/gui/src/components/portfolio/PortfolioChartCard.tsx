@@ -384,7 +384,7 @@ export function PortfolioChartCard({
             </div>
             {relative ? (
               <p
-                className="text-[11px] text-slate-500 font-mono mt-0.5 truncate"
+                className="pl-[22px] text-[11px] text-slate-500 font-mono mt-0.5 truncate"
                 title={t("dashboard.chart.versusHint")}
               >
                 {t("dashboard.chart.versus", {
@@ -401,37 +401,9 @@ export function PortfolioChartCard({
                 )
               </p>
             ) : (
-              <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.chart.subtitle")}>
+              <p className="pl-[22px] text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.chart.subtitle")}>
                 {t("dashboard.chart.subtitle")}
               </p>
-            )}
-          </div>
-
-          <div className="hidden lg:flex items-center gap-3 text-[10px] text-slate-400 ml-2 pl-3 border-l border-slate-800">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-0.5 border-t border-dashed border-mint inline-block" />
-              <span>{t("dashboard.chart.legend.total")}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span
-                className="w-2.5 h-1.5 rounded-sm border border-[#DD3C73]/60 inline-block"
-                style={{ background: "rgba(221, 60, 115, 0.25)" }}
-              />
-              <span>{t("dashboard.chart.legend.invested")}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400 inline-block" />
-              <span>{t("dashboard.chart.legend.cost")}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-1 rounded-sm bg-[#6d8bf7] inline-block" />
-              <span>{relative ? t("dashboard.chart.legend.portfolio") : t("dashboard.chart.series.return")}</span>
-            </span>
-            {relative && (
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-0.5 border-t border-dashed border-cream inline-block" />
-                <span>{relative.label}</span>
-              </span>
             )}
           </div>
         </div>
@@ -472,6 +444,33 @@ export function PortfolioChartCard({
 
       <div className="h-[280px] w-full flex-1">
         <canvas ref={canvasRef} />
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-slate-400 mt-3">
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-0.5 border-t border-dashed border-mint inline-block" />
+          <span>{t("dashboard.chart.legend.total")}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span
+            className="w-2.5 h-1.5 rounded-sm border border-[#DD3C73]/60 inline-block"
+            style={{ background: "rgba(221, 60, 115, 0.25)" }}
+          />
+          <span>{t("dashboard.chart.legend.invested")}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400 inline-block" />
+          <span>{t("dashboard.chart.legend.cost")}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-1 rounded-sm bg-[#6d8bf7] inline-block" />
+          <span>{relative ? t("dashboard.chart.legend.portfolio") : t("dashboard.chart.series.return")}</span>
+        </span>
+        {relative && (
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-0.5 border-t border-dashed border-cream inline-block" />
+            <span>{relative.label}</span>
+          </span>
+        )}
       </div>
     </div>
   );

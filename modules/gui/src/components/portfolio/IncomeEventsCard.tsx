@@ -187,7 +187,7 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
             <Coins className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="truncate">{t("dashboard.income.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.income.subtitle", { days: EVENT_DAYS })}</p>
+          <p className="pl-[22px] text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.income.subtitle", { days: EVENT_DAYS })}</p>
         </div>
         {loading && <Loader2 className="w-4 h-4 animate-spin text-accent-500 shrink-0" aria-label={t("dashboard.income.loading")} />}
       </div>

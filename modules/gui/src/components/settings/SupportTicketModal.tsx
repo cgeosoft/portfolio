@@ -120,7 +120,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               <LifeBuoy className="w-4 h-4 text-[#DD3C73]" />
               <span>{t("settings.support.title")}</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">{t("settings.support.description", { email: WEBPAGE_EMAIL })}</p>
+            <p className="pl-6 text-[11px] text-slate-400 mt-1">{t("settings.support.description", { email: WEBPAGE_EMAIL })}</p>
           </div>
           <button type="button" onClick={onClose} disabled={isSubmitting} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 shrink-0" title={t("common.close")}>
             <X className="w-5 h-5" />
