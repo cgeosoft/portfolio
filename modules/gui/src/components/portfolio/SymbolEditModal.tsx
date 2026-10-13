@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import { X, Tag, Loader2, AlertCircle } from "lucide-react";
 import type { PortfolioHolding } from "portfolio-shared/portfolio";
 import { api } from "../../api";
+import { t } from "../../i18n";
 
 interface SymbolEditModalProps {
   holding: PortfolioHolding & { isin: string };
@@ -33,22 +34,24 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
     e.preventDefault();
     const value = symbol.trim().toUpperCase();
     if (!value) {
-      setError("Enter a ticker symbol.");
+      setError(t("transactions.symbol.required"));
       return;
     }
     setSaving(true);
     setError(null);
     try {
       const res = await api.setIsinSymbol(holding.isin, { symbol: value, name: name.trim() || undefined });
-      if (!res.success) throw new Error(res.error || "Could not save the symbol");
+      if (!res.success) throw new Error(res.error || t("transactions.symbol.saveFailed"));
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the symbol");
+      setError(err instanceof Error ? err.message : t("transactions.symbol.saveFailed"));
     } finally {
       setSaving(false);
     }
   };
+
+  const [isinBefore, isinAfter] = t("transactions.symbol.isin").split("{isin}");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 font-mono" onClick={saving ? undefined : onClose} role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -61,7 +64,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
           <div className="flex items-center gap-1.5 min-w-0">
             <Tag className="w-4 h-4 text-slate-400 shrink-0" />
             <span id={titleId} className="text-xs font-bold uppercase tracking-wider text-slate-400 truncate">
-              Set Ticker
+              {t("transactions.symbol.title")}
             </span>
           </div>
           <button
@@ -69,7 +72,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
             onClick={onClose}
             disabled={saving}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-30"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -77,11 +80,9 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
 
         <div className="p-4 flex flex-col gap-3 text-xs">
           <p className="text-slate-400 leading-relaxed">
-            ISIN <span className="text-slate-200">{holding.isin}</span>.{" "}
-            {unresolved
-              ? "No provider returned a ticker for it. Enter one to get quotes, or a label of your own for a private holding."
-              : "Change the ticker if the listing is wrong."}{" "}
-            The symbol applies to every portfolio and to later imports.
+            {isinBefore}<span className="text-slate-200">{holding.isin}</span>{isinAfter}{" "}
+            {unresolved ? t("transactions.symbol.unresolved") : t("transactions.symbol.resolved")}{" "}
+            {t("transactions.symbol.appliesEverywhere")}
           </p>
 
           {error && (
@@ -92,24 +93,24 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
           )}
 
           <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Ticker *</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t("transactions.symbol.ticker")}</span>
             <input
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
-              placeholder="e.g. AAPL, SXR8.DE"
+              placeholder={t("transactions.symbol.tickerPlaceholder")}
               autoFocus
               maxLength={32}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73]"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Name</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t("transactions.symbol.name")}</span>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Optional"
+              placeholder={t("common.optional")}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
             />
           </label>
@@ -122,7 +123,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
             disabled={saving}
             className="px-3 py-1.5 rounded-lg border border-slate-800 text-xs text-slate-300 hover:bg-slate-800 cursor-pointer disabled:opacity-40"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -130,7 +131,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
             className="px-3 py-1.5 rounded-lg border border-[#DD3C73]/50 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
           >
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Save
+            {t("common.save")}
           </button>
         </div>
       </form>

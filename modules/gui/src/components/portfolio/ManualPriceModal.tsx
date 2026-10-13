@@ -3,6 +3,7 @@ import { X, Landmark, Loader2, AlertCircle } from "lucide-react";
 import type { PortfolioHolding } from "portfolio-shared/portfolio";
 import { api } from "../../api";
 import { fmtCurrency } from "./utils";
+import { t } from "../../i18n";
 
 interface ManualPriceModalProps {
   portfolioId: string;
@@ -39,23 +40,23 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
     e.preventDefault();
     const value = Number(price.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Enter a price above zero.");
+      setError(t("transactions.manualPrice.priceAboveZero"));
       return;
     }
     const curr = priceCurrency.trim().toUpperCase();
     if (!/^[A-Z]{3}$/.test(curr)) {
-      setError("Enter a three-letter currency code, such as EUR.");
+      setError(t("transactions.manualPrice.currencyCode"));
       return;
     }
     setBusy("save");
     setError(null);
     try {
       const res = await api.setManualPrice(portfolioId, holding.symbol, { price: value, currency: curr });
-      if (!res.success) throw new Error(res.error || "Could not save the price");
+      if (!res.success) throw new Error(res.error || t("transactions.manualPrice.saveFailed"));
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the price");
+      setError(err instanceof Error ? err.message : t("transactions.manualPrice.saveFailed"));
     } finally {
       setBusy(null);
     }
@@ -66,15 +67,17 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
     setError(null);
     try {
       const res = await api.clearManualPrice(portfolioId, holding.symbol);
-      if (!res.success) throw new Error(res.error || "Could not clear the price");
+      if (!res.success) throw new Error(res.error || t("transactions.manualPrice.clearFailed"));
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not clear the price");
+      setError(err instanceof Error ? err.message : t("transactions.manualPrice.clearFailed"));
     } finally {
       setBusy(null);
     }
   };
+
+  const [introBefore, introAfter] = t("transactions.manualPrice.intro").split("{symbol}");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 font-mono" onClick={busy ? undefined : onClose} role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -87,7 +90,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
           <div className="flex items-center gap-1.5 min-w-0">
             <Landmark className="w-4 h-4 text-slate-400 shrink-0" />
             <span id={titleId} className="text-xs font-bold uppercase tracking-wider text-slate-400 truncate">
-              Price or NAV
+              {t("transactions.manualPrice.title")}
             </span>
           </div>
           <button
@@ -95,7 +98,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
             onClick={onClose}
             disabled={busy !== null}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-30"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -103,12 +106,11 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
 
         <div className="p-4 flex flex-col gap-3 text-xs">
           <p className="text-slate-400 leading-relaxed">
-            <span className="text-slate-200">{holding.symbol}</span> has no public quote, so it is valued at its buy price. Enter the
-            current price or NAV per share from your broker to value it with that instead.
+            {introBefore}<span className="text-slate-200">{holding.symbol}</span>{introAfter}
           </p>
           {current && (
             <p className="text-slate-500">
-              Set on {current.setAt}: {fmtCurrency(current.price, current.currency, hideValues)}
+              {t("transactions.manualPrice.setOn", { date: current.setAt, price: fmtCurrency(current.price, current.currency, hideValues) })}
             </p>
           )}
 
@@ -121,20 +123,20 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
 
           <div className="flex gap-2">
             <label className="flex flex-col gap-1 flex-1 min-w-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Price per share *</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t("transactions.manualPrice.pricePerShare")}</span>
               <input
                 type={hideValues ? "password" : "text"}
                 inputMode="decimal"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="e.g. 10.42"
+                placeholder={t("transactions.manualPrice.pricePlaceholder")}
                 autoFocus
                 autoComplete="off"
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
               />
             </label>
             <label className="flex flex-col gap-1 w-24">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Currency</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t("transactions.manualPrice.currency")}</span>
               <input
                 type="text"
                 value={priceCurrency}
@@ -153,10 +155,10 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
               onClick={handleClear}
               disabled={busy !== null}
               className="px-3 py-1.5 rounded-lg border border-slate-800 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
-              title="Value the holding at its buy price again"
+              title={t("transactions.manualPrice.clearTitle")}
             >
               {busy === "clear" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Clear
+              {t("transactions.manualPrice.clear")}
             </button>
           )}
           <div className="flex-1" />
@@ -166,7 +168,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
             disabled={busy !== null}
             className="px-3 py-1.5 rounded-lg border border-slate-800 text-xs text-slate-300 hover:bg-slate-800 cursor-pointer disabled:opacity-40"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -174,7 +176,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
             className="px-3 py-1.5 rounded-lg border border-[#DD3C73]/50 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
           >
             {busy === "save" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Save
+            {t("common.save")}
           </button>
         </div>
       </form>

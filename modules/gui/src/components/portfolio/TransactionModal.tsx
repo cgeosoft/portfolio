@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Select } from "../common/Select";
+import { t } from "../../i18n";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -133,7 +134,7 @@ export function TransactionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!symbol.trim()) {
-      setError("Please specify a ticker symbol or currency");
+      setError(t("transactions.modal.symbolRequired"));
       return;
     }
 
@@ -157,7 +158,7 @@ export function TransactionModal({
       });
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to save transaction");
+      setError(err.message || t("transactions.modal.saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +174,7 @@ export function TransactionModal({
           <div className="flex items-center gap-1.5 min-w-0">
             <ArrowRightLeft className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 truncate">
-              {transaction ? "Edit Transaction" : "Record Transaction"}
+              {transaction ? t("transactions.modal.editTitle") : t("transactions.modal.recordTitle")}
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800/80 text-slate-400 uppercase font-bold shrink-0 ml-1">
               {type}
@@ -195,12 +196,12 @@ export function TransactionModal({
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-100 uppercase tracking-wider">
                 <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
-                <span>{transaction ? "Modify Transaction Details" : "Manual Trade & Asset Entry"}</span>
+                <span>{transaction ? t("transactions.modal.editHeading") : t("transactions.modal.recordHeading")}</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 {transaction
-                  ? "Update execution price, quantity, asset class, or fee structure for this transaction in the portfolio ledger."
-                  : "Log an asset purchase, sale, dividend distribution, interest payment, or cash transfer to update your portfolio."}
+                  ? t("transactions.modal.editDescription")
+                  : t("transactions.modal.recordDescription")}
               </p>
             </div>
 
@@ -209,7 +210,7 @@ export function TransactionModal({
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Wallet className="w-3 h-3 text-[#DD3C73]" />
-                  <span>Total Amount</span>
+                  <span>{t("transactions.modal.totalAmount")}</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">
                   {amount
@@ -221,7 +222,7 @@ export function TransactionModal({
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Layers className="w-3 h-3 text-plum-bright" />
-                  <span>Asset Class</span>
+                  <span>{t("transactions.modal.assetClass")}</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">
                   {assetClass}
@@ -231,7 +232,7 @@ export function TransactionModal({
               <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-0.5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Percent className="w-3 h-3 text-mint" />
-                  <span>Fee & Tax</span>
+                  <span>{t("transactions.modal.feeAndTax")}</span>
                 </div>
                 <div className="font-bold text-slate-100 text-xs truncate">
                   {currency} {calculatedTotalFriction.toFixed(2)}
@@ -245,7 +246,7 @@ export function TransactionModal({
                 <AlertCircle className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
-                    Transaction Error
+                    {t("transactions.modal.errorTitle")}
                   </div>
                   <div className="text-xs text-[#DD3C73] font-mono break-words leading-relaxed mt-1">
                     {error}
@@ -258,7 +259,7 @@ export function TransactionModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Transaction Date
+                  {t("transactions.modal.date")}
                 </label>
                 <input
                   type="date"
@@ -271,19 +272,19 @@ export function TransactionModal({
 
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Transaction Type
+                  {t("transactions.modal.type")}
                 </label>
                 <Select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   selectSize="sm"
                 >
-                  <option value="BUY">BUY (Asset Purchase)</option>
-                  <option value="SELL">SELL (Asset Sale)</option>
-                  <option value="DIVIDEND">DIVIDEND (Cash Payout)</option>
-                  <option value="INTEREST_PAYMENT">INTEREST (Fixed Yield)</option>
-                  <option value="CUSTOMER_INBOUND">DEPOSIT (Cash Inflow)</option>
-                  <option value="CUSTOMER_OUTBOUND">WITHDRAWAL (Cash Outflow)</option>
+                  <option value="BUY">{t("transactions.modal.typeOptions.buy")}</option>
+                  <option value="SELL">{t("transactions.modal.typeOptions.sell")}</option>
+                  <option value="DIVIDEND">{t("transactions.modal.typeOptions.dividend")}</option>
+                  <option value="INTEREST_PAYMENT">{t("transactions.modal.typeOptions.interest")}</option>
+                  <option value="CUSTOMER_INBOUND">{t("transactions.modal.typeOptions.deposit")}</option>
+                  <option value="CUSTOMER_OUTBOUND">{t("transactions.modal.typeOptions.withdrawal")}</option>
                 </Select>
               </div>
             </div>
@@ -292,14 +293,14 @@ export function TransactionModal({
             <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs flex flex-col gap-3 relative" ref={searchContainerRef}>
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider flex items-center justify-between">
-                  <span>Ticker Symbol & Lookup</span>
-                  {isSearching && <span className="text-[#DD3C73] text-[10px] animate-pulse">Searching…</span>}
+                  <span>{t("transactions.modal.symbolLookup")}</span>
+                  {isSearching && <span className="text-[#DD3C73] text-[10px] animate-pulse">{t("transactions.modal.searching")}</span>}
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <input
                       type="text"
-                      placeholder="e.g. MSFT, EUNL.DE, BTC-EUR, PRIVATE_ASSET"
+                      placeholder={t("transactions.modal.symbolPlaceholder")}
                       value={symbol}
                       onChange={(e) => {
                         setSymbol(e.target.value);
@@ -343,11 +344,11 @@ export function TransactionModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                    Asset Full Name
+                    {t("transactions.modal.assetName")}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Microsoft Corporation"
+                    placeholder={t("transactions.modal.assetNamePlaceholder")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
@@ -356,17 +357,17 @@ export function TransactionModal({
 
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                    Asset Class
+                    {t("transactions.modal.assetClass")}
                   </label>
                   <Select
                     value={assetClass}
                     onChange={(e) => setAssetClass(e.target.value)}
                     selectSize="sm"
                   >
-                    <option value="EQUITY">Stock / Equity</option>
-                    <option value="FUND">ETF / Fund</option>
-                    <option value="CRYPTO">Crypto Asset</option>
-                    <option value="PRIVATE_FUND">Private Investment / Fund</option>
+                    <option value="EQUITY">{t("transactions.modal.assetClasses.equity")}</option>
+                    <option value="FUND">{t("transactions.modal.assetClasses.fund")}</option>
+                    <option value="CRYPTO">{t("transactions.modal.assetClasses.crypto")}</option>
+                    <option value="PRIVATE_FUND">{t("transactions.modal.assetClasses.privateFund")}</option>
                   </Select>
                 </div>
               </div>
@@ -376,7 +377,7 @@ export function TransactionModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Shares / Units
+                  {t("transactions.modal.shares")}
                 </label>
                 <input
                   type="number"
@@ -395,7 +396,7 @@ export function TransactionModal({
 
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Unit Price
+                  {t("transactions.modal.unitPrice")}
                 </label>
                 <input
                   type="number"
@@ -414,7 +415,7 @@ export function TransactionModal({
 
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Total Amount
+                  {t("transactions.modal.totalAmount")}
                 </label>
                 <input
                   type="number"
@@ -431,7 +432,7 @@ export function TransactionModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Fee Paid (Broker)
+                  {t("transactions.modal.fee")}
                 </label>
                 <input
                   type="number"
@@ -445,7 +446,7 @@ export function TransactionModal({
 
               <div>
                 <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
-                  Withholding Tax
+                  {t("transactions.modal.tax")}
                 </label>
                 <input
                   type="number"
@@ -462,7 +463,7 @@ export function TransactionModal({
           {/* Modal Footer */}
           <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/60 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0 gap-2">
             <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
-              <span>Transaction Ledger</span>
+              <span>{t("transactions.ledger.title")}</span>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -472,7 +473,7 @@ export function TransactionModal({
                 disabled={isSubmitting}
                 className="px-3 sm:px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer disabled:opacity-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="submit"
@@ -482,12 +483,12 @@ export function TransactionModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Saving…</span>
+                    <span>{t("common.saving")}</span>
                   </>
                 ) : (
                   <>
                     <Save className="w-3.5 h-3.5" />
-                    <span>{transaction ? "Save" : "Save"}</span>
+                    <span>{t("common.save")}</span>
                   </>
                 )}
               </button>

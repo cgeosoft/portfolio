@@ -15,6 +15,7 @@ import {
   Coins,
 } from "lucide-react";
 import { fmtCurrency, cleanThinkTags, escapeCsvField } from "./utils";
+import { t } from "../../i18n";
 
 interface ExportPortfolioModalProps {
   isOpen: boolean;
@@ -194,7 +195,7 @@ export function ExportPortfolioModal({
 
   const handleDownloadZip = async () => {
     if (!includeTransactions && !includeReports && !includeReadme) {
-      setError("Please select at least one item to include in the export archive.");
+      setError(t("transactions.export.selectOne"));
       return;
     }
 
@@ -278,11 +279,13 @@ export function ExportPortfolioModal({
       }, 4000);
     } catch (err: any) {
       console.error("Export error:", err);
-      setError(err?.message || "Failed to generate export archive");
+      setError(err?.message || t("transactions.export.failed"));
     } finally {
       setIsExporting(false);
     }
   };
+
+  const [reportsHintBefore, reportsHintAfter] = t("transactions.export.reportsHint").split("{folder}");
 
   const sanitizedFileName = `portfolio-${portfolio.name.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "export"}-${new Date().toISOString().split("T")[0]}.zip`;
 
@@ -296,7 +299,7 @@ export function ExportPortfolioModal({
               <Archive className="w-3.5 h-3.5" />
             </div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-200 truncate">
-              Export Portfolio Archive
+              {t("transactions.export.title")}
             </span>
           </div>
           <button
@@ -315,7 +318,7 @@ export function ExportPortfolioModal({
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-[#DD3C73]" />
-                <span>Target Portfolio</span>
+                <span>{t("transactions.export.targetPortfolio")}</span>
               </div>
               <div className="text-sm font-bold text-slate-100 truncate mt-0.5" title={portfolio.name}>
                 {portfolio.name}
@@ -348,7 +351,7 @@ export function ExportPortfolioModal({
             <div className="p-3 rounded-xl border border-emerald-800/50 bg-emerald-950/30 text-emerald-300 flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <div className="text-xs">
-                Archive successfully generated and download triggered!
+                {t("transactions.export.success")}
               </div>
             </div>
           )}
@@ -356,7 +359,7 @@ export function ExportPortfolioModal({
           {/* Export Options */}
           <div className="space-y-2">
             <label className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-              Items to Include in Archive
+              {t("transactions.export.itemsLabel")}
             </label>
 
             <div className="space-y-2">
@@ -390,13 +393,13 @@ export function ExportPortfolioModal({
                     <FileSpreadsheet className="w-4 h-4 text-mint shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
-                        <span>Transactions Ledger</span>
+                        <span>{t("transactions.export.transactions")}</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           .csv
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        Historical trades, dividends, deposits, withdrawals & fees
+                        {t("transactions.export.transactionsHint")}
                       </p>
                     </div>
                   </div>
@@ -406,7 +409,7 @@ export function ExportPortfolioModal({
                   {isLoadingCounts ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
                   ) : txCount !== null ? (
-                    `${txCount} rows`
+                    t("transactions.export.rows", { count: txCount })
                   ) : (
                     "—"
                   )}
@@ -443,13 +446,13 @@ export function ExportPortfolioModal({
                     <FileText className="w-4 h-4 text-[#DD3C73] shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
-                        <span>AI Intelligence Reports</span>
+                        <span>{t("transactions.export.reports")}</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           .md
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        Analytical briefings & reports stored in <code className="text-cream">reports/</code> folder
+                        {reportsHintBefore}<code className="text-cream">reports/</code>{reportsHintAfter}
                       </p>
                     </div>
                   </div>
@@ -459,7 +462,7 @@ export function ExportPortfolioModal({
                   {isLoadingCounts ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
                   ) : reportsCount !== null ? (
-                    `${reportsCount} files`
+                    t("transactions.export.files", { count: reportsCount })
                   ) : (
                     "—"
                   )}
@@ -496,13 +499,13 @@ export function ExportPortfolioModal({
                     <TrendingUp className="w-4 h-4 text-sky-400 shrink-0" />
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
-                        <span>Portfolio Summary Manifest</span>
+                        <span>{t("transactions.export.readme")}</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           README.md
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        High-level totals, currency metrics, and snapshot telemetry
+                        {t("transactions.export.readmeHint")}
                       </p>
                     </div>
                   </div>
@@ -514,7 +517,7 @@ export function ExportPortfolioModal({
           {/* Archive Filename Preview */}
           <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1">
             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-              Output ZIP Archive Filename:
+              {t("transactions.export.filename")}
             </div>
             <div className="text-xs font-mono text-cream truncate flex items-center gap-1.5">
               <Archive className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -531,7 +534,7 @@ export function ExportPortfolioModal({
             disabled={isExporting}
             className="px-3.5 py-1.5 rounded-xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer disabled:opacity-50"
           >
-            Close
+            {t("common.close")}
           </button>
 
           <button
@@ -543,12 +546,12 @@ export function ExportPortfolioModal({
             {isExporting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Generating ZIP…</span>
+                <span>{t("transactions.export.generating")}</span>
               </>
             ) : (
               <>
                 <Download className="w-3.5 h-3.5" />
-                <span>Download ZIP</span>
+                <span>{t("transactions.export.download")}</span>
               </>
             )}
           </button>

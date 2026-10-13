@@ -4,6 +4,7 @@ import { formatMoney, fmtCurrency, numberFormat } from "./utils";
 import { Plus, Upload, Trash2, Edit2, Search, ArrowRightLeft } from "lucide-react";
 import { Select } from "../common/Select";
 import { HoldingLink } from "./holding-links";
+import { t } from "../../i18n";
 
 /** Rows rendered before "Show all": thousands of rows make every search keystroke slow. */
 const ROW_LIMIT = 200;
@@ -103,10 +104,10 @@ export function TransactionsCard({
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
             <ArrowRightLeft className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span className="truncate">Transaction Ledger</span>
+            <span className="truncate">{t("transactions.ledger.title")}</span>
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5 font-mono" title={`${transactions.length} recorded events (trades, dividends, deposits)`}>
-            {transactions.length} recorded events (trades, dividends, deposits)
+          <p className="text-[11px] text-slate-400 mt-0.5 font-mono" title={t("transactions.ledger.eventsCount", { count: transactions.length })}>
+            {t("transactions.ledger.eventsCount", { count: transactions.length })}
           </p>
         </div>
 
@@ -116,7 +117,7 @@ export function TransactionsCard({
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search ledger..."
+              placeholder={t("transactions.ledger.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
@@ -129,15 +130,15 @@ export function TransactionsCard({
             selectSize="sm"
             className="h-8"
             wrapperClassName="shrink-0"
-            aria-label="Filter by transaction type"
+            aria-label={t("transactions.ledger.filterLabel")}
           >
-            <option value="ALL">All Types</option>
-            <option value="BUY">BUY</option>
-            <option value="SELL">SELL</option>
-            <option value="DIVIDEND">DIVIDEND</option>
-            <option value="INTEREST_PAYMENT">INTEREST</option>
-            <option value="CUSTOMER_INBOUND">DEPOSIT</option>
-            <option value="CUSTOMER_OUTBOUND">WITHDRAWAL</option>
+            <option value="ALL">{t("transactions.ledger.allTypes")}</option>
+            <option value="BUY">{t("transactions.types.buy")}</option>
+            <option value="SELL">{t("transactions.types.sell")}</option>
+            <option value="DIVIDEND">{t("transactions.types.dividend")}</option>
+            <option value="INTEREST_PAYMENT">{t("transactions.types.interest")}</option>
+            <option value="CUSTOMER_INBOUND">{t("transactions.types.deposit")}</option>
+            <option value="CUSTOMER_OUTBOUND">{t("transactions.types.withdrawal")}</option>
           </Select>
 
           <button
@@ -145,7 +146,7 @@ export function TransactionsCard({
             className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer uppercase tracking-wider font-mono"
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>Import CSV</span>
+            <span>{t("transactions.ledger.importCsv")}</span>
           </button>
 
           <button
@@ -153,7 +154,7 @@ export function TransactionsCard({
             className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Transaction</span>
+            <span>{t("transactions.ledger.addTransaction")}</span>
           </button>
         </div>
       </div>
@@ -164,21 +165,21 @@ export function TransactionsCard({
           <table className="w-full text-left text-xs font-mono border-collapse">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-800 z-10">
               <tr className="text-[11px] text-slate-400 uppercase tracking-wider">
-                <th className="py-2.5 px-3">Date</th>
-                <th className="py-2.5 px-3">Type</th>
-                <th className="py-2.5 px-3">Symbol</th>
-                <th className="py-2.5 px-3 text-right">Shares</th>
-                <th className="py-2.5 px-3 text-right">Price</th>
-                <th className="py-2.5 px-3 text-right">Total Amount</th>
-                <th className="py-2.5 px-3 text-right">Fee / Tax</th>
-                <th className="py-2.5 px-3 text-center">Actions</th>
+                <th className="py-2.5 px-3">{t("transactions.ledger.columns.date")}</th>
+                <th className="py-2.5 px-3">{t("transactions.ledger.columns.type")}</th>
+                <th className="py-2.5 px-3">{t("transactions.ledger.columns.symbol")}</th>
+                <th className="py-2.5 px-3 text-right">{t("transactions.ledger.columns.shares")}</th>
+                <th className="py-2.5 px-3 text-right">{t("transactions.ledger.columns.price")}</th>
+                <th className="py-2.5 px-3 text-right">{t("transactions.ledger.columns.totalAmount")}</th>
+                <th className="py-2.5 px-3 text-right">{t("transactions.ledger.columns.feeTax")}</th>
+                <th className="py-2.5 px-3 text-center">{t("transactions.ledger.columns.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500 font-mono text-xs">
-                    No recorded transactions found. Click "Import CSV" or "Add Transaction" to record trades.
+                    {t("transactions.ledger.empty")}
                   </td>
                 </tr>
               ) : (
@@ -214,14 +215,14 @@ export function TransactionsCard({
                         <button
                           onClick={() => onOpenEditModal(tx)}
                           className="p-1 hover:text-[#DD3C73] text-slate-400 transition-colors cursor-pointer"
-                          title="Edit Transaction"
+                          title={t("transactions.ledger.editTransaction")}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => onDeleteTransaction(tx.id)}
                           className="p-1 hover:text-[#DD3C73] text-slate-400 transition-colors cursor-pointer"
-                          title="Delete Transaction"
+                          title={t("transactions.ledger.deleteTransaction")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -238,7 +239,7 @@ export function TransactionsCard({
                       onClick={() => setShowAll(true)}
                       className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer uppercase tracking-wider font-mono"
                     >
-                      Show all {filtered.length} transactions
+                      {t("transactions.ledger.showAll", { count: filtered.length })}
                     </button>
                   </td>
                 </tr>
