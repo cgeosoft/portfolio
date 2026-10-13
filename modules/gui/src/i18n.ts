@@ -11,7 +11,9 @@
 import { DEFAULT_LANGUAGE, findLanguage, matchLanguage, parseMessages, translate, type Messages } from "portfolio-shared/i18n";
 import enSource from "../../../lang/en.yml?raw";
 
-const loaders = import.meta.glob<string>(["../../../lang/*.yml", "!../../../lang/en.yml"], { query: "?raw", import: "default" });
+// `import.meta.glob` is Vite's; under `bun test` it is missing and only English loads.
+const loaders: Record<string, () => Promise<string>> =
+  typeof import.meta.glob === "function" ? import.meta.glob<string>(["../../../lang/*.yml", "!../../../lang/en.yml"], { query: "?raw", import: "default" }) : {};
 
 /** localStorage key of the chosen language on this device. */
 const STORAGE_KEY = "portfolio_language";

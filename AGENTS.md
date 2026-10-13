@@ -16,6 +16,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (`index.ts` shell, `dev.ts` development run, `service.ts` child process and logs, tray, window state, Linux icons; `app.ts` is the only file that differs from FintechCrafts Management), `scripts/stage.ts`, `assets/`. `modules/gui/scripts/dev-server.ts` starts Vite for `bun start`.
 - `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) with `releases/latest.json` manifest.
 - `scripts/release.sh` (tag, build, publish), `scripts/docker/Dockerfile.linux`, `scripts/build-deb.sh`, `scripts/build-metrics.ts`.
+- `lang/<code>.yml` - interface text, one file per ISO 639-1 code; `en.yml` is the source and the fallback. Format and the language list with AI support tiers in `modules/shared/src/i18n.ts`, GUI loader in `modules/gui/src/i18n.ts`.
 - `docs/architecture.md` (modules, config, logging, release), `docs/theme.md`.
 
 ## Skills
@@ -54,4 +55,5 @@ bun run website:publish                   # write latest.json and deploy website
 6. Settings live in the `settings` table (`loadConfig`/`updateConfig`), never in a .env file. The service reads no environment variables: `paths.ts` derives the paths, build-time values are `--define` constants (`globals.d.ts`).
 7. Clean LLM output with `sanitizeLlmResponse()` before display.
 8. A metric never runs in the main process or webview; the ABI changes only with a new version.
-9. Writing: short active sentences. No em-dashes, emojis or AI clichés. State only verified facts.
+9. User-visible GUI text goes through `t("section.key")` with the English text in `lang/en.yml`, never at module top level (the language loads before the first render). Add new keys to every language; `bun run scripts/check-lang.ts` lists missing ones. LLM prompts stay English; `language` in the config sets the output language.
+10. Writing: short active sentences. No em-dashes, emojis or AI clichés. State only verified facts.
