@@ -3,25 +3,26 @@ import { BellRing, Briefcase, CalendarClock, CalendarDays, CalendarRange, Clock,
 import type { AutomationStatus, DailyBriefDays, DesktopConfig, NotificationChannel, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { api } from "../../api";
+import { getLocale, t } from "../../i18n";
 import { Select } from "../common/Select";
 import { SectionHeader, SettingItem, Toggle } from "./SettingsFields";
 import { ChoiceButton, StatusLine, type StatusResult } from "./SettingsPrimitives";
 import type { AutomationId } from "./settings-nav";
 
-const DAILY_OPTIONS: { value: DailyBriefDays; label: string }[] = [
-  { value: "weekdays", label: "Mon to Fri" },
-  { value: "daily", label: "Every day" },
+const DAILY_OPTIONS: { value: DailyBriefDays; key: string }[] = [
+  { value: "weekdays", key: "weekdays" },
+  { value: "daily", key: "daily" },
 ];
 
-/** Monday first, with the JavaScript day numbers the service stores. */
+/** Monday first, with the JavaScript day numbers the service stores; `key` names the label under settings.automation.weekdays. */
 const WEEKDAY_OPTIONS = [
-  { value: 1, label: "Mon" },
-  { value: 2, label: "Tue" },
-  { value: 3, label: "Wed" },
-  { value: 4, label: "Thu" },
-  { value: 5, label: "Fri" },
-  { value: 6, label: "Sat" },
-  { value: 0, label: "Sun" },
+  { value: 1, key: "mon" },
+  { value: 2, key: "tue" },
+  { value: 3, key: "wed" },
+  { value: 4, key: "thu" },
+  { value: 5, key: "fri" },
+  { value: 6, key: "sat" },
+  { value: 0, key: "sun" },
 ];
 
 /** How often a card refreshes the status while it is open, so a scheduled run shows up. */
@@ -29,26 +30,19 @@ const STATUS_POLL_MS = 30_000;
 
 type ConfigKey<T> = { [K in keyof DesktopConfig]-?: DesktopConfig[K] extends T ? K : never }[keyof DesktopConfig];
 
-/** What differs between the automations; the card draws the rest the same way. */
+/**
+ * What differs between the automations; the card draws the rest the same way.
+ * The texts live in en.yml under `settings.automation.<messages>`: title,
+ * blurb, toggleTitle, toggleDescription, timeDescription,
+ * portfolioDescription, privacy, runningText and the status sentences.
+ */
 interface AutomationDefinition {
   icon: LucideIcon;
-  title: string;
-  blurb: string;
-  toggleTitle: string;
-  toggleDescription: string;
+  /** i18n group of the texts: `settings.automation.<messages>.*`. */
+  messages: string;
   enabledKey: ConfigKey<boolean>;
   timeKey: ConfigKey<string>;
   portfolioKey: ConfigKey<string>;
-  timeDescription: string;
-  portfolioDescription: string;
-  /** What goes to the notification channels, after "Each ... goes to". */
-  delivered: string;
-  /** Where the result stays without a channel. */
-  stored: string;
-  privacy: string;
-  /** "brief", "report" or "alert", for the status texts. */
-  noun: string;
-  runningText: string;
   loadStatus: () => Promise<AutomationStatus>;
   run: () => Promise<RunAutomationResponse>;
   /** The row that picks the days; none for an automation that runs every day. */
@@ -58,28 +52,15 @@ interface AutomationDefinition {
 const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
   "daily-brief": {
     icon: Newspaper,
-    title: "Daily Brief",
-    blurb: "Each morning the assistant sums up the last trading session and sends it to your phone.",
-    toggleTitle: "Send a daily brief",
-    toggleDescription:
-      "The assistant writes a short overview of each portfolio: the return of the session, the largest moves, news that explains them and new transactions. The brief also lands in the assistant sidebar, so you can ask follow-up questions.",
+    messages: "dailyBrief",
     enabledKey: "dailyBriefEnabled",
     timeKey: "dailyBriefTime",
     portfolioKey: "dailyBriefPortfolioId",
-    timeDescription:
-      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the brief goes out when it starts.",
-    portfolioDescription: "One brief and one notification per portfolio.",
-    delivered: "Each brief goes",
-    stored: "The briefs still land in the assistant sidebar",
-    privacy:
-      "Percentages, weights, tickers and transaction types, as in the assistant chat. Never balances or money amounts. News headlines come from Finnhub when a Finnhub key is set.",
-    noun: "brief",
-    runningText: "Refreshing quotes and writing the brief...",
     loadStatus: api.getDailyBriefStatus,
     run: api.runDailyBrief,
     days: (config, save, saving) => (
-      <SettingItem icon={CalendarDays} title="Days" description="On Monday to Friday, the Monday brief covers the Friday session.">
-        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Days">
+      <SettingItem icon={CalendarDays} title={t("settings.automation.days")} description={t("settings.automation.daysDescription")}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("settings.automation.days")}>
           {DAILY_OPTIONS.map((option) => (
             <ChoiceButton
               key={option.value}
@@ -87,7 +68,7 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
               disabled={saving}
               onClick={() => config.dailyBriefDays !== option.value && save({ dailyBriefDays: option.value })}
             >
-              {option.label}
+              {t(`settings.automation.dailyOptions.${option.key}`)}
             </ChoiceButton>
           ))}
         </div>
@@ -96,32 +77,15 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
   },
   "weekly-analysis": {
     icon: CalendarRange,
-    title: "Weekly Report",
-    blurb: "Once a week the assistant writes the weekly report of each portfolio and sends you a summary.",
-    toggleTitle: "Write a weekly report",
-    toggleDescription:
-      "The assistant writes the full weekly report, the same one as Reports, Generate: performance, allocation, risk, technical signals and the news of the week. It is stored under Reports; your notification apps get a short summary.",
+    messages: "weeklyReport",
     enabledKey: "weeklyAnalysisEnabled",
     timeKey: "weeklyAnalysisTime",
     portfolioKey: "weeklyAnalysisPortfolioId",
-    timeDescription:
-      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the report is written when it starts within two days.",
-    portfolioDescription: "One report and one notification per portfolio.",
-    delivered: "A short summary of each report goes",
-    stored: "The reports are still stored under Reports",
-    privacy:
-      "The report sees what Reports, Generate sends to your AI provider. The notification summary carries percentages and tickers only, never balances or money amounts.",
-    noun: "report",
-    runningText: "Refreshing quotes and writing the weekly report. This can take a few minutes...",
     loadStatus: api.getWeeklyAnalysisStatus,
     run: api.runWeeklyAnalysis,
     days: (config, save, saving) => (
-      <SettingItem
-        icon={CalendarDays}
-        title="Day of the week"
-        description="The report covers the week of the day before, so a run on Saturday or Sunday covers the week that just closed and a run on Monday the week before."
-      >
-        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Day of the week">
+      <SettingItem icon={CalendarDays} title={t("settings.automation.weekday")} description={t("settings.automation.weekdayDescription")}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("settings.automation.weekday")}>
           {WEEKDAY_OPTIONS.map((option) => (
             <ChoiceButton
               key={option.value}
@@ -129,7 +93,7 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
               disabled={saving}
               onClick={() => config.weeklyAnalysisDay !== option.value && save({ weeklyAnalysisDay: option.value })}
             >
-              {option.label}
+              {t(`settings.automation.weekdays.${option.key}`)}
             </ChoiceButton>
           ))}
         </div>
@@ -138,23 +102,10 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
   },
   "event-alerts": {
     icon: CalendarClock,
-    title: "Dividend & Earnings Alerts",
-    blurb: "Each day your phone hears which holdings pay a dividend or publish results the next day.",
-    toggleTitle: "Send event alerts",
-    toggleDescription:
-      "Covers the ex-dividend dates (the last day to own a share and still get the dividend) and earnings reports (quarterly results) of the stocks and funds you hold. On Friday and Saturday the alert covers the days up to Monday. Each event goes out once, even after a manual run.",
+    messages: "eventAlerts",
     enabledKey: "eventAlertsEnabled",
     timeKey: "eventAlertsTime",
     portfolioKey: "eventAlertsPortfolioId",
-    timeDescription:
-      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the alert goes out when it starts.",
-    portfolioDescription: "One notification lists the events of every chosen portfolio.",
-    delivered: "Each alert goes",
-    stored: "The dates still show in the Income & events card",
-    privacy:
-      "The alert names tickers and dates only. Never quantities, balances or money amounts. The dates come from FMP, Yahoo Finance or Finnhub, whichever has them.",
-    noun: "alert",
-    runningText: "Checking the dividend and earnings dates of the next day...",
     loadStatus: api.getEventAlertsStatus,
     run: api.runEventAlerts,
   },
@@ -170,17 +121,18 @@ interface SectionProps {
 
 const CHANNEL_NAMES: Record<NotificationChannel, string> = { gotify: "Gotify", ntfy: "ntfy" };
 
+/** The text `settings.automation.<messages>.<name>` of an automation. */
+const msg = (def: AutomationDefinition, name: string, params?: Record<string, string | number>) => t(`settings.automation.${def.messages}.${name}`, params);
+
 /** The Delivery text for the set-up channels. */
 function deliveryText(def: AutomationDefinition, channels: NotificationChannel[]): string {
-  if (channels.length === 0) {
-    return `No notification channel is set up. ${def.stored}, but no push notification goes out. Set up Gotify or ntfy under Phone Apps.`;
-  }
-  const names = channels.map((c) => CHANNEL_NAMES[c]).join(" and ");
-  return `${def.delivered} to ${names} as a push notification.`;
+  if (channels.length === 0) return msg(def, "noChannel");
+  const names = new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(channels.map((c) => CHANNEL_NAMES[c]));
+  return msg(def, "delivered", { channels: names });
 }
 
 const formatWhen = (iso?: string) =>
-  iso ? new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+  iso ? new Date(iso).toLocaleString(getLocale(), { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
 
 /** One scheduled assistant task: switch, schedule, portfolios, delivery through the notification channels and the last run. */
 function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSetup }: SectionProps & { def: AutomationDefinition }) {
@@ -221,7 +173,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
     setResult(null);
     try {
       const res = await def.run();
-      setResult({ ok: res.success, message: res.success ? (res.message ?? "Done.") : (res.error ?? res.message ?? `The ${def.noun} failed.`) });
+      setResult({ ok: res.success, message: res.success ? (res.message ?? t("settings.automation.done")) : (res.error ?? res.message ?? msg(def, "failed")) });
     } catch (err) {
       setResult({ ok: false, message: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -245,15 +197,15 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
       <SectionHeader
         icon={def.icon}
-        title={def.title}
-        description={def.blurb}
+        title={msg(def, "title")}
+        description={msg(def, "blurb")}
         actions={
           <span
             className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${
               enabled ? "bg-accent-500/15 text-accent-500 border-accent-500/30" : "bg-slate-800/60 text-slate-400 border-slate-700"
             }`}
           >
-            {enabled ? "Scheduled" : "Off"}
+            {enabled ? t("settings.automation.scheduled") : t("settings.automation.off")}
           </span>
         }
       />
@@ -261,15 +213,15 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
       <div className="divide-y divide-slate-800/80 -mt-2">
         <SettingItem
           icon={def.icon}
-          title={def.toggleTitle}
-          description={def.toggleDescription}
-          control={<Toggle checked={enabled} disabled={saving} onChange={() => save({ [def.enabledKey]: !enabled })} label={def.toggleTitle} />}
+          title={msg(def, "toggleTitle")}
+          description={msg(def, "toggleDescription")}
+          control={<Toggle checked={enabled} disabled={saving} onChange={() => save({ [def.enabledKey]: !enabled })} label={msg(def, "toggleTitle")} />}
         />
 
         <SettingItem
           icon={Clock}
-          title="Time of day"
-          description={`${def.timeDescription}${enabled && status?.nextRun ? ` Next ${def.noun} ${formatWhen(status.nextRun)}.` : ""}`}
+          title={t("settings.automation.timeOfDay")}
+          description={`${msg(def, "timeDescription")}${enabled && status?.nextRun ? ` ${msg(def, "nextRun", { when: formatWhen(status.nextRun) })}` : ""}`}
           control={
             <input
               type="time"
@@ -278,7 +230,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
               onBlur={commitTime}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               disabled={saving}
-              aria-label="Time of day"
+              aria-label={t("settings.automation.timeOfDay")}
               className="h-9 w-28 shrink-0 bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-lg px-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
             />
           }
@@ -286,16 +238,16 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
 
         {def.days?.(config, save, saving)}
 
-        <SettingItem icon={Briefcase} title="Portfolios" description={def.portfolioDescription}>
+        <SettingItem icon={Briefcase} title={t("settings.automation.portfolios")} description={msg(def, "portfolioDescription")}>
           <Select
             value={portfolioKnown ? portfolioId : ""}
             onChange={(e) => save({ [def.portfolioKey]: e.target.value })}
             disabled={saving}
             selectSize="lg"
             icon={<Briefcase className="w-4 h-4" />}
-            aria-label={`Portfolios of the ${def.noun}`}
+            aria-label={msg(def, "portfoliosLabel")}
           >
-            <option value="">All portfolios</option>
+            <option value="">{t("settings.automation.allPortfolios")}</option>
             {portfolios.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -306,8 +258,8 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
 
         <SettingItem
           icon={BellRing}
-          title="Delivery"
-          description={status ? deliveryText(def, channels) : "Checking the notification channels..."}
+          title={t("settings.automation.delivery")}
+          description={status ? deliveryText(def, channels) : t("settings.automation.checkingChannels")}
           control={
             <button
               type="button"
@@ -315,33 +267,36 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
               className="h-8 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-950/60 text-[11px] font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer"
             >
               <BellRing className="w-3.5 h-3.5 text-accent-500" />
-              {channels.length > 0 ? "Phone Apps" : "Set up"}
+              {channels.length > 0 ? t("settings.nav.phone") : t("settings.automation.setUp")}
             </button>
           }
         />
 
-        <SettingItem icon={ShieldCheck} title="What the assistant sees" description={def.privacy} />
+        <SettingItem icon={ShieldCheck} title={t("settings.automation.privacy")} description={msg(def, "privacy")} />
 
         <SettingItem
           icon={History}
-          title={`Last ${def.noun}`}
+          title={msg(def, "lastTitle")}
           description={
             last
-              ? `${formatWhen(last.at)} (${last.trigger === "schedule" ? "scheduled" : "run by hand"}). ${last.message}`
+              ? t(last.trigger === "schedule" ? "settings.automation.lastRunScheduled" : "settings.automation.lastRunManual", {
+                  when: formatWhen(last.at),
+                  message: last.message,
+                })
               : status?.lastRun
-                ? `Last scheduled ${def.noun} on ${status.lastRun}.`
-                : `No ${def.noun} yet.`
+                ? msg(def, "lastScheduled", { date: status.lastRun })
+                : msg(def, "noneYet")
           }
           control={
             <button
               type="button"
               onClick={runNow}
               disabled={busy || portfolios.length === 0}
-              title={`Write and send the ${def.noun} now. The scheduled ${def.noun} still runs.`}
+              title={msg(def, "runTitle")}
               className="h-8 shrink-0 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-500" /> : <Play className="w-3.5 h-3.5 text-accent-500" />}
-              Run now
+              {t("settings.automation.runNow")}
             </button>
           }
         >
@@ -358,16 +313,16 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
       <div className="flex items-center gap-3 pt-4 border-t border-slate-800/80 min-h-[2rem]">
         {saving ? (
           <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("common.saving")}
           </span>
         ) : sending ? (
           <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> {def.runningText}
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> {msg(def, "runningText")}
           </span>
         ) : result ? (
           <StatusLine result={result} />
         ) : (
-          <span className="text-[11px] text-slate-500">Changes save right away.</span>
+          <span className="text-[11px] text-slate-500">{t("settings.automation.savesRightAway")}</span>
         )}
       </div>
     </div>

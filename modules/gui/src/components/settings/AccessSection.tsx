@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Lock, MonitorSmartphone, ShieldCheck, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
+import { t } from "../../i18n";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
 import { SectionHeader, SettingItem, SettingsFields, Toggle } from "./SettingsFields";
@@ -48,10 +49,10 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
     setError(null);
 
     if (mode !== "disable") {
-      if (!PIN_RULE.test(pin)) return setError("The PIN must be exactly 6 digits.");
-      if (pin !== confirmPin) return setError("The two PINs do not match.");
+      if (!PIN_RULE.test(pin)) return setError(t("settings.security.lock.pinRule"));
+      if (pin !== confirmPin) return setError(t("settings.security.lock.pinMismatch"));
     }
-    if (mode !== "enable" && !PIN_RULE.test(currentPin)) return setError("Enter the current 6-digit PIN.");
+    if (mode !== "enable" && !PIN_RULE.test(currentPin)) return setError(t("settings.security.lock.currentPinRequired"));
 
     setBusy(true);
     try {
@@ -64,7 +65,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
       }
       reset();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not update the PIN.");
+      setError(err instanceof Error ? err.message : t("settings.security.lock.failed"));
     } finally {
       setBusy(false);
     }
@@ -73,13 +74,13 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
   return (
     <SettingItem
       icon={Lock}
-      title="App lock"
+      title={t("settings.security.lock.title")}
       description={
         <>
-          Ask for a PIN before opening Portfolio. Applies to this computer and to any device that connects over the network. Without it the app opens straight away.
+          {t("settings.security.lock.description")}
           {pinEnabled && mode === "idle" && (
             <button type="button" onClick={() => setMode("change")} className="block text-xs font-semibold text-accent-400 hover:text-accent-300 mt-1 cursor-pointer">
-              Change PIN
+              {t("settings.security.lock.changePin")}
             </button>
           )}
         </>
@@ -89,7 +90,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           checked={pinEnabled}
           disabled={busy}
           onChange={() => (mode !== "idle" ? reset() : setMode(pinEnabled ? "disable" : "enable"))}
-          label="App lock"
+          label={t("settings.security.lock.title")}
         />
       }
     >
@@ -98,7 +99,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           <div className="flex flex-col gap-3">
             {mode !== "enable" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Current PIN</label>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t("settings.security.lock.currentPin")}</label>
                 <PinInput
                   ref={currentPinRef}
                   value={currentPin}
@@ -114,7 +115,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
             )}
             {mode !== "disable" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">New PIN</label>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t("settings.security.lock.newPin")}</label>
                 <PinInput
                   ref={newPinRef}
                   value={pin}
@@ -128,7 +129,7 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
             )}
             {mode !== "disable" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Repeat new PIN</label>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t("settings.security.lock.repeatPin")}</label>
                 <PinInput
                   ref={confirmPinRef}
                   value={confirmPin}
@@ -143,10 +144,10 @@ function AppLockCard({ pinEnabled, onChanged }: AppLockCardProps) {
           {error && <p className="text-xs text-rose-400">{error}</p>}
           <div className="flex items-center gap-2">
             <button type="submit" disabled={busy} className="px-3 py-1.5 rounded-lg bg-accent-600 hover:bg-accent-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
-              {mode === "disable" ? "Turn off" : mode === "change" ? "Change PIN" : "Turn on"}
+              {mode === "disable" ? t("settings.security.lock.turnOff") : mode === "change" ? t("settings.security.lock.changePin") : t("settings.security.lock.turnOn")}
             </button>
             <button type="button" onClick={reset} className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -177,10 +178,10 @@ function SessionsCard() {
     setNotice(null);
     try {
       const res = await api.revokeOtherSessions();
-      setNotice(res.revoked === 0 ? "No other session was open." : `Signed out ${res.revoked} other ${res.revoked === 1 ? "session" : "sessions"}.`);
+      setNotice(res.revoked === 0 ? t("settings.security.sessions.noneRevoked") : t("settings.security.sessions.revoked", { count: res.revoked }));
       load();
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : "Could not sign out the other sessions.");
+      setError(err instanceof ApiError ? err.message : t("settings.security.sessions.failed"));
     } finally {
       setBusy(false);
     }
@@ -191,12 +192,12 @@ function SessionsCard() {
   return (
     <SettingItem
       icon={MonitorSmartphone}
-      title="Signed-in devices"
+      title={t("settings.security.sessions.title")}
       description={
         <>
-          Every window, browser or phone that opened this Portfolio keeps a session for seven days. End all of them except this one, for example after lending your phone or changing the PIN.
+          {t("settings.security.sessions.description")}
           {others !== null && (
-            <span className="block text-xs text-slate-500 mt-1">{others === 0 ? "No other session is open." : `${others} other ${others === 1 ? "session is" : "sessions are"} open.`}</span>
+            <span className="block text-xs text-slate-500 mt-1">{others === 0 ? t("settings.security.sessions.noneOpen") : t("settings.security.sessions.open", { count: others })}</span>
           )}
           {notice && <span className="block text-xs text-emerald-400 mt-1">{notice}</span>}
           {error && <span className="block text-xs text-rose-400 mt-1">{error}</span>}
@@ -209,7 +210,7 @@ function SessionsCard() {
           onClick={() => void revoke()}
           className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
         >
-          {busy ? "Signing out…" : "Sign out other devices"}
+          {busy ? t("settings.security.sessions.signingOut") : t("settings.security.sessions.signOut")}
         </button>
       }
     />
@@ -252,7 +253,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
       setRemote(info);
       setPortText(String(info.port));
     } catch (err: unknown) {
-      setRemoteError(err instanceof ApiError ? err.message : "Could not change the setting.");
+      setRemoteError(err instanceof ApiError ? err.message : t("settings.security.remote.failed"));
       setPortText(String(remote.port));
     } finally {
       setRemoteBusy(false);
@@ -267,7 +268,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
     const port = Number(portText.trim());
     if (portText.trim() === String(remote.port)) return;
     if (!Number.isInteger(port) || port < 1024 || port > 65535) {
-      setRemoteError("The port must be a whole number from 1024 to 65535.");
+      setRemoteError(t("settings.security.remote.portRule"));
       setPortText(String(remote.port));
       return;
     }
@@ -290,22 +291,22 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
       {remote && (
         <SettingItem
           icon={Wifi}
-          title="Open on other devices"
-          description="Let your phone or another computer on the same home network open this Portfolio in its browser. Turn on the app lock first. When off, only this computer can open it."
+          title={t("settings.security.remote.title")}
+          description={t("settings.security.remote.description")}
           control={
-            <span title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}>
+            <span title={!remote.enabled && remote.pinRequired ? t("settings.security.remote.pinFirst") : undefined}>
               <Toggle
                 checked={remote.enabled}
                 disabled={remoteBusy || (!remote.enabled && remote.pinRequired)}
                 onChange={toggleRemote}
-                label="Open on other devices"
+                label={t("settings.security.remote.title")}
               />
             </span>
           }
         >
           <div className="flex items-center gap-2">
             <label htmlFor="remote-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Port
+              {t("settings.security.remote.port")}
             </label>
             <input
               id="remote-port"
@@ -320,17 +321,17 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
               }}
               className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
             />
-            <span className="text-[11px] text-slate-500">Other devices use this number in the address. Change it only if another program already uses it.</span>
+            <span className="text-[11px] text-slate-500">{t("settings.security.remote.portHint")}</span>
           </div>
           {remoteError && <p className="text-xs text-rose-400">{remoteError}</p>}
           {!remoteError && remote.error && <p className="text-xs text-rose-400">{remote.error}</p>}
           {remote.enabled && remote.urls.length > 0 && (
-            <span className="text-[11px] text-slate-400">Open one of these addresses in the browser of the other device:</span>
+            <span className="text-[11px] text-slate-400">{t("settings.security.remote.addresses")}</span>
           )}
           {remote.enabled && (
             <div className="flex flex-wrap gap-2">
               {remote.urls.length === 0 ? (
-                <span className="text-xs text-slate-500">No network interface found. Connect this computer to your Wi-Fi or LAN.</span>
+                <span className="text-xs text-slate-500">{t("settings.security.remote.noInterface")}</span>
               ) : (
                 remote.urls.map((url) => (
                   <code key={url} className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all">
@@ -350,7 +351,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
 export function SecuritySection({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void }) {
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-      <SectionHeader icon={ShieldCheck} title="Privacy & Security" description="Who can open Portfolio, and what it shares." />
+      <SectionHeader icon={ShieldCheck} title={t("settings.security.title")} description={t("settings.security.description")} />
       <div className="divide-y divide-slate-800/80 -mt-2">
         <AccessRows onPinEnabledChange={onPinEnabledChange} />
         <SettingsFields section="security" />

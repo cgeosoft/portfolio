@@ -3,22 +3,23 @@ import { BellRing, Gauge, Loader2, Megaphone, Send, Smartphone, type LucideIcon 
 import type { DesktopConfig, SendNotificationResponse } from "portfolio-shared/api-types";
 import { DEFAULT_NTFY_URL, SECRET_MASK } from "portfolio-shared/config-types";
 import { api } from "../../api";
+import { t } from "../../i18n";
 import { SectionHeader } from "./SettingsFields";
 import { ChoiceButton, StatusLine, TextField, type StatusResult } from "./SettingsPrimitives";
 
-/** Gotify priorities: the Android app stays silent below 4 and pops up from 8. */
+/** Gotify priorities: the Android app stays silent below 4 and pops up from 8. `key` names the label under settings.phone.priorities. */
 const GOTIFY_PRIORITIES = [
-  { value: 2, label: "Low" },
-  { value: 5, label: "Normal" },
-  { value: 8, label: "High" },
+  { value: 2, key: "low" },
+  { value: 5, key: "normal" },
+  { value: 8, key: "high" },
 ];
 
 /** ntfy priorities: 1 and 2 stay silent, 3 is the default, 4 and 5 pop up. */
 const NTFY_PRIORITIES = [
-  { value: 2, label: "Low" },
-  { value: 3, label: "Default" },
-  { value: 4, label: "High" },
-  { value: 5, label: "Urgent" },
+  { value: 2, key: "low" },
+  { value: 3, key: "default" },
+  { value: 4, key: "high" },
+  { value: 5, key: "urgent" },
 ];
 
 interface SectionProps {
@@ -32,12 +33,13 @@ function usePhoneAppCard(onConfigChange: (config: DesktopConfig) => void, name: 
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<StatusResult | null>(null);
 
-  const save = async (updates: Partial<DesktopConfig>, label: string) => {
+  /** `saved` is the whole sentence shown on success ("Saved the topic."). */
+  const save = async (updates: Partial<DesktopConfig>, saved: string) => {
     setSaving(true);
     setResult(null);
     try {
       onConfigChange(await api.saveConfig(updates));
-      setResult({ ok: true, message: `Saved ${label}.` });
+      setResult({ ok: true, message: saved });
     } catch (err) {
       setResult({ ok: false, message: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -52,8 +54,14 @@ function usePhoneAppCard(onConfigChange: (config: DesktopConfig) => void, name: 
       const res = await send();
       setResult(
         res.success
-          ? { ok: true, message: `${name} accepted the test message${res.latencyMs !== undefined ? ` in ${res.latencyMs} ms` : ""}. Check your ${name} app.` }
-          : { ok: false, message: res.error ?? "The test message failed." },
+          ? {
+              ok: true,
+              message:
+                res.latencyMs !== undefined
+                  ? t("settings.phone.testOkLatency", { name, ms: res.latencyMs })
+                  : t("settings.phone.testOk", { name }),
+            }
+          : { ok: false, message: res.error ?? t("settings.phone.testFailed") },
       );
     } catch (err) {
       setResult({ ok: false, message: err instanceof Error ? err.message : String(err) });
@@ -102,7 +110,7 @@ function PhoneAppCard({
               ready ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-slate-800/60 text-slate-400 border-slate-700"
             }`}
           >
-            {ready ? "Connected" : "Not set up"}
+            {ready ? t("settings.phone.connected") : t("settings.phone.notSetUp")}
           </span>
         }
       />
@@ -114,20 +122,20 @@ function PhoneAppCard({
           type="button"
           onClick={onTest}
           disabled={testing || !ready}
-          title={ready ? "Send a test message" : missing}
+          title={ready ? t("settings.phone.sendTestTitle") : missing}
           className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-500" /> : <Send className="w-3.5 h-3.5 text-accent-500" />}
-          Send test message
+          {t("settings.phone.sendTest")}
         </button>
         {saving ? (
           <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("common.saving")}
           </span>
         ) : result ? (
           <StatusLine result={result} />
         ) : (
-          <span className="text-[11px] text-slate-500">Changes save when you leave a field or press Enter.</span>
+          <span className="text-[11px] text-slate-500">{t("settings.phone.savesOnBlur")}</span>
         )}
       </div>
     </div>
@@ -144,23 +152,23 @@ function PriorityField({
   description,
 }: {
   label: string;
-  presets: { value: number; label: string }[];
+  presets: { value: number; key?: string }[];
   value: number;
   disabled: boolean;
   onSelect: (value: number) => void;
   description: string;
 }) {
-  const options = presets.some((p) => p.value === value) ? presets : [...presets, { value, label: String(value) }].sort((a, b) => a.value - b.value);
+  const options = presets.some((p) => p.value === value) ? presets : [...presets, { value }].sort((a, b) => a.value - b.value);
   return (
     <div className="space-y-2 pt-4 border-t border-slate-800/80">
       <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
         <Gauge className="w-3.5 h-3.5" />
-        Priority
+        {t("settings.phone.priority")}
       </span>
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
         {options.map((p) => (
           <ChoiceButton key={p.value} active={p.value === value} disabled={disabled} onClick={() => p.value !== value && onSelect(p.value)}>
-            {p.label} ({p.value})
+            {p.key ? t(`settings.phone.priorities.${p.key}`) : String(p.value)} ({p.value})
           </ChoiceButton>
         ))}
       </div>
@@ -179,9 +187,9 @@ function GotifyCard({ config, onConfigChange }: SectionProps) {
     <PhoneAppCard
       icon={BellRing}
       title="Gotify"
-      description="For people who run their own Gotify server. Notifications arrive in the Gotify app."
+      description={t("settings.phone.gotify.description")}
       ready={ready}
-      missing="Set the server URL and token first"
+      missing={t("settings.phone.gotify.missing")}
       saving={card.saving}
       testing={card.testing}
       result={card.result}
@@ -189,32 +197,32 @@ function GotifyCard({ config, onConfigChange }: SectionProps) {
     >
       <TextField
         id="gotifyUrl"
-        label="Server URL"
+        label={t("settings.phone.serverUrl")}
         first
         value={config.gotifyUrl}
         placeholder="https://gotify.example.com"
-        description="The address of your Gotify server, as you open it in the browser."
-        onCommit={(value) => card.save({ gotifyUrl: value.replace(/\/+$/, "") }, "the server URL")}
+        description={t("settings.phone.gotify.urlDescription")}
+        onCommit={(value) => card.save({ gotifyUrl: value.replace(/\/+$/, "") }, t("settings.phone.saved.serverUrl"))}
       />
 
       <TextField
         id="gotifyToken"
-        label="Application token"
+        label={t("settings.phone.gotify.token")}
         secret
         isSet={tokenSet}
         value=""
-        placeholder="Token of a Gotify application"
-        description="In Gotify, open Apps, create an application named Portfolio and copy its token. The token stays in the local database and is never shown again."
-        onCommit={(value) => card.save({ gotifyToken: value }, value ? "the application token" : "the removal of the token")}
+        placeholder={t("settings.phone.gotify.tokenPlaceholder")}
+        description={t("settings.phone.gotify.tokenDescription")}
+        onCommit={(value) => card.save({ gotifyToken: value }, value ? t("settings.phone.saved.appToken") : t("settings.phone.saved.tokenRemoved"))}
       />
 
       <PriorityField
-        label="Gotify priority"
+        label={t("settings.phone.gotify.priority")}
         presets={GOTIFY_PRIORITIES}
         value={config.gotifyPriority}
         disabled={card.saving}
-        onSelect={(value) => card.save({ gotifyPriority: value }, "the priority")}
-        description="The Gotify Android app shows Low without a sound, Normal as a regular notification and High as a pop-up."
+        onSelect={(value) => card.save({ gotifyPriority: value }, t("settings.phone.saved.priority"))}
+        description={t("settings.phone.gotify.priorityDescription")}
       />
     </PhoneAppCard>
   );
@@ -237,9 +245,9 @@ function NtfyCard({ config, onConfigChange }: SectionProps) {
     <PhoneAppCard
       icon={Megaphone}
       title="ntfy"
-      description="The easiest choice: install the free ntfy app, no account needed."
+      description={t("settings.phone.ntfy.description")}
       ready={ready}
-      missing="Set the topic first"
+      missing={t("settings.phone.ntfy.missing")}
       saving={card.saving}
       testing={card.testing}
       result={card.result}
@@ -247,57 +255,57 @@ function NtfyCard({ config, onConfigChange }: SectionProps) {
     >
       <TextField
         id="ntfyUrl"
-        label="Server URL"
+        label={t("settings.phone.serverUrl")}
         first
         value={config.ntfyUrl}
         placeholder={DEFAULT_NTFY_URL}
-        description={`${DEFAULT_NTFY_URL} is the free public server. Put the address of your own server here if you host one.`}
-        onCommit={(value) => card.save({ ntfyUrl: value.replace(/\/+$/, "") || DEFAULT_NTFY_URL }, "the server URL")}
+        description={t("settings.phone.ntfy.urlDescription", { url: DEFAULT_NTFY_URL })}
+        onCommit={(value) => card.save({ ntfyUrl: value.replace(/\/+$/, "") || DEFAULT_NTFY_URL }, t("settings.phone.saved.serverUrl"))}
       />
 
       <div className="space-y-2">
         <TextField
           id="ntfyTopic"
-          label="Topic"
+          label={t("settings.phone.ntfy.topic")}
           value={config.ntfyTopic}
           placeholder="portfolio-..."
           description={
             isPublic
-              ? "On ntfy.sh anyone who knows the topic can read its messages, so use a long name nobody can guess. Subscribe to the same topic in the ntfy app."
-              : "Letters, digits, - and _. Subscribe to the same topic in the ntfy app."
+              ? t("settings.phone.ntfy.topicPublic")
+              : t("settings.phone.ntfy.topicPrivate")
           }
-          onCommit={(value) => card.save({ ntfyTopic: value }, value ? "the topic" : "the removal of the topic")}
+          onCommit={(value) => card.save({ ntfyTopic: value }, value ? t("settings.phone.saved.topic") : t("settings.phone.saved.topicRemoved"))}
         />
         {!config.ntfyTopic && (
           <button
             type="button"
-            onClick={() => card.save({ ntfyTopic: randomTopic() }, "a random topic")}
+            onClick={() => card.save({ ntfyTopic: randomTopic() }, t("settings.phone.saved.randomTopic"))}
             disabled={card.saving}
             className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-950/60 text-[11px] font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer disabled:opacity-60"
           >
-            Make a random topic
+            {t("settings.phone.ntfy.randomTopic")}
           </button>
         )}
       </div>
 
       <TextField
         id="ntfyToken"
-        label="Access token (optional)"
+        label={t("settings.phone.ntfy.token")}
         secret
         isSet={tokenSet}
         value=""
         placeholder="tk_..."
-        description="Only for a protected topic or a server that requires login. Create it in the ntfy web app under Account, Access tokens."
-        onCommit={(value) => card.save({ ntfyToken: value }, value ? "the access token" : "the removal of the token")}
+        description={t("settings.phone.ntfy.tokenDescription")}
+        onCommit={(value) => card.save({ ntfyToken: value }, value ? t("settings.phone.saved.accessToken") : t("settings.phone.saved.tokenRemoved"))}
       />
 
       <PriorityField
-        label="ntfy priority"
+        label={t("settings.phone.ntfy.priority")}
         presets={NTFY_PRIORITIES}
         value={config.ntfyPriority}
         disabled={card.saving}
-        onSelect={(value) => card.save({ ntfyPriority: value }, "the priority")}
-        description="Low arrives without a sound, Default as a regular notification, High and Urgent as a pop-up with a longer vibration."
+        onSelect={(value) => card.save({ ntfyPriority: value }, t("settings.phone.saved.priority"))}
+        description={t("settings.phone.ntfy.priorityDescription")}
       />
     </PhoneAppCard>
   );
@@ -311,10 +319,8 @@ export function PhoneAppsSection(props: SectionProps) {
   return (
     <div className="space-y-6">
       <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-4">
-        <SectionHeader icon={Smartphone} title="Phone Apps" description="Get the daily brief and alerts on your phone." />
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Portfolio sends notifications through a free notification app on your phone. Set up one of the two below, then switch on the daily brief, the weekly report or the dividend and earnings alerts in this menu. Without a phone app they still show inside Portfolio.
-        </p>
+        <SectionHeader icon={Smartphone} title={t("settings.phone.title")} description={t("settings.phone.description")} />
+        <p className="text-xs text-slate-400 leading-relaxed">{t("settings.phone.intro")}</p>
       </div>
       <NtfyCard {...props} />
       <GotifyCard {...props} />

@@ -11,11 +11,11 @@ export type SettingsSectionId = "appearance" | "security" | "metrics" | "assista
 
 export type AutomationId = "daily-brief" | "weekly-analysis" | "event-alerts";
 
-/** The scheduled assistant tasks, listed under Notifications. */
+/** The scheduled assistant tasks, listed under Notifications. Labels are i18n keys, translated where the sidebar renders. */
 export const AUTOMATIONS: (SidebarSection & { id: AutomationId })[] = [
-  { id: "daily-brief", label: "Daily Brief", icon: Newspaper },
-  { id: "weekly-analysis", label: "Weekly Report", icon: CalendarRange },
-  { id: "event-alerts", label: "Dividend & Earnings Alerts", icon: CalendarClock },
+  { id: "daily-brief", labelKey: "settings.nav.dailyBrief", icon: Newspaper },
+  { id: "weekly-analysis", labelKey: "settings.nav.weeklyReport", icon: CalendarRange },
+  { id: "event-alerts", labelKey: "settings.nav.eventAlerts", icon: CalendarClock },
 ];
 
 /** The pages of the Notifications submenu: the phone apps first, since every automation sends through them. */
@@ -28,17 +28,17 @@ export type SettingsSection = Exclude<SettingsSectionId, "notifications"> | Noti
 export const DEFAULT_SETTINGS_SECTION: SettingsSection = "appearance";
 
 export const SECTIONS: (SidebarSection & { id: SettingsSectionId })[] = [
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "security", label: "Privacy & Security", icon: ShieldCheck },
-  { id: "metrics", label: "Dashboard Cards", icon: Gauge },
-  { id: "assistant", label: "AI Assistant", icon: Bot },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "market-data", label: "Market Data", icon: Database },
-  { id: "data", label: "Your Data", icon: HardDrive },
-  { id: "about", label: "App & Help", icon: Info },
+  { id: "appearance", labelKey: "settings.nav.appearance", icon: Palette },
+  { id: "security", labelKey: "settings.nav.security", icon: ShieldCheck },
+  { id: "metrics", labelKey: "settings.nav.metrics", icon: Gauge },
+  { id: "assistant", labelKey: "settings.nav.assistant", icon: Bot },
+  { id: "notifications", labelKey: "settings.nav.notifications", icon: Bell },
+  { id: "market-data", labelKey: "settings.nav.marketData", icon: Database },
+  { id: "data", labelKey: "settings.nav.data", icon: HardDrive },
+  { id: "about", labelKey: "settings.nav.about", icon: Info },
 ];
 
-export const NOTIFICATION_PAGES: (SidebarSection & { id: NotificationPageId })[] = [{ id: "phone", label: "Phone Apps", icon: Smartphone }, ...AUTOMATIONS];
+export const NOTIFICATION_PAGES: (SidebarSection & { id: NotificationPageId })[] = [{ id: "phone", labelKey: "settings.nav.phone", icon: Smartphone }, ...AUTOMATIONS];
 
 /** Pages of earlier releases, so old links and bookmarks still open the right place. */
 const ALIASES: Record<string, SettingsSection> = {

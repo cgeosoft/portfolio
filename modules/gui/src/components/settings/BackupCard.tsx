@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FolderOpen, HardDriveDownload } from "lucide-react";
 import { api, ApiError } from "../../api";
+import { t } from "../../i18n";
 
 /**
  * "Backup" block of Settings → Your Data. The desktop window asks the service for
@@ -29,7 +30,7 @@ export function BackupCard() {
       const res = await api.createBackup();
       setSaved({ filePath: res.filePath, fileName: res.fileName, sizeBytes: res.sizeBytes });
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : "Could not create the backup.");
+      setError(err instanceof ApiError ? err.message : t("settings.backup.failed"));
     } finally {
       setBusy(false);
     }
@@ -41,26 +42,26 @@ export function BackupCard() {
     <div className="space-y-2.5">
       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
         <HardDriveDownload className="w-3.5 h-3.5 text-[#DD3C73]" />
-        <span>Backup</span>
+        <span>{t("settings.backup.title")}</span>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
         <div className="min-w-0">
-          <span className="text-xs text-slate-200 font-semibold">Keep a copy of your data</span>
+          <span className="text-xs text-slate-200 font-semibold">{t("settings.backup.heading")}</span>
           <p className="text-[11px] text-slate-400 mt-0.5">
             {isLocalClient === false
-              ? "Make backups from the Portfolio window on the computer itself. The copy holds the keys you entered for other services, so it never travels over the network."
-              : "Saves a complete copy of the database (portfolios, transactions, reports and settings) to your Downloads folder. To restore, quit Portfolio and put the file back in place of the data file shown below."}
+              ? t("settings.backup.remoteHint")
+              : t("settings.backup.hint")}
           </p>
           {saved && (
             <p className="text-[11px] text-slate-300 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span>Saved {saved.fileName} ({sizeLabel(saved.sizeBytes)}).</span>
+              <span>{t("settings.backup.saved", { file: saved.fileName, size: sizeLabel(saved.sizeBytes) })}</span>
               <button
                 type="button"
                 onClick={() => void api.revealFile(saved.filePath).catch(() => {})}
                 className="inline-flex items-center gap-1 text-accent-400 hover:text-accent-300 font-semibold cursor-pointer"
               >
                 <FolderOpen className="w-3 h-3" />
-                <span>Show in folder</span>
+                <span>{t("settings.backup.showInFolder")}</span>
               </button>
             </p>
           )}
@@ -74,7 +75,7 @@ export function BackupCard() {
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
           >
             <HardDriveDownload className={`w-3.5 h-3.5 ${busy ? "animate-pulse text-[#DD3C73]" : ""}`} />
-            <span>{busy ? "Saving…" : "Back up now"}</span>
+            <span>{busy ? t("common.saving") : t("settings.backup.backUpNow")}</span>
           </button>
         )}
       </div>
