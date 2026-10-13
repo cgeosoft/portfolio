@@ -4,6 +4,7 @@ import type { Components } from "react-markdown";
 import { api } from "../../api";
 import { openExternal } from "../../environment";
 import { SafeMarkdown } from "./SafeMarkdown";
+import { t } from "../../i18n";
 
 /** Styles of the release notes; module level, so the elements are not remounted on every render. */
 const NOTES_MARKDOWN: Components = {
@@ -112,7 +113,7 @@ export function ChangelogModal({
         setDownloadPath(result.fileName || result.url);
         setDownloadState("done");
       } else {
-        setDownloadError(result.error || "Download failed");
+        setDownloadError(result.error || t("layout.changelog.downloadFailed"));
         setDownloadState("error");
       }
     } catch (err: unknown) {
@@ -142,17 +143,17 @@ export function ChangelogModal({
             </div>
             <div>
               <h2 id="changelog-modal-title" className="text-base font-bold tracking-wide text-slate-100">
-                {releaseName || `Version ${latestVersion}`}
+                {releaseName || t("layout.changelog.version", { version: latestVersion })}
               </h2>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Currently running v{currentVersion}
+                {t("layout.changelog.running", { version: currentVersion })}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
-            aria-label="Close changelog dialog"
+            aria-label={t("layout.changelog.closeLabel")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -169,13 +170,13 @@ export function ChangelogModal({
             </SafeMarkdown>
           ) : (
             <p className="text-[10px] text-slate-500 italic">
-              No release notes available.{" "}
+              {t("layout.changelog.noNotes")}{" "}
               <button
                 type="button"
                 onClick={() => openExternal(releaseUrl)}
                 className="text-[#DD3C73] hover:underline cursor-pointer"
               >
-                Release page
+                {t("layout.changelog.releasePage")}
               </button>
             </p>
           )}
@@ -185,7 +186,7 @@ export function ChangelogModal({
         {downloadState === "done" && (
           <div className="mt-3 p-2.5 rounded-lg bg-mint/10 border border-mint/30 flex items-center gap-2 text-[10px] text-mint shrink-0">
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Download started in your browser: {downloadPath}</span>
+            <span className="truncate">{t("layout.changelog.downloadStarted", { path: downloadPath })}</span>
           </div>
         )}
 
@@ -204,7 +205,7 @@ export function ChangelogModal({
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <ExternalLink className="w-3 h-3" />
-            Release page
+            {t("layout.changelog.releasePage")}
           </button>
 
           <div className="flex items-center gap-2">
@@ -213,7 +214,7 @@ export function ChangelogModal({
               onClick={onClose}
               className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors cursor-pointer"
             >
-              Dismiss
+              {t("common.dismiss")}
             </button>
             <button
               type="button"
@@ -224,12 +225,12 @@ export function ChangelogModal({
               {downloadState === "downloading" ? (
                 <>
                   <Loader2 className="w-3 h-3 animate-spin" />
-                  Downloading...
+                  {t("layout.changelog.downloading")}
                 </>
               ) : (
                 <>
                   <Download className="w-3 h-3" />
-                  {downloadState === "done" ? "Download Again" : "Download Latest Version"}
+                  {downloadState === "done" ? t("layout.changelog.downloadAgain") : t("layout.changelog.downloadLatest")}
                 </>
               )}
             </button>

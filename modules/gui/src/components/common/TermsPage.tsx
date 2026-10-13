@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import { APP_NAME, WEBPAGE_URL } from "../../environment";
+import { t } from "../../i18n";
 
 export interface TermsPageProps {
   onBack: () => void;
@@ -40,6 +41,9 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
     }
   }, [termsUrl]);
 
+  // The URL sits inside the sentence as code; split the translated sentence around it.
+  const [connectBefore, connectAfter = ""] = t("layout.terms.couldNotConnect", { url: "\u0000" }).split("\u0000");
+
   return (
     <div className="flex-1 w-full max-w-full flex flex-col font-mono min-h-0 space-y-4">
       {/* Top Header */}
@@ -50,35 +54,35 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
             type="button"
             onClick={onBack}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-none"
-            title="Back"
+            title={t("common.back")}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline">{t("common.back")}</span>
           </button>
 
           <button
             type="button"
             onClick={handleReload}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-none"
-            title="Reload Terms of Use"
+            title={t("layout.terms.reloadTitle")}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-[#DD3C73]" : ""}`} />
-            <span className="hidden sm:inline">Reload</span>
+            <span className="hidden sm:inline">{t("layout.terms.reload")}</span>
           </button>
 
           <button
             type="button"
             onClick={handleOpenBrowser}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-[#DD3C73] transition-colors cursor-pointer focus:outline-none"
-            title="Open Terms in Web Browser"
+            title={t("layout.terms.openTitle")}
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Open in Browser</span>
+            <span className="hidden sm:inline">{t("layout.terms.openInBrowser")}</span>
           </button>
 
           <div className="flex text-xs font-bold text-slate-400 uppercase tracking-widest items-center gap-1.5 min-w-0">
             <ShieldCheck className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span className="truncate">{APP_NAME} &bull; Terms of Use</span>
+            <span className="truncate">{APP_NAME} &bull; {t("layout.terms.title")}</span>
           </div>
         </div>
       </div>
@@ -90,7 +94,7 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-canvas/80 backdrop-blur-sm gap-3">
             <RefreshCw className="w-6 h-6 text-[#DD3C73] animate-spin" />
             <span className="text-xs text-slate-400 tracking-wider">
-              Loading {APP_NAME} Terms of Use from {termsUrl}...
+              {t("layout.terms.loading", { app: APP_NAME, url: termsUrl })}
             </span>
           </div>
         )}
@@ -103,13 +107,13 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
             </div>
             <div className="max-w-md space-y-1">
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                Unable to Load {APP_NAME} Terms Page
+                {t("layout.terms.loadFailed", { app: APP_NAME })}
               </h3>
               <p className="text-xs text-slate-400">
-                Could not connect to <code className="text-[#DD3C73]">{termsUrl}</code>.{" "}
-                {isLocalhost
-                  ? "Ensure your local dev server or website is reachable."
-                  : "Ensure your internet connection or website is reachable."}
+                {connectBefore}
+                <code className="text-[#DD3C73]">{termsUrl}</code>
+                {connectAfter}{" "}
+                {isLocalhost ? t("layout.terms.checkLocal") : t("layout.terms.checkInternet")}
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
@@ -118,14 +122,14 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
                 onClick={handleReload}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               >
-                Try Again
+                {t("layout.terms.tryAgain")}
               </button>
               <button
                 type="button"
                 onClick={handleOpenBrowser}
                 className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Open in Browser</span>
+                <span>{t("layout.terms.openInBrowser")}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -136,7 +140,7 @@ export function TermsPage({ onBack, webpageUrl }: TermsPageProps) {
         <iframe
           ref={iframeRef}
           src={termsUrl}
-          title={`${APP_NAME} Terms of Use`}
+          title={t("layout.terms.frameTitle", { app: APP_NAME })}
           className="w-full h-full flex-1 border-0 rounded-2xl bg-canvas"
           onLoad={() => {
             setIsLoading(false);

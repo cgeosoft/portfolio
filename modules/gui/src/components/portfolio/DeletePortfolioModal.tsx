@@ -10,6 +10,7 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
+import { t } from "../../i18n";
 
 interface DeletePortfolioModalProps {
   isOpen: boolean;
@@ -55,7 +56,7 @@ export function DeletePortfolioModal({
       await onConfirmDelete(portfolio);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to delete portfolio. Please try again.");
+      setError(err.message || t("portfolios.delete.failed"));
       setIsDeleting(false);
     }
   };
@@ -84,14 +85,14 @@ export function DeletePortfolioModal({
               id="delete-portfolio-title"
               className="text-xs font-bold uppercase tracking-wider text-rose-400 truncate"
             >
-              Delete Portfolio
+              {t("portfolios.delete.title")}
             </span>
           </div>
           <button
             onClick={onClose}
             disabled={isDeleting}
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-30"
-            aria-label="Close modal"
+            aria-label={t("portfolios.delete.closeLabel")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -112,7 +113,7 @@ export function DeletePortfolioModal({
                     {portfolio.description}
                   </p>
                 ) : (
-                  <p className="text-[10px] text-slate-500 italic mt-0.5">No description</p>
+                  <p className="text-[10px] text-slate-500 italic mt-0.5">{t("portfolios.delete.noDescription")}</p>
                 )}
               </div>
             </div>
@@ -129,10 +130,10 @@ export function DeletePortfolioModal({
             <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold text-rose-200">
-                Are you sure you want to permanently delete this portfolio?
+                {t("portfolios.delete.confirm")}
               </p>
               <p className="text-[11px] text-rose-300/90">
-                This action is destructive and cannot be undone.
+                {t("portfolios.delete.irreversible")}
               </p>
             </div>
           </div>
@@ -140,20 +141,20 @@ export function DeletePortfolioModal({
           {/* Cascade Deletion List */}
           <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs">
             <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-              Automatically Deleted Data:
+              {t("portfolios.delete.cascadeTitle")}
             </div>
             <ul className="space-y-1.5 text-[11px] text-slate-300">
               <li className="flex items-center gap-2">
                 <History className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                <span>All transaction history and trade ledgers</span>
+                <span>{t("portfolios.delete.cascadeTransactions")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                <span>All AI quantitative analysis reports and briefings</span>
+                <span>{t("portfolios.delete.cascadeReports")}</span>
               </li>
               <li className="flex items-center gap-2">
                 <TrendingUp className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                <span>All performance history, charts, and snapshots</span>
+                <span>{t("portfolios.delete.cascadeHistory")}</span>
               </li>
             </ul>
           </div>
@@ -161,7 +162,7 @@ export function DeletePortfolioModal({
           {/* Note if it's the only portfolio */}
           {isLastPortfolio && (
             <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-950/20 text-[11px] text-amber-300 leading-relaxed">
-              <span className="font-bold text-amber-200">Note:</span> This is your only portfolio. An empty portfolio named Main Portfolio replaces it.
+              <span className="font-bold text-amber-200">{t("portfolios.delete.noteLabel")}</span> {t("portfolios.delete.lastPortfolio", { name: "Main Portfolio" })}
             </div>
           )}
 
@@ -182,7 +183,7 @@ export function DeletePortfolioModal({
             disabled={isDeleting}
             className="px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-xs font-bold text-slate-400 hover:text-slate-200 cursor-pointer disabled:opacity-50 transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
 
           <button
@@ -194,12 +195,12 @@ export function DeletePortfolioModal({
             {isDeleting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Deleting…</span>
+                <span>{t("portfolios.delete.deleting")}</span>
               </>
             ) : (
               <>
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Portfolio</span>
+                <span>{t("portfolios.delete.title")}</span>
               </>
             )}
           </button>

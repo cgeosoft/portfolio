@@ -4,6 +4,7 @@ import type { AppTheme } from "portfolio-shared/api-types";
 import { api } from "../../api";
 import { openExternal } from "../../environment";
 import { SponsorInfoModal } from "./SponsorInfoModal";
+import { t } from "../../i18n";
 
 export interface SponsorBannerCardProps {
   /** Unused: the service picks the banner page on the Portfolio website. */
@@ -95,7 +96,7 @@ export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCar
           <iframe
             ref={iframeRef}
             src={frameUrl}
-            title="Sponsor Banner"
+            title={t("portfolios.sponsor.bannerTitle")}
             className="w-full h-full block border-0 overflow-hidden"
             style={{ backgroundColor: isLight ? "#ffffff" : "#08080a" }}
             sandbox="allow-scripts allow-popups"
@@ -131,8 +132,8 @@ export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCar
             type="button"
             onClick={() => setIsInfoModalOpen(true)}
             className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
-            title="About sponsorship"
-            aria-label="About sponsorship"
+            title={t("portfolios.sponsor.about")}
+            aria-label={t("portfolios.sponsor.about")}
           >
             <HelpCircle className="w-3.5 h-3.5" />
           </button>

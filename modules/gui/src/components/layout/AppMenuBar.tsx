@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { reloadPage } from "../portfolio/utils";
 import { AppIcon } from "../common/AppIcon";
+import { t } from "../../i18n";
 import {
   FolderPlus,
   FileSpreadsheet,
@@ -144,10 +145,10 @@ export function AppMenuBar({
 
   // File: portfolios as documents (create, switch, manage, import/export) plus app-level session items.
   const fileItems: MenuItemDef[] = [
-    { label: "New Portfolio...", shortcut: "Ctrl+N", icon: FolderPlus, action: run(onNewPortfolio) },
+    { label: t("layout.menu.file.newPortfolio"), shortcut: "Ctrl+N", icon: FolderPlus, action: run(onNewPortfolio) },
     ...(portfolios && portfolios.length > 1
       ? [
-          { type: "header", label: "Switch Portfolio" } satisfies MenuItemDef,
+          { type: "header", label: t("layout.menu.file.switchPortfolio") } satisfies MenuItemDef,
           ...portfolios.map(
             (p) =>
               ({
@@ -158,66 +159,65 @@ export function AppMenuBar({
           ),
         ]
       : []),
-    { label: "Manage Portfolios...", icon: FolderCog, action: run(onManagePortfolios) },
+    { label: t("layout.menu.file.managePortfolios"), icon: FolderCog, action: run(onManagePortfolios) },
     { type: "separator" },
-    { label: "Import Transactions (CSV)...", shortcut: "Ctrl+I", icon: FileSpreadsheet, action: run(onImportCsv), disabled: !activePortfolio },
-    { label: "Export Portfolio...", shortcut: "Ctrl+E", icon: Download, action: run(onExportPortfolio), disabled: !activePortfolio },
+    { label: t("layout.menu.file.importCsv"), shortcut: "Ctrl+I", icon: FileSpreadsheet, action: run(onImportCsv), disabled: !activePortfolio },
+    { label: t("layout.menu.file.exportPortfolio"), shortcut: "Ctrl+E", icon: Download, action: run(onExportPortfolio), disabled: !activePortfolio },
     { type: "separator" },
-    { label: "Settings...", shortcut: "Ctrl+,", icon: Settings, action: run(() => onOpenSettings()) },
+    { label: t("layout.menu.file.settings"), shortcut: "Ctrl+,", icon: Settings, action: run(() => onOpenSettings()) },
     { type: "separator" },
-    ...(pinEnabled ? [{ label: "Lock Portfolio", icon: Lock, action: run(() => onLock?.()) } satisfies MenuItemDef] : []),
-    { label: "Quit Portfolio", shortcut: "Ctrl+Q", icon: Power, action: run(onQuit) },
+    ...(pinEnabled ? [{ label: t("layout.menu.file.lock"), icon: Lock, action: run(() => onLock?.()) } satisfies MenuItemDef] : []),
+    { label: t("layout.menu.file.quit"), shortcut: "Ctrl+Q", icon: Power, action: run(onQuit) },
   ];
 
   // Portfolio: actions that change or analyze the active portfolio's data.
   const portfolioItems: MenuItemDef[] = [
-    { label: "Add Transaction...", shortcut: "Ctrl+T", icon: PlusCircle, action: run(onAddTransaction), disabled: !activePortfolio },
-    { label: isRefreshing ? "Refreshing Market Quotes..." : "Refresh Market Quotes", icon: RefreshCw, action: run(onRefresh), disabled: isRefreshing || !activePortfolio },
+    { label: t("layout.menu.portfolio.addTransaction"), shortcut: "Ctrl+T", icon: PlusCircle, action: run(onAddTransaction), disabled: !activePortfolio },
+    { label: isRefreshing ? t("layout.menu.portfolio.refreshingQuotes") : t("layout.menu.portfolio.refreshQuotes"), icon: RefreshCw, action: run(onRefresh), disabled: isRefreshing || !activePortfolio },
     { type: "separator" },
-    { label: "Analyze with AI...", icon: Sparkles, action: run(onAnalyzePortfolio), disabled: !activePortfolio },
+    { label: t("layout.menu.portfolio.analyze"), icon: Sparkles, action: run(onAnalyzePortfolio), disabled: !activePortfolio },
   ];
 
   // View: what is on screen (page, panels, masking, zoom, theme) — never data mutations.
   const zoom = zoomLevel ?? 1;
-  const nextTheme = theme === "light" ? "Dark" : "Light";
   const viewItems: MenuItemDef[] = [
-    { label: "Overview", icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
-    { label: "Transactions", icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
-    { label: "Reports", icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
-    { label: "Suggestions", icon: Lightbulb, checked: activeTab === "suggestions", action: run(() => onSelectTab("suggestions")) },
+    { label: t("layout.tabs.overview"), icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
+    { label: t("layout.tabs.transactions"), icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
+    { label: t("layout.tabs.reports"), icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
+    { label: t("layout.tabs.suggestions"), icon: Lightbulb, checked: activeTab === "suggestions", action: run(() => onSelectTab("suggestions")) },
     { type: "separator" },
     ...(onToggleAssistant
-      ? [{ label: "Assistant Sidebar", shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]
+      ? [{ label: t("layout.menu.view.assistant"), shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]
       : []),
-    { label: "Mask Currency Values", shortcut: "Ctrl+H", icon: hideCurrencyValues ? Eye : EyeOff, checked: hideCurrencyValues, action: run(onToggleHideCurrency) },
+    { label: t("layout.menu.view.maskValues"), shortcut: "Ctrl+H", icon: hideCurrencyValues ? Eye : EyeOff, checked: hideCurrencyValues, action: run(onToggleHideCurrency) },
     { type: "separator" },
-    { label: "Zoom In", shortcut: "Ctrl++", icon: ZoomIn, action: run(() => onZoomIn?.()), disabled: zoom >= 2.5 },
-    { label: "Zoom Out", shortcut: "Ctrl+-", icon: ZoomOut, action: run(() => onZoomOut?.()), disabled: zoom <= 0.5 },
-    { label: `Reset Zoom (${Math.round(zoom * 100)}%)`, shortcut: "Ctrl+0", icon: RotateCcw, action: run(() => onZoomReset?.()), disabled: Math.abs(zoom - 1) < 0.01 },
+    { label: t("layout.menu.view.zoomIn"), shortcut: "Ctrl++", icon: ZoomIn, action: run(() => onZoomIn?.()), disabled: zoom >= 2.5 },
+    { label: t("layout.menu.view.zoomOut"), shortcut: "Ctrl+-", icon: ZoomOut, action: run(() => onZoomOut?.()), disabled: zoom <= 0.5 },
+    { label: t("layout.menu.view.resetZoom", { percent: Math.round(zoom * 100) }), shortcut: "Ctrl+0", icon: RotateCcw, action: run(() => onZoomReset?.()), disabled: Math.abs(zoom - 1) < 0.01 },
     { type: "separator" },
-    { label: `Switch to ${nextTheme} Theme`, shortcut: "Ctrl+Shift+L", icon: theme === "light" ? Moon : Sun, action: run(() => onToggleTheme?.()) },
+    { label: theme === "light" ? t("layout.menu.view.darkTheme") : t("layout.menu.view.lightTheme"), shortcut: "Ctrl+Shift+L", icon: theme === "light" ? Moon : Sun, action: run(() => onToggleTheme?.()) },
     { type: "separator" },
-    { label: "Reload", shortcut: "Ctrl+R", icon: RotateCw, action: run(() => (onReload ? onReload() : void reloadPage())) },
+    { label: t("layout.menu.view.reload"), shortcut: "Ctrl+R", icon: RotateCw, action: run(() => (onReload ? onReload() : void reloadPage())) },
   ];
 
   const helpItems: MenuItemDef[] = [
-    { label: "Keyboard Shortcuts...", icon: Keyboard, action: run(() => onOpenSettings("about")) },
-    { label: "Setup Wizard...", icon: HelpCircle, action: run(onOpenSetupWizard) },
-    { label: "Report an Issue...", icon: LifeBuoy, action: run(onReportIssue) },
+    { label: t("layout.menu.help.shortcuts"), icon: Keyboard, action: run(() => onOpenSettings("about")) },
+    { label: t("layout.menu.help.setupWizard"), icon: HelpCircle, action: run(onOpenSetupWizard) },
+    { label: t("layout.menu.help.reportIssue"), icon: LifeBuoy, action: run(onReportIssue) },
     { type: "separator" },
     {
-      label: updateInfo?.hasUpdate ? `Update Available (v${updateInfo.latestVersion})...` : "Check for Updates...",
+      label: updateInfo?.hasUpdate ? t("layout.menu.help.updateAvailable", { version: updateInfo.latestVersion }) : t("layout.menu.help.checkUpdates"),
       icon: RefreshCw,
       action: run(() => (onCheckForUpdates ? onCheckForUpdates() : onOpenSettings("about"))),
     },
-    { label: "About Portfolio", icon: Info, action: run(() => onOpenSettings("about")) },
+    { label: t("layout.menu.help.about"), icon: Info, action: run(() => onOpenSettings("about")) },
   ];
 
   const menus: { key: MenuKey; label: string; accessKey: string; items: MenuItemDef[] }[] = [
-    { key: "file", label: "File", accessKey: "f", items: fileItems },
-    { key: "portfolio", label: "Portfolio", accessKey: "p", items: portfolioItems },
-    { key: "view", label: "View", accessKey: "v", items: viewItems },
-    { key: "help", label: "Help", accessKey: "h", items: helpItems },
+    { key: "file", label: t("layout.menu.menus.file"), accessKey: "f", items: fileItems },
+    { key: "portfolio", label: t("layout.menu.menus.portfolio"), accessKey: "p", items: portfolioItems },
+    { key: "view", label: t("layout.menu.menus.view"), accessKey: "v", items: viewItems },
+    { key: "help", label: t("layout.menu.menus.help"), accessKey: "h", items: helpItems },
   ];
 
   const activeMenuDef = menus.find((m) => m.key === activeMenu);
@@ -318,7 +318,7 @@ export function AppMenuBar({
   };
 
   return (
-    <div ref={menuBarRef} className="app-menubar flex" role="menubar" aria-label="Application menu">
+    <div ref={menuBarRef} className="app-menubar flex" role="menubar" aria-label={t("layout.menu.label")}>
       <div className="flex items-center gap-1.5 pl-1 pr-2 text-slate-500 select-none" title="Portfolio">
         <AppIcon className="w-3.5 h-3.5 text-accent-400" />
       </div>
@@ -390,11 +390,11 @@ export function AppMenuBar({
               onLock?.();
             }}
             className="app-menubar-trigger app-menubar-lock flex items-center gap-1.5"
-            title="Lock Portfolio"
-            aria-label="Lock Portfolio"
+            title={t("layout.menu.file.lock")}
+            aria-label={t("layout.menu.file.lock")}
           >
             <Lock className="w-3.5 h-3.5" />
-            <span>lock</span>
+            <span>{t("layout.menu.lockShort")}</span>
           </button>
         )}
         {onToggleAssistant && (
@@ -406,8 +406,8 @@ export function AppMenuBar({
             }}
             className="app-menubar-trigger flex items-center"
             data-open={!!isAssistantOpen}
-            title={isAssistantOpen ? "Close Assistant (Ctrl+J)" : "Open Assistant (Ctrl+J)"}
-            aria-label="Toggle Assistant"
+            title={isAssistantOpen ? t("layout.menu.assistantClose", { shortcut: "Ctrl+J" }) : t("layout.menu.assistantOpen", { shortcut: "Ctrl+J" })}
+            aria-label={t("layout.menu.assistantToggle")}
             aria-pressed={!!isAssistantOpen}
           >
             <Bot className="w-3.5 h-3.5" />

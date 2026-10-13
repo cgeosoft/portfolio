@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
+import { t } from "../../i18n";
 
 // The colour of a portfolio dot: the Portfolios page, its modals and the status bar picker. The service
 // stores the chosen colour as `#rrggbb` in the `color` column of `portfolios`; null means the default.
@@ -40,7 +41,7 @@ export function PortfolioColorField({ color, onChange, disabled }: { color: stri
   const custom = !PORTFOLIO_COLORS.includes(color);
   return (
     <div className="space-y-2">
-      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Colour</span>
+      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{t("portfolios.color.label")}</span>
       <div className="flex flex-wrap items-center gap-2">
         {PORTFOLIO_COLORS.map((swatch) => (
           <button
@@ -52,7 +53,7 @@ export function PortfolioColorField({ color, onChange, disabled }: { color: stri
               color === swatch ? "ring-2 ring-white/80 ring-offset-2 ring-offset-slate-900" : ""
             }`}
             style={{ backgroundColor: swatch }}
-            aria-label={`Colour ${swatch}`}
+            aria-label={t("portfolios.color.swatch", { color: swatch })}
             aria-pressed={color === swatch}
           >
             {color === swatch && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
@@ -62,10 +63,10 @@ export function PortfolioColorField({ color, onChange, disabled }: { color: stri
           className={`relative h-7 px-2.5 rounded-full inline-flex items-center gap-1.5 border text-[10px] uppercase tracking-wider font-bold cursor-pointer transition-colors ${
             custom ? "border-white/70 text-slate-100" : "border-slate-700 text-slate-400 hover:text-slate-200"
           }`}
-          title="Pick any colour"
+          title={t("portfolios.color.customTitle")}
         >
           <span className="w-3 h-3 rounded-full" style={{ backgroundColor: custom ? color : "transparent", border: custom ? "none" : "1px dashed currentColor" }} />
-          Custom
+          {t("portfolios.color.custom")}
           <input
             type="color"
             value={color}

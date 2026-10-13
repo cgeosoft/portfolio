@@ -7,6 +7,7 @@ import {
   Lightbulb,
   Settings,
 } from "lucide-react";
+import { t } from "../../i18n";
 
 export type PortfolioTabKey = "overview" | "reports" | "suggestions" | "transactions";
 
@@ -54,22 +55,22 @@ export function Header({
   };
 
   const tabs = [
-    { id: "overview" as PortfolioTabKey, label: "Overview", icon: PieChart },
+    { id: "overview" as PortfolioTabKey, label: t("layout.tabs.overview"), icon: PieChart },
     {
       id: "transactions" as PortfolioTabKey,
-      label: "Transactions",
+      label: t("layout.tabs.transactions"),
       icon: History,
       badge: transactionsCount > 0 ? transactionsCount : null,
     },
     {
       id: "reports" as PortfolioTabKey,
-      label: "Reports",
+      label: t("layout.tabs.reports"),
       icon: FileText,
       badge: reportsCount > 0 ? reportsCount : null,
     },
     {
       id: "suggestions" as PortfolioTabKey,
-      label: "Suggestions",
+      label: t("layout.tabs.suggestions"),
       icon: Lightbulb,
       badge: suggestionsCount > 0 ? suggestionsCount : null,
     },
@@ -77,7 +78,7 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 px-3 sm:px-6 py-1.5 flex items-center justify-center font-mono select-none gap-1.5 shrink-0 w-full bg-transparent">
-      <nav aria-label="Page navigation" className="flex items-center gap-1">
+      <nav aria-label={t("layout.header.navigation")} className="flex items-center gap-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeView === "dashboard" && activeTab === tab.id;
@@ -123,8 +124,8 @@ export function Header({
                   ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
               }`}
-              title="Settings (Ctrl+,)"
-              aria-label="Settings"
+              title={t("layout.header.settingsShortcut", { shortcut: "Ctrl+," })}
+              aria-label={t("layout.header.settings")}
             >
               <Settings className="w-3.5 h-3.5" />
             </button>

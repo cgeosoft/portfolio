@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, HelpCircle, ShieldCheck, Mail, Check, HeartHandshake } from "lucide-react";
 import { rpc } from "../../rpc";
 import { WEBPAGE_EMAIL } from "../../environment";
+import { t } from "../../i18n";
 
 export interface SponsorInfoModalProps {
   isOpen: boolean;
@@ -75,15 +76,15 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
             </div>
             <div>
               <h2 id="sponsor-info-title" className="text-base font-bold tracking-wide text-slate-100">
-                Sponsor Content
+                {t("portfolios.sponsor.title")}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">Keeping Development Active</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t("portfolios.sponsor.subtitle")}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
-            aria-label="Close dialog"
+            aria-label={t("portfolios.sponsor.closeLabel")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -94,14 +95,14 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-2.5">
             <HeartHandshake className="w-4 h-4 text-[#DD3C73] shrink-0 mt-0.5" />
             <p>
-              This box shows partner content. Sponsorships fund independent maintenance, live market quotes, and updates to keep development active.
+              {t("portfolios.sponsor.partnerContent")}
             </p>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-mint shrink-0 mt-0.5" />
             <p>
-              Your personal investment numbers, balances, and holdings are 100% private. No financial data is ever shared with sponsors or third parties.
+              {t("portfolios.sponsor.privacy")}
             </p>
           </div>
 
@@ -109,10 +110,10 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           <div className="p-3.5 rounded-xl bg-card border border-[#DD3C73]/30 space-y-2">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#DD3C73] uppercase tracking-wider">
               <Mail className="w-3.5 h-3.5" />
-              <span>Offer a Sponsorship</span>
+              <span>{t("portfolios.sponsor.offer")}</span>
             </div>
             <p className="text-slate-300 text-[11px]">
-              Want to showcase your platform or financial service? You can reach out directly to the developer email:
+              {t("portfolios.sponsor.offerText")}
             </p>
             <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800">
               <code className="text-mint text-[11px] select-all truncate">{contactEmail}</code>
@@ -124,10 +125,10 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
                 {copied ? (
                   <>
                     <Check className="w-3 h-3 text-mint" />
-                    <span className="text-mint">Copied</span>
+                    <span className="text-mint">{t("common.copied")}</span>
                   </>
                 ) : (
-                  <span>Copy</span>
+                  <span>{t("common.copy")}</span>
                 )}
               </button>
             </div>
@@ -142,14 +143,14 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#DD3C73] hover:text-white bg-[#DD3C73]/10 hover:bg-[#DD3C73]/20 border border-[#DD3C73]/30 rounded-lg font-semibold transition-colors cursor-pointer"
           >
             <Mail className="w-3.5 h-3.5" />
-            <span>Contact via Email</span>
+            <span>{t("portfolios.sponsor.contact")}</span>
           </button>
           <button
             type="button"
             onClick={onClose}
             className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
           >
-            Close
+            {t("common.close")}
           </button>
         </div>
       </div>
