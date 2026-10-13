@@ -17,6 +17,7 @@ import * as sentAlerts from "../db/sent-alerts.repo.js";
 import { addDaysIso, daysBetween, isoDay } from "./intel/calendar.js";
 import type { IncomeService } from "./income.js";
 import { channelNames, configuredChannels, notifyAll } from "./notify.js";
+import { serviceLanguage, t } from "../i18n.js";
 import type { AutomationStatus, PortfolioEvent, RunAutomationResponse } from "portfolio-shared/api-types";
 
 const CHECK_INTERVAL_MS = 60_000;
@@ -66,22 +67,24 @@ export function isAlertEvent(e: PortfolioEvent): boolean {
 
 export const alertKey = (e: PortfolioEvent) => `${e.kind}:${e.symbol}:${e.date}`;
 
-function dayLabel(date: string): string {
-  const weekday = new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" });
+/** Short weekday in the interface language, then the ISO date: "Mon 2026-10-12". */
+function dayLabel(date: string, language: string): string {
+  const weekday = new Date(`${date}T12:00:00`).toLocaleDateString(language === "en" ? "en-US" : language, { weekday: "short" });
   return `${weekday} ${date}`;
 }
 
 /** The notification text: one line per event, tickers and dates only. */
 export function formatAlertMessage(events: PortfolioEvent[], through: string): string {
-  const lines = [`**Events of your holdings up to ${dayLabel(through)}**`];
+  const language = serviceLanguage();
+  const lines = [`**${t("service.eventAlerts.heading", { date: dayLabel(through, language) })}**`];
   for (const e of events) {
-    if (e.kind === "exDividend") lines.push(`- ${e.symbol}: ex-dividend date ${dayLabel(e.date)}`);
-    else {
-      const time = e.time === "bmo" ? ", before the market opens" : e.time === "amc" ? ", after the market closes" : "";
-      lines.push(`- ${e.symbol}: earnings report ${dayLabel(e.date)}${time}`);
-    }
+    const params = { symbol: e.symbol, date: dayLabel(e.date, language) };
+    if (e.kind === "exDividend") lines.push(`- ${t("service.eventAlerts.exDividend", params)}`);
+    else if (e.time === "bmo") lines.push(`- ${t("service.eventAlerts.earningsBeforeOpen", params)}`);
+    else if (e.time === "amc") lines.push(`- ${t("service.eventAlerts.earningsAfterClose", params)}`);
+    else lines.push(`- ${t("service.eventAlerts.earnings", params)}`);
   }
-  lines.push("", "_Open Portfolio for the income and events overview._");
+  lines.push("", `_${t("service.eventAlerts.footer")}_`);
   return lines.join("\n");
 }
 
@@ -165,7 +168,7 @@ export class EventAlertsService {
       } else if (channels.length === 0) {
         message = `Found ${fresh.length} event(s). Set up a phone app under Settings, Notifications to receive them as push notifications.`;
       } else {
-        const result = await notifyAll({ title: "Portfolio: upcoming events", message: formatAlertMessage(fresh.map(([, e]) => e), through) }, channels);
+        const result = await notifyAll({ title: t("service.eventAlerts.notificationTitle"), message: formatAlertMessage(fresh.map(([, e]) => e), through) }, channels);
         errors.push(...result.errors);
         if (result.ok) {
           sentAlerts.markSent(fresh.map(([key]) => key), SENT_TTL_MS);

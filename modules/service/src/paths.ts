@@ -18,9 +18,10 @@
  * `%APPDATA%\portfolio` on Windows. The desktop shell computes the same
  * directory in `modules/desktop/src/bun/app.ts`; keep the two in step.
  *
- * Bundled files (the built GUI, the sponsor pages, `version.txt`) sit next to
- * the service bundle. From a checkout the GUI is not served (Vite serves it)
- * and the sponsor pages come from `extras/website`.
+ * Bundled files (the built GUI, the sponsor pages, `version.txt`, the
+ * translation files in `lang/`) sit next to the service bundle. From a
+ * checkout the GUI is not served (Vite serves it), the sponsor pages come
+ * from `extras/website` and the translation files from `lang/` at the repo root.
  *
  * This module imports nothing from the project, so every other module can
  * import it.
@@ -140,4 +141,12 @@ export function getGuiDir(): string | undefined {
 export function findBundledFile(bundled: string, repoPath: string): string | undefined {
   const candidates = [join(import.meta.dir, bundled), ...(REPO_ROOT ? [join(REPO_ROOT, repoPath)] : [])];
   return candidates.find((file) => existsSync(file));
+}
+
+/**
+ * Directory of the translation files `<code>.yml`: `lang/` next to the bundle
+ * in the desktop app, else `lang/` at the repo root. Undefined when neither exists.
+ */
+export function getLangDir(): string | undefined {
+  return findBundledFile("lang", "lang");
 }

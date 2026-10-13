@@ -5,6 +5,7 @@
  *   stage/service/main.js        single-file service bundle (bun build --target=bun)
  *   stage/service/version.txt    the version, next to the bundle
  *   stage/gui/                   Vite build, served by the service on / (`<dir of main.js>/../gui`)
+ *   stage/service/lang/          the translation files `<code>.yml` (service push texts)
  *   + the per-app files below (EXTRA_FILES)
  *
  * The version (and the other build constants in DEFINES) is baked into the bundle with
@@ -37,10 +38,14 @@ const DEFINES: Record<string, string> = {
   POSTHOG_API_KEY: process.env.POSTHOG_API_KEY ?? "",
 };
 
-/** Files the service reads next to its bundle (`import.meta.dir`), `[from repo root, to stage/]`. */
+/**
+ * Files the service reads next to its bundle (`import.meta.dir`), `[from repo root, to stage/]`.
+ * A directory is copied whole: `lang/` holds the translation files `<code>.yml`.
+ */
 const EXTRA_FILES: [string, string][] = [
   ["extras/website/sponsor/index.html", "service/sponsor.html"],
   ["extras/website/sponsor/light/index.html", "service/sponsor-light.html"],
+  ["lang", "service/lang"],
 ];
 
 // ---- shared ------------------------------------------------------------------------------

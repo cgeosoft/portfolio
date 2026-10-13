@@ -12,6 +12,8 @@ import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
+import { isEnglishOutput, languageInstruction, plainStyle } from "./output-language.js";
+import { t } from "../i18n.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type {
   PrepareReportPromptResponse,
@@ -51,6 +53,21 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   const startStr = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const endStr = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   return `${startStr} - ${endStr}`;
+}
+
+const signed = (value: number) => `${value >= 0 ? "+" : ""}${value}`;
+
+/** Title and summary line of a stored report, in the interface language. */
+function reportHeadline(ctx: { portfolio: { name: string }; period: string; baseCurrency: string; summary: FinancialPortfolioData["summary"]; holdings: unknown[] }) {
+  return {
+    title: t("service.report.title", { portfolio: ctx.portfolio.name, period: ctx.period }),
+    summary: t("service.report.summary", {
+      currency: ctx.baseCurrency,
+      value: (ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString(),
+      change: signed(ctx.summary.totalGainLossPercent),
+      count: ctx.holdings.length,
+    }),
+  };
 }
 
 function extractLastWords(text: string, count = 50): string {
@@ -162,6 +179,7 @@ export class PortfolioReportService {
     if (!portfolio) throw new Error("Portfolio not found");
 
     const config = loadConfig();
+    const language = config.language;
     // An empty model lets the server or the Claude CLI pick its default.
     const provider = options.provider || config.llmProvider || "openai-compatible";
     const model = options.model || config.llmModel || "";
@@ -239,6 +257,7 @@ export class PortfolioReportService {
     const systemPrompt =
       "You are a sophisticated, analytical quantitative investment portfolio analyst. You provide objective, concise, actionable commentary on portfolio performance, asset allocation, technical market trends, risk concentrations, and strategic rebalancing recommendations in clean markdown format. Maintain a professional, cyberpunk-tactical yet measured tone.";
 
+    const languageRule = languageInstruction(language);
     const userPrompt = `
 Analyze the following investment portfolio state for portfolio **"${portfolio.name}"** for period **${period}** (${weekKey}):
 
@@ -254,11 +273,11 @@ ${intelContext}
 ${structureInstructions}
 
 ## General Rules
-1. Use ASD-STE100 simplified english text
+1. Use ${isEnglishOutput(language) ? "ASD-STE100 simplified english text" : plainStyle(language)}
 2. Do not use emojis or special characters
 3. Do not split section with lines ---
 4. Do not use long dash characters
-`;
+${languageRule ? `5. ${languageRule}\n` : ""}`;
 
     const metrics: ReportMetrics = {
       totalPortfolioValue: summary.totalPortfolioValue || summary.totalValue,
@@ -403,8 +422,7 @@ ${structureInstructions}
           weekStartDate: ctx.weekStartDate,
           weekEndDate: ctx.weekEndDate,
           weekKey: ctx.weekKey,
-          title: `${ctx.portfolio.name} - Weekly Briefing (${ctx.period})`,
-          summary: `Valuation ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% cumulative return across ${ctx.holdings.length} assets.`,
+          ...reportHeadline(ctx),
           content,
           prompt: ctx.fullPrompt,
           metrics: ctx.metrics,
@@ -513,7 +531,12 @@ ${structureInstructions}
       reportStatus = "fallback";
       isFallback = true;
       errorMessage = errMsg;
-      content = `### Automated Portfolio Briefing (${ctx.period})\n\n**Market Overview**: Total portfolio valuation stands at ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% overall return.\n\n*Note: Detailed LLM report model was temporarily unreachable (${errMsg}). Technical metrics and ledger values remain verified.*`;
+      const overview = t("service.report.fallback.overview", {
+        currency: ctx.baseCurrency,
+        value: (ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString(),
+        change: signed(ctx.summary.totalGainLossPercent),
+      });
+      content = `### ${t("service.report.fallback.heading", { period: ctx.period })}\n\n**${t("service.report.fallback.overviewLabel")}**: ${overview}\n\n*${t("service.report.fallback.note", { error: errMsg })}*`;
     }
 
     const reportId = `${portfolio.id}_${ctx.weekKey}`;
@@ -524,8 +547,7 @@ ${structureInstructions}
       weekStartDate: ctx.weekStartDate,
       weekEndDate: ctx.weekEndDate,
       weekKey: ctx.weekKey,
-      title: `${portfolio.name} - Weekly Briefing (${ctx.period})`,
-      summary: `Valuation ${ctx.baseCurrency}${(ctx.summary.totalPortfolioValue || ctx.summary.totalValue).toLocaleString()} with ${ctx.summary.totalGainLossPercent >= 0 ? "+" : ""}${ctx.summary.totalGainLossPercent}% cumulative return across ${ctx.holdings.length} assets.`,
+      ...reportHeadline({ ...ctx, portfolio }),
       content,
       prompt: ctx.fullPrompt,
       metrics: ctx.metrics,
