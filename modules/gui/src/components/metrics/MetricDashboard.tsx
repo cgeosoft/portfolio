@@ -1,6 +1,7 @@
 import { Sliders } from "lucide-react";
 import type { MetricEvaluation, MetricListing } from "portfolio-shared/api-types";
 import type { PortfolioMetricPreference } from "portfolio-shared/metrics";
+import { t } from "../../i18n";
 import { MetricCompactTile, MetricLargeCard } from "./MetricCard";
 import { displayMetric } from "./metric-view";
 
@@ -49,14 +50,14 @@ export function MetricDashboard({ prefs, listings, evaluations, currency, hideVa
 
       {slotted.length === 0 && (
         <div className="p-6 rounded-2xl bg-widget/60 border border-line text-center space-y-3">
-          <div className="text-xs text-slate-400 font-mono">No metrics are on the dashboard of this portfolio.</div>
+          <div className="text-xs text-slate-400 font-mono">{t("metrics.dashboard.empty")}</div>
           <button
             type="button"
             onClick={onOpenMetrics}
             className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Open Metrics</span>
+            <span>{t("metrics.dashboard.openMetrics")}</span>
           </button>
         </div>
       )}

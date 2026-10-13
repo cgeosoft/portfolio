@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BadgeCheck, ExternalLink, ShieldAlert, X } from "lucide-react";
 import type { MetricListing } from "portfolio-shared/api-types";
+import { t } from "../../i18n";
 import { rpc } from "../../rpc";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
 import { ScopeBadges } from "./ScopeBadges";
@@ -54,7 +55,7 @@ export function MetricDetailsModal({ listing, onClose }: MetricDetailsModalProps
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -64,28 +65,28 @@ export function MetricDetailsModal({ listing, onClose }: MetricDetailsModalProps
           <div className="flex flex-wrap items-center gap-2">
             {listing.verified ? (
               <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                <BadgeCheck className="w-3 h-3" /> Reviewed in repository
+                <BadgeCheck className="w-3 h-3" /> {t("metrics.details.reviewed")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md border border-amber-500/50 bg-amber-500/10 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                <ShieldAlert className="w-3 h-3" /> Unverified · installed from URL
+                <ShieldAlert className="w-3 h-3" /> {t("metrics.details.unverified")}
               </span>
             )}
             <ScopeBadges scopes={manifest.scopes} size="sm" />
           </div>
 
           <section className="space-y-1">
-            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">What it shows</div>
+            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.whatItShows")}</div>
             <p className="text-slate-300 leading-relaxed">{manifest.description}</p>
           </section>
           <section className="space-y-1">
-            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Why it matters</div>
+            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.whyItMatters")}</div>
             <p className="text-slate-300 leading-relaxed">{manifest.importance}</p>
           </section>
 
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Developer</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.developer")}</div>
               {manifest.developer.url ? (
                 <button
                   type="button"
@@ -100,20 +101,19 @@ export function MetricDetailsModal({ listing, onClose }: MetricDetailsModalProps
               )}
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Source</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.source")}</div>
               <div className="text-slate-300 mt-0.5 break-all">
-                {listing.source === "builtin" ? "Bundled with the application" : listing.sourceUrl || "URL"}
+                {listing.source === "builtin" ? t("metrics.details.bundled") : listing.sourceUrl || t("metrics.details.url")}
               </div>
             </div>
             <div className="sm:col-span-2">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Module SHA-256</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.sha256")}</div>
               <div className="text-slate-500 mt-0.5 break-all text-[10px]">{listing.sha256}</div>
             </div>
             <div className="sm:col-span-2">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Sandbox limits</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">{t("metrics.details.sandbox")}</div>
               <div className="text-slate-400 mt-0.5">
-                {manifest.runtime.memoryPages * 64} KiB memory · {manifest.runtime.timeoutMs} ms per run · no file, network, or
-                system access
+                {t("metrics.details.sandboxLimits", { memory: manifest.runtime.memoryPages * 64, timeout: manifest.runtime.timeoutMs })}
               </div>
             </div>
           </section>

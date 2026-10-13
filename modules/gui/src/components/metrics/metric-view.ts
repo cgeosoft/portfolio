@@ -52,11 +52,3 @@ export function metricTitle(listing: MetricListing): string {
 export function metricShortTitle(listing: MetricListing): string {
   return listing.manifest.shortName || listing.manifest.name;
 }
-
-/** Why a metric cannot be added or run (a provider without an API key), or null. */
-export function metricUnavailableReason(listing: MetricListing | null | undefined): string | null {
-  return listing?.status === "unavailable" ? listing.statusReason || "A data provider this metric needs is not set up" : null;
-}
-
-/** Short label of a disabled metric, for tiles and badges. */
-export const UNAVAILABLE_LABEL = "Needs FMP key";

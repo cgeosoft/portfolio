@@ -9,6 +9,7 @@ import {
   type MetricSlot,
   type PortfolioMetricPreference,
 } from "portfolio-shared/metrics";
+import { t } from "../../i18n";
 import { MetricLibrary, smallButton } from "./MetricLibrary";
 import { MetricCompactTile, MetricLargeCard } from "./MetricCard";
 import { MetricPickerModal } from "./MetricPickerModal";
@@ -33,8 +34,6 @@ interface MetricsTabProps {
   onUninstall: (id: string) => Promise<void>;
   onRetry: (id: string) => void;
 }
-
-const SLOT_LABEL: Record<MetricSlot, string> = { large: "Large cards", compact: "Compact tiles" };
 
 /** A dashboard place: the metric on it, or null when it is empty. */
 interface Place {
@@ -118,7 +117,7 @@ export function MetricsTab({
 
   if (!portfolioId) {
     return (
-      <div className="cx-card p-10 text-center text-slate-500 font-mono text-xs">Create a portfolio first to choose its metrics.</div>
+      <div className="cx-card p-10 text-center text-slate-500 font-mono text-xs">{t("metrics.tab.noPortfolio")}</div>
     );
   }
 
@@ -129,11 +128,10 @@ export function MetricsTab({
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
               <LayoutGrid className="w-4 h-4 text-[#DD3C73] shrink-0" />
-              <span className="truncate">Dashboard</span>
+              <span className="truncate">{t("metrics.tab.title")}</span>
             </h2>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              {portfolioName ? `Shown on the Overview tab of ${portfolioName}. Each portfolio keeps its own cards. ` : "Shown on the Overview tab. "}
-              Drag a card by its header to move it, click an empty place to fill it.
+              {portfolioName ? t("metrics.tab.descriptionNamed", { name: portfolioName }) : t("metrics.tab.description")}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -144,14 +142,14 @@ export function MetricsTab({
               className={`${smallButton} border-[#DD3C73]/40 text-[#DD3C73] hover:text-[#DD3C73] hover:bg-[#DD3C73]/15 ${
                 isEmpty && !isSaving && added.length > 0 ? "cx-attention-pulse" : ""
               }`}
-              title="Let the assistant choose cards and tiles from your allocation"
+              title={t("metrics.tab.autoChooseHint")}
             >
               <Sparkles className="w-3 h-3" />
-              <span>Auto choose</span>
+              <span>{t("metrics.tab.autoChoose")}</span>
             </button>
-            <button type="button" disabled={isSaving} onClick={onReset} className={smallButton} title="Restore the default dashboard">
+            <button type="button" disabled={isSaving} onClick={onReset} className={smallButton} title={t("metrics.tab.defaultsHint")}>
               <RotateCcw className="w-3 h-3" />
-              <span>Defaults</span>
+              <span>{t("metrics.tab.defaults")}</span>
             </button>
           </div>
         </div>
@@ -167,7 +165,7 @@ export function MetricsTab({
           return (
             <div key={slot} className="space-y-3">
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                {SLOT_LABEL[slot]} · {used[slot]}/{METRIC_SLOT_CAPACITY[slot]}
+                {t(`metrics.slots.${slot}`)} · {used[slot]}/{METRIC_SLOT_CAPACITY[slot]}
               </div>
               <div className={slot === "large" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"}>
                 {places.map((place) => {
@@ -188,10 +186,10 @@ export function MetricsTab({
                             ? "border-[#DD3C73]/70 bg-[#DD3C73]/10 text-[#DD3C73]"
                             : "border-slate-800 text-slate-600 hover:border-[#DD3C73]/50 hover:text-[#DD3C73] hover:bg-[#DD3C73]/5"
                         }`}
-                        aria-label={`Choose a metric for this ${slot === "large" ? "large card" : "compact tile"}`}
+                        aria-label={t(`metrics.tab.chooseFor.${slot}`)}
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add metric</span>
+                        <span>{t("metrics.tab.addMetric")}</span>
                       </button>
                     );
                   }
@@ -220,8 +218,8 @@ export function MetricsTab({
                           setDropTarget(null);
                         }}
                         className="h-6 shrink-0 flex items-center justify-between gap-2 pl-2 pr-1 border-b border-line bg-slate-900/60 text-slate-500 cursor-grab active:cursor-grabbing hover:text-slate-300 transition-colors"
-                        title="Drag to move"
-                        aria-label={`Drag ${title} to another place`}
+                        title={t("metrics.tab.dragHint")}
+                        aria-label={t("metrics.tab.dragLabel", { name: title })}
                         role="button"
                       >
                         <GripHorizontal className="w-3.5 h-3.5" />
@@ -231,8 +229,8 @@ export function MetricsTab({
                           draggable={false}
                           onClick={() => removeFromDashboard(listing.id)}
                           className="w-4 h-4 inline-flex items-center justify-center rounded text-slate-500 cursor-pointer hover:text-rose-300 hover:bg-rose-500/15 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title="Remove from the dashboard"
-                          aria-label={`Remove ${title} from the dashboard`}
+                          title={t("metrics.tab.removeHint")}
+                          aria-label={t("metrics.tab.removeLabel", { name: title })}
                         >
                           <X className="w-3 h-3" />
                         </button>

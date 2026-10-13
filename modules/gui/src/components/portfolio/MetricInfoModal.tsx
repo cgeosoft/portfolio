@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import type { PortfolioSummary } from "portfolio-shared/portfolio";
+import { t } from "../../i18n";
 import { fmtCurrency, fmtPercent } from "./utils";
 
 export type MetricKey =
@@ -36,43 +37,32 @@ interface MetricInfoModalProps {
   hideCurrencyValues?: boolean;
 }
 
+/**
+ * A metric explanation. Its text lives in `metrics.info.defs.<key>` of the
+ * language file and is read at render time: `title`, `category`, `short`,
+ * `full`, `formula`, `formulaDescription`, `components.<id>.label|description`
+ * and `takeaways.<id>`.
+ */
 interface MetricDefinition {
   key: MetricKey;
-  title: string;
-  category: string;
   icon: React.ElementType;
   iconColor: string;
-  shortDescription: string;
-  fullExplanation: string;
-  formula: string;
-  formulaDescription: string;
   components: Array<{
-    label: string;
-    description: string;
+    id: string;
     getValue?: (summary: PortfolioSummary | null | undefined, currency: string, hide: boolean) => string;
     colorClass?: string | ((summary: PortfolioSummary | null | undefined) => string);
   }>;
-  keyTakeaways: string[];
+  takeaways: string[];
 }
 
 const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
   totalGain: {
     key: "totalGain",
-    title: "Total Gain Since Start",
-    category: "Performance",
     icon: TrendingUp,
     iconColor: "text-mint",
-    shortDescription: "All-time net economic performance generated across your entire portfolio since inception.",
-    fullExplanation:
-      "This metric captures the comprehensive net performance of your capital. It does not look merely at current unrealized paper gains, but synthesizes all asset price changes, realized profits from closed sales, dividend distributions, interest payouts, and subtracts transaction fees paid across time.",
-    formula:
-      "Total Gain = (Invested Value - Cost Basis) + Realized PnL + Dividends + Interest - Broker Fees",
-    formulaDescription:
-      "Return % = (Total Gain Since Start ÷ Total Capital Invested) × 100",
     components: [
       {
-        label: "Unrealized Gain / Loss",
-        description: "Paper profit or loss on currently open positions (Invested Value − Cost Basis).",
+        id: "unrealized",
         getValue: (s, c, h) => {
           const val = (s?.totalValue ?? 0) - (s?.totalCost ?? 0);
           return `${val >= 0 ? "+" : ""}${fmtCurrency(val, s?.baseCurrency || c, h)}`;
@@ -80,259 +70,165 @@ const METRIC_DEFINITIONS: Record<MetricKey, MetricDefinition> = {
         colorClass: "text-mint",
       },
       {
-        label: "Closed / Realized PnL",
-        description: "Net profit or loss locked in upon selling assets over time.",
+        id: "realized",
         getValue: (s, c, h) =>
           `${(s?.realizedPnL ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.realizedPnL ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: "text-mint",
       },
       {
-        label: "Dividends & Interest",
-        description: "Cumulative cash distributions and fixed yields credited into the portfolio.",
+        id: "income",
         getValue: (s, c, h) =>
           `+${fmtCurrency((s?.totalDividends ?? 0) + (s?.totalInterest ?? 0), s?.baseCurrency || c, h)}`,
         colorClass: "text-mint",
       },
       {
-        label: "Transaction Fees",
-        description: "Total brokerage commissions and order fees deducted over time.",
+        id: "fees",
         getValue: (s, c, h) => `-${fmtCurrency(s?.totalFees ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: "text-[#DD3C73]",
       },
     ],
-    keyTakeaways: [
-      "True Economic Alpha: Evaluates total wealth created rather than just static ticker price changes.",
-      "Cash Flow Included: Reinvested or collected dividends and interest are fully accounted for in the return percentage.",
-      "Net of Fees: Broker commissions and trade frictions are deducted to show realistic net returns.",
-    ],
+    takeaways: ["alpha", "cashFlow", "netOfFees"],
   },
   valuation: {
     key: "valuation",
-    title: "Portfolio Valuation",
-    category: "Valuation",
     icon: Wallet,
     iconColor: "text-[#DD3C73]",
-    shortDescription: "Total liquidated net worth of your portfolio at live market quotes.",
-    fullExplanation:
-      "Portfolio Valuation reflects the exact total liquid value of your entire investment portfolio right now. It combines the real-time market value of all active securities (stocks, ETFs, cryptocurrencies, mutual funds) with your uninvested cash reserves.",
-    formula: "Portfolio Valuation = Total Market Value of Holdings + Cash Reserves",
-    formulaDescription:
-      "Holdings Value is calculated by multiplying each active position's share count by its latest live market quote.",
     components: [
       {
-        label: "Invested Holdings Value",
-        description: "Aggregate live value of all active stocks, ETFs, crypto, and other assets.",
+        id: "holdings",
         getValue: (s, c, h) => fmtCurrency(s?.totalValue ?? 0, s?.baseCurrency || c, h),
         colorClass: "text-[#DD3C73]",
       },
       {
-        label: "Uninvested Cash Reserves",
-        description: "Liquid cash buffer available for new buys or safe-haven liquidity.",
+        id: "cash",
         getValue: (s, c, h) => fmtCurrency(s?.cashBalance ?? 0, s?.baseCurrency || c, h),
         colorClass: "text-mint",
       },
       {
-        label: "Holdings Cost Basis",
-        description: "Total capital expended to acquire currently open positions.",
+        id: "costBasis",
         getValue: (s, c, h) => fmtCurrency(s?.totalCost ?? 0, s?.baseCurrency || c, h),
         colorClass: "text-slate-300",
       },
     ],
-    keyTakeaways: [
-      "Liquid Worth: What your portfolio would yield before taxes if all holdings were liquidated immediately at current market bids.",
-      "Multi-Asset Integration: Seamlessly consolidates multi-currency positions, cash balances, and fractional assets.",
-      "Includes Cash Drag: Accurately weights liquid reserves alongside invested assets.",
-    ],
+    takeaways: ["liquidWorth", "multiAsset", "cashDrag"],
   },
   todayReturn: {
     key: "todayReturn",
-    title: "Today's Return",
-    category: "Daily Return",
     icon: DollarSign,
     iconColor: "text-[#DD3C73]",
-    shortDescription: "Single-session valuation delta compared to previous market close.",
-    fullExplanation:
-      "Today's Return measures the monetary and percentage fluctuation of your active positions during the current trading session. It compares live quotes against the prior day's official market closing prices for each holding.",
-    formula:
-      "Today's Return ($) = Sum of [ (Current Price - Previous Close Price) × Shares ]",
-    formulaDescription:
-      "Today's Return (%) = (Today's Return $ ÷ Aggregate Previous Session Close Value) × 100",
     components: [
       {
-        label: "24h Currency Delta",
-        description: "Absolute financial gain or loss experienced in the current session.",
+        id: "currencyDelta",
         getValue: (s, c, h) =>
           `${(s?.dayGainLossDollar ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.dayGainLossDollar ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: (s) => ((s?.dayGainLossDollar ?? 0) >= 0 ? "text-mint" : "text-[#DD3C73]"),
       },
       {
-        label: "24h Percentage Change",
-        description: "Percentage return relative to yesterday's closing baseline valuation.",
+        id: "percentChange",
         getValue: (s) =>
           `${(s?.dayGainLossPercent ?? 0) >= 0 ? "+" : ""}${fmtPercent(s?.dayGainLossPercent ?? 0)}`,
         colorClass: (s) => ((s?.dayGainLossPercent ?? 0) >= 0 ? "text-mint" : "text-[#DD3C73]"),
       },
       {
-        label: "Session Top Winner",
-        description: "The best performing asset in your active portfolio during this session.",
+        id: "topWinner",
         getValue: (s) =>
           s?.bestPerformer ? `${s.bestPerformer.symbol} (+${s.bestPerformer.changePercent.toFixed(1)}%)` : "—",
         colorClass: "text-mint",
       },
     ],
-    keyTakeaways: [
-      "Session Volatility: Shows how daily macro events, earnings reports, or market shifts impacted your holdings today.",
-      "Excludes Cash: Only price-sensitive securities drive daily returns; cash reserves maintain zero daily volatility.",
-      "Real-time Updates: Recalculates dynamically as new quote ticks arrive during market hours.",
-    ],
+    takeaways: ["volatility", "excludesCash", "realTime"],
   },
   realizedIncome: {
     key: "realizedIncome",
-    title: "Realized & Income",
-    category: "Income & Yield",
     icon: PiggyBank,
     iconColor: "text-mint",
-    shortDescription: "Cumulative locked-in cash profits from executed sales, dividends, and yields.",
-    fullExplanation:
-      "While unrealized paper gains rise and fall with market sentiment, Realized & Income tracks the permanent, crystalized wealth you have banked. It sums all profits realized from sold securities together with regular income flows from dividends and interest.",
-    formula:
-      "Realized & Income = Closed Sale PnL + Total Dividends Received + Fixed Interest Earned",
-    formulaDescription:
-      "Closed Sale PnL is computed on each SELL execution using the FIFO / average cost basis method.",
     components: [
       {
-        label: "Net Realized Sells",
-        description: "Crystalized capital gains from executed sell transactions.",
+        id: "sells",
         getValue: (s, c, h) =>
           `${(s?.realizedPnL ?? 0) >= 0 ? "+" : ""}${fmtCurrency(s?.realizedPnL ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: "text-mint",
       },
       {
-        label: "Dividends Received",
-        description: "Cash payments distributed by portfolio holdings directly to you.",
+        id: "dividends",
         getValue: (s, c, h) => `+${fmtCurrency(s?.totalDividends ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: "text-mint",
       },
       {
-        label: "Fixed Interest / Yields",
-        description: "Income earned from cash yields, bond coupons, or lending.",
+        id: "interest",
         getValue: (s, c, h) => `+${fmtCurrency(s?.totalInterest ?? 0, s?.baseCurrency || c, h)}`,
         colorClass: "text-mint",
       },
     ],
-    keyTakeaways: [
-      "Permanent Wealth: Locked-in gains cannot be reversed by future market downturns.",
-      "Income Generation: Clear visibility into passive yield generation from dividend-paying assets.",
-      "Tax & Accounting: Useful for tracking annual taxable capital events and dividend distributions.",
-    ],
+    takeaways: ["permanent", "income", "tax"],
   },
   cashReserves: {
     key: "cashReserves",
-    title: "Cash Reserves",
-    category: "Liquidity",
     icon: Coins,
     iconColor: "text-mint",
-    shortDescription: "Unallocated liquid cash available for strategic rebalancing or safety.",
-    fullExplanation:
-      "Cash Reserves represent uninvested fiat currency in your portfolio. This liquidity serves as 'dry powder' for opportunistic market dips, emergency buffers, or awaiting dividend reinvestment.",
-    formula: "Cash Reserves = Total Injected Deposits - Total Buys + Total Sells + Dividends - Withdrawals - Fees",
-    formulaDescription: "Cash Weight (%) = (Cash Reserves ÷ Total Portfolio Valuation) × 100",
     components: [
       {
-        label: "Current Balance",
-        description: "Instant liquid cash available in the portfolio base currency.",
+        id: "balance",
         getValue: (s, c, h) => fmtCurrency(s?.cashBalance ?? 0, s?.baseCurrency || c, h),
         colorClass: "text-mint",
       },
       {
-        label: "Allocation Share",
-        description: "Percentage proportion of total portfolio value held in cash.",
-        getValue: (s) => `${s?.cashWeightPercent ?? 0}% of portfolio`,
+        id: "share",
+        getValue: (s) => t("metrics.info.defs.cashReserves.components.share.value", { percent: s?.cashWeightPercent ?? 0 }),
         colorClass: "text-slate-300",
       },
     ],
-    keyTakeaways: [
-      "Opportunistic Liquidity: Enables immediate execution on market drawdowns without selling existing assets.",
-      "Risk Mitigation: Dampens overall portfolio volatility during bear cycles.",
-    ],
+    takeaways: ["liquidity", "risk"],
   },
   capitalInjected: {
     key: "capitalInjected",
-    title: "Capital Injected",
-    category: "Principal",
     icon: Layers,
     iconColor: "text-royal-bright",
-    shortDescription: "Total cumulative principal capital deposited into the portfolio.",
-    fullExplanation:
-      "Capital Injected tracks your total principal contributions (deposits) into the portfolio ledger. It acts as the financial baseline denominator for calculating true Return on Invested Capital (ROIC).",
-    formula: "Capital Injected = Cumulative Deposits - Cumulative Capital Withdrawals",
-    formulaDescription: "Calculated from all DEPOSIT and WITHDRAWAL transaction records in your portfolio.",
     components: [
       {
-        label: "Total Capital Deposited",
-        description: "Sum of all historical external deposits transferred into the portfolio.",
+        id: "deposited",
         getValue: (s, c, h) =>
           fmtCurrency(s?.totalCashInjected || s?.totalCost || 0, s?.baseCurrency || c, h),
         colorClass: "text-royal-bright",
       },
     ],
-    keyTakeaways: [
-      "Principal Benchmark: Differentiates external savings contributions from organic market growth.",
-      "Return Base: Forms the denominator for accurate Money-Weighted and Time-Weighted Return models.",
-    ],
+    takeaways: ["benchmark", "returnBase"],
   },
   dividends: {
     key: "dividends",
-    title: "Total Dividends",
-    category: "Distributions",
     icon: CircleDollarSign,
     iconColor: "text-mint",
-    shortDescription: "All-time cash dividend payouts received from equity and fund holdings.",
-    fullExplanation:
-      "Total Dividends represents the aggregate lifetime cash distributions paid directly to your portfolio by dividend-yielding equities, ETFs, and REITs. These can be held as cash liquidity or redeployed into new holdings.",
-    formula: "Total Dividends = Sum of all DIVIDEND transactions credited to the account",
-    formulaDescription: "Excludes price appreciation and focuses strictly on corporate earnings distributions.",
     components: [
       {
-        label: "Cumulative Dividends",
-        description: "Total monetary dividends credited across all portfolio assets.",
+        id: "cumulative",
         getValue: (s, c, h) => fmtCurrency(s?.totalDividends ?? 0, s?.baseCurrency || c, h),
         colorClass: "text-mint",
       },
     ],
-    keyTakeaways: [
-      "Passive Cash Flow: Measures the real cash payout power of your income-oriented investments.",
-      "Compounding Fuel: Dividends can be systematically reinvested to accelerate compound growth.",
-    ],
+    takeaways: ["cashFlow", "compounding"],
   },
   topPerformer: {
     key: "topPerformer",
-    title: "Top Session Performer",
-    category: "Session Leader",
     icon: Flame,
     iconColor: "text-[#DD3C73]",
-    shortDescription: "The individual active asset with the highest percentage gain in the current market session.",
-    fullExplanation:
-      "Identifies the standout asset in your portfolio based on intraday percentage gain from the previous official market close. Helps spot momentum drivers and market leadership across your holdings.",
-    formula: "Top Performer = max( (Current Quote - Previous Close) ÷ Previous Close ) across all active holdings",
-    formulaDescription: "Evaluated across all active non-cash assets in the portfolio.",
     components: [
       {
-        label: "Top Asset",
-        description: "Asset ticker and intraday percentage return.",
+        id: "topAsset",
         getValue: (s) =>
           s?.bestPerformer
             ? `${s.bestPerformer.symbol} (+${s.bestPerformer.changePercent.toFixed(1)}%)`
-            : "No active equity positions",
+            : t("metrics.info.defs.topPerformer.components.topAsset.none"),
         colorClass: "text-mint",
       },
     ],
-    keyTakeaways: [
-      "Momentum Tracking: Instant visibility into today's strongest asset rally.",
-      "Attribution: Understand what position is carrying today's portfolio performance.",
-    ],
+    takeaways: ["momentum", "attribution"],
   },
 };
+
+/** Text of a metric explanation, e.g. `defText("valuation", "formula")`. */
+function defText(key: MetricKey, path: string): string {
+  return t(`metrics.info.defs.${key}.${path}`);
+}
 
 const ALL_METRIC_KEYS: MetricKey[] = [
   "totalGain",
@@ -387,9 +283,9 @@ export function MetricInfoModal({
             baseCurr,
             hideCurrencyValues
           )}`,
-          sub: `Return: ${isStartUp ? "+" : ""}${fmtPercent(
-            summary?.totalGainSinceStartPercent ?? summary?.totalGainLossPercent ?? 0
-          )} since inception`,
+          sub: t("metrics.info.live.sinceInception", {
+            percent: `${isStartUp ? "+" : ""}${fmtPercent(summary?.totalGainSinceStartPercent ?? summary?.totalGainLossPercent ?? 0)}`,
+          }),
           color: isStartUp ? "text-mint" : "text-[#DD3C73]",
         };
       case "valuation":
@@ -401,14 +297,14 @@ export function MetricInfoModal({
           ),
           sub:
             (summary?.cashBalance ?? 0) > 0
-              ? `Invested: ${fmtCurrency(summary?.totalValue ?? 0, baseCurr, hideCurrencyValues)}`
-              : `Cost Basis: ${fmtCurrency(summary?.totalCost ?? 0, baseCurr, hideCurrencyValues)}`,
+              ? t("metrics.info.live.invested", { amount: fmtCurrency(summary?.totalValue ?? 0, baseCurr, hideCurrencyValues) })
+              : t("metrics.info.live.costBasis", { amount: fmtCurrency(summary?.totalCost ?? 0, baseCurr, hideCurrencyValues) }),
           color: "text-slate-100",
         };
       case "todayReturn":
         return {
           main: `${isDayUp ? "+" : ""}${fmtCurrency(summary?.dayGainLossDollar ?? 0, baseCurr, hideCurrencyValues)}`,
-          sub: `24h Change: ${isDayUp ? "▲" : "▼"} ${fmtPercent(summary?.dayGainLossPercent ?? 0)}`,
+          sub: t("metrics.info.live.dayChange", { arrow: isDayUp ? "▲" : "▼", percent: fmtPercent(summary?.dayGainLossPercent ?? 0) }),
           color: isDayUp ? "text-mint" : "text-[#DD3C73]",
         };
       case "realizedIncome": {
@@ -416,18 +312,17 @@ export function MetricInfoModal({
           (summary?.realizedPnL ?? 0) + (summary?.totalDividends ?? 0) + (summary?.totalInterest ?? 0);
         return {
           main: `+${fmtCurrency(combined, baseCurr, hideCurrencyValues)}`,
-          sub: `Sells: ${fmtCurrency(summary?.realizedPnL ?? 0, baseCurr, hideCurrencyValues)} | Divs: ${fmtCurrency(
-            summary?.totalDividends ?? 0,
-            baseCurr,
-            hideCurrencyValues
-          )}`,
+          sub: t("metrics.info.live.sellsAndDividends", {
+            sells: fmtCurrency(summary?.realizedPnL ?? 0, baseCurr, hideCurrencyValues),
+            dividends: fmtCurrency(summary?.totalDividends ?? 0, baseCurr, hideCurrencyValues),
+          }),
           color: "text-mint",
         };
       }
       case "cashReserves":
         return {
           main: `${fmtCurrency(summary?.cashBalance ?? 0, baseCurr, hideCurrencyValues)}`,
-          sub: `${summary?.cashWeightPercent ?? 0}% of Total Portfolio`,
+          sub: t("metrics.info.live.cashShare", { percent: summary?.cashWeightPercent ?? 0 }),
           color: "text-mint",
         };
       case "capitalInjected":
@@ -437,19 +332,21 @@ export function MetricInfoModal({
             baseCurr,
             hideCurrencyValues
           ),
-          sub: "Total Cumulative Net Deposits",
+          sub: t("metrics.info.live.netDeposits"),
           color: "text-slate-100",
         };
       case "dividends":
         return {
           main: fmtCurrency(summary?.totalDividends || 0, baseCurr, hideCurrencyValues),
-          sub: "All-Time Cash Distributions",
+          sub: t("metrics.info.live.cashDistributions"),
           color: "text-mint",
         };
       case "topPerformer":
         return {
           main: summary?.bestPerformer ? summary.bestPerformer.symbol : "—",
-          sub: summary?.bestPerformer ? `+${summary.bestPerformer.changePercent.toFixed(1)}% session change` : "No equities active",
+          sub: summary?.bestPerformer
+            ? t("metrics.info.live.sessionChange", { percent: summary.bestPerformer.changePercent.toFixed(1) })
+            : t("metrics.info.live.noEquities"),
           color: summary?.bestPerformer ? "text-mint" : "text-slate-400",
         };
       default:
@@ -479,17 +376,17 @@ export function MetricInfoModal({
             </div>
             <div className="min-w-0">
               <h2 id={modalTitleId} className="text-xs font-bold text-slate-200 uppercase tracking-wider truncate">
-                Metric Explanations & Methodology
+                {t("metrics.info.title")}
               </h2>
               <p className="text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5">
-                Formulas, component breakdowns, and live calculated values
+                {t("metrics.info.subtitle")}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ml-2"
-            aria-label="Close metric explanations modal"
+            aria-label={t("metrics.info.closeLabel")}
           >
             <X className="w-5 h-5" />
           </button>
@@ -498,7 +395,7 @@ export function MetricInfoModal({
         {/* Metric Selector Tabs */}
         <div className="border-b border-slate-800/80 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0 bg-slate-950/20 overflow-x-auto custom-scrollbar">
           <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1.5 sm:mb-2">
-            Select Metric to Inspect:
+            {t("metrics.info.selectMetric")}
           </div>
           <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-2 pb-1 sm:pb-0 overflow-x-auto sm:overflow-visible">
             {ALL_METRIC_KEYS.map((key) => {
@@ -517,7 +414,7 @@ export function MetricInfoModal({
                   }`}
                 >
                   <TabIcon className={`w-3.5 h-3.5 ${isSelected ? "text-[#DD3C73]" : "text-slate-400"}`} />
-                  <span>{def.title}</span>
+                  <span>{defText(key, "title")}</span>
                 </button>
               );
             })}
@@ -535,10 +432,10 @@ export function MetricInfoModal({
               <div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-                    {currentDef.title}
+                    {defText(currentDef.key, "title")}
                   </span>
                   <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
-                    {currentDef.category}
+                    {defText(currentDef.key, "category")}
                   </span>
                 </div>
                 <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight mt-0.5 ${liveDisplay.color}`}>
@@ -552,12 +449,12 @@ export function MetricInfoModal({
 
             <div className="text-left sm:text-right pt-2.5 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-800 sm:pl-4 flex sm:flex-col justify-between sm:justify-start items-center sm:items-end">
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">Active Currency</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{t("metrics.info.activeCurrency")}</div>
                 <div className="text-xs sm:text-sm font-bold text-slate-200 font-mono mt-0.5">{baseCurr}</div>
               </div>
               <div className="text-[10px] text-mint flex items-center gap-1 justify-end sm:mt-1">
                 <CheckCircle2 className="w-3 h-3" />
-                <span>Live Portfolio Data</span>
+                <span>{t("metrics.info.liveData")}</span>
               </div>
             </div>
           </div>
@@ -566,11 +463,11 @@ export function MetricInfoModal({
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
               <Info className="w-3.5 h-3.5 text-[#DD3C73]" />
-              <span>What this value means</span>
+              <span>{t("metrics.info.whatItMeans")}</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-mono">
-              <p className="font-semibold text-slate-200 mb-1">{currentDef.shortDescription}</p>
-              <p className="text-slate-400 text-[11px] sm:text-[11.5px] leading-normal">{currentDef.fullExplanation}</p>
+              <p className="font-semibold text-slate-200 mb-1">{defText(currentDef.key, "short")}</p>
+              <p className="text-slate-400 text-[11px] sm:text-[11.5px] leading-normal">{defText(currentDef.key, "full")}</p>
             </div>
           </div>
 
@@ -578,14 +475,14 @@ export function MetricInfoModal({
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
               <Calculator className="w-3.5 h-3.5 text-[#DD3C73]" />
-              <span>Mathematical Formula & Method</span>
+              <span>{t("metrics.info.formula")}</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 font-mono space-y-2">
               <div className="p-2 sm:p-2.5 rounded-lg bg-canvas border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
-                {currentDef.formula}
+                {defText(currentDef.key, "formula")}
               </div>
               <p className="text-[10.5px] sm:text-[11px] text-slate-400 leading-relaxed">
-                {currentDef.formulaDescription}
+                {defText(currentDef.key, "formulaDescription")}
               </p>
             </div>
           </div>
@@ -595,10 +492,10 @@ export function MetricInfoModal({
             <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
                 <Layers className="w-3.5 h-3.5 text-[#DD3C73]" />
-                <span>Components & Current Balances</span>
+                <span>{t("metrics.info.components")}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-                {currentDef.components.map((comp, idx) => {
+                {currentDef.components.map((comp) => {
                   const valStr = comp.getValue ? comp.getValue(summary, baseCurr, hideCurrencyValues) : null;
                   const color =
                     typeof comp.colorClass === "function"
@@ -607,16 +504,16 @@ export function MetricInfoModal({
 
                   return (
                     <div
-                      key={idx}
+                      key={comp.id}
                       className="p-2.5 sm:p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 flex flex-col justify-between"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider">
-                          {comp.label}
+                          {defText(currentDef.key, `components.${comp.id}.label`)}
                         </span>
                         {valStr && <span className={`text-[11px] sm:text-xs font-bold font-mono ${color}`}>{valStr}</span>}
                       </div>
-                      <p className="text-[10px] sm:text-[10.5px] text-slate-400 leading-tight mt-1.5">{comp.description}</p>
+                      <p className="text-[10px] sm:text-[10.5px] text-slate-400 leading-tight mt-1.5">{defText(currentDef.key, `components.${comp.id}.description`)}</p>
                     </div>
                   );
                 })}
@@ -628,13 +525,13 @@ export function MetricInfoModal({
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
               <CheckCircle2 className="w-3.5 h-3.5 text-mint" />
-              <span>Key Analytical Insights</span>
+              <span>{t("metrics.info.insights")}</span>
             </div>
             <ul className="space-y-1 sm:space-y-1.5 p-3 sm:p-3.5 rounded-xl bg-slate-950/30 border border-slate-800/60 text-xs text-slate-400 font-mono">
-              {currentDef.keyTakeaways.map((point, index) => (
-                <li key={index} className="flex items-start gap-2 text-[10.5px] sm:text-[11px] leading-relaxed">
+              {currentDef.takeaways.map((id) => (
+                <li key={id} className="flex items-start gap-2 text-[10.5px] sm:text-[11px] leading-relaxed">
                   <span className="text-[#DD3C73] font-bold shrink-0">▸</span>
-                  <span>{point}</span>
+                  <span>{defText(currentDef.key, `takeaways.${id}`)}</span>
                 </li>
               ))}
             </ul>
@@ -644,14 +541,14 @@ export function MetricInfoModal({
         {/* Modal Footer */}
         <div className="border-t border-slate-800 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0 bg-slate-950/40 flex items-center justify-between">
           <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono hidden sm:block">
-            Click any tab above to switch metric explanation
+            {t("metrics.info.footerHint")}
           </div>
           <button
             type="button"
             onClick={onClose}
             className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer ml-auto"
           >
-            Close Guide
+            {t("metrics.info.closeGuide")}
           </button>
         </div>
       </div>
