@@ -48,6 +48,8 @@ language:
   tier4: "很少有 AI 模型系列支持此语言；报告可能包含错误。"
   supportedBy: "官方支持：{models}。"
   detected: "{name} · 您的系统"
+  search: "搜索语言"
+  noMatch: "没有匹配的语言"
   showMore:
     other: "再显示 {count} 种语言"
 

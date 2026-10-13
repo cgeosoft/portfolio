@@ -46,6 +46,8 @@ language:
   tier4: "Šo valodu atbalsta maz MI modeļu saimju; pārskatos var būt kļūdas."
   supportedBy: "Oficiāli atbalsta {models}."
   detected: "{name} · jūsu sistēma"
+  search: "Meklēt valodu"
+  noMatch: "Nav atbilstošas valodas"
   showMore:
     zero: "Rādīt vēl {count} valodas"
     one: "Rādīt vēl {count} valodu"

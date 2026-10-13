@@ -48,6 +48,8 @@ language:
   tier4: "Harvat tekoälymalliperheet tukevat tätä kieltä; raporteissa voi olla virheitä."
   supportedBy: "Virallisesti tuettu: {models}."
   detected: "{name} · järjestelmäsi"
+  search: "Hae kieltä"
+  noMatch: "Ei vastaavaa kieltä"
   showMore:
     one: "Näytä {count} kieli lisää"
     other: "Näytä {count} kieltä lisää"

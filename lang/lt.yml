@@ -46,6 +46,8 @@ language:
   tier4: "Šią kalbą palaiko nedaug DI modelių šeimų; ataskaitose gali būti klaidų."
   supportedBy: "Oficialiai palaiko {models}."
   detected: "{name} · jūsų sistema"
+  search: "Ieškoti kalbos"
+  noMatch: "Atitinkančios kalbos nėra"
   showMore:
     one: "Rodyti dar {count} kalbą"
     few: "Rodyti dar {count} kalbas"

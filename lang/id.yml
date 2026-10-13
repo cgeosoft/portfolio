@@ -46,12 +46,15 @@ language:
   tier4: "Sedikit keluarga model AI mendukung bahasa ini; laporan mungkin mengandung kesalahan."
   supportedBy: "Didukung secara resmi oleh {models}."
   detected: "{name} · sistem Anda"
+  search: "Cari bahasa"
+  noMatch: "Tidak ada bahasa yang cocok"
   showMore:
     other: "Tampilkan {count} bahasa lagi"
 
 layout:
   tabs:
     overview: "Ringkasan"
+    analysis: "Analisis"
     transactions: "Transaksi"
     reports: "Laporan"
     suggestions: "Saran"

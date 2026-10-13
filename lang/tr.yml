@@ -46,6 +46,8 @@ language:
   tier4: "Az sayıda yapay zekâ model ailesi bu dili destekler; raporlar hata içerebilir."
   supportedBy: "{models} tarafından resmî olarak desteklenir."
   detected: "{name} · sisteminiz"
+  search: "Dil ara"
+  noMatch: "Eşleşen dil yok"
   showMore:
     one: "{count} dil daha göster"
     other: "{count} dil daha göster"

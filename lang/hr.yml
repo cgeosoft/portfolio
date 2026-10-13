@@ -46,6 +46,8 @@ language:
   tier4: "Malo obitelji AI modela podržava ovaj jezik; izvješća mogu sadržavati pogreške."
   supportedBy: "Službeno podržavaju: {models}."
   detected: "{name} · jezik sustava"
+  search: "Pretraži jezike"
+  noMatch: "Nema odgovarajućeg jezika"
   showMore:
     one: "Prikaži još {count} jezik"
     few: "Prikaži još {count} jezika"

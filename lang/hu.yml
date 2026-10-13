@@ -46,6 +46,8 @@ language:
   tier4: "Kevés MI-modellcsalád támogatja ezt a nyelvet; a jelentések hibákat tartalmazhatnak."
   supportedBy: "Hivatalosan támogatja: {models}."
   detected: "{name} · az Ön rendszere"
+  search: "Nyelv keresése"
+  noMatch: "Nincs egyező nyelv"
   showMore:
     one: "Még {count} nyelv megjelenítése"
     other: "Még {count} nyelv megjelenítése"

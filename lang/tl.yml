@@ -46,6 +46,8 @@ language:
   tier4: "Kakaunting pamilya ng AI model ang sumusuporta sa wikang ito; maaaring may mga mali ang mga report."
   supportedBy: "Opisyal na sinusuportahan ng {models}."
   detected: "{name} · ang iyong system"
+  search: "Maghanap ng wika"
+  noMatch: "Walang tugmang wika"
   showMore:
     one: "Ipakita ang {count} pang wika"
     other: "Ipakita ang {count} pang wika"

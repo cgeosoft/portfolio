@@ -46,12 +46,15 @@ language:
   tier4: "Ít dòng mô hình AI hỗ trợ ngôn ngữ này; báo cáo có thể có lỗi."
   supportedBy: "Được {models} hỗ trợ chính thức."
   detected: "{name} · hệ thống của bạn"
+  search: "Tìm ngôn ngữ"
+  noMatch: "Không có ngôn ngữ phù hợp"
   showMore:
     other: "Hiện thêm {count} ngôn ngữ"
 
 layout:
   tabs:
     overview: "Tổng quan"
+    analysis: "Phân tích"
     transactions: "Giao dịch"
     reports: "Báo cáo"
     suggestions: "Đề xuất"

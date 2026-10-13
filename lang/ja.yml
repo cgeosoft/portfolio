@@ -48,6 +48,8 @@ language:
   tier4: "この言語に対応する AI モデルファミリーはわずかです。レポートに誤りが含まれる場合があります。"
   supportedBy: "公式対応：{models}。"
   detected: "{name} · お使いのシステム"
+  search: "言語を検索"
+  noMatch: "一致する言語はありません"
   showMore:
     other: "さらに {count} 言語を表示"
 

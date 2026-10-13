@@ -46,6 +46,8 @@ language:
   tier4: "Niewiele rodzin modeli AI obsługuje ten język; raporty mogą zawierać błędy."
   supportedBy: "Oficjalnie obsługiwany przez {models}."
   detected: "{name} · język systemu"
+  search: "Szukaj języka"
+  noMatch: "Brak pasującego języka"
   showMore:
     one: "Pokaż jeszcze {count} język"
     few: "Pokaż jeszcze {count} języki"

@@ -46,6 +46,8 @@ language:
   tier4: "Tento jazyk podporuje len málo rodín AI modelov; reporty môžu obsahovať chyby."
   supportedBy: "Oficiálne podporované: {models}."
   detected: "{name} · jazyk systému"
+  search: "Hľadať jazyk"
+  noMatch: "Žiadny zodpovedajúci jazyk"
   showMore:
     one: "Zobraziť ďalší {count} jazyk"
     few: "Zobraziť ďalšie {count} jazyky"

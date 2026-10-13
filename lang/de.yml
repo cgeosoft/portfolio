@@ -46,6 +46,8 @@ language:
   tier4: "Wenige KI-Modellfamilien unterstützen diese Sprache; Berichte können Fehler enthalten."
   supportedBy: "Offiziell unterstützt von {models}."
   detected: "{name} · Ihr System"
+  search: "Sprache suchen"
+  noMatch: "Keine passende Sprache"
   showMore:
     one: "{count} weitere Sprache anzeigen"
     other: "{count} weitere Sprachen anzeigen"

@@ -46,6 +46,8 @@ language:
   tier4: "Peu de familles de modèles d'IA prennent en charge cette langue ; les rapports peuvent contenir des erreurs."
   supportedBy: "Prise en charge officielle par {models}."
   detected: "{name} · votre système"
+  search: "Rechercher une langue"
+  noMatch: "Aucune langue ne correspond"
   showMore:
     one: "Afficher {count} autre langue"
     many: "Afficher {count} autres langues"

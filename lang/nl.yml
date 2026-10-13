@@ -46,6 +46,8 @@ language:
   tier4: "Weinig AI-modelfamilies ondersteunen deze taal; rapporten kunnen fouten bevatten."
   supportedBy: "Officieel ondersteund door {models}."
   detected: "{name} · je systeem"
+  search: "Taal zoeken"
+  noMatch: "Geen overeenkomende taal"
   showMore:
     one: "Nog {count} taal tonen"
     other: "Nog {count} talen tonen"

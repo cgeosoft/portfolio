@@ -46,12 +46,15 @@ language:
   tier4: "มีโมเดล AI เพียงไม่กี่ตระกูลที่รองรับภาษานี้ รายงานอาจมีข้อผิดพลาด"
   supportedBy: "รองรับอย่างเป็นทางการโดย {models}"
   detected: "{name} · ระบบของคุณ"
+  search: "ค้นหาภาษา"
+  noMatch: "ไม่พบภาษาที่ตรงกัน"
   showMore:
     other: "แสดงอีก {count} ภาษา"
 
 layout:
   tabs:
     overview: "ภาพรวม"
+    analysis: "การวิเคราะห์"
     transactions: "ธุรกรรม"
     reports: "รายงาน"
     suggestions: "คำแนะนำ"

@@ -46,12 +46,15 @@ language:
   tier4: "Ìdílé àwòṣe AI díẹ̀ ló ṣe àtìlẹ́yìn fún èdè yìí; àwọn ìjábọ̀ lè ní àṣìṣe."
   supportedBy: "Àtìlẹ́yìn tí a fọwọ́ sí láti ọ̀dọ̀ {models}."
   detected: "{name} · ètò ẹ̀rọ rẹ"
+  search: "Wá èdè"
+  noMatch: "Kò sí èdè tó bá a mu"
   showMore:
     other: "Fi èdè {count} míràn hàn"
 
 layout:
   tabs:
     overview: "Àkópọ̀"
+    analysis: "Àyẹ̀wò"
     transactions: "Ìdúnàádúrà"
     reports: "Ìjábọ̀"
     suggestions: "Àbá"

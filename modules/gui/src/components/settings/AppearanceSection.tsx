@@ -47,10 +47,8 @@ export function AppearanceSection({ theme, onChangeTheme, zoomLevel, onChangeZoo
 
       <div className="divide-y divide-slate-800/80 -mt-2">
         <SettingItem icon={Languages} title={t("language.label")} description={t("language.description")}>
-          <div className="flex flex-col gap-2 sm:max-w-sm">
-            <LanguageSelect value={language} onChange={(code) => void handleLanguage(code)} disabled={switching} />
-            <LanguageTierNote code={language} />
-          </div>
+          <LanguageSelect value={language} onChange={(code) => void handleLanguage(code)} disabled={switching} />
+          <LanguageTierNote code={language} />
         </SettingItem>
 
         <SettingItem icon={theme === "light" ? Sun : Moon} title={t("settings.appearance.theme")} description={t("settings.appearance.themeDescription")}>

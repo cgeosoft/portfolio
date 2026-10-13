@@ -46,6 +46,8 @@ language:
   tier4: "Poche famiglie di modelli IA supportano questa lingua; i report potrebbero contenere errori."
   supportedBy: "Supportata ufficialmente da {models}."
   detected: "{name} · il tuo sistema"
+  search: "Cerca una lingua"
+  noMatch: "Nessuna lingua corrispondente"
   showMore:
     one: "Mostra {count} lingua in più"
     many: "Mostra {count} lingue in più"

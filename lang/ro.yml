@@ -46,6 +46,8 @@ language:
   tier4: "Puține familii de modele AI acceptă această limbă; rapoartele pot conține greșeli."
   supportedBy: "Acceptată oficial de {models}."
   detected: "{name} · limba sistemului"
+  search: "Caută o limbă"
+  noMatch: "Nicio limbă nu corespunde"
   showMore:
     one: "Afișare încă {count} limbă"
     few: "Afișare încă {count} limbi"

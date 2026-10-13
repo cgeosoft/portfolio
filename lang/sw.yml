@@ -46,6 +46,8 @@ language:
   tier4: "Familia chache za miundo ya AI zinaauni lugha hii; ripoti huenda zikawa na makosa."
   supportedBy: "Inaauniwa rasmi na {models}."
   detected: "{name} · mfumo wako"
+  search: "Tafuta lugha"
+  noMatch: "Hakuna lugha inayolingana"
   showMore:
     one: "Onyesha lugha {count} zaidi"
     other: "Onyesha lugha {count} zaidi"

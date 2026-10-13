@@ -48,6 +48,8 @@ language:
   tier4: "Seda keelt toetavad vähesed tehisintellekti mudelipered; aruannetes võib esineda vigu."
   supportedBy: "Ametlikult toetab: {models}."
   detected: "{name} · sinu süsteem"
+  search: "Otsi keelt"
+  noMatch: "Sobivat keelt ei leitud"
   showMore:
     one: "Näita veel {count} keel"
     other: "Näita veel {count} keelt"

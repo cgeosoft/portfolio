@@ -46,6 +46,8 @@ language:
   tier4: "Få AI-modellfamilier støtter dette språket; rapporter kan inneholde feil."
   supportedBy: "Offisielt støttet av {models}."
   detected: "{name} · systemet ditt"
+  search: "Søk etter språk"
+  noMatch: "Ingen samsvarende språk"
   showMore:
     one: "Vis {count} språk til"
     other: "Vis {count} språk til"

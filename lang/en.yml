@@ -51,6 +51,8 @@ language:
   tier4: "Few AI model families support this language; reports may contain mistakes."
   supportedBy: "Officially supported by {models}."
   detected: "{name} · your system"
+  search: "Search languages"
+  noMatch: "No matching language"
   showMore:
     one: "Show {count} more language"
     other: "Show {count} more languages"

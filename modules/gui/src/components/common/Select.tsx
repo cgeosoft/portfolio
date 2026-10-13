@@ -1,5 +1,6 @@
 import {
   Children,
+  Fragment,
   isValidElement,
   useCallback,
   useEffect,
@@ -37,7 +38,7 @@ export interface SelectProps {
   wrapperClassName?: string;
   /** Classes for the trigger button. */
   className?: string;
-  /** `<option>` elements, exactly as a native select would take. */
+  /** `<option>` elements, exactly as a native select would take; an `<hr />` draws a divider. */
   children?: ReactNode;
 }
 
@@ -45,6 +46,8 @@ interface SelectOption {
   value: string;
   label: string;
   disabled: boolean;
+  /** An `<hr />` came before this option: draw a divider above it. */
+  separatorBefore: boolean;
 }
 
 const MENU_MARGIN = 6;
@@ -70,7 +73,12 @@ function toText(node: ReactNode): string {
 
 function readOptions(children: ReactNode): SelectOption[] {
   const options: SelectOption[] = [];
+  let separator = false;
   Children.forEach(children, (child) => {
+    if (isValidElement(child) && child.type === "hr") {
+      separator = options.length > 0;
+      return;
+    }
     if (!isValidElement(child) || child.type !== "option") {
       return;
     }
@@ -84,7 +92,9 @@ function readOptions(children: ReactNode): SelectOption[] {
       value: props.value === undefined ? label : String(props.value),
       label,
       disabled: Boolean(props.disabled),
+      separatorBefore: separator,
     });
+    separator = false;
   });
   return options;
 }
@@ -355,24 +365,26 @@ export function Select({
             {options.map((option, index) => {
               const isSelected = option.value === selectedValue;
               return (
-                <div
-                  key={`${option.value}-${index}`}
-                  id={`${listId}-${index}`}
-                  role="option"
-                  aria-selected={isSelected}
-                  aria-disabled={option.disabled || undefined}
-                  data-active={isSelected}
-                  data-highlighted={index === activeIndex}
-                  data-disabled={option.disabled || undefined}
-                  className="cx-menu-item"
-                  onMouseEnter={() => !option.disabled && setActiveIndex(index)}
-                  onClick={() => commit(index)}
-                >
-                  <span className="truncate">{option.label}</span>
-                  {isSelected && (
-                    <Check className="cx-select-option-check w-3.5 h-3.5" />
-                  )}
-                </div>
+                <Fragment key={`${option.value}-${index}`}>
+                  {option.separatorBefore && <div role="separator" className="cx-menu-separator" />}
+                  <div
+                    id={`${listId}-${index}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    aria-disabled={option.disabled || undefined}
+                    data-active={isSelected}
+                    data-highlighted={index === activeIndex}
+                    data-disabled={option.disabled || undefined}
+                    className="cx-menu-item"
+                    onMouseEnter={() => !option.disabled && setActiveIndex(index)}
+                    onClick={() => commit(index)}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {isSelected && (
+                      <Check className="cx-select-option-check w-3.5 h-3.5" />
+                    )}
+                  </div>
+                </Fragment>
               );
             })}
           </div>,

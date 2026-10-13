@@ -46,6 +46,8 @@ language:
   tier4: "Malo družin modelov UI podpira ta jezik; poročila lahko vsebujejo napake."
   supportedBy: "Uradno podpirajo: {models}."
   detected: "{name} · jezik sistema"
+  search: "Iskanje jezika"
+  noMatch: "Ni ustreznega jezika"
   showMore:
     one: "Pokaži še {count} jezik"
     two: "Pokaži še {count} jezika"
