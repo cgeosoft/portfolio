@@ -29,6 +29,7 @@ import {
 } from "portfolio-shared/suggestions";
 import { api } from "../../api";
 import { showToast } from "../common/Toaster";
+import { getLocale, t } from "../../i18n";
 import { fmtCurrency, formatTimeAgo } from "./utils";
 import { HoldingLink } from "./holding-links";
 
@@ -49,15 +50,21 @@ interface Row {
   ev: SuggestionEvaluation;
 }
 
-const ACTION_LABEL: Record<PortfolioSuggestion["action"], string> = { increase: "Increase", decrease: "Decrease", open: "Open", close: "Close" };
+const ACTIONS: readonly string[] = ["increase", "decrease", "open", "close"];
 
-const STATUS_LABEL: Record<SuggestionStatus, string> = {
-  active: "Active",
-  done: "Done",
-  cancelled: "Cancelled",
-  superseded: "Superseded",
-  dismissed: "Dismissed",
-};
+const actionLabel = (action: PortfolioSuggestion["action"]) => t(`assistant.suggestions.action.${action}`);
+const statusLabel = (status: SuggestionStatus) => t(`assistant.suggestions.status.${status}`);
+
+/** "decrease AAPL" for a funding link; a key with an unknown action shows as sent. */
+function linkLabel(action: string, symbol: string): string {
+  return ACTIONS.includes(action) ? t(`assistant.suggestions.linkAction.${action}`, { symbol }) : `${action} ${symbol}`;
+}
+
+/** A suggestion key (`action:SYMBOL`) as a funding link. */
+function keyLabel(key: string): string {
+  const at = key.indexOf(":");
+  return at < 0 ? key : linkLabel(key.slice(0, at), key.slice(at + 1));
+}
 
 const STATUS_CLASS: Record<SuggestionStatus, string> = {
   active: "border-[#DD3C73]/40 bg-[#DD3C73]/10 text-[#DD3C73]",
@@ -79,13 +86,13 @@ function fmtShares(n: number, hideValues: boolean): string {
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(getLocale(), { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 function rangeText(min?: number, max?: number, unit = ""): string {
-  if (min !== undefined && max !== undefined) return `${min}${unit} to ${max}${unit}`;
-  if (min !== undefined) return `above ${min}${unit}`;
-  return `below ${max}${unit}`;
+  if (min !== undefined && max !== undefined) return t("assistant.suggestions.range.between", { min: `${min}${unit}`, max: `${max}${unit}` });
+  if (min !== undefined) return t("assistant.suggestions.range.above", { min: `${min}${unit}` });
+  return t("assistant.suggestions.range.below", { max: `${max}${unit}` });
 }
 
 /** Rebalancing ideas from the assistant, with amounts computed here from live prices. */
@@ -200,11 +207,11 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest min-w-0">
             <Lightbulb className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span className="truncate">Suggestions</span>
+            <span className="truncate">{t("assistant.suggestions.title")}</span>
           </h2>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            {data?.generatedAt ? `Generated ${formatTimeAgo(data.generatedAt)}. ` : ""}
-            The assistant sees weights only. Amounts are computed here from live prices.
+            {data?.generatedAt ? `${t("assistant.suggestions.generated", { time: formatTimeAgo(data.generatedAt) })} ` : ""}
+            {t("assistant.suggestions.subtitle")}
           </p>
         </div>
         <button
@@ -214,7 +221,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
           className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
           {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-          {running ? "Generating" : hasAny ? "Recalculate" : "Generate"}
+          {running ? t("assistant.suggestions.generating") : hasAny ? t("assistant.suggestions.recalculate") : t("assistant.suggestions.generate")}
         </button>
       </div>
 
@@ -223,35 +230,33 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
         <div className="rounded-xl border border-cream/40 bg-cream/10 px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-cream shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Transactions changed since these suggestions were made.</span>
+            <span>{t("assistant.suggestions.stale")}</span>
           </div>
           <button type="button" onClick={() => void generate()} className="font-bold uppercase tracking-wider hover:underline cursor-pointer shrink-0">
-            Recalculate
+            {t("assistant.suggestions.recalculate")}
           </button>
         </div>
       )}
       {(error || data?.generation.status === "fail") && (
         <div className="rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 px-3.5 py-2.5 flex items-center gap-2 text-xs text-[#DD3C73] shrink-0">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span className="min-w-0 break-words">{error || data?.generation.error || "The generation failed."}</span>
+          <span className="min-w-0 break-words">{error || data?.generation.error || t("assistant.suggestions.generationFailed")}</span>
         </div>
       )}
 
       {loading && !data ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
           <RefreshCw className="w-8 h-8 animate-spin text-[#DD3C73] mb-3" />
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Loading suggestions</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-300">{t("assistant.suggestions.loading")}</div>
         </div>
       ) : !hasAny ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
           <div className="w-12 h-12 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-4">
             {running ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Lightbulb className="w-6 h-6" />}
           </div>
-          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">{running ? "Generating suggestions" : "No suggestions yet"}</div>
+          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">{running ? t("assistant.suggestions.generatingTitle") : t("assistant.suggestions.emptyTitle")}</div>
           <p className="max-w-md text-xs text-slate-400 leading-relaxed">
-            {running
-              ? "The assistant reads the allocation and the market data. This can take a minute."
-              : "Generate a list of rebalancing actions. The assistant gets the weight of each holding in percent, never balances or quantities."}
+            {running ? t("assistant.suggestions.generatingDescription") : t("assistant.suggestions.emptyDescription")}
           </p>
         </div>
       ) : (
@@ -273,7 +278,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
             )}
 
             {listed.length === 0 && (
-              <div className="cx-card p-6 text-center text-xs text-slate-400">No active suggestions. Recalculate for a new list.</div>
+              <div className="cx-card p-6 text-center text-xs text-slate-400">{t("assistant.suggestions.noneActive")}</div>
             )}
             {listed.map((r) =>
               r.ev.status === "active" ? (
@@ -311,7 +316,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
                   className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 cursor-pointer"
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${historyOpen ? "" : "-rotate-90"}`} />
-                  History ({past.length})
+                  {t("assistant.suggestions.history", { count: past.length })}
                 </button>
                 {historyOpen && (
                   <div className="mt-2 space-y-2">
@@ -367,14 +372,14 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
   const links = sell
     ? all
         .filter((o) => o.ev.status === "active" && o.s.fundedBy.some((f) => f.key === s.key))
-        .map((o) => ({ label: `${ACTION_LABEL[o.s.action].toLowerCase()} ${o.s.symbol}`, weight: o.s.fundedBy.find((f) => f.key === s.key)!.weight }))
-    : s.fundedBy.map((f) => ({ label: f.key === "CASH" ? "cash" : f.key.replace(":", " "), weight: f.weight }));
+        .map((o) => ({ label: linkLabel(o.s.action, o.s.symbol), weight: o.s.fundedBy.find((f) => f.key === s.key)!.weight }))
+    : s.fundedBy.map((f) => ({ label: f.key === "CASH" ? t("assistant.suggestions.cashLink") : keyLabel(f.key), weight: f.weight }));
 
   const v = s.validity;
   const validity = [
-    `until ${fmtDate(v.expiresAt)}`,
-    v.price ? `price ${rangeText(v.price.min, v.price.max)} ${v.price.currency}` : "",
-    v.weight ? `weight ${rangeText(v.weight.min, v.weight.max, "%")}` : "",
+    t("assistant.suggestions.validity.until", { date: fmtDate(v.expiresAt) }),
+    v.price ? t("assistant.suggestions.validity.price", { range: rangeText(v.price.min, v.price.max), currency: v.price.currency }) : "",
+    v.weight ? t("assistant.suggestions.validity.weight", { range: rangeText(v.weight.min, v.weight.max, "%") }) : "",
   ].filter(Boolean);
 
   return (
@@ -390,8 +395,8 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
             type="button"
             onClick={onCheck}
             disabled={busy || !onCheck}
-            title={done ? (onCheck ? "Mark as not done" : ev.reason) : "Mark as done"}
-            aria-label={done ? "Mark as not done" : "Mark as done"}
+            title={done ? (onCheck ? t("assistant.suggestions.markNotDone") : ev.reason) : t("assistant.suggestions.markDone")}
+            aria-label={done ? t("assistant.suggestions.markNotDone") : t("assistant.suggestions.markDone")}
             aria-pressed={done}
             className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer disabled:cursor-default ${
               done ? "border-mint/60 bg-mint/15 text-mint" : "border-slate-600 hover:border-mint"
@@ -403,10 +408,10 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-            <span className="px-1.5 py-0.5 rounded border border-line bg-widget text-slate-300">P{s.priority}</span>
+            <span className="px-1.5 py-0.5 rounded border border-line bg-widget text-slate-300">{t("assistant.suggestions.priority", { priority: s.priority })}</span>
             <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-line bg-widget ${tone}`}>
               <Arrow className="w-3 h-3" />
-              {ACTION_LABEL[s.action]}
+              {actionLabel(s.action)}
             </span>
             <span className="text-slate-100 text-xs normal-case tracking-normal">
               <HoldingLink reference={s.symbol} />
@@ -414,7 +419,7 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
             <span className="text-slate-500 normal-case tracking-normal font-normal truncate max-w-[220px]" title={s.name}>
               {s.name}
             </span>
-            {!active && <span className={`px-1.5 py-0.5 rounded border ${STATUS_CLASS[ev.status]}`}>{STATUS_LABEL[ev.status]}</span>}
+            {!active && <span className={`px-1.5 py-0.5 rounded border ${STATUS_CLASS[ev.status]}`}>{statusLabel(ev.status)}</span>}
           </div>
 
           <div className={`mt-1 text-sm font-bold text-slate-100 font-sans ${done ? "line-through decoration-slate-500" : ""}`}>{s.title}</div>
@@ -423,17 +428,20 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
             {ev.deltaShares !== undefined && ev.deltaShares !== 0 && (
               <span className={`font-bold ${tone}`}>
-                {sell ? "Sell" : "Buy"} {fmtShares(ev.deltaShares, hideValues)} {Math.abs(ev.deltaShares) === 1 ? "share" : "shares"}
+                {t(sell ? "assistant.suggestions.sellShares" : "assistant.suggestions.buyShares", {
+                  count: Math.abs(ev.deltaShares),
+                  shares: fmtShares(ev.deltaShares, hideValues),
+                })}
               </span>
             )}
             {ev.deltaValue !== undefined && (
               <span className={`${tone}`}>{fmtCurrency(Math.abs(ev.deltaValue), currency, hideValues)}</span>
             )}
             <span className="text-slate-400">
-              {pct(active ? ev.currentWeight : s.fromWeight)} to {pct(s.targetWeight)}
+              {t("assistant.suggestions.weightChange", { from: pct(active ? ev.currentWeight : s.fromWeight), to: pct(s.targetWeight) })}
               {active && <span className="text-slate-500"> ({pp(ev.deltaWeight)})</span>}
             </span>
-            {ev.deltaShares === undefined && active && <span className="text-cream text-[11px]">No price, amount in shares unknown</span>}
+            {ev.deltaShares === undefined && active && <span className="text-cream text-[11px]">{t("assistant.suggestions.noPrice")}</span>}
           </div>
 
           {active && ev.progress > 0 && ev.progress < 1 && (
@@ -441,7 +449,7 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
               <div className="h-1.5 flex-1 max-w-[220px] rounded-full bg-widget overflow-hidden">
                 <div className="h-full rounded-full bg-mint" style={{ width: `${Math.round(ev.progress * 100)}%` }} />
               </div>
-              <span className="text-[10px] text-slate-400">{Math.round(ev.progress * 100)}% done</span>
+              <span className="text-[10px] text-slate-400">{t("assistant.suggestions.progress", { percent: Math.round(ev.progress * 100) })}</span>
             </div>
           )}
 
@@ -449,14 +457,15 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
 
           {!compact && links.length > 0 && (
             <div className="mt-1.5 text-[11px] text-slate-400">
-              {sell ? "Funds: " : "Funded by: "}
-              {links.map((l) => `${l.label} ${l.weight.toFixed(2)} pp`).join(", ")}
+              {t(sell ? "assistant.suggestions.funds" : "assistant.suggestions.fundedBy", {
+                links: links.map((l) => `${l.label} ${l.weight.toFixed(2)} pp`).join(", "),
+              })}
             </div>
           )}
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[10px] text-slate-500">
             <Clock className="w-3 h-3" />
-            {!active && ev.reason ? <span className="text-slate-400">{ev.reason}</span> : <span>Valid {validity.join(", ")}</span>}
+            {!active && ev.reason ? <span className="text-slate-400">{ev.reason}</span> : <span>{t("assistant.suggestions.validity.valid", { conditions: validity.join(", ") })}</span>}
           </div>
         </div>
 
@@ -466,8 +475,8 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
             <button
               type="button"
               onClick={onToggleExcluded}
-              title={excluded ? "Show in target portfolio" : "Leave out of target portfolio"}
-              aria-label={excluded ? "Show in target portfolio" : "Leave out of target portfolio"}
+              title={excluded ? t("assistant.suggestions.include") : t("assistant.suggestions.exclude")}
+              aria-label={excluded ? t("assistant.suggestions.include") : t("assistant.suggestions.exclude")}
               className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 cursor-pointer"
             >
               {excluded ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -478,8 +487,8 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
               type="button"
               onClick={onDismiss}
               disabled={busy}
-              title="Dismiss"
-              aria-label="Dismiss"
+              title={t("assistant.suggestions.dismiss")}
+              aria-label={t("assistant.suggestions.dismiss")}
               className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-[#DD3C73] hover:bg-slate-800/40 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
@@ -490,8 +499,8 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
               type="button"
               onClick={onReopen}
               disabled={busy}
-              title="Reopen"
-              aria-label="Reopen"
+              title={t("assistant.suggestions.reopen")}
+              aria-label={t("assistant.suggestions.reopen")}
               className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 cursor-pointer"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -515,10 +524,11 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
       {/* Summary, a toggle on narrow screens */}
       <button type="button" onClick={onToggle} className="flex items-center justify-between gap-2 text-left cursor-pointer lg:cursor-default w-full">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Target portfolio</div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300">{t("assistant.suggestions.target.title")}</div>
           <div className="text-[11px] text-slate-500 mt-0.5">
-            After {activeCount} {activeCount === 1 ? "suggestion" : "suggestions"}: cash {pct(cash.currentWeight)} to {pct(cash.targetWeight)}
-            {newCount > 0 ? `, ${newCount} new` : ""}
+            {newCount > 0
+              ? t("assistant.suggestions.target.summaryNew", { count: activeCount, from: pct(cash.currentWeight), to: pct(cash.targetWeight), newCount })
+              : t("assistant.suggestions.target.summary", { count: activeCount, from: pct(cash.currentWeight), to: pct(cash.targetWeight) })}
           </div>
         </div>
         <ChevronDown className={`w-4 h-4 text-slate-400 lg:hidden transition-transform ${open ? "" : "-rotate-90"}`} />
@@ -536,10 +546,10 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
           <table className="w-full text-[11px]">
             <thead>
               <tr className="text-slate-500 text-[10px] uppercase tracking-wider">
-                <th className="text-left font-bold pb-1.5">Holding</th>
-                <th className="text-right font-bold pb-1.5">Now</th>
-                <th className="text-right font-bold pb-1.5">Target</th>
-                <th className="text-right font-bold pb-1.5">Change</th>
+                <th className="text-left font-bold pb-1.5">{t("assistant.suggestions.target.holding")}</th>
+                <th className="text-right font-bold pb-1.5">{t("assistant.suggestions.target.now")}</th>
+                <th className="text-right font-bold pb-1.5">{t("assistant.suggestions.target.target")}</th>
+                <th className="text-right font-bold pb-1.5">{t("assistant.suggestions.target.change")}</th>
               </tr>
             </thead>
             <tbody>
@@ -549,7 +559,7 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
                   <tr key={r.symbol} className={`border-t border-line ${moved ? "" : "text-slate-500"}`}>
                     <td className={`py-1 pr-2 min-w-0 ${r.isClosed ? "line-through" : ""}`}>
                       <span className={moved ? "text-slate-200" : ""}>{r.symbol}</span>
-                      {r.isNew && <span className="ml-1 px-1 rounded border border-mint/40 bg-mint/10 text-mint text-[9px] font-bold uppercase">new</span>}
+                      {r.isNew && <span className="ml-1 px-1 rounded border border-mint/40 bg-mint/10 text-mint text-[9px] font-bold uppercase">{t("assistant.suggestions.target.new")}</span>}
                     </td>
                     <td className="py-1 text-right">{pct(r.currentWeight)}</td>
                     <td className={`py-1 text-right ${moved ? "text-slate-100 font-bold" : ""}`}>{pct(r.targetWeight)}</td>
@@ -558,7 +568,7 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
                 );
               })}
               <tr className="border-t border-slate-600">
-                <td className="py-1 pr-2 text-slate-200 font-bold">Cash</td>
+                <td className="py-1 pr-2 text-slate-200 font-bold">{t("assistant.suggestions.target.cash")}</td>
                 <td className="py-1 text-right">{pct(cash.currentWeight)}</td>
                 <td className={`py-1 text-right font-bold ${cash.targetWeight < 0 ? "text-[#DD3C73]" : "text-slate-100"}`}>{pct(cash.targetWeight)}</td>
                 <td className={`py-1 text-right ${Math.abs(cash.deltaWeight) < 0.005 ? "" : cash.deltaWeight > 0 ? "text-mint" : "text-rose-400"}`}>
@@ -571,16 +581,16 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
 
         <div className="mt-2 pt-2 border-t border-line grid grid-cols-3 gap-2 text-[10px] uppercase tracking-wider text-slate-500">
           <div>
-            Sold<div className="text-xs text-rose-400 font-bold normal-case">{target.sold.toFixed(2)} pp</div>
+            {t("assistant.suggestions.target.sold")}<div className="text-xs text-rose-400 font-bold normal-case">{target.sold.toFixed(2)} pp</div>
           </div>
           <div>
-            Bought<div className="text-xs text-mint font-bold normal-case">{target.bought.toFixed(2)} pp</div>
+            {t("assistant.suggestions.target.bought")}<div className="text-xs text-mint font-bold normal-case">{target.bought.toFixed(2)} pp</div>
           </div>
           <div>
-            Cash<div className="text-xs text-slate-200 font-bold normal-case">{pp(cash.deltaWeight)}</div>
+            {t("assistant.suggestions.target.cash")}<div className="text-xs text-slate-200 font-bold normal-case">{pp(cash.deltaWeight)}</div>
           </div>
         </div>
-        {changed.length === 0 && <div className="mt-2 text-[11px] text-slate-500">No change to the allocation.</div>}
+        {changed.length === 0 && <div className="mt-2 text-[11px] text-slate-500">{t("assistant.suggestions.target.noChange")}</div>}
       </div>
     </div>
   );

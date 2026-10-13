@@ -17,6 +17,7 @@ import {
 import { api } from "../../api";
 import { openExternal } from "../../environment";
 import { SafeMarkdown } from "../common/SafeMarkdown";
+import { t } from "../../i18n";
 import { fmtCurrency, fmtPercent } from "./utils";
 
 interface HoldingIntelModalProps {
@@ -54,9 +55,17 @@ function fmtDay(unix: number): string {
   return unix > 0 ? new Date(unix * 1000).toISOString().slice(0, 10) : "";
 }
 
+/** A translated text whose `{name}` placeholders become the given elements, so they keep their own style. */
+function fillNodes(text: string, nodes: Record<string, ReactNode>): ReactNode {
+  return text.split(/(\{\w+\})/).map((part, i) => {
+    const name = /^\{(\w+)\}$/.exec(part)?.[1];
+    return name !== undefined && name in nodes ? <span key={i}>{nodes[name]}</span> : part;
+  });
+}
+
 function SourceTag({ source }: { source?: DataProviderId | null }) {
   if (!source) return null;
-  return <span className="text-[10px] font-normal normal-case tracking-normal text-slate-500">Source: {DATA_PROVIDER_LABELS[source] ?? source}</span>;
+  return <span className="text-[10px] font-normal normal-case tracking-normal text-slate-500">{t("assistant.intel.source", { provider: DATA_PROVIDER_LABELS[source] ?? source })}</span>;
 }
 
 function Section({ title, icon: Icon, source, children, className = "" }: { title: string; icon: typeof Target; source?: DataProviderId | null; children: ReactNode; className?: string }) {
@@ -79,17 +88,17 @@ function unavailableText(part: CompanyIntelPart, intel: CompanyIntel): string {
   const reason = intel.unavailable?.[part] ?? (intel.skipped.includes(part) ? "not_applicable" : "no_data");
   switch (reason) {
     case "not_applicable":
-      return intel.included.length > 0 ? "Does not apply to ETFs and funds." : "Public company data does not apply to this holding.";
+      return intel.included.length > 0 ? t("assistant.intel.unavailable.notApplicableFund") : t("assistant.intel.unavailable.notApplicable");
     case "no_key":
-      return fmpOnly ? "Needs a Financial Modeling Prep key. Add one in Settings → Market Data." : "Needs a Financial Modeling Prep or Finnhub key. Add one in Settings → Market Data.";
+      return fmpOnly ? t("assistant.intel.unavailable.noKeyFmp") : t("assistant.intel.unavailable.noKey");
     case "key_rejected":
-      return "Financial Modeling Prep rejected the API key. Check it in Settings → Market Data.";
+      return t("assistant.intel.unavailable.keyRejected");
     case "restricted":
-      return "Your Financial Modeling Prep plan does not include this data.";
+      return t("assistant.intel.unavailable.restricted");
     case "failed":
-      return "The request failed. Try again later.";
+      return t("assistant.intel.unavailable.failed");
     case "no_data":
-      return fmpOnly ? "Financial Modeling Prep has no data for this symbol." : "Your data providers have no data for this symbol.";
+      return fmpOnly ? t("assistant.intel.unavailable.noDataFmp") : t("assistant.intel.unavailable.noData");
   }
 }
 
@@ -141,17 +150,17 @@ function TargetRange({ low, high, price, consensus, currency }: { low: number; h
     <div className="pt-4 pb-1">
       <div className="relative h-2 rounded bg-slate-800 border border-slate-700">
         <div className="absolute inset-y-0 rounded bg-accent/30" style={{ left: at(low), width: `${((high - low) / span) * 100}%` }} />
-        {consensus !== undefined && <div className="absolute -top-1 -bottom-1 w-0.5 bg-cream" style={{ left: at(consensus) }} title={`Consensus ${fmtCurrency(consensus, currency)}`} />}
+        {consensus !== undefined && <div className="absolute -top-1 -bottom-1 w-0.5 bg-cream" style={{ left: at(consensus) }} title={t("assistant.intel.range.consensus", { value: fmtCurrency(consensus, currency) })} />}
         {price !== undefined && (
-          <div className="absolute -top-3 -translate-x-1/2 flex flex-col items-center" style={{ left: at(price) }} title={`Price ${fmtCurrency(price, currency)}`}>
-            <span className="text-[9px] text-mint leading-none">price</span>
+          <div className="absolute -top-3 -translate-x-1/2 flex flex-col items-center" style={{ left: at(price) }} title={t("assistant.intel.range.priceTitle", { value: fmtCurrency(price, currency) })}>
+            <span className="text-[9px] text-mint leading-none">{t("assistant.intel.range.priceMarker")}</span>
             <span className="w-2 h-2 rotate-45 bg-mint mt-0.5" />
           </div>
         )}
       </div>
       <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-        <span>Low {fmtCurrency(low, currency)}</span>
-        <span>High {fmtCurrency(high, currency)}</span>
+        <span>{t("assistant.intel.range.low", { value: fmtCurrency(low, currency) })}</span>
+        <span>{t("assistant.intel.range.high", { value: fmtCurrency(high, currency) })}</span>
       </div>
     </div>
   );
@@ -172,11 +181,11 @@ function ScoreRow({ name, value, info }: { name: string; value: string; info: { 
 
 function RecommendationBar({ counts }: { counts: AnalystRecommendationCounts }) {
   const rows: Array<[string, number, string]> = [
-    ["Strong buy", counts.strongBuy, "bg-mint"],
-    ["Buy", counts.buy, "bg-mint/60"],
-    ["Hold", counts.hold, "bg-cream/60"],
-    ["Sell", counts.sell, "bg-accent/60"],
-    ["Strong sell", counts.strongSell, "bg-accent"],
+    [t("assistant.intel.recommendations.strongBuy"), counts.strongBuy, "bg-mint"],
+    [t("assistant.intel.recommendations.buy"), counts.buy, "bg-mint/60"],
+    [t("assistant.intel.recommendations.hold"), counts.hold, "bg-cream/60"],
+    [t("assistant.intel.recommendations.sell"), counts.sell, "bg-accent/60"],
+    [t("assistant.intel.recommendations.strongSell"), counts.strongSell, "bg-accent"],
   ];
   const total = rows.reduce((sum, row) => sum + row[1], 0) || 1;
   return (
@@ -197,33 +206,33 @@ function RecommendationBar({ counts }: { counts: AnalystRecommendationCounts }) 
 
 function KeyRatios({ metrics: m, intel }: { metrics: CompanyKeyMetrics; intel: CompanyIntel }) {
   const all: Array<[string, string]> = [
-    ["P/E", fmtRatio(m.peRatio, 1)],
-    ["PEG", fmtRatio(m.pegRatio)],
-    ["P/S", fmtRatio(m.priceToSales, 1)],
-    ["P/B", fmtRatio(m.priceToBook, 1)],
-    ["P/FCF", fmtRatio(m.priceToFreeCashFlow, 1)],
-    ["EV/EBITDA", fmtRatio(m.evToEbitda, 1)],
-    ["FCF yield", fmtFraction(m.freeCashFlowYield)],
-    ["Dividend yield", fmtFraction(m.dividendYield)],
-    ["Payout ratio", fmtFraction(m.payoutRatio)],
-    ["Gross margin", fmtFraction(m.grossMargin)],
-    ["Operating margin", fmtFraction(m.operatingMargin)],
-    ["Net margin", fmtFraction(m.netMargin)],
-    ["ROE", fmtFraction(m.returnOnEquity)],
-    ["ROA", fmtFraction(m.returnOnAssets)],
-    ["ROIC", fmtFraction(m.returnOnInvestedCapital)],
-    ["Debt / equity", fmtRatio(m.debtToEquity)],
-    ["Current ratio", fmtRatio(m.currentRatio)],
-    ["Quick ratio", fmtRatio(m.quickRatio)],
-    ["Interest cover", fmtRatio(m.interestCoverage, 1)],
-    ["Revenue growth", fmtFraction(m.revenueGrowth)],
+    ["pe", fmtRatio(m.peRatio, 1)],
+    ["peg", fmtRatio(m.pegRatio)],
+    ["ps", fmtRatio(m.priceToSales, 1)],
+    ["pb", fmtRatio(m.priceToBook, 1)],
+    ["pfcf", fmtRatio(m.priceToFreeCashFlow, 1)],
+    ["evEbitda", fmtRatio(m.evToEbitda, 1)],
+    ["fcfYield", fmtFraction(m.freeCashFlowYield)],
+    ["dividendYield", fmtFraction(m.dividendYield)],
+    ["payoutRatio", fmtFraction(m.payoutRatio)],
+    ["grossMargin", fmtFraction(m.grossMargin)],
+    ["operatingMargin", fmtFraction(m.operatingMargin)],
+    ["netMargin", fmtFraction(m.netMargin)],
+    ["roe", fmtFraction(m.returnOnEquity)],
+    ["roa", fmtFraction(m.returnOnAssets)],
+    ["roic", fmtFraction(m.returnOnInvestedCapital)],
+    ["debtToEquity", fmtRatio(m.debtToEquity)],
+    ["currentRatio", fmtRatio(m.currentRatio)],
+    ["quickRatio", fmtRatio(m.quickRatio)],
+    ["interestCover", fmtRatio(m.interestCoverage, 1)],
+    ["revenueGrowth", fmtFraction(m.revenueGrowth)],
   ];
   const cells = all.filter(([, value]) => value !== "—");
   if (cells.length === 0) return <Unavailable part="metrics" intel={intel} />;
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5">
-      {cells.map(([label, value]) => (
-        <Stat key={label} label={label} value={value} />
+      {cells.map(([key, value]) => (
+        <Stat key={key} label={t(`assistant.intel.ratios.${key}`)} value={value} />
       ))}
     </div>
   );
@@ -288,7 +297,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
     try {
       const res = await api.summarizeTranscript(holding.symbol, force);
       if (res.summary) setSummary(res.summary);
-      else setSummaryError(res.error || "No summary is available.");
+      else setSummaryError(res.error || t("assistant.intel.transcript.noSummary"));
     } catch (err) {
       setSummaryError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -304,7 +313,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
     setTranscriptBusy(true);
     try {
       const res = await api.getTranscript(holding.symbol);
-      setTranscriptText(res.transcript?.text ?? "The transcript is not available.");
+      setTranscriptText(res.transcript?.text ?? t("assistant.intel.transcript.notAvailable"));
       if (res.summary && !summary) setSummary(res.summary);
     } catch (err) {
       setTranscriptText(err instanceof Error ? err.message : String(err));
@@ -341,10 +350,10 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button onClick={load} disabled={loading} className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50" aria-label="Reload company data" title="Reload">
+            <button onClick={load} disabled={loading} className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50" aria-label={t("assistant.intel.reloadLabel")} title={t("assistant.intel.reload")}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Close company details">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer" aria-label={t("assistant.intel.closeLabel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -354,30 +363,30 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
           {loading && !intel ? (
             <div className="flex items-center justify-center gap-2 py-16 text-xs text-slate-400">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Loading company data...
+              {t("assistant.intel.loading")}
             </div>
           ) : error ? (
-            <div className="py-12 text-center text-xs text-accent-bright">Company data failed to load: {error}</div>
+            <div className="py-12 text-center text-xs text-accent-bright">{t("assistant.intel.loadFailed", { error })}</div>
           ) : intel ? (
             <>
               {/* Profile */}
-              <Section title="Profile" icon={Building2} source={intel.profile?.source}>
+              <Section title={t("assistant.intel.profile.title")} icon={Building2} source={intel.profile?.source}>
                 {profile ? (
                   <div className="space-y-2.5">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <Stat label="Price" value={price !== undefined ? fmtCurrency(price, currency) : "—"} />
-                      <Stat label="Market cap" value={fmtCompact(profile.marketCap, currency)} />
-                      <Stat label="Beta" value={fmtRatio(profile.beta)} />
-                      <Stat label="Employees" value={profile.employees ? profile.employees.toLocaleString("en-US") : "—"} />
-                      {profile.ceo && <Stat label="CEO" value={profile.ceo} title={profile.ceo} />}
-                      {profile.ipoDate && <Stat label="Listed since" value={profile.ipoDate} />}
-                      {profile.website && <Stat label="Website" value={<ExternalLinkButton url={profile.website}>{profile.website.replace(/^https?:\/\//, "")}</ExternalLinkButton>} />}
+                      <Stat label={t("assistant.intel.profile.price")} value={price !== undefined ? fmtCurrency(price, currency) : "—"} />
+                      <Stat label={t("assistant.intel.profile.marketCap")} value={fmtCompact(profile.marketCap, currency)} />
+                      <Stat label={t("assistant.intel.profile.beta")} value={fmtRatio(profile.beta)} />
+                      <Stat label={t("assistant.intel.profile.employees")} value={profile.employees ? profile.employees.toLocaleString("en-US") : "—"} />
+                      {profile.ceo && <Stat label={t("assistant.intel.profile.ceo")} value={profile.ceo} title={profile.ceo} />}
+                      {profile.ipoDate && <Stat label={t("assistant.intel.profile.listedSince")} value={profile.ipoDate} />}
+                      {profile.website && <Stat label={t("assistant.intel.profile.website")} value={<ExternalLinkButton url={profile.website}>{profile.website.replace(/^https?:\/\//, "")}</ExternalLinkButton>} />}
                     </div>
                     {profile.description && (
                       <div className="text-[11px] text-slate-400 leading-relaxed font-sans">
                         <p className={showDescription ? "" : "line-clamp-3"}>{profile.description}</p>
                         <button type="button" onClick={() => setShowDescription((v) => !v)} className="text-accent-bright hover:underline mt-1 cursor-pointer font-mono">
-                          {showDescription ? "Show less" : "Show more"}
+                          {showDescription ? t("assistant.intel.profile.showLess") : t("assistant.intel.profile.showMore")}
                         </button>
                       </div>
                     )}
@@ -389,16 +398,16 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {/* Analysts */}
-                <Section title="Analyst consensus" icon={Target} source={intel.analyst?.source}>
+                <Section title={t("assistant.intel.analyst.title")} icon={Target} source={intel.analyst?.source}>
                   {analyst ? (
                     <div className="space-y-3">
                       {analyst.priceTarget && (
                         <div>
                           <div className="grid grid-cols-3 gap-2">
-                            <Stat label="Consensus target" value={analyst.priceTarget.consensus !== undefined ? fmtCurrency(analyst.priceTarget.consensus, currency) : "—"} />
-                            <Stat label="Median target" value={analyst.priceTarget.median !== undefined ? fmtCurrency(analyst.priceTarget.median, currency) : "—"} />
+                            <Stat label={t("assistant.intel.analyst.consensusTarget")} value={analyst.priceTarget.consensus !== undefined ? fmtCurrency(analyst.priceTarget.consensus, currency) : "—"} />
+                            <Stat label={t("assistant.intel.analyst.medianTarget")} value={analyst.priceTarget.median !== undefined ? fmtCurrency(analyst.priceTarget.median, currency) : "—"} />
                             <Stat
-                              label="Upside to consensus"
+                              label={t("assistant.intel.analyst.upside")}
                               value={
                                 price && analyst.priceTarget.consensus ? (
                                   <span className={analyst.priceTarget.consensus >= price ? "text-mint" : "text-accent-bright"}>{fmtPercent((analyst.priceTarget.consensus / price - 1) * 100)}</span>
@@ -413,7 +422,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                           )}
                           {analyst.priceTarget.lastQuarterCount !== undefined && (
                             <p className="text-[10px] text-slate-500 mt-1">
-                              {analyst.priceTarget.lastQuarterCount} new targets in the last quarter, {analyst.priceTarget.lastYearCount ?? 0} in the last year.
+                              {t("assistant.intel.analyst.targetCounts", { count: analyst.priceTarget.lastQuarterCount, yearCount: analyst.priceTarget.lastYearCount ?? 0 })}
                             </p>
                           )}
                         </div>
@@ -423,7 +432,9 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                         <div>
                           <div className="flex items-center justify-between text-[11px] mb-1">
                             <span className="text-slate-400">
-                              Recommendation: <span className="font-bold text-slate-100">{analyst.recommendations.consensus ?? "—"}</span>
+                              {fillNodes(t("assistant.intel.analyst.recommendation"), {
+                                consensus: <span className="font-bold text-slate-100">{analyst.recommendations.consensus ?? "—"}</span>,
+                              })}
                             </span>
                             {analyst.recommendationsSource && <SourceTag source={analyst.recommendationsSource} />}
                           </div>
@@ -433,14 +444,18 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
 
                       {analyst.rating?.rating && (
                         <p className="text-[11px] text-slate-400">
-                          FMP rating <span className="font-bold text-slate-100">{analyst.rating.rating}</span>
-                          {analyst.rating.overallScore !== undefined && <> ({analyst.rating.overallScore} of 5, from DCF, returns, debt and valuation scores)</>}
+                          {fillNodes(
+                            analyst.rating.overallScore !== undefined
+                              ? t("assistant.intel.analyst.ratingWithScore", { score: analyst.rating.overallScore })
+                              : t("assistant.intel.analyst.rating"),
+                            { rating: <span className="font-bold text-slate-100">{analyst.rating.rating}</span> },
+                          )}
                         </p>
                       )}
 
                       {analyst.grades.length > 0 && (
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Recent rating actions</div>
+                          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">{t("assistant.intel.analyst.recentActions")}</div>
                           <ul className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                             {analyst.grades.map((g, i) => (
                               <li key={`${g.date}-${g.firm}-${i}`} className="flex items-center justify-between gap-2 text-[11px]">
@@ -463,30 +478,30 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
 
                 {/* Scores and DCF */}
                 <div className="space-y-3 min-w-0">
-                  <Section title="Financial health scores" icon={Gauge} source={intel.scores?.source}>
+                  <Section title={t("assistant.intel.scores.title")} icon={Gauge} source={intel.scores?.source}>
                     {intel.scores && (intel.scores.data.piotroski !== undefined || intel.scores.data.altmanZ !== undefined) ? (
                       <div className="space-y-2.5">
-                        {intel.scores.data.piotroski !== undefined && <ScoreRow name="Piotroski F-score" value={`${intel.scores.data.piotroski} / 9`} info={describePiotroski(intel.scores.data.piotroski)} />}
-                        {intel.scores.data.altmanZ !== undefined && <ScoreRow name="Altman Z-score" value={fmtRatio(intel.scores.data.altmanZ)} info={describeAltmanZ(intel.scores.data.altmanZ)} />}
+                        {intel.scores.data.piotroski !== undefined && <ScoreRow name={t("assistant.intel.scores.piotroski")} value={`${intel.scores.data.piotroski} / 9`} info={describePiotroski(intel.scores.data.piotroski)} />}
+                        {intel.scores.data.altmanZ !== undefined && <ScoreRow name={t("assistant.intel.scores.altman")} value={fmtRatio(intel.scores.data.altmanZ)} info={describeAltmanZ(intel.scores.data.altmanZ)} />}
                       </div>
                     ) : (
                       <Unavailable part="scores" intel={intel} />
                     )}
                   </Section>
 
-                  <Section title="DCF value vs price" icon={Scale} source={intel.dcf?.source}>
+                  <Section title={t("assistant.intel.dcf.title")} icon={Scale} source={intel.dcf?.source}>
                     {intel.dcf ? (
                       <div className="space-y-1.5">
                         <div className="grid grid-cols-3 gap-2">
-                          <Stat label="DCF value" value={fmtCurrency(intel.dcf.data.dcfValue, intel.dcf.data.currency || currency)} />
-                          <Stat label="Price" value={intel.dcf.data.price !== undefined ? fmtCurrency(intel.dcf.data.price, intel.dcf.data.currency || currency) : "—"} />
+                          <Stat label={t("assistant.intel.dcf.value")} value={fmtCurrency(intel.dcf.data.dcfValue, intel.dcf.data.currency || currency)} />
+                          <Stat label={t("assistant.intel.dcf.price")} value={intel.dcf.data.price !== undefined ? fmtCurrency(intel.dcf.data.price, intel.dcf.data.currency || currency) : "—"} />
                           <Stat
-                            label="Difference"
+                            label={t("assistant.intel.dcf.difference")}
                             value={intel.dcf.data.upside !== undefined ? <span className={intel.dcf.data.upside >= 0 ? "text-mint" : "text-accent-bright"}>{fmtPercent(intel.dcf.data.upside * 100)}</span> : "—"}
                           />
                         </div>
                         <p className="text-[11px] text-slate-500 font-sans">
-                          A discounted cash flow model values the company from its projected cash flows. Above the price suggests undervalued, below suggests overvalued. The model is sensitive to its growth and discount assumptions.
+                          {t("assistant.intel.dcf.description")}
                         </p>
                       </div>
                     ) : (
@@ -497,20 +512,20 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
               </div>
 
               {/* Key ratios */}
-              <Section title="Key ratios (trailing twelve months)" icon={BarChart3} source={intel.metrics?.source}>
+              <Section title={t("assistant.intel.ratios.title")} icon={BarChart3} source={intel.metrics?.source}>
                 {intel.metrics ? <KeyRatios metrics={intel.metrics.data} intel={intel} /> : <Unavailable part="metrics" intel={intel} />}
               </Section>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {/* Estimates */}
-                <Section title="Analyst estimates (annual)" icon={LineChart} source={intel.estimates?.source}>
+                <Section title={t("assistant.intel.estimates.title")} icon={LineChart} source={intel.estimates?.source}>
                   {intel.estimates ? (
                     <table className="w-full text-[11px]">
                       <thead>
                         <tr className="text-[10px] uppercase tracking-wider text-slate-500 text-left">
-                          <th className="py-1 font-normal">Fiscal year end</th>
-                          <th className="py-1 font-normal text-right">EPS (range)</th>
-                          <th className="py-1 font-normal text-right">Revenue</th>
+                          <th className="py-1 font-normal">{t("assistant.intel.estimates.fiscalYearEnd")}</th>
+                          <th className="py-1 font-normal text-right">{t("assistant.intel.estimates.eps")}</th>
+                          <th className="py-1 font-normal text-right">{t("assistant.intel.estimates.revenue")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60">
@@ -519,7 +534,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                             <td className="py-1 text-slate-400">{p.date}</td>
                             <td className="py-1 text-right text-slate-200">
                               {fmtRatio(p.epsAvg)}
-                              {p.epsLow !== undefined && p.epsHigh !== undefined && <span className="text-slate-500"> ({fmtRatio(p.epsLow)} to {fmtRatio(p.epsHigh)})</span>}
+                              {p.epsLow !== undefined && p.epsHigh !== undefined && <span className="text-slate-500"> {t("assistant.intel.estimates.range", { low: fmtRatio(p.epsLow), high: fmtRatio(p.epsHigh) })}</span>}
                             </td>
                             <td className="py-1 text-right text-slate-200">{fmtCompact(p.revenueAvg)}</td>
                           </tr>
@@ -532,30 +547,46 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                 </Section>
 
                 {/* Insiders */}
-                <Section title="Insider activity" icon={UserCheck} source={intel.insider?.source}>
+                <Section title={t("assistant.intel.insider.title")} icon={UserCheck} source={intel.insider?.source}>
                   {intel.insider ? (
                     <div className="space-y-2.5">
                       {intel.insider.data.statistics[0] && (
                         <p className="text-[11px] text-slate-400">
-                          Q{intel.insider.data.statistics[0].quarter} {intel.insider.data.statistics[0].year}:{" "}
-                          <span className="text-mint font-bold">{intel.insider.data.statistics[0].purchases} open-market purchases</span>,{" "}
-                          <span className="text-accent-bright font-bold">{intel.insider.data.statistics[0].sales} sales</span>. Awards and option exercises are not counted as purchases.
+                          {fillNodes(
+                            t("assistant.intel.insider.quarterSummary", {
+                              quarter: intel.insider.data.statistics[0].quarter,
+                              year: intel.insider.data.statistics[0].year,
+                            }),
+                            {
+                              purchases: (
+                                <span className="text-mint font-bold">
+                                  {t("assistant.intel.insider.purchases", { count: intel.insider.data.statistics[0].purchases })}
+                                </span>
+                              ),
+                              sales: (
+                                <span className="text-accent-bright font-bold">
+                                  {t("assistant.intel.insider.sales", { count: intel.insider.data.statistics[0].sales })}
+                                </span>
+                              ),
+                            },
+                          )}
                         </p>
                       )}
                       {intel.insider.data.trades.length > 0 && (
                         <ul className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                          {intel.insider.data.trades.map((t, i) => (
-                            <li key={`${t.transactionDate}-${t.name}-${i}`} className="text-[11px] flex items-start justify-between gap-2">
+                          {intel.insider.data.trades.map((trade, i) => (
+                            <li key={`${trade.transactionDate}-${trade.name}-${i}`} className="text-[11px] flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <div className="text-slate-300 truncate">{t.url ? <ExternalLinkButton url={t.url}>{t.name}</ExternalLinkButton> : t.name}</div>
-                                <div className="text-[10px] text-slate-500 truncate">{[t.transactionDate ?? t.filingDate, t.role, t.transactionType].filter(Boolean).join(" · ")}</div>
+                                <div className="text-slate-300 truncate">{trade.url ? <ExternalLinkButton url={trade.url}>{trade.name}</ExternalLinkButton> : trade.name}</div>
+                                <div className="text-[10px] text-slate-500 truncate">{[trade.transactionDate ?? trade.filingDate, trade.role, trade.transactionType].filter(Boolean).join(" · ")}</div>
                               </div>
-                              <div className={`shrink-0 text-right ${t.isPurchase ? "text-mint" : t.isSale ? "text-accent-bright" : "text-slate-400"}`}>
+                              <div className={`shrink-0 text-right ${trade.isPurchase ? "text-mint" : trade.isSale ? "text-accent-bright" : "text-slate-400"}`}>
                                 <div>
-                                  {t.acquired ? "+" : "−"}
-                                  {t.shares !== undefined ? t.shares.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "—"} sh
+                                  {t("assistant.intel.insider.shares", {
+                                    shares: `${trade.acquired ? "+" : "−"}${trade.shares !== undefined ? trade.shares.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "—"}`,
+                                  })}
                                 </div>
-                                {t.value !== undefined && <div className="text-[10px] opacity-80">{fmtCompact(t.value, currency)}</div>}
+                                {trade.value !== undefined && <div className="text-[10px] opacity-80">{fmtCompact(trade.value, currency)}</div>}
                               </div>
                             </li>
                           ))}
@@ -569,20 +600,20 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <Section title="Press releases" icon={Newspaper} source={intel.press?.source}>
+                <Section title={t("assistant.intel.pressReleases")} icon={Newspaper} source={intel.press?.source}>
                   {intel.press ? <NewsList items={intel.press.data} /> : <Unavailable part="press" intel={intel} />}
                 </Section>
-                <Section title="News" icon={Newspaper} source={intel.news?.source}>
+                <Section title={t("assistant.intel.news")} icon={Newspaper} source={intel.news?.source}>
                   {intel.news ? <NewsList items={intel.news.data} /> : <Unavailable part="news" intel={intel} />}
                 </Section>
               </div>
 
               {/* Peers */}
-              <Section title="Peers" icon={Users} source={intel.peers?.source}>
+              <Section title={t("assistant.intel.peers")} icon={Users} source={intel.peers?.source}>
                 {intel.peers ? (
                   <div className="flex flex-wrap gap-1.5">
                     {intel.peers.data.map((p) => (
-                      <span key={p.symbol} className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-900/60 text-slate-300" title={[p.name, p.marketCap ? `Market cap ${fmtCompact(p.marketCap)}` : ""].filter(Boolean).join(" · ")}>
+                      <span key={p.symbol} className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-900/60 text-slate-300" title={[p.name, p.marketCap ? t("assistant.intel.peerMarketCap", { value: fmtCompact(p.marketCap) }) : ""].filter(Boolean).join(" · ")}>
                         <span className="font-bold text-slate-100">{p.symbol}</span>
                         {p.name && <span className="text-slate-500"> {p.name}</span>}
                       </span>
@@ -594,13 +625,14 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
               </Section>
 
               {/* Earnings call */}
-              <Section title="Latest earnings call" icon={Mic} source={intel.transcript?.source}>
+              <Section title={t("assistant.intel.transcript.title")} icon={Mic} source={intel.transcript?.source}>
                 {intel.transcript ? (
                   <div className="space-y-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-[11px] text-slate-400">
-                        Q{intel.transcript.data.quarter} fiscal {intel.transcript.data.fiscalYear}
-                        {intel.transcript.data.date ? `, held ${intel.transcript.data.date}` : ""}
+                        {intel.transcript.data.date
+                          ? t("assistant.intel.transcript.periodHeld", { quarter: intel.transcript.data.quarter, year: intel.transcript.data.fiscalYear, date: intel.transcript.data.date })
+                          : t("assistant.intel.transcript.period", { quarter: intel.transcript.data.quarter, year: intel.transcript.data.fiscalYear })}
                       </p>
                       <div className="flex items-center gap-2">
                         <button
@@ -609,7 +641,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                           disabled={transcriptBusy}
                           className="text-[11px] px-2.5 py-1 rounded-lg border border-slate-700 text-slate-300 hover:border-slate-600 hover:text-slate-100 transition-colors cursor-pointer disabled:opacity-50"
                         >
-                          {transcriptBusy ? "Loading..." : transcriptText !== null ? "Hide transcript" : "Read transcript"}
+                          {transcriptBusy ? t("assistant.intel.transcript.loading") : transcriptText !== null ? t("assistant.intel.transcript.hide") : t("assistant.intel.transcript.read")}
                         </button>
                         <button
                           type="button"
@@ -618,7 +650,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                           className="text-[11px] px-2.5 py-1 rounded-lg border border-accent/40 bg-accent/15 text-accent-bright hover:bg-accent/25 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                         >
                           {summaryBusy && <Loader2 className="w-3 h-3 animate-spin" />}
-                          {summaryBusy ? "Summarizing..." : summary ? "Summarize again" : "Summarize latest earnings call"}
+                          {summaryBusy ? t("assistant.intel.transcript.summarizing") : summary ? t("assistant.intel.transcript.summarizeAgain") : t("assistant.intel.transcript.summarize")}
                         </button>
                       </div>
                     </div>
@@ -629,9 +661,8 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                           {summary.summary}
                         </SafeMarkdown>
                         <p className="text-[10px] text-slate-500 mt-1">
-                          Generated by your assistant model on {summary.generatedAt.slice(0, 10)}
-                          {summary.cached ? " (saved copy)" : ""}
-                          {summary.trimmed ? ". The transcript was shortened to fit the model." : "."} Check figures against the transcript.
+                          {t(summary.cached ? "assistant.intel.transcript.generatedCached" : "assistant.intel.transcript.generated", { date: summary.generatedAt.slice(0, 10) })}
+                          {summary.trimmed ? ` ${t("assistant.intel.transcript.trimmed")}` : ""} {t("assistant.intel.transcript.checkFigures")}
                         </p>
                       </div>
                     )}
