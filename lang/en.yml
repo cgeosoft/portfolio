@@ -1,0 +1,107 @@
+# English interface text: the source for every other lang/<code>.yml.
+# Format (modules/shared/src/i18n.ts): nested maps, two spaces per level,
+# values in double quotes, {name} placeholders, plurals as one/other children.
+# Each section below belongs to one area of the app; keep keys in their section.
+
+# ── common: words many screens share ──────────────────────────────────────
+common:
+  add: "Add"
+  all: "All"
+  apply: "Apply"
+  back: "Back"
+  cancel: "Cancel"
+  close: "Close"
+  confirm: "Confirm"
+  continue: "Continue"
+  copy: "Copy"
+  copied: "Copied"
+  delete: "Delete"
+  done: "Done"
+  download: "Download"
+  edit: "Edit"
+  error: "Error"
+  export: "Export"
+  import: "Import"
+  learnMore: "Learn more"
+  loading: "Loading…"
+  next: "Next"
+  no: "No"
+  none: "None"
+  ok: "OK"
+  optional: "Optional"
+  refresh: "Refresh"
+  remove: "Remove"
+  reset: "Reset"
+  retry: "Retry"
+  save: "Save"
+  saving: "Saving…"
+  search: "Search"
+  unknown: "Unknown"
+  yes: "Yes"
+
+# ── language: the language picker ─────────────────────────────────────────
+language:
+  label: "Language"
+  description: "Language of the interface, the AI reports, the assistant and the notifications. Portfolio reloads to apply it."
+  tierShort: "Tier {tier}"
+  tier1: "Every major AI model family supports this language."
+  tier2: "Most AI model families support this language."
+  tier3: "Some AI model families support this language; reports may read less naturally."
+  tier4: "Few AI model families support this language; reports may contain mistakes."
+  supportedBy: "Officially supported by {models}."
+
+# ── layout: menu bar, header, bottom bar, app-wide dialogs ────────────────
+layout:
+  _section: "layout"
+
+# ── portfolios: the Portfolios page and its dialogs ───────────────────────
+portfolios:
+  _section: "portfolios"
+
+# ── dashboard: overview cards, holdings, charts ───────────────────────────
+dashboard:
+  _section: "dashboard"
+
+# ── transactions: transactions, import and export ─────────────────────────
+transactions:
+  _section: "transactions"
+
+# ── reports: Analyze with AI and saved reports ────────────────────────────
+reports:
+  _section: "reports"
+
+# ── assistant: chat sidebar, suggestions, company intel ──────────────────
+assistant:
+  _section: "assistant"
+
+# ── metrics: dashboard cards and the metric library ───────────────────────
+metrics:
+  _section: "metrics"
+
+# ── settings: every Settings page ─────────────────────────────────────────
+settings:
+  appearance:
+    title: "Appearance"
+    description: "How Portfolio looks on this device."
+    theme: "Theme"
+    themeDescription: "Dark or light colours, or follow the setting of your computer."
+    themeDark: "Dark"
+    themeLight: "Light"
+    themeSystem: "Same as my computer"
+    textSize: "Text size"
+    textSizeDescription: "Make all text and buttons larger or smaller. Ctrl + and Ctrl - also work, Ctrl 0 resets."
+    textSizes:
+      small: "Small ({percent}%)"
+      default: "Default ({percent}%)"
+      large: "Large ({percent}%)"
+      larger: "Larger ({percent}%)"
+      largest: "Largest ({percent}%)"
+      custom: "Custom ({percent}%)"
+
+# ── setup: the first-run setup and the lock screen ────────────────────────
+setup:
+  _section: "setup"
+
+# ── service: text the service sends (notifications, errors) ──────────────
+service:
+  _section: "service"

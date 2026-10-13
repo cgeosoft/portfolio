@@ -12,6 +12,7 @@ import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { DEFAULT_LANGUAGE, findLanguage } from "portfolio-shared/i18n";
 import { getDatabase } from "./db/database";
 import { DATA_DIR } from "./paths";
 
@@ -43,6 +44,7 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   dismissedUpdateVersion: undefined,
   zoomLevel: 1.0,
   theme: "dark",
+  language: DEFAULT_LANGUAGE,
   hideSponsorBanners: false,
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
@@ -238,6 +240,7 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   if (cfg.theme !== "dark" && cfg.theme !== "light" && cfg.theme !== "system") {
     cfg.theme = "dark";
   }
+  if (!findLanguage(cfg.language)) cfg.language = DEFAULT_LANGUAGE;
   if (!Number.isInteger(cfg.gotifyPriority) || cfg.gotifyPriority < 0 || cfg.gotifyPriority > 10) {
     cfg.gotifyPriority = DEFAULT_GOTIFY_PRIORITY;
   }

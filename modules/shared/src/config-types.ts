@@ -124,6 +124,8 @@ export interface DesktopConfig {
   zoomLevel?: number;
   /** UI theme mode: "dark" | "light" | "system" */
   theme?: AppTheme;
+  /** Interface language, an ISO 639-1 code of `LANGUAGES` (shared/i18n.ts). Reports, chat and notifications are written in it too. */
+  language: string;
   /** Hide sponsor banners, such as the one on the overview page. */
   hideSponsorBanners: boolean;
   /**

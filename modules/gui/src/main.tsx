@@ -4,6 +4,7 @@ import App from "./App";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { installChartZoomFix } from "./components/common/chart-zoom";
 import { clientLogger } from "./rpc";
+import { loadLanguage, preferredLanguage } from "./i18n";
 // Self-hosted fonts: no network round trip for a LAN-only app.
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
@@ -38,10 +39,13 @@ installChartZoomFix();
 
 clientLogger.log("debug", "mount", "GUI script loaded", undefined, { url: window.location.href });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+// The language is fixed for the life of the page: load it once, then render.
+void loadLanguage(preferredLanguage()).finally(() => {
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
+});
