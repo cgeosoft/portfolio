@@ -30,6 +30,7 @@ import { ReportPromptModal } from "./ReportPromptModal";
 import { DownloadReportModal } from "./DownloadReportModal";
 import { HoldingLink, HoldingText, renderHoldingAnchor, useHoldingLinkPlugin } from "./holding-links";
 import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
+import { getLocale, t } from "../../i18n";
 
 /** The report wizard is large and opened rarely: its code loads on first use. */
 const AnalyzePortfolioModal = lazy(() => import("./AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
@@ -86,7 +87,7 @@ interface ReportsCardProps {
 }
 
 export function formatReportDropdownLabel(report: PortfolioReport): string {
-  const weekKey = report.weekKey || report.id || "Report";
+  const weekKey = report.weekKey || report.id || t("reports.card.reportFallbackName");
   let from = report.weekStartDate;
   let to = report.weekEndDate;
 
@@ -180,7 +181,7 @@ export function ReportsCard({
         await onRefreshReports();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        setGenError(msg || "Failed to refresh reports list");
+        setGenError(msg || t("reports.card.refreshFailed"));
       }
     },
     [onRefreshReports]
@@ -192,7 +193,7 @@ export function ReportsCard({
       await onRefreshReports();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setGenError(msg || "Failed to refresh reports list");
+      setGenError(msg || t("reports.card.refreshFailed"));
     } finally {
       setIsRefreshing(false);
     }
@@ -226,10 +227,10 @@ export function ReportsCard({
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
             <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span className="truncate">Reports</span>
+            <span className="truncate">{t("reports.card.title")}</span>
           </h2>
           <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
-            Generated reports from your portfolio
+            {t("reports.card.subtitle")}
           </p>
         </div>
 
@@ -258,7 +259,7 @@ export function ReportsCard({
                 <div className="cx-menu absolute right-0 top-full mt-1.5 z-50 min-w-[280px] sm:min-w-[340px] max-w-[90vw] flex flex-col overflow-hidden">
                   <div className="cx-menu-label" data-align="start">
                     <FileText className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">Historical Briefings ({reports.length})</span>
+                    <span className="truncate">{t("reports.card.history", { count: reports.length })}</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto font-mono text-xs flex flex-col custom-scrollbar">
                     {reports.map((rep) => {
@@ -291,7 +292,7 @@ export function ReportsCard({
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isRepFallback && (
                               <span className="text-[10px] px-1.5 py-0.2 rounded border border-cream/40 bg-cream/10 text-cream font-bold uppercase">
-                                Fallback
+                                {t("reports.card.fallbackBadge")}
                               </span>
                             )}
                             {isSelected && <Check className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />}
@@ -312,7 +313,7 @@ export function ReportsCard({
             className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider shadow-lg shadow-[#DD3C73]/10 font-mono"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Analyze</span>
+            <span>{t("reports.card.analyze")}</span>
           </button>
         </div>
       </div>
@@ -322,7 +323,7 @@ export function ReportsCard({
         <div className="rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 px-3.5 py-2.5 flex items-center justify-between text-xs text-[#DD3C73] shrink-0">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Notice: {genError}</span>
+            <span>{t("reports.card.notice", { message: genError })}</span>
           </div>
           <button onClick={() => setGenError(null)} className="text-[#DD3C73] hover:text-accent-bright font-bold ml-2 cursor-pointer">
             ✕
@@ -334,17 +335,17 @@ export function ReportsCard({
       {(loadingReports || isRefreshing) && reports.length === 0 ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
           <RefreshCw className="w-8 h-8 animate-spin text-[#DD3C73] mb-3" />
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-300">Loading Portfolio Briefings</div>
-          <div className="text-[11px] text-slate-500 mt-1">Retrieving stored quantitative and qualitative reports...</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-300">{t("reports.card.loadingTitle")}</div>
+          <div className="text-[11px] text-slate-500 mt-1">{t("reports.card.loadingDescription")}</div>
         </div>
       ) : !activeReport ? (
         <div className="cx-card flex-1 flex flex-col items-center justify-center min-h-0 p-10 text-center">
           <div className="w-12 h-12 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-4">
             <Bot className="w-6 h-6" />
           </div>
-          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">No Reports Recorded Yet</div>
+          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">{t("reports.card.emptyTitle")}</div>
           <p className="max-w-md text-xs text-slate-400 leading-relaxed mb-6">
-            The Autonomous AI analyzes your multi-asset portfolio, evaluates moving averages, and synthesizes tactical qualitative rebalancing briefings.
+            {t("reports.card.emptyDescription")}
           </p>
           <button
             type="button"
@@ -352,7 +353,7 @@ export function ReportsCard({
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-all shadow-lg shadow-[#DD3C73]/25 cursor-pointer uppercase tracking-wider"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Analyze Portfolio</span>
+            <span>{t("reports.card.analyzePortfolio")}</span>
           </button>
         </div>
       ) : (
@@ -363,11 +364,11 @@ export function ReportsCard({
             <div className="px-4 py-2.5 bg-cream/10 border-b border-cream/30 flex items-start gap-2.5 text-xs text-cream shrink-0 font-mono">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <span className="font-bold uppercase tracking-wider">AI Fallback Telemetry Notice:</span>{" "}
+                <span className="font-bold uppercase tracking-wider">{t("reports.card.fallbackTitle")}</span>{" "}
                 <span className="text-slate-300">
                   {activeReport.error
-                    ? `Inference notice: ${activeReport.error.replace(/\.+$/, "")}. Baseline quantitative telemetry is displayed.`
-                    : "AI reasoning advisor could not complete inference. Baseline quantitative telemetry is displayed."}
+                    ? t("reports.card.fallbackWithError", { error: activeReport.error.replace(/\.+$/, "") })
+                    : t("reports.card.fallbackNoError")}
                 </span>
               </div>
             </div>
@@ -381,7 +382,7 @@ export function ReportsCard({
                 <div className="p-3.5 rounded-xl border border-[#DD3C73]/30 bg-[#DD3C73]/5 mb-4 text-xs text-slate-300">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[#DD3C73] mb-1 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    <span>Executive Summary</span>
+                    <span>{t("reports.card.executiveSummary")}</span>
                   </div>
                   <p className="italic text-slate-200">
                     <HoldingText text={hideValues ? maskFinancialValues(activeReport.summary) : activeReport.summary} />
@@ -400,7 +401,7 @@ export function ReportsCard({
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2.5 shrink-0">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
                   <Activity className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate">Performance States</span>
+                  <span className="truncate">{t("reports.card.performance")}</span>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -409,7 +410,7 @@ export function ReportsCard({
                       <Wallet className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Portfolio Valuation</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("reports.card.valuation")}</div>
                       <div className="font-bold text-slate-100 truncate">
                         {fmtCurrency(activeReport.metrics?.totalPortfolioValue, baseCurrency, hideValues)}
                       </div>
@@ -423,7 +424,7 @@ export function ReportsCard({
                       {isReturnUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Period Return</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("reports.card.periodReturn")}</div>
                       <div className={`font-bold truncate ${isReturnUp ? "text-mint" : "text-[#DD3C73]"}`}>
                         {fmtPercent(returnPercent)}
                         {returnDollar !== undefined && (
@@ -440,7 +441,7 @@ export function ReportsCard({
                       <Percent className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Cash Liquidity</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("reports.card.cashLiquidity")}</div>
                       <div className="font-bold text-slate-100 truncate">
                         {fmtCurrency(activeReport.metrics?.cashBalance, baseCurrency, hideValues)}
                       </div>
@@ -452,9 +453,9 @@ export function ReportsCard({
                       <Layers className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Positions Tracked</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("reports.card.positionsTracked")}</div>
                       <div className="font-bold text-slate-100 truncate">
-                        {activeReport.metrics?.holdingsCount ?? 0} assets
+                        {t("reports.card.assets", { count: activeReport.metrics?.holdingsCount ?? 0 })}
                       </div>
                     </div>
                   </div>
@@ -464,7 +465,7 @@ export function ReportsCard({
                       {activeReport.metrics?.topWinner && (
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-500 flex items-center gap-1">
-                            <span className="text-mint">★</span> Top Winner
+                            <span className="text-mint">★</span> {t("reports.card.topWinner")}
                           </span>
                           <span className="font-bold text-mint">
                             <HoldingLink reference={activeReport.metrics.topWinner.symbol} /> {fmtPercent(activeReport.metrics.topWinner.changePercent)}
@@ -474,7 +475,7 @@ export function ReportsCard({
                       {activeReport.metrics?.topLoser && (
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-500 flex items-center gap-1">
-                            <span className="text-[#DD3C73]">▼</span> Top Loser
+                            <span className="text-[#DD3C73]">▼</span> {t("reports.card.topLoser")}
                           </span>
                           <span className="font-bold text-[#DD3C73]">
                             <HoldingLink reference={activeReport.metrics.topLoser.symbol} /> {fmtPercent(activeReport.metrics.topLoser.changePercent)}
@@ -490,16 +491,16 @@ export function ReportsCard({
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2 shrink-0">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
                   <Info className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate">Report Telemetry</span>
+                  <span className="truncate">{t("reports.card.telemetry")}</span>
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     <Clock className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Generated Timestamp</span>
+                    <span>{t("reports.card.generatedAt")}</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px]">
-                    {new Date(activeReport.createdAt).toLocaleString("en-US", {
+                    {new Date(activeReport.createdAt).toLocaleString(getLocale(), {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
@@ -513,7 +514,7 @@ export function ReportsCard({
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     <Calendar className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Period Window</span>
+                    <span>{t("reports.card.periodWindow")}</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px]">{activeReport.period}</div>
                 </div>
@@ -521,7 +522,7 @@ export function ReportsCard({
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     <Bot className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Inference Model</span>
+                    <span>{t("reports.card.model")}</span>
                   </div>
                   <div className="text-slate-300 font-medium text-[11px] truncate">{activeReport.model}</div>
                 </div>
@@ -533,13 +534,13 @@ export function ReportsCard({
                     ) : (
                       <Check className="w-3 h-3 text-mint shrink-0" />
                     )}
-                    <span>Execution Health</span>
+                    <span>{t("reports.card.health")}</span>
                   </div>
                   <div className="font-bold text-[11px]">
                     {isReportFallback ? (
-                      <span className="text-cream">Fallback / Degraded</span>
+                      <span className="text-cream">{t("reports.card.healthDegraded")}</span>
                     ) : (
-                      <span className="text-mint">Optimal (AI Synthesized)</span>
+                      <span className="text-mint">{t("reports.card.healthOptimal")}</span>
                     )}
                   </div>
                 </div>
@@ -547,14 +548,14 @@ export function ReportsCard({
                 <div className="flex flex-col gap-1 pt-1.5 border-t border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     <Terminal className="w-3 h-3 text-[#DD3C73] shrink-0" />
-                    <span>Inference Prompt</span>
+                    <span>{t("reports.card.prompt")}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsPromptModalOpen(true)}
                     className="inline-flex items-center gap-1 text-[11px] text-[#DD3C73] hover:text-accent-bright transition-colors cursor-pointer text-left font-semibold"
                   >
-                    <span>Inspect LLM Prompt &rarr;</span>
+                    <span>{t("reports.card.inspectPrompt")}</span>
                   </button>
                 </div>
               </div>
@@ -563,7 +564,7 @@ export function ReportsCard({
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2.5 shrink-0">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center gap-1.5 min-w-0">
                   <Terminal className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate">Commands</span>
+                  <span className="truncate">{t("reports.card.commands")}</span>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -572,7 +573,7 @@ export function ReportsCard({
                     type="button"
                     onClick={handleCopyMarkdown}
                     className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
-                    title="Copy markdown report to clipboard"
+                    title={t("reports.card.copyMarkdownTitle")}
                   >
                     <div className="flex items-center gap-2">
                       {copied ? (
@@ -580,11 +581,11 @@ export function ReportsCard({
                       ) : (
                         <Copy className="w-3.5 h-3.5 text-slate-400" />
                       )}
-                      <span>{copied ? "Copied" : "Copy Markdown"}</span>
+                      <span>{copied ? t("common.copied") : t("reports.card.copyMarkdown")}</span>
                     </div>
                     {copied && (
                       <span className="text-[10px] text-mint font-bold uppercase tracking-wider">
-                        Copied
+                        {t("common.copied")}
                       </span>
                     )}
                   </button>
@@ -594,11 +595,11 @@ export function ReportsCard({
                     type="button"
                     onClick={() => setIsDownloadModalOpen(true)}
                     className="h-8 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 hover:bg-[#DD3C73]/20 hover:border-[#DD3C73]/60 text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
-                    title="Download report as Markdown or PDF"
+                    title={t("reports.card.downloadTitle")}
                   >
                     <div className="flex items-center gap-2">
                       <Download className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span>Download</span>
+                      <span>{t("common.download")}</span>
                     </div>
                     <span className="text-[10px] uppercase font-bold tracking-wider text-[#DD3C73]/80">
                       MD / PDF
@@ -610,11 +611,11 @@ export function ReportsCard({
                     type="button"
                     onClick={() => onDeleteReport(activeReport.id)}
                     className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-[#DD3C73]/10 hover:border-[#DD3C73]/40 text-slate-400 hover:text-[#DD3C73] transition-colors cursor-pointer flex items-center justify-between text-xs font-medium"
-                    title="Delete active report"
+                    title={t("reports.card.deleteTitle")}
                   >
                     <div className="flex items-center gap-2">
                       <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-                      <span>Delete Report</span>
+                      <span>{t("reports.card.deleteReport")}</span>
                     </div>
                   </button>
                 </div>

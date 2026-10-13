@@ -20,7 +20,9 @@ import {
   getDefaultReportFilename,
   generateReportMarkdown,
   generateReportPdf,
+  type ReportExportText,
 } from "./report-export";
+import { getLocale, t } from "../../i18n";
 
 interface DownloadReportModalProps {
   isOpen: boolean;
@@ -31,6 +33,28 @@ interface DownloadReportModalProps {
 }
 
 type ReportFormat = "markdown" | "pdf";
+
+/** Headings and labels of the exported file in the active language. */
+function reportExportText(): ReportExportText {
+  return {
+    markdownTitle: (period) => t("reports.export.markdownTitle", { period }),
+    markdownSummary: t("reports.export.markdownSummary"),
+    pdfTitle: t("reports.export.pdfTitle"),
+    pdfPortfolio: (name) => t("reports.export.pdfPortfolio", { name }),
+    pdfPeriod: (period) => t("reports.export.pdfPeriod", { period }),
+    pdfModel: (model) => t("reports.export.pdfModel", { model }),
+    pdfDate: (date) => t("reports.export.pdfDate", { date }),
+    pdfAssets: (count) => t("reports.export.pdfAssets", { count }),
+    pdfValuation: t("reports.export.pdfValuation"),
+    pdfPeriodReturn: t("reports.export.pdfPeriodReturn"),
+    pdfCashLiquidity: t("reports.export.pdfCashLiquidity"),
+    pdfPositionsTracked: t("reports.export.pdfPositionsTracked"),
+    pdfSummary: t("reports.export.pdfSummary"),
+    pdfFooter: t("reports.export.pdfFooter"),
+    pdfPage: (page, total) => t("reports.export.pdfPage", { page, total }),
+    locale: getLocale(),
+  };
+}
 
 export function DownloadReportModal({
   isOpen,
@@ -80,7 +104,8 @@ export function DownloadReportModal({
     const cleanFileName = fileName.trim() || getDefaultReportFilename(report, format, portfolioName);
 
     try {
-      const content: string | Blob = format === "markdown" ? generateReportMarkdown(report, portfolioName, hideValues) : await generateReportPdf(report, portfolioName, hideValues);
+      const text = reportExportText();
+      const content: string | Blob = format === "markdown" ? generateReportMarkdown(report, portfolioName, hideValues, text) : await generateReportPdf(report, portfolioName, hideValues, text);
 
       if (isLocalClient) {
         // Desktop window: the service writes the file into ~/Downloads.
@@ -93,7 +118,7 @@ export function DownloadReportModal({
           for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]!);
           res = await api.saveFile(cleanFileName, undefined, btoa(binary));
         }
-        if (!res.success || !res.filePath) throw new Error(res.error || "Failed to save the report");
+        if (!res.success || !res.filePath) throw new Error(res.error || t("reports.download.saveFailed"));
         setSavedFilePath(res.filePath);
         return;
       }
@@ -104,7 +129,7 @@ export function DownloadReportModal({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("Failed to download report:", err);
-      setError(msg || "Failed to download report");
+      setError(msg || t("reports.download.downloadFailed"));
     } finally {
       setIsProcessing(false);
     }
@@ -131,10 +156,10 @@ export function DownloadReportModal({
             </div>
             <div className="min-w-0">
               <h2 className="text-xs sm:text-sm font-bold text-slate-100 uppercase tracking-wider truncate">
-                Download Report
+                {t("reports.download.title")}
               </h2>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                {step === 1 ? "Step 1 of 2: Select Format" : "Step 2 of 2: Choose Download Path"}
+                {step === 1 ? t("reports.download.step1") : t("reports.download.step2")}
               </p>
             </div>
           </div>
@@ -142,7 +167,7 @@ export function DownloadReportModal({
             type="button"
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close dialog"
+            aria-label={t("reports.download.closeDialog")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -164,7 +189,7 @@ export function DownloadReportModal({
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                Report Downloaded
+                {t("reports.download.success")}
               </div>
               <p className="text-xs text-slate-400 max-w-xs break-all">
                 {savedFilePath}
@@ -177,7 +202,7 @@ export function DownloadReportModal({
                     className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
                   >
                     <FolderOpen className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Open Folder</span>
+                    <span>{t("reports.download.openFolder")}</span>
                   </button>
                 )}
                 <button
@@ -185,7 +210,7 @@ export function DownloadReportModal({
                   onClick={onClose}
                   className="h-8 px-4 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
                 >
-                  Done
+                  {t("common.done")}
                 </button>
               </div>
             </div>
@@ -193,7 +218,7 @@ export function DownloadReportModal({
             /* Step 1: Format Selection */
             <div className="flex flex-col gap-3">
               <div className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-                Select Export Format
+                {t("reports.download.selectFormat")}
               </div>
 
               {/* Format Option 1: Markdown */}
@@ -222,7 +247,7 @@ export function DownloadReportModal({
                         format === "markdown" ? "text-slate-50" : "text-slate-200"
                       }`}
                     >
-                      Markdown Document (.md)
+                      {t("reports.download.markdownTitle")}
                     </span>
                     {format === "markdown" && (
                       <span className="w-4 h-4 rounded-full bg-[#DD3C73] text-white flex items-center justify-center">
@@ -231,7 +256,7 @@ export function DownloadReportModal({
                     )}
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    Plain text format with YAML metadata frontmatter. Ideal for Obsidian, Notion, or local archives.
+                    {t("reports.download.markdownDescription")}
                   </p>
                 </div>
               </button>
@@ -262,7 +287,7 @@ export function DownloadReportModal({
                         format === "pdf" ? "text-slate-50" : "text-slate-200"
                       }`}
                     >
-                      PDF Document (.pdf)
+                      {t("reports.download.pdfTitle")}
                     </span>
                     {format === "pdf" && (
                       <span className="w-4 h-4 rounded-full bg-[#DD3C73] text-white flex items-center justify-center">
@@ -271,7 +296,7 @@ export function DownloadReportModal({
                     )}
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                    Formatted document with executive summary, performance cards, tables, and pagination.
+                    {t("reports.download.pdfDescription")}
                   </p>
                 </div>
               </button>
@@ -281,7 +306,7 @@ export function DownloadReportModal({
             <div className="flex flex-col gap-3.5">
               {/* Format summary pill */}
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
-                <span className="text-slate-400">Selected Format:</span>
+                <span className="text-slate-400">{t("reports.download.selectedFormat")}</span>
                 <span className="font-bold text-[#DD3C73] uppercase tracking-wider flex items-center gap-1.5">
                   {format === "markdown" ? (
                     <FileText className="w-3.5 h-3.5" />
@@ -295,7 +320,7 @@ export function DownloadReportModal({
               {/* Filename Input */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="report-filename" className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-                  File Name
+                  {t("reports.download.fileName")}
                 </label>
                 <input
                   id="report-filename"
@@ -307,10 +332,10 @@ export function DownloadReportModal({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Save Location</label>
+                <label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">{t("reports.download.saveLocation")}</label>
                 <div className="h-8 px-3 rounded-lg border border-slate-800 bg-slate-950 flex items-center text-xs text-slate-400 overflow-hidden">
                   <Folder className="w-3.5 h-3.5 text-[#DD3C73] mr-2 shrink-0" />
-                  <span className="truncate">{isLocalClient ? "Downloads folder" : "Browser download"}</span>
+                  <span className="truncate">{isLocalClient ? t("reports.download.downloadsFolder") : t("reports.download.browserDownload")}</span>
                 </div>
               </div>
             </div>
@@ -328,7 +353,7 @@ export function DownloadReportModal({
                 className="h-8 px-3 rounded-lg border border-slate-800 text-slate-300 hover:text-slate-50 hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back</span>
+                <span>{t("common.back")}</span>
               </button>
             ) : (
               <button
@@ -336,7 +361,7 @@ export function DownloadReportModal({
                 onClick={onClose}
                 className="h-8 px-3 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-50 hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer uppercase tracking-wider"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             )}
 
@@ -346,7 +371,7 @@ export function DownloadReportModal({
                 onClick={() => setStep(2)}
                 className="h-8 px-4 rounded-lg bg-[#DD3C73] hover:bg-[#c82f63] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider shadow-lg shadow-[#DD3C73]/20"
               >
-                <span>Next</span>
+                <span>{t("common.next")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             ) : (
@@ -359,12 +384,12 @@ export function DownloadReportModal({
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Downloading...</span>
+                    <span>{t("reports.download.downloading")}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download</span>
+                    <span>{t("common.download")}</span>
                   </>
                 )}
               </button>
