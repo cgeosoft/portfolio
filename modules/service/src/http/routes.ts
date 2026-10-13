@@ -24,6 +24,7 @@ import { appUpdateService } from "../services/app-update";
 import { telemetry } from "../services/telemetry";
 import { sendGotify } from "../services/gotify";
 import { sendNtfy } from "../services/ntfy";
+import { OPENROUTER_CALLBACK_PATH, callbackPage, completeOpenRouterConnect, openRouterConnectStatus, startOpenRouterConnect } from "../services/openrouter-connect";
 import * as portfolioMetrics from "../services/portfolio-metrics";
 import { suggestMetricLayout } from "../services/metric-advisor";
 import { getMacroSnapshot } from "../services/intel/macro";
@@ -72,6 +73,12 @@ import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/conf
  * webview withholds the cookie from a sandboxed frame.
  */
 const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/api/app/sponsor/frame", "/intro"]);
+/**
+ * The OpenRouter sign-in returns through the system browser, which has no
+ * session cookie. The route serves only loopback clients and only a one-time
+ * state the service issued (openrouter-connect.ts).
+ */
+const isPublicPath = (path: string) => PUBLIC_PATHS.has(path) || path.startsWith(OPENROUTER_CALLBACK_PATH);
 /** Routes a signed-in client may call before accepting the Terms of Use. */
 const PRE_TERMS_PATHS = new Set(["/api/auth/me", "/api/auth/accept-terms", "/api/auth/logout"]);
 
@@ -121,7 +128,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.use((ctx) => {
-    if (PUBLIC_PATHS.has(ctx.url.pathname)) return;
+    if (isPublicPath(ctx.url.pathname)) return;
     const session = readSession(ctx.req);
     const sessionId = session?.id ?? null;
     if (!authService.validateSession(sessionId)) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
@@ -483,7 +490,22 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     }
   });
 
-  router.get("/api/llm/claude-cli/status", () => llm.claudeCliStatus());
+  router.get("/api/llm/claude-cli/status", () => llm.cliStatus("claude-cli"));
+  router.get("/api/llm/cli/:provider/status", (ctx) => llm.cliStatus(ctx.params.provider!));
+
+  router.post("/api/llm/openrouter/connect", (ctx) => {
+    assertLocal(ctx, "Connecting OpenRouter");
+    return startOpenRouterConnect(ctx.url.port);
+  });
+  router.get("/api/llm/openrouter/connect/:state", (ctx) => openRouterConnectStatus(ctx.params.state!));
+  router.get(`${OPENROUTER_CALLBACK_PATH}:state`, async (ctx) => {
+    if (!ctx.isLocal) throw new HttpError(403, "The OpenRouter sign-in completes only on this computer");
+    const { ok, message } = await completeOpenRouterConnect(ctx.params.state!, ctx.url.searchParams.get("code"));
+    return new Response(callbackPage(ok, message), {
+      status: ok ? 200 : 400,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
+    });
+  });
 
   router.post("/api/providers/finnhub/test", async (ctx) => finnhub.testConnection(unmaskSecret((await ctx.body<TestFinnhubConnectionRequest>()).apiKey, loadConfig().finnhubApiKey)));
   router.post("/api/providers/fmp/test", async (ctx) => fmp.testConnection(unmaskSecret((await ctx.body<TestFmpConnectionRequest>()).apiKey, loadConfig().fmpApiKey)));

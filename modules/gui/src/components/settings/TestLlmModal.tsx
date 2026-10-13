@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { LlmTestStepId } from "portfolio-shared/api-types";
-import { DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
 
 export interface TestLlmModalProps {
   isOpen: boolean;
@@ -211,7 +211,8 @@ export function TestLlmModal({
   const passedCount = steps.filter((s) => s.status === "passed").length;
   const progressPercent = Math.round((passedCount / steps.length) * 100);
 
-  const displayEndpoint = provider === "claude-cli" ? "Claude CLI on this machine" : baseUrl?.trim() || DEFAULT_OPENAI_COMPATIBLE_URL;
+  const cliName = CLI_PROVIDER_NAMES[provider as CliProviderId];
+  const displayEndpoint = cliName ? `${cliName} on this machine` : baseUrl?.trim() || DEFAULT_OPENAI_COMPATIBLE_URL;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in font-mono">

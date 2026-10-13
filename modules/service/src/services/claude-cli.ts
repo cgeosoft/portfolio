@@ -15,48 +15,25 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ClaudeCliStatusResponse } from "portfolio-shared/api-types";
-import { DATA_DIR } from "../paths.js";
+import { cliWorkDir, findCliBinary, parseJsonLine, promptFor, readLines, runCli, stderrTail, systemPromptOf } from "./cli-process.js";
 import type { LlmMessage } from "./llm.js";
-
-const STATUS_TIMEOUT_MS = 15_000;
 
 /** The working directory of every CLI run, created on first use with mode 0700. */
 export function claudeCliWorkDir(): string {
-  const dir = join(DATA_DIR, "claude-cli");
-  mkdirSync(dir, { recursive: true, mode: 0o700 });
-  return dir;
+  return cliWorkDir("claude-cli");
 }
 
 /** `claude` on PATH, else the usual install locations a desktop launch may leave off PATH. */
 export function findClaudeBinary(): string | null {
-  const onPath = Bun.which("claude");
-  if (onPath) return onPath;
-  const exe = process.platform === "win32" ? "claude.exe" : "claude";
-  const home = homedir();
-  const candidates = [
-    join(home, ".local", "bin", exe),
-    join(home, ".claude", "local", exe),
-    "/opt/homebrew/bin/claude",
-    "/usr/local/bin/claude",
-  ];
-  return candidates.find((path) => existsSync(path)) ?? null;
+  return findCliBinary("claude", [join(homedir(), ".claude", "local")]);
 }
 
-async function run(bin: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string; timedOut: boolean }> {
-  const signal = AbortSignal.timeout(STATUS_TIMEOUT_MS);
-  const proc = Bun.spawn([bin, ...args], {
-    cwd: claudeCliWorkDir(),
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-    signal,
-  });
-  const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
-  return { code, stdout, stderr, timedOut: signal.aborted };
+function run(bin: string, args: string[]) {
+  return runCli(bin, args, claudeCliWorkDir());
 }
 
 /** Per CLI binary: whether it takes `--system-prompt-file`. */
@@ -139,14 +116,6 @@ export async function getClaudeCliStatus(): Promise<ClaudeCliStatusResponse> {
   }
 }
 
-/** The CLI takes one prompt; earlier turns are replayed as a labelled transcript. */
-function promptFor(messages: LlmMessage[]): string {
-  const turns = messages.filter((m) => m.role !== "system");
-  if (turns.length === 1) return turns[0]!.content;
-  const transcript = turns.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n\n");
-  return `${transcript}\n\nReply to the last User message as the Assistant.`;
-}
-
 interface StreamFrame {
   type?: string;
   event?: { type?: string; delta?: { type?: string; text?: string } };
@@ -169,7 +138,7 @@ export async function claudeCliComplete(messages: LlmMessage[], options: ClaudeC
   if (!bin) throw new Error("Claude CLI not found. Install Claude Code and sign in, then select Claude CLI again in Settings > Assistant.");
 
   const cwd = claudeCliWorkDir();
-  const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+  const system = systemPromptOf(messages);
   // Only this user can read the file; a command line is visible to every local user.
   const systemFile = system && (await supportsSystemPromptFile(bin)) ? join(cwd, `system-${randomUUID()}.txt`) : null;
   if (options.signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
@@ -210,13 +179,8 @@ async function streamCompletion(bin: string, args: string[], cwd: string, messag
   let result: string | undefined;
   let isError = false;
   const onLine = (line: string) => {
-    if (!line.trim()) return;
-    let frame: StreamFrame;
-    try {
-      frame = JSON.parse(line) as StreamFrame;
-    } catch {
-      return; // not a JSON frame
-    }
+    const frame = parseJsonLine<StreamFrame>(line);
+    if (!frame) return;
     if (frame.type === "stream_event" && frame.event?.type === "content_block_delta" && frame.event.delta?.type === "text_delta") {
       const text = frame.event.delta.text ?? "";
       streamed += text;
@@ -228,21 +192,12 @@ async function streamCompletion(bin: string, args: string[], cwd: string, messag
       isError = Boolean(frame.is_error);
     }
   };
-
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for await (const chunk of proc.stdout) {
-    buffer += decoder.decode(chunk, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    lines.forEach(onLine);
-  }
-  onLine(buffer);
+  await readLines(proc.stdout, onLine);
 
   const code = await proc.exited;
   if (options.signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   if (isError || code !== 0) {
-    const detail = (isError ? result : "") || (await stderrText).trim().split("\n").slice(-3).join(" ") || `exit code ${code}`;
+    const detail = (isError ? result : "") || stderrTail(await stderrText) || `exit code ${code}`;
     throw new Error(`Claude CLI request failed: ${detail}`);
   }
   const text = result ?? (streamed || whole);

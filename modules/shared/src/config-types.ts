@@ -84,7 +84,7 @@ export interface DesktopConfig {
   baseCurrency: string;
   /** Privacy mode: mask monetary values in the UI */
   hideCurrencyValues: boolean;
-  /** Active LLM provider: "openai-compatible" or "claude-cli" */
+  /** Active LLM provider: "openai-compatible", "claude-cli" or "codex-cli" */
   llmProvider: string;
   /** LLM model identifier */
   llmModel: string;

@@ -23,7 +23,7 @@ There is no `.env` file and the service reads no environment variable of its own
 | Database | `<data>/portfolio.sqlite` |
 | Logs | `<data>/logs/` |
 | Metric engine and modules | `<data>/metrics/` |
-| Claude CLI working directory | `<data>/claude-cli/` (mode 0700): every `claude -p` run starts there, never in a shared directory such as `/tmp`, and gets the system prompt in a 0600 file that is deleted after the request |
+| CLI provider working directories | `<data>/claude-cli/` and `<data>/codex-cli/` (mode 0700): every `claude -p` and `codex exec` run starts there, never in a shared directory such as `/tmp`, and gets the system prompt in a 0600 file that is deleted after the request |
 | Desktop switches | `<data>/desktop-settings.json` (`{ "closeToTray": bool }`), written by the service at start-up and when Settings → App & Help → Keep running when the window closes changes; the shell reads it when the window closes |
 | Built GUI | `Resources/app/gui`, next to the bundle's `service/` directory; from a checkout Vite serves the GUI |
 | Sponsor pages | `sponsor.html` and `sponsor-light.html` next to the bundle; `extras/website/sponsor/` in a checkout |

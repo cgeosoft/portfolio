@@ -1,17 +1,23 @@
 /**
- * LLM client for the two inference providers.
+ * LLM client for the inference providers.
  *
  * `openai-compatible` speaks OpenAI chat completions over HTTP to any server
  * or cloud API that offers them (llama.cpp, Ollama, LM Studio, vLLM, OpenAI,
- * Groq, OpenRouter and others). `claude-cli` runs the Claude Code CLI on this
- * machine with the user's Claude subscription (see claude-cli.ts). Options
- * given by the caller win over the settings, which win over the defaults.
+ * Groq, OpenRouter and others). The CLI providers run a vendor CLI on this
+ * machine with the user's own sign-in: `claude-cli` (Claude Code, Claude
+ * subscription, claude-cli.ts) and `codex-cli` (Codex, ChatGPT plan,
+ * codex-cli.ts). Gemini CLI is not one: Google's terms forbid third-party
+ * software from using its Google sign-in, so Gemini goes through an API key.
+ * Options given by the caller win over the settings, which win over the
+ * defaults.
  */
 
 import { isSameServer, loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
-import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { CLI_PROVIDER_MODELS, CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
+import type { CliProviderStatusResponse } from "portfolio-shared/api-types";
 import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
+import { codexCliComplete, getCodexCliStatus } from "./codex-cli.js";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
@@ -49,21 +55,35 @@ export interface TestStepResult {
 
 // ── providers ───────────────────────────────────────────────────────────────
 
-export type ProviderId = "openai-compatible" | "claude-cli";
+export type ProviderId = "openai-compatible" | CliProviderId;
 
-const PROVIDER_NAMES: Record<ProviderId, string> = {
-  "openai-compatible": "OpenAI-compatible",
-  "claude-cli": "Claude CLI",
+/** A vendor CLI on this machine: its sign-in check and one completion. */
+interface CliProvider {
+  name: string;
+  status(): Promise<CliProviderStatusResponse>;
+  complete(messages: LlmMessage[], options: { model?: string; signal: AbortSignal; onChunk?: (chunk: string) => void }): Promise<string>;
+}
+
+const CLI_PROVIDERS: Record<CliProviderId, CliProvider> = {
+  "claude-cli": { name: CLI_PROVIDER_NAMES["claude-cli"], status: getClaudeCliStatus, complete: claudeCliComplete },
+  "codex-cli": { name: CLI_PROVIDER_NAMES["codex-cli"], status: getCodexCliStatus, complete: codexCliComplete },
 };
 
+const PROVIDER_NAMES: Record<ProviderId, string> = { "openai-compatible": "OpenAI-compatible", ...CLI_PROVIDER_NAMES };
+
+function isCliProvider(id: ProviderId): id is CliProviderId {
+  return id !== "openai-compatible";
+}
+
 /**
- * Every stored id other than "claude-cli" maps to the OpenAI-compatible
- * provider. Earlier versions stored one id per server or cloud (llamacpp,
- * ollama, groq, ...); their base URL and key still apply through the
- * `llmBaseUrl` / `llmApiKey` settings.
+ * The CLI provider ids are kept; every other stored id maps to the
+ * OpenAI-compatible provider. Earlier versions stored one id per server or
+ * cloud (llamacpp, ollama, groq, ...); their base URL and key still apply
+ * through the `llmBaseUrl` / `llmApiKey` settings.
  */
 function normalizeProvider(raw: string | undefined): ProviderId {
-  return (raw || "").toLowerCase().trim() === "claude-cli" ? "claude-cli" : "openai-compatible";
+  const id = (raw || "").toLowerCase().trim();
+  return Object.hasOwn(CLI_PROVIDERS, id) ? (id as CliProviderId) : "openai-compatible";
 }
 
 /**
@@ -79,8 +99,8 @@ const SERVER_MODEL_CACHE_MS = 60_000;
 
 const REQUEST_TIMEOUT_MS = 120_000;
 
-/** The CLI starts a fresh session per request, so it gets more time than an HTTP call. */
-const CLAUDE_CLI_TIMEOUT_MS = 300_000;
+/** A CLI starts a fresh session per request, so it gets more time than an HTTP call. */
+const CLI_TIMEOUT_MS = 300_000;
 
 /** A request with the caller's own signal (a report stream) lives at most as long as its session, 15 minutes (portfolio-report.ts). */
 const CALLER_SIGNAL_LIMIT_MS = 15 * 60_000;
@@ -282,7 +302,7 @@ export class LlmService {
     const isCurrent = normalizeProvider(config.llmProvider) === provider;
     const stored = (map: Record<string, string> | undefined) => map?.[provider]?.trim() || "";
     const current = (value: string | undefined) => (isCurrent ? value?.trim() : "");
-    const isCli = provider === "claude-cli";
+    const isCli = isCliProvider(provider);
     const storedUrl = stored(config.llmBaseUrls) || current(config.llmBaseUrl) || DEFAULT_OPENAI_COMPATIBLE_URL;
     const baseUrl = (options.baseUrl?.trim() || storedUrl).replace(/\/+$/, "");
     const storedKey = isSameServer(baseUrl, storedUrl) ? stored(config.llmApiKeys) || current(config.llmApiKey) || "" : "";
@@ -315,10 +335,10 @@ export class LlmService {
       model: target.model || "default",
     });
 
-    if (target.provider === "claude-cli") {
-      return claudeCliComplete(messages, {
+    if (isCliProvider(target.provider)) {
+      return CLI_PROVIDERS[target.provider].complete(messages, {
         model: target.model,
-        signal: requestSignal(options.signal, CLAUDE_CLI_TIMEOUT_MS),
+        signal: requestSignal(options.signal, CLI_TIMEOUT_MS),
         onChunk,
       });
     }
@@ -403,7 +423,7 @@ export class LlmService {
   /** Model names the provider offers; empty when the server is offline or does not list models. */
   public async getAvailableModels(provider: string, baseUrl?: string, apiKey?: string): Promise<string[]> {
     const target = this.resolve({ provider, baseUrl, apiKey });
-    if (target.provider === "claude-cli") return [...CLAUDE_CLI_MODELS];
+    if (isCliProvider(target.provider)) return [...CLI_PROVIDER_MODELS[target.provider]];
     if (!isHttpUrl(target.baseUrl)) return [];
     try {
       const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
@@ -426,19 +446,19 @@ export class LlmService {
     const fail = (message: string): TestStepResult => ({ success: false, message });
     const typed: LlmChatOptions = { provider: options.provider, model: options.model, apiKey: options.apiKey, baseUrl: options.baseUrl };
     const target = this.resolve(typed);
-    const isCli = target.provider === "claude-cli";
+    const cli = isCliProvider(target.provider) ? CLI_PROVIDERS[target.provider] : null;
 
     if (step === "config") {
       // The model may stay empty: the server or the CLI then picks its default.
-      if (isCli) return { success: true, message: `Claude CLI with ${target.model ? `model "${target.model}"` : "its default model"}.` };
+      if (cli) return { success: true, message: `${cli.name} with ${target.model ? `model "${target.model}"` : "its default model"}.` };
       if (!isHttpUrl(target.baseUrl)) return fail(`Invalid server URL format: ${target.baseUrl}. Use an http:// or https:// address.`);
       return { success: true, message: "Configuration parameters and credentials validated." };
     }
 
     if (step === "connection") {
       const started = Date.now();
-      if (isCli) {
-        const status = await getClaudeCliStatus();
+      if (cli) {
+        const status = await cli.status();
         if (!status.installed || !status.loggedIn) return fail(status.message);
         return { success: true, message: status.message, latencyMs: Date.now() - started };
       }
@@ -499,8 +519,12 @@ export class LlmService {
     return fail(`Unknown step identifier: ${step}`);
   }
 
-  /** Whether the Claude CLI on this machine is installed and signed in. */
-  public claudeCliStatus() {
-    return getClaudeCliStatus();
+  /** Whether the CLI of a CLI provider is installed on this machine and signed in. */
+  public cliStatus(provider: string): Promise<CliProviderStatusResponse> {
+    const id = normalizeProvider(provider);
+    if (!isCliProvider(id) || id !== provider.toLowerCase().trim()) {
+      return Promise.resolve({ installed: false, loggedIn: false, message: `Unknown CLI provider: ${provider}` });
+    }
+    return CLI_PROVIDERS[id].status();
   }
 }

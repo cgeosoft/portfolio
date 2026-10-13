@@ -502,16 +502,30 @@ export interface GetProviderModelsResponse {
   models: string[];
 }
 
-/** Whether the Claude Code CLI on this machine can serve as the inference provider. */
-export interface ClaudeCliStatusResponse {
+/** Whether a vendor CLI on this machine (Claude Code, Codex, Gemini) can serve as the inference provider. */
+export interface CliProviderStatusResponse {
   installed: boolean;
   loggedIn: boolean;
   version?: string;
-  /** "claude.ai" for a subscription sign-in. */
+  /** How the CLI signed in, e.g. "claude.ai" for a Claude subscription. */
   authMethod?: string;
   /** Subscription plan, e.g. "pro" or "max". */
   subscriptionType?: string;
   message: string;
+}
+
+export type ClaudeCliStatusResponse = CliProviderStatusResponse;
+
+/** Starts the OpenRouter sign-in: the window opens `authUrl` in the system browser. */
+export interface StartOpenRouterConnectResponse {
+  authUrl: string;
+  /** One-time id of this sign-in, polled with `/api/llm/openrouter/connect/<state>`. */
+  state: string;
+}
+
+export interface OpenRouterConnectStatusResponse {
+  status: "pending" | "connected" | "failed" | "expired";
+  message?: string;
 }
 
 export interface GetAppInfoResponse {

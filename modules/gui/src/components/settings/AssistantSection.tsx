@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { AlertCircle, Bot, CheckCircle2, Cpu, ExternalLink, Eye, EyeOff, Globe, Key, PlayCircle, RefreshCw, Terminal } from "lucide-react";
-import type { ClaudeCliStatusResponse, DesktopConfig } from "portfolio-shared/api-types";
-import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle, Bot, CheckCircle2, Cpu, ExternalLink, Eye, EyeOff, Globe, Key, Link2, PlayCircle, RefreshCw, Terminal } from "lucide-react";
+import type { CliProviderStatusResponse, DesktopConfig } from "portfolio-shared/api-types";
+import { CLI_PROVIDER_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
 import { SECRET_MASK } from "portfolio-shared/config-types";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
@@ -9,7 +9,7 @@ import { openExternal } from "../../environment";
 import { SectionHeader } from "./SettingsFields";
 import { TestLlmModal } from "./TestLlmModal";
 
-type LlmProviderId = "openai-compatible" | "claude-cli";
+type LlmProviderId = "openai-compatible" | CliProviderId;
 
 interface LlmProviderOption {
   id: LlmProviderId;
@@ -17,6 +17,32 @@ interface LlmProviderOption {
   badge: string;
   description: string;
 }
+
+/** What the Settings page shows for a CLI provider. */
+interface CliProviderInfo {
+  /** The app name in labels, e.g. "Claude Code". */
+  app: string;
+  setupUrl: string;
+  setupLabel: string;
+  modelPlaceholder: string;
+}
+
+const CLI_INFO: Record<CliProviderId, CliProviderInfo> = {
+  "claude-cli": {
+    app: "Claude Code",
+    setupUrl: "https://code.claude.com/docs/en/setup",
+    setupLabel: "Claude Code setup guide",
+    modelPlaceholder: "e.g. claude-sonnet-5",
+  },
+  "codex-cli": {
+    app: "Codex",
+    setupUrl: "https://learn.chatgpt.com/docs/codex/cli",
+    setupLabel: "Codex CLI setup guide",
+    modelPlaceholder: "e.g. gpt-6-sol",
+  },
+};
+
+const isCliId = (id: LlmProviderId): id is CliProviderId => id !== "openai-compatible";
 
 const LLM_PROVIDERS: LlmProviderOption[] = [
   {
@@ -32,10 +58,20 @@ const LLM_PROVIDERS: LlmProviderOption[] = [
     badge: "Claude Code",
     description: "Uses the Claude Code app installed on this computer, signed in with your Claude subscription. No API key needed.",
   },
+  {
+    id: "codex-cli",
+    name: "ChatGPT subscription",
+    badge: "Codex CLI",
+    description: "Uses the OpenAI Codex CLI installed on this computer, signed in with your ChatGPT plan. No API key needed.",
+  },
 ];
 
 /** Provider ids from earlier releases were migrated to "openai-compatible" by the service. */
-const toProviderId = (raw: string | undefined): LlmProviderId => (raw === "claude-cli" ? "claude-cli" : "openai-compatible");
+const toProviderId = (raw: string | undefined): LlmProviderId =>
+  raw && Object.hasOwn(CLI_PROVIDER_MODELS, raw) ? (raw as CliProviderId) : "openai-compatible";
+
+/** How often the page asks whether the OpenRouter sign-in in the browser has finished. */
+const CONNECT_POLL_MS = 1500;
 
 const fieldLabel = "block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5";
 const linkButton = "text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50";
@@ -58,8 +94,14 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [serverModels, setServerModels] = useState<string[]>([]);
   const [isFetchingModels, setIsFetchingModels] = useState(false);
-  const [claudeStatus, setClaudeStatus] = useState<ClaudeCliStatusResponse | null>(null);
-  const [isCheckingClaude, setIsCheckingClaude] = useState(false);
+  const [cliStatus, setCliStatus] = useState<CliProviderStatusResponse | null>(null);
+  const [isCheckingCli, setIsCheckingCli] = useState(false);
+  const [isLocalClient, setIsLocalClient] = useState(false);
+  const [connectState, setConnectState] = useState<"idle" | "waiting" | "connected" | "failed">("idle");
+  const [connectMessage, setConnectMessage] = useState("");
+  const connectPoll = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** The provider of the latest status check: a slow answer for another provider is dropped. */
+  const cliCheckFor = useRef<LlmProviderId | null>(null);
 
   /** Lists the models of the OpenAI-compatible server and keeps the saved one when it is still offered. */
   const fetchServerModels = async (url: string, key: string) => {
@@ -74,17 +116,79 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
     }
   };
 
-  /** Checks that the Claude CLI is installed and signed in. */
-  const checkClaudeCli = async () => {
-    setIsCheckingClaude(true);
+  /** Checks that the CLI of a CLI provider is installed and signed in. */
+  const checkCli = async (provider: CliProviderId) => {
+    cliCheckFor.current = provider;
+    setCliStatus(null);
+    setIsCheckingCli(true);
+    let status: CliProviderStatusResponse;
     try {
-      setClaudeStatus(await rpc.request.getClaudeCliStatus());
+      status = await rpc.request.getCliProviderStatus({ provider });
     } catch (err) {
-      setClaudeStatus({ installed: false, loggedIn: false, message: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setIsCheckingClaude(false);
+      status = { installed: false, loggedIn: false, message: err instanceof Error ? err.message : String(err) };
+    }
+    if (cliCheckFor.current !== provider) return;
+    setCliStatus(status);
+    setIsCheckingCli(false);
+  };
+
+  const stopConnectPoll = () => {
+    if (connectPoll.current) clearInterval(connectPoll.current);
+    connectPoll.current = null;
+  };
+
+  /**
+   * Opens the OpenRouter sign-in in the system browser and waits for the
+   * service to store the key it returns. Then the page shows the stored
+   * address, key and model.
+   */
+  const connectOpenRouter = async () => {
+    stopConnectPoll();
+    setConnectState("waiting");
+    setConnectMessage("Approve Portfolio in the browser window that opened.");
+    try {
+      const { authUrl, state } = await rpc.request.startOpenRouterConnect();
+      if (!openExternal(authUrl)) throw new Error("Could not open the browser.");
+      connectPoll.current = setInterval(async () => {
+        let res;
+        try {
+          res = await rpc.request.getOpenRouterConnectStatus({ state });
+        } catch {
+          return; // try again on the next tick
+        }
+        if (res.status === "pending") return;
+        stopConnectPoll();
+        if (res.status !== "connected") {
+          setConnectState("failed");
+          setConnectMessage(res.message || "The OpenRouter sign-in did not finish.");
+          return;
+        }
+        const saved = await rpc.request.getConfig();
+        onConfigChange(() => saved);
+        const url = saved.llmBaseUrls?.["openai-compatible"] || saved.llmBaseUrl;
+        const key = saved.llmApiKeys?.["openai-compatible"] || saved.llmApiKey;
+        const model = saved.llmModels?.["openai-compatible"] || saved.llmModel || "";
+        setReportBaseUrl(url);
+        setReportApiKey(key);
+        setReportModel(model);
+        setIsCustomModel(false);
+        setConnectState("connected");
+        setConnectMessage(res.message || "Connected to OpenRouter.");
+        fetchServerModels(url, key);
+      }, CONNECT_POLL_MS);
+    } catch (err) {
+      setConnectState("failed");
+      setConnectMessage(err instanceof Error ? err.message : String(err));
     }
   };
+
+  useEffect(() => {
+    rpc.request
+      .getAppInfo()
+      .then((info) => setIsLocalClient(Boolean(info.isLocalClient)))
+      .catch(() => setIsLocalClient(false));
+    return stopConnectPoll;
+  }, []);
 
   // The stored provider, model, key and URL, read once when the page opens.
   useEffect(() => {
@@ -94,7 +198,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
 
     const savedModel = config.llmModels?.[provider] || (isCurrent ? config.llmModel : "") || "";
     setReportModel(savedModel);
-    if (provider === "claude-cli" && savedModel && !CLAUDE_CLI_MODELS.includes(savedModel)) setIsCustomModel(true);
+    if (isCliId(provider) && savedModel && !CLI_PROVIDER_MODELS[provider].includes(savedModel)) setIsCustomModel(true);
 
     const savedKey = config.llmApiKeys?.[provider] || (isCurrent ? config.llmApiKey : "") || "";
     setReportApiKey(savedKey);
@@ -102,7 +206,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
     const savedUrl = config.llmBaseUrls?.[provider] || (isCurrent ? config.llmBaseUrl : "") || DEFAULT_OPENAI_COMPATIBLE_URL;
     setReportBaseUrl(savedUrl);
 
-    if (provider === "claude-cli") checkClaudeCli();
+    if (isCliId(provider)) checkCli(provider);
     else fetchServerModels(savedUrl, savedKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -116,13 +220,14 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
     setReportProvider(newProvider);
     const nextModel = config.llmModels?.[newProvider] || "";
     setReportModel(nextModel);
-    setIsCustomModel(newProvider === "claude-cli" && Boolean(nextModel) && !CLAUDE_CLI_MODELS.includes(nextModel));
+    setIsCustomModel(isCliId(newProvider) && Boolean(nextModel) && !CLI_PROVIDER_MODELS[newProvider].includes(nextModel));
 
-    if (newProvider === "claude-cli") {
+    if (isCliId(newProvider)) {
       saveConfig({ llmProvider: newProvider, llmModel: nextModel, llmBaseUrl: "", llmApiKey: "" });
-      checkClaudeCli();
+      checkCli(newProvider);
       return;
     }
+    cliCheckFor.current = null;
 
     const nextBaseUrl = config.llmBaseUrls?.[newProvider] || DEFAULT_OPENAI_COMPATIBLE_URL;
     const nextApiKey = config.llmApiKeys?.[newProvider] || "";
@@ -133,12 +238,14 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
   };
 
   const currentProvider = LLM_PROVIDERS.find((p) => p.id === reportProvider) ?? LLM_PROVIDERS[0]!;
-  const isClaudeCli = reportProvider === "claude-cli";
-  const modelOptions = isClaudeCli ? CLAUDE_CLI_MODELS : serverModels;
+  const cliId = isCliId(reportProvider) ? reportProvider : null;
+  const cliInfo = cliId ? CLI_INFO[cliId] : null;
+  const isCli = cliId !== null;
+  const modelOptions = cliId ? CLI_PROVIDER_MODELS[cliId] : serverModels;
   // A saved model the list no longer offers stays selectable instead of silently switching.
   const availableModels = reportModel && !isCustomModel && !modelOptions.includes(reportModel) ? [reportModel, ...modelOptions] : modelOptions;
   // Without a model list the only way to name a model is to type it.
-  const showModelInput = isCustomModel || (!isClaudeCli && serverModels.length === 0);
+  const showModelInput = isCustomModel || (!isCli && serverModels.length === 0);
 
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
@@ -171,38 +278,44 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
         <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">{currentProvider.description}</p>
       </div>
 
-      {/* Claude CLI status: checked on selection */}
-      {isClaudeCli && (
+      {/* CLI status: checked on selection */}
+      {cliInfo && (
         <div className="space-y-2 pt-2 border-t border-slate-800/80">
           <div className="flex items-center justify-between">
             <label className={fieldLabel}>
               <Terminal className="w-3.5 h-3.5 text-slate-400" />
-              <span>Claude Code status</span>
+              <span>{cliInfo.app} status</span>
             </label>
-            <button type="button" onClick={checkClaudeCli} disabled={isCheckingClaude} className={linkButton} title="Check Claude Code again">
-              <RefreshCw className={`w-3 h-3 ${isCheckingClaude ? "animate-spin" : ""}`} />
-              <span>{isCheckingClaude ? "Checking..." : "Check again"}</span>
+            <button
+              type="button"
+              onClick={() => cliId && checkCli(cliId)}
+              disabled={isCheckingCli}
+              className={linkButton}
+              title={`Check ${cliInfo.app} again`}
+            >
+              <RefreshCw className={`w-3 h-3 ${isCheckingCli ? "animate-spin" : ""}`} />
+              <span>{isCheckingCli ? "Checking..." : "Check again"}</span>
             </button>
           </div>
-          {isCheckingClaude && !claudeStatus ? (
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400">Looking for Claude Code and its sign-in...</div>
-          ) : claudeStatus?.installed && claudeStatus.loggedIn ? (
+          {isCheckingCli && !cliStatus ? (
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400">Looking for {cliInfo.app} and its sign-in...</div>
+          ) : cliStatus?.installed && cliStatus.loggedIn ? (
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2 text-[11px] text-emerald-300">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-px" />
-              <span>{claudeStatus.message}</span>
+              <span>{cliStatus.message}</span>
             </div>
-          ) : claudeStatus ? (
+          ) : cliStatus ? (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-[11px] text-rose-300">
               <AlertCircle className="w-4 h-4 shrink-0 mt-px" />
               <div className="space-y-1">
-                <p>{claudeStatus.message}</p>
-                {!claudeStatus.installed && (
+                <p>{cliStatus.message}</p>
+                {!cliStatus.installed && (
                   <button
                     type="button"
-                    onClick={() => openExternal("https://code.claude.com/docs/en/setup")}
+                    onClick={() => openExternal(cliInfo.setupUrl)}
                     className="flex items-center gap-1 text-rose-200 hover:text-white underline underline-offset-2 cursor-pointer"
                   >
-                    <span>Claude Code setup guide</span>
+                    <span>{cliInfo.setupLabel}</span>
                     <ExternalLink className="w-3 h-3" />
                   </button>
                 )}
@@ -212,8 +325,48 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
         </div>
       )}
 
+      {/* OpenRouter sign-in: fills the address and key below */}
+      {!isCli && isLocalClient && (
+        <div className="space-y-2 pt-2 border-t border-slate-800/80">
+          <label className={fieldLabel}>
+            <Link2 className="w-3.5 h-3.5 text-slate-400" />
+            <span>OpenRouter account</span>
+          </label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <button
+              type="button"
+              onClick={connectOpenRouter}
+              disabled={connectState === "waiting"}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-100 transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <Link2 className="w-3.5 h-3.5 text-[#DD3C73]" />
+              <span>{connectState === "waiting" ? "Waiting for the browser..." : "Connect OpenRouter"}</span>
+            </button>
+            {connectState === "waiting" && (
+              <button
+                type="button"
+                onClick={() => {
+                  stopConnectPoll();
+                  setConnectState("idle");
+                  setConnectMessage("");
+                }}
+                className={linkButton}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+          <p
+            className={`text-[10px] ${connectState === "connected" ? "text-emerald-300" : connectState === "failed" ? "text-rose-300" : "text-slate-500"}`}
+          >
+            {connectMessage ||
+              "Sign in to OpenRouter in your browser and approve Portfolio. The app gets a key for your OpenRouter account and uses its credits."}
+          </p>
+        </div>
+      )}
+
       {/* Server address and API key: OpenAI-compatible only */}
-      {!isClaudeCli && (
+      {!isCli && (
         <div className="space-y-2 pt-2 border-t border-slate-800/80">
           <label className={fieldLabel}>
             <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -252,7 +405,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
         </div>
       )}
 
-      {!isClaudeCli && (
+      {!isCli && (
         <div className="space-y-2 pt-2 border-t border-slate-800/80">
           <label className={fieldLabel}>
             <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
@@ -293,7 +446,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
             <Cpu className="w-3.5 h-3.5 text-slate-400" />
             <span>Model</span>
           </label>
-          {!isClaudeCli && (
+          {!isCli && (
             <button
               type="button"
               onClick={() => fetchServerModels(reportBaseUrl, reportApiKey)}
@@ -307,7 +460,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
           )}
         </div>
 
-        {(isClaudeCli || serverModels.length > 0) && (
+        {(isCli || serverModels.length > 0) && (
           <Select
             value={isCustomModel ? "__custom__" : reportModel}
             onChange={(e) => {
@@ -323,7 +476,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
             icon={<Cpu className="w-4 h-4" />}
             aria-label="Model"
           >
-            <option value="">{isClaudeCli ? "Default (chosen by Claude Code)" : "Default (chosen by the server)"}</option>
+            <option value="">{cliInfo ? `Default (chosen by ${cliInfo.app})` : "Default (chosen by the server)"}</option>
             {availableModels.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -341,11 +494,11 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
               onChange={(e) => setReportModel(e.target.value)}
               onBlur={(e) => saveModel(reportProvider, e.target.value.trim())}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-              placeholder={isClaudeCli ? "e.g. claude-sonnet-5" : "e.g. llama-3.3-70b-versatile, or leave empty for the server default"}
+              placeholder={cliInfo ? cliInfo.modelPlaceholder : "e.g. llama-3.3-70b-versatile, or leave empty for the server default"}
               className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
             />
             <p className="text-[10px] text-slate-500 mt-1">
-              {isClaudeCli ? "Any model name or alias Claude Code accepts with --model." : "The model name as your program or service lists it."}
+              {cliInfo ? `Any model name ${cliInfo.app} accepts with its model option.` : "The model name as your program or service lists it."}
             </p>
           </div>
         )}
