@@ -5,16 +5,8 @@ import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { api } from "../../api";
 import { Select } from "../common/Select";
 import { SectionHeader, SettingItem, Toggle } from "./SettingsFields";
-import { ChoiceButton, StatusLine, type SidebarSection, type StatusResult } from "./SettingsPrimitives";
-
-export type AutomationId = "daily-brief" | "weekly-analysis" | "event-alerts";
-
-/** The cards of the Automation section, listed as its submenu in the Preferences sidebar. */
-export const AUTOMATIONS: (SidebarSection & { id: AutomationId })[] = [
-  { id: "daily-brief", label: "Daily brief", icon: Newspaper },
-  { id: "weekly-analysis", label: "Weekly analysis", icon: CalendarRange },
-  { id: "event-alerts", label: "Event alerts", icon: CalendarClock },
-];
+import { ChoiceButton, StatusLine, type StatusResult } from "./SettingsPrimitives";
+import type { AutomationId } from "./settings-nav";
 
 const DAILY_OPTIONS: { value: DailyBriefDays; label: string }[] = [
   { value: "weekdays", label: "Mon to Fri" },
@@ -54,7 +46,7 @@ interface AutomationDefinition {
   /** Where the result stays without a channel. */
   stored: string;
   privacy: string;
-  /** "brief" or "analysis", for the status texts. */
+  /** "brief", "report" or "alert", for the status texts. */
   noun: string;
   runningText: string;
   loadStatus: () => Promise<AutomationStatus>;
@@ -104,22 +96,22 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
   },
   "weekly-analysis": {
     icon: CalendarRange,
-    title: "Weekly Analysis",
+    title: "Weekly Report",
     blurb: "Once a week the assistant writes the weekly report of each portfolio and sends you a summary.",
-    toggleTitle: "Write a weekly analysis",
+    toggleTitle: "Write a weekly report",
     toggleDescription:
       "The assistant writes the full weekly report, the same one as Reports, Generate: performance, allocation, risk, technical signals and the news of the week. It is stored under Reports; your notification apps get a short summary.",
     enabledKey: "weeklyAnalysisEnabled",
     timeKey: "weeklyAnalysisTime",
     portfolioKey: "weeklyAnalysisPortfolioId",
     timeDescription:
-      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the analysis runs when it starts within two days.",
+      "Local time of this computer. Portfolio must be running, in the window or the tray. If it was not running at that time, the report is written when it starts within two days.",
     portfolioDescription: "One report and one notification per portfolio.",
     delivered: "A short summary of each report goes",
     stored: "The reports are still stored under Reports",
     privacy:
-      "The report sees what Reports, Generate sends to your LLM provider. The notification summary carries percentages and tickers only, never balances or money amounts.",
-    noun: "analysis",
+      "The report sees what Reports, Generate sends to your AI provider. The notification summary carries percentages and tickers only, never balances or money amounts.",
+    noun: "report",
     runningText: "Refreshing quotes and writing the weekly report. This can take a few minutes...",
     loadStatus: api.getWeeklyAnalysisStatus,
     run: api.runWeeklyAnalysis,
@@ -146,11 +138,11 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
   },
   "event-alerts": {
     icon: CalendarClock,
-    title: "Event Alerts",
-    blurb: "Each day a push notification names the holdings that go ex-dividend or report earnings on the next day.",
+    title: "Dividend & Earnings Alerts",
+    blurb: "Each day your phone hears which holdings pay a dividend or publish results the next day.",
     toggleTitle: "Send event alerts",
     toggleDescription:
-      "Covers declared ex-dividend dates and earnings reports of held stocks and funds. On Friday and Saturday the alert covers the days up to Monday. Each event goes out once, even after a manual run.",
+      "Covers the ex-dividend dates (the last day to own a share and still get the dividend) and earnings reports (quarterly results) of the stocks and funds you hold. On Friday and Saturday the alert covers the days up to Monday. Each event goes out once, even after a manual run.",
     enabledKey: "eventAlertsEnabled",
     timeKey: "eventAlertsTime",
     portfolioKey: "eventAlertsPortfolioId",
@@ -172,8 +164,8 @@ interface SectionProps {
   config: DesktopConfig;
   onConfigChange: (config: DesktopConfig) => void;
   portfolios: PortfolioItem[];
-  /** Opens Settings, Integrations. */
-  onOpenIntegrations: () => void;
+  /** Opens Settings, Notifications, Phone Apps. */
+  onOpenPhoneSetup: () => void;
 }
 
 const CHANNEL_NAMES: Record<NotificationChannel, string> = { gotify: "Gotify", ntfy: "ntfy" };
@@ -181,7 +173,7 @@ const CHANNEL_NAMES: Record<NotificationChannel, string> = { gotify: "Gotify", n
 /** The Delivery text for the set-up channels. */
 function deliveryText(def: AutomationDefinition, channels: NotificationChannel[]): string {
   if (channels.length === 0) {
-    return `No notification channel is set up. ${def.stored}, but no push notification goes out. Set up Gotify or ntfy under Integrations.`;
+    return `No notification channel is set up. ${def.stored}, but no push notification goes out. Set up Gotify or ntfy under Phone Apps.`;
   }
   const names = channels.map((c) => CHANNEL_NAMES[c]).join(" and ");
   return `${def.delivered} to ${names} as a push notification.`;
@@ -191,7 +183,7 @@ const formatWhen = (iso?: string) =>
   iso ? new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
 
 /** One scheduled assistant task: switch, schedule, portfolios, delivery through the notification channels and the last run. */
-function AutomationCard({ def, config, onConfigChange, portfolios, onOpenIntegrations }: SectionProps & { def: AutomationDefinition }) {
+function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSetup }: SectionProps & { def: AutomationDefinition }) {
   const [status, setStatus] = useState<AutomationStatus | null>(null);
   const [result, setResult] = useState<StatusResult | null>(null);
   const [saving, setSaving] = useState(false);
@@ -319,11 +311,11 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenIntegra
           control={
             <button
               type="button"
-              onClick={onOpenIntegrations}
+              onClick={onOpenPhoneSetup}
               className="h-8 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 bg-slate-950/60 text-[11px] font-bold text-slate-300 hover:text-slate-100 hover:border-slate-700 transition-colors cursor-pointer"
             >
               <BellRing className="w-3.5 h-3.5 text-accent-500" />
-              {channels.length > 0 ? "Integrations" : "Set up"}
+              {channels.length > 0 ? "Phone Apps" : "Set up"}
             </button>
           }
         />
@@ -382,7 +374,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenIntegra
   );
 }
 
-/** The Automation section: one card per automation of the submenu. */
+/** A Notifications page for one automation of the submenu. */
 export function AutomationSection({ automation, ...props }: SectionProps & { automation: AutomationId }) {
   return <AutomationCard key={automation} def={DEFINITIONS[automation]} {...props} />;
 }

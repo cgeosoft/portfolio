@@ -1,21 +1,52 @@
 /**
  * Static pages shown in the window while the service is not reachable.
  *
- * They copy the GUI's own loading screen (brand tile, radial-gradient glows, pill status) so the
+ * They copy the GUI's own loading screen (brand tile, radial-gradient glows, loading state) so the
  * hand-off from "service starting" to the GUI is seamless. The texts and colours come from
  * `app.ts`. Glows are gradients, not blur filters, and the only animated elements are small
- * boxes: the window renders in software WebKitGTK on Linux. The line under the "Starting up"
- * pill follows the start-up steps: `startingHintScript` replaces it in place, without a reload.
+ * boxes: the window renders in software WebKitGTK on Linux. While the app starts, an accent
+ * wave runs across the heading letters (opacity only), and the loading state under the tagline follows the start-up steps:
+ * `startingHintScript` replaces it in place, without a reload. The heading font is embedded as a
+ * data URL (`loadHeadingFont`), and the page stays hidden until it has loaded.
  * The starting page opens with the vendor intro of `pages.intro`: a white square wordmark whose
  * rows slide in from the left and the right, snap together in the centre and send out ripples,
  * then fade out before the brand rises.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { APP } from "./app";
 
 const { pages } = APP;
 const t = pages.theme;
 
 const escape = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] as string);
+
+const font = pages.headingFont;
+
+/** The `@font-face` rule of the heading font; empty until `loadHeadingFont` has read the file. */
+let headingFontFace = "";
+
+/** Reads the heading font from `<appDir>/<file>` for the pages. Without it, the heading uses the body font. */
+export function loadHeadingFont(appDir: string): void {
+  try {
+    const data = readFileSync(join(appDir, font.file)).toString("base64");
+    headingFontFace = `
+  @font-face { font-family: "${font.family}"; font-weight: ${font.weight}; font-style: normal; font-display: block;
+               src: url(data:font/woff2;base64,${data}) format("woff2"); }`;
+  } catch {
+    headingFontFace = "";
+  }
+}
+
+/** Hides the page until the heading font has loaded, for at most 1.5 s. Nothing hides without scripts. */
+const fontWaitScript = () => `<script>(function () {
+  var root = document.documentElement;
+  if (!document.fonts || !document.fonts.load) return;
+  root.classList.add("font-wait");
+  var show = function () { root.classList.remove("font-wait"); };
+  document.fonts.load(${JSON.stringify(`${font.weight} 28px "${font.family}"`)}).then(show, show);
+  setTimeout(show, 1500);
+})();</script>`;
 
 const intro = pages.intro;
 const introSeconds = intro.durationMs / 1000;
@@ -73,8 +104,9 @@ const introCss = () => `
 
 const shell = (body: string, glow: string, withIntro = false) => `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${escape(pages.documentTitle)}</title>
-<style>
+<style>${headingFontFace}
   * { box-sizing: border-box; }
+  .font-wait body > * { visibility: hidden; }
   html, body { height: 100%; margin: 0; }
   body {
     background: ${t.background}; color: ${t.text}; overflow: hidden; -webkit-user-select: none; user-select: none;
@@ -90,16 +122,17 @@ const shell = (body: string, glow: string, withIntro = false) => `<!doctype html
   .tile svg { width: 28px; height: 28px; color: ${t.accent}; animation: breathe 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
   @keyframes breathe { 50% { opacity: 0.45; } }
 
-  h1 { margin: 14px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;
+  h1 { margin: 14px 0 0; font: ${font.weight} 28px/1.2 "${font.family}", ${t.font};
        background: ${t.heading}; -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h1.loading { background: none; color: ${t.text}; }
+  h1.loading .l { position: relative; }
+  h1.loading .l::after { content: attr(data-c); position: absolute; left: 0; top: 0; color: ${t.accent}; opacity: 0; will-change: opacity;
+                         animation: wave 1.8s ease-in-out calc(var(--i) * 0.09s) infinite; }
+  @keyframes wave { 0%, 50%, 100% { opacity: 0; } 25% { opacity: 1; } }
   .tagline { margin: 4px 0 0; font: 500 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: ${t.accent}; }
   .tagline.error { color: #fb7185; }
 
-  .pill { display: flex; align-items: center; gap: 8px; margin-top: 28px; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 500; color: ${t.muted};
-          background: ${t.surface}; border: 1px solid ${t.surfaceBorder}; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6); }
-  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${t.accentSoft}; border-top-color: ${t.accent}; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .hint { margin: 14px 0 0; font-size: 12px; color: ${t.hint}; }
+  .status { margin: 20px 0 0; font-size: 12px; color: ${t.muted}; }
 
   .card { width: 100%; margin-top: 24px; padding: 20px; border-radius: 20px; background: ${t.card}; border: 1px solid ${t.cardBorder};
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: left; }
@@ -107,28 +140,32 @@ const shell = (body: string, glow: string, withIntro = false) => `<!doctype html
   code { color: #bae6fd; background: ${t.inset}; padding: 2px 6px; border-radius: 6px; font-size: 12px; word-break: break-all; }
   pre { margin: 0; background: ${t.inset}; border: 1px solid ${t.cardBorder}; border-radius: 12px; padding: 12px; font-size: 11px; line-height: 1.5;
         max-height: 36vh; overflow: auto; white-space: pre-wrap; color: ${t.muted}; }${withIntro ? introCss() : ""}
-</style></head><body>${withIntro ? introHtml() : ""}<main>${body}</main></body></html>`;
+  @media (prefers-reduced-motion: reduce) { h1.loading .l::after { animation: none; } }
+</style>${headingFontFace ? fontWaitScript() : ""}</head><body>${withIntro ? introHtml() : ""}<main>${body}</main></body></html>`;
 
-const brand = (tagline: string, error = false) => `<div class="tile"><div>${pages.icon}</div></div>
-<h1>${escape(pages.heading)}</h1>
+/** The heading letter by letter: each letter carries an accent copy that `h1.loading` fades in and out. */
+const headingLetters = () =>
+  [...pages.heading].map((c, i) => `<span class="l" style="--i:${i}" data-c="${escape(c).replace(/"/g, "&quot;")}">${escape(c)}</span>`).join("");
+
+const brand = (tagline: string, error = false, loading = false) => `<div class="tile"><div>${pages.icon}</div></div>
+<h1${loading ? ` class="loading">${headingLetters()}` : `>${escape(pages.heading)}`}</h1>
 <p class="tagline${error ? " error" : ""}">${escape(tagline)}</p>`;
 
-/** The id of the line under the "Starting up" pill; `startingHintScript` replaces its text. */
+/** The id of the loading state under the tagline; `startingHintScript` replaces its text. */
 const HINT_ID = "starting-hint";
 
-/** The page of the start-up, with `hint` (a text of `pages.starting`) under the pill. */
+/** The page of the start-up, with `hint` (a text of `pages.starting`) under the tagline. */
 export function startingPage(hint: string): string {
   return shell(
-    `${brand(pages.tagline)}
-<div class="pill"><span class="spin"></span><span>Starting up</span></div>
-<p class="hint" id="${HINT_ID}">${escape(hint)}</p>`,
+    `${brand(pages.tagline, false, true)}
+<p class="status" id="${HINT_ID}">${escape(hint)}</p>`,
     t.glow,
     true,
   );
 }
 
 /**
- * A script for `webview.executeJavascript` that replaces the line under "Starting up" with
+ * A script for `webview.executeJavascript` that replaces the loading state under the tagline with
  * `hint`, so the page follows the start-up without a reload. A no-op on any other page.
  */
 export function startingHintScript(hint: string): string {

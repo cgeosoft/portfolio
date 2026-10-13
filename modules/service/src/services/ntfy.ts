@@ -1,5 +1,5 @@
 /**
- * ntfy push notifications (Settings, Integrations). The service publishes a
+ * ntfy push notifications (Settings, Notifications, Phone Apps). The service publishes a
  * message as JSON to the root of the ntfy server (https://ntfy.sh or a
  * self-hosted one), which keeps titles with any character intact. On the
  * public server the topic name is the only protection, so the GUI asks for a

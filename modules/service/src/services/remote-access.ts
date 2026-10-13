@@ -1,5 +1,5 @@
 /**
- * The "remote connections" switch and port (Settings, General). The service
+ * The "remote connections" switch and port (Settings, Privacy & Security). The service
  * always listens on `127.0.0.1` on a random port for the desktop window.
  * While the switch is on and a PIN is set, a second listener on
  * `0.0.0.0:<remote port>` lets phones and other devices on the local network

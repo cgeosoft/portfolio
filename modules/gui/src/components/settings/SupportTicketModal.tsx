@@ -16,7 +16,7 @@ interface TicketStatus {
 }
 
 /**
- * Help → Report an Issue... and Settings → About → Report an Issue: the
+ * Help → Report an Issue... and Settings → App & Help → Report an Issue: the
  * support ticket form. The service builds the mail and, when asked, the
  * anonymised diagnostics zip; the mail opens in the default email
  * application and the user attaches the archive by hand.

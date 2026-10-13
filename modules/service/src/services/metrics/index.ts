@@ -89,7 +89,7 @@ export class MetricsService {
   private unavailableReason(record: MetricRecord): string | undefined {
     const missing = metricScopeProviders(record.scopesGranted).filter((provider) => provider === "fmp" && !this.fundamentals.isAvailable());
     if (missing.length === 0) return undefined;
-    return `Needs a ${missing.map((p) => DATA_PROVIDER_LABELS[p]).join(" and ")} API key (Settings, Data providers)`;
+    return `Needs a ${missing.map((p) => DATA_PROVIDER_LABELS[p]).join(" and ")} API key (Settings, Market Data)`;
   }
 
   async evaluateForPortfolio(params: EvaluatePortfolioMetricsRequest): Promise<MetricEvaluation[]> {

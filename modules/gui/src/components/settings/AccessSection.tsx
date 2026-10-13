@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, MonitorSmartphone, Wifi } from "lucide-react";
+import { Lock, MonitorSmartphone, ShieldCheck, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import type { RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
-import { SettingItem, Toggle } from "./SettingsFields";
+import { SectionHeader, SettingItem, SettingsFields, Toggle } from "./SettingsFields";
 
 const PIN_RULE = /^[0-9]{6}$/;
 
@@ -217,7 +217,7 @@ function SessionsCard() {
 }
 
 /**
- * The app lock and the remote-connections rows of Settings → General. The
+ * The app lock and the remote-connections rows of Settings → Privacy & Security. The
  * remote row only renders in the desktop window (the service answers 403
  * for other clients) and needs a PIN before it can be turned on.
  */
@@ -290,15 +290,15 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
       {remote && (
         <SettingItem
           icon={Wifi}
-          title="Allow remote connections"
-          description="Let phones and other devices on the same network open this Portfolio. The app lock PIN is required first. When off, only this computer can connect."
+          title="Open on other devices"
+          description="Let your phone or another computer on the same home network open this Portfolio in its browser. Turn on the app lock first. When off, only this computer can open it."
           control={
             <span title={!remote.enabled && remote.pinRequired ? "Set a PIN first" : undefined}>
               <Toggle
                 checked={remote.enabled}
                 disabled={remoteBusy || (!remote.enabled && remote.pinRequired)}
                 onChange={toggleRemote}
-                label="Allow remote connections"
+                label="Open on other devices"
               />
             </span>
           }
@@ -320,10 +320,13 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
               }}
               className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
             />
-            <span className="text-[11px] text-slate-500">Other devices connect on this port.</span>
+            <span className="text-[11px] text-slate-500">Other devices use this number in the address. Change it only if another program already uses it.</span>
           </div>
           {remoteError && <p className="text-xs text-rose-400">{remoteError}</p>}
           {!remoteError && remote.error && <p className="text-xs text-rose-400">{remote.error}</p>}
+          {remote.enabled && remote.urls.length > 0 && (
+            <span className="text-[11px] text-slate-400">Open one of these addresses in the browser of the other device:</span>
+          )}
           {remote.enabled && (
             <div className="flex flex-wrap gap-2">
               {remote.urls.length === 0 ? (
@@ -340,5 +343,18 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
         </SettingItem>
       )}
     </>
+  );
+}
+
+/** Settings → Privacy & Security: the app lock, signed-in devices, remote access and usage statistics. */
+export function SecuritySection({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void }) {
+  return (
+    <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
+      <SectionHeader icon={ShieldCheck} title="Privacy & Security" description="Who can open Portfolio, and what it shares." />
+      <div className="divide-y divide-slate-800/80 -mt-2">
+        <AccessRows onPinEnabledChange={onPinEnabledChange} />
+        <SettingsFields section="security" />
+      </div>
+    </div>
   );
 }

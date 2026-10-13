@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ArrowDownToLine, BarChart3, Download, Power, RefreshCw, Settings2, type LucideIcon } from "lucide-react";
+import { AlertCircle, ArrowDownToLine, BarChart3, Download, EyeOff, Power, RefreshCw, Settings2, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SettingSection, SettingView } from "portfolio-shared/api-types";
 import type { DesktopConfig } from "portfolio-shared/config-types";
@@ -34,6 +34,7 @@ export function Toggle({ checked, onChange, label, disabled = false }: { checked
 /** Icons for the catalog settings, keyed by setting key. */
 const SETTING_ICONS: Record<string, LucideIcon> = {
   marketQuotesInterval: RefreshCw,
+  hideSponsorBanners: EyeOff,
   startWithBoot: Power,
   closeToTray: ArrowDownToLine,
   telemetryEnabled: BarChart3,

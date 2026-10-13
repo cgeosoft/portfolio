@@ -81,9 +81,9 @@ function unavailableText(part: CompanyIntelPart, intel: CompanyIntel): string {
     case "not_applicable":
       return intel.included.length > 0 ? "Does not apply to ETFs and funds." : "Public company data does not apply to this holding.";
     case "no_key":
-      return fmpOnly ? "Needs a Financial Modeling Prep key. Add one in Settings → Data Providers." : "Needs a Financial Modeling Prep or Finnhub key. Add one in Settings → Data Providers.";
+      return fmpOnly ? "Needs a Financial Modeling Prep key. Add one in Settings → Market Data." : "Needs a Financial Modeling Prep or Finnhub key. Add one in Settings → Market Data.";
     case "key_rejected":
-      return "Financial Modeling Prep rejected the API key. Check it in Settings → Data Providers.";
+      return "Financial Modeling Prep rejected the API key. Check it in Settings → Market Data.";
     case "restricted":
       return "Your Financial Modeling Prep plan does not include this data.";
     case "failed":

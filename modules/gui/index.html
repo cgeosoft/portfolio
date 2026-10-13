@@ -37,44 +37,79 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <!-- Boot loader: a static copy of the desktop shell's starting page (modules/desktop/src/bun/pages.ts),
          painted before the scripts load so the hand-off from the shell shows no blank page.
+         The content stays hidden until the heading font has loaded, so the heading never changes font.
          hideBootLoader() in src/bootLoader.ts removes it once the first screen has its data. -->
+    <link rel="stylesheet" href="/src/boot-font.css" />
     <style>
       #boot-loader { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center;
         background: #07090e; color: #e2e8f0; -webkit-user-select: none; user-select: none;
-        font: 14px/1.5 "Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
         background-image: radial-gradient(circle 420px at 50% 25%, rgba(79, 70, 229, 0.22), transparent 70%),
           radial-gradient(circle 340px at 25% 75%, rgba(147, 51, 234, 0.12), transparent 70%),
           radial-gradient(circle 300px at 85% 85%, rgba(6, 182, 212, 0.08), transparent 70%);
         transition: opacity 0.3s ease-out; }
       #boot-loader.hide { opacity: 0; pointer-events: none; }
-      #boot-loader main { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); padding: 24px; }
+      #boot-loader, #boot-loader * { box-sizing: border-box; }
+      #boot-loader main { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); padding: 24px; transition: opacity 0.2s ease-out; }
+      .boot-font-wait #boot-loader main { opacity: 0; }
       #boot-loader .tile { width: 56px; height: 56px; padding: 1px; border-radius: 16px; box-shadow: 0 20px 40px -12px rgba(221, 60, 115, 0.35);
         background: linear-gradient(to top right, #DD3C73, #a855f7, #22d3ee); }
       #boot-loader .tile div { width: 100%; height: 100%; border-radius: 15px; background: #020617; display: flex; align-items: center; justify-content: center; }
       #boot-loader .tile svg { width: 28px; height: 28px; color: #e65f8e; animation: boot-breathe 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
       @keyframes boot-breathe { 50% { opacity: 0.45; } }
-      #boot-loader h1 { margin: 14px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;
-        background: linear-gradient(to right, #fff, #e2e8f0, #f5abc5); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      #boot-loader h1 { margin: 14px 0 0; font: 700 28px/1.2 Sansation, system-ui, sans-serif; color: #e2e8f0; }
+      /* An accent copy of each letter fades in and out, one letter after the other. Only opacity
+         animates, so the compositor runs it while the scripts keep the main thread busy. */
+      #boot-loader h1 .l { position: relative; }
+      #boot-loader h1 .l::after { content: attr(data-c); position: absolute; left: 0; top: 0; color: #e65f8e; opacity: 0; will-change: opacity;
+        animation: boot-wave 1.8s ease-in-out calc(var(--i) * 0.09s) infinite; }
+      @keyframes boot-wave { 0%, 50%, 100% { opacity: 0; } 25% { opacity: 1; } }
       #boot-loader .tagline { margin: 4px 0 0; font: 500 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e65f8e; }
-      #boot-loader .pill { display: flex; align-items: center; gap: 8px; margin-top: 28px; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 500;
-        color: #94a3b8; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(30, 41, 59, 0.8); box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6); }
-      #boot-loader .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(230, 95, 142, 0.25); border-top-color: #e65f8e;
-        animation: boot-spin 0.8s linear infinite; }
-      @keyframes boot-spin { to { transform: rotate(360deg); } }
-      #boot-loader .hint { margin: 14px 0 0; font-size: 12px; color: #475569; }
+      #boot-loader .status { margin: 20px 0 0; font-size: 12px; color: #94a3b8; }
+      @media (prefers-reduced-motion: reduce) { #boot-loader h1 .l::after { animation: none; } }
     </style>
+    <script>
+      // Hide the loader content until the heading font has loaded, for at most 1.5 s.
+      (function() {
+        var root = document.documentElement;
+        if (!document.fonts || !document.fonts.load) return;
+        root.classList.add('boot-font-wait');
+        var show = function() {
+          if (!root.classList.contains('boot-font-wait')) return;
+          root.classList.remove('boot-font-wait');
+          // hideBootLoader() keeps the loader on screen for a minimum time from here.
+          root.dataset.bootShownAt = String(performance.now());
+        };
+        document.fonts.load('700 28px Sansation').then(show, show);
+        setTimeout(show, 1500);
+      })();
+    </script>
     <title>Portfolio</title>
   </head>
   <body class="bg-[var(--app-bg)] text-[var(--text-main)] font-sans antialiased selection:bg-accent-500/30 selection:text-accent-200 overflow-hidden">
     <div id="boot-loader" aria-busy="true">
       <main>
         <div class="tile"><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg></div></div>
-        <h1>Portfolio</h1>
+        <h1><span class="l" style="--i:0" data-c="P">P</span><span class="l" style="--i:1" data-c="o">o</span><span class="l" style="--i:2" data-c="r">r</span><span class="l" style="--i:3" data-c="t">t</span><span class="l" style="--i:4" data-c="f">f</span><span class="l" style="--i:5" data-c="o">o</span><span class="l" style="--i:6" data-c="l">l</span><span class="l" style="--i:7" data-c="i">i</span><span class="l" style="--i:8" data-c="o">o</span></h1>
         <p class="tagline">Personal Investment Tracker</p>
-        <div class="pill"><span class="spin"></span><span>Starting up</span></div>
-        <p class="hint">Loading your portfolio.</p>
+        <p class="status">Loading your portfolio.</p>
       </main>
     </div>
+    <script>
+      // The app restores its zoom level on <html> while the loader shows; undo it here so the
+      // loader keeps the size of the shell's starting page.
+      (function() {
+        var root = document.documentElement;
+        var el = document.getElementById('boot-loader');
+        var observer = new MutationObserver(sync);
+        function sync() {
+          if (!el.isConnected) return observer.disconnect();
+          var zoom = parseFloat(root.style.zoom) || 1;
+          el.style.zoom = String(1 / zoom);
+        }
+        observer.observe(root, { attributes: true, attributeFilter: ['style'] });
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

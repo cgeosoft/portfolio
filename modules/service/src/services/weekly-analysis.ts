@@ -1,5 +1,5 @@
 /**
- * Weekly analysis (Settings, Automation): once a week at the set day and
+ * Weekly analysis (Settings, Notifications, Weekly Report): once a week at the set day and
  * local time the assistant writes the weekly report of each portfolio, the
  * same report as Reports, Generate. The report is stored with the others;
  * every notification channel that is set up (Gotify, ntfy) gets a short
@@ -179,7 +179,7 @@ export class WeeklyAnalysisService {
     const success = written > 0 && delivered === (channels.length > 0 ? written : 0);
     const message =
       channels.length === 0
-        ? `Wrote ${written} weekly report(s) to Reports. Set up Gotify or ntfy under Integrations to receive a summary as a push notification.`
+        ? `Wrote ${written} weekly report(s) to Reports. Set up a phone app under Settings, Notifications to receive a summary as a push notification.`
         : `Wrote ${written} weekly report(s) and delivered ${delivered} summary(ies) through ${channelNames(channels)}.`;
     this.last = { at: now.toISOString(), trigger, success, message, errors: unique };
     timer.end(success ? "success" : "warning", `Weekly analysis: ${written} written, ${delivered} delivered, ${unique.length} problem(s)`);

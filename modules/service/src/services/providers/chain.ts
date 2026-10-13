@@ -2,7 +2,7 @@
  * Provider chain: "best data available" for any kind of market data.
  *
  * A chain takes a data category and one attempt per provider. It orders the
- * attempts as: the preferred provider from Settings → Data providers (for a
+ * attempts as: the preferred provider from Settings → Market Data (for a
  * routed category), then the rest in the category's quality order. It skips
  * a provider whose `isAvailable()` is false (no API key), treats null, an
  * empty result or a throw as a miss, and moves on to the next provider.

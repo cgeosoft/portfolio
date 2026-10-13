@@ -25,7 +25,7 @@ import { APP, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
 import { classifyExternalUrl, encodeForShell } from "./external-url";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
-import { failedPage, startingHintScript, startingPage } from "./pages";
+import { failedPage, loadHeadingFont, startingHintScript, startingPage } from "./pages";
 import { ServiceProcess, pruneDailyLogs } from "./service";
 import { WindowStateManager, normalizeWindowState, readWindowState, writeWindowState } from "./window-state";
 
@@ -107,6 +107,8 @@ async function main(): Promise<void> {
   const repoRoot = build.isPackaged ? undefined : findRepoRoot(appDir);
   const echo = !build.isPackaged;
 
+  loadHeadingFont(appDir);
+
   const windowStateFile = join(dataDir, "window-state.json");
   const savedWindowState = readWindowState(windowStateFile);
   const windowState = normalizeWindowState(savedWindowState);
@@ -161,7 +163,7 @@ async function main(): Promise<void> {
     }
   });
 
-  // The line under "Starting up" follows the start-up steps. The page loads a moment after the
+  // The loading state under the tagline follows the start-up steps. The page loads a moment after the
   // window opens, so the current line is written again when its DOM is ready (a no-op on the
   // app and on the failure page).
   let startingHint: string = APP.pages.starting.service;

@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    hideBootLoader();
+    hideBootLoader(true);
     console.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
     this.setState({ errorInfo });
   }

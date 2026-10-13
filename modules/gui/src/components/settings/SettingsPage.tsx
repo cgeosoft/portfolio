@@ -1,154 +1,29 @@
 import { useState, useEffect, type ReactNode } from "react";
-import {
-  Settings,
-  Sliders,
-  Bot,
-  Info,
-  Cpu,
-  Globe,
-  Key,
-  EyeOff,
-  Eye,
-  RefreshCw,
-  PlayCircle,
-  CheckCircle2,
-  AlertCircle,
-  Keyboard,
-  Sparkles,
-  Database,
-  LifeBuoy,
-  Check,
-  ExternalLink,
-  Sun,
-  Moon,
-  Terminal,
-  Gauge,
-  Plug,
-  Workflow,
-  Type,
-} from "lucide-react";
-import { Select } from "../common/Select";
+import { Settings } from "lucide-react";
 import { rpc } from "../../rpc";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
-import type { AppUpdateInfo, ClaudeCliStatusResponse, DesktopConfig, AppTheme } from "portfolio-shared/api-types";
-import { TestLlmModal } from "./TestLlmModal";
+import type { DesktopConfig, AppTheme } from "portfolio-shared/api-types";
+import { AppearanceSection } from "./AppearanceSection";
+import { SecuritySection } from "./AccessSection";
+import { AssistantSection } from "./AssistantSection";
+import { PhoneAppsSection } from "./PhoneAppsSection";
+import { AutomationSection } from "./AutomationSection";
 import { DataProvidersSection } from "./DataProvidersSection";
-import { AccessRows } from "./AccessSection";
-import { BackupCard } from "./BackupCard";
-import { SectionHeader, SettingItem, SettingsFields } from "./SettingsFields";
-import { SidebarEntry, type SidebarSection } from "./SettingsPrimitives";
-import { INTEGRATIONS, IntegrationsSection, type IntegrationId } from "./IntegrationsSection";
-import { AUTOMATIONS, AutomationSection, type AutomationId } from "./AutomationSection";
-import { openExternal, WEBPAGE_EMAIL } from "../../environment";
-import { CLAUDE_CLI_MODELS, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
-import { SECRET_MASK } from "portfolio-shared/config-types";
+import { YourDataSection } from "./YourDataSection";
+import { AboutSection } from "./AboutSection";
+import { SidebarEntry } from "./SettingsPrimitives";
+import {
+  DEFAULT_SETTINGS_SECTION,
+  NOTIFICATION_PAGES,
+  SECTIONS,
+  isNotificationPage,
+  sectionOf,
+  type NotificationPageId,
+  type SettingsSection,
+  type SettingsSectionId,
+} from "./settings-nav";
 
-type SettingsSectionId = "general" | "metrics" | "integrations" | "automation" | "about";
-
-/** The pages of the Integrations submenu: the assistant and data providers, then the notification channels. */
-type IntegrationPageId = "assistant" | "data-providers" | IntegrationId;
-
-/** A Preferences section, or an Integrations or Automation page opened directly. */
-export type SettingsSection = SettingsSectionId | IntegrationPageId | AutomationId;
-
-const INTEGRATION_PAGES: (SidebarSection & { id: IntegrationPageId })[] = [
-  { id: "assistant", label: "Assistant", icon: Bot },
-  { id: "data-providers", label: "Data Providers", icon: Database },
-  ...INTEGRATIONS,
-];
-
-const isIntegrationPage = (section: SettingsSection): section is IntegrationPageId => INTEGRATION_PAGES.some((page) => page.id === section);
-const isAutomationPage = (section: SettingsSection): section is AutomationId => AUTOMATIONS.some((page) => page.id === section);
-
-/** The top-level section a page belongs to. */
-const sectionOf = (section: SettingsSection): SettingsSectionId =>
-  isIntegrationPage(section) ? "integrations" : isAutomationPage(section) ? "automation" : section;
-
-type LlmProviderId = "openai-compatible" | "claude-cli";
-
-interface LlmProviderOption {
-  id: LlmProviderId;
-  name: string;
-  badge: string;
-  description: string;
-}
-
-const LLM_PROVIDERS: LlmProviderOption[] = [
-  {
-    id: "openai-compatible",
-    name: "OpenAI Compatible",
-    badge: "HTTP API",
-    description:
-      "Any local server or cloud API that speaks OpenAI chat completions: llama.cpp, Ollama, LM Studio, vLLM, OpenAI, Groq, OpenRouter and others.",
-  },
-  {
-    id: "claude-cli",
-    name: "Claude CLI",
-    badge: "Claude Subscription",
-    description: "Runs the Claude Code CLI installed on this machine with your Claude subscription. No API key needed.",
-  },
-];
-
-/** Provider ids from earlier releases were migrated to "openai-compatible" by the service. */
-const toProviderId = (raw: string | undefined): LlmProviderId => (raw === "claude-cli" ? "claude-cli" : "openai-compatible");
-
-const SECTIONS = [
-  {
-    id: "general" as const,
-    label: "General",
-    description: "Refresh, startup & app lock",
-    icon: Sliders,
-  },
-  {
-    id: "metrics" as const,
-    label: "Metrics",
-    description: "Dashboard metrics & marketplace",
-    icon: Gauge,
-  },
-  {
-    id: "integrations" as const,
-    label: "Integrations",
-    description: "Assistant, data providers & notifications",
-    icon: Plug,
-  },
-  {
-    id: "automation" as const,
-    label: "Automation",
-    description: "Scheduled assistant briefs",
-    icon: Workflow,
-  },
-  {
-    id: "about" as const,
-    label: "About",
-    description: "App details & shortcuts",
-    icon: Info,
-  },
-];
-
-// Text size presets map onto the interface zoom level.
-const TEXT_SIZES: { value: number; label: string }[] = [
-  { value: 0.9, label: "Small (90%)" },
-  { value: 1, label: "Default (100%)" },
-  { value: 1.1, label: "Large (110%)" },
-  { value: 1.25, label: "Larger (125%)" },
-  { value: 1.5, label: "Largest (150%)" },
-];
-
-const SHORTCUTS = [
-  { key: "Ctrl + N", desc: "Create New Portfolio" },
-  { key: "Ctrl + T", desc: "Add Transaction" },
-  { key: "Ctrl + I", desc: "Import CSV Data" },
-  { key: "Ctrl + E", desc: "Export Active Portfolio" },
-  { key: "Ctrl + +", desc: "Zoom In" },
-  { key: "Ctrl + -", desc: "Zoom Out" },
-  { key: "Ctrl + 0", desc: "Reset Zoom" },
-  { key: "Ctrl + R", desc: "Reload Page" },
-  { key: "Ctrl + H", desc: "Toggle Privacy Mode (Mask Values)" },
-  { key: "Ctrl + J", desc: "Toggle Assistant Sidebar" },
-  { key: "Ctrl + Shift + L", desc: "Switch Light / Dark Theme" },
-  { key: "Ctrl + ,", desc: "Open Preferences" },
-  { key: "Ctrl + Q", desc: "Quit Application" },
-];
+export type { SettingsSection } from "./settings-nav";
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -161,17 +36,16 @@ interface SettingsPageProps {
   /** Interface zoom (CSS zoom on the root), shared with Ctrl +/- and the View menu. */
   zoomLevel?: number;
   onChangeZoom?: (zoom: number) => void;
-  /** Fires when the app lock is turned on or off under Access. */
+  /** Fires when the app lock is turned on or off under Privacy & Security. */
   onPinEnabledChange?: (enabled: boolean) => void;
-  /** About → Report an Issue: opens the support ticket form (the Help menu has the same item). */
+  /** App & Help → Report an Issue: opens the support ticket form (the Help menu has the same item). */
   onReportIssue?: () => void;
-  /** Preferences → Metrics: the metrics page of the active portfolio, rendered by App with its state. */
+  /** Settings → Dashboard Cards: the metrics page of the active portfolio, rendered by App with its state. */
   metrics?: ReactNode;
 }
 
 export function SettingsPage({
-  onBack,
-  initialSection = "general",
+  initialSection = DEFAULT_SETTINGS_SECTION,
   onSectionChange,
   portfolios = [],
   theme,
@@ -183,204 +57,73 @@ export function SettingsPage({
   metrics,
 }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(sectionOf(initialSection));
-  // The open card of the sections with a submenu.
-  const [activeIntegration, setActiveIntegration] = useState<IntegrationPageId>(isIntegrationPage(initialSection) ? initialSection : INTEGRATION_PAGES[0]!.id);
-  const [activeAutomation, setActiveAutomation] = useState<AutomationId>(isAutomationPage(initialSection) ? initialSection : AUTOMATIONS[0]!.id);
+  // The open page of the Notifications submenu.
+  const [activeNotification, setActiveNotification] = useState<NotificationPageId>(
+    isNotificationPage(initialSection) ? initialSection : NOTIFICATION_PAGES[0]!.id,
+  );
 
-  // General settings state
-  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
-  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
-  const [appVersion, setAppVersion] = useState("0.1.0");
-  const [appPaths, setAppPaths] = useState<{ data: string; logs: string } | null>(null);
-
-  // Assistant settings state
-  const [reportProvider, setReportProvider] = useState<LlmProviderId>("openai-compatible");
-  const [reportModel, setReportModel] = useState("");
-  const [reportApiKey, setReportApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [reportBaseUrl, setReportBaseUrl] = useState(DEFAULT_OPENAI_COMPATIBLE_URL);
-  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
-  const [isCustomModel, setIsCustomModel] = useState(false);
-  const [serverModels, setServerModels] = useState<string[]>([]);
-  const [isFetchingModels, setIsFetchingModels] = useState(false);
-  const [claudeStatus, setClaudeStatus] = useState<ClaudeCliStatusResponse | null>(null);
-  const [isCheckingClaude, setIsCheckingClaude] = useState(false);
-
-  // Full desktop config state for data providers and general settings
+  // The stored settings the hand-built pages edit; the catalog rows load their own.
   const [fullConfig, setFullConfig] = useState<DesktopConfig | null>(null);
-
-  const handleUpdateConfig = (updates: Partial<DesktopConfig>) => {
-    saveConfig(updates);
-    setFullConfig((prev) => (prev ? ({ ...prev, ...updates } as DesktopConfig) : null));
-  };
-
-  /** Lists the models of the OpenAI-compatible server and keeps the saved one when it is still offered. */
-  const fetchServerModels = async (url: string, key: string) => {
-    setIsFetchingModels(true);
-    try {
-      const res = await rpc.request.getProviderModels({ provider: "openai-compatible", baseUrl: url, apiKey: key });
-      setServerModels(res.models || []);
-    } catch {
-      setServerModels([]); // server offline or not responding
-    } finally {
-      setIsFetchingModels(false);
-    }
-  };
-
-  /** Checks that the Claude CLI is installed and signed in. */
-  const checkClaudeCli = async () => {
-    setIsCheckingClaude(true);
-    try {
-      setClaudeStatus(await rpc.request.getClaudeCliStatus());
-    } catch (err) {
-      setClaudeStatus({ installed: false, loggedIn: false, message: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setIsCheckingClaude(false);
-    }
-  };
-
-  const saveModel = (provider: LlmProviderId, model: string) => {
-    setReportModel(model);
-    saveConfig({ llmModel: model, llmModels: { ...(fullConfig?.llmModels || {}), [provider]: model } });
-  };
 
   useEffect(() => {
     setActiveSection(sectionOf(initialSection));
-    if (isIntegrationPage(initialSection)) setActiveIntegration(initialSection);
-    if (isAutomationPage(initialSection)) setActiveAutomation(initialSection);
+    if (isNotificationPage(initialSection)) setActiveNotification(initialSection);
   }, [initialSection]);
 
-  // The open page, down to the submenu card, goes to App for the URL.
-  const openPage: SettingsSection =
-    activeSection === "integrations" ? activeIntegration : activeSection === "automation" ? activeAutomation : activeSection;
+  // The open page, down to the submenu, goes to App for the URL.
+  const openPage: SettingsSection = activeSection === "notifications" ? activeNotification : activeSection;
   useEffect(() => {
     onSectionChange?.(openPage);
   }, [openPage, onSectionChange]);
 
   useEffect(() => {
-    rpc.request.getConfig({}).then((config: any) => {
-      const desktopConfig = config as DesktopConfig;
-      setFullConfig(desktopConfig);
-      const provider = toProviderId(desktopConfig.llmProvider);
-      const isCurrent = desktopConfig.llmProvider === provider;
-      setReportProvider(provider);
-
-      const savedModel = desktopConfig.llmModels?.[provider] || (isCurrent ? desktopConfig.llmModel : "") || "";
-      setReportModel(savedModel);
-      if (provider === "claude-cli" && savedModel && !CLAUDE_CLI_MODELS.includes(savedModel)) setIsCustomModel(true);
-
-      const savedKey = desktopConfig.llmApiKeys?.[provider] || (isCurrent ? desktopConfig.llmApiKey : "") || "";
-      setReportApiKey(savedKey);
-
-      const savedUrl =
-        desktopConfig.llmBaseUrls?.[provider] || (isCurrent ? desktopConfig.llmBaseUrl : "") || DEFAULT_OPENAI_COMPATIBLE_URL;
-      setReportBaseUrl(savedUrl);
-
-
-      if (provider === "claude-cli") checkClaudeCli();
-      else fetchServerModels(savedUrl, savedKey);
-    });
-
-    rpc.request.getAppInfo({}).then((info) => {
-      if (info?.version) setAppVersion(info.version);
-      if (info?.paths) setAppPaths(info.paths);
-    }).catch(() => {});
-
-    rpc.request.getUpdateInfo({}).then((res: any) => {
-      if (res) setUpdateInfo(res);
-    }).catch(() => {});
+    rpc.request.getConfig({}).then((config) => setFullConfig(config as DesktopConfig));
   }, []);
 
-  const handleCheckForUpdates = async () => {
-    setIsCheckingUpdates(true);
-    try {
-      const res = await rpc.request.checkForUpdates({ force: true });
-      setUpdateInfo(res);
-    } catch (err) {
-      console.warn("Manual update check failed:", err);
-    } finally {
-      setIsCheckingUpdates(false);
-    }
-  };
-
-  const saveConfig = async (updates: any): Promise<DesktopConfig> => {
+  const saveConfig = async (updates: Partial<DesktopConfig>): Promise<DesktopConfig> => {
     setFullConfig((prev) => (prev ? { ...prev, ...updates } : prev));
     return rpc.request.saveConfig(updates);
+  };
+
+  const handleUpdateConfig = (updates: Partial<DesktopConfig>) => {
+    void saveConfig(updates);
   };
 
   const currentTheme: AppTheme = theme ?? (fullConfig?.theme as AppTheme) ?? "dark";
 
   const handleThemeChange = (newTheme: AppTheme) => {
     onChangeTheme?.(newTheme);
-    saveConfig({ theme: newTheme });
+    void saveConfig({ theme: newTheme });
   };
 
-  const handleProviderSelect = (newProvider: LlmProviderId) => {
-    setReportProvider(newProvider);
-    const nextModel = fullConfig?.llmModels?.[newProvider] || "";
-    setReportModel(nextModel);
-    setIsCustomModel(newProvider === "claude-cli" && Boolean(nextModel) && !CLAUDE_CLI_MODELS.includes(nextModel));
-
-    if (newProvider === "claude-cli") {
-      saveConfig({ llmProvider: newProvider, llmModel: nextModel, llmBaseUrl: "", llmApiKey: "" });
-      checkClaudeCli();
-      return;
-    }
-
-    const nextBaseUrl = fullConfig?.llmBaseUrls?.[newProvider] || DEFAULT_OPENAI_COMPATIBLE_URL;
-    const nextApiKey = fullConfig?.llmApiKeys?.[newProvider] || "";
-    setReportBaseUrl(nextBaseUrl);
-    setReportApiKey(nextApiKey);
-    saveConfig({ llmProvider: newProvider, llmModel: nextModel, llmBaseUrl: nextBaseUrl, llmApiKey: nextApiKey });
-    fetchServerModels(nextBaseUrl, nextApiKey);
-  };
-
-  const currentProvider = LLM_PROVIDERS.find((p) => p.id === reportProvider) ?? LLM_PROVIDERS[0]!;
-  const isClaudeCli = reportProvider === "claude-cli";
-  const modelOptions = isClaudeCli ? CLAUDE_CLI_MODELS : serverModels;
-  // A saved model the list no longer offers stays selectable instead of silently switching.
-  const availableModels = reportModel && !isCustomModel && !modelOptions.includes(reportModel) ? [reportModel, ...modelOptions] : modelOptions;
-  // Without a model list the only way to name a model is to type it.
-  const showModelInput = isCustomModel || (!isClaudeCli && serverModels.length === 0);
-
-  /** The submenu of a section: its cards and the one that shows, or null for a one-card section. */
-  const submenu = (id: SettingsSectionId): { items: SidebarSection[]; active: string; select: (id: string) => void } | null => {
-    if (id === "integrations") return { items: INTEGRATION_PAGES, active: activeIntegration, select: (item) => setActiveIntegration(item as IntegrationPageId) };
-    if (id === "automation") return { items: AUTOMATIONS, active: activeAutomation, select: (item) => setActiveAutomation(item as AutomationId) };
-    return null;
-  };
-
-  const openIntegrations = () => {
-    setActiveSection("integrations");
-    setActiveIntegration(INTEGRATIONS[0]!.id);
+  const openPhoneSetup = () => {
+    setActiveSection("notifications");
+    setActiveNotification("phone");
   };
 
   return (
     <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
-
-      {/* Main Container: Left Sidebar + Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
-        {/* Left Navigation Sidebar */}
         <aside className="w-full lg:sticky lg:top-0">
           <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Settings className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>Preferences</span>
+            <span>Settings</span>
           </div>
 
           <nav className="space-y-1 mt-1" aria-label="Settings sections">
             {SECTIONS.map((sec) => {
-              const sub = submenu(sec.id);
+              const hasSubmenu = sec.id === "notifications";
               return (
                 <SidebarEntry
                   key={sec.id}
                   section={sec}
                   isActive={activeSection === sec.id}
                   onSelect={() => setActiveSection(sec.id)}
-                  items={sub?.items}
-                  activeItem={sub?.active}
+                  items={hasSubmenu ? NOTIFICATION_PAGES : undefined}
+                  activeItem={hasSubmenu ? activeNotification : undefined}
                   onSelectItem={(id) => {
                     setActiveSection(sec.id);
-                    sub?.select(id);
+                    setActiveNotification(id as NotificationPageId);
                   }}
                 />
               );
@@ -388,477 +131,40 @@ export function SettingsPage({
           </nav>
         </aside>
 
-        {/* Right/Center Content Area */}
         <div className="min-w-0 space-y-6">
-          {/* SECTION 1: GENERAL */}
-          {activeSection === "general" && (
-            <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-              <SectionHeader
-                icon={Sliders}
-                title="General Configuration"
-                description="Manage interface theme, text size, background quote updates, startup behavior, telemetry, the app lock and remote connections."
-              />
-
-              <div className="divide-y divide-slate-800/80 -mt-2">
-                <SettingItem
-                  icon={currentTheme === "light" ? Sun : Moon}
-                  title="Interface theme"
-                  description="Choose between high-contrast dark terminal mode, clean daylight theme, or automatic synchronization with your system appearance."
-                >
-                  <Select
-                    value={currentTheme}
-                    onChange={(e) => {
-                      const val = e.target.value as AppTheme;
-                      handleThemeChange(val);
-                    }}
-                    selectSize="lg"
-                    icon={currentTheme === "light" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                    aria-label="Interface Theme"
-                  >
-                    <option value="dark">Dark Theme (Terminal Default)</option>
-                    <option value="light">Light Theme (Daylight)</option>
-                    <option value="system">Follow System Appearance</option>
-                  </Select>
-                </SettingItem>
-
-                <SettingItem
-                  icon={Type}
-                  title="Text size"
-                  description="Scale all text and controls. Ctrl + and Ctrl - step through more sizes, Ctrl 0 resets."
-                >
-                  <Select
-                    value={String(zoomLevel)}
-                    onChange={(e) => onChangeZoom?.(Number(e.target.value))}
-                    selectSize="lg"
-                    icon={<Type className="w-4 h-4" />}
-                    aria-label="Text size"
-                  >
-                    {!TEXT_SIZES.some((size) => size.value === zoomLevel) && (
-                      <option value={String(zoomLevel)}>Custom ({Math.round(zoomLevel * 100)}%)</option>
-                    )}
-                    {TEXT_SIZES.map((size) => (
-                      <option key={size.value} value={String(size.value)}>
-                        {size.label}
-                      </option>
-                    ))}
-                  </Select>
-                </SettingItem>
-
-                <SettingsFields section="general" />
-
-                <AccessRows onPinEnabledChange={onPinEnabledChange} />
-              </div>
-            </div>
+          {activeSection === "appearance" && (
+            <AppearanceSection theme={currentTheme} onChangeTheme={handleThemeChange} zoomLevel={zoomLevel} onChangeZoom={onChangeZoom} />
           )}
 
-          {/* SECTION 3: ASSISTANT */}
-          {activeSection === "integrations" && activeIntegration === "assistant" && (
-            <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-5">
-              <SectionHeader
-                icon={Bot}
-                title="Assistant Engine"
-                description="Configure local or cloud inference providers for automated portfolio analysis briefings."
-              />
-
-              {/* Provider Selection Dropdown: styled identically to inputs */}
-              <div className="space-y-2">
-                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Inference Provider</span>
-                </label>
-                <Select
-                  value={reportProvider}
-                  onChange={(e) => handleProviderSelect(toProviderId(e.target.value))}
-                  selectSize="lg"
-                  icon={<Bot className="w-4 h-4" />}
-                  aria-label="Inference provider"
-                >
-                  {LLM_PROVIDERS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.badge})
-                    </option>
-                  ))}
-                </Select>
-                <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">{currentProvider.description}</p>
-              </div>
-
-              {/* Claude CLI status: checked on selection */}
-              {isClaudeCli && (
-                <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                      <span>CLI Status</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={checkClaudeCli}
-                      disabled={isCheckingClaude}
-                      className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                      title="Check the Claude CLI again"
-                    >
-                      <RefreshCw className={`w-3 h-3 ${isCheckingClaude ? "animate-spin" : ""}`} />
-                      <span>{isCheckingClaude ? "Checking..." : "Check Again"}</span>
-                    </button>
-                  </div>
-                  {isCheckingClaude && !claudeStatus ? (
-                    <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400">
-                      Looking for the Claude CLI and its sign-in...
-                    </div>
-                  ) : claudeStatus?.installed && claudeStatus.loggedIn ? (
-                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2 text-[11px] text-emerald-300">
-                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-px" />
-                      <span>{claudeStatus.message}</span>
-                    </div>
-                  ) : claudeStatus ? (
-                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-[11px] text-rose-300">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-px" />
-                      <div className="space-y-1">
-                        <p>{claudeStatus.message}</p>
-                        {!claudeStatus.installed && (
-                          <button
-                            type="button"
-                            onClick={() => openExternal("https://code.claude.com/docs/en/setup")}
-                            className="flex items-center gap-1 text-rose-200 hover:text-white underline underline-offset-2 cursor-pointer"
-                          >
-                            <span>Claude Code setup guide</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Model Identifier Dropdown */}
-              <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Model Identifier</span>
-                  </label>
-                  {!isClaudeCli && (
-                    <button
-                      type="button"
-                      onClick={() => fetchServerModels(reportBaseUrl, reportApiKey)}
-                      disabled={isFetchingModels}
-                      className="text-[10px] text-slate-400 hover:text-[#DD3C73] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                      title="Fetch available models from endpoint"
-                    >
-                      <RefreshCw className={`w-3 h-3 ${isFetchingModels ? "animate-spin" : ""}`} />
-                      <span>{isFetchingModels ? "Scanning Server..." : "Detect Models"}</span>
-                    </button>
-                  )}
-                </div>
-
-                {(isClaudeCli || serverModels.length > 0) && (
-                  <Select
-                    value={isCustomModel ? "__custom__" : reportModel}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "__custom__") {
-                        setIsCustomModel(true);
-                      } else {
-                        setIsCustomModel(false);
-                        saveModel(reportProvider, val);
-                      }
-                    }}
-                    selectSize="lg"
-                    icon={<Cpu className="w-4 h-4" />}
-                    aria-label="Model identifier"
-                  >
-                    <option value="">{isClaudeCli ? "Default (chosen by the CLI)" : "Default (chosen by the server)"}</option>
-                    {availableModels.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                    <option value="__custom__">Custom Model (Manual Entry)...</option>
-                  </Select>
-                )}
-
-                {showModelInput && (
-                  <div className="pt-2 animate-fade-in">
-                    <input
-                      type="text"
-                      value={reportModel}
-                      onChange={(e) => setReportModel(e.target.value)}
-                      onBlur={(e) => saveModel(reportProvider, e.target.value.trim())}
-                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                      placeholder={isClaudeCli ? "e.g. claude-sonnet-5" : "e.g. llama-3.3-70b-versatile or leave empty for the server default"}
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      {isClaudeCli
-                        ? "Any model name or alias the Claude CLI accepts with --model."
-                        : "Enter the model identifier expected by your inference endpoint."}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Server Base URL and API Key: OpenAI-compatible only */}
-              {!isClaudeCli && (
-                <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Server Base URL</span>
-                  </label>
-                  <div className="relative">
-                    <Globe className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={reportBaseUrl}
-                      onChange={(e) => setReportBaseUrl(e.target.value)}
-                      onBlur={(e) => {
-                        const val = e.target.value.trim();
-                        // A stored key goes only to the server it was saved for: the service drops it when the
-                        // URL names another server. Save first, then list the models with the key it kept.
-                        void saveConfig({ llmBaseUrl: val, llmBaseUrls: { ...(fullConfig?.llmBaseUrls || {}), [reportProvider]: val } })
-                          .then((saved) => {
-                            const key = saved?.llmApiKeys?.[reportProvider] ?? reportApiKey;
-                            if (key !== reportApiKey) {
-                              setReportApiKey(key);
-                              setFullConfig((prev) => (prev ? { ...prev, llmApiKey: saved.llmApiKey, llmApiKeys: saved.llmApiKeys } : prev));
-                            }
-                            fetchServerModels(val, key);
-                          })
-                          .catch(() => {});
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                      placeholder={DEFAULT_OPENAI_COMPATIBLE_URL}
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Examples: http://127.0.0.1:8080 (llama.cpp), http://127.0.0.1:11434/v1 (Ollama), https://api.openai.com/v1, https://api.groq.com/openai/v1
-                  </p>
-                </div>
-              )}
-
-              {!isClaudeCli && (
-                <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Provider API Key</span>
-                    <span className="text-[9px] text-slate-500 font-normal uppercase">(Optional for local servers)</span>
-                  </label>
-                  <div className="relative">
-                    <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type={showApiKey ? "text" : "password"}
-                      value={reportApiKey === SECRET_MASK ? "" : reportApiKey}
-                      onChange={(e) => setReportApiKey(e.target.value)}
-                      onBlur={() => {
-                        const val = reportApiKey.trim();
-                        saveConfig({ llmApiKey: val, llmApiKeys: { ...(fullConfig?.llmApiKeys || {}), [reportProvider]: val } });
-                        fetchServerModels(reportBaseUrl, val);
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                      placeholder={reportApiKey === SECRET_MASK ? "•••••••• (stored)" : "API key or bearer token"}
-                      className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                    >
-                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Test LLM Action */}
-              <div className="space-y-3 pt-3 border-t border-slate-800/80">
-                <button
-                  type="button"
-                  onClick={() => setIsTestModalOpen(true)}
-                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-100 transition-colors cursor-pointer"
-                >
-                  <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Test LLM Provider</span>
-                </button>
-              </div>
-            </div>
-          )}
-          {activeSection === "integrations" && activeIntegration === "data-providers" && fullConfig && (
-            <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />
-          )}
+          {activeSection === "security" && <SecuritySection onPinEnabledChange={onPinEnabledChange} />}
 
           {activeSection === "metrics" && metrics}
 
-          {activeSection === "integrations" && activeIntegration !== "assistant" && activeIntegration !== "data-providers" && fullConfig && (
-            <IntegrationsSection integration={activeIntegration} config={fullConfig} onConfigChange={setFullConfig} />
+          {activeSection === "assistant" && fullConfig && (
+            <AssistantSection config={fullConfig} saveConfig={saveConfig} onConfigChange={setFullConfig} />
           )}
 
-          {activeSection === "automation" && fullConfig && (
+          {activeSection === "notifications" && fullConfig && activeNotification === "phone" && (
+            <PhoneAppsSection config={fullConfig} onConfigChange={setFullConfig} />
+          )}
+
+          {activeSection === "notifications" && fullConfig && activeNotification !== "phone" && (
             <AutomationSection
-              automation={activeAutomation}
+              automation={activeNotification}
               config={fullConfig}
               onConfigChange={setFullConfig}
               portfolios={portfolios}
-              onOpenIntegrations={openIntegrations}
+              onOpenPhoneSetup={openPhoneSetup}
             />
           )}
 
-          {/* SECTION 5: ABOUT */}
-          {activeSection === "about" && (
-            <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-              <SectionHeader
-                icon={Info}
-                title="About Portfolio"
-                description="Personal Investment Tracker"
-                actions={
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
-                    v{appVersion}
-                  </span>
-                }
-              />
+          {activeSection === "market-data" && fullConfig && <DataProvidersSection config={fullConfig} onUpdateConfig={handleUpdateConfig} />}
 
-              {/* Version and Updates */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
-                    <span>Version and Updates</span>
-                  </div>
-                  {updateInfo?.lastChecked && (
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      Last checked: {new Date(updateInfo.lastChecked).toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
+          {activeSection === "data" && <YourDataSection />}
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-200 font-semibold">
-                        {updateInfo?.hasUpdate
-                          ? `New version available: v${updateInfo.latestVersion}`
-                          : fullConfig?.checkForUpdates === false
-                          ? "Automatic update checks are disabled"
-                          : "Portfolio is up to date"}
-                      </span>
-                      {updateInfo?.hasUpdate && (
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-mint/15 text-mint border border-mint/30">
-                          Update Available
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Current version: v{appVersion}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    {updateInfo?.hasUpdate && updateInfo.releaseUrl && (
-                      <button
-                        type="button"
-                        onClick={() => openExternal(updateInfo.releaseUrl)}
-                        className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>View Release</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      disabled={isCheckingUpdates}
-                      onClick={handleCheckForUpdates}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? "animate-spin text-[#DD3C73]" : ""}`} />
-                      <span>{isCheckingUpdates ? "Checking..." : "Check Now"}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Support */}
-              <div className="space-y-2.5">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <LifeBuoy className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Support</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <div>
-                    <span className="text-xs text-slate-200 font-semibold">Something is not working or you have an idea?</span>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Open a support ticket to {WEBPAGE_EMAIL}. Your version is filled in and the anonymized diagnostics of the last day can be attached.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onReportIssue?.()}
-                    className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                  >
-                    <LifeBuoy className="w-3.5 h-3.5" />
-                    <span>Report an Issue</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Storage Locations */}
-              <div className="space-y-2.5">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Local Data Paths</span>
-                </div>
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                    <span className="text-slate-400 text-[11px]">Database Ledger:</span>
-                    <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                      {appPaths?.data || "…"}
-                    </code>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                    <span className="text-slate-400 text-[11px]">Application Logs:</span>
-                    <code className="text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                      {appPaths ? `${appPaths.logs}/service.log` : "…"}
-                    </code>
-                  </div>
-                </div>
-              </div>
-
-              <BackupCard />
-
-              {/* Keyboard Shortcuts Reference */}
-              <div className="space-y-2.5">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Keyboard className="w-3.5 h-3.5 text-[#DD3C73]" />
-                  <span>Keyboard Shortcuts Reference</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {SHORTCUTS.map((sc) => (
-                    <div
-                      key={sc.key}
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60"
-                    >
-                      <span className="text-slate-300 text-[11px]">{sc.desc}</span>
-                      <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 shadow-sm">
-                        {sc.key}
-                      </kbd>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {activeSection === "about" && <AboutSection config={fullConfig} onReportIssue={onReportIssue} />}
         </div>
       </div>
-
-      {/* LLM Diagnostics Step-by-Step Modal */}
-      <TestLlmModal
-        isOpen={isTestModalOpen}
-        onClose={() => setIsTestModalOpen(false)}
-        provider={reportProvider}
-        providerName={currentProvider.name}
-        model={reportModel}
-        apiKey={reportApiKey}
-        baseUrl={reportBaseUrl}
-      />
     </div>
   );
 }

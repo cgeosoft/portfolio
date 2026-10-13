@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Trash2,
   Radio,
+  ChevronRight,
   Check,
   Fingerprint,
   Users,
@@ -29,7 +30,7 @@ import {
   Shapes,
 } from "lucide-react";
 import { rpc } from "../../rpc";
-import { SectionHeader } from "./SettingsFields";
+import { SectionHeader, SettingsFields } from "./SettingsFields";
 import { showToast } from "../common/Toaster";
 import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "portfolio-shared/api-types";
 import { DEFAULT_DATA_PROVIDER_ROUTING, SECRET_MASK } from "portfolio-shared/config-types";
@@ -88,40 +89,40 @@ const CATEGORIES: CategoryDefinition[] = [
   {
     id: "quotes",
     routed: true,
-    label: "Market Quotes",
-    description: "Real-time prices, daily change, volume, and 52-week price ranges.",
+    label: "Prices",
+    description: "Current price, daily change, trading volume and 52-week range.",
     icon: TrendingUp,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "fx",
     routed: true,
-    label: "Exchange Rates (FX)",
-    description: "Foreign currency rates for multi-currency portfolio valuation.",
+    label: "Exchange Rates",
+    description: "Currency rates, to value holdings priced in another currency.",
     icon: ArrowRightLeft,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "search",
     routed: true,
-    label: "Symbol Search",
-    description: "Asset ticker lookup and auto-completion when entering transactions.",
+    label: "Ticker Search",
+    description: "Finds a stock or fund by name or ticker when you add a transaction.",
     icon: Search,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "identifiers",
     routed: false,
-    label: "ISIN & CUSIP Lookup",
-    description: "Resolves an ISIN or CUSIP to a ticker when entering transactions.",
+    label: "Security Code Lookup",
+    description: "Turns an ISIN or CUSIP code (from a bank statement) into a ticker when you add a transaction.",
     icon: Fingerprint,
     providers: ["fmp"],
   },
   {
     id: "charts",
     routed: true,
-    label: "Historical Charts",
-    description: "Daily candle history, portfolio trendlines, and technical indicators.",
+    label: "Price History",
+    description: "Daily prices for the charts, trend lines and technical indicators.",
     icon: BarChart3,
     providers: ["fmp", "yahoo"],
   },
@@ -129,7 +130,7 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "marketHours",
     routed: false,
     label: "Market Hours & Holidays",
-    description: "Exchange sessions and closures. Without FMP the built-in table applies.",
+    description: "When stock exchanges open, close and take holidays. Without FMP a built-in table applies.",
     icon: Clock,
     providers: ["fmp"],
   },
@@ -137,7 +138,7 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "news",
     routed: true,
     label: "Market News",
-    description: "General market and macroeconomic headlines.",
+    description: "General market and economy headlines.",
     icon: Newspaper,
     providers: ["fmp", "yahoo", "finnhub"],
   },
@@ -145,15 +146,15 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "companyNews",
     routed: true,
     label: "Company News",
-    description: "Holding-specific headlines for the daily brief and AI reports.",
+    description: "Headlines about the companies you hold, for the daily brief and AI reports.",
     icon: Newspaper,
     providers: ["finnhub", "fmp"],
   },
   {
     id: "fundamentals",
     routed: true,
-    label: "Company Profile & Fundamentals",
-    description: "Sector, industry, country, and valuation ratios.",
+    label: "Company Profile",
+    description: "Sector, industry, country and valuation ratios such as price to earnings.",
     icon: ShieldCheck,
     providers: ["fmp", "yahoo", "finnhub"],
   },
@@ -161,7 +162,7 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "dividends",
     routed: true,
     label: "Dividends",
-    description: "Dividend history, ex-dates, pay dates, and frequency.",
+    description: "Past dividends, ex-dividend and pay dates, and how often they are paid.",
     icon: Coins,
     providers: ["fmp", "yahoo"],
   },
@@ -169,7 +170,7 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "splits",
     routed: true,
     label: "Stock Splits",
-    description: "Split history per holding.",
+    description: "Past share splits of each holding.",
     icon: Split,
     providers: ["fmp", "yahoo"],
   },
@@ -177,7 +178,7 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "earnings",
     routed: true,
     label: "Earnings",
-    description: "Last and upcoming earnings dates with estimates.",
+    description: "Dates of the last and next quarterly results, with estimates.",
     icon: CalendarClock,
     providers: ["fmp", "finnhub", "yahoo"],
   },
@@ -185,47 +186,47 @@ const CATEGORIES: CategoryDefinition[] = [
     id: "analyst",
     routed: true,
     label: "Analyst Recommendations",
-    description: "Price targets, grades, and consensus for holdings and AI reports.",
+    description: "Analyst price targets and ratings for holdings and AI reports.",
     icon: Users,
     providers: ["fmp", "finnhub"],
   },
   {
     id: "etfInfo",
     routed: true,
-    label: "ETF Facts",
-    description: "Expense ratio, assets under management, and holdings count.",
+    label: "Fund Facts",
+    description: "Yearly fee (expense ratio), fund size and number of holdings of ETFs.",
     icon: Info,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfHoldings",
     routed: true,
-    label: "ETF Holdings",
-    description: "Fund look-through. FMP has the full list, Yahoo the top ten.",
+    label: "Fund Holdings",
+    description: "What an ETF owns. FMP has the full list, Yahoo the top ten.",
     icon: Layers,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfSectors",
     routed: true,
-    label: "ETF Sector Weights",
-    description: "Sector breakdown of funds.",
+    label: "Fund Sectors",
+    description: "Sector breakdown of ETFs.",
     icon: PieChart,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfCountries",
     routed: false,
-    label: "ETF Country Weights",
-    description: "Country breakdown of funds.",
+    label: "Fund Countries",
+    description: "Country breakdown of ETFs.",
     icon: Globe,
     providers: ["fmp"],
   },
   {
     id: "etfAssetClasses",
     routed: true,
-    label: "ETF Asset Classes",
-    description: "Stock, bond, and cash split of funds.",
+    label: "Fund Mix",
+    description: "Share of stocks, bonds and cash in an ETF.",
     icon: Shapes,
     providers: ["yahoo", "fmp"],
   },
@@ -311,6 +312,7 @@ function ClearButton({ disabled = false, onClick }: { disabled?: boolean; onClic
   );
 }
 
+/** Settings → Market Data: price updates, the sources and their keys, and the source of each kind of data. */
 export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSectionProps) {
   // Finnhub API Key state
   const [finnhubApiKey, setFinnhubApiKey] = useState(config.finnhubApiKey || "");
@@ -327,10 +329,6 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
   // Yahoo Finance state
   const [isTestingYahoo, setIsTestingYahoo] = useState(false);
   const [yahooTestResult, setYahooTestResult] = useState<ConnectionTestResult | null>(null);
-
-  // Cache clearing state
-  const [isClearingCache, setIsClearingCache] = useState(false);
-  const [cacheClearMessage, setCacheClearMessage] = useState<string | null>(null);
 
   const routing: DataProviderCategoryRouting = { ...DEFAULT_DATA_PROVIDER_ROUTING, ...config.dataProviderRouting };
 
@@ -447,22 +445,6 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
     rpc.request.saveConfig({ dataProviderRouting: updated });
   };
 
-  const handleClearCache = async () => {
-    setIsClearingCache(true);
-    setCacheClearMessage(null);
-    try {
-      const res = await rpc.request.clearMarketCache({});
-      const count = res.clearedEntries ?? 0;
-      setCacheClearMessage(`Purged ${count} cached market records. Fresh data will load on next refresh.`);
-      setTimeout(() => setCacheClearMessage(null), 5000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setCacheClearMessage(`Failed to clear market cache: ${msg}`);
-    } finally {
-      setIsClearingCache(false);
-    }
-  };
-
   const isFinnhubConfigured = Boolean(finnhubApiKey && finnhubApiKey.trim().length > 0);
   const isFmpConfigured = Boolean(fmpApiKey && fmpApiKey.trim().length > 0);
   const isProviderConfigured = (provider: DataProviderId) =>
@@ -480,23 +462,29 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-8">
       {/* Section Header */}
-      <SectionHeader
-        icon={Database}
-        title="Data Providers"
-        description="Manage market data providers. Providers operate independently. Select which provider supplies each data category."
-      />
+      <SectionHeader icon={Database} title="Market Data" description="Where prices, news and company facts come from, and how often they update." />
+
+      <div className="divide-y divide-slate-800/80 -mt-4">
+        <SettingsFields section="market" />
+      </div>
 
       {/* Part 1: Provider Cards */}
       <div className="space-y-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-          <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Providers</span>
+        <div>
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
+            <span>Sources</span>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+            Yahoo Finance works without any setup. A free Finnhub key adds company news and analyst ratings. A paid FMP key gives the most complete
+            data, such as security code lookup and full fund holdings. Each key stays on this computer.
+          </p>
         </div>
 
         <div className="flex flex-col divide-y divide-slate-800">
           {/* Yahoo Finance */}
           <div className="py-4 space-y-2.5">
-            <ProviderTitle name="Yahoo Finance" subtitle="Public Market Data Engine" latencyMs={yahooTestResult?.latencyMs} />
+            <ProviderTitle name="Yahoo Finance" subtitle="Free, no key needed" latencyMs={yahooTestResult?.latencyMs} />
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -513,8 +501,8 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
           {/* Finnhub */}
           <div className="py-4 space-y-2.5">
             <ProviderTitle
-              name="Finnhub Stock API"
-              subtitle="Institutional Financial Intelligence"
+              name="Finnhub"
+              subtitle="Free key"
               latencyMs={finnhubTestResult?.latencyMs}
               keyLabel="Get free key"
               keyUrl="https://finnhub.io/register"
@@ -550,8 +538,8 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
           {/* FMP */}
           <div className="py-4 space-y-2.5">
             <ProviderTitle
-              name="Financial Modeling Prep"
-              subtitle="Premium Market & Fundamentals Data"
+              name="Financial Modeling Prep (FMP)"
+              subtitle="Paid key"
               latencyMs={fmpTestResult?.latencyMs}
               keyLabel="Get API key"
               keyUrl="https://site.financialmodelingprep.com/developer/docs"
@@ -586,17 +574,17 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
         </div>
       </div>
 
-      {/* Part 2: Category Routing Matrix */}
-      <div className="space-y-4">
-        <div className="border-b border-slate-800/80 pb-2">
+      {/* Part 2: Category Routing Matrix, folded: the automatic choice suits most people */}
+      <details className="group space-y-4">
+        <summary className="list-none cursor-pointer border-b border-slate-800/80 pb-2 [&::-webkit-details-marker]:hidden">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>Categories</span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#DD3C73] transition-transform group-open:rotate-90" />
+            <span>Advanced: choose the source of each kind of data</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
-            Assign the preferred provider per category. Providers without a key are unavailable and the next best one is selected. If a provider fails or lacks data, the next configured one fills the gap.
+            Portfolio picks the best source with a key on its own. Choose here only to prefer another one. If a source fails or lacks data, the next one fills the gap.
           </p>
-        </div>
+        </summary>
 
         <div className="flex flex-col">
           {CATEGORIES.map((cat) => {
@@ -647,35 +635,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
             );
           })}
         </div>
-      </div>
-
-      {/* Part 3: Market Data Cache Management */}
-      <div className="p-4 rounded-xl bg-slate-950/50 border border-slate-800 space-y-3">
-        <div className="flex items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold text-slate-200">Market Data Cache</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Quotes and currency rates are cached in SQLite to accelerate load times and prevent API rate limiting.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            disabled={isClearingCache}
-            onClick={handleClearCache}
-            className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer disabled:opacity-40"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>{isClearingCache ? "Purging..." : "Clear Market Cache"}</span>
-          </button>
-        </div>
-
-        {cacheClearMessage && (
-          <div className="text-xs text-mint bg-mint/10 border border-mint/30 rounded-lg px-3 py-2">
-            {cacheClearMessage}
-          </div>
-        )}
-      </div>
+      </details>
     </div>
   );
 }

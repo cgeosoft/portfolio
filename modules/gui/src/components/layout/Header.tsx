@@ -27,6 +27,8 @@ interface HeaderProps {
   onNavigateDashboard?: (tab?: PortfolioTabKey) => void;
   reportsCount?: number;
   transactionsCount?: number;
+  /** Open suggestions, shown next to the Suggestions tab. */
+  suggestionsCount?: number;
   hideCurrencyValues?: boolean;
   onToggleHideCurrency?: () => void;
   isAssistantOpen?: boolean;
@@ -41,6 +43,7 @@ export function Header({
   onOpenSettings,
   reportsCount = 0,
   transactionsCount = 0,
+  suggestionsCount = 0,
 }: HeaderProps) {
   const handlePageClick = (tabId: PortfolioTabKey) => {
     if (activeView !== "dashboard" && onNavigateDashboard) {
@@ -68,7 +71,7 @@ export function Header({
       id: "suggestions" as PortfolioTabKey,
       label: "Suggestions",
       icon: Lightbulb,
-      badge: null,
+      badge: suggestionsCount > 0 ? suggestionsCount : null,
     },
   ];
 

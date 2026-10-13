@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type {
   FinancialPortfolioData,
   PortfolioTransaction,
@@ -25,7 +25,7 @@ import { SetupWizardModal } from "./components/common/SetupWizardModal";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { Toaster } from "./components/common/Toaster";
 import { ChangelogModal } from "./components/common/ChangelogModal";
-import type { SettingsSection } from "./components/settings/SettingsPage";
+import { DEFAULT_SETTINGS_SECTION, resolveSettingsSection, type SettingsSection } from "./components/settings/settings-nav";
 import { CONFIG_CHANGED_EVENT } from "./components/settings/SettingsFields";
 import { SupportTicketModal } from "./components/settings/SupportTicketModal";
 import { TermsPage } from "./components/common/TermsPage";
@@ -49,7 +49,9 @@ import type {
   MetricListing,
   MetricRepositoryListing,
   AppTheme,
+  GetSuggestionsResponse,
 } from "portfolio-shared/api-types";
+import { countActiveSuggestions } from "portfolio-shared/suggestions";
 import { rpc, ensureRpcReady, clientLogger, onUpdateAvailable } from "./rpc";
 import { api, setUnauthorizedHandler } from "./api";
 import { LockScreen } from "./components/common/LockScreen";
@@ -101,19 +103,6 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "dividends",
   "topPerformer",
 ];
-const SETTINGS_SECTIONS: readonly string[] = [
-  "general",
-  "metrics",
-  "integrations",
-  "assistant",
-  "data-providers",
-  "gotify",
-  "ntfy",
-  "automation",
-  "daily-brief",
-  "weekly-analysis",
-  "about",
-];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
   const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
@@ -143,16 +132,13 @@ export default function App() {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith("#settings/")) {
-        const raw = hash.replace("#settings/", "");
-        // Data providers became an Integrations page; keep old links working.
-        const sec = (raw === "providers" ? "data-providers" : raw) as SettingsSection;
-        if (SETTINGS_SECTIONS.includes(sec)) {
-          return sec;
-        }
+        // Pages of earlier releases resolve to where they moved.
+        const sec = resolveSettingsSection(hash.replace("#settings/", ""));
+        if (sec) return sec;
       }
       if (hash === "#metrics") return "metrics";
     }
-    return "general";
+    return DEFAULT_SETTINGS_SECTION;
   });
 
   const [activeTab, setActiveTab] = useState<PortfolioTabKey>(() => {
@@ -182,22 +168,22 @@ export default function App() {
     }
   }, []);
 
-  const handleOpenSettings = useCallback((section: SettingsSection = "general") => {
+  const handleOpenSettings = useCallback((section: SettingsSection = DEFAULT_SETTINGS_SECTION) => {
     setSettingsSection(section);
     setView("settings");
     if (typeof window !== "undefined") {
-      const newHash = section === "general" ? "#settings" : `#settings/${section}`;
+      const newHash = section === DEFAULT_SETTINGS_SECTION ? "#settings" : `#settings/${section}`;
       if (window.location.hash !== newHash) {
         window.history.pushState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
       }
     }
   }, []);
 
-  // Moving between Preferences sections replaces the URL so a reload reopens the same page.
+  // Moving between Settings pages replaces the URL so a reload reopens the same page.
   const handleSettingsSectionChange = useCallback((section: SettingsSection) => {
     setSettingsSection(section);
     if (typeof window !== "undefined") {
-      const newHash = section === "general" ? "#settings" : `#settings/${section}`;
+      const newHash = section === DEFAULT_SETTINGS_SECTION ? "#settings" : `#settings/${section}`;
       if (window.location.hash !== newHash) {
         window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
       }
@@ -262,13 +248,7 @@ export default function App() {
         setSettingsSection("metrics");
         setView("settings");
       } else if (hash.startsWith("#settings")) {
-        const parts = hash.split("/");
-        const sec = parts[1] === "providers" ? "data-providers" : parts[1];
-        if (sec && SETTINGS_SECTIONS.includes(sec)) {
-          setSettingsSection(sec as SettingsSection);
-        } else {
-          setSettingsSection("general");
-        }
+        setSettingsSection(resolveSettingsSection(hash.split("/")[1]) ?? DEFAULT_SETTINGS_SECTION);
         setView("settings");
       } else if (hash === "#terms") {
         setView("terms");
@@ -302,6 +282,7 @@ export default function App() {
   const [portfolioData, setPortfolioData] = useState<FinancialPortfolioData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reports, setReports] = useState<PortfolioReport[]>([]);
+  const [suggestions, setSuggestions] = useState<GetSuggestionsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingSlowWarning, setLoadingSlowWarning] = useState(false);
@@ -1183,6 +1164,27 @@ export default function App() {
     }
   }, [activePortfolioId]);
 
+  // Fetch suggestions for the header badge; the Suggestions page keeps it current while open.
+  const loadSuggestions = useCallback(async () => {
+    if (!activePortfolioId) return;
+    try {
+      setSuggestions(await api.getSuggestions(activePortfolioId, currency));
+    } catch (e) {
+      console.error("Error loading suggestions:", e);
+    }
+  }, [activePortfolioId, currency]);
+
+  const suggestionsCount = useMemo(() => {
+    if (!suggestions || suggestions.portfolioId !== activePortfolioId) return 0;
+    const summary = portfolioData?.summary;
+    return countActiveSuggestions(
+      suggestions.suggestions,
+      portfolioData?.holdings ?? [],
+      suggestions.quotes,
+      summary?.totalPortfolioValue || summary?.totalValue,
+    );
+  }, [suggestions, activePortfolioId, portfolioData]);
+
   // Fetch portfolio data
   const loadData = useCallback(
     async (mode: LoadMode = "initial") => {
@@ -1254,8 +1256,9 @@ export default function App() {
         setIsRefreshing(false);
       }
       void loadReports();
+      void loadSuggestions();
     },
-    [activePortfolioId, currency, loadReports],
+    [activePortfolioId, currency, loadReports, loadSuggestions],
   );
 
   // One refresh at a time: a click while one runs does nothing.
@@ -1349,6 +1352,7 @@ export default function App() {
     setPortfolios(remaining);
     if (activePortfolioId !== id) return;
     setReports([]);
+    setSuggestions(null);
     if (remaining.length > 0) {
       handleSelectPortfolio(remaining[0]!.id);
       return;
@@ -1652,6 +1656,7 @@ export default function App() {
           onNavigateDashboard={handleNavigateDashboard}
           reportsCount={reports.length}
           transactionsCount={0}
+          suggestionsCount={suggestionsCount}
         />
         <div className="flex-1 flex flex-col items-center justify-center space-y-3 p-8">
           <RefreshCw className="w-8 h-8 text-[#DD3C73] animate-spin" />
@@ -1744,6 +1749,7 @@ export default function App() {
           onNavigateDashboard={handleNavigateDashboard}
           reportsCount={reports.length}
           transactionsCount={0}
+          suggestionsCount={suggestionsCount}
         />
         <div className="flex-1 flex flex-col items-center justify-center space-y-4 p-8 text-center max-w-md mx-auto">
           <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/30 text-[#DD3C73]">
@@ -1797,6 +1803,7 @@ export default function App() {
   const metricsPage = (
     <MetricsTab
       portfolioId={activePortfolioId || null}
+      portfolioName={activePortfolio?.name}
       prefs={metricPreferences}
       listings={metricListings}
       repository={metricRepository}
@@ -1881,6 +1888,7 @@ export default function App() {
             onNavigateDashboard={handleNavigateDashboard}
             reportsCount={reports.length}
             transactionsCount={transactions.length}
+            suggestionsCount={suggestionsCount}
             isAssistantOpen={isAssistantOpen}
             onToggleAssistant={handleToggleAssistant}
           />
@@ -1965,7 +1973,7 @@ export default function App() {
           {/* TAB: OVERVIEW (Charts & Holdings) */}
           {activeTab === "overview" && (
             <>
-              {/* Dashboard metrics, chosen under Preferences → Metrics */}
+              {/* Dashboard metrics, chosen under Settings → Dashboard Cards */}
               <MetricDashboard
                 prefs={metricPreferences}
                 listings={metricListings}
@@ -2073,6 +2081,7 @@ export default function App() {
                 portfolioData={portfolioData}
                 currency={currency}
                 hideValues={hideCurrencyValues}
+                onDataChange={setSuggestions}
               />
             </div>
           )}

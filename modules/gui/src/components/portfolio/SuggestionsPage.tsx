@@ -37,6 +37,8 @@ interface SuggestionsPageProps {
   portfolioData: FinancialPortfolioData | null;
   currency: string;
   hideValues?: boolean;
+  /** Receives every loaded or changed result, so the header badge follows the page. */
+  onDataChange?: (data: GetSuggestionsResponse) => void;
 }
 
 /** How often the page asks for the result while a generation runs. */
@@ -87,7 +89,7 @@ function rangeText(min?: number, max?: number, unit = ""): string {
 }
 
 /** Rebalancing ideas from the assistant, with amounts computed here from live prices. */
-export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValues = false }: SuggestionsPageProps) {
+export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValues = false, onDataChange }: SuggestionsPageProps) {
   const [data, setData] = useState<GetSuggestionsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +115,10 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
     setLoading(true);
     void load().finally(() => setLoading(false));
   }, [load, dataStamp]);
+
+  useEffect(() => {
+    if (data) onDataChange?.(data);
+  }, [data, onDataChange]);
 
   const running = data?.generation.status === "running";
   useEffect(() => {

@@ -163,7 +163,7 @@ export function AppMenuBar({
     { label: "Import Transactions (CSV)...", shortcut: "Ctrl+I", icon: FileSpreadsheet, action: run(onImportCsv), disabled: !activePortfolio },
     { label: "Export Portfolio...", shortcut: "Ctrl+E", icon: Download, action: run(onExportPortfolio), disabled: !activePortfolio },
     { type: "separator" },
-    { label: "Preferences...", shortcut: "Ctrl+,", icon: Settings, action: run(() => onOpenSettings()) },
+    { label: "Settings...", shortcut: "Ctrl+,", icon: Settings, action: run(() => onOpenSettings()) },
     { type: "separator" },
     ...(pinEnabled ? [{ label: "Lock Portfolio", icon: Lock, action: run(() => onLock?.()) } satisfies MenuItemDef] : []),
     { label: "Quit Portfolio", shortcut: "Ctrl+Q", icon: Power, action: run(onQuit) },

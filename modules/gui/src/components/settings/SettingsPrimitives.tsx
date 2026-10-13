@@ -128,7 +128,7 @@ export interface SidebarSection {
 }
 
 /**
- * One entry of the Preferences sidebar. With `items` it has a submenu, open
+ * One entry of the Settings sidebar. With `items` it has a submenu, open
  * while the section is active: the rows animate their height open and closed
  * (a `grid-template-rows` transition).
  */

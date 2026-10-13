@@ -1,5 +1,5 @@
 /**
- * Daily brief (Settings, Automation): once a day at the set local time the
+ * Daily brief (Settings, Notifications, Daily Brief): once a day at the set local time the
  * assistant writes a short overview of the last trading session for each
  * portfolio, stores it as an assistant conversation (so the sidebar can
  * follow up on it) and pushes it to every notification channel that is set
@@ -284,7 +284,7 @@ export class DailyBriefService {
     const skippedNote = skipped > 0 ? ` Skipped ${skipped} portfolio(s): no held market traded since the last brief.` : "";
     const message =
       channels.length === 0
-        ? `Wrote ${written} brief(s) to the assistant. Set up Gotify or ntfy under Integrations to receive them as push notifications.${skippedNote}`
+        ? `Wrote ${written} brief(s) to the assistant. Set up a phone app under Settings, Notifications to receive them as push notifications.${skippedNote}`
         : `Wrote ${written} brief(s) and delivered ${delivered} through ${channelNames(channels)}.${skippedNote}`;
     this.last = { at: now.toISOString(), trigger, success, message, errors: unique };
     timer.end(success ? "success" : "warning", `Daily brief: ${written} written, ${delivered} delivered, ${skipped} skipped, ${unique.length} problem(s)`);

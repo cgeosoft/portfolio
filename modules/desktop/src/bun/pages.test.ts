@@ -2,9 +2,9 @@ import { describe, expect, it } from "bun:test";
 import { startingHintScript, startingPage } from "./pages";
 
 describe("startingPage", () => {
-  it("shows the hint under the pill, escaped for HTML", () => {
+  it("shows the hint under the tagline, escaped for HTML", () => {
     const html = startingPage("Waiting for <the> service & more.");
-    expect(html).toContain("Starting up");
+    expect(html).toContain('<h1 class="loading">');
     expect(html).toContain('id="starting-hint">Waiting for &lt;the&gt; service &amp; more.</p>');
   });
 });

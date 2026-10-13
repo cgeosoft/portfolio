@@ -697,7 +697,8 @@ export interface SaveFileResponse {
 /** How Settings draws one setting of the catalog (`GET /api/settings`). */
 export type SettingKind = "toggle" | "choice" | "text" | "secret";
 
-export type SettingSection = "general" | "providers" | "assistant";
+/** The Settings page a catalog setting shows on. */
+export type SettingSection = "appearance" | "security" | "market" | "app" | "providers" | "assistant";
 
 /** One setting as the service lists it: its definition and its current value. */
 export interface SettingView {
@@ -734,7 +735,7 @@ export interface TestNtfyRequest {
   priority?: number;
 }
 
-/** A push notification channel of Settings, Integrations. */
+/** A push notification channel of Settings, Notifications, Phone Apps. */
 export type NotificationChannel = "gotify" | "ntfy";
 
 /** The answer of a notification send or test, for any channel. */

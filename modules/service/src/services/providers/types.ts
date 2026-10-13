@@ -6,7 +6,7 @@ import type { DataProviderCategoryRouting, DataProviderId } from "portfolio-shar
 
 export type { DataProviderId };
 
-/** A data category the user routes in Settings → Data providers. */
+/** A data category the user routes in Settings → Market Data. */
 export type RoutedCategory = keyof DataProviderCategoryRouting;
 
 /**

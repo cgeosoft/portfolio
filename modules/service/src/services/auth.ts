@@ -1,5 +1,5 @@
 /**
- * One local account, optionally locked with a PIN (Settings → General).
+ * One local account, optionally locked with a PIN (Settings → Privacy & Security).
  * Sessions are cookies stored in the `sessions` table so a phone on the LAN
  * (remote connections) gets its own session and the PIN applies to it too.
  * The table keeps the SHA-256 of each session id, not the id, so a copy of

@@ -1,5 +1,5 @@
 /**
- * Event alerts (Settings, Automation): once a day at the set local time, a
+ * Event alerts (Settings, Notifications, Dividend & Earnings Alerts): once a day at the set local time, a
  * push notification names the held symbols that go ex-dividend or report
  * earnings on the next day. On a Friday or Saturday the window runs to the
  * Monday, so a Monday event is not missed over the weekend.
@@ -163,7 +163,7 @@ export class EventAlertsService {
             ? "Every ex-dividend date and earnings report of the next day was already sent."
             : "No ex-dividend dates or earnings reports of held symbols on the next day.";
       } else if (channels.length === 0) {
-        message = `Found ${fresh.length} event(s). Set up Gotify or ntfy under Integrations to receive them as push notifications.`;
+        message = `Found ${fresh.length} event(s). Set up a phone app under Settings, Notifications to receive them as push notifications.`;
       } else {
         const result = await notifyAll({ title: "Portfolio: upcoming events", message: formatAlertMessage(fresh.map(([, e]) => e), through) }, channels);
         errors.push(...result.errors);

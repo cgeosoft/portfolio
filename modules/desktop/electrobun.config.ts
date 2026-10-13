@@ -45,7 +45,9 @@ const iconCopies = Object.fromEntries([
 // ---- per app -----------------------------------------------------------------------------
 
 /** Staged files outside `stage/service` and `stage/gui`. */
-const extraCopies: Record<string, string> = {};
+const extraCopies: Record<string, string> = {
+  "assets/fonts/sansation-latin-700.woff2": APP.pages.headingFont.file,
+};
 
 /** Linux, Windows and macOS. */
 const platforms = {

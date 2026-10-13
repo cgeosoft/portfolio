@@ -37,8 +37,10 @@ export const APP = {
   pages: {
     documentTitle: "Portfolio",
     heading: "Portfolio",
+    /** The heading font, as on the website. `electrobun.config.ts` copies the file into `Resources/app/`. */
+    headingFont: { family: "Sansation", weight: 700, file: "fonts/sansation-latin-700.woff2" },
     tagline: "Personal Investment Tracker",
-    /** The line under the "Starting up" pill, one text per start-up step of `index.ts`. */
+    /** The loading state under the tagline, one text per start-up step of `index.ts`. */
     starting: {
       service: "Starting the local service.",
       health: (port: number) => `Waiting for the service to answer on port ${port}.`,
@@ -57,7 +59,7 @@ export const APP = {
   <path d="M16 7h6v6"/>
 </svg>`,
     theme: {
-      font: `"Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif`,
+      font: `system-ui, -apple-system, "Segoe UI", sans-serif`,
       background: "#07090e",
       text: "#e2e8f0",
       glow: "79, 70, 229, 0.22",
@@ -75,9 +77,6 @@ export const APP = {
       accent: "#e65f8e",
       accentSoft: "rgba(230, 95, 142, 0.25)",
       muted: "#94a3b8",
-      hint: "#475569",
-      surface: "rgba(15, 23, 42, 0.7)",
-      surfaceBorder: "rgba(30, 41, 59, 0.8)",
       card: "rgba(15, 23, 42, 0.85)",
       cardBorder: "rgba(30, 41, 59, 0.9)",
       inset: "rgba(2, 6, 23, 0.7)",

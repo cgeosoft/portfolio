@@ -1,18 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { BellRing, Gauge, Loader2, Megaphone, Send, type LucideIcon } from "lucide-react";
+import { BellRing, Gauge, Loader2, Megaphone, Send, Smartphone, type LucideIcon } from "lucide-react";
 import type { DesktopConfig, SendNotificationResponse } from "portfolio-shared/api-types";
 import { DEFAULT_NTFY_URL, SECRET_MASK } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { SectionHeader } from "./SettingsFields";
-import { ChoiceButton, StatusLine, TextField, type SidebarSection, type StatusResult } from "./SettingsPrimitives";
-
-export type IntegrationId = "gotify" | "ntfy";
-
-/** The cards of the Integrations section, listed as its submenu in the Preferences sidebar. */
-export const INTEGRATIONS: (SidebarSection & { id: IntegrationId })[] = [
-  { id: "gotify", label: "Gotify", icon: BellRing },
-  { id: "ntfy", label: "ntfy", icon: Megaphone },
-];
+import { ChoiceButton, StatusLine, TextField, type StatusResult } from "./SettingsPrimitives";
 
 /** Gotify priorities: the Android app stays silent below 4 and pops up from 8. */
 const GOTIFY_PRIORITIES = [
@@ -34,8 +26,8 @@ interface SectionProps {
   onConfigChange: (config: DesktopConfig) => void;
 }
 
-/** Save and test state of an integration card, with the footer that shows it. */
-function useIntegrationCard(onConfigChange: (config: DesktopConfig) => void, name: string) {
+/** Save and test state of a phone app card, with the footer that shows it. */
+function usePhoneAppCard(onConfigChange: (config: DesktopConfig) => void, name: string) {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<StatusResult | null>(null);
@@ -74,7 +66,7 @@ function useIntegrationCard(onConfigChange: (config: DesktopConfig) => void, nam
 }
 
 /** The card frame: header with the Connected badge, the fields, and the test button with the status line. */
-function IntegrationCard({
+function PhoneAppCard({
   icon,
   title,
   description,
@@ -179,15 +171,15 @@ function PriorityField({
 
 /** Push notifications to the user's own Gotify server: URL, application token, priority and a test message. */
 function GotifyCard({ config, onConfigChange }: SectionProps) {
-  const card = useIntegrationCard(onConfigChange, "Gotify");
+  const card = usePhoneAppCard(onConfigChange, "Gotify");
   const tokenSet = config.gotifyToken === SECRET_MASK;
   const ready = Boolean(config.gotifyUrl && tokenSet);
 
   return (
-    <IntegrationCard
+    <PhoneAppCard
       icon={BellRing}
       title="Gotify"
-      description="Push notifications to your own Gotify server, such as the daily brief of the assistant."
+      description="For people who run their own Gotify server. Notifications arrive in the Gotify app."
       ready={ready}
       missing="Set the server URL and token first"
       saving={card.saving}
@@ -224,7 +216,7 @@ function GotifyCard({ config, onConfigChange }: SectionProps) {
         onSelect={(value) => card.save({ gotifyPriority: value }, "the priority")}
         description="The Gotify Android app shows Low without a sound, Normal as a regular notification and High as a pop-up."
       />
-    </IntegrationCard>
+    </PhoneAppCard>
   );
 }
 
@@ -236,16 +228,16 @@ function randomTopic(): string {
 
 /** Push notifications through ntfy (ntfy.sh or a self-hosted server): URL, topic, optional token, priority and a test message. */
 function NtfyCard({ config, onConfigChange }: SectionProps) {
-  const card = useIntegrationCard(onConfigChange, "ntfy");
+  const card = usePhoneAppCard(onConfigChange, "ntfy");
   const tokenSet = config.ntfyToken === SECRET_MASK;
   const ready = Boolean(config.ntfyTopic);
   const isPublic = config.ntfyUrl.replace(/\/+$/, "") === DEFAULT_NTFY_URL;
 
   return (
-    <IntegrationCard
+    <PhoneAppCard
       icon={Megaphone}
       title="ntfy"
-      description="Push notifications through ntfy.sh or your own ntfy server, such as the daily brief of the assistant."
+      description="The easiest choice: install the free ntfy app, no account needed."
       ready={ready}
       missing="Set the topic first"
       saving={card.saving}
@@ -307,16 +299,25 @@ function NtfyCard({ config, onConfigChange }: SectionProps) {
         onSelect={(value) => card.save({ ntfyPriority: value }, "the priority")}
         description="Low arrives without a sound, Default as a regular notification, High and Urgent as a pop-up with a longer vibration."
       />
-    </IntegrationCard>
+    </PhoneAppCard>
   );
 }
 
-/** The Integrations section: one card per integration of the submenu. */
-export function IntegrationsSection({ integration, ...props }: SectionProps & { integration: IntegrationId }) {
-  switch (integration) {
-    case "gotify":
-      return <GotifyCard {...props} />;
-    case "ntfy":
-      return <NtfyCard {...props} />;
-  }
+/**
+ * Settings → Notifications → Phone Apps: the two push channels every
+ * automation sends through, ntfy first as the one that needs no server.
+ */
+export function PhoneAppsSection(props: SectionProps) {
+  return (
+    <div className="space-y-6">
+      <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-4">
+        <SectionHeader icon={Smartphone} title="Phone Apps" description="Get the daily brief and alerts on your phone." />
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Portfolio sends notifications through a free notification app on your phone. Set up one of the two below, then switch on the daily brief, the weekly report or the dividend and earnings alerts in this menu. Without a phone app they still show inside Portfolio.
+        </p>
+      </div>
+      <NtfyCard {...props} />
+      <GotifyCard {...props} />
+    </div>
+  );
 }

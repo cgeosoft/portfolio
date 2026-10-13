@@ -127,7 +127,7 @@ export interface DesktopConfig {
   /** Hide sponsor banners, such as the one on the overview page. */
   hideSponsorBanners: boolean;
   /**
-   * Remote connections switch (Settings, General). Counts only while a PIN is
+   * Remote connections switch (Settings, Privacy & Security). Counts only while a PIN is
    * set. Changed through `/api/host/remote-access`, never `PATCH /api/config`.
    */
   allowRemoteConnections: boolean;
@@ -135,13 +135,13 @@ export interface DesktopConfig {
   remotePort: number;
   /** Closing the desktop window hides it to the tray (mirrored to desktop-settings.json for the shell). */
   closeToTray: boolean;
-  /** Base URL of the Gotify server that receives push notifications (Settings, Integrations). */
+  /** Base URL of the Gotify server that receives push notifications (Settings, Notifications, Phone Apps). */
   gotifyUrl: string;
   /** Application token of the Gotify server. Masked like the API keys. */
   gotifyToken: string;
   /** Gotify message priority, 0 to 10. */
   gotifyPriority: number;
-  /** Base URL of the ntfy server (Settings, Integrations); https://ntfy.sh or a self-hosted one. */
+  /** Base URL of the ntfy server (Settings, Notifications, Phone Apps); https://ntfy.sh or a self-hosted one. */
   ntfyUrl: string;
   /** The ntfy topic the notifications go to; empty turns ntfy off. */
   ntfyTopic: string;
@@ -149,7 +149,7 @@ export interface DesktopConfig {
   ntfyToken: string;
   /** ntfy message priority, 1 (min) to 5 (max). */
   ntfyPriority: number;
-  /** Whether the assistant writes the daily brief on a schedule (Settings, Automation). */
+  /** Whether the assistant writes the daily brief on a schedule (Settings, Notifications, Daily Brief). */
   dailyBriefEnabled: boolean;
   /** Local time of day the daily brief runs, "HH:MM". */
   dailyBriefTime: string;
@@ -159,7 +159,7 @@ export interface DesktopConfig {
   dailyBriefPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled daily brief. Written by the service. */
   dailyBriefLastRun?: string;
-  /** Whether the assistant writes the weekly analysis on a schedule (Settings, Automation). */
+  /** Whether the assistant writes the weekly analysis on a schedule (Settings, Notifications, Weekly Report). */
   weeklyAnalysisEnabled: boolean;
   /** Day of the week the weekly analysis runs, 0 (Sunday) to 6 (Saturday). */
   weeklyAnalysisDay: number;
@@ -169,7 +169,7 @@ export interface DesktopConfig {
   weeklyAnalysisPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled weekly analysis. Written by the service. */
   weeklyAnalysisLastRun?: string;
-  /** Whether a daily push names the ex-dividend dates and earnings reports of the next day for held symbols (Settings, Automation). */
+  /** Whether a daily push names the ex-dividend dates and earnings reports of the next day for held symbols (Settings, Notifications, Dividend & Earnings Alerts). */
   eventAlertsEnabled: boolean;
   /** Local time of day the event alerts run, "HH:MM". */
   eventAlertsTime: string;

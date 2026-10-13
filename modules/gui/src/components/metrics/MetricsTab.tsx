@@ -17,6 +17,8 @@ import { displayMetric, metricTitle, type MetricDisplay } from "./metric-view";
 
 interface MetricsTabProps {
   portfolioId: string | null;
+  /** The name of the portfolio whose dashboard this edits; each portfolio keeps its own cards. */
+  portfolioName?: string;
   prefs: PortfolioMetricPreference[];
   listings: MetricListing[];
   repository: MetricRepositoryListing[];
@@ -41,9 +43,10 @@ interface Place {
   id: string | null;
 }
 
-/** Preferences → Metrics: the dashboard places on top, every metric below. */
+/** Settings → Dashboard Cards: the dashboard places on top, every metric below. */
 export function MetricsTab({
   portfolioId,
+  portfolioName,
   prefs,
   listings,
   repository,
@@ -128,7 +131,10 @@ export function MetricsTab({
               <LayoutGrid className="w-4 h-4 text-[#DD3C73] shrink-0" />
               <span className="truncate">Dashboard</span>
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">Shown on the Overview tab. Drag a card by its header to move it, click an empty place to fill it.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {portfolioName ? `Shown on the Overview tab of ${portfolioName}. Each portfolio keeps its own cards. ` : "Shown on the Overview tab. "}
+              Drag a card by its header to move it, click an empty place to fill it.
+            </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button

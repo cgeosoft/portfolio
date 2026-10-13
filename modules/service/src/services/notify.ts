@@ -1,6 +1,6 @@
 /**
  * Push notifications of the automations: one message goes to every channel
- * of Settings, Integrations that is set up (Gotify, ntfy).
+ * of Settings, Notifications, Phone Apps that is set up (Gotify, ntfy).
  */
 import type { NotificationChannel } from "portfolio-shared/api-types";
 import { isGotifyConfigured, sendGotify } from "./gotify";

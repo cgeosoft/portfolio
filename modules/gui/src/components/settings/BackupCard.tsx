@@ -3,7 +3,7 @@ import { FolderOpen, HardDriveDownload } from "lucide-react";
 import { api, ApiError } from "../../api";
 
 /**
- * "Backup" block of Settings → About. The desktop window asks the service for
+ * "Backup" block of Settings → Your Data. The desktop window asks the service for
  * a copy of the database (`POST /api/app/backup`), which lands in the
  * Downloads folder; a remote client is told to use the desktop window, the
  * copy holds the API keys.
@@ -48,8 +48,8 @@ export function BackupCard() {
           <span className="text-xs text-slate-200 font-semibold">Keep a copy of your data</span>
           <p className="text-[11px] text-slate-400 mt-0.5">
             {isLocalClient === false
-              ? "Backups are made from the desktop window: the copy holds your API keys, so it never leaves this computer over the network."
-              : "Saves a complete copy of the database (portfolios, transactions, reports and settings) to your Downloads folder. To restore, quit Portfolio and put the file back as the database ledger shown above."}
+              ? "Make backups from the Portfolio window on the computer itself. The copy holds the keys you entered for other services, so it never travels over the network."
+              : "Saves a complete copy of the database (portfolios, transactions, reports and settings) to your Downloads folder. To restore, quit Portfolio and put the file back in place of the data file shown below."}
           </p>
           {saved && (
             <p className="text-[11px] text-slate-300 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">

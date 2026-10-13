@@ -177,6 +177,16 @@ export function evaluateSuggestion(
   return { ...base, status: "active" };
 }
 
+/** How many suggestions are still open against live data: the menu badge. */
+export function countActiveSuggestions(
+  suggestions: readonly PortfolioSuggestion[],
+  holdings: readonly SuggestionHoldingInput[],
+  quotes: readonly SuggestionQuote[],
+  totalValue: number | undefined,
+): number {
+  return suggestions.filter((s) => s.status === "active" && evaluateSuggestion(s, marketForSymbol(s.symbol, holdings, quotes), totalValue).status === "active").length;
+}
+
 /** The first validity rule that fails, as a sentence, or undefined. */
 export function failedValidity(validity: SuggestionValidity, market: SuggestionMarket, now: Date = new Date()): string | undefined {
   const expires = Date.parse(validity.expiresAt);

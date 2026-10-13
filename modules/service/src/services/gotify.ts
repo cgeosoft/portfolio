@@ -1,5 +1,5 @@
 /**
- * Gotify push notifications (Settings, Integrations). The service posts a
+ * Gotify push notifications (Settings, Notifications, Phone Apps). The service posts a
  * message to `<server>/message` with the application token of the user's own
  * Gotify server; the Gotify apps show it on the phone and the desktop.
  * Messages carry Markdown, which the Gotify clients render.
