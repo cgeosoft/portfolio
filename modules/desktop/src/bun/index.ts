@@ -21,7 +21,7 @@
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Tray, Utils } from "electrobun/bun";
 import { chmodSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { APP, userDataDir } from "./app";
+import { APP, startQuery, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
 import { classifyExternalUrl, encodeForShell } from "./external-url";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
@@ -31,6 +31,13 @@ import { WindowStateManager, normalizeWindowState, readWindowState, writeWindowS
 
 const STARTUP_TIMEOUT_MS = 60_000;
 const DEV_GUI_TIMEOUT_MS = 60_000;
+
+/**
+ * Runs at document start on every page the windows load. The native webview always enables the
+ * inspector, so its right-click menu offers "Inspect Element"; cancelling the event hides that
+ * menu. Copy and paste stay on the keyboard shortcuts. A browser on another device is not affected.
+ */
+const NO_CONTEXT_MENU_SCRIPT = `window.addEventListener("contextmenu", (e) => e.preventDefault(), true);`;
 
 /** The switch the service writes for us. Defaults to "close to tray" when the file is missing. */
 function readCloseToTray(dataDir: string): boolean {
@@ -122,6 +129,7 @@ async function main(): Promise<void> {
     title: APP.windowTitle,
     html: startingPage(APP.pages.starting.service),
     sandbox: true,
+    preload: NO_CONTEXT_MENU_SCRIPT,
     frame: { width: windowState.frame.width, height: windowState.frame.height, x: windowState.frame.x, y: windowState.frame.y },
   });
   if (windowState.isMaximized) {
@@ -154,6 +162,7 @@ async function main(): Promise<void> {
         title: APP.windowTitle,
         url: decision.url,
         sandbox: true,
+        preload: NO_CONTEXT_MENU_SCRIPT,
         // The constructor takes the rules as JSON, as setNavigationRules() sends them.
         navigationRules: JSON.stringify(appNavigationRules(appUrl as string)),
         frame: { width: APP.popup.width, height: APP.popup.height },
@@ -320,7 +329,7 @@ async function main(): Promise<void> {
   service.log(`window on ${appUrl}`);
   // Lock the window to the app origin before the app loads, so no page can navigate it away.
   mainWindow.webview.setNavigationRules(appNavigationRules(appUrl));
-  mainWindow.webview.loadURL(appUrl);
+  mainWindow.webview.loadURL(appUrl + startQuery());
 }
 
 void main();

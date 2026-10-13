@@ -85,6 +85,14 @@ export const APP = {
 } as const;
 
 /**
+ * Query string for the first page the window loads. `PORTFOLIO_ONBOARDING=1` opens the setup
+ * wizard even when setup is complete.
+ */
+export function startQuery(): string {
+  return process.env.PORTFOLIO_ONBOARDING === "1" ? "?onboarding=1" : "";
+}
+
+/**
  * The user data directory, the same in development and in the installed app. It holds
  * `window-state.json`, `desktop-settings.json` (written by the service) and `logs/`. Keep it in
  * step with the data directory rule in `modules/service/src/paths.ts`: Linux
