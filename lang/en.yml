@@ -178,6 +178,19 @@ transactions:
     currency: "Currency"
     clear: "Clear"
     clearTitle: "Value the holding at its buy price again"
+  rsi:
+    notAvailable: "N/A"
+    overbought: "OVERBOUGHT"
+    oversold: "OVERSOLD"
+    neutral: "NEUTRAL"
+  time:
+    never: "never"
+    justNow: "just now"
+    minutesAgo: "{count}m ago"
+    hoursAgo: "{count}h ago"
+    daysAgo: "{count}d ago"
+    monthsAgo: "{count}mo ago"
+    yearsAgo: "{count}y ago"
 
 # ── reports: Analyze with AI and saved reports ────────────────────────────
 reports:

@@ -1,3 +1,5 @@
+import { t } from "../../i18n";
+
 export { fmtCurrency, formatMoney, fmtPercent, numberFormat } from "portfolio-shared/format";
 
 /**
@@ -40,15 +42,15 @@ export function getAssetTypeBadgeClass(assetType: string): string {
 
 export function getRsiZone(rsi?: number): { label: string; color: string; bgClass: string; textClass: string; borderClass: string } {
   if (rsi === undefined || isNaN(rsi)) {
-    return { label: "N/A", color: "text-slate-500", bgClass: "bg-slate-500/10", textClass: "text-slate-400", borderClass: "border-slate-500/20" };
+    return { label: t("transactions.rsi.notAvailable"), color: "text-slate-500", bgClass: "bg-slate-500/10", textClass: "text-slate-400", borderClass: "border-slate-500/20" };
   }
   if (rsi >= 70) {
-    return { label: "OVERBOUGHT", color: "text-[#DD3C73]", bgClass: "bg-[#DD3C73]/10", textClass: "text-[#DD3C73]", borderClass: "border-[#DD3C73]/20" };
+    return { label: t("transactions.rsi.overbought"), color: "text-[#DD3C73]", bgClass: "bg-[#DD3C73]/10", textClass: "text-[#DD3C73]", borderClass: "border-[#DD3C73]/20" };
   }
   if (rsi <= 30) {
-    return { label: "OVERSOLD", color: "text-mint", bgClass: "bg-mint/10", textClass: "text-mint", borderClass: "border-mint/20" };
+    return { label: t("transactions.rsi.oversold"), color: "text-mint", bgClass: "bg-mint/10", textClass: "text-mint", borderClass: "border-mint/20" };
   }
-  return { label: "NEUTRAL", color: "text-cream", bgClass: "bg-cream/10", textClass: "text-cream", borderClass: "border-cream/20" };
+  return { label: t("transactions.rsi.neutral"), color: "text-cream", bgClass: "bg-cream/10", textClass: "text-cream", borderClass: "border-cream/20" };
 }
 
 /**
@@ -140,23 +142,23 @@ function stripThinkTags(input: string): string {
 
 /** Format ISO timestamp to relative time string ("x ago") */
 export function formatTimeAgo(isoString?: string | null): string {
-  if (!isoString) return "never";
+  if (!isoString) return t("transactions.time.never");
   const date = new Date(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  if (diffMs < 0 || isNaN(diffMs)) return "just now";
+  if (diffMs < 0 || isNaN(diffMs)) return t("transactions.time.justNow");
   const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 45) return "just now";
+  if (diffSec < 45) return t("transactions.time.justNow");
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 60) return t("transactions.time.minutesAgo", { count: diffMin });
   const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return t("transactions.time.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 30) return `${diffDays}d ago`;
+  if (diffDays < 30) return t("transactions.time.daysAgo", { count: diffDays });
   const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  if (diffMonths < 12) return t("transactions.time.monthsAgo", { count: diffMonths });
   const diffYears = Math.floor(diffMonths / 12);
-  return `${diffYears}y ago`;
+  return t("transactions.time.yearsAgo", { count: diffYears });
 }
 
 /**
