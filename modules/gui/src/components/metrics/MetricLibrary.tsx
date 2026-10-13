@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { BadgeCheck, Download, Library, Loader2, RotateCcw, ShieldAlert, Trash2 } from "lucide-react";
 import type { MetricListing, MetricRepositoryListing } from "portfolio-shared/api-types";
 import type { MetricManifest } from "portfolio-shared/metric-manifest";
+import { t } from "../../i18n";
 import { getMetricIcon } from "../portfolio/metrics-catalog";
 import { InstallMetricDialog } from "./InstallMetricDialog";
-import { UNAVAILABLE_LABEL, metricUnavailableReason, type MetricDisplay } from "./metric-view";
+import { metricUnavailableReason, unavailableLabel } from "./MetricCard";
+import type { MetricDisplay } from "./metric-view";
 
 export const smallButton =
   "h-7 inline-flex items-center gap-1 px-2 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed font-mono";
@@ -13,16 +15,16 @@ export function VerifiedBadge({ listing }: { listing: MetricListing }) {
   return listing.verified ? (
     <span
       className="inline-flex items-center gap-1 h-5 px-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-[9px] font-bold uppercase tracking-wider text-emerald-300 shrink-0"
-      title="Reviewed in the metrics repository"
+      title={t("metrics.library.verifiedHint")}
     >
-      <BadgeCheck className="w-2.5 h-2.5" /> Verified
+      <BadgeCheck className="w-2.5 h-2.5" /> {t("metrics.library.verified")}
     </span>
   ) : (
     <span
       className="inline-flex items-center gap-1 h-5 px-1.5 rounded-md border border-amber-500/50 bg-amber-500/10 text-[9px] font-bold uppercase tracking-wider text-amber-300 shrink-0"
-      title="Installed from a URL. Nobody reviewed this module."
+      title={t("metrics.library.unverifiedHint")}
     >
-      <ShieldAlert className="w-2.5 h-2.5" /> Unverified
+      <ShieldAlert className="w-2.5 h-2.5" /> {t("metrics.library.unverified")}
     </span>
   );
 }
@@ -101,10 +103,10 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
             <Library className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            <span className="truncate">Metrics</span>
+            <span className="truncate">{t("metrics.library.title")}</span>
           </h2>
           <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
-            Metrics are reviewed and bundled with the application. Metrics from a URL are not.
+            {t("metrics.library.description")}
           </p>
         </div>
         <button
@@ -113,7 +115,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
           className="h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono shrink-0"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Install from URL</span>
+          <span>{t("metrics.library.installFromUrl")}</span>
         </button>
       </div>
 
@@ -129,7 +131,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
                 category === name ? "bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/40" : "text-slate-500 hover:text-slate-300 border-transparent hover:bg-slate-800/40"
               }`}
             >
-              {name}
+              {name === "All" ? t("common.all") : name}
             </button>
           ))}
         </div>
@@ -153,7 +155,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
                 disabled={!listing}
                 onClick={() => listing && onInfo(listing)}
                 className="flex items-start gap-3 min-w-0 flex-1 text-left cursor-pointer disabled:cursor-default group"
-                title={listing ? "Details" : undefined}
+                title={listing ? t("metrics.library.details") : undefined}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0">
@@ -168,7 +170,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
               {((value?.kind === "failed" && value.status === "quarantined") || listing?.source === "url") && (
                 <div className="flex items-center gap-1 shrink-0">
                   {value?.kind === "failed" && value.status === "quarantined" && (
-                    <button type="button" onClick={() => onRetry(row.id)} className={smallButton} title="Run this module again" aria-label={`Retry ${manifest.name}`}>
+                    <button type="button" onClick={() => onRetry(row.id)} className={smallButton} title={t("metrics.library.retryHint")} aria-label={t("metrics.library.retryLabel", { name: manifest.name })}>
                       <RotateCcw className="w-3 h-3" />
                     </button>
                   )}
@@ -178,8 +180,8 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
                       disabled={uninstalling === row.id}
                       onClick={() => void uninstall(row.id)}
                       className={`${smallButton} hover:text-rose-300 hover:border-rose-500/40`}
-                      title="Uninstall this module"
-                      aria-label={`Uninstall ${manifest.name}`}
+                      title={t("metrics.library.uninstallHint")}
+                      aria-label={t("metrics.library.uninstallLabel", { name: manifest.name })}
                     >
                       {uninstalling === row.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                     </button>
@@ -190,7 +192,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
               <div className="lg:w-36 shrink-0 min-w-0 lg:text-right">
                 {unavailable && (
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate" title={unavailable}>
-                    {UNAVAILABLE_LABEL}
+                    {unavailableLabel()}
                   </div>
                 )}
                 {!unavailable && value?.kind === "ok" && (
@@ -202,15 +204,14 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
                 {!unavailable && value?.kind === "pending" && <Loader2 className="w-4 h-4 animate-spin text-slate-600 lg:ml-auto" />}
                 {!unavailable && value?.kind === "failed" && (
                   <div className="text-[10px] text-rose-400 truncate" title={value.error}>
-                    {value.status === "quarantined" ? "Stopped: " : "Error: "}
-                    {value.error}
+                    {t(value.status === "quarantined" ? "metrics.library.stopped" : "metrics.library.failed", { error: value.error })}
                   </div>
                 )}
               </div>
             </div>
           );
         })}
-        {shown.length === 0 && <div className="py-8 text-center text-slate-500 text-xs">No metrics in this category.</div>}
+        {shown.length === 0 && <div className="py-8 text-center text-slate-500 text-xs">{t("metrics.library.emptyCategory")}</div>}
       </div>
 
       <InstallMetricDialog isOpen={isInstallOpen} onClose={() => setIsInstallOpen(false)} onInstalled={onInstalled} />

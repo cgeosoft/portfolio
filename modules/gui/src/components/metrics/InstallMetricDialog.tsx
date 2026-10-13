@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { AlertCircle, Download, Link, Loader2, ShieldAlert, X } from "lucide-react";
 import type { MetricListing, PreviewMetricInstallResponse } from "portfolio-shared/api-types";
 import { api } from "../../api";
+import { t } from "../../i18n";
 import { rpc } from "../../rpc";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
 import { ScopeConsentList } from "./ScopeBadges";
+
+/** A translated sentence with `{name}` placeholders replaced by JSX (code, strong). */
+function richText(text: string, parts: Record<string, ReactNode>): ReactNode {
+  return text.split(/(\{\w+\})/).map((piece, i) => {
+    const name = /^\{(\w+)\}$/.exec(piece)?.[1];
+    return <Fragment key={i}>{name !== undefined && name in parts ? parts[name] : piece}</Fragment>;
+  });
+}
 
 interface InstallMetricDialogProps {
   isOpen: boolean;
@@ -98,7 +107,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
               <Download className="w-4 h-4" />
             </div>
             <h2 id="install-metric-title" className="text-sm font-bold text-slate-100 uppercase tracking-wider truncate">
-              Install metric from URL
+              {t("metrics.install.title")}
             </h2>
           </div>
           <button
@@ -106,7 +115,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
             onClick={onClose}
             disabled={busy}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -115,7 +124,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
         <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar text-xs">
           <div className="space-y-1.5">
             <label htmlFor="metric-url" className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              Manifest URL
+              {t("metrics.install.manifestUrl")}
             </label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 min-w-0">
@@ -141,11 +150,11 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                 className="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg border border-slate-800 text-xs font-bold text-slate-200 hover:bg-slate-800/60 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               >
                 {isFetching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                <span>Fetch</span>
+                <span>{t("metrics.install.fetch")}</span>
               </button>
             </div>
             <p className="text-[10px] text-slate-500">
-              The URL must point at a <code>manifest.yml</code> whose <code>module</code> block names the .wasm file and its SHA-256.
+              {richText(t("metrics.install.urlHint"), { manifest: <code>manifest.yml</code>, module: <code>module</code> })}
             </p>
           </div>
 
@@ -166,7 +175,12 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-bold text-slate-100 truncate">{manifest.name}</div>
                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">
-                      {manifest.category} · v{manifest.version} · {manifest.license} · by {manifest.developer.name}
+                      {t("metrics.install.meta", {
+                        category: manifest.category,
+                        version: manifest.version,
+                        license: manifest.license,
+                        developer: manifest.developer.name,
+                      })}
                     </div>
                     <p className="text-slate-400 mt-1.5 leading-relaxed">{manifest.summary}</p>
                   </div>
@@ -176,27 +190,28 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                 </div>
                 {preview.conflict === "builtin" && (
                   <div className="text-rose-400 text-[11px]">
-                    The id <code>{manifest.id}</code> belongs to a built-in metric and cannot be replaced.
+                    {richText(t("metrics.install.builtinConflict"), { id: <code>{manifest.id}</code> })}
                   </div>
                 )}
                 {preview.conflict === "installed" && (
                   <div className="text-amber-300 text-[11px]">
-                    Replaces the installed version {preview.installedVersion} of <code>{manifest.id}</code>.
+                    {richText(t("metrics.install.installedConflict"), {
+                      version: preview.installedVersion ?? "",
+                      id: <code>{manifest.id}</code>,
+                    })}
                   </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">This metric asks to read</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">{t("metrics.install.asksToRead")}</div>
                 <ScopeConsentList scopes={manifest.scopes} />
               </div>
 
               <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 flex items-start gap-2 text-amber-200">
                 <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-300" />
                 <div className="min-w-0 text-[11px] leading-relaxed">
-                  Nobody has reviewed this module. It runs in a sandbox with no file, network, or system access and can only
-                  return a number and a label, but it receives the data listed above. It stays marked{" "}
-                  <strong>UNVERIFIED</strong>.
+                  {richText(t("metrics.install.warning"), { unverified: <strong>{t("metrics.install.unverified")}</strong> })}
                 </div>
               </div>
 
@@ -209,7 +224,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                   className="mt-0.5 accent-[#DD3C73]"
                 />
                 <span className="text-slate-300 text-[11px]">
-                  I grant this module the data scopes listed above and accept that it is unverified.
+                  {t("metrics.install.accept")}
                 </span>
               </label>
             </>
@@ -223,7 +238,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
             disabled={busy}
             className="h-8 px-3 rounded-lg border border-slate-800 text-xs font-bold text-slate-300 hover:bg-slate-800/60 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -232,7 +247,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
             className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isInstalling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-            <span>Install</span>
+            <span>{t("metrics.install.install")}</span>
           </button>
         </div>
       </div>

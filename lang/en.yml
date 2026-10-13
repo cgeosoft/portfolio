@@ -76,7 +76,297 @@ assistant:
 
 # ── metrics: dashboard cards and the metric library ───────────────────────
 metrics:
-  _section: "metrics"
+  slots:
+    large: "Large cards"
+    compact: "Compact tiles"
+  unavailable:
+    label: "Needs FMP key"
+    reason: "A data provider this metric needs is not set up"
+  card:
+    stopped: "Stopped"
+    notInstalled: "Not installed"
+    error: "Error"
+    calculating: "Calculating"
+    explanationFor: "Explanation for {name}"
+  scopes:
+    portfolio:
+      summary:
+        label: "Portfolio totals"
+        grants: "Aggregate figures only: totals, cash, fees, taxes, weights. No symbols."
+        consent: "Portfolio totals. No individual positions."
+      holdings:
+        label: "Holdings"
+        grants: "Per-position rows: symbol, shares, prices, weights, indicators."
+        consent: "Every position you hold, including tickers and quantities."
+      transactions:
+        label: "Transactions"
+        grants: "The full ledger: every transaction with symbol, type, amount, fee, and tax."
+        consent: "Your complete transaction history."
+      history:
+        label: "Value history"
+        grants: "The equity curve: portfolio value, cost, and cash per day."
+        consent: "Your portfolio value over time."
+    market:
+      fundamentals:
+        label: "Fundamentals"
+        grants: "Public company data per held symbol: beta, valuation, dividends, analyst targets, DCF, financial scores. Needs a Financial Modeling Prep key."
+        consent: "Public company data for every symbol you hold. It names your symbols, not your quantities."
+  dashboard:
+    empty: "No metrics are on the dashboard of this portfolio."
+    openMetrics: "Open Metrics"
+  tab:
+    noPortfolio: "Create a portfolio first to choose its metrics."
+    title: "Dashboard"
+    description: "Shown on the Overview tab. Drag a card by its header to move it, click an empty place to fill it."
+    descriptionNamed: "Shown on the Overview tab of {name}. Each portfolio keeps its own cards. Drag a card by its header to move it, click an empty place to fill it."
+    autoChoose: "Auto choose"
+    autoChooseHint: "Let the assistant choose cards and tiles from your allocation"
+    defaults: "Defaults"
+    defaultsHint: "Restore the default dashboard"
+    addMetric: "Add metric"
+    chooseFor:
+      large: "Choose a metric for this large card"
+      compact: "Choose a metric for this compact tile"
+    dragHint: "Drag to move"
+    dragLabel: "Drag {name} to another place"
+    removeHint: "Remove from the dashboard"
+    removeLabel: "Remove {name} from the dashboard"
+  library:
+    title: "Metrics"
+    description: "Metrics are reviewed and bundled with the application. Metrics from a URL are not."
+    installFromUrl: "Install from URL"
+    verified: "Verified"
+    verifiedHint: "Reviewed in the metrics repository"
+    unverified: "Unverified"
+    unverifiedHint: "Installed from a URL. Nobody reviewed this module."
+    details: "Details"
+    retryHint: "Run this module again"
+    retryLabel: "Retry {name}"
+    uninstallHint: "Uninstall this module"
+    uninstallLabel: "Uninstall {name}"
+    stopped: "Stopped: {error}"
+    failed: "Error: {error}"
+    emptyCategory: "No metrics in this category."
+  picker:
+    title: "Choose a metric"
+    fills:
+      large: "It fills this large card on the dashboard."
+      compact: "It fills this compact tile on the dashboard."
+    search: "Search metrics"
+    allPlaced: "Every installed metric is already on the dashboard."
+    noMatch: "No metric matches the search."
+  suggest:
+    title: "Auto choose metrics"
+    subtitle: "The assistant picks cards and tiles from your allocation"
+    waiting: "Waiting for the assistant…"
+    checkAssistant: "Check the assistant under Settings, then try again."
+    unchanged: "The assistant suggests the layout you already have."
+    current: "Current"
+    suggested: "Suggested"
+    empty: "Empty"
+    markNew: "New"
+    markOut: "Out"
+    tryAgain: "Try again"
+    tryAgainHint: "Ask the assistant again"
+    replace: "Replace"
+  install:
+    title: "Install metric from URL"
+    manifestUrl: "Manifest URL"
+    fetch: "Fetch"
+    urlHint: "The URL must point at a {manifest} whose {module} block names the .wasm file and its SHA-256."
+    meta: "{category} · v{version} · {license} · by {developer}"
+    builtinConflict: "The id {id} belongs to a built-in metric and cannot be replaced."
+    installedConflict: "Replaces the installed version {version} of {id}."
+    asksToRead: "This metric asks to read"
+    warning: "Nobody has reviewed this module. It runs in a sandbox with no file, network, or system access and can only return a number and a label, but it receives the data listed above. It stays marked {unverified}."
+    unverified: "UNVERIFIED"
+    accept: "I grant this module the data scopes listed above and accept that it is unverified."
+    install: "Install"
+  details:
+    reviewed: "Reviewed in repository"
+    unverified: "Unverified · installed from URL"
+    whatItShows: "What it shows"
+    whyItMatters: "Why it matters"
+    developer: "Developer"
+    source: "Source"
+    bundled: "Bundled with the application"
+    url: "URL"
+    sha256: "Module SHA-256"
+    sandbox: "Sandbox limits"
+    sandboxLimits: "{memory} KiB memory · {timeout} ms per run · no file, network, or system access"
+  info:
+    title: "Metric Explanations & Methodology"
+    subtitle: "Formulas, component breakdowns, and live calculated values"
+    closeLabel: "Close metric explanations modal"
+    selectMetric: "Select Metric to Inspect:"
+    activeCurrency: "Active Currency"
+    liveData: "Live Portfolio Data"
+    whatItMeans: "What this value means"
+    formula: "Mathematical Formula & Method"
+    components: "Components & Current Balances"
+    insights: "Key Analytical Insights"
+    footerHint: "Click any tab above to switch metric explanation"
+    closeGuide: "Close Guide"
+    live:
+      sinceInception: "Return: {percent} since inception"
+      invested: "Invested: {amount}"
+      costBasis: "Cost Basis: {amount}"
+      dayChange: "24h Change: {arrow} {percent}"
+      sellsAndDividends: "Sells: {sells} | Divs: {dividends}"
+      cashShare: "{percent}% of Total Portfolio"
+      netDeposits: "Total Cumulative Net Deposits"
+      cashDistributions: "All-Time Cash Distributions"
+      sessionChange: "+{percent}% session change"
+      noEquities: "No equities active"
+    defs:
+      totalGain:
+        title: "Total Gain Since Start"
+        category: "Performance"
+        short: "All-time net economic performance generated across your entire portfolio since inception."
+        full: "This metric captures the comprehensive net performance of your capital. It does not look merely at current unrealized paper gains, but synthesizes all asset price changes, realized profits from closed sales, dividend distributions, interest payouts, and subtracts transaction fees paid across time."
+        formula: "Total Gain = (Invested Value - Cost Basis) + Realized PnL + Dividends + Interest - Broker Fees"
+        formulaDescription: "Return % = (Total Gain Since Start ÷ Total Capital Invested) × 100"
+        components:
+          unrealized:
+            label: "Unrealized Gain / Loss"
+            description: "Paper profit or loss on currently open positions (Invested Value − Cost Basis)."
+          realized:
+            label: "Closed / Realized PnL"
+            description: "Net profit or loss locked in upon selling assets over time."
+          income:
+            label: "Dividends & Interest"
+            description: "Cumulative cash distributions and fixed yields credited into the portfolio."
+          fees:
+            label: "Transaction Fees"
+            description: "Total brokerage commissions and order fees deducted over time."
+        takeaways:
+          alpha: "True Economic Alpha: Evaluates total wealth created rather than just static ticker price changes."
+          cashFlow: "Cash Flow Included: Reinvested or collected dividends and interest are fully accounted for in the return percentage."
+          netOfFees: "Net of Fees: Broker commissions and trade frictions are deducted to show realistic net returns."
+      valuation:
+        title: "Portfolio Valuation"
+        category: "Valuation"
+        short: "Total liquidated net worth of your portfolio at live market quotes."
+        full: "Portfolio Valuation reflects the exact total liquid value of your entire investment portfolio right now. It combines the real-time market value of all active securities (stocks, ETFs, cryptocurrencies, mutual funds) with your uninvested cash reserves."
+        formula: "Portfolio Valuation = Total Market Value of Holdings + Cash Reserves"
+        formulaDescription: "Holdings Value is calculated by multiplying each active position's share count by its latest live market quote."
+        components:
+          holdings:
+            label: "Invested Holdings Value"
+            description: "Aggregate live value of all active stocks, ETFs, crypto, and other assets."
+          cash:
+            label: "Uninvested Cash Reserves"
+            description: "Liquid cash buffer available for new buys or safe-haven liquidity."
+          costBasis:
+            label: "Holdings Cost Basis"
+            description: "Total capital expended to acquire currently open positions."
+        takeaways:
+          liquidWorth: "Liquid Worth: What your portfolio would yield before taxes if all holdings were liquidated immediately at current market bids."
+          multiAsset: "Multi-Asset Integration: Seamlessly consolidates multi-currency positions, cash balances, and fractional assets."
+          cashDrag: "Includes Cash Drag: Accurately weights liquid reserves alongside invested assets."
+      todayReturn:
+        title: "Today's Return"
+        category: "Daily Return"
+        short: "Single-session valuation delta compared to previous market close."
+        full: "Today's Return measures the monetary and percentage fluctuation of your active positions during the current trading session. It compares live quotes against the prior day's official market closing prices for each holding."
+        formula: "Today's Return ($) = Sum of [ (Current Price - Previous Close Price) × Shares ]"
+        formulaDescription: "Today's Return (%) = (Today's Return $ ÷ Aggregate Previous Session Close Value) × 100"
+        components:
+          currencyDelta:
+            label: "24h Currency Delta"
+            description: "Absolute financial gain or loss experienced in the current session."
+          percentChange:
+            label: "24h Percentage Change"
+            description: "Percentage return relative to yesterday's closing baseline valuation."
+          topWinner:
+            label: "Session Top Winner"
+            description: "The best performing asset in your active portfolio during this session."
+        takeaways:
+          volatility: "Session Volatility: Shows how daily macro events, earnings reports, or market shifts impacted your holdings today."
+          excludesCash: "Excludes Cash: Only price-sensitive securities drive daily returns; cash reserves maintain zero daily volatility."
+          realTime: "Real-time Updates: Recalculates dynamically as new quote ticks arrive during market hours."
+      realizedIncome:
+        title: "Realized & Income"
+        category: "Income & Yield"
+        short: "Cumulative locked-in cash profits from executed sales, dividends, and yields."
+        full: "While unrealized paper gains rise and fall with market sentiment, Realized & Income tracks the permanent, crystalized wealth you have banked. It sums all profits realized from sold securities together with regular income flows from dividends and interest."
+        formula: "Realized & Income = Closed Sale PnL + Total Dividends Received + Fixed Interest Earned"
+        formulaDescription: "Closed Sale PnL is computed on each SELL execution using the FIFO / average cost basis method."
+        components:
+          sells:
+            label: "Net Realized Sells"
+            description: "Crystalized capital gains from executed sell transactions."
+          dividends:
+            label: "Dividends Received"
+            description: "Cash payments distributed by portfolio holdings directly to you."
+          interest:
+            label: "Fixed Interest / Yields"
+            description: "Income earned from cash yields, bond coupons, or lending."
+        takeaways:
+          permanent: "Permanent Wealth: Locked-in gains cannot be reversed by future market downturns."
+          income: "Income Generation: Clear visibility into passive yield generation from dividend-paying assets."
+          tax: "Tax & Accounting: Useful for tracking annual taxable capital events and dividend distributions."
+      cashReserves:
+        title: "Cash Reserves"
+        category: "Liquidity"
+        short: "Unallocated liquid cash available for strategic rebalancing or safety."
+        full: "Cash Reserves represent uninvested fiat currency in your portfolio. This liquidity serves as 'dry powder' for opportunistic market dips, emergency buffers, or awaiting dividend reinvestment."
+        formula: "Cash Reserves = Total Injected Deposits - Total Buys + Total Sells + Dividends - Withdrawals - Fees"
+        formulaDescription: "Cash Weight (%) = (Cash Reserves ÷ Total Portfolio Valuation) × 100"
+        components:
+          balance:
+            label: "Current Balance"
+            description: "Instant liquid cash available in the portfolio base currency."
+          share:
+            label: "Allocation Share"
+            description: "Percentage proportion of total portfolio value held in cash."
+            value: "{percent}% of portfolio"
+        takeaways:
+          liquidity: "Opportunistic Liquidity: Enables immediate execution on market drawdowns without selling existing assets."
+          risk: "Risk Mitigation: Dampens overall portfolio volatility during bear cycles."
+      capitalInjected:
+        title: "Capital Injected"
+        category: "Principal"
+        short: "Total cumulative principal capital deposited into the portfolio."
+        full: "Capital Injected tracks your total principal contributions (deposits) into the portfolio ledger. It acts as the financial baseline denominator for calculating true Return on Invested Capital (ROIC)."
+        formula: "Capital Injected = Cumulative Deposits - Cumulative Capital Withdrawals"
+        formulaDescription: "Calculated from all DEPOSIT and WITHDRAWAL transaction records in your portfolio."
+        components:
+          deposited:
+            label: "Total Capital Deposited"
+            description: "Sum of all historical external deposits transferred into the portfolio."
+        takeaways:
+          benchmark: "Principal Benchmark: Differentiates external savings contributions from organic market growth."
+          returnBase: "Return Base: Forms the denominator for accurate Money-Weighted and Time-Weighted Return models."
+      dividends:
+        title: "Total Dividends"
+        category: "Distributions"
+        short: "All-time cash dividend payouts received from equity and fund holdings."
+        full: "Total Dividends represents the aggregate lifetime cash distributions paid directly to your portfolio by dividend-yielding equities, ETFs, and REITs. These can be held as cash liquidity or redeployed into new holdings."
+        formula: "Total Dividends = Sum of all DIVIDEND transactions credited to the account"
+        formulaDescription: "Excludes price appreciation and focuses strictly on corporate earnings distributions."
+        components:
+          cumulative:
+            label: "Cumulative Dividends"
+            description: "Total monetary dividends credited across all portfolio assets."
+        takeaways:
+          cashFlow: "Passive Cash Flow: Measures the real cash payout power of your income-oriented investments."
+          compounding: "Compounding Fuel: Dividends can be systematically reinvested to accelerate compound growth."
+      topPerformer:
+        title: "Top Session Performer"
+        category: "Session Leader"
+        short: "The individual active asset with the highest percentage gain in the current market session."
+        full: "Identifies the standout asset in your portfolio based on intraday percentage gain from the previous official market close. Helps spot momentum drivers and market leadership across your holdings."
+        formula: "Top Performer = max( (Current Quote - Previous Close) ÷ Previous Close ) across all active holdings"
+        formulaDescription: "Evaluated across all active non-cash assets in the portfolio."
+        components:
+          topAsset:
+            label: "Top Asset"
+            description: "Asset ticker and intraday percentage return."
+            none: "No active equity positions"
+        takeaways:
+          momentum: "Momentum Tracking: Instant visibility into today's strongest asset rally."
+          attribution: "Attribution: Understand what position is carrying today's portfolio performance."
 
 # ── settings: every Settings page ─────────────────────────────────────────
 settings:

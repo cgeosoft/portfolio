@@ -3,6 +3,7 @@ import { Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import type { MetricEvaluation, MetricListing, SuggestPortfolioMetricsResponse } from "portfolio-shared/api-types";
 import { METRIC_SLOT_CAPACITY, type MetricSlot, type PortfolioMetricPreference } from "portfolio-shared/metrics";
 import { api } from "../../api";
+import { t } from "../../i18n";
 import { MetricCompactTile, MetricLargeCard } from "./MetricCard";
 import { smallButton } from "./MetricLibrary";
 import { displayMetric } from "./metric-view";
@@ -19,8 +20,6 @@ interface MetricSuggestModalProps {
   onClose: () => void;
   onReplace: (next: PortfolioMetricPreference[]) => void;
 }
-
-const SLOT_LABEL: Record<MetricSlot, string> = { large: "Large cards", compact: "Compact tiles" };
 
 type Mark = "new" | "out" | null;
 
@@ -109,7 +108,7 @@ export function MetricSuggestModal({
               mark === "new" ? "bg-[#DD3C73] text-white" : "bg-slate-700 text-slate-300"
             }`}
           >
-            {mark === "new" ? "New" : "Out"}
+            {mark === "new" ? t("metrics.suggest.markNew") : t("metrics.suggest.markOut")}
           </span>
         )}
       </div>
@@ -122,7 +121,7 @@ export function MetricSuggestModal({
         {label} · {ids.length}/{METRIC_SLOT_CAPACITY[slot]}
       </div>
       {ids.length === 0 ? (
-        <div className="py-3 text-center rounded-xl border border-dashed border-slate-800 text-slate-600 text-[10px] uppercase tracking-wider">Empty</div>
+        <div className="py-3 text-center rounded-xl border border-dashed border-slate-800 text-slate-600 text-[10px] uppercase tracking-wider">{t("metrics.suggest.empty")}</div>
       ) : (
         <div className={slot === "large" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"}>
           {ids.map((id) => renderItem(id, slot, markOf(id)))}
@@ -147,16 +146,16 @@ export function MetricSuggestModal({
             <Sparkles className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <div className="min-w-0">
               <h2 id="metric-suggest-title" className="text-sm font-bold text-slate-100 uppercase tracking-wider truncate">
-                Auto choose metrics
+                {t("metrics.suggest.title")}
               </h2>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">The assistant picks cards and tiles from your allocation</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">{t("metrics.suggest.subtitle")}</div>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -166,14 +165,14 @@ export function MetricSuggestModal({
           {isLoading && (
             <div className="py-16 flex flex-col items-center gap-3 text-slate-400 text-xs">
               <Loader2 className="w-6 h-6 animate-spin text-[#DD3C73]" />
-              <span>Waiting for the assistant…</span>
+              <span>{t("metrics.suggest.waiting")}</span>
             </div>
           )}
 
           {!isLoading && error && (
             <div className="py-10 text-center space-y-3">
               <div className="text-xs text-rose-400">{error}</div>
-              <div className="text-[10px] text-slate-500">Check the assistant under Settings, then try again.</div>
+              <div className="text-[10px] text-slate-500">{t("metrics.suggest.checkAssistant")}</div>
             </div>
           )}
 
@@ -182,15 +181,15 @@ export function MetricSuggestModal({
               {suggestion.reason && (
                 <div className="p-3 rounded-xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 text-xs text-slate-200">{suggestion.reason}</div>
               )}
-              {isUnchanged && <div className="text-xs text-slate-400">The assistant suggests the layout you already have.</div>}
+              {isUnchanged && <div className="text-xs text-slate-400">{t("metrics.suggest.unchanged")}</div>}
               {(["large", "compact"] as const).map((slot) => {
                 const current = currentIds(slot);
                 const next = suggestedIds(slot);
                 return (
                   <section key={slot} className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-200 pb-2 border-b border-slate-800/80">{SLOT_LABEL[slot]}</h3>
-                    {renderRow("Current", current, slot, (id) => (next.includes(id) ? null : "out"))}
-                    {renderRow("Suggested", next, slot, (id) => (current.includes(id) ? null : "new"))}
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-200 pb-2 border-b border-slate-800/80">{t(`metrics.slots.${slot}`)}</h3>
+                    {renderRow(t("metrics.suggest.current"), current, slot, (id) => (next.includes(id) ? null : "out"))}
+                    {renderRow(t("metrics.suggest.suggested"), next, slot, (id) => (current.includes(id) ? null : "new"))}
                   </section>
                 );
               })}
@@ -199,12 +198,12 @@ export function MetricSuggestModal({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-800 px-5 py-3 shrink-0">
-          <button type="button" onClick={retry} disabled={isLoading} className={smallButton} title="Ask the assistant again">
+          <button type="button" onClick={retry} disabled={isLoading} className={smallButton} title={t("metrics.suggest.tryAgainHint")}>
             <RefreshCw className="w-3 h-3" />
-            <span>Try again</span>
+            <span>{t("metrics.suggest.tryAgain")}</span>
           </button>
           <button type="button" onClick={onClose} className={smallButton}>
-            <span>Cancel</span>
+            <span>{t("common.cancel")}</span>
           </button>
           <button
             type="button"
@@ -213,7 +212,7 @@ export function MetricSuggestModal({
             className="h-7 inline-flex items-center gap-1.5 px-3 rounded-md border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-[10px] font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider font-mono disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3 h-3" />
-            <span>Replace</span>
+            <span>{t("metrics.suggest.replace")}</span>
           </button>
         </div>
       </div>

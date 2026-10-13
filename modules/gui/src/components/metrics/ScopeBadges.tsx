@@ -1,5 +1,6 @@
 import { Building2, Database, Eye, History, LineChart, type LucideIcon } from "lucide-react";
-import { METRIC_SCOPE_DESCRIPTIONS, type MetricScope } from "portfolio-shared/metric-abi";
+import type { MetricScope } from "portfolio-shared/metric-abi";
+import { t } from "../../i18n";
 
 const SCOPE_ICONS: Record<MetricScope, LucideIcon> = {
   "portfolio.summary": Eye,
@@ -12,6 +13,15 @@ const SCOPE_ICONS: Record<MetricScope, LucideIcon> = {
 /** Scopes that reveal individual positions, the ledger, or which symbols you hold. */
 const SENSITIVE: readonly MetricScope[] = ["portfolio.holdings", "portfolio.transactions", "market.fundamentals"];
 
+/** Label, grant and consent text of a scope; the keys nest by the scope id (`metrics.scopes.portfolio.summary.label`). */
+function scopeText(scope: MetricScope) {
+  return {
+    label: t(`metrics.scopes.${scope}.label`),
+    grants: t(`metrics.scopes.${scope}.grants`),
+    consent: t(`metrics.scopes.${scope}.consent`),
+  };
+}
+
 interface ScopeBadgesProps {
   scopes: readonly MetricScope[];
   size?: "xs" | "sm";
@@ -23,7 +33,7 @@ export function ScopeBadges({ scopes, size = "xs" }: ScopeBadgesProps) {
     <div className="flex flex-wrap items-center gap-1">
       {scopes.map((scope) => {
         const Icon = SCOPE_ICONS[scope];
-        const meta = METRIC_SCOPE_DESCRIPTIONS[scope];
+        const meta = scopeText(scope);
         const sensitive = SENSITIVE.includes(scope);
         return (
           <span
@@ -56,7 +66,7 @@ export function ScopeConsentList({ scopes }: ScopeConsentListProps) {
     <ul className="space-y-2">
       {scopes.map((scope) => {
         const Icon = SCOPE_ICONS[scope];
-        const meta = METRIC_SCOPE_DESCRIPTIONS[scope];
+        const meta = scopeText(scope);
         const sensitive = SENSITIVE.includes(scope);
         return (
           <li

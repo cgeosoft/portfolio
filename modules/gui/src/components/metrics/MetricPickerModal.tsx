@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { LayoutGrid, Search, X } from "lucide-react";
 import type { MetricListing } from "portfolio-shared/api-types";
 import type { MetricSlot } from "portfolio-shared/metrics";
+import { t } from "../../i18n";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
+import { metricUnavailableReason, unavailableLabel } from "./MetricCard";
 import { VerifiedBadge } from "./MetricLibrary";
-import { UNAVAILABLE_LABEL, metricUnavailableReason, type MetricDisplay } from "./metric-view";
+import type { MetricDisplay } from "./metric-view";
 
 interface MetricPickerModalProps {
   /** Size of the empty place being filled; null closes the modal. */
@@ -15,8 +17,6 @@ interface MetricPickerModalProps {
   onPick: (id: string) => void;
   onClose: () => void;
 }
-
-const SLOT_NAME: Record<MetricSlot, string> = { large: "large card", compact: "compact tile" };
 
 /** Choose a metric for an empty dashboard place. */
 export function MetricPickerModal({ slot, candidates, display, onPick, onClose }: MetricPickerModalProps) {
@@ -58,16 +58,16 @@ export function MetricPickerModal({ slot, candidates, display, onPick, onClose }
             </div>
             <div className="min-w-0">
               <h2 id="metric-picker-title" className="text-sm font-bold text-slate-100 uppercase tracking-wider truncate">
-                Choose a metric
+                {t("metrics.picker.title")}
               </h2>
-              <p className="text-[11px] text-slate-400 truncate">It fills this {SLOT_NAME[slot]} on the dashboard.</p>
+              <p className="text-[11px] text-slate-400 truncate">{t(`metrics.picker.fills.${slot}`)}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -80,7 +80,7 @@ export function MetricPickerModal({ slot, candidates, display, onPick, onClose }
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search metrics"
+              placeholder={t("metrics.picker.search")}
               className="flex-1 min-w-0 bg-transparent text-xs text-slate-200 placeholder:text-slate-600 outline-none"
             />
           </label>
@@ -111,14 +111,14 @@ export function MetricPickerModal({ slot, candidates, display, onPick, onClose }
                   </div>
                   <p className="text-[11px] text-slate-500 truncate mt-0.5">{manifest.summary}</p>
                 </div>
-                {unavailable && <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">{UNAVAILABLE_LABEL}</div>}
+                {unavailable && <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">{unavailableLabel()}</div>}
                 {!unavailable && value?.kind === "ok" && <div className={`text-xs font-bold shrink-0 max-w-[30%] truncate ${value.valueClass}`}>{value.value}</div>}
               </button>
             );
           })}
           {shown.length === 0 && (
             <div className="py-10 text-center text-slate-500 text-xs">
-              {candidates.length === 0 ? "Every installed metric is already on the dashboard." : "No metric matches the search."}
+              {candidates.length === 0 ? t("metrics.picker.allPlaced") : t("metrics.picker.noMatch")}
             </div>
           )}
         </div>

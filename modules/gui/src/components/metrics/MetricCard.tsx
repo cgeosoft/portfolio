@@ -2,7 +2,8 @@ import { AlertTriangle, Info, KeyRound, Loader2 } from "lucide-react";
 import type { MetricListing } from "portfolio-shared/api-types";
 import { getMetricAccentClass, getMetricIcon } from "../portfolio/metrics-catalog";
 import { StatCard } from "../portfolio/StatCard";
-import { UNAVAILABLE_LABEL, metricShortTitle, metricTitle, type MetricDisplay } from "./metric-view";
+import { t } from "../../i18n";
+import { metricShortTitle, metricTitle, type MetricDisplay } from "./metric-view";
 
 interface MetricCardProps {
   listing: MetricListing;
@@ -10,10 +11,23 @@ interface MetricCardProps {
   onInfo?: () => void;
 }
 
+/**
+ * Why a metric cannot be added or run (a provider without an API key), or null.
+ * Lives here, not in metric-view.ts, so that file stays free of the i18n module for its tests.
+ */
+export function metricUnavailableReason(listing: MetricListing | null | undefined): string | null {
+  return listing?.status === "unavailable" ? listing.statusReason || t("metrics.unavailable.reason") : null;
+}
+
+/** Short label of a disabled metric, for tiles and badges. */
+export function unavailableLabel(): string {
+  return t("metrics.unavailable.label");
+}
+
 function failureLabel(display: Extract<MetricDisplay, { kind: "failed" }>): string {
-  if (display.status === "quarantined") return "Stopped";
-  if (display.status === "missing") return "Not installed";
-  return "Error";
+  if (display.status === "quarantined") return t("metrics.card.stopped");
+  if (display.status === "missing") return t("metrics.card.notInstalled");
+  return t("metrics.card.error");
 }
 
 /** Large dashboard card of a metric module. */
@@ -26,12 +40,12 @@ export function MetricLargeCard({ listing, display, onInfo }: MetricCardProps) {
   if (display.kind === "unavailable") {
     return (
       <div className="opacity-50" title={display.reason}>
-        <StatCard title={metricTitle(listing)} value={UNAVAILABLE_LABEL} subValue={display.reason} subValueClass="text-slate-500" icon={icon} onInfo={onInfo} hint={display.reason} />
+        <StatCard title={metricTitle(listing)} value={unavailableLabel()} subValue={display.reason} subValueClass="text-slate-500" icon={icon} onInfo={onInfo} hint={display.reason} />
       </div>
     );
   }
   if (display.kind === "pending") {
-    return <StatCard title={metricTitle(listing)} value="…" subValue="Calculating" subValueClass="text-slate-500" icon={icon} onInfo={onInfo} />;
+    return <StatCard title={metricTitle(listing)} value="…" subValue={t("metrics.card.calculating")} subValueClass="text-slate-500" icon={icon} onInfo={onInfo} />;
   }
   return (
     <StatCard
@@ -55,7 +69,7 @@ export function MetricCompactTile({ listing, display, onInfo }: MetricCardProps)
           {metricShortTitle(listing)}
         </span>
         {onInfo && (
-          <button onClick={onInfo} className="hover:text-slate-300 shrink-0" aria-label={`Explanation for ${metricTitle(listing)}`}>
+          <button onClick={onInfo} className="hover:text-slate-300 shrink-0" aria-label={t("metrics.card.explanationFor", { name: metricTitle(listing) })}>
             <Info className="w-2.5 h-2.5" />
           </button>
         )}
@@ -70,7 +84,7 @@ export function MetricCompactTile({ listing, display, onInfo }: MetricCardProps)
       {display.kind === "unavailable" && (
         <div className="font-bold mt-0.5 text-slate-500 flex items-center gap-1 truncate" title={display.reason}>
           <KeyRound className="w-3 h-3 shrink-0" />
-          <span className="truncate">{UNAVAILABLE_LABEL}</span>
+          <span className="truncate">{unavailableLabel()}</span>
         </div>
       )}
       {display.kind === "failed" && (
