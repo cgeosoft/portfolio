@@ -4,6 +4,7 @@ import type { EconomicEvent, EconomicIndicatorReading, MacroSnapshot, SectorPerf
 import { DATA_PROVIDER_LABELS, type DataProviderId } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { fmtPercent, getDeltaColorClass } from "./utils";
+import { getLocale, t } from "../../i18n";
 
 interface MarketsCardProps {
   /** Picks the calendar currencies and the risk premium country. */
@@ -12,25 +13,33 @@ interface MarketsCardProps {
 
 const MAX_EVENTS = 8;
 
+/** Release impacts with a label under `dashboard.markets.impact`. */
+const IMPACT_KEYS: Record<string, string> = { High: "high", Medium: "medium", Low: "low" };
+
+function impactLabel(impact: string): string {
+  const key = IMPACT_KEYS[impact];
+  return key ? t(`dashboard.markets.impact.${key}`) : t("dashboard.markets.impact.generic", { impact });
+}
+
 function rate(n: number, digits = 2): string {
   return `${n.toFixed(digits)}%`;
 }
 
 function providerName(source: DataProviderId | "default" | null | undefined): string {
   if (!source) return "";
-  if (source === "default") return "built-in default";
+  if (source === "default") return t("dashboard.markets.builtInDefault");
   return DATA_PROVIDER_LABELS[source] ?? source;
 }
 
 function eventTime(date: string): string {
   const d = new Date(`${date.replace(" ", "T")}Z`);
   if (Number.isNaN(d.getTime())) return date;
-  return d.toLocaleString(undefined, { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString(getLocale(), { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 function indicatorValue(item: EconomicIndicatorReading): string {
   if (item.unit === "%") return rate(item.value);
-  if (item.unit === "bn USD") return `${(item.value / 1000).toFixed(2)} tn USD`;
+  if (item.unit === "bn USD") return t("dashboard.markets.trillionUsd", { value: (item.value / 1000).toFixed(2) });
   return item.value.toFixed(1);
 }
 
@@ -53,8 +62,8 @@ function Empty({ text }: { text: string }) {
 function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null; riskFree: MacroSnapshot["riskFreeRate"] }) {
   if (!curve || curve.points.length === 0) {
     return (
-      <Panel title="US Treasury yields">
-        <Empty text="No yield data" />
+      <Panel title={t("dashboard.markets.treasuryYields")}>
+        <Empty text={t("dashboard.markets.noYieldData")} />
       </Panel>
     );
   }
@@ -75,8 +84,8 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
   const shortLabel = find("year2") !== undefined ? "2Y" : "3M";
 
   return (
-    <Panel title="US Treasury yields" note={curve.date}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[70px] text-royal-bright" role="img" aria-label="Yield curve">
+    <Panel title={t("dashboard.markets.treasuryYields")} note={curve.date}>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[70px] text-royal-bright" role="img" aria-label={t("dashboard.markets.yieldCurve")}>
         <path d={path} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinejoin="round" />
         {pts.map((p, i) => (
           <circle key={p.tenor} cx={x(i)} cy={y(p.yield)} r={2} fill="currentColor">
@@ -98,12 +107,14 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
       </div>
       <div className="mt-2 pt-2 border-t border-line text-[10px] text-slate-400 font-mono flex flex-wrap gap-x-3 gap-y-0.5">
         {spread !== undefined && (
-          <span className={spread < 0 ? "text-accent-bright" : ""} title={`10Y minus ${shortLabel}`}>
-            10Y-{shortLabel} {spread >= 0 ? "+" : ""}
-            {spread.toFixed(2)} pp{spread < 0 ? " (inverted)" : ""}
+          <span className={spread < 0 ? "text-accent-bright" : ""} title={t("dashboard.markets.spreadHint", { short: shortLabel })}>
+            {t(spread < 0 ? "dashboard.markets.spreadInverted" : "dashboard.markets.spread", {
+              short: shortLabel,
+              value: `${spread >= 0 ? "+" : ""}${spread.toFixed(2)}`,
+            })}
           </span>
         )}
-        <span title={`Source: ${providerName(riskFree.source)}`}>Risk-free {rate(riskFree.rate * 100)}</span>
+        <span title={t("dashboard.markets.source", { name: providerName(riskFree.source) })}>{t("dashboard.markets.riskFree", { rate: rate(riskFree.rate * 100) })}</span>
       </div>
     </Panel>
   );
@@ -112,15 +123,15 @@ function YieldCurvePanel({ curve, riskFree }: { curve: YieldCurveSnapshot | null
 function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
   if (!sectors || sectors.items.length === 0) {
     return (
-      <Panel title="Sectors today">
-        <Empty text="No sector data" />
+      <Panel title={t("dashboard.markets.sectorsToday")}>
+        <Empty text={t("dashboard.markets.noSectorData")} />
       </Panel>
     );
   }
   const maxAbs = Math.max(0.5, ...sectors.items.map((s) => Math.abs(s.changePercent)));
   const viaEtf = sectors.items.some((s) => s.etf);
   return (
-    <Panel title="Sectors today" note={viaEtf ? "via sector ETFs" : sectors.date}>
+    <Panel title={t("dashboard.markets.sectorsToday")} note={viaEtf ? t("dashboard.markets.viaSectorEtfs") : sectors.date}>
       <ul className="space-y-1">
         {sectors.items.map((s: SectorPerformanceRow) => {
           const width = (Math.abs(s.changePercent) / maxAbs) * 50;
@@ -129,7 +140,7 @@ function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
             <li key={s.sector} className="grid grid-cols-[minmax(0,1fr)_96px_52px] items-center gap-2 text-[11px]">
               <span className="truncate text-slate-300" title={s.etf ? `${s.sector} (${s.etf})` : s.sector}>
                 {s.sector}
-                {s.pe !== undefined && <span className="text-slate-500 font-mono"> P/E {s.pe.toFixed(1)}</span>}
+                {s.pe !== undefined && <span className="text-slate-500 font-mono"> {t("dashboard.markets.pe", { value: s.pe.toFixed(1) })}</span>}
               </span>
               <span className="relative h-1.5 rounded-full bg-widget overflow-hidden">
                 <span className="absolute inset-y-0 left-1/2 w-px bg-line" />
@@ -150,18 +161,18 @@ function SectorsPanel({ sectors }: { sectors: MacroSnapshot["sectors"] }) {
 function CalendarPanel({ calendar }: { calendar: MacroSnapshot["calendar"] }) {
   const events: EconomicEvent[] = calendar?.events.slice(0, MAX_EVENTS) ?? [];
   return (
-    <Panel title="Next economic releases" note={calendar ? "7 days" : undefined}>
+    <Panel title={t("dashboard.markets.nextReleases")} note={calendar ? t("dashboard.markets.sevenDays") : undefined}>
       {!calendar ? (
-        <Empty text="Needs a Financial Modeling Prep key" />
+        <Empty text={t("dashboard.markets.needsFmpKey")} />
       ) : events.length === 0 ? (
-        <Empty text="No major releases in the next 7 days" />
+        <Empty text={t("dashboard.markets.noReleases")} />
       ) : (
         <ul className="space-y-1.5">
           {events.map((e) => (
             <li key={`${e.date}:${e.currency}:${e.event}`} className="flex items-start gap-2 text-[11px] min-w-0">
               <span
                 className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${e.impact === "High" ? "bg-accent-500" : "bg-cream"}`}
-                title={`${e.impact} impact`}
+                title={impactLabel(e.impact)}
               />
               <span className="font-mono text-slate-500 shrink-0 w-[92px] truncate">{eventTime(e.date)}</span>
               <span className="font-mono text-slate-400 shrink-0 w-8">{e.currency}</span>
@@ -170,8 +181,7 @@ function CalendarPanel({ calendar }: { calendar: MacroSnapshot["calendar"] }) {
                 {e.estimate !== null && e.estimate !== undefined && (
                   <span className="text-slate-500 font-mono">
                     {" "}
-                    est {e.estimate}
-                    {e.unit ?? ""}
+                    {t("dashboard.markets.estimate", { value: `${e.estimate}${e.unit ?? ""}` })}
                   </span>
                 )}
               </span>
@@ -197,7 +207,7 @@ export function MarketsCard({ baseCurrency }: MarketsCardProps) {
         const result = await api.getMacroSnapshot(baseCurrency, refresh);
         if (!isCancelled()) setData(result);
       } catch (err) {
-        if (!isCancelled()) setError(err instanceof Error ? err.message : "Could not load market data");
+        if (!isCancelled()) setError(err instanceof Error ? err.message : t("dashboard.markets.loadFailed"));
       } finally {
         if (!isCancelled()) setLoading(false);
       }
@@ -231,17 +241,17 @@ export function MarketsCard({ baseCurrency }: MarketsCardProps) {
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
             <Globe2 className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">Markets</span>
+            <span className="truncate">{t("dashboard.markets.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">Rates, sectors and the economic calendar</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.markets.subtitle")}</p>
         </div>
         <button
           type="button"
           onClick={() => void load(true)}
           disabled={loading}
           className="p-1.5 rounded-md border border-line text-slate-400 hover:text-slate-200 disabled:opacity-50 shrink-0"
-          title="Refresh market data"
-          aria-label="Refresh market data"
+          title={t("dashboard.markets.refresh")}
+          aria-label={t("dashboard.markets.refresh")}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>
@@ -250,7 +260,7 @@ export function MarketsCard({ baseCurrency }: MarketsCardProps) {
       {error && !data ? (
         <div className="text-xs text-accent-bright text-center py-10">{error}</div>
       ) : !data ? (
-        <div className="text-xs text-slate-500 text-center py-10">{loading ? "Loading market data..." : "No market data"}</div>
+        <div className="text-xs text-slate-500 text-center py-10">{loading ? t("dashboard.markets.loading") : t("dashboard.markets.noData")}</div>
       ) : (
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -262,19 +272,26 @@ export function MarketsCard({ baseCurrency }: MarketsCardProps) {
           {(data.indicators || data.riskPremium) && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
               {data.indicators?.items.map((i) => (
-                <span key={i.id} title={`${i.name}, ${i.date}${i.previous !== undefined ? `; previous ${i.previous}` : ""}`}>
-                  <span className="text-slate-500">US {i.name}</span> <span className="text-slate-200">{indicatorValue(i)}</span>
+                <span
+                  key={i.id}
+                  title={
+                    i.previous !== undefined
+                      ? t("dashboard.markets.indicatorHintPrevious", { name: i.name, date: i.date, previous: i.previous })
+                      : t("dashboard.markets.indicatorHint", { name: i.name, date: i.date })
+                  }
+                >
+                  <span className="text-slate-500">{t("dashboard.markets.usIndicator", { name: i.name })}</span> <span className="text-slate-200">{indicatorValue(i)}</span>
                 </span>
               ))}
               {data.riskPremium?.items.map((r) => (
-                <span key={r.country} title="Total equity risk premium">
-                  <span className="text-slate-500">ERP {r.country}</span> <span className="text-slate-200">{rate(r.totalEquityRiskPremium)}</span>
+                <span key={r.country} title={t("dashboard.markets.riskPremium")}>
+                  <span className="text-slate-500">{t("dashboard.markets.erp", { country: r.country })}</span> <span className="text-slate-200">{rate(r.totalEquityRiskPremium)}</span>
                 </span>
               ))}
             </div>
           )}
 
-          {sources && <div className="text-[10px] text-slate-500">Data: {sources}</div>}
+          {sources && <div className="text-[10px] text-slate-500">{t("dashboard.markets.sources", { sources })}</div>}
         </div>
       )}
     </div>

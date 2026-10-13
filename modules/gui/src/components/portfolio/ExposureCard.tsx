@@ -5,6 +5,7 @@ import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { fmtCurrency } from "./utils";
 import { HoldingLink, HoldingText } from "./holding-links";
+import { t } from "../../i18n";
 
 interface ExposureCardProps {
   portfolioId: string | null | undefined;
@@ -22,20 +23,20 @@ function pct(n: number, digits = 1): string {
 }
 
 function viaLabel(via: string): string {
-  return via === "direct" ? "Direct" : via;
+  return via === "direct" ? t("dashboard.exposure.direct") : via;
 }
 
 function BreakdownBars({ title, breakdown, barClass }: { title: string; breakdown: ExposureBreakdown; barClass: string }) {
   const shown = breakdown.items.slice(0, MAX_BARS);
   const rest = breakdown.items.slice(MAX_BARS).reduce((s, i) => s + i.percent, 0);
   const max = Math.max(1, ...shown.map((i) => i.percent), rest);
-  const rows = rest > 0 ? [...shown, { name: "Other", percent: rest, value: 0 }] : shown;
+  const rows = rest > 0 ? [...shown, { name: t("dashboard.exposure.otherShare"), percent: rest, value: 0 }] : shown;
 
   return (
     <div className="bg-card border border-line rounded-lg p-3 min-w-0">
       <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">{title}</div>
       {rows.length === 0 ? (
-        <div className="text-xs text-slate-500 py-4 text-center">No data</div>
+        <div className="text-xs text-slate-500 py-4 text-center">{t("dashboard.exposure.noBreakdownData")}</div>
       ) : (
         <ul className="space-y-1.5">
           {rows.map((row) => (
@@ -55,8 +56,8 @@ function BreakdownBars({ title, breakdown, barClass }: { title: string; breakdow
       )}
       {(breakdown.unknownPercent > 0.05 || breakdown.notApplicablePercent > 0.05) && (
         <div className="mt-2 pt-2 border-t border-line text-[10px] text-slate-500 font-mono flex flex-wrap gap-x-3">
-          {breakdown.unknownPercent > 0.05 && <span title="No provider had this data">Unknown {pct(breakdown.unknownPercent)}</span>}
-          {breakdown.notApplicablePercent > 0.05 && <span title="Cash, crypto, private assets and the bond part of funds">Not applicable {pct(breakdown.notApplicablePercent)}</span>}
+          {breakdown.unknownPercent > 0.05 && <span title={t("dashboard.exposure.unknownHint")}>{t("dashboard.exposure.unknown", { percent: pct(breakdown.unknownPercent) })}</span>}
+          {breakdown.notApplicablePercent > 0.05 && <span title={t("dashboard.exposure.notApplicableHint")}>{t("dashboard.exposure.notApplicable", { percent: pct(breakdown.notApplicablePercent) })}</span>}
         </div>
       )}
     </div>
@@ -95,7 +96,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
         const result = await api.getPortfolioExposure(portfolioId, refresh);
         if (!isCancelled()) setData(result);
       } catch (err) {
-        if (!isCancelled()) setError(err instanceof Error ? err.message : "Could not load the exposure");
+        if (!isCancelled()) setError(err instanceof Error ? err.message : t("dashboard.exposure.loadFailed"));
       } finally {
         if (!isCancelled()) setLoading(false);
       }
@@ -126,44 +127,44 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
             <Layers className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">Exposure</span>
+            <span className="truncate">{t("dashboard.exposure.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">Direct holdings plus what your ETFs and funds hold</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.exposure.subtitle")}</p>
         </div>
         <button
           type="button"
           onClick={() => void load(true)}
           disabled={loading || !portfolioId}
           className="p-1.5 rounded-md border border-line text-slate-400 hover:text-slate-200 disabled:opacity-50 shrink-0"
-          title="Rebuild the exposure"
-          aria-label="Rebuild the exposure"
+          title={t("dashboard.exposure.rebuild")}
+          aria-label={t("dashboard.exposure.rebuild")}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
       {!portfolioId ? (
-        <div className="text-xs text-slate-500 text-center py-10">Select a portfolio to see its exposure</div>
+        <div className="text-xs text-slate-500 text-center py-10">{t("dashboard.exposure.noPortfolio")}</div>
       ) : error && !data ? (
         <div className="text-xs text-accent-bright text-center py-10">{error}</div>
       ) : !data ? (
-        <div className="text-xs text-slate-500 text-center py-10">{loading ? "Looking through holdings and funds..." : "No exposure data"}</div>
+        <div className="text-xs text-slate-500 text-center py-10">{loading ? t("dashboard.exposure.loading") : t("dashboard.exposure.noData")}</div>
       ) : isEmpty ? (
-        <div className="text-xs text-slate-500 text-center py-10">No holdings to analyse</div>
+        <div className="text-xs text-slate-500 text-center py-10">{t("dashboard.exposure.noHoldings")}</div>
       ) : (
         <div className="space-y-4">
           {/* Coverage */}
           <div>
             <div className="flex h-2 rounded-full overflow-hidden bg-widget">
-              <div className="bg-royal-bright" style={{ width: `${data.coverage.directPercent}%` }} title={`Held directly: ${pct(data.coverage.directPercent)}`} />
-              <div className="bg-mint" style={{ width: `${data.coverage.lookedThroughPercent}%` }} title={`Looked through in funds: ${pct(data.coverage.lookedThroughPercent)}`} />
-              <div className="bg-slate-600" style={{ width: `${data.coverage.unknownPercent}%` }} title={`Unknown: ${pct(data.coverage.unknownPercent)}`} />
+              <div className="bg-royal-bright" style={{ width: `${data.coverage.directPercent}%` }} title={t("dashboard.exposure.heldDirectly", { percent: pct(data.coverage.directPercent) })} />
+              <div className="bg-mint" style={{ width: `${data.coverage.lookedThroughPercent}%` }} title={t("dashboard.exposure.lookedThroughInFunds", { percent: pct(data.coverage.lookedThroughPercent) })} />
+              <div className="bg-slate-600" style={{ width: `${data.coverage.unknownPercent}%` }} title={t("dashboard.exposure.unknownShare", { percent: pct(data.coverage.unknownPercent) })} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-royal-bright" />Direct {pct(data.coverage.directPercent)}</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-mint" />Looked through {pct(data.coverage.lookedThroughPercent)}</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-slate-600" />Unknown {pct(data.coverage.unknownPercent)}</span>
-              <span>Single names known {pct(data.coverage.holdingsKnownPercent)}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-royal-bright" />{t("dashboard.exposure.directShare", { percent: pct(data.coverage.directPercent) })}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-mint" />{t("dashboard.exposure.lookedThrough", { percent: pct(data.coverage.lookedThroughPercent) })}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-slate-600" />{t("dashboard.exposure.unknown", { percent: pct(data.coverage.unknownPercent) })}</span>
+              <span>{t("dashboard.exposure.singleNamesKnown", { percent: pct(data.coverage.holdingsKnownPercent) })}</span>
             </div>
           </div>
 
@@ -181,26 +182,26 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
 
           {/* Breakdowns */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <BreakdownBars title="Sectors" breakdown={data.sectors} barClass="bg-accent-500" />
-            <BreakdownBars title="Countries" breakdown={data.countries} barClass="bg-royal-bright" />
-            <BreakdownBars title="Asset classes" breakdown={data.assetClasses} barClass="bg-mint" />
+            <BreakdownBars title={t("dashboard.exposure.sectors")} breakdown={data.sectors} barClass="bg-accent-500" />
+            <BreakdownBars title={t("dashboard.exposure.countries")} breakdown={data.countries} barClass="bg-royal-bright" />
+            <BreakdownBars title={t("dashboard.exposure.assetClasses")} breakdown={data.assetClasses} barClass="bg-mint" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Top underlying stocks */}
             <div className="lg:col-span-2 bg-card border border-line rounded-lg p-3 min-w-0">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Largest underlying stocks</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">{t("dashboard.exposure.topStocks")}</div>
               {data.topStocks.length === 0 ? (
-                <div className="text-xs text-slate-500 py-4 text-center">No single-stock data</div>
+                <div className="text-xs text-slate-500 py-4 text-center">{t("dashboard.exposure.noStocks")}</div>
               ) : (
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-wider text-slate-500 text-left">
-                        <th className="pb-1 pr-2 font-semibold">Stock</th>
-                        <th className="pb-1 pr-2 font-semibold text-right">Weight</th>
-                        <th className="pb-1 pr-2 font-semibold text-right hidden sm:table-cell">Value</th>
-                        <th className="pb-1 font-semibold">Held through</th>
+                        <th className="pb-1 pr-2 font-semibold">{t("dashboard.exposure.columns.stock")}</th>
+                        <th className="pb-1 pr-2 font-semibold text-right">{t("dashboard.exposure.columns.weight")}</th>
+                        <th className="pb-1 pr-2 font-semibold text-right hidden sm:table-cell">{t("dashboard.exposure.columns.value")}</th>
+                        <th className="pb-1 font-semibold">{t("dashboard.exposure.columns.heldThrough")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -216,20 +217,20 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
             {/* Funds and overlap */}
             <div className="bg-card border border-line rounded-lg p-3 min-w-0 space-y-3">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Fund overlap</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">{t("dashboard.exposure.overlap")}</div>
                 {data.overlaps.length === 0 ? (
-                  <div className="text-xs text-slate-500">{data.funds.length < 2 ? "Needs two or more funds" : "No shared holdings found"}</div>
+                  <div className="text-xs text-slate-500">{data.funds.length < 2 ? t("dashboard.exposure.needsTwoFunds") : t("dashboard.exposure.noOverlap")}</div>
                 ) : (
                   <ul className="space-y-1.5">
                     {data.overlaps.slice(0, 6).map((o) => (
                       <li key={`${o.a}:${o.b}`} className="text-[11px]">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono text-slate-300 truncate"><HoldingLink reference={o.a} /> / <HoldingLink reference={o.b} /></span>
-                          <span className="font-mono text-slate-200 shrink-0" title={o.partial ? "Based on top holdings only; the real overlap can be higher" : undefined}>
+                          <span className="font-mono text-slate-200 shrink-0" title={o.partial ? t("dashboard.exposure.partialOverlap") : undefined}>
                             {pct(o.overlapPercent)}{o.partial ? "+" : ""}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500">{o.commonHoldings} shared holdings</div>
+                        <div className="text-[10px] text-slate-500">{t("dashboard.exposure.sharedHoldings", { count: o.commonHoldings })}</div>
                       </li>
                     ))}
                   </ul>
@@ -238,7 +239,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
 
               {data.funds.length > 0 && (
                 <div className="pt-3 border-t border-line">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Funds</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">{t("dashboard.exposure.funds")}</div>
                   <ul className="space-y-1.5">
                     {data.funds.map((f) => (
                       <li key={f.symbol} className="text-[11px]">
@@ -248,12 +249,12 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
                         </div>
                         {f.name && f.name !== f.symbol && <div className="text-[10px] text-slate-500 truncate" title={f.name}>{f.name}</div>}
                         <div className="text-[10px] text-slate-500 flex flex-wrap gap-x-2">
-                          {f.expenseRatio !== undefined && <span>TER {pct(f.expenseRatio, 2)}</span>}
-                          {f.holdingsCount !== undefined && <span>{f.holdingsCount} holdings</span>}
+                          {f.expenseRatio !== undefined && <span>{t("dashboard.exposure.ter", { percent: pct(f.expenseRatio, 2) })}</span>}
+                          {f.holdingsCount !== undefined && <span>{t("dashboard.exposure.fundHoldings", { count: f.holdingsCount })}</span>}
                           {!f.sources.holdings && !f.sources.sectors && !f.sources.countries ? (
-                            <span>No look-through data</span>
+                            <span>{t("dashboard.exposure.noLookThrough")}</span>
                           ) : (
-                            !f.holdingsComplete && f.sources.holdings && <span>Top holdings only</span>
+                            !f.holdingsComplete && f.sources.holdings && <span>{t("dashboard.exposure.topHoldingsOnly")}</span>
                           )}
                         </div>
                       </li>
@@ -261,8 +262,8 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
                   </ul>
                   {data.weightedExpenseRatio && (
                     <div className="mt-2 text-[10px] text-slate-400">
-                      Weighted TER {pct(data.weightedExpenseRatio.percent, 2)}
-                      {data.weightedExpenseRatio.coveragePercent < 99.5 && ` (${pct(data.weightedExpenseRatio.coveragePercent, 0)} of fund value)`}
+                      {t("dashboard.exposure.weightedTer", { percent: pct(data.weightedExpenseRatio.percent, 2) })}
+                      {data.weightedExpenseRatio.coveragePercent < 99.5 && ` ${t("dashboard.exposure.terCoverage", { percent: pct(data.weightedExpenseRatio.coveragePercent, 0) })}`}
                     </div>
                   )}
                 </div>
@@ -271,7 +272,7 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
           </div>
 
           <div className="text-[10px] text-slate-500 flex flex-wrap justify-between gap-2">
-            <span>Data: {sourceNote ?? "none"}</span>
+            <span>{t("dashboard.exposure.sources", { sources: sourceNote ?? t("dashboard.exposure.noSources") })}</span>
             {error && <span className="text-accent-bright">{error}</span>}
           </div>
         </div>

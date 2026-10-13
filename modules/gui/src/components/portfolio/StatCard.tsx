@@ -1,5 +1,6 @@
 import React from "react";
 import { Info } from "lucide-react";
+import { t } from "../../i18n";
 
 interface StatCardProps {
   title: string;
@@ -37,8 +38,8 @@ export function StatCard({
               onInfo();
             }}
             className="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800/90 hover:bg-[#DD3C73]/20 text-slate-300 hover:text-[#DD3C73] border border-slate-700/80 hover:border-[#DD3C73]/50 transition-all cursor-pointer shrink-0 shadow-sm"
-            title={`View calculation & explanation for ${title}`}
-            aria-label={infoAriaLabel || `Explanation for ${title}`}
+            title={t("dashboard.statCard.infoHint", { title })}
+            aria-label={infoAriaLabel || t("dashboard.statCard.infoLabel", { title })}
           >
             <Info className="w-3.5 h-3.5" />
           </button>

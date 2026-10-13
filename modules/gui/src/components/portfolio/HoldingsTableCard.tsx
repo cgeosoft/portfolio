@@ -9,6 +9,7 @@ import { api } from "../../api";
 import { SymbolEditModal } from "./SymbolEditModal";
 import { ManualPriceModal } from "./ManualPriceModal";
 import { hasCompanyIntel, openHolding } from "./holding-links";
+import { t } from "../../i18n";
 
 type HoldingWithIsin = PortfolioHolding & { isin: string };
 
@@ -30,6 +31,22 @@ interface HoldingsTableCardProps {
 
 const VALID_ASSET_FILTERS = ["ALL", "Stock", "ETF", "Crypto", "Cash", "Other"] as const;
 
+/** Keys of the asset type badges under `dashboard.assetTypes`. */
+const ASSET_TYPE_KEYS: Record<string, string> = {
+  Stock: "stock",
+  ETF: "etf",
+  MutualFund: "mutualFund",
+  Crypto: "crypto",
+  Cash: "cash",
+  Other: "otherType",
+  Private: "private",
+};
+
+function assetTypeLabel(type: string): string {
+  const key = ASSET_TYPE_KEYS[type];
+  return key ? t(`dashboard.assetTypes.${key}`) : type;
+}
+
 export function HoldingsTableCard({
   holdings,
   currency = "EUR",
@@ -50,15 +67,15 @@ export function HoldingsTableCard({
     setResolving(true);
     try {
       const res = await api.resolvePortfolioSymbols(portfolioId);
-      if (!res.success) throw new Error(res.error || "Ticker lookup failed");
+      if (!res.success) throw new Error(res.error || t("dashboard.holdings.lookupFailed"));
       if (res.updated > 0) {
-        showToast(`Found tickers for ${res.updated} transactions`);
+        showToast(t("dashboard.holdings.foundTickers", { count: res.updated }));
         await onSymbolsChanged?.();
       } else {
-        showToast("No tickers found. Set them by hand with the pencil button.", "error");
+        showToast(t("dashboard.holdings.noTickers"), "error");
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Ticker lookup failed", "error");
+      showToast(err instanceof Error ? err.message : t("dashboard.holdings.lookupFailed"), "error");
     } finally {
       setResolving(false);
     }
@@ -122,7 +139,7 @@ export function HoldingsTableCard({
     cashHoldings = [
       {
         symbol: "CASH",
-        name: `Available Liquidity (${currency})`,
+        name: t("dashboard.availableLiquidity", { currency }),
         assetType: "Cash",
         shares: cashBalance,
         buyPrice: 1,
@@ -201,7 +218,7 @@ export function HoldingsTableCard({
         onClick={canOpenIntel ? () => openHolding(h.symbol) : undefined}
         onKeyDown={canOpenIntel ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHolding(h.symbol); } } : undefined}
         tabIndex={canOpenIntel ? 0 : undefined}
-        title={canOpenIntel ? `Show company details for ${h.symbol}` : undefined}
+        title={canOpenIntel ? t("dashboard.holdings.showDetails", { symbol: h.symbol }) : undefined}
       >
         {/* Line 1: Symbol + Asset Type badge, Line 2: Full Name */}
         <td className="px-4 py-3">
@@ -217,14 +234,14 @@ export function HoldingsTableCard({
                   }}
                   onKeyDown={(e) => e.stopPropagation()}
                   className={`p-0.5 rounded hover:bg-slate-800 cursor-pointer ${showsIsin(h) ? "text-cream" : "text-slate-600 hover:text-slate-300"}`}
-                  title={showsIsin(h) ? "No ticker found. Set one by hand" : "Change the ticker"}
-                  aria-label={`Set ticker for ${h.isin}`}
+                  title={showsIsin(h) ? t("dashboard.holdings.noTickerSet") : t("dashboard.holdings.changeTicker")}
+                  aria-label={t("dashboard.holdings.setTickerFor", { isin: h.isin ?? "" })}
                 >
                   <Pencil className="w-3 h-3" />
                 </button>
               )}
               <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border ${badgeClass}`}>
-                {h.isPrivate ? "Private" : h.assetType}
+                {assetTypeLabel(h.isPrivate ? "Private" : h.assetType)}
               </span>
             </div>
             <span className="text-[11px] text-slate-500 truncate max-w-[180px]" title={h.name}>
@@ -239,7 +256,7 @@ export function HoldingsTableCard({
             {isCash ? "—" : hideValues ? "••••" : (typeof h.shares === "number" ? h.shares.toLocaleString("en-US", { maximumFractionDigits: 4 }) : h.shares)}
           </div>
           <div className="text-[11px] text-slate-500">
-            {isCash ? "Par: 1.00" : `Avg: ${fmtCurrency(h.buyPrice, h.currency || currency, hideValues)}`}
+            {isCash ? t("dashboard.holdings.par") : t("dashboard.holdings.avgCost", { price: fmtCurrency(h.buyPrice, h.currency || currency, hideValues) })}
           </div>
         </td>
 
@@ -250,7 +267,7 @@ export function HoldingsTableCard({
             {!isCash && h.nativeCurrency && h.nativeCurrency !== currency && h.nativePrice !== undefined && (
               <span
                 className="text-[10px] font-normal px-1 py-0.5 rounded border border-cream/40 bg-cream/10 text-cream"
-                title={`Native Price: ${fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)} (FX Rate: ${h.fxRate ?? "—"})`}
+                title={t("dashboard.holdings.nativePrice", { price: fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues), rate: h.fxRate ?? "—" })}
               >
                 {fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)}
               </span>
@@ -258,9 +275,9 @@ export function HoldingsTableCard({
             {!isCash && h.quoteMissing && (
               <span
                 className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
-                title="No market quote. The price shown is the average buy price."
+                title={t("dashboard.holdings.noQuoteHint")}
               >
-                no quote
+                {t("dashboard.holdings.noQuote")}
               </span>
             )}
             {canSetPrice && (
@@ -278,21 +295,21 @@ export function HoldingsTableCard({
                 }`}
                 title={
                   h.manualPrice
-                    ? `Price set by hand on ${h.manualPrice.setAt}. Edit or clear it.`
-                    : "No public quote. The price shown is the average buy price. Set the current price or NAV."
+                    ? t("dashboard.holdings.manualPriceHint", { date: h.manualPrice.setAt })
+                    : t("dashboard.holdings.setPriceHint")
                 }
-                aria-label={`Set the price or NAV of ${h.symbol}`}
+                aria-label={t("dashboard.holdings.setPriceFor", { symbol: h.symbol })}
               >
                 <Pencil className="w-2.5 h-2.5" />
-                {h.manualPrice ? `NAV ${h.manualPrice.setAt}` : "set NAV"}
+                {h.manualPrice ? t("dashboard.holdings.navOn", { date: h.manualPrice.setAt }) : t("dashboard.holdings.setNav")}
               </button>
             )}
             {!isCash && h.fxMissing && (
               <span
                 className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
-                title={`No exchange rate for ${h.nativeCurrency ?? "this currency"}. The value is not converted.`}
+                title={h.nativeCurrency ? t("dashboard.holdings.noFxFor", { currency: h.nativeCurrency }) : t("dashboard.holdings.noFxUnknown")}
               >
-                no FX
+                {t("dashboard.holdings.noFx")}
               </span>
             )}
           </div>
@@ -332,7 +349,7 @@ export function HoldingsTableCard({
               className="text-[10px] font-bold text-slate-300 border border-slate-700/80 px-2 py-0.5 rounded inline-block shadow-inner"
               style={{ background: "repeating-linear-gradient(-45deg, #334155, #334155 3px, #1e293b 3px, #1e293b 6px)" }}
             >
-              UNALLOCATED
+              {t("dashboard.holdings.unallocated")}
             </span>
           ) : h.fiftyTwoWeekHigh && h.fiftyTwoWeekLow ? (
             <div className="flex flex-col items-center gap-1 w-24 mx-auto">
@@ -377,10 +394,10 @@ export function HoldingsTableCard({
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
             <Layers className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">Active Positions & Technical Gauges</span>
+            <span className="truncate">{t("dashboard.holdings.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={`${totalAssetsCount} tracked assets with real-time valuation, indicators & moving averages`}>
-            {totalAssetsCount} tracked assets with real-time valuation, indicators & moving averages
+          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.holdings.subtitle", { count: totalAssetsCount })}>
+            {t("dashboard.holdings.subtitle", { count: totalAssetsCount })}
           </p>
         </div>
 
@@ -391,10 +408,10 @@ export function HoldingsTableCard({
               onClick={handleResolveSymbols}
               disabled={resolving}
               className="h-8 px-2.5 rounded-lg border border-cream/40 bg-cream/10 text-cream text-[11px] font-mono flex items-center gap-1.5 cursor-pointer hover:bg-cream/20 disabled:opacity-50 shrink-0"
-              title={`${isinOnlyCount} holdings show an ISIN. Search the data providers for their tickers.`}
+              title={t("dashboard.holdings.findTickersHint", { count: isinOnlyCount })}
             >
               {resolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              Find tickers ({isinOnlyCount})
+              {t("dashboard.holdings.findTickers", { count: isinOnlyCount })}
             </button>
           )}
 
@@ -403,7 +420,7 @@ export function HoldingsTableCard({
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search symbol..."
+              placeholder={t("dashboard.holdings.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
@@ -417,14 +434,14 @@ export function HoldingsTableCard({
             selectSize="sm"
             className="h-8"
             wrapperClassName="shrink-0"
-            aria-label="Filter by asset type"
+            aria-label={t("dashboard.holdings.filterLabel")}
           >
-            <option value="ALL">All Asset Types</option>
-            <option value="Stock">Stocks</option>
-            <option value="ETF">ETFs</option>
-            <option value="Crypto">Crypto</option>
-            <option value="Cash">Cash Liquidity</option>
-            <option value="Other">Other / Funds</option>
+            <option value="ALL">{t("dashboard.holdings.filters.all")}</option>
+            <option value="Stock">{t("dashboard.holdings.filters.stock")}</option>
+            <option value="ETF">{t("dashboard.holdings.filters.etf")}</option>
+            <option value="Crypto">{t("dashboard.holdings.filters.crypto")}</option>
+            <option value="Cash">{t("dashboard.holdings.filters.cash")}</option>
+            <option value="Other">{t("dashboard.holdings.filters.otherFunds")}</option>
           </Select>
         </div>
       </div>
@@ -435,31 +452,31 @@ export function HoldingsTableCard({
             <tr className="border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider bg-slate-950/40">
               <th className="py-2.5 px-4 cursor-pointer hover:text-slate-200" onClick={() => handleSort("symbol")}>
                 <div className="flex items-center gap-1">
-                  Asset
+                  {t("dashboard.holdings.columns.asset")}
                   <ArrowUpDown className="w-3 h-3 opacity-60" />
                 </div>
               </th>
               <th className="py-2.5 px-4 text-right cursor-pointer hover:text-slate-200" onClick={() => handleSort("shares")}>
-                Shares & Avg Cost
+                {t("dashboard.holdings.columns.shares")}
               </th>
               <th className="py-2.5 px-4 text-right cursor-pointer hover:text-slate-200" onClick={() => handleSort("currentValue")}>
-                Price & Valuation
+                {t("dashboard.holdings.columns.price")}
               </th>
               <th className="py-2.5 px-4 text-right cursor-pointer hover:text-slate-200" onClick={() => handleSort("dayChangePercent")}>
-                24h Change
+                {t("dashboard.holdings.columns.dayChange")}
               </th>
               <th className="py-2.5 px-4 text-right cursor-pointer hover:text-slate-200" onClick={() => handleSort("totalGainLossPercent")}>
-                Total Return
+                {t("dashboard.holdings.columns.totalReturn")}
               </th>
-              <th className="py-2.5 px-4 text-center">52w Range</th>
-              <th className="py-2.5 px-4 text-right">RSI</th>
+              <th className="py-2.5 px-4 text-center">{t("dashboard.holdings.columns.range")}</th>
+              <th className="py-2.5 px-4 text-right">{t("dashboard.holdings.columns.rsi")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/40">
             {totalAssetsCount === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-slate-500 font-mono text-xs">
-                  No active holdings match your filter criteria.
+                  {t("dashboard.holdings.empty")}
                 </td>
               </tr>
             ) : (
@@ -476,7 +493,7 @@ export function HoldingsTableCard({
                           className="w-2.5 h-2.5 rounded-sm border border-slate-500/60 inline-block shrink-0"
                           style={{ background: "repeating-linear-gradient(-45deg, #64748b, #64748b 2px, #334155 2px, #334155 4px)" }}
                         />
-                        <span className="font-semibold text-slate-300">Unallocated Standby Liquidity / Cash Reserve</span>
+                        <span className="font-semibold text-slate-300">{t("dashboard.holdings.cashDivider")}</span>
                       </div>
                     </td>
                   </tr>

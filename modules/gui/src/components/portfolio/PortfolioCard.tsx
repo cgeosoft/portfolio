@@ -2,6 +2,7 @@ import type { KeyboardEvent } from "react";
 import { Download, LogIn, Pencil } from "lucide-react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { PortfolioDot, portfolioColor } from "./portfolioColor";
+import { getLocale, t } from "../../i18n";
 
 // One portfolio on the Portfolios page, drawn like the organization cards of FintechCrafts
 // Management: a click on the card opens the edit modal, Open makes it the active portfolio and returns
@@ -36,7 +37,7 @@ export function formatCreated(createdAt?: string): string {
   if (!createdAt) return "-";
   const date = new Date(createdAt);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return date.toLocaleDateString(getLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 interface PortfolioCardProps {
@@ -62,7 +63,7 @@ export function PortfolioCard({ portfolio, isActive, onOpen, onEdit, onExport }:
       tabIndex={0}
       onClick={edit}
       onKeyDown={onKeyDown}
-      title={`Edit ${portfolio.name}`}
+      title={t("dashboard.portfolioCard.edit", { name: portfolio.name })}
       className={`group relative cx-card overflow-hidden p-4 flex flex-col gap-3.5 cursor-pointer transition-colors hover:border-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60 ${
         isActive ? "ring-1 ring-accent-500/50" : ""
       }`}
@@ -71,15 +72,15 @@ export function PortfolioCard({ portfolio, isActive, onOpen, onEdit, onExport }:
       <div className="flex items-center gap-2.5 min-w-0">
         <PortfolioDot color={color} className="w-2.5 h-2.5" />
         <span className="text-sm font-bold text-slate-50 whitespace-nowrap truncate">{portfolio.name}</span>
-        {portfolio.isShared && <Badge tone="slate">shared</Badge>}
-        {isActive && <Badge tone="accent">open</Badge>}
+        {portfolio.isShared && <Badge tone="slate">{t("dashboard.portfolioCard.shared")}</Badge>}
+        {isActive && <Badge tone="accent">{t("dashboard.portfolioCard.open")}</Badge>}
         <Pencil className="w-3.5 h-3.5 ml-auto shrink-0 text-slate-600 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
       </div>
       {portfolio.description && <p className="text-xs text-slate-400 leading-snug whitespace-nowrap truncate -mt-1.5" title={portfolio.description}>{portfolio.description}</p>}
       <div className="grid grid-cols-3 gap-3 rounded-lg bg-slate-950/50 border border-slate-800/80 px-3 py-2">
-        <Stat label="Currency" value={portfolio.baseCurrency} />
-        <Stat label="Type" value={portfolio.isShared ? "Shared" : "Own"} />
-        <Stat label="Created" value={formatCreated(portfolio.createdAt)} />
+        <Stat label={t("dashboard.portfolioCard.currency")} value={portfolio.baseCurrency} />
+        <Stat label={t("dashboard.portfolioCard.type")} value={portfolio.isShared ? t("dashboard.portfolioCard.typeShared") : t("dashboard.portfolioCard.typeOwn")} />
+        <Stat label={t("dashboard.portfolioCard.created")} value={formatCreated(portfolio.createdAt)} />
       </div>
       <div className="flex items-center gap-2 mt-auto">
         <button
@@ -91,7 +92,7 @@ export function PortfolioCard({ portfolio, isActive, onOpen, onEdit, onExport }:
           className={SECONDARY_BUTTON}
         >
           <LogIn className="w-3.5 h-3.5" />
-          {isActive ? "Continue" : "Open"}
+          {isActive ? t("common.continue") : t("dashboard.portfolioCard.openButton")}
         </button>
         <button
           type="button"
@@ -100,10 +101,10 @@ export function PortfolioCard({ portfolio, isActive, onOpen, onEdit, onExport }:
             onExport(portfolio);
           }}
           className={SECONDARY_BUTTON}
-          title={`Export ${portfolio.name} transactions and reports as ZIP`}
+          title={t("dashboard.portfolioCard.exportHint", { name: portfolio.name })}
         >
           <Download className="w-3.5 h-3.5" />
-          Export
+          {t("common.export")}
         </button>
       </div>
     </div>
