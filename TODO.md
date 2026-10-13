@@ -16,7 +16,8 @@ None open.
 
 ### Medium
 
-None open.
+- [ ] [F] [Translate the screens left in English](#translate-the-screens-left-in-english)
+- [ ] [B] [PDF reports in non-Latin scripts](#pdf-reports-in-non-latin-scripts)
 
 ### Low
 
@@ -28,6 +29,7 @@ None open.
 
 ### Implemented
 
+- [x] [F] Interface in 41 languages: `lang/<code>.yml` (English source and fallback), `t()` in the GUI with the language loaded before the first render (a switch saves and reloads), a Language setting in Settings → Appearance with the AI support tier of each language, LLM reports, chat, briefs and suggestions written in the chosen language, translated push notifications; `scripts/check-lang.ts` checks keys, placeholders and plurals
 - [x] [B] Privacy mode masks transaction quantities ("[BUY] •••• NVDA") and share or unit counts in the system prompt, prompt previews, chat and reports
 - [x] [B] Charts keep their size when the app starts at a saved zoom other than 100%: Chart.js measures the container in CSS pixels, as its resizes do
 - [x] [B] Analyze with AI uses the stored LLM key: the report stream route unmasks the key and the modal no longer sends the masked one
@@ -60,3 +62,29 @@ The nine fixes above were checked by typecheck and the test suite (228 tests) on
 - A private holding (SpaceX) and a stock on a free FMP plan: the wording of each missing part; the FMP key test message.
 - Settings → General → Text size; the zoom kept across a restart.
 - Clicking a symbol, ISIN or name in a report, a chat answer, the exposure and income cards, and an allocation chart slice.
+
+## Translate the screens left in English
+
+```
+type: feature
+importance: medium
+```
+
+Multilingual skipped the files other sessions were editing at the time; their text is still English:
+
+- `App.tsx`, `api.ts`, `rpc.ts` (client-side errors and toasts).
+- `LockScreen.tsx`, `BrandScreen.tsx`, `SetupWizardPage.tsx`: add a language step to the setup with `LanguageSelect` and `LanguageTierNote` (`components/common/LanguageSelect.tsx`), saved with `api.saveConfig({ language })` and `switchLanguage()`.
+- `ImportCsvPage.tsx`, `AssistantSection.tsx`, `TestLlmModal.tsx`.
+- Call `adoptConfigLanguage(config.language)` from `gui/src/i18n.ts` once App loads the config, so a new browser on the network starts in the saved language.
+- `routes.ts`: send `testNotification("gotify" | "ntfy")` from `services/notify.ts` for the Gotify and ntfy test messages (the `service.testNotification.*` keys exist).
+
+Add the new keys to `lang/en.yml` and every other language; `bun run scripts/check-lang.ts` lists what is missing.
+
+## PDF reports in non-Latin scripts
+
+```
+type: bug
+importance: medium
+```
+
+The PDF export (`report-export.ts`, jsPDF) uses the built-in Helvetica and Courier, which cannot draw Greek, Cyrillic, Arabic, Hebrew, CJK or Indic text. Report bodies in those languages and the translated PDF labels come out garbled. Embed a Unicode font (for example Noto Sans subsets) for those scripts, and handle right-to-left text.
