@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.14.0] - 2026-10-13
+
+### Added
+- A new sponsorship page on the website, linked from every footer.
+- A new Analysis tab that groups Exposure, Income & Events, and Markets.
+- Codex CLI added as another assistant provider, using the user's existing sign-in.
+- A new way to connect an OpenRouter account by signing in through the browser.
+- A search field in the setup wizard's language list.
+- The app interface is now available in 40 languages.
+- The setup wizard detects the device's system language automatically.
+- Assistant messages and notifications now appear in the user's chosen language.
+
+### Changed
+- Download Latest now asks where to save the installer and shows download progress in the window; other devices still download in their own browser.
+- The setup wizard and the CSV import now open as full pages instead of popup windows.
+- The setup wizard's first step now also shows the Terms of Use.
+- The Markets section is now split into three cards and refreshes with the main refresh button.
+- Card and section subtitles now line up under their titles.
+- The chart legend moved from the header to below the chart.
+- Suggestions show fewer, larger actions and explain clearly when no change is needed.
+- Completed suggestions stay in the list with a checkmark, and can be hidden with a toggle.
+- The language list in Settings now shows English first, then the other languages by their own name.
+
+### Fixed
+- A right-click menu with developer tools no longer appears in the desktop app.
+- A bug where the installed app only showed English even after choosing another language.
+
+### Removed
+- The version number chip from the bottom bar.
+- The Dismiss buttons from the update popup and the changelog window.
+- The option to hide sponsor banners from Settings.
+
+### Security
+- Connecting OpenRouter uses a one-time code and only accepts the sign-in reply from the local device.
+
+
 ## [0.13.0] - 2026-10-13
 
 ### Added
