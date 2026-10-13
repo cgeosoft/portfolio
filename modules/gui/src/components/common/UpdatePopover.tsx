@@ -1,4 +1,5 @@
 import { X, Download } from "lucide-react";
+import { t } from "../../i18n";
 
 export interface UpdatePopoverProps {
   isVisible: boolean;
@@ -30,19 +31,19 @@ export function UpdatePopover({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-xs font-bold text-slate-100 leading-snug">
-                Portfolio v{latestVersion} is available
+                {t("layout.update.available", { version: latestVersion })}
               </h3>
               <button
                 type="button"
                 onClick={onDismiss}
                 className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors shrink-0 cursor-pointer"
-                aria-label="Dismiss update notification"
+                aria-label={t("layout.update.dismissLabel")}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <p className="text-[10px] text-slate-400 mt-1">
-              You are running v{currentVersion}. A new version is ready.
+              {t("layout.update.running", { version: currentVersion })}
             </p>
 
             {/* Action buttons */}
@@ -52,14 +53,14 @@ export function UpdatePopover({
                 onClick={onShowChangelog}
                 className="flex-1 px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-[11px] font-bold transition-colors cursor-pointer"
               >
-                What's New
+                {t("layout.update.whatsNew")}
               </button>
               <button
                 type="button"
                 onClick={onDismiss}
                 className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-[11px] transition-colors cursor-pointer"
               >
-                Dismiss
+                {t("common.dismiss")}
               </button>
             </div>
           </div>

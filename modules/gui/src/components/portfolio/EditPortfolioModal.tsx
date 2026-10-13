@@ -4,6 +4,7 @@ import { rpc } from "../../rpc";
 import { X, Pencil, Lock, Check, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./PortfolioCard";
 import { PortfolioColorField, PortfolioDot, portfolioColor } from "./portfolioColor";
+import { t } from "../../i18n";
 
 // The edit modal of one portfolio, drawn like the edit modal of an organization in FintechCrafts
 // Management: a preview line, name, description and colour, the fixed base currency, then Delete,
@@ -77,7 +78,7 @@ export function EditPortfolioModal({
       onPortfolioUpdated(updated);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Error updating portfolio");
+      setError(err.message || t("portfolios.edit.error"));
     } finally {
       setIsLoading(false);
     }
@@ -92,8 +93,8 @@ export function EditPortfolioModal({
               <Pencil className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-100 text-lg">Edit portfolio</h3>
-              <p className="text-xs text-slate-400">Name, description and colour</p>
+              <h3 className="font-bold text-slate-100 text-lg">{t("portfolios.edit.title")}</h3>
+              <p className="text-xs text-slate-400">{t("portfolios.edit.subtitle")}</p>
             </div>
           </div>
           <button
@@ -101,7 +102,7 @@ export function EditPortfolioModal({
             onClick={onClose}
             disabled={isLoading}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors cursor-pointer hover:bg-slate-800 hover:text-slate-100 disabled:opacity-50"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -110,7 +111,7 @@ export function EditPortfolioModal({
         <form onSubmit={handleSave} className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5 text-sm text-slate-300">
           <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
             <PortfolioDot color={color} className="w-3 h-3" />
-            <span className="font-bold text-slate-50 truncate">{name.trim() || "Portfolio name"}</span>
+            <span className="font-bold text-slate-50 truncate">{name.trim() || t("portfolios.form.namePreview")}</span>
             <span className="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border bg-slate-800/80 text-slate-400 border-slate-700 shrink-0">
               {portfolio.baseCurrency || "EUR"}
             </span>
@@ -118,7 +119,7 @@ export function EditPortfolioModal({
 
           <div className="space-y-2">
             <label htmlFor="portfolio-edit-name" className={LABEL_CLASS}>
-              Name
+              {t("portfolios.form.name")}
             </label>
             <input
               id="portfolio-edit-name"
@@ -133,14 +134,14 @@ export function EditPortfolioModal({
 
           <div className="space-y-2">
             <label htmlFor="portfolio-edit-description" className={LABEL_CLASS}>
-              Description
+              {t("portfolios.form.description")}
             </label>
             <input
               id="portfolio-edit-description"
               className={INPUT_CLASS}
               value={description}
               maxLength={200}
-              placeholder="Optional, one short line"
+              placeholder={t("portfolios.form.descriptionPlaceholder")}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isLoading}
             />
@@ -150,7 +151,7 @@ export function EditPortfolioModal({
 
           <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
             <Lock className="w-3 h-3 shrink-0" />
-            The base currency, {portfolio.baseCurrency || "EUR"}, is fixed after creation.
+            {t("portfolios.edit.fixedCurrency", { currency: portfolio.baseCurrency || "EUR" })}
           </p>
 
           {error && (
@@ -172,15 +173,15 @@ export function EditPortfolioModal({
                 className={DANGER_BUTTON}
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Delete
+                {t("common.delete")}
               </button>
             )}
             <button type="button" onClick={onClose} disabled={isLoading} className={`${SECONDARY_BUTTON} ml-auto`}>
-              Cancel
+              {t("common.cancel")}
             </button>
             <button type="submit" disabled={isLoading || !name.trim()} className={PRIMARY_BUTTON}>
               {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              Save
+              {t("common.save")}
             </button>
           </div>
         </form>

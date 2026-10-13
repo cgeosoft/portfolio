@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
+import { t } from "../../i18n";
 
 export type ToastKind = "success" | "error";
 
@@ -26,7 +27,7 @@ function subscribe(listener: () => void): () => void {
 }
 
 function dismissToast(id: number): void {
-  toasts = toasts.filter((t) => t.id !== id);
+  toasts = toasts.filter((item) => item.id !== id);
   emit();
 }
 
@@ -45,21 +46,21 @@ export function Toaster() {
 
   return (
     <div className="fixed top-16 right-6 z-[60] flex flex-col gap-2 max-w-sm pointer-events-none">
-      {items.map((t) => (
+      {items.map((toast) => (
         <div
-          key={t.id}
+          key={toast.id}
           role="status"
           className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-lg border bg-widget shadow-2xl text-xs font-mono animate-popover-in ${
-            t.kind === "success" ? "border-mint/40 text-mint" : "border-[#DD3C73]/40 text-[#DD3C73]"
+            toast.kind === "success" ? "border-mint/40 text-mint" : "border-[#DD3C73]/40 text-[#DD3C73]"
           }`}
         >
-          {t.kind === "success" ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
-          <span className="flex-1 min-w-0">{t.message}</span>
+          {toast.kind === "success" ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
+          <span className="flex-1 min-w-0">{toast.message}</span>
           <button
             type="button"
-            onClick={() => dismissToast(t.id)}
+            onClick={() => dismissToast(toast.id)}
             className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors shrink-0 cursor-pointer"
-            aria-label="Dismiss"
+            aria-label={t("common.dismiss")}
           >
             <X className="w-3.5 h-3.5" />
           </button>

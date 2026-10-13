@@ -8,6 +8,7 @@ import { DeletePortfolioModal } from "./DeletePortfolioModal";
 import { ExportPortfolioModal } from "./ExportPortfolioModal";
 import { PortfolioCard, SECONDARY_BUTTON } from "./PortfolioCard";
 import { portfolioColor } from "./portfolioColor";
+import { t } from "../../i18n";
 
 // The Portfolios page, laid out like the Organizations page of FintechCrafts Management: one level above
 // the open portfolio, so `App.tsx` hides the menu bar, the header and the assistant while it shows, and
@@ -78,28 +79,28 @@ export function ManagePortfoliosPage({
   const confirmDelete = async (p: PortfolioItem) => {
     setStatus(null);
     const data = await rpc.request.deletePortfolio({ portfolioId: p.id });
-    if (!data.success) throw new Error("Failed to delete portfolio");
+    if (!data.success) throw new Error(t("portfolios.page.deleteFailed"));
     onPortfolioDeleted(p.id);
-    setStatus({ ok: true, text: `Deleted ${p.name} and all its data.` });
+    setStatus({ ok: true, text: t("portfolios.page.deleted", { name: p.name }) });
   };
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-8 py-6 space-y-6 font-mono text-slate-100">
         <div className="space-y-4">
-          <button type="button" onClick={onBack} className={SECONDARY_BUTTON} title="Back (Escape)">
+          <button type="button" onClick={onBack} className={SECONDARY_BUTTON} title={t("portfolios.page.backTitle", { key: "Escape" })}>
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back
+            {t("common.back")}
           </button>
           <div className="flex items-center justify-between gap-4 min-w-0">
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-2 min-w-0 text-sm font-bold uppercase tracking-wider text-slate-50 whitespace-nowrap">
                 <TrendingUp className="w-4 h-4 shrink-0 text-accent-500" />
-                <span className="truncate">Portfolios</span>
+                <span className="truncate">{t("portfolios.page.title")}</span>
                 <span className="text-slate-500 font-semibold shrink-0">{portfolios.length}</span>
               </h1>
               <p className="text-[11px] text-slate-500 whitespace-nowrap truncate">
-                Each portfolio has its own holdings, transactions and reports. Click a portfolio to edit it.
+                {t("portfolios.page.description")}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -108,7 +109,7 @@ export function ManagePortfoliosPage({
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
                   <input
                     type="text"
-                    placeholder="Search portfolios..."
+                    placeholder={t("portfolios.page.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full h-8 bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-accent-500/50 font-mono"
@@ -117,7 +118,7 @@ export function ManagePortfoliosPage({
               )}
               <button type="button" onClick={() => setCreating(true)} className={SECONDARY_BUTTON}>
                 <Plus className="w-3.5 h-3.5" />
-                New portfolio
+                {t("portfolios.page.newPortfolio")}
               </button>
             </div>
           </div>
@@ -132,7 +133,7 @@ export function ManagePortfoliosPage({
 
         {filtered.length === 0 ? (
           <p className="py-12 text-center text-slate-500 text-xs">
-            {portfolios.length === 0 ? "No portfolios yet. Click New portfolio to add the first one." : "No portfolio matches your search."}
+            {portfolios.length === 0 ? t("portfolios.page.empty") : t("portfolios.page.noMatch")}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 min-[1200px]:grid-cols-3 gap-4">
@@ -156,7 +157,7 @@ export function ManagePortfoliosPage({
         takenColors={portfolios.map(portfolioColor)}
         onPortfolioCreated={(created) => {
           onPortfolioCreated(created);
-          setStatus({ ok: true, text: `Created ${created.name}. It is now the active portfolio.` });
+          setStatus({ ok: true, text: t("portfolios.page.created", { name: created.name }) });
         }}
       />
 

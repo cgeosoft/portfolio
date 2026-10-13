@@ -5,6 +5,7 @@ import React, {
   useImperativeHandle,
   useRef,
 } from "react";
+import { t } from "../../i18n";
 
 export interface PinInputHandle {
   focus: (index?: number) => void;
@@ -195,7 +196,7 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
       id={id}
       className={`flex items-center gap-1.5 sm:gap-2.5 select-none ${className}`}
       role="group"
-      aria-label={ariaLabel || "6-digit PIN input"}
+      aria-label={ariaLabel || t("layout.pin.group")}
     >
       {digits.map((digit, i) => {
         const stateClass = hasError
@@ -220,7 +221,7 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={(e) => handlePaste(i, e)}
             onFocus={(e) => handleFocus(i, e)}
-            aria-label={ariaLabel ? `${ariaLabel} digit ${i + 1}` : `PIN digit ${i + 1} of 6`}
+            aria-label={ariaLabel ? t("layout.pin.namedDigit", { label: ariaLabel, index: i + 1 }) : t("layout.pin.digit", { index: i + 1, total: PIN_LENGTH })}
             className={`${sizeClass} ${stateClass} text-center font-mono font-bold caret-[#DD3C73] border transition-colors duration-100 focus:outline-none focus:ring-2 focus:bg-slate-900/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner`}
           />
         );

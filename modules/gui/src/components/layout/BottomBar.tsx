@@ -3,6 +3,7 @@ import { RefreshCw, ExternalLink, ChevronUp, Check, Eye, EyeOff } from "lucide-r
 import { openExternal, VENDOR_URL } from "../../environment";
 import { formatTimeAgo } from "../portfolio/utils";
 import { PortfolioDot } from "../portfolio/portfolioColor";
+import { getLocale, t } from "../../i18n";
 
 import type { AppUpdateInfo } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
@@ -87,15 +88,15 @@ export function BottomBar({
 
   const lastSyncDate = lastQuotesSync ? new Date(lastQuotesSync) : null;
   const lastSyncLabel =
-    lastSyncDate && !Number.isNaN(lastSyncDate.getTime()) ? lastSyncDate.toLocaleString() : "Never";
+    lastSyncDate && !Number.isNaN(lastSyncDate.getTime()) ? lastSyncDate.toLocaleString(getLocale()) : t("layout.bottomBar.never");
   const intervalLabel =
     quotesIntervalMins === undefined
-      ? "Unknown"
+      ? t("common.unknown")
       : quotesIntervalMins <= 0
-        ? "Off (manual only)"
+        ? t("layout.bottomBar.intervalOff")
         : quotesIntervalMins >= 60 && quotesIntervalMins % 60 === 0
-          ? `Every ${quotesIntervalMins / 60} h`
-          : `Every ${quotesIntervalMins} min`;
+          ? t("layout.bottomBar.everyHours", { hours: quotesIntervalMins / 60 })
+          : t("layout.bottomBar.everyMinutes", { minutes: quotesIntervalMins });
   // Like the organization chip of FintechCrafts Management: shown whenever a portfolio is open.
   const showPortfolioPicker = !!portfolios && portfolios.length > 0 && !!activePortfolio;
 
@@ -103,7 +104,7 @@ export function BottomBar({
     <footer
       className="app-bottombar text-slate-400"
       role="contentinfo"
-      aria-label="Application Status Bar"
+      aria-label={t("layout.bottomBar.statusBar")}
     >
       {/* Left side: portfolio v<version> - cgeosoft - terms of use */}
       <div className="flex items-center gap-1.5 min-w-0 truncate">
@@ -120,9 +121,9 @@ export function BottomBar({
               })
             }
             className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-500/20 text-accent-300 border border-accent-500/40 hover:bg-accent-500/30 transition-colors cursor-pointer inline-flex items-center gap-1"
-            title={`New version v${updateInfo.latestVersion} available`}
+            title={t("layout.bottomBar.newVersionTitle", { version: updateInfo.latestVersion })}
           >
-            <span>v{updateInfo.latestVersion} available</span>
+            <span>{t("layout.bottomBar.versionAvailable", { version: updateInfo.latestVersion })}</span>
           </button>
         )}
         <span className="text-slate-600">-</span>
@@ -130,7 +131,7 @@ export function BottomBar({
           type="button"
           onClick={handleOpenCgeosoft}
           className="text-slate-400 hover:text-accent-300 transition-colors inline-flex items-center gap-1 focus:outline-none cursor-pointer"
-          title="Open cgeosoft.com in browser"
+          title={t("layout.bottomBar.openVendor")}
         >
           <span>cgeosoft</span>
           <ExternalLink className="w-2.5 h-2.5 opacity-60" />
@@ -140,9 +141,9 @@ export function BottomBar({
           type="button"
           onClick={onOpenTerms}
           className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-none cursor-pointer"
-          title="Open Terms of Use in app"
+          title={t("layout.bottomBar.openTerms")}
         >
-          terms of use
+          {t("layout.bottomBar.terms")}
         </button>
       </div>
 
@@ -156,7 +157,7 @@ export function BottomBar({
               className="px-1.5 py-0.5 rounded flex items-center gap-1.5 max-w-[200px] text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
               aria-haspopup="listbox"
               aria-expanded={isPortfolioMenuOpen}
-              title="Switch Portfolio"
+              title={t("layout.bottomBar.switchPortfolio")}
             >
               <PortfolioDot portfolio={activePortfolio} />
               <span className="truncate">{activePortfolio?.name || "Main Portfolio"}</span>
@@ -166,7 +167,7 @@ export function BottomBar({
             {isPortfolioMenuOpen && (
               <div className="app-menu app-menu-up" style={{ left: "auto", right: 0, width: "16rem" }} role="listbox">
                 <div className="flex items-center justify-between px-2.5 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                  <span>Portfolios ({portfolios.length})</span>
+                  <span>{t("layout.bottomBar.portfoliosCount", { count: portfolios.length })}</span>
                   {onManagePortfolios && (
                     <button
                       type="button"
@@ -176,7 +177,7 @@ export function BottomBar({
                       }}
                       className="text-[#DD3C73] hover:text-accent-bright hover:underline cursor-pointer"
                     >
-                      Manage
+                      {t("layout.bottomBar.manage")}
                     </button>
                   )}
                 </div>
@@ -198,7 +199,7 @@ export function BottomBar({
                         <span className="flex items-center gap-2.5 min-w-0 pr-3">
                           <PortfolioDot portfolio={p} />
                           <span className="truncate">{p.name}</span>
-                          {p.isShared && <span className="text-[10px] text-slate-500 shrink-0">(shared)</span>}
+                          {p.isShared && <span className="text-[10px] text-slate-500 shrink-0">{t("layout.bottomBar.shared")}</span>}
                         </span>
                         {isActive && <Check className="w-3.5 h-3.5 text-accent-400 shrink-0" />}
                       </button>
@@ -217,12 +218,12 @@ export function BottomBar({
             className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-none cursor-pointer hover:bg-slate-800/60 ${
               hideCurrencyValues ? "text-cream hover:text-[#f0f5db]" : "hover:text-accent-300"
             }`}
-            title={hideCurrencyValues ? "Show financial values (Privacy ON - Ctrl+H)" : "Hide financial values for privacy (Ctrl+H)"}
-            aria-label={hideCurrencyValues ? "Show financial values" : "Hide financial values for privacy"}
+            title={hideCurrencyValues ? t("layout.bottomBar.privacyShowTitle", { shortcut: "Ctrl+H" }) : t("layout.bottomBar.privacyHideTitle", { shortcut: "Ctrl+H" })}
+            aria-label={hideCurrencyValues ? t("layout.bottomBar.privacyShowLabel") : t("layout.bottomBar.privacyHideLabel")}
             aria-pressed={hideCurrencyValues}
           >
             {hideCurrencyValues ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-            <span>{hideCurrencyValues ? "privacy: on" : "privacy"}</span>
+            <span>{hideCurrencyValues ? t("layout.bottomBar.privacyOn") : t("layout.bottomBar.privacy")}</span>
           </button>
         )}
         <div
@@ -236,33 +237,33 @@ export function BottomBar({
             onFocus={() => setIsSyncInfoOpen(true)}
             onBlur={() => setIsSyncInfoOpen(false)}
             aria-disabled={isSyncingQuotes}
-            aria-label={isSyncingQuotes ? "Refreshing market quotes" : "Refresh market quotes"}
+            aria-label={isSyncingQuotes ? t("layout.bottomBar.refreshingLabel") : t("layout.bottomBar.refreshLabel")}
             className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-none ${
               isSyncingQuotes ? "cursor-default" : "cursor-pointer hover:bg-slate-800/60 hover:text-accent-300"
             }`}
           >
-            <span className="text-slate-300 font-medium">{isSyncingQuotes ? "refreshing" : relativeTime}</span>
+            <span className="text-slate-300 font-medium">{isSyncingQuotes ? t("layout.bottomBar.refreshing") : relativeTime}</span>
             <RefreshCw className={`w-3 h-3 ${isSyncingQuotes ? "animate-spin text-accent-400" : "text-slate-400"}`} />
           </button>
 
           {isSyncInfoOpen && (
             <div className="app-menu app-menu-up pointer-events-none" style={{ left: "auto", right: 0, width: "16rem" }} role="tooltip">
-              <div className="px-2.5 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Market quotes</div>
+              <div className="px-2.5 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">{t("layout.bottomBar.quotes.title")}</div>
               <dl className="px-2.5 pb-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px]">
-                <dt className="text-slate-500">Status</dt>
+                <dt className="text-slate-500">{t("layout.bottomBar.quotes.status")}</dt>
                 <dd className={`text-right ${isSyncingQuotes ? "text-accent-300" : "text-slate-200"}`}>
-                  {isSyncingQuotes ? "Refreshing..." : "Idle"}
+                  {isSyncingQuotes ? t("layout.bottomBar.quotes.refreshing") : t("layout.bottomBar.quotes.idle")}
                 </dd>
-                <dt className="text-slate-500">Last refresh</dt>
+                <dt className="text-slate-500">{t("layout.bottomBar.quotes.lastRefresh")}</dt>
                 <dd className="text-right text-slate-200">{lastSyncLabel}</dd>
-                <dt className="text-slate-500">Age</dt>
+                <dt className="text-slate-500">{t("layout.bottomBar.quotes.age")}</dt>
                 <dd className="text-right text-slate-200">{relativeTime}</dd>
-                <dt className="text-slate-500">Auto refresh</dt>
+                <dt className="text-slate-500">{t("layout.bottomBar.quotes.autoRefresh")}</dt>
                 <dd className="text-right text-slate-200">{intervalLabel}</dd>
               </dl>
               <div className="app-menu-separator" />
               <div className="px-2.5 pb-1 text-[10px] text-slate-500">
-                {isSyncingQuotes ? "A refresh is running." : "Click to refresh now."}
+                {isSyncingQuotes ? t("layout.bottomBar.quotes.running") : t("layout.bottomBar.quotes.clickToRefresh")}
               </div>
             </div>
           )}

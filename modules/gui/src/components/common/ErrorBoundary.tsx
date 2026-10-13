@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { reloadPage } from "../portfolio/utils.js";
 import { hideBootLoader } from "../../bootLoader";
+import { t } from "../../i18n";
 
 interface Props {
   children: ReactNode;
@@ -51,10 +52,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <div className="min-w-0">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 truncate">
-                System Diagnostics Fault
+                {t("layout.errorBoundary.title")}
               </h2>
-              <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title="A rendering exception occurred. The error has been captured below.">
-                A rendering exception occurred. The error has been captured below.
+              <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("layout.errorBoundary.description")}>
+                {t("layout.errorBoundary.description")}
               </p>
             </div>
 
@@ -72,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
               className="w-full py-2.5 px-4 bg-[#DD3C73] hover:bg-[#c82f63] text-white font-semibold text-xs rounded-xl shadow-lg shadow-[#DD3C73]/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
-              <span>Reload Application</span>
+              <span>{t("layout.errorBoundary.reload")}</span>
             </button>
           </div>
         </div>
