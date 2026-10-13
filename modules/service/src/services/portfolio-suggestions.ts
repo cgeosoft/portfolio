@@ -38,6 +38,8 @@ import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "./llm.js"
 import type { PortfolioService } from "./portfolio.js";
 import type { MarketDataCoordinator } from "./market-data.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
+import { plainStyle, withLanguageInstruction } from "./output-language.js";
+import { t } from "../i18n.js";
 
 /** Most suggestions kept from one answer. */
 const MAX_SUGGESTIONS = 8;
@@ -203,17 +205,10 @@ export function parseSuggestionAnswer(
   }
 
   const notes: string[] = [];
-  const say = (n: number, what: string) => {
-    if (n > 0) notes.push(`${n} ${n === 1 ? "suggestion was" : "suggestions were"} dropped: ${what}.`);
-  };
-  say(dropped.invalid, "the answer was incomplete");
-  say(dropped.notHeld, "it changes a holding the portfolio does not have");
-  say(dropped.unknown, "the data providers do not know the symbol");
-  say(dropped.privateAsset, "it trades a private holding");
-  say(dropped.misread, "the assistant misread the current weight");
-  say(dropped.noChange, "the weight change was too small or in the wrong direction");
-  say(dropped.duplicate, "it repeated a symbol");
-  say(dropped.extra, `only ${MAX_SUGGESTIONS} are kept`);
+  for (const reason of Object.keys(dropped) as (keyof typeof dropped)[]) {
+    const count = dropped[reason];
+    if (count > 0) notes.push(t(`service.suggestions.dropped.${reason}`, { count, max: MAX_SUGGESTIONS }));
+  }
 
   return { summary: text(raw.summary, 600), proposals, notes };
 }
@@ -379,7 +374,8 @@ function describeHolding(h: PortfolioHolding): string {
 
 export function buildSuggestionPrompt(
   data: FinancialPortfolioData,
-  ctx: { baseCurrency: string; intelText: string; openKeys: string[]; dismissedKeys: string[]; today: string },
+  /** `language`: interface language code for the text fields; English when left out. */
+  ctx: { baseCurrency: string; intelText: string; openKeys: string[]; dismissedKeys: string[]; today: string; language?: string },
 ): LlmMessage[] {
   const summary = data.summary;
   const cash = summary?.cashWeightPercent ?? 0;
@@ -389,7 +385,7 @@ export function buildSuggestionPrompt(
       ? `Cash is ${pct(cash)} of the portfolio. You may suggest "open" for new instruments to put cash to work. Use Yahoo Finance symbols, with the exchange suffix for non-US listings (for example VWCE.DE). Prefer liquid, broad ETFs or large companies. The app checks each symbol and drops unknown ones.`
       : `Suggest "open" for a new instrument only when it clearly fixes a gap in the allocation. Use Yahoo Finance symbols with the exchange suffix for non-US listings.`;
 
-  const system = `You are a portfolio analyst. You give a short list of concrete rebalancing actions for one investment portfolio.
+  const system = withLanguageInstruction(`You are a portfolio analyst. You give a short list of concrete rebalancing actions for one investment portfolio.
 You see weights in percent of the total portfolio, never money amounts. Never write money amounts or share counts. The app turns your target weights into amounts.
 
 Rules:
@@ -400,10 +396,10 @@ Rules:
 - "priority" is 1 (most important) to 5.
 - "validity" says how long the idea holds: "days" (1 to ${SUGGESTION_MAX_TTL_DAYS}), and optional "priceMin" / "priceMax" in the quote currency of the symbol, and optional "weightMin" / "weightMax" in percent. The app cancels the suggestion when a rule fails.
 - Do not trade private assets. Give at most ${MAX_SUGGESTIONS} suggestions. Give none when the portfolio needs no change.
-- "title" is at most 8 words. "why" is 1 to 3 short sentences based on the data given. Use ASD-STE100 Simplified English. No emojis, no long dashes.
+- "title" is at most 8 words. "why" is 1 to 3 short sentences based on the data given. Use ${plainStyle(ctx.language)}. No emojis, no long dashes.
 
 Reply with one JSON object and nothing else, in this shape:
-{"summary": "1 or 2 sentences", "suggestions": [{"action": "decrease", "symbol": "NVDA", "fromWeight": 14.2, "targetWeight": 9, "priority": 1, "title": "Trim the largest single stock", "why": "...", "fundedBy": [], "validity": {"days": 5, "priceMin": 160, "priceMax": 210}}]}`;
+{"summary": "1 or 2 sentences", "suggestions": [{"action": "decrease", "symbol": "NVDA", "fromWeight": 14.2, "targetWeight": 9, "priority": 1, "title": "Trim the largest single stock", "why": "...", "fundedBy": [], "validity": {"days": 5, "priceMin": 160, "priceMax": 210}}]}`, ctx.language, { jsonFields: ["summary", "title", "why"] });
 
   const open = ctx.openKeys.length > 0
     ? `\n## Open suggestions\nThe user has not acted on these yet. Repeat one with the same action and symbol only if it still applies:\n${ctx.openKeys.map((k) => `- ${k}`).join("\n")}\n`
@@ -540,7 +536,7 @@ export class PortfolioSuggestionService {
       appLogger.logStep("warning", "suggestions", "intel_failed", `Suggestion market context failed (${err instanceof Error ? err.name : typeof err})`);
     }
 
-    const messages = buildSuggestionPrompt(data, { baseCurrency, intelText, openKeys, dismissedKeys, today: now.toISOString().slice(0, 10) });
+    const messages = buildSuggestionPrompt(data, { baseCurrency, intelText, openKeys, dismissedKeys, today: now.toISOString().slice(0, 10), language: loadConfig().language });
     const target = this.llm.resolve({ temperature: 0.2 });
     let raw: Record<string, unknown>;
     const first = await this.llm.chat(messages, { temperature: 0.2 });
@@ -573,7 +569,7 @@ export class PortfolioSuggestionService {
     const merged = mergeSuggestions(portfolioId, existing, parsed.proposals, (symbol) => marketForSymbol(symbol, holdings, allQuotes), totalValueOf(data), now);
 
     const notes = [...parsed.notes];
-    if (merged.skippedDismissed > 0) notes.push(`${merged.skippedDismissed} dismissed ${merged.skippedDismissed === 1 ? "suggestion was" : "suggestions were"} left out.`);
+    if (merged.skippedDismissed > 0) notes.push(t("service.suggestions.dismissedLeftOut", { count: merged.skippedDismissed }));
     suggestionRepo.saveGeneration(merged.suggestions, {
       portfolioId,
       generatedAt: now.toISOString(),

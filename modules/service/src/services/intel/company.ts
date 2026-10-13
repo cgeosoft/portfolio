@@ -26,6 +26,8 @@ import { FMP_TTL, toFmpSymbol, type FmpNewsArticle, type FmpParams, type FmpServ
 import type { FinnhubBasicFinancials, FinnhubInsiderTransaction, FinnhubService } from "../finnhub.js";
 import type { MarketDataCoordinator } from "../market-data.js";
 import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "../llm.js";
+import { withLanguageInstruction } from "../output-language.js";
+import { serviceLanguage } from "../../i18n.js";
 import { mapWithConcurrencyLimit } from "../yahoo-finance.js";
 import { firstAvailable } from "../providers/chain.js";
 import {
@@ -896,8 +898,10 @@ export function trimTranscript(text: string, maxChars = DEFAULT_TRANSCRIPT_PROMP
 
 const summaryInFlight = new Map<string, Promise<TranscriptSummary | null>>();
 
-function summaryCacheKey(meta: TranscriptMeta): string {
-  return `intel:transcript-summary:${meta.symbol}:${meta.fiscalYear}Q${meta.quarter}`;
+/** One summary per call and output language; an English summary keeps the key of releases before languages. */
+function summaryCacheKey(meta: TranscriptMeta, language = serviceLanguage()): string {
+  const key = `intel:transcript-summary:${meta.symbol}:${meta.fiscalYear}Q${meta.quarter}`;
+  return language === "en" ? key : `${key}:${language}`;
 }
 
 /** The cached summary of the latest call, without calling the model. */
@@ -908,23 +912,27 @@ export async function getCachedTranscriptSummary(deps: CompanyIntelDeps, symbol:
   return cached?.data?.summary ? { ...cached.data, cached: true } : null;
 }
 
-export function buildTranscriptSummaryPrompt(meta: TranscriptMeta, transcript: string, trimmed: boolean, companyName?: string): LlmMessage[] {
+/** `language`: interface language code of the summary; English when left out. */
+export function buildTranscriptSummaryPrompt(meta: TranscriptMeta, transcript: string, trimmed: boolean, companyName?: string, language?: string): LlmMessage[] {
   const company = companyName ? `${companyName} (${meta.symbol})` : meta.symbol;
   return [
     {
       role: "system",
-      content: [
-        "You are an equity analyst. Summarize an earnings call transcript for a private investor.",
-        "Use only facts stated in the transcript. Do not invent numbers. Say so when the call does not cover a section.",
-        "Write Markdown with these sections, each a short bulleted list:",
-        "## Results (revenue, earnings, margins, versus last year or guidance)",
-        "## Guidance and outlook",
-        "## Strategy and management comments",
-        "## Analyst questions",
-        "## Risks and concerns",
-        "## Tone (one line: confident, cautious or mixed, and why)",
-        "Keep it under 300 words. Short active sentences. No preamble.",
-      ].join("\n"),
+      content: withLanguageInstruction(
+        [
+          "You are an equity analyst. Summarize an earnings call transcript for a private investor.",
+          "Use only facts stated in the transcript. Do not invent numbers. Say so when the call does not cover a section.",
+          "Write Markdown with these sections, each a short bulleted list:",
+          "## Results (revenue, earnings, margins, versus last year or guidance)",
+          "## Guidance and outlook",
+          "## Strategy and management comments",
+          "## Analyst questions",
+          "## Risks and concerns",
+          "## Tone (one line: confident, cautious or mixed, and why)",
+          "Keep it under 300 words. Short active sentences. No preamble.",
+        ].join("\n"),
+        language,
+      ),
     },
     {
       role: "user",
@@ -953,7 +961,8 @@ export interface SummarizeTranscriptOptions {
 export async function summarizeTranscript(deps: TranscriptSummaryDeps, symbol: string, options: SummarizeTranscriptOptions = {}): Promise<TranscriptSummary | null> {
   const meta = await getLatestTranscriptMeta(deps, symbol);
   if (!meta) return null;
-  const key = summaryCacheKey(meta.data);
+  const language = serviceLanguage();
+  const key = summaryCacheKey(meta.data, language);
   if (!options.force) {
     const cached = marketCache.get<Omit<TranscriptSummary, "cached">>(key);
     if (cached?.data?.summary) return { ...cached.data, cached: true };
@@ -967,7 +976,7 @@ export async function summarizeTranscript(deps: TranscriptSummaryDeps, symbol: s
     const { text, trimmed } = trimTranscript(transcript.data.text, options.maxChars ?? DEFAULT_TRANSCRIPT_PROMPT_CHARS);
     const timer = appLogger.startTimer("intel", "transcript_summary");
     try {
-      const raw = await deps.llm.chat(buildTranscriptSummaryPrompt(transcript.data, text, trimmed, str(profile?.companyName)), {
+      const raw = await deps.llm.chat(buildTranscriptSummaryPrompt(transcript.data, text, trimmed, str(profile?.companyName), language), {
         provider: options.provider,
         model: options.model,
         maxTokens: 1200,

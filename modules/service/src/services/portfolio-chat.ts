@@ -13,6 +13,8 @@ import { loadConfig } from "../config.js";
 import type { LlmService, LlmMessage } from "./llm.js";
 import type { PortfolioService } from "./portfolio.js";
 import { buildAssistantMarketContext, type AiContextDeps } from "./ai-context.js";
+import { plainStyle, withLanguageInstruction } from "./output-language.js";
+import { t } from "../i18n.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as conversationRepo from "../db/conversation.repo.js";
 import type { PortfolioItem, FinancialPortfolioData, HoldingPerformance } from "portfolio-shared/portfolio";
@@ -27,7 +29,8 @@ const priceNote = (h: HoldingPerformance) =>
   h.isPrivate ? " (private asset, no market price)" : h.quoteMissing ? " (no market quote, valued at buy price)" : "";
 const indicator = (value: number | undefined, digits: number) => (value !== undefined && !isNaN(value) ? value.toFixed(digits) : "N/A");
 
-export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData, marketContext = ""): string {
+/** `language` is the code of Settings, Appearance; the assistant answers in it. */
+export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData, marketContext = "", language?: string): string {
   const summary = data.summary;
 
   const holdingsLedger =
@@ -47,9 +50,9 @@ export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: Finan
       .map((tx) => `- ${tx.date ? tx.date.slice(0, 10) : "Unknown date"} [${tx.type}] ${tx.symbol || ""}`.trim())
       .join("\n") || "No transaction history recorded.";
 
-  return `You are a quantitative investment portfolio analyst and tactical financial assistant.
+  const prompt = `You are a quantitative investment portfolio analyst and tactical financial assistant.
 You possess real-time, comprehensive context for the user's active portfolio.
-Use ASD-STE100 Simplified English whenever possible.
+Use ${plainStyle(language)} whenever possible.
 Do not use long dashes in your output.
 Answer questions objectively, clearly, and concisely. Ground your answers strictly in the verified portfolio data below.
 
@@ -83,12 +86,13 @@ ${marketContext ? `\n${marketContext}\n` : ""}
 5. Use the exposure, events, macro and benchmark data above when they help the answer. Do not invent data that is not given, such as company fundamentals or news.`
       : ""
   }`;
+  return withLanguageInstruction(prompt, language);
 }
 
 /** First user message, shortened, or a generic title. */
 function titleFor(messages: PortfolioChatMessage[]): string {
   const first = messages.find((m) => m.role === "user")?.content.trim();
-  if (!first) return "Chat Session";
+  if (!first) return t("service.assistant.untitledChat");
   return first.length > TITLE_MAX_CHARS ? `${first.slice(0, TITLE_MAX_CHARS)}...` : first;
 }
 
@@ -112,12 +116,13 @@ export class PortfolioChatService {
   public async getSystemPrompt(portfolioId: string): Promise<string> {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) throw new Error(`Portfolio with ID "${portfolioId}" not found`);
-    const baseCurrency = portfolio.baseCurrency || loadConfig().baseCurrency || "EUR";
+    const config = loadConfig();
+    const baseCurrency = portfolio.baseCurrency || config.baseCurrency || "EUR";
     const [data, marketContext] = await Promise.all([
       this.portfolioService.getPortfolioData(portfolio.id, baseCurrency),
       this.aiContext ? buildAssistantMarketContext(this.aiContext, portfolio.id, baseCurrency).catch(() => "") : Promise.resolve(""),
     ]);
-    return buildPortfolioSystemPrompt(portfolio, data, marketContext);
+    return buildPortfolioSystemPrompt(portfolio, data, marketContext, config.language);
   }
 
   public getConversations(portfolioId: string): AssistantConversation[] {

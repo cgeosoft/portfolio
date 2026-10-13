@@ -5,6 +5,7 @@
 import type { NotificationChannel } from "portfolio-shared/api-types";
 import { isGotifyConfigured, sendGotify } from "./gotify";
 import { isNtfyConfigured, sendNtfy } from "./ntfy";
+import { t } from "../i18n";
 
 export interface PushMessage {
   title: string;
@@ -13,6 +14,11 @@ export interface PushMessage {
 }
 
 const CHANNEL_NAMES: Record<NotificationChannel, string> = { gotify: "Gotify", ntfy: "ntfy" };
+
+/** The test message of Settings, Notifications, Phone Apps, in the interface language. */
+export function testNotification(channel: NotificationChannel): PushMessage {
+  return { title: t("service.testNotification.title"), message: t(`service.testNotification.${channel}`) };
+}
 
 /** The channels that are set up, in a fixed order. */
 export function configuredChannels(): NotificationChannel[] {

@@ -104,4 +104,76 @@ setup:
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:
-  _section: "service"
+  assistant:
+    untitledChat: "Chat Session"
+  report:
+    title: "{portfolio} - Weekly Briefing ({period})"
+    summary:
+      one: "Valuation {currency}{value} with {change}% cumulative return across {count} asset."
+      other: "Valuation {currency}{value} with {change}% cumulative return across {count} assets."
+    fallback:
+      heading: "Automated Portfolio Briefing ({period})"
+      overviewLabel: "Market Overview"
+      overview: "Total portfolio valuation stands at {currency}{value} with {change}% overall return."
+      note: "Note: Detailed LLM report model was temporarily unreachable ({error}). Technical metrics and ledger values remain verified."
+  suggestions:
+    dropped:
+      invalid:
+        one: "{count} suggestion was dropped: the answer was incomplete."
+        other: "{count} suggestions were dropped: the answer was incomplete."
+      notHeld:
+        one: "{count} suggestion was dropped: it changes a holding the portfolio does not have."
+        other: "{count} suggestions were dropped: it changes a holding the portfolio does not have."
+      unknown:
+        one: "{count} suggestion was dropped: the data providers do not know the symbol."
+        other: "{count} suggestions were dropped: the data providers do not know the symbol."
+      privateAsset:
+        one: "{count} suggestion was dropped: it trades a private holding."
+        other: "{count} suggestions were dropped: it trades a private holding."
+      misread:
+        one: "{count} suggestion was dropped: the assistant misread the current weight."
+        other: "{count} suggestions were dropped: the assistant misread the current weight."
+      noChange:
+        one: "{count} suggestion was dropped: the weight change was too small or in the wrong direction."
+        other: "{count} suggestions were dropped: the weight change was too small or in the wrong direction."
+      duplicate:
+        one: "{count} suggestion was dropped: it repeated a symbol."
+        other: "{count} suggestions were dropped: it repeated a symbol."
+      extra:
+        one: "{count} suggestion was dropped: only {max} are kept."
+        other: "{count} suggestions were dropped: only {max} are kept."
+    dismissedLeftOut:
+      one: "{count} dismissed suggestion was left out."
+      other: "{count} dismissed suggestions were left out."
+  dailyBrief:
+    notificationTitle: "{portfolio}: daily brief"
+    conversationTitle: "Daily brief {date}"
+    question: "Daily brief for {date}: what happened in the last trading session?"
+    fallback:
+      sessionReturn: "Session return {change}"
+      topGainer: "Top gainer: {instrument} {change}"
+      topDecliner: "Top decliner: {instrument} {change}"
+      transactions:
+        one: "{count} transaction since {since}"
+        other: "{count} transactions since {since}"
+      note: "The assistant was not available, so this brief shows the numbers only."
+  weeklyAnalysis:
+    notificationTitle: "{portfolio}: weekly analysis"
+    openReports: "Open Portfolio, Reports for the full analysis."
+    fallback:
+      heading: "Weekly analysis {period}"
+      weekReturn: "Return of the week: {change}"
+      topGainer: "Top gainer: {symbol} {change}"
+      topDecliner: "Top decliner: {symbol} {change}"
+  eventAlerts:
+    notificationTitle: "Portfolio: upcoming events"
+    heading: "Events of your holdings up to {date}"
+    exDividend: "{symbol}: ex-dividend date {date}"
+    earnings: "{symbol}: earnings report {date}"
+    earningsBeforeOpen: "{symbol}: earnings report {date}, before the market opens"
+    earningsAfterClose: "{symbol}: earnings report {date}, after the market closes"
+    footer: "Open Portfolio for the income and events overview."
+  testNotification:
+    title: "Portfolio"
+    gotify: "Test message from Portfolio. Daily briefs will arrive here."
+    ntfy: "Test message from Portfolio. Daily briefs and weekly analyses will arrive here."

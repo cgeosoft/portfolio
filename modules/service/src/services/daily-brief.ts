@@ -26,6 +26,8 @@ import { getCompanyNews } from "./intel/company";
 import { instrumentLabel } from "./instrument-label";
 import { exchangeForSymbol, isTradingDay } from "./intel/market-hours";
 import { channelNames, configuredChannels, notifyAll } from "./notify";
+import { plainStyle, withLanguageInstruction } from "./output-language";
+import { t } from "../i18n";
 import type { AutomationStatus, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData, PortfolioItem } from "portfolio-shared/portfolio";
 
@@ -95,6 +97,8 @@ interface BriefContext {
   news: string[];
   /** Earnings, ex-dividend dates and splits of held symbols today and tomorrow, as prompt lines. */
   events?: string;
+  /** Interface language code; the brief is written in it. English when left out. */
+  language?: string;
 }
 
 /** The holdings of the last session, largest gains first and largest losses last. */
@@ -145,13 +149,16 @@ ${news.join("\n") || "No news available."}${events ? `\n\n=== EVENTS OF HELD SYM
   return [
     {
       role: "system",
-      content: `You are the portfolio assistant. Write the user's daily brief: a quick overview of what happened in their portfolio during the last trading session.
-Use ASD-STE100 Simplified English. Do not use long dashes. Do not use emojis.
+      content: withLanguageInstruction(
+        `You are the portfolio assistant. Write the user's daily brief: a quick overview of what happened in their portfolio during the last trading session.
+Use ${plainStyle(ctx.language)}. Do not use long dashes. Do not use emojis.
 Use only the data given. Never invent prices, amounts, news or events. Do not give buy or sell advice.
 Output Markdown only, at most 120 words:
 - One bold first line with the portfolio return of the session.
 - Then 2 to 4 short bullet points: the largest moves and their weight, a news item that explains a move when one is given, and any transactions.
 - End with one short line on anything to watch, based only on the data. Name the earnings reports and ex-dividend dates of today and tomorrow when they are given.`,
+        ctx.language,
+      ),
     },
     { role: "user", content: `Today is ${today}. Write the daily brief.\n\n${context}` },
   ];
@@ -161,13 +168,13 @@ Output Markdown only, at most 120 words:
 export function fallbackBrief(ctx: BriefContext): string {
   const { data, since, today } = ctx;
   const { up, down } = movers(data);
-  const lines = [`**Session return ${signedPct(data.summary?.dayGainLossPercent)}**`];
-  if (up[0]) lines.push(`- Top gainer: ${instrumentLabel(up[0].symbol, up[0].name)} ${signedPct(up[0].dayChangePercent)}`);
-  if (down[0]) lines.push(`- Top decliner: ${instrumentLabel(down[0].symbol, down[0].name)} ${signedPct(down[0].dayChangePercent)}`);
+  const lines = [`**${t("service.dailyBrief.fallback.sessionReturn", { change: signedPct(data.summary?.dayGainLossPercent) })}**`];
+  if (up[0]) lines.push(`- ${t("service.dailyBrief.fallback.topGainer", { instrument: instrumentLabel(up[0].symbol, up[0].name), change: signedPct(up[0].dayChangePercent) })}`);
+  if (down[0]) lines.push(`- ${t("service.dailyBrief.fallback.topDecliner", { instrument: instrumentLabel(down[0].symbol, down[0].name), change: signedPct(down[0].dayChangePercent) })}`);
   const txs = recentTransactions(data, since, today).length;
-  if (txs > 0) lines.push(`- ${txs} transaction${txs === 1 ? "" : "s"} since ${since}`);
+  if (txs > 0) lines.push(`- ${t("service.dailyBrief.fallback.transactions", { count: txs, since })}`);
   if (ctx.events) lines.push(...ctx.events.split("\n").slice(0, 3));
-  lines.push("", "_The assistant was not available, so this brief shows the numbers only._");
+  lines.push("", `_${t("service.dailyBrief.fallback.note")}_`);
   return lines.join("\n");
 }
 
@@ -243,7 +250,7 @@ export class DailyBriefService {
             continue;
           }
           const [news, events] = await Promise.all([this.news(data, since), this.events(row.id, today)]);
-          const ctx: BriefContext = { portfolio, data, since, today, news, events };
+          const ctx: BriefContext = { portfolio, data, since, today, news, events, language: cfg.language };
 
           let content: string;
           try {
@@ -257,16 +264,16 @@ export class DailyBriefService {
           conversationRepo.upsert({
             id: `brief_${row.id}_${today}`,
             portfolioId: row.id,
-            title: `Daily brief ${today}`,
+            title: t("service.dailyBrief.conversationTitle", { date: today }),
             messages: JSON.stringify([
-              { role: "user", content: `Daily brief for ${today}: what happened in the last trading session?` },
+              { role: "user", content: t("service.dailyBrief.question", { date: today }) },
               { role: "assistant", content },
             ]),
           });
           written++;
 
           if (channels.length > 0) {
-            const sent = await notifyAll({ title: `${row.name}: daily brief`, message: content }, channels);
+            const sent = await notifyAll({ title: t("service.dailyBrief.notificationTitle", { portfolio: row.name }), message: content }, channels);
             if (sent.ok) delivered++;
             errors.push(...sent.errors);
           }
