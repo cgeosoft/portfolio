@@ -921,6 +921,9 @@ assistant:
     emptyTitle: "尚无建议"
     emptyDescription: "生成一份再平衡操作列表。助手只获得每项持仓的百分比权重，绝不会获得余额或数量。"
     noneActive: "没有有效的建议。重新计算以获取新列表。"
+    noChangeTitle: "无需调整"
+    hideDone: "隐藏已完成（{count}）"
+    showDone: "显示已完成（{count}）"
     history: "历史（{count}）"
     action:
       increase: "增持"

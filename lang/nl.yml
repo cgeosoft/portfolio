@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Nog geen suggesties"
     emptyDescription: "Genereer een lijst met herbalanceringsacties. De assistent krijgt de weging van elke positie in procenten, nooit saldi of aantallen."
     noneActive: "Geen actieve suggesties. Herbereken voor een nieuwe lijst."
+    noChangeTitle: "Geen wijziging nodig"
+    hideDone: "Uitgevoerde verbergen ({count})"
+    showDone: "Uitgevoerde tonen ({count})"
     history: "Geschiedenis ({count})"
     action:
       increase: "Verhogen"

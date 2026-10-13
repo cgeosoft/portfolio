@@ -45,6 +45,17 @@ interface SuggestionsPageProps {
 /** How often the page asks for the result while a generation runs. */
 const POLL_MS = 2_000;
 
+/** localStorage key of the "hide done" choice on this device. */
+const HIDE_DONE_KEY = "portfolio_suggestions_hide_done";
+
+function loadHideDone(): boolean {
+  try {
+    return localStorage.getItem(HIDE_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface Row {
   s: PortfolioSuggestion;
   ev: SuggestionEvaluation;
@@ -104,6 +115,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
   const [historyOpen, setHistoryOpen] = useState(false);
   const [targetOpen, setTargetOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [hideDone, setHideDone] = useState(loadHideDone);
 
   const dataStamp = portfolioData?.summary?.lastUpdated ?? "";
 
@@ -190,6 +202,20 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
     [holdings, current, excluded],
   );
 
+  const toggleHideDone = () => {
+    const next = !hideDone;
+    setHideDone(next);
+    try {
+      localStorage.setItem(HIDE_DONE_KEY, next ? "1" : "0");
+    } catch {
+      // localStorage unavailable: the choice lasts until the window closes.
+    }
+  };
+
+  // Done suggestions stay in the list, ticked, unless the user hides them.
+  const doneCount = listed.filter((r) => r.ev.status === "done").length;
+  const shown = hideDone ? listed.filter((r) => r.ev.status !== "done") : listed;
+
   const toggleExcluded = (id: string) =>
     setExcluded((prev) => {
       const next = new Set(prev);
@@ -209,20 +235,33 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
             <Lightbulb className="w-4 h-4 text-[#DD3C73] shrink-0" />
             <span className="truncate">{t("assistant.suggestions.title")}</span>
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="pl-6 text-[11px] text-slate-400 mt-0.5">
             {data?.generatedAt ? `${t("assistant.suggestions.generated", { time: formatTimeAgo(data.generatedAt) })} ` : ""}
             {t("assistant.suggestions.subtitle")}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void generate()}
-          disabled={running || !portfolioId}
-          className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-          {running ? t("assistant.suggestions.generating") : hasAny ? t("assistant.suggestions.recalculate") : t("assistant.suggestions.generate")}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {hasAny && doneCount > 0 && (
+            <button
+              type="button"
+              onClick={toggleHideDone}
+              aria-pressed={hideDone}
+              className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-slate-800 bg-slate-950 text-xs font-bold text-slate-300 hover:bg-slate-900 hover:border-slate-700 hover:text-slate-50 transition-colors cursor-pointer uppercase tracking-wider"
+            >
+              {hideDone ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              {hideDone ? t("assistant.suggestions.showDone", { count: doneCount }) : t("assistant.suggestions.hideDone", { count: doneCount })}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void generate()}
+            disabled={running || !portfolioId}
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/15 text-xs font-bold text-[#DD3C73] hover:bg-[#DD3C73]/25 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {running ? t("assistant.suggestions.generating") : hasAny ? t("assistant.suggestions.recalculate") : t("assistant.suggestions.generate")}
+          </button>
+        </div>
       </div>
 
       {/* Banners */}
@@ -254,9 +293,11 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
           <div className="w-12 h-12 rounded-2xl border border-[#DD3C73]/30 bg-[#DD3C73]/10 flex items-center justify-center text-[#DD3C73] mb-4">
             {running ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Lightbulb className="w-6 h-6" />}
           </div>
-          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">{running ? t("assistant.suggestions.generatingTitle") : t("assistant.suggestions.emptyTitle")}</div>
+          <div className="text-sm font-bold uppercase tracking-wider text-slate-100 mb-2">
+            {running ? t("assistant.suggestions.generatingTitle") : data?.generatedAt ? t("assistant.suggestions.noChangeTitle") : t("assistant.suggestions.emptyTitle")}
+          </div>
           <p className="max-w-md text-xs text-slate-400 leading-relaxed">
-            {running ? t("assistant.suggestions.generatingDescription") : t("assistant.suggestions.emptyDescription")}
+            {running ? t("assistant.suggestions.generatingDescription") : data?.generatedAt ? data.summary || t("assistant.suggestions.noneActive") : t("assistant.suggestions.emptyDescription")}
           </p>
         </div>
       ) : (
@@ -277,10 +318,10 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
               </ul>
             )}
 
-            {listed.length === 0 && (
+            {shown.length === 0 && (
               <div className="cx-card p-6 text-center text-xs text-slate-400">{t("assistant.suggestions.noneActive")}</div>
             )}
-            {listed.map((r) =>
+            {shown.map((r) =>
               r.ev.status === "active" ? (
                 <SuggestionCard
                   key={r.s.id}

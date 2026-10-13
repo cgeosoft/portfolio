@@ -991,6 +991,9 @@ assistant:
     emptyTitle: "Predlogov še ni"
     emptyDescription: "Ustvarite seznam dejanj za uravnoteženje. Pomočnik dobi delež vsake naložbe v odstotkih, nikoli stanj ali količin."
     noneActive: "Ni aktivnih predlogov. Znova izračunajte za nov seznam."
+    noChangeTitle: "Sprememba ni potrebna"
+    hideDone: "Skrij končane ({count})"
+    showDone: "Prikaži končane ({count})"
     history: "Zgodovina ({count})"
     action:
       increase: "Povečaj"

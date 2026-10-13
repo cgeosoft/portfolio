@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Inga förslag ännu"
     emptyDescription: "Generera en lista med åtgärder för ombalansering. Assistenten får varje innehavs vikt i procent, aldrig saldon eller antal."
     noneActive: "Inga aktiva förslag. Beräkna igen för en ny lista."
+    noChangeTitle: "Ingen ändring behövs"
+    hideDone: "Dölj utförda ({count})"
+    showDone: "Visa utförda ({count})"
     history: "Historik ({count})"
     action:
       increase: "Öka"

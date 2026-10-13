@@ -950,6 +950,9 @@ assistant:
     emptyTitle: "No suggestions yet"
     emptyDescription: "Generate a list of rebalancing actions. The assistant gets the weight of each holding in percent, never balances or quantities."
     noneActive: "No active suggestions. Recalculate for a new list."
+    noChangeTitle: "No change needed"
+    hideDone: "Hide done ({count})"
+    showDone: "Show done ({count})"
     history: "History ({count})"
     action:
       increase: "Increase"

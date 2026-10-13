@@ -991,6 +991,9 @@ assistant:
     emptyTitle: "Zatím žádné návrhy"
     emptyDescription: "Vytvořte seznam kroků k rebalancování. Asistent dostává váhu každé pozice v procentech, nikdy zůstatky ani množství."
     noneActive: "Žádné aktivní návrhy. Přepočítejte pro nový seznam."
+    noChangeTitle: "Žádná změna není potřeba"
+    hideDone: "Skrýt hotové ({count})"
+    showDone: "Zobrazit hotové ({count})"
     history: "Historie ({count})"
     action:
       increase: "Navýšit"

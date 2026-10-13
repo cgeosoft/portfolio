@@ -921,6 +921,9 @@ assistant:
     emptyTitle: "提案はまだありません"
     emptyDescription: "リバランスのアクション一覧を作成します。アシスタントが受け取るのは各保有銘柄のウェイト（%）だけで、残高や数量は一切受け取りません。"
     noneActive: "有効な提案はありません。再計算すると新しい一覧を作成します。"
+    noChangeTitle: "変更は不要です"
+    hideDone: "完了を非表示（{count}）"
+    showDone: "完了を表示（{count}）"
     history: "履歴（{count}）"
     action:
       increase: "買い増し"

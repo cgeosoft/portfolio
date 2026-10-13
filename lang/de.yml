@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Noch keine Vorschläge"
     emptyDescription: "Erstellen Sie eine Liste von Umschichtungsschritten. Der Assistent erhält das Gewicht jeder Position in Prozent, niemals Salden oder Stückzahlen."
     noneActive: "Keine aktiven Vorschläge. Neu berechnen für eine neue Liste."
+    noChangeTitle: "Keine Änderung nötig"
+    hideDone: "Erledigte ausblenden ({count})"
+    showDone: "Erledigte einblenden ({count})"
     history: "Verlauf ({count})"
     action:
       increase: "Aufstocken"

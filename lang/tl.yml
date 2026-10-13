@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Wala pang mungkahi"
     emptyDescription: "Gumawa ng listahan ng mga aksyon sa rebalancing. Natatanggap ng assistant ang timbang ng bawat holding sa porsyento, hindi kailanman ang mga balanse o dami."
     noneActive: "Walang aktibong mungkahi. Kalkulahin muli para sa bagong listahan."
+    noChangeTitle: "Walang kailangang baguhin"
+    hideDone: "Itago ang tapos na ({count})"
+    showDone: "Ipakita ang tapos na ({count})"
     history: "Kasaysayan ({count})"
     action:
       increase: "Dagdagan"

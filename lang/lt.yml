@@ -991,6 +991,9 @@ assistant:
     emptyTitle: "Pasiūlymų dar nėra"
     emptyDescription: "Sukurkite perbalansavimo veiksmų sąrašą. Asistentas gauna kiekvienos investicijos svorį procentais, niekada likučių ar kiekių."
     noneActive: "Aktyvių pasiūlymų nėra. Perskaičiuokite, kad gautumėte naują sąrašą."
+    noChangeTitle: "Pakeitimų nereikia"
+    hideDone: "Slėpti įvykdytus ({count})"
+    showDone: "Rodyti įvykdytus ({count})"
     history: "Istorija ({count})"
     action:
       increase: "Padidinti"

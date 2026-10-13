@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Ingen forslag endnu"
     emptyDescription: "Generér en liste over handlinger til rebalancering. Assistenten får hver beholdnings vægt i procent, aldrig saldi eller antal."
     noneActive: "Ingen aktive forslag. Beregn igen for at få en ny liste."
+    noChangeTitle: "Ingen ændring nødvendig"
+    hideDone: "Skjul udførte ({count})"
+    showDone: "Vis udførte ({count})"
     history: "Historik ({count})"
     action:
       increase: "Øg"

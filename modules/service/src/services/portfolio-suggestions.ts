@@ -45,8 +45,8 @@ import { t } from "../i18n.js";
 const MAX_SUGGESTIONS = 8;
 /** Largest gap between the weight the model echoes and the real weight, in percentage points. */
 const WEIGHT_ECHO_TOLERANCE_PP = 2;
-/** Smallest weight change worth a suggestion, in percentage points. */
-const MIN_CHANGE_PP = 0.25;
+/** Smallest weight change worth a suggestion, in percentage points. Smaller trades are noise next to fees and spreads. */
+const MIN_CHANGE_PP = 1;
 /** Cash weight from which the prompt invites new positions. */
 const NEW_POSITION_CASH_PERCENT = 10;
 
@@ -382,11 +382,18 @@ export function buildSuggestionPrompt(
   const holdings = heldHoldings(data).sort((a, b) => b.weightPercent - a.weightPercent);
   const newPositions =
     cash >= NEW_POSITION_CASH_PERCENT
-      ? `Cash is ${pct(cash)} of the portfolio. You may suggest "open" for new instruments to put cash to work. Use Yahoo Finance symbols, with the exchange suffix for non-US listings (for example VWCE.DE). Prefer liquid, broad ETFs or large companies. The app checks each symbol and drops unknown ones.`
+      ? `Cash is ${pct(cash)} of the portfolio. The user may hold it on purpose. You may suggest "open" for a new instrument when it fills a clear gap in the allocation. Use Yahoo Finance symbols, with the exchange suffix for non-US listings (for example VWCE.DE). Prefer liquid, broad ETFs or large companies. The app checks each symbol and drops unknown ones.`
       : `Suggest "open" for a new instrument only when it clearly fixes a gap in the allocation. Use Yahoo Finance symbols with the exchange suffix for non-US listings.`;
 
-  const system = withLanguageInstruction(`You are a portfolio analyst. You give a short list of concrete rebalancing actions for one investment portfolio.
+  const system = withLanguageInstruction(`You are a portfolio analyst. You review one investment portfolio and decide whether it needs rebalancing. Most of the time it does not.
 You see weights in percent of the total portfolio, never money amounts. Never write money amounts or share counts. The app turns your target weights into amounts.
+
+When to suggest:
+- An empty list is a good answer and the expected one for a sound portfolio. Never fill the list to have something to say.
+- Suggest an action only when a specific fact in the data calls for it: a position that dominates the portfolio, a large drift in the allocation, a broken long-term trend, or a material news event for that holding.
+- Not a reason: a small tweak, a generic idea such as "diversify more" that fits any portfolio, a short-term price move or RSI reading on its own, or holding cash.
+- Each action must change the weight by at least ${MIN_CHANGE_PP} percentage point. Fewer, larger actions beat many small ones.
+- When the list is empty, "summary" says in 1 or 2 sentences why the portfolio needs no change.
 
 Rules:
 - Each suggestion changes the weight of one symbol. Actions: "decrease" and "increase" for held symbols, "close" to sell a held symbol completely, "open" for a symbol not held.
@@ -395,11 +402,13 @@ Rules:
 - For "increase" and "open", "fundedBy" lists the sources: keys of your sell suggestions ("decrease:SYMBOL" or "close:SYMBOL") or "CASH", with the weight in percentage points from each.
 - "priority" is 1 (most important) to 5.
 - "validity" says how long the idea holds: "days" (1 to ${SUGGESTION_MAX_TTL_DAYS}), and optional "priceMin" / "priceMax" in the quote currency of the symbol, and optional "weightMin" / "weightMax" in percent. The app cancels the suggestion when a rule fails.
-- Do not trade private assets. Give at most ${MAX_SUGGESTIONS} suggestions. Give none when the portfolio needs no change.
-- "title" is at most 8 words. "why" is 1 to 3 short sentences based on the data given. Use ${plainStyle(ctx.language)}. No emojis, no long dashes.
+- Do not trade private assets. Give at most ${MAX_SUGGESTIONS} suggestions.
+- "title" is at most 8 words. "why" is 1 to 3 short sentences that name the fact from the data that triggers the action. Use ${plainStyle(ctx.language)}. No emojis, no long dashes.
 
 Reply with one JSON object and nothing else, in this shape:
-{"summary": "1 or 2 sentences", "suggestions": [{"action": "decrease", "symbol": "NVDA", "fromWeight": 14.2, "targetWeight": 9, "priority": 1, "title": "Trim the largest single stock", "why": "...", "fundedBy": [], "validity": {"days": 5, "priceMin": 160, "priceMax": 210}}]}`, ctx.language, { jsonFields: ["summary", "title", "why"] });
+{"summary": "1 or 2 sentences", "suggestions": [{"action": "decrease", "symbol": "NVDA", "fromWeight": 14.2, "targetWeight": 9, "priority": 1, "title": "Trim the largest single stock", "why": "...", "fundedBy": [], "validity": {"days": 5, "priceMin": 160, "priceMax": 210}}]}
+or, when nothing needs to change:
+{"summary": "1 or 2 sentences on why", "suggestions": []}`, ctx.language, { jsonFields: ["summary", "title", "why"] });
 
   const open = ctx.openKeys.length > 0
     ? `\n## Open suggestions\nThe user has not acted on these yet. Repeat one with the same action and symbol only if it still applies:\n${ctx.openKeys.map((k) => `- ${k}`).join("\n")}\n`

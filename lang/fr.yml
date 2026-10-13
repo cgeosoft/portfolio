@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Aucune suggestion pour l'instant"
     emptyDescription: "Générez une liste d'actions de rééquilibrage. L'assistant reçoit le poids de chaque position en pourcentage, jamais les soldes ni les quantités."
     noneActive: "Aucune suggestion active. Recalculez pour obtenir une nouvelle liste."
+    noChangeTitle: "Aucun changement nécessaire"
+    hideDone: "Masquer les effectuées ({count})"
+    showDone: "Afficher les effectuées ({count})"
     history: "Historique ({count})"
     action:
       increase: "Renforcer"

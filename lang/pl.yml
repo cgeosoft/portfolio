@@ -991,6 +991,9 @@ assistant:
     emptyTitle: "Brak sugestii"
     emptyDescription: "Wygeneruj listę działań rebalansujących. Asystent otrzymuje wagę każdej pozycji w procentach, nigdy salda ani ilości."
     noneActive: "Brak aktywnych sugestii. Przelicz, aby uzyskać nową listę."
+    noChangeTitle: "Zmiana nie jest potrzebna"
+    hideDone: "Ukryj wykonane ({count})"
+    showDone: "Pokaż wykonane ({count})"
     history: "Historia ({count})"
     action:
       increase: "Zwiększ"

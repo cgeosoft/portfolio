@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "עדיין אין הצעות"
     emptyDescription: "אפשר ליצור רשימה של פעולות איזון מחדש. העוזר מקבל את המשקל של כל אחזקה באחוזים, אף פעם לא יתרות או כמויות."
     noneActive: "אין הצעות פעילות. אפשר לחשב מחדש לקבלת רשימה חדשה."
+    noChangeTitle: "אין צורך בשינוי"
+    hideDone: "הסתר שבוצעו ({count})"
+    showDone: "הצג שבוצעו ({count})"
     history: "היסטוריה ({count})"
     action:
       increase: "הגדלה"

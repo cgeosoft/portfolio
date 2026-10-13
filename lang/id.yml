@@ -913,6 +913,9 @@ assistant:
     emptyTitle: "Belum ada saran"
     emptyDescription: "Buat daftar tindakan penyeimbangan ulang. Asisten menerima bobot setiap kepemilikan dalam persen, tidak pernah saldo atau jumlah unit."
     noneActive: "Tidak ada saran aktif. Hitung ulang untuk daftar baru."
+    noChangeTitle: "Tidak perlu perubahan"
+    hideDone: "Sembunyikan yang selesai ({count})"
+    showDone: "Tampilkan yang selesai ({count})"
     history: "Riwayat ({count})"
     action:
       increase: "Tambah"

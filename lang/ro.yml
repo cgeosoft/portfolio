@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Nicio sugestie încă"
     emptyDescription: "Generați o listă de acțiuni de reechilibrare. Asistentul primește ponderea fiecărei dețineri în procente, niciodată solduri sau cantități."
     noneActive: "Nicio sugestie activă. Recalculați pentru o listă nouă."
+    noChangeTitle: "Nu este nevoie de nicio schimbare"
+    hideDone: "Ascunde efectuatele ({count})"
+    showDone: "Arată efectuatele ({count})"
     history: "Istoric ({count})"
     action:
       increase: "Creștere"

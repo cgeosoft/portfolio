@@ -913,6 +913,9 @@ assistant:
     emptyTitle: "아직 제안이 없습니다"
     emptyDescription: "리밸런싱 작업 목록을 생성합니다. 어시스턴트는 각 보유 종목의 비중(%)만 받으며, 잔액이나 수량은 받지 않습니다."
     noneActive: "활성 제안이 없습니다. 새 목록을 받으려면 다시 계산하세요."
+    noChangeTitle: "변경할 필요 없음"
+    hideDone: "완료 숨기기 ({count})"
+    showDone: "완료 표시 ({count})"
     history: "기록 ({count})"
     action:
       increase: "늘리기"

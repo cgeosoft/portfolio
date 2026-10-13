@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Ieteikumu vēl nav"
     emptyDescription: "Ģenerējiet pārbalansēšanas darbību sarakstu. Asistents saņem katra ieguldījuma svaru procentos, nekad atlikumus vai daudzumus."
     noneActive: "Nav aktīvu ieteikumu. Pārrēķiniet, lai iegūtu jaunu sarakstu."
+    noChangeTitle: "Izmaiņas nav vajadzīgas"
+    hideDone: "Slēpt izpildītos ({count})"
+    showDone: "Rādīt izpildītos ({count})"
     history: "Vēsture ({count})"
     action:
       increase: "Palielināt"

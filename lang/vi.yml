@@ -913,6 +913,9 @@ assistant:
     emptyTitle: "Chưa có đề xuất"
     emptyDescription: "Tạo danh sách hành động tái cân bằng. Trợ lý chỉ nhận tỷ trọng phần trăm của từng khoản nắm giữ, không bao giờ nhận số dư hay số lượng."
     noneActive: "Không có đề xuất đang hiệu lực. Hãy tính lại để có danh sách mới."
+    noChangeTitle: "Không cần thay đổi"
+    hideDone: "Ẩn mục đã xong ({count})"
+    showDone: "Hiện mục đã xong ({count})"
     history: "Lịch sử ({count})"
     action:
       increase: "Tăng"

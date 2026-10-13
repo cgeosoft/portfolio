@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Henüz öneri yok"
     emptyDescription: "Yeniden dengeleme eylemlerinin bir listesini oluşturun. Asistan her varlığın ağırlığını yüzde olarak alır, bakiyeleri veya miktarları asla almaz."
     noneActive: "Etkin öneri yok. Yeni bir liste için yeniden hesaplayın."
+    noChangeTitle: "Değişiklik gerekmiyor"
+    hideDone: "Tamamlananları gizle ({count})"
+    showDone: "Tamamlananları göster ({count})"
     history: "Geçmiş ({count})"
     action:
       increase: "Artır"

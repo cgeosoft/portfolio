@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Aún no hay sugerencias"
     emptyDescription: "Genera una lista de acciones de rebalanceo. El asistente recibe el peso de cada posición en porcentaje, nunca saldos ni cantidades."
     noneActive: "No hay sugerencias activas. Recalcula para obtener una lista nueva."
+    noChangeTitle: "No hace falta ningún cambio"
+    hideDone: "Ocultar hechas ({count})"
+    showDone: "Mostrar hechas ({count})"
     history: "Historial ({count})"
     action:
       increase: "Aumentar"

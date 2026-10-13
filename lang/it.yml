@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Nessun suggerimento ancora"
     emptyDescription: "Genera un elenco di azioni di ribilanciamento. L'assistente riceve il peso percentuale di ogni posizione, mai saldi o quantità."
     noneActive: "Nessun suggerimento attivo. Ricalcola per un nuovo elenco."
+    noChangeTitle: "Nessuna modifica necessaria"
+    hideDone: "Nascondi eseguiti ({count})"
+    showDone: "Mostra eseguiti ({count})"
     history: "Storico ({count})"
     action:
       increase: "Aumenta"

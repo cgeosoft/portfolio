@@ -947,6 +947,9 @@ assistant:
     emptyTitle: "Ei vielä ehdotuksia"
     emptyDescription: "Luo luettelo tasapainotustoimista. Avustaja saa kunkin omistuksen painon prosentteina, ei koskaan saldoja tai määriä."
     noneActive: "Ei aktiivisia ehdotuksia. Laske uudelleen saadaksesi uuden luettelon."
+    noChangeTitle: "Muutoksia ei tarvita"
+    hideDone: "Piilota tehdyt ({count})"
+    showDone: "Näytä tehdyt ({count})"
     history: "Historia ({count})"
     action:
       increase: "Kasvata"

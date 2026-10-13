@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Még nincsenek javaslatok"
     emptyDescription: "Készítsen listát az újrasúlyozási lépésekről. Az asszisztens az egyes tételek súlyát kapja meg százalékban, soha nem az egyenlegeket vagy a mennyiségeket."
     noneActive: "Nincs aktív javaslat. Számolja újra egy új listához."
+    noChangeTitle: "Nincs szükség változtatásra"
+    hideDone: "Készek elrejtése ({count})"
+    showDone: "Készek megjelenítése ({count})"
     history: "Előzmények ({count})"
     action:
       increase: "Növelés"

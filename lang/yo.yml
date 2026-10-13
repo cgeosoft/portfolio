@@ -913,6 +913,9 @@ assistant:
     emptyTitle: "Kò sí àbá síbẹ̀"
     emptyDescription: "Ṣẹ̀dá àkójọ àwọn ìgbésẹ̀ àtúntò. Olùrànlọ́wọ́ ń gba ìwúwo ohun-ìní kọ̀ọ̀kan ní ìdá-ọgọ́rùn-ún, kò gba ìyókù owó tàbí iye ìpín rí."
     noneActive: "Kò sí àbá tó ń ṣiṣẹ́. Tún ṣírò fún àkójọ tuntun."
+    noChangeTitle: "Kò sí àyípadà tó pọndandan"
+    hideDone: "Fi àwọn tí ó ti parí pamọ́ ({count})"
+    showDone: "Fi àwọn tí ó ti parí hàn ({count})"
     history: "Ìtàn ({count})"
     action:
       increase: "Fi kún un"

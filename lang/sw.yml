@@ -939,6 +939,9 @@ assistant:
     emptyTitle: "Bado hakuna mapendekezo"
     emptyDescription: "Tengeneza orodha ya hatua za kusawazisha upya. Msaidizi hupata uzito wa kila umiliki kwa asilimia, kamwe si salio wala idadi."
     noneActive: "Hakuna mapendekezo amilifu. Kokotoa upya ili kupata orodha mpya."
+    noChangeTitle: "Hakuna mabadiliko yanayohitajika"
+    hideDone: "Ficha zilizokamilika ({count})"
+    showDone: "Onyesha zilizokamilika ({count})"
     history: "Historia ({count})"
     action:
       increase: "Ongeza"

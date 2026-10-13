@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Još nema prijedloga"
     emptyDescription: "Generirajte popis radnji za uravnoteženje. Asistent dobiva udio svakog ulaganja u postocima, nikad stanja ni količine."
     noneActive: "Nema aktivnih prijedloga. Ponovno izračunajte za novi popis."
+    noChangeTitle: "Nije potrebna promjena"
+    hideDone: "Sakrij gotove ({count})"
+    showDone: "Prikaži gotove ({count})"
     history: "Povijest ({count})"
     action:
       increase: "Povećaj"

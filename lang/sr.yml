@@ -965,6 +965,9 @@ assistant:
     emptyTitle: "Још нема предлога"
     emptyDescription: "Генеришите списак радњи за ребалансирање. Асистент добија удео сваког улагања у процентима, никад стања ни количине."
     noneActive: "Нема активних предлога. Поново израчунајте за нови списак."
+    noChangeTitle: "Nije potrebna promena"
+    hideDone: "Сакриј готове ({count})"
+    showDone: "Прикажи готове ({count})"
     history: "Историја ({count})"
     action:
       increase: "Повећај"

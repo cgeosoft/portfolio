@@ -947,6 +947,9 @@ assistant:
     emptyTitle: "Soovitusi veel pole"
     emptyDescription: "Loo tasakaalustamistoimingute loend. Assistent saab iga osaluse kaalu protsentides, mitte kunagi saldosid ega koguseid."
     noneActive: "Aktiivseid soovitusi pole. Uue loendi saamiseks arvuta uuesti."
+    noChangeTitle: "Muudatusi pole vaja"
+    hideDone: "Peida tehtud ({count})"
+    showDone: "Näita tehtud ({count})"
     history: "Ajalugu ({count})"
     action:
       increase: "Suurenda"
