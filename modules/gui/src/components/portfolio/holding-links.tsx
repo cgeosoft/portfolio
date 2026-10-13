@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } fr
 import { createPortal } from "react-dom";
 import type { PortfolioHolding, PortfolioTransaction } from "portfolio-shared/portfolio";
 import { HoldingIntelModal } from "./HoldingIntelModal";
+import { t } from "../../i18n";
 
 /**
  * Clickable instrument references. `HoldingLinksHost` (mounted once in App) owns the holding
@@ -194,7 +195,7 @@ export function HoldingButton({ symbol, name, children, className = "" }: { symb
       role="button"
       tabIndex={0}
       className={`${HOLDING_LINK_CLASS} ${className}`}
-      title={`Show details for ${name && name !== symbol ? `${name} (${symbol})` : symbol}`}
+      title={name && name !== symbol ? t("dashboard.holdingLink.showDetailsNamed", { name, symbol }) : t("dashboard.holdingLink.showDetails", { symbol })}
       onClick={(e) => {
         e.stopPropagation();
         openHolding(symbol);

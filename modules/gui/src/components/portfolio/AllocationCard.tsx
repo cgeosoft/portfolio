@@ -11,6 +11,7 @@ import type { AppTheme } from "portfolio-shared/api-types";
 import { fmtCurrency, fmtPercent } from "./utils";
 import { hasCompanyIntel, openHolding } from "./holding-links";
 import { PieChart } from "lucide-react";
+import { t } from "../../i18n";
 
 Chart.register(DoughnutController, ArcElement, Tooltip);
 
@@ -93,7 +94,7 @@ export function AllocationCard({
     const cashVal = summary.cashBalance;
     cashHoldings.push({
       symbol: "CASH",
-      name: `Available Liquidity (${currency})`,
+      name: t("dashboard.availableLiquidity", { currency }),
       assetType: "Cash",
       shares: cashVal,
       buyPrice: 1,
@@ -111,11 +112,11 @@ export function AllocationCard({
   }
 
   const categoryGroups: { type: string; name: string; items: PortfolioHolding[] }[] = [
-    { type: "Stock", name: "Stocks", items: stockHoldings },
-    { type: "ETF", name: "ETFs", items: etfHoldings },
-    { type: "Crypto", name: "Crypto", items: cryptoHoldings },
-    { type: "Other", name: "Other / Private", items: otherHoldings },
-    { type: "Cash", name: "Cash Reserves", items: cashHoldings },
+    { type: "Stock", name: t("dashboard.allocation.categories.stock"), items: stockHoldings },
+    { type: "ETF", name: t("dashboard.allocation.categories.etf"), items: etfHoldings },
+    { type: "Crypto", name: t("dashboard.allocation.categories.crypto"), items: cryptoHoldings },
+    { type: "Other", name: t("dashboard.allocation.categories.otherPrivate"), items: otherHoldings },
+    { type: "Cash", name: t("dashboard.allocation.categories.cash"), items: cashHoldings },
   ];
 
   // Calculate total portfolio value
@@ -194,7 +195,7 @@ export function AllocationCard({
         // Top label
         ctx.font = '600 9px monospace';
         ctx.fillStyle = textMuted;
-        ctx.fillText("PORTFOLIO", cx, cy - 13);
+        ctx.fillText(t("dashboard.allocation.centerLabel"), cx, cy - 13);
 
         // Middle Value
         ctx.font = 'bold 12px monospace';
@@ -205,7 +206,7 @@ export function AllocationCard({
         // Bottom count
         ctx.font = '500 9px monospace';
         ctx.fillStyle = "#DD3C73";
-        ctx.fillText(`${outerHoldings.length} Assets`, cx, cy + 17);
+        ctx.fillText(t("dashboard.allocation.assetsCount", { count: outerHoldings.length }), cx, cy + 17);
 
         ctx.restore();
       },
@@ -218,7 +219,7 @@ export function AllocationCard({
         datasets: [
           {
             // Outer Ring: Individual Holdings / Weight
-            label: "Holdings Weight",
+            label: t("dashboard.allocation.holdingsWeight"),
             data: outerHoldings.map((o) => o.holding.currentValue),
             backgroundColor: outerHoldings.map((o) => o.color),
             borderColor: bgWidget,
@@ -230,7 +231,7 @@ export function AllocationCard({
           },
           {
             // Inner Ring: Asset Allocation by Category
-            label: "Asset Allocation",
+            label: t("dashboard.allocation.assetAllocation"),
             data: innerCategories.map((c) => c.value),
             backgroundColor: innerCategories.map((c) => c.color),
             borderColor: bgWidget,
@@ -285,10 +286,10 @@ export function AllocationCard({
                 const item = items[0]!;
                 if (item.datasetIndex === 1) {
                   const cat = innerCategories[item.dataIndex];
-                  return cat ? `Asset Class: ${cat.name.toUpperCase()}` : "Asset Allocation";
+                  return cat ? t("dashboard.allocation.assetClass", { name: cat.name.toUpperCase() }) : t("dashboard.allocation.assetAllocation");
                 }
                 const h = outerHoldings[item.dataIndex]?.holding;
-                return h ? `${h.symbol} • ${h.name}` : "Holding Weight";
+                return h ? `${h.symbol} • ${h.name}` : t("dashboard.allocation.holdingWeight");
               },
               label: (item) => {
                 const lines: string[] = [];
@@ -298,32 +299,38 @@ export function AllocationCard({
                 if (item.datasetIndex === 1) {
                   // Inner ring: Asset class allocation
                   const cat = innerCategories[item.dataIndex];
-                  lines.push(`Allocation: ${fmtCurrency(val, currency, hideValues)}`);
-                  lines.push(`Portfolio Weight: ${weightPct.toFixed(1)}%`);
+                  lines.push(t("dashboard.allocation.allocation", { value: fmtCurrency(val, currency, hideValues) }));
+                  lines.push(t("dashboard.allocation.portfolioWeight", { weight: weightPct.toFixed(1) }));
                   if (cat) {
-                    lines.push(`Holdings Count: ${cat.count} position${cat.count > 1 ? "s" : ""}`);
+                    lines.push(t("dashboard.allocation.holdingsCount", { count: cat.count }));
                   }
                 } else {
                   // Outer ring: Individual holding weight
                   const entry = outerHoldings[item.dataIndex];
                   const h = entry?.holding;
                   if (h) {
-                    lines.push(`Category: ${entry.categoryName}`);
-                    lines.push(`Current Value: ${fmtCurrency(val, currency, hideValues)}`);
-                    lines.push(`Portfolio Weight: ${weightPct.toFixed(1)}%`);
+                    lines.push(t("dashboard.allocation.category", { name: entry.categoryName }));
+                    lines.push(t("dashboard.allocation.currentValue", { value: fmtCurrency(val, currency, hideValues) }));
+                    lines.push(t("dashboard.allocation.portfolioWeight", { weight: weightPct.toFixed(1) }));
                     if (h.shares > 0 && h.currentPrice > 0 && h.symbol !== "CASH") {
                       lines.push(
-                        `Holdings: ${hideValues ? "••••" : h.shares.toLocaleString()} @ ${fmtCurrency(h.currentPrice, currency, hideValues)}`
+                        t("dashboard.allocation.holdings", {
+                          shares: hideValues ? "••••" : h.shares.toLocaleString(),
+                          price: fmtCurrency(h.currentPrice, currency, hideValues),
+                        })
                       );
                     }
                     if (h.totalGainLossDollar !== 0 && h.symbol !== "CASH") {
                       const sign = h.totalGainLossDollar > 0 ? "+" : "";
                       lines.push(
-                        `Total Return: ${sign}${fmtCurrency(h.totalGainLossDollar, currency, hideValues)} (${fmtPercent(h.totalGainLossPercent)})`
+                        t("dashboard.allocation.totalReturn", {
+                          value: `${sign}${fmtCurrency(h.totalGainLossDollar, currency, hideValues)}`,
+                          percent: fmtPercent(h.totalGainLossPercent),
+                        })
                       );
                     }
                     if (h.dayChangePercent !== 0 && h.symbol !== "CASH") {
-                      lines.push(`Day Change: ${fmtPercent(h.dayChangePercent)}`);
+                      lines.push(t("dashboard.allocation.dayChange", { percent: fmtPercent(h.dayChangePercent) }));
                     }
                   }
                 }
@@ -350,10 +357,10 @@ export function AllocationCard({
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
             <PieChart className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">Asset Allocation & Weight</span>
+            <span className="truncate">{t("dashboard.allocation.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title="Inner: Asset Class • Outer: Holding Weight">
-            Inner: Asset Class • Outer: Holding Weight
+          <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.allocation.subtitle")}>
+            {t("dashboard.allocation.subtitle")}
           </p>
         </div>
       </div>
@@ -362,7 +369,7 @@ export function AllocationCard({
       <div className="h-[280px] w-full flex-1 flex items-center justify-center relative">
         {outerHoldings.length === 0 && innerCategories.length === 0 ? (
           <div className="text-xs text-slate-500 text-center py-12">
-            No holdings or cash allocation available
+            {t("dashboard.allocation.empty")}
           </div>
         ) : (
           <canvas ref={canvasRef} />

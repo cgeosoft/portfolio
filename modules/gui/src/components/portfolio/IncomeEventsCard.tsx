@@ -6,6 +6,7 @@ import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
 import { api } from "../../api";
 import { fmtCurrency } from "./utils";
 import { HoldingLink } from "./holding-links";
+import { getLocale, t } from "../../i18n";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -21,20 +22,7 @@ interface IncomeEventsCardProps {
   refreshStamp?: string;
 }
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  monthly: "Monthly",
-  quarterly: "Quarterly",
-  semiannual: "Twice a year",
-  annual: "Yearly",
-  irregular: "Irregular",
-};
-
-const EVENT_LABELS: Record<PortfolioEvent["kind"], string> = {
-  exDividend: "Ex-dividend",
-  dividendPayment: "Payment",
-  earnings: "Earnings",
-  split: "Split",
-};
+const eventLabel = (kind: PortfolioEvent["kind"]) => t(`dashboard.income.events.${kind}`);
 
 const EVENT_BADGES: Record<PortfolioEvent["kind"], string> = {
   exDividend: "bg-accent-500/15 text-accent-500 border-accent-500/30",
@@ -43,20 +31,21 @@ const EVENT_BADGES: Record<PortfolioEvent["kind"], string> = {
   split: "bg-status-warning/10 text-status-warning border-status-warning/30",
 };
 
-const yieldText = (value: number | undefined) => (value === undefined ? "n/a" : `${value.toFixed(2)}%`);
+const yieldText = (value: number | undefined) => (value === undefined ? t("dashboard.income.notAvailable") : `${value.toFixed(2)}%`);
 
-const shortDate = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const shortDate = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString(getLocale(), { month: "short", day: "numeric" });
 
-const monthLabel = (month: string) => new Date(`${month}-01T12:00:00`).toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+const monthLabel = (month: string) => new Date(`${month}-01T12:00:00`).toLocaleDateString(getLocale(), { month: "short", year: "2-digit" });
 
 function perShare(amount: number | undefined, currency: string | undefined): string {
   if (amount === undefined) return "";
-  return `${amount.toLocaleString("en-US", { maximumFractionDigits: 4 })} ${currency ?? ""}/share`.replace(" /share", "/share");
+  const value = amount.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  return currency ? t("dashboard.income.perShareCurrency", { amount: value, currency }) : t("dashboard.income.perShare", { amount: value });
 }
 
 function sourceNote(sources: DataProviderId[]): string {
   const names = sources.map((s) => DATA_PROVIDER_LABELS[s] ?? s);
-  return names.length > 0 ? `Data: ${names.join(", ")}.` : "No provider had dividend or earnings data for these holdings.";
+  return names.length > 0 ? t("dashboard.income.sources", { sources: names.join(", ") }) : t("dashboard.income.noSources");
 }
 
 function eventDetail(e: PortfolioEvent, currency: string, hideValues: boolean): string {
@@ -64,13 +53,16 @@ function eventDetail(e: PortfolioEvent, currency: string, hideValues: boolean): 
     case "exDividend":
       return perShare(e.amountPerShare, e.currency);
     case "dividendPayment":
-      return e.expectedIncome !== undefined ? `about ${fmtCurrency(e.expectedIncome, currency, hideValues)}` : perShare(e.amountPerShare, e.currency);
+      return e.expectedIncome !== undefined ? t("dashboard.income.about", { amount: fmtCurrency(e.expectedIncome, currency, hideValues) }) : perShare(e.amountPerShare, e.currency);
     case "earnings": {
-      const parts = [typeof e.epsEstimate === "number" ? `EPS estimate ${e.epsEstimate}` : "", e.time === "bmo" ? "before the open" : e.time === "amc" ? "after the close" : ""];
+      const parts = [
+        typeof e.epsEstimate === "number" ? t("dashboard.income.epsEstimate", { value: e.epsEstimate }) : "",
+        e.time === "bmo" ? t("dashboard.income.beforeOpen") : e.time === "amc" ? t("dashboard.income.afterClose") : "",
+      ];
       return parts.filter(Boolean).join(", ");
     }
     case "split":
-      return `${e.numerator}-for-${e.denominator}`;
+      return t("dashboard.income.split", { numerator: String(e.numerator), denominator: String(e.denominator) });
   }
 }
 
@@ -129,8 +121,8 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
       data: {
         labels: months.map((m) => monthLabel(m.month)),
         datasets: [
-          { label: "Declared", data: months.map((m) => m.declared), backgroundColor: declaredColor, borderRadius: 3, stack: "income" },
-          { label: "Estimated", data: months.map((m) => m.estimated), backgroundColor: estimatedColor, borderColor: declaredColor, borderWidth: 1, borderRadius: 3, stack: "income" },
+          { label: t("dashboard.income.declared"), data: months.map((m) => m.declared), backgroundColor: declaredColor, borderRadius: 3, stack: "income" },
+          { label: t("dashboard.income.estimated"), data: months.map((m) => m.estimated), backgroundColor: estimatedColor, borderColor: declaredColor, borderWidth: 1, borderRadius: 3, stack: "income" },
         ],
       },
       options: {
@@ -176,13 +168,13 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
   if (!portfolioId) return null;
 
   const stats = [
-    { label: "Expected, next 12 months", value: fmtCurrency(income?.projected12m.total ?? 0, baseCurrency, hideValues) },
+    { label: t("dashboard.income.expected12m"), value: fmtCurrency(income?.projected12m.total ?? 0, baseCurrency, hideValues) },
     {
-      label: "Received, last 12 months",
-      value: income && income.received12m.count > 0 ? fmtCurrency(income.received12m.total, baseCurrency, hideValues) : "None recorded",
+      label: t("dashboard.income.received12m"),
+      value: income && income.received12m.count > 0 ? fmtCurrency(income.received12m.total, baseCurrency, hideValues) : t("dashboard.income.noneRecorded"),
     },
-    { label: "Yield on cost", value: yieldText(income?.yieldOnCostPercent) },
-    { label: "Current yield", value: yieldText(income?.currentYieldPercent) },
+    { label: t("dashboard.income.yieldOnCost"), value: yieldText(income?.yieldOnCostPercent) },
+    { label: t("dashboard.income.currentYield"), value: yieldText(income?.currentYieldPercent) },
   ];
   const sources = Array.from(new Set([...(income?.sources ?? []), ...(events?.sources ?? [])]));
   const anyEstimated = months.some((m) => m.estimated > 0) || (events?.events ?? []).some((e) => e.estimated);
@@ -193,11 +185,11 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
         <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
             <Coins className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="truncate">Income & events</span>
+            <span className="truncate">{t("dashboard.income.title")}</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5 truncate">Dividends of the next 12 months and the dates of the next {EVENT_DAYS} days</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 truncate">{t("dashboard.income.subtitle", { days: EVENT_DAYS })}</p>
         </div>
-        {loading && <Loader2 className="w-4 h-4 animate-spin text-accent-500 shrink-0" aria-label="Loading" />}
+        {loading && <Loader2 className="w-4 h-4 animate-spin text-accent-500 shrink-0" aria-label={t("dashboard.income.loading")} />}
       </div>
 
       {error && <p className="text-xs text-status-error">{error}</p>}
@@ -215,10 +207,10 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
         <div className="lg:col-span-2 min-w-0">
           <div className="flex items-center gap-4 text-[10px] uppercase tracking-wider text-slate-500 mb-2">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-mint" /> Declared
+              <span className="w-2.5 h-2.5 rounded-sm bg-mint" /> {t("dashboard.income.declared")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm border border-mint bg-mint/30" /> Estimated
+              <span className="w-2.5 h-2.5 rounded-sm border border-mint bg-mint/30" /> {t("dashboard.income.estimated")}
             </span>
           </div>
           <div className="h-[220px] w-full relative">
@@ -226,7 +218,7 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
               <canvas ref={canvasRef} />
             ) : (
               <div className="h-full flex items-center justify-center text-xs text-slate-500 text-center px-4">
-                {loading ? "Loading dividend data..." : "No dividends expected from the current holdings in the next 12 months."}
+                {loading ? t("dashboard.income.loadingDividends") : t("dashboard.income.noDividends")}
               </div>
             )}
           </div>
@@ -234,21 +226,21 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
 
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-            <CalendarClock className="w-3.5 h-3.5" /> Next {EVENT_DAYS} days
+            <CalendarClock className="w-3.5 h-3.5" /> {t("dashboard.income.nextDays", { days: EVENT_DAYS })}
           </div>
           <ul className="space-y-1.5 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
             {(events?.events ?? []).map((e) => (
               <li key={`${e.kind}:${e.symbol}:${e.date}`} className="flex items-start gap-2 text-[11px] min-w-0">
                 <span className="w-12 shrink-0 text-slate-400">{shortDate(e.date)}</span>
-                <span className={`shrink-0 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${EVENT_BADGES[e.kind]}`}>{EVENT_LABELS[e.kind]}</span>
+                <span className={`shrink-0 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${EVENT_BADGES[e.kind]}`}>{eventLabel(e.kind)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="font-bold text-slate-100"><HoldingLink reference={e.symbol} /></span>
                   <span className="text-slate-500"> {eventDetail(e, baseCurrency, hideValues)}</span>
-                  {e.estimated && <span className="text-slate-500 italic"> (estimated)</span>}
+                  {e.estimated && <span className="text-slate-500 italic"> {t("dashboard.income.estimatedNote")}</span>}
                 </span>
               </li>
             ))}
-            {events && events.events.length === 0 && <li className="text-xs text-slate-500">No dividend, earnings or split dates in the next {EVENT_DAYS} days.</li>}
+            {events && events.events.length === 0 && <li className="text-xs text-slate-500">{t("dashboard.income.noEvents", { days: EVENT_DAYS })}</li>}
           </ul>
         </div>
       </div>
@@ -258,12 +250,12 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
           <table className="w-full text-[11px]">
             <thead>
               <tr className="text-[10px] uppercase tracking-wider text-slate-500 text-left">
-                <th className="py-1.5 pr-3 font-semibold">Symbol</th>
-                <th className="py-1.5 pr-3 font-semibold">Frequency</th>
-                <th className="py-1.5 pr-3 font-semibold">Next ex-date</th>
-                <th className="py-1.5 pr-3 font-semibold text-right">Yield on cost</th>
-                <th className="py-1.5 pr-3 font-semibold text-right">Current yield</th>
-                <th className="py-1.5 font-semibold text-right">Next 12 months</th>
+                <th className="py-1.5 pr-3 font-semibold">{t("dashboard.income.columns.symbol")}</th>
+                <th className="py-1.5 pr-3 font-semibold">{t("dashboard.income.columns.frequency")}</th>
+                <th className="py-1.5 pr-3 font-semibold">{t("dashboard.income.columns.nextExDate")}</th>
+                <th className="py-1.5 pr-3 font-semibold text-right">{t("dashboard.income.yieldOnCost")}</th>
+                <th className="py-1.5 pr-3 font-semibold text-right">{t("dashboard.income.currentYield")}</th>
+                <th className="py-1.5 font-semibold text-right">{t("dashboard.income.columns.next12m")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80">
@@ -272,14 +264,14 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
                   <td className="py-1.5 pr-3 font-bold text-slate-100" title={h.name}>
                     <HoldingLink reference={h.symbol} />
                   </td>
-                  <td className="py-1.5 pr-3">{h.frequency ? FREQUENCY_LABELS[h.frequency] : "n/a"}</td>
+                  <td className="py-1.5 pr-3">{h.frequency ? t(`dashboard.income.frequencies.${h.frequency}`) : t("dashboard.income.notAvailable")}</td>
                   <td className="py-1.5 pr-3">
-                    {h.nextExDate ? shortDate(h.nextExDate) : "n/a"}
-                    {h.estimated && <span className="text-slate-500 italic"> est.</span>}
+                    {h.nextExDate ? shortDate(h.nextExDate) : t("dashboard.income.notAvailable")}
+                    {h.estimated && <span className="text-slate-500 italic"> {t("dashboard.income.estimatedShort")}</span>}
                   </td>
                   <td className="py-1.5 pr-3 text-right">{yieldText(h.yieldOnCostPercent)}</td>
                   <td className="py-1.5 pr-3 text-right">{yieldText(h.currentYieldPercent)}</td>
-                  <td className="py-1.5 text-right">{h.fxMissing ? "No FX rate" : fmtCurrency(h.projectedIncome12m, baseCurrency, hideValues)}</td>
+                  <td className="py-1.5 text-right">{h.fxMissing ? t("dashboard.income.noFxRate") : fmtCurrency(h.projectedIncome12m, baseCurrency, hideValues)}</td>
                 </tr>
               ))}
             </tbody>
@@ -300,8 +292,8 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
 
       {(income || events) && (
         <p className="text-[10px] text-slate-500 leading-relaxed">
-          {sourceNote(sources)} Income uses the current quantities and exchange rates.
-          {anyEstimated ? " Estimated dividends repeat the last amount at the usual interval." : ""}
+          {sourceNote(sources)} {t("dashboard.income.basis")}
+          {anyEstimated ? ` ${t("dashboard.income.estimateMethod")}` : ""}
         </p>
       )}
     </div>

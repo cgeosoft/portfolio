@@ -18,6 +18,7 @@ import { api } from "../../api";
 import { Select } from "../common/Select";
 import { fmtCurrency, fmtPercent } from "./utils";
 import { TrendingUp } from "lucide-react";
+import { getLocale, t } from "../../i18n";
 
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, Tooltip, Filler);
 
@@ -33,6 +34,15 @@ type Timeframe = "1m" | "3m" | "6m" | "1y" | "all";
 const VALID_TIMEFRAMES: readonly Timeframe[] = ["1m", "3m", "6m", "1y", "all"] as const;
 
 const NO_BENCHMARK = "none";
+
+/** Keys of the timeframe buttons under `dashboard.chart.ranges`. */
+const TIMEFRAME_KEYS: Record<Timeframe, string> = {
+  "1m": "oneMonth",
+  "3m": "threeMonths",
+  "6m": "sixMonths",
+  "1y": "oneYear",
+  all: "all",
+};
 
 /** First date of a timeframe, "YYYY-MM-DD"; null for "all". */
 function timeframeCutoff(range: Timeframe): string | null {
@@ -154,7 +164,7 @@ export function PortfolioChartCard({
     if (filtered.length === 0) return;
 
     const labels = filtered.map((pt) =>
-      new Date(pt.date + "T12:00:00Z").toLocaleDateString(undefined, {
+      new Date(pt.date + "T12:00:00Z").toLocaleDateString(getLocale(), {
         month: "short",
         day: "numeric",
       })
@@ -204,10 +214,10 @@ export function PortfolioChartCard({
       type: "line",
       plugins: [zeroLinePlugin as any],
       data: {
-        labels: labels.length > 0 ? labels : ["Today"],
+        labels: labels.length > 0 ? labels : [t("dashboard.chart.today")],
         datasets: [
           {
-            label: "Total Value (inc. Cash)",
+            label: t("dashboard.chart.series.total"),
             data: totalWithCash,
             borderColor: totalColor,
             backgroundColor: "transparent",
@@ -221,7 +231,7 @@ export function PortfolioChartCard({
             order: 1,
           },
           {
-            label: "Invested Value",
+            label: t("dashboard.chart.series.invested"),
             data: values,
             borderColor: accentColor,
             backgroundColor: "rgba(221, 60, 115, 0.12)",
@@ -234,7 +244,7 @@ export function PortfolioChartCard({
             order: 3,
           },
           {
-            label: "Total Cost Basis",
+            label: t("dashboard.chart.series.cost"),
             data: costs,
             borderColor: costBasisColor,
             borderWidth: 1.5,
@@ -249,7 +259,7 @@ export function PortfolioChartCard({
           ...(relative
             ? [
                 {
-                  label: "Portfolio (time-weighted) %",
+                  label: t("dashboard.chart.series.portfolio"),
                   data: filtered.map((pt) => relative.byDate.get(pt.date)?.portfolio ?? null),
                   borderColor: returnColor,
                   backgroundColor: "transparent",
@@ -280,7 +290,7 @@ export function PortfolioChartCard({
               ]
             : [
                 {
-                  label: "Return %",
+                  label: t("dashboard.chart.series.return"),
                   data: pctChange,
                   borderColor: returnColor,
                   backgroundColor: "transparent",
@@ -370,23 +380,29 @@ export function PortfolioChartCard({
           <div className="min-w-0">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 min-w-0">
               <TrendingUp className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="truncate">Portfolio Performance History</span>
+              <span className="truncate">{t("dashboard.chart.title")}</span>
             </div>
             {relative ? (
               <p
                 className="text-[11px] text-slate-500 font-mono mt-0.5 truncate"
-                title="Time-weighted return of the holdings against the benchmark over the selected range. Buys and sells do not count as gains or losses."
+                title={t("dashboard.chart.versusHint")}
               >
-                Portfolio {fmtPercent(relative.portfolio)} vs {relative.label} {fmtPercent(relative.benchmark)} (
+                {t("dashboard.chart.versus", {
+                  portfolio: fmtPercent(relative.portfolio),
+                  benchmark: relative.label,
+                  benchmarkReturn: fmtPercent(relative.benchmark),
+                })}{" "}
+                (
                 <span className={relative.portfolio - relative.benchmark >= 0 ? "text-mint" : "text-rose-400"}>
-                  {relative.portfolio - relative.benchmark >= 0 ? "+" : ""}
-                  {(relative.portfolio - relative.benchmark).toFixed(2)} pp
+                  {t("dashboard.chart.pp", {
+                    value: `${relative.portfolio - relative.benchmark >= 0 ? "+" : ""}${(relative.portfolio - relative.benchmark).toFixed(2)}`,
+                  })}
                 </span>
                 )
               </p>
             ) : (
-              <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title="Historical portfolio value vs. invested basis & return %">
-                Historical portfolio value vs. invested basis & return %
+              <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate" title={t("dashboard.chart.subtitle")}>
+                {t("dashboard.chart.subtitle")}
               </p>
             )}
           </div>
@@ -394,22 +410,22 @@ export function PortfolioChartCard({
           <div className="hidden lg:flex items-center gap-3 text-[10px] text-slate-400 ml-2 pl-3 border-l border-slate-800">
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-0.5 border-t border-dashed border-mint inline-block" />
-              <span>Total inc. Cash</span>
+              <span>{t("dashboard.chart.legend.total")}</span>
             </span>
             <span className="flex items-center gap-1">
               <span
                 className="w-2.5 h-1.5 rounded-sm border border-[#DD3C73]/60 inline-block"
                 style={{ background: "rgba(221, 60, 115, 0.25)" }}
               />
-              <span>Invested</span>
+              <span>{t("dashboard.chart.legend.invested")}</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-0.5 border-t border-dashed border-slate-400 inline-block" />
-              <span>Cost Basis</span>
+              <span>{t("dashboard.chart.legend.cost")}</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-1 rounded-sm bg-[#6d8bf7] inline-block" />
-              <span>{relative ? "Portfolio %" : "Return %"}</span>
+              <span>{relative ? t("dashboard.chart.legend.portfolio") : t("dashboard.chart.series.return")}</span>
             </span>
             {relative && (
               <span className="flex items-center gap-1">
@@ -425,14 +441,14 @@ export function PortfolioChartCard({
             value={benchmark}
             onChange={(e) => handleSelectBenchmark(e.target.value)}
             selectSize="sm"
-            aria-label="Benchmark"
-            title="Compare with a benchmark"
+            aria-label={t("dashboard.chart.benchmark")}
+            title={t("dashboard.chart.benchmarkHint")}
             wrapperClassName="min-w-[8.5rem]"
           >
-            <option value={NO_BENCHMARK}>No benchmark</option>
+            <option value={NO_BENCHMARK}>{t("dashboard.chart.noBenchmark")}</option>
             {BENCHMARK_OPTIONS.map((o) => (
               <option key={o.symbol} value={o.symbol}>
-                vs {o.label}
+                {t("dashboard.chart.versusBenchmark", { name: o.label })}
               </option>
             ))}
           </Select>
@@ -447,7 +463,7 @@ export function PortfolioChartCard({
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
                 }`}
               >
-                {r}
+                {t(`dashboard.chart.ranges.${TIMEFRAME_KEYS[r]}`)}
               </button>
             ))}
           </div>
