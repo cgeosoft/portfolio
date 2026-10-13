@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X, LifeBuoy, Mail, ShieldCheck, CheckCircle2, AlertCircle, FolderOpen, Copy, Check } from "lucide-react";
 import { rpc } from "../../rpc";
 import { api } from "../../api";
+import { t } from "../../i18n";
 import { downloadBlob, openExternal, WEBPAGE_EMAIL } from "../../environment";
 
 interface SupportTicketModalProps {
@@ -57,7 +58,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
         message: message.trim() || undefined,
         includeLogs,
       });
-      if (!res.success) throw new Error(res.error || "Failed to prepare the support ticket.");
+      if (!res.success) throw new Error(res.error || t("settings.support.prepareFailed"));
       // Remote client: the diagnostics come as a browser download.
       if (includeLogs && !res.zipPath) {
         try {
@@ -72,14 +73,14 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
       setStatus({
         type: "success",
         text: res.zipPath
-          ? "Support mail opened. The diagnostics archive was saved to your Downloads folder; attach it to the mail."
+          ? t("settings.support.openedSaved")
           : includeLogs
-            ? "Support mail opened. The diagnostics archive was downloaded; attach it to the mail."
-            : "Support mail opened in your default email application.",
+            ? t("settings.support.openedDownloaded")
+            : t("settings.support.opened"),
         zipPath: res.zipPath,
       });
     } catch (err: unknown) {
-      setStatus({ type: "error", text: err instanceof Error ? err.message : "An unexpected error occurred while creating the support ticket." });
+      setStatus({ type: "error", text: err instanceof Error ? err.message : t("settings.support.unexpected") });
     } finally {
       setIsSubmitting(false);
     }
@@ -117,11 +118,11 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
           <div className="min-w-0">
             <div id="support-ticket-title" className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">
               <LifeBuoy className="w-4 h-4 text-[#DD3C73]" />
-              <span>Report an Issue</span>
+              <span>{t("settings.support.title")}</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Open a technical support ticket or report an issue directly to {WEBPAGE_EMAIL}.</p>
+            <p className="text-[11px] text-slate-400 mt-1">{t("settings.support.description", { email: WEBPAGE_EMAIL })}</p>
           </div>
-          <button type="button" onClick={onClose} disabled={isSubmitting} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 shrink-0" title="Close">
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 shrink-0" title={t("common.close")}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -131,10 +132,8 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
           <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 text-xs flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
             <div className="space-y-1 leading-relaxed">
-              <div className="font-bold text-emerald-200">Strict Log Anonymization Guarantee</div>
-              <p className="text-[11px] text-emerald-300/90 leading-relaxed">
-                All diagnostic log entries are completely anonymized before packaging into the ZIP file. Personal usernames, home directories, file paths, portfolio names, tickers, quantities, financial values, and API keys are automatically stripped and redacted.
-              </p>
+              <div className="font-bold text-emerald-200">{t("settings.support.guaranteeTitle")}</div>
+              <p className="text-[11px] text-emerald-300/90 leading-relaxed">{t("settings.support.guaranteeText")}</p>
             </div>
           </div>
 
@@ -142,7 +141,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
           <div className="space-y-1.5">
             <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-[#DD3C73]" />
-              <span>Recipient Email</span>
+              <span>{t("settings.support.recipient")}</span>
             </label>
             <input type="text" readOnly value={WEBPAGE_EMAIL} className="w-full bg-slate-950/90 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono focus:outline-none cursor-default select-all" />
           </div>
@@ -150,14 +149,14 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
           {/* Subject */}
           <div className="space-y-1.5">
             <label htmlFor="ticket-subject" className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              Ticket Subject
+              {t("settings.support.subject")}
             </label>
             <input
               id="ticket-subject"
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. Issue with transaction import or quote sync"
+              placeholder={t("settings.support.subjectPlaceholder")}
               autoFocus
               className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
             />
@@ -166,14 +165,14 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
           {/* Message */}
           <div className="space-y-1.5">
             <label htmlFor="ticket-message" className="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-              Problem Description (Optional)
+              {t("settings.support.message")}
             </label>
             <textarea
               id="ticket-message"
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Describe what happened or steps to reproduce..."
+              placeholder={t("settings.support.messagePlaceholder")}
               className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
             />
           </div>
@@ -188,10 +187,8 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
             />
             <label htmlFor="ticket-include-logs" className="cursor-pointer select-none space-y-0.5">
-              <div className="text-xs font-semibold text-slate-200">Submit last day logs as an anonymized zip attachment</div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Packages diagnostic events and system metadata from the previous 24 hours into a ZIP file. Personal file paths, portfolio names, financial values, and credentials are automatically redacted.
-              </p>
+              <div className="text-xs font-semibold text-slate-200">{t("settings.support.includeLogs")}</div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">{t("settings.support.includeLogsHint")}</p>
             </label>
           </div>
 
@@ -212,20 +209,20 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
                         type="button"
                         onClick={() => handleRevealZipFile(status.zipPath!)}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-white text-[11px] font-semibold transition-colors cursor-pointer"
-                        title="Open folder containing ZIP archive"
+                        title={t("settings.support.openFolderTitle")}
                       >
                         <FolderOpen className="w-3.5 h-3.5" />
-                        <span>Open Folder</span>
+                        <span>{t("settings.support.openFolder")}</span>
                       </button>
                     )}
                     <button
                       type="button"
                       onClick={() => handleCopyZipPath(status.zipPath!)}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors cursor-pointer"
-                      title="Copy path to clipboard"
+                      title={t("settings.support.copyPathTitle")}
                     >
                       {copiedZipPath ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedZipPath ? "Copied" : "Copy Path"}</span>
+                      <span>{copiedZipPath ? t("common.copied") : t("settings.support.copyPath")}</span>
                     </button>
                   </div>
                 </div>
@@ -237,7 +234,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
         {/* Footer */}
         <div className="border-t border-slate-800/80 px-5 py-4 shrink-0 flex items-center justify-end gap-2">
           <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -246,7 +243,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-[#DD3C73]/20"
           >
             <LifeBuoy className={`w-3.5 h-3.5 ${isSubmitting ? "animate-spin" : ""}`} />
-            <span>{isSubmitting ? "Preparing Ticket..." : "Open Support Ticket"}</span>
+            <span>{isSubmitting ? t("settings.support.preparing") : t("settings.support.submit")}</span>
           </button>
         </div>
       </div>

@@ -30,6 +30,7 @@ import {
   Shapes,
 } from "lucide-react";
 import { rpc } from "../../rpc";
+import { t } from "../../i18n";
 import { SectionHeader, SettingsFields } from "./SettingsFields";
 import { showToast } from "../common/Toaster";
 import type { DesktopConfig, DataProviderId, DataProviderCategoryRouting } from "portfolio-shared/api-types";
@@ -42,12 +43,11 @@ interface DataProvidersSectionProps {
 
 type RoutedCategoryId = keyof DataProviderCategoryRouting;
 
+/** A kind of market data. Its title and description are `settings.market.categories.<id>.title` / `.description`. */
 interface CategoryDefinition {
   id: string;
   /** True when Settings stores a preferred provider for the category. */
   routed: boolean;
-  label: string;
-  description: string;
   icon: typeof TrendingUp;
   /**
    * Providers that supply this category. The toggle disables the others.
@@ -89,144 +89,108 @@ const CATEGORIES: CategoryDefinition[] = [
   {
     id: "quotes",
     routed: true,
-    label: "Prices",
-    description: "Current price, daily change, trading volume and 52-week range.",
     icon: TrendingUp,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "fx",
     routed: true,
-    label: "Exchange Rates",
-    description: "Currency rates, to value holdings priced in another currency.",
     icon: ArrowRightLeft,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "search",
     routed: true,
-    label: "Ticker Search",
-    description: "Finds a stock or fund by name or ticker when you add a transaction.",
     icon: Search,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "identifiers",
     routed: false,
-    label: "Security Code Lookup",
-    description: "Turns an ISIN or CUSIP code (from a bank statement) into a ticker when you add a transaction.",
     icon: Fingerprint,
     providers: ["fmp"],
   },
   {
     id: "charts",
     routed: true,
-    label: "Price History",
-    description: "Daily prices for the charts, trend lines and technical indicators.",
     icon: BarChart3,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "marketHours",
     routed: false,
-    label: "Market Hours & Holidays",
-    description: "When stock exchanges open, close and take holidays. Without FMP a built-in table applies.",
     icon: Clock,
     providers: ["fmp"],
   },
   {
     id: "news",
     routed: true,
-    label: "Market News",
-    description: "General market and economy headlines.",
     icon: Newspaper,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "companyNews",
     routed: true,
-    label: "Company News",
-    description: "Headlines about the companies you hold, for the daily brief and AI reports.",
     icon: Newspaper,
     providers: ["finnhub", "fmp"],
   },
   {
     id: "fundamentals",
     routed: true,
-    label: "Company Profile",
-    description: "Sector, industry, country and valuation ratios such as price to earnings.",
     icon: ShieldCheck,
     providers: ["fmp", "yahoo", "finnhub"],
   },
   {
     id: "dividends",
     routed: true,
-    label: "Dividends",
-    description: "Past dividends, ex-dividend and pay dates, and how often they are paid.",
     icon: Coins,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "splits",
     routed: true,
-    label: "Stock Splits",
-    description: "Past share splits of each holding.",
     icon: Split,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "earnings",
     routed: true,
-    label: "Earnings",
-    description: "Dates of the last and next quarterly results, with estimates.",
     icon: CalendarClock,
     providers: ["fmp", "finnhub", "yahoo"],
   },
   {
     id: "analyst",
     routed: true,
-    label: "Analyst Recommendations",
-    description: "Analyst price targets and ratings for holdings and AI reports.",
     icon: Users,
     providers: ["fmp", "finnhub"],
   },
   {
     id: "etfInfo",
     routed: true,
-    label: "Fund Facts",
-    description: "Yearly fee (expense ratio), fund size and number of holdings of ETFs.",
     icon: Info,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfHoldings",
     routed: true,
-    label: "Fund Holdings",
-    description: "What an ETF owns. FMP has the full list, Yahoo the top ten.",
     icon: Layers,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfSectors",
     routed: true,
-    label: "Fund Sectors",
-    description: "Sector breakdown of ETFs.",
     icon: PieChart,
     providers: ["fmp", "yahoo"],
   },
   {
     id: "etfCountries",
     routed: false,
-    label: "Fund Countries",
-    description: "Country breakdown of ETFs.",
     icon: Globe,
     providers: ["fmp"],
   },
   {
     id: "etfAssetClasses",
     routed: true,
-    label: "Fund Mix",
-    description: "Share of stocks, bonds and cash in an ETF.",
     icon: Shapes,
     providers: ["yahoo", "fmp"],
   },
@@ -262,7 +226,7 @@ function ProviderTitle({
       <div className="flex items-center gap-3 text-[11px]">
         {latencyMs !== undefined && (
           <span className="text-[10px] text-slate-400 font-mono">
-            Latency: <strong className="text-slate-200">{latencyMs}ms</strong>
+            {t("settings.market.latency")} <strong className="text-slate-200">{latencyMs}ms</strong>
           </span>
         )}
         {keyLabel && keyUrl && (
@@ -293,7 +257,7 @@ function TestButton({ testing, disabled = false, onClick }: { testing: boolean; 
       ) : (
         <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
       )}
-      <span>{testing ? "Testing" : "Test"}</span>
+      <span>{testing ? t("settings.market.testing") : t("settings.market.test")}</span>
     </button>
   );
 }
@@ -307,7 +271,7 @@ function ClearButton({ disabled = false, onClick }: { disabled?: boolean; onClic
       className="shrink-0 w-24 flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
     >
       <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-      <span>Clear</span>
+      <span>{t("settings.market.clear")}</span>
     </button>
   );
 }
@@ -346,20 +310,20 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       if (res.success) {
         reportTest(setYahooTestResult, {
           success: true,
-          message: "Yahoo Finance connection verified",
+          message: t("settings.market.yahoo.verified"),
           latencyMs: res.latencyMs,
         });
       } else {
         reportTest(setYahooTestResult, {
           success: false,
-          message: res.error || "Failed to reach Yahoo Finance",
+          message: res.error || t("settings.market.yahoo.failed"),
         });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       reportTest(setYahooTestResult, {
         success: false,
-        message: msg || "Connection test failed",
+        message: msg || t("settings.market.testFailed"),
       });
     } finally {
       setIsTestingYahoo(false);
@@ -374,20 +338,20 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       if (res.success) {
         reportTest(setFinnhubTestResult, {
           success: true,
-          message: "Finnhub connection verified",
+          message: t("settings.market.finnhub.verified"),
           latencyMs: res.latencyMs,
         });
       } else {
         reportTest(setFinnhubTestResult, {
           success: false,
-          message: res.error || "Finnhub authentication failed",
+          message: res.error || t("settings.market.finnhub.failed"),
         });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       reportTest(setFinnhubTestResult, {
         success: false,
-        message: msg || "Connection test failed",
+        message: msg || t("settings.market.testFailed"),
       });
     } finally {
       setIsTestingFinnhub(false);
@@ -409,20 +373,20 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       if (res.success) {
         reportTest(setFmpTestResult, {
           success: true,
-          message: res.restricted?.length ? `FMP key works. Your plan does not include: ${res.restricted.join(", ")}.` : "FMP connection verified",
+          message: res.restricted?.length ? t("settings.market.fmp.restricted", { features: res.restricted.join(", ") }) : t("settings.market.fmp.verified"),
           latencyMs: res.latencyMs,
         });
       } else {
         reportTest(setFmpTestResult, {
           success: false,
-          message: res.error || "FMP authentication failed",
+          message: res.error || t("settings.market.fmp.failed"),
         });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       reportTest(setFmpTestResult, {
         success: false,
-        message: msg || "Connection test failed",
+        message: msg || t("settings.market.testFailed"),
       });
     } finally {
       setIsTestingFmp(false);
@@ -462,7 +426,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-8">
       {/* Section Header */}
-      <SectionHeader icon={Database} title="Market Data" description="Where prices, news and company facts come from, and how often they update." />
+      <SectionHeader icon={Database} title={t("settings.market.title")} description={t("settings.market.description")} />
 
       <div className="divide-y divide-slate-800/80 -mt-4">
         <SettingsFields section="market" />
@@ -473,25 +437,22 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Radio className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>Sources</span>
+            <span>{t("settings.market.sources")}</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-            Yahoo Finance works without any setup. A free Finnhub key adds company news and analyst ratings. A paid FMP key gives the most complete
-            data, such as security code lookup and full fund holdings. Each key stays on this computer.
-          </p>
+          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{t("settings.market.sourcesHint")}</p>
         </div>
 
         <div className="flex flex-col divide-y divide-slate-800">
           {/* Yahoo Finance */}
           <div className="py-4 space-y-2.5">
-            <ProviderTitle name="Yahoo Finance" subtitle="Free, no key needed" latencyMs={yahooTestResult?.latencyMs} />
+            <ProviderTitle name="Yahoo Finance" subtitle={t("settings.market.yahoo.subtitle")} latencyMs={yahooTestResult?.latencyMs} />
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled
                 className="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-left text-slate-500 font-mono cursor-not-allowed"
               >
-                No key needed
+                {t("settings.market.yahoo.noKey")}
               </button>
               <TestButton testing={isTestingYahoo} onClick={handleTestYahoo} />
               <ClearButton disabled onClick={() => {}} />
@@ -502,9 +463,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
           <div className="py-4 space-y-2.5">
             <ProviderTitle
               name="Finnhub"
-              subtitle="Free key"
+              subtitle={t("settings.market.finnhub.subtitle")}
               latencyMs={finnhubTestResult?.latencyMs}
-              keyLabel="Get free key"
+              keyLabel={t("settings.market.finnhub.getKey")}
               keyUrl="https://finnhub.io/register"
             />
             <div className="flex items-center gap-2">
@@ -519,7 +480,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   }}
                   onBlur={() => handleSaveFinnhubKey(finnhubApiKey)}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                  placeholder={finnhubApiKey === SECRET_MASK ? "•••••••• (stored)" : "Enter Finnhub API Key"}
+                  placeholder={finnhubApiKey === SECRET_MASK ? t("settings.textField.storedPlaceholder") : t("settings.market.finnhub.placeholder")}
                   className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                 />
                 <button
@@ -539,9 +500,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
           <div className="py-4 space-y-2.5">
             <ProviderTitle
               name="Financial Modeling Prep (FMP)"
-              subtitle="Paid key"
+              subtitle={t("settings.market.fmp.subtitle")}
               latencyMs={fmpTestResult?.latencyMs}
-              keyLabel="Get API key"
+              keyLabel={t("settings.market.fmp.getKey")}
               keyUrl="https://site.financialmodelingprep.com/developer/docs"
             />
             <div className="flex items-center gap-2">
@@ -556,7 +517,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   }}
                   onBlur={() => handleSaveFmpKey(fmpApiKey)}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                  placeholder={fmpApiKey === SECRET_MASK ? "•••••••• (stored)" : "Enter FMP API Key"}
+                  placeholder={fmpApiKey === SECRET_MASK ? t("settings.textField.storedPlaceholder") : t("settings.market.fmp.placeholder")}
                   className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
                 />
                 <button
@@ -579,11 +540,9 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
         <summary className="list-none cursor-pointer border-b border-slate-800/80 pb-2 [&::-webkit-details-marker]:hidden">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <ChevronRight className="w-3.5 h-3.5 text-[#DD3C73] transition-transform group-open:rotate-90" />
-            <span>Advanced: choose the source of each kind of data</span>
+            <span>{t("settings.market.advanced")}</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Portfolio picks the best source with a key on its own. Choose here only to prefer another one. If a source fails or lacks data, the next one fills the gap.
-          </p>
+          <p className="text-[11px] text-slate-400 mt-1">{t("settings.market.advancedHint")}</p>
         </summary>
 
         <div className="flex flex-col">
@@ -603,8 +562,8 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                 <div className="flex items-start gap-2 min-w-0 flex-1">
                   <Icon className="w-4 h-4 mt-px text-[#DD3C73] shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-200">{cat.label}</div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">{cat.description}</p>
+                    <div className="text-xs font-bold text-slate-200">{t(`settings.market.categories.${cat.id}.title`)}</div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">{t(`settings.market.categories.${cat.id}.description`)}</p>
                   </div>
                 </div>
 

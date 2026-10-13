@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Settings } from "lucide-react";
 import { rpc } from "../../rpc";
+import { t } from "../../i18n";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import type { DesktopConfig, AppTheme } from "portfolio-shared/api-types";
 import { AppearanceSection } from "./AppearanceSection";
@@ -107,10 +108,10 @@ export function SettingsPage({
         <aside className="w-full lg:sticky lg:top-0">
           <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Settings className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>Settings</span>
+            <span>{t("settings.page.title")}</span>
           </div>
 
-          <nav className="space-y-1 mt-1" aria-label="Settings sections">
+          <nav className="space-y-1 mt-1" aria-label={t("settings.page.sections")}>
             {SECTIONS.map((sec) => {
               const hasSubmenu = sec.id === "notifications";
               return (

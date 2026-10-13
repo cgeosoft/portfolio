@@ -3,22 +3,24 @@ import { ExternalLink, Info, Keyboard, LifeBuoy, Power, RefreshCw } from "lucide
 import type { AppUpdateInfo, DesktopConfig } from "portfolio-shared/api-types";
 import { rpc } from "../../rpc";
 import { openExternal, WEBPAGE_EMAIL } from "../../environment";
+import { getLocale, t } from "../../i18n";
 import { CONFIG_CHANGED_EVENT, SectionHeader, SettingsFields } from "./SettingsFields";
 
+// `desc` names the i18n key under settings.about.shortcuts, translated at render time.
 const SHORTCUTS = [
-  { key: "Ctrl + N", desc: "Create New Portfolio" },
-  { key: "Ctrl + T", desc: "Add Transaction" },
-  { key: "Ctrl + I", desc: "Import CSV Data" },
-  { key: "Ctrl + E", desc: "Export Active Portfolio" },
-  { key: "Ctrl + +", desc: "Zoom In" },
-  { key: "Ctrl + -", desc: "Zoom Out" },
-  { key: "Ctrl + 0", desc: "Reset Zoom" },
-  { key: "Ctrl + R", desc: "Reload Page" },
-  { key: "Ctrl + H", desc: "Hide or Show Amounts" },
-  { key: "Ctrl + J", desc: "Open or Close the Assistant" },
-  { key: "Ctrl + Shift + L", desc: "Switch Light / Dark Theme" },
-  { key: "Ctrl + ,", desc: "Open Settings" },
-  { key: "Ctrl + Q", desc: "Quit Application" },
+  { key: "Ctrl + N", desc: "newPortfolio" },
+  { key: "Ctrl + T", desc: "addTransaction" },
+  { key: "Ctrl + I", desc: "importCsv" },
+  { key: "Ctrl + E", desc: "exportPortfolio" },
+  { key: "Ctrl + +", desc: "zoomIn" },
+  { key: "Ctrl + -", desc: "zoomOut" },
+  { key: "Ctrl + 0", desc: "resetZoom" },
+  { key: "Ctrl + R", desc: "reload" },
+  { key: "Ctrl + H", desc: "hideAmounts" },
+  { key: "Ctrl + J", desc: "toggleAssistant" },
+  { key: "Ctrl + Shift + L", desc: "toggleTheme" },
+  { key: "Ctrl + ,", desc: "openSettings" },
+  { key: "Ctrl + Q", desc: "quit" },
 ];
 
 const blockTitle = "text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5";
@@ -79,8 +81,8 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
       <SectionHeader
         icon={Info}
-        title="App & Help"
-        description="Version, updates, how Portfolio starts, and where to get help."
+        title={t("settings.about.title")}
+        description={t("settings.about.description")}
         actions={
           <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/30">
             v{appVersion}
@@ -93,10 +95,12 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
         <div className="flex items-center justify-between">
           <div className={blockTitle}>
             <RefreshCw className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>Version and updates</span>
+            <span>{t("settings.about.versionTitle")}</span>
           </div>
           {updateInfo?.lastChecked && (
-            <span className="text-[10px] text-slate-500 font-mono">Last checked: {new Date(updateInfo.lastChecked).toLocaleTimeString()}</span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {t("settings.about.lastChecked", { time: new Date(updateInfo.lastChecked).toLocaleTimeString(getLocale()) })}
+            </span>
           )}
         </div>
 
@@ -105,18 +109,18 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-200 font-semibold">
                 {updateInfo?.hasUpdate
-                  ? `New version available: v${updateInfo.latestVersion}`
+                  ? t("settings.about.newVersion", { version: updateInfo.latestVersion })
                   : !checksEnabled
-                    ? "Automatic update checks are off"
-                    : "Portfolio is up to date"}
+                    ? t("settings.about.checksOff")
+                    : t("settings.about.upToDate")}
               </span>
               {updateInfo?.hasUpdate && (
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-mint/15 text-mint border border-mint/30">
-                  Update Available
+                  {t("settings.about.updateAvailable")}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">Current version: v{appVersion}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{t("settings.about.currentVersion", { version: appVersion })}</p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -127,7 +131,7 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
                 className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>View Release</span>
+                <span>{t("settings.about.viewRelease")}</span>
               </button>
             )}
             <button
@@ -137,7 +141,7 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
               className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? "animate-spin text-[#DD3C73]" : ""}`} />
-              <span>{isCheckingUpdates ? "Checking..." : "Check Now"}</span>
+              <span>{isCheckingUpdates ? t("settings.about.checking") : t("settings.about.checkNow")}</span>
             </button>
           </div>
         </div>
@@ -147,7 +151,7 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
       <div className="space-y-1">
         <div className={blockTitle}>
           <Power className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Starting and closing</span>
+          <span>{t("settings.about.startingTitle")}</span>
         </div>
         <div className="divide-y divide-slate-800/80">
           <SettingsFields section="app" />
@@ -158,13 +162,13 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
       <div className="space-y-2.5">
         <div className={blockTitle}>
           <LifeBuoy className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Help</span>
+          <span>{t("settings.about.helpTitle")}</span>
         </div>
         <div className={panel}>
           <div>
-            <span className="text-xs text-slate-200 font-semibold">Something is not working or you have an idea?</span>
+            <span className="text-xs text-slate-200 font-semibold">{t("settings.about.helpQuestion")}</span>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Write to {WEBPAGE_EMAIL}. Your version is filled in, and you can attach an anonymous app log of the last day.
+              {t("settings.about.helpText", { email: WEBPAGE_EMAIL })}
             </p>
           </div>
           <button
@@ -173,7 +177,7 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
             className="px-3 py-1.5 rounded-lg bg-[#DD3C73] hover:bg-[#c93567] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
           >
             <LifeBuoy className="w-3.5 h-3.5" />
-            <span>Report an Issue</span>
+            <span>{t("settings.about.reportIssue")}</span>
           </button>
         </div>
       </div>
@@ -182,12 +186,12 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
       <div className="space-y-2.5">
         <div className={blockTitle}>
           <Keyboard className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Keyboard shortcuts</span>
+          <span>{t("settings.about.shortcutsTitle")}</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           {SHORTCUTS.map((sc) => (
             <div key={sc.key} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-              <span className="text-slate-300 text-[11px]">{sc.desc}</span>
+              <span className="text-slate-300 text-[11px]">{t(`settings.about.shortcuts.${sc.desc}`)}</span>
               <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 shadow-sm">{sc.key}</kbd>
             </div>
           ))}

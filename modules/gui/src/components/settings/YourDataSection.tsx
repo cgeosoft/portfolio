@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FolderOpen, HardDrive, Trash2 } from "lucide-react";
 import { rpc } from "../../rpc";
+import { t } from "../../i18n";
 import { BackupCard } from "./BackupCard";
 import { SectionHeader } from "./SettingsFields";
 
@@ -35,10 +36,10 @@ export function YourDataSection() {
     try {
       const res = await rpc.request.clearMarketCache({});
       const count = res.clearedEntries ?? 0;
-      setCacheClearMessage(`Removed ${count} stored market records. Fresh data loads on the next refresh.`);
+      setCacheClearMessage(t("settings.data.cacheCleared", { count }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setCacheClearMessage(`Could not clear the stored market data: ${msg}`);
+      setCacheClearMessage(t("settings.data.cacheClearFailed", { error: msg }));
     } finally {
       setIsClearingCache(false);
     }
@@ -46,22 +47,22 @@ export function YourDataSection() {
 
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-      <SectionHeader icon={HardDrive} title="Your Data" description="Everything stays on this computer. Keep a copy somewhere safe." />
+      <SectionHeader icon={HardDrive} title={t("settings.data.title")} description={t("settings.data.description")} />
 
       <BackupCard />
 
       <div className="space-y-2.5">
         <div className={blockTitle}>
           <FolderOpen className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Where your data is</span>
+          <span>{t("settings.data.whereTitle")}</span>
         </div>
         <div className="space-y-1.5 text-xs">
           <div className={row}>
-            <span className="text-slate-400 text-[11px]">Data file (portfolios, transactions, reports, settings):</span>
+            <span className="text-slate-400 text-[11px]">{t("settings.data.dataFile")}</span>
             <code className={pathCode}>{paths?.data || "…"}</code>
           </div>
           <div className={row}>
-            <span className="text-slate-400 text-[11px]">Log folder (one file per day, for support):</span>
+            <span className="text-slate-400 text-[11px]">{t("settings.data.logFolder")}</span>
             <code className={pathCode}>{paths?.logs || "…"}</code>
           </div>
         </div>
@@ -70,14 +71,13 @@ export function YourDataSection() {
       <div className="space-y-2.5">
         <div className={blockTitle}>
           <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>Stored market data</span>
+          <span>{t("settings.data.cacheTitle")}</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
           <div className="min-w-0">
-            <span className="text-xs text-slate-200 font-semibold">Prices look wrong or out of date?</span>
+            <span className="text-xs text-slate-200 font-semibold">{t("settings.data.cacheQuestion")}</span>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Portfolio keeps recent prices and exchange rates so it opens fast. Clearing them makes it fetch everything again. Your portfolios and
-              transactions are not touched.
+              {t("settings.data.cacheHint")}
             </p>
             {cacheClearMessage && <p className="text-[11px] text-slate-300 mt-1.5">{cacheClearMessage}</p>}
           </div>
@@ -88,7 +88,7 @@ export function YourDataSection() {
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
           >
             <Trash2 className="w-3.5 h-3.5 text-[#DD3C73]" />
-            <span>{isClearingCache ? "Clearing..." : "Clear stored prices"}</span>
+            <span>{isClearingCache ? t("settings.data.clearing") : t("settings.data.clearCache")}</span>
           </button>
         </div>
       </div>

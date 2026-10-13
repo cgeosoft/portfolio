@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { SettingSection, SettingView } from "portfolio-shared/api-types";
 import type { DesktopConfig } from "portfolio-shared/config-types";
 import { api } from "../../api";
+import { hasMessage, t } from "../../i18n";
 
 /** Fired on `window` after a catalog setting saves; `detail` holds the changed keys. */
 export const CONFIG_CHANGED_EVENT = "portfolio:config-changed";
@@ -108,25 +109,32 @@ export function SectionHeader({
   );
 }
 
+/** Catalog text in the active language, or the English the service sent when the key has no text. */
+function catalogText(key: string, fallback: string): string {
+  return hasMessage(key) ? t(key) : fallback;
+}
+
 function SettingRow({ setting, onSave }: { setting: SettingView; onSave: (key: string, value: SettingView["value"]) => void }) {
   const icon = SETTING_ICONS[setting.key] ?? Settings2;
+  const title = catalogText(`settings.catalog.${setting.key}.title`, setting.label);
+  const description = catalogText(`settings.catalog.${setting.key}.description`, setting.description);
 
   if (setting.kind === "toggle") {
     const checked = setting.value === true;
     return (
       <SettingItem
         icon={icon}
-        title={setting.label}
-        description={setting.description}
-        control={<Toggle checked={checked} onChange={() => onSave(setting.key, !checked)} label={setting.label} />}
+        title={title}
+        description={description}
+        control={<Toggle checked={checked} onChange={() => onSave(setting.key, !checked)} label={title} />}
       />
     );
   }
 
   if (setting.kind === "choice") {
     return (
-      <SettingItem icon={icon} title={setting.label} description={setting.description}>
-        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={setting.label}>
+      <SettingItem icon={icon} title={title} description={description}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={title}>
           {setting.options?.map((option) => {
             const active = option.value === setting.value;
             return (
@@ -142,7 +150,7 @@ function SettingRow({ setting, onSave }: { setting: SettingView; onSave: (key: s
                     : "border-slate-800 bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                 }`}
               >
-                {option.label}
+                {catalogText(`settings.catalog.${setting.key}.options.${option.value}`, option.label)}
               </button>
             );
           })}
