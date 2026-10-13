@@ -16,3 +16,12 @@
 
 /terms/*
   ! X-Frame-Options
+
+# The sponsorship page shows the sponsor banner in an iframe. Same origin only.
+/sponsor
+  ! X-Frame-Options
+  Content-Security-Policy: frame-ancestors 'self'
+
+/sponsor/*
+  ! X-Frame-Options
+  Content-Security-Policy: frame-ancestors 'self'

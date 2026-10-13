@@ -10,6 +10,7 @@ The site uses vanilla HTML, `style.css`, `script.js` and `tour.js`. `style.css` 
 - `tour/index.html` - the screenshot tour on its own page, sized to fit the window. `#<screen id>` opens a screen.
 - `terms/index.html` - Terms of Use, including the "Analytics and Cookies" section (`#cookie-policy`).
 - `metrics/index.html` - the Metrics Marketplace catalog. **Generated** by `bun run website:metrics` from `extras/metrics/repository.yml` and each `manifest.yml`; it copies the `<head>`, header and footer of `terms/index.html`. Do not edit by hand; `deploy.sh` regenerates it.
+- `sponsorship/index.html` - the offer for sponsors: the matched marketing budget, the example banner from `sponsor/` live in an iframe (`_headers` allows framing it from the same origin), and the placements with screenshots from `assets/sponsorship/`. Placements the app does not have yet are drawn over the screenshot and marked "Preview". Linked from every footer.
 - `sponsor/index.html` - self-contained sponsor page (dark theme) with its own inline styles.
 - `sponsor/light/index.html` - self-contained sponsor page (light theme) for light mode.
 - `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x900, the overview tab with the demo portfolio; README and og:image), `tour/` (generated, see Screenshots).

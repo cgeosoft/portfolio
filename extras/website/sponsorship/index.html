@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sponsorship - Portfolio</title>
+  <meta name="description" content="Sponsor the launch of Portfolio, the private, offline-first investment tracker. We match your money and spend it all on marketing.">
+  <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sansation:wght@700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+
+  <!-- PostHog Analytics (consent-gated: no tracking until the visitor opts in) -->
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing has_opted_in_capturing reset addFeatureFlag getFeatureFlag getFeatureFlagPayload getFeatureFlagBoolean reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onFeatureFlags callback getSurveys getNextSurveyStep onSurveysLoaded onSessionId onSurveysLiked uh_hooks identify_psq set_session_recording_id".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('YOUR_POSTHOG_PROJECT_API_KEY', {
+      api_host: 'https://eu.i.posthog.com',
+      opt_out_capturing_by_default: true,
+      capture_pageview: true,
+      disable_session_recording: true
+    });
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="/" class="brand-link" aria-label="Portfolio home">
+        <img src="/assets/app-icon.svg" alt="" class="brand-icon" width="32" height="32">
+        <span class="brand-name">Portfolio</span>
+      </a>
+      <nav class="main-nav" aria-label="Primary">
+        <a href="/tour/">Tour</a>
+        <a href="/#privacy">Privacy</a>
+        <a href="/#ledger">Features</a>
+        <a href="/metrics/">Metrics</a>
+        <a href="/#faq">FAQ</a>
+        <a href="https://github.com/cgeosoft/portfolio" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="/#downloads" class="btn btn-primary">Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="container sp-hero">
+      <p class="label"><span class="dot"></span>Sponsorship 2027</p>
+      <h1 class="big-title">Sponsor the launch.<br>We match it.</h1>
+      <p class="hero-subtitle">Portfolio is a free, open-source investment tracker that runs on the investor's own computer. No accounts, no cloud, no tracking. It is new, and placements are worth nothing until people download it. So your money goes where the users come from: marketing.</p>
+      <div class="sp-actions">
+        <a href="mailto:christos@cgeosoft.com?subject=Portfolio%20sponsorship%202027" class="btn btn-big">Become a sponsor</a>
+        <a href="#placements" class="btn">See the placements</a>
+      </div>
+    </section>
+
+    <section class="section container" id="offer">
+      <p class="label">The offer</p>
+      <h2 class="big-title">How it works</h2>
+      <ol class="ledger-list sp-steps">
+        <li class="card"><h3>You sponsor</h3><p>Any amount, paid once for 2027.</p></li>
+        <li class="card"><h3>We match it</h3><p>Euro for euro, from our own EUR 5,000 budget for 2027, in the order sponsors sign.</p></li>
+        <li class="card"><h3>All of it goes to marketing</h3><p>Investing newsletters, creator reviews, launch campaigns and community ads without tracking. Every one names you.</p></li>
+      </ol>
+      <p class="sp-example card"><b>Example:</b> you put in EUR 5,000, we add EUR 5,000, and EUR 10,000 goes into marketing with your name on it. You can give more; the part above our match goes into marketing too. Every user it brings in sees you in the app.</p>
+    </section>
+
+    <section class="section container" id="banner">
+      <p class="label">Example banner</p>
+      <h2 class="big-title">Your banner, live</h2>
+      <p class="section-lead">The banner is a small web page we host for you, in dark and light versions. The app shows it in a sandbox: it cannot read the app or the user's data. This one is an example with live prices.</p>
+      <div class="sp-banner card">
+        <iframe id="sp-banner-frame" src="/sponsor/" title="Example sponsor banner" sandbox="allow-scripts allow-popups" referrerpolicy="no-referrer" scrolling="no" loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="section container" id="placements">
+      <p class="label">What you get in the app</p>
+      <h2 class="big-title">Where users see you</h2>
+
+      <div class="sp-feature">
+        <div class="sp-copy">
+          <span class="pill pill-accent">In the app</span>
+          <h3>Banner on the Overview</h3>
+          <p>The first screen users see when they open Portfolio, between the value cards and the charts. The button opens an account with you through our referral link.</p>
+        </div>
+        <figure class="sp-shot">
+          <a href="/assets/sponsorship/overview-banner.webp" target="_blank" rel="noopener"><img src="/assets/sponsorship/overview-banner.webp" alt="The Portfolio overview tab with the example sponsor banner between the value cards and the performance chart." width="2000" height="1125" loading="lazy"></a>
+        </figure>
+      </div>
+
+      <div class="sp-feature">
+        <div class="sp-copy">
+          <span class="pill">Preview</span>
+          <h3>"Open in" on suggestions</h3>
+          <p>Each rebalancing suggestion gets a button that opens the instrument in your platform. We pass only the ticker. The user places any order inside your platform, never in Portfolio.</p>
+        </div>
+        <figure class="sp-shot">
+          <a href="/assets/tour/suggestions.webp" target="_blank" rel="noopener"><img src="/assets/tour/suggestions.webp" alt="The suggestions tab with two rebalancing suggestions and the target portfolio." width="2000" height="1125" loading="lazy"></a>
+          <span class="sp-mock sp-mock-open" aria-hidden="true">Open in Your Platform &#8599;</span>
+        </figure>
+      </div>
+
+      <div class="sp-feature">
+        <div class="sp-copy">
+          <span class="pill">Preview</span>
+          <h3>CSV import and "Open an account"</h3>
+          <p>We build the import for your CSV export, so your clients bring their history in a minute. Users without an account get an "Open an account" link next to it, and in the broker picker.</p>
+        </div>
+        <figure class="sp-shot">
+          <a href="/assets/sponsorship/import.webp" target="_blank" rel="noopener"><img src="/assets/sponsorship/import.webp" alt="The import transactions page with the recognised broker formats: Trade Republic, Interactive Brokers, Scalable Capital and Degiro." width="2000" height="1125" loading="lazy"></a>
+          <span class="sp-mock sp-mock-account" aria-hidden="true"><b>Your Platform</b><span>No account yet? Open one &#8599;</span></span>
+        </figure>
+      </div>
+
+      <div class="sp-feature">
+        <div class="sp-copy">
+          <span class="pill">Preview</span>
+          <h3>A featured metric</h3>
+          <p>A metric card we build with you, for example "Cost of trading" or "Cash yield". It is listed first in the metric catalog and users can pin it to their dashboard. It computes on the user's machine.</p>
+        </div>
+        <figure class="sp-shot">
+          <a href="/assets/sponsorship/metrics.webp" target="_blank" rel="noopener"><img src="/assets/sponsorship/metrics.webp" alt="Settings, Dashboard Cards: the cards on the overview and the metric catalog below them." width="2000" height="1125" loading="lazy"></a>
+        </figure>
+      </div>
+
+      <div class="sp-feature">
+        <div class="sp-copy">
+          <span class="pill pill-accent">Everywhere</span>
+          <h3>Website, GitHub and release notes</h3>
+          <p>Your logo on this website and the GitHub README, and a thank-you in every release note of 2027.</p>
+        </div>
+        <div class="sp-logos card">
+          <p class="label">Sponsors 2027</p>
+          <div class="sp-logo-row">
+            <span class="sp-logo">Your logo</span>
+            <span class="sp-logo">Your logo</span>
+            <span class="sp-logo">Your logo</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="sp-note">"Preview" marks placements we build for the first sponsor. The banner and the "Open an account" links use our referral link in your affiliate programme, so you also pay your standard commission for each client they bring. The more you put in, the larger your share of the banner and the campaigns.</p>
+    </section>
+
+    <section class="section container" id="rules">
+      <p class="label">Rules</p>
+      <h2 class="big-title">What we promise</h2>
+      <div class="split-cols">
+        <div class="card col col-stay">
+          <p class="label"><span class="dot dot-mint"></span>Our rules</p>
+          <ul>
+            <li>No balances, holdings or personal data reach a sponsor</li>
+            <li>No tracking pixels</li>
+            <li>Sponsored content is labelled</li>
+            <li>Sponsors never influence AI briefs, suggestions or metrics</li>
+          </ul>
+        </div>
+        <div class="card col col-leave">
+          <p class="label"><span class="dot"></span>Terms</p>
+          <ul>
+            <li><b>One payment</b> in advance, in EUR, VAT where it applies.</li>
+            <li><b>You approve</b> every text and creative that names you, and supply any risk warning your regulator requires.</li>
+            <li><b>Each quarter</b> we report what we spent, where, and the downloads and clicks it brought.</li>
+            <li><b>Anything not spent</b> by 31 December 2027 carries into early 2028 for the same sponsors.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container sp-cta">
+      <h2 class="big-title">Interested?</h2>
+      <p class="section-lead">Write to <a href="mailto:christos@cgeosoft.com?subject=Portfolio%20sponsorship%202027">christos@cgeosoft.com</a> with the amount you have in mind. We will set up a 30-minute call.</p>
+      <div class="sp-actions">
+        <a href="mailto:christos@cgeosoft.com?subject=Portfolio%20sponsorship%202027" class="btn btn-big">Become a sponsor</a>
+        <a href="/tour/" class="btn">Take the tour</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span id="current-year"></span> cgeosoft. Open source under the MIT License. &bull; <a href="/">Back to the site</a> &bull; <a href="/terms/">Terms of use</a></p>
+    </div>
+  </footer>
+
+  <script>
+    // The example banner reports its height and its link clicks, as it does in the app.
+    (function () {
+      var frame = document.getElementById("sp-banner-frame");
+      window.addEventListener("message", function (event) {
+        if (!frame || event.source !== frame.contentWindow || !event.data || typeof event.data !== "object") return;
+        if (event.data.type === "SPONSOR_RESIZE" && typeof event.data.height === "number" && event.data.height > 0) {
+          frame.style.height = Math.max(70, Math.min(event.data.height, 300)) + "px";
+        }
+        if (event.data.type === "SPONSOR_CLICK" && typeof event.data.url === "string" && /^https:\/\//i.test(event.data.url)) {
+          window.open(event.data.url, "_blank", "noopener");
+        }
+      });
+    })();
+  </script>
+  <script src="/script.js" defer></script>
+</body>
+</html>
