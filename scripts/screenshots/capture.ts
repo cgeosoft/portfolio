@@ -138,7 +138,8 @@ async function prepareData(api: Api): Promise<{ id: string; baseCurrency: string
     await api.call("POST", "/api/setup/complete", { populateDemo: true, enableTelemetry: false });
     ({ portfolios } = await api.call("GET", "/api/portfolios"));
   }
-  await api.call("PATCH", "/api/config", { hideSponsorBanners: true, dailyBriefEnabled: true });
+  // English: the hotspot targets in shots.ts match English text.
+  await api.call("PATCH", "/api/config", { language: "en", hideSponsorBanners: true, dailyBriefEnabled: true });
   const portfolio = portfolios[0];
   if (!portfolio) throw new Error("no portfolio after setup");
   return portfolio;

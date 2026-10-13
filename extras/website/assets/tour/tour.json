@@ -1,5 +1,5 @@
 {
-  "version": "0.12.0",
+  "version": "0.13.0",
   "width": 1600,
   "height": 900,
   "screens": [
@@ -63,12 +63,12 @@
           "title": "Against a benchmark",
           "text": "Draw the S&P 500, Nasdaq 100, MSCI World, Euro Stoxx 50 or FTSE All-World over your returns. Zoom from one month to all time.",
           "x": 22.72,
-          "y": 41.65,
+          "y": 40.49,
           "box": {
             "x": 4.94,
-            "y": 39.61,
+            "y": 38.19,
             "w": 58.77,
-            "h": 4.08
+            "h": 4.58
           },
           "image": "/assets/tour/overview-benchmark.webp",
           "width": 874,
@@ -119,80 +119,80 @@
           "id": "holding",
           "title": "Positions",
           "text": "Ticker, asset type, shares and average cost for each holding.",
-          "x": 12.06,
-          "y": 33.15,
+          "x": 11,
+          "y": 33.59,
           "box": {
-            "x": 4.94,
-            "y": 18.06,
-            "w": 34.47,
+            "x": 3.69,
+            "y": 18.5,
+            "w": 35.41,
             "h": 33.39
           },
           "image": "/assets/tour/positions-holding.webp",
           "width": 1100,
-          "height": 491
+          "height": 479
         },
         {
           "id": "price",
           "title": "Any currency",
           "text": "The price in its own currency next to the value in yours, converted at live FX rates, with the portfolio weight.",
-          "x": 47.34,
-          "y": 33.15,
+          "x": 47.26,
+          "y": 33.59,
           "box": {
-            "x": 38.66,
-            "y": 18.06,
-            "w": 17.36,
+            "x": 38.35,
+            "y": 18.5,
+            "w": 17.82,
             "h": 33.39
           },
           "image": "/assets/tour/positions-price.webp",
-          "width": 587,
+          "width": 602,
           "height": 633
         },
         {
           "id": "returns",
           "title": "Day and total return",
           "text": "In percent and in money, for today and since you bought.",
-          "x": 65.85,
-          "y": 33.15,
+          "x": 66.29,
+          "y": 33.59,
           "box": {
-            "x": 55.26,
-            "y": 18.06,
-            "w": 21.16,
+            "x": 55.42,
+            "y": 18.5,
+            "w": 21.73,
             "h": 33.39
           },
           "image": "/assets/tour/positions-returns.webp",
-          "width": 709,
+          "width": 728,
           "height": 633
         },
         {
           "id": "range",
           "title": "52-week range",
           "text": "Where the price sits between the low and the high of the last year.",
-          "x": 81.96,
-          "y": 33.15,
+          "x": 82.85,
+          "y": 33.59,
           "box": {
-            "x": 75.68,
-            "y": 18.06,
-            "w": 12.56,
+            "x": 76.41,
+            "y": 18.5,
+            "w": 12.89,
             "h": 33.39
           },
           "image": "/assets/tour/positions-range.webp",
-          "width": 434,
+          "width": 444,
           "height": 633
         },
         {
           "id": "rsi",
           "title": "RSI 14",
           "text": "Momentum for each holding, marked oversold, neutral or overbought.",
-          "x": 91.27,
-          "y": 33.15,
+          "x": 92.43,
+          "y": 33.59,
           "box": {
-            "x": 87.48,
-            "y": 18.06,
-            "w": 7.58,
+            "x": 88.54,
+            "y": 18.5,
+            "w": 7.77,
             "h": 33.39
           },
           "image": "/assets/tour/positions-rsi.webp",
-          "width": 275,
+          "width": 281,
           "height": 633
         },
         {
@@ -215,74 +215,90 @@
     },
     {
       "id": "income",
-      "label": "Income",
+      "label": "Analysis",
       "title": "Dividends you got and dividends to come",
-      "text": "Twelve months of expected income, yields and the next ex-dividend dates.",
+      "text": "The Analysis tab: exposure, income and markets. Here, twelve months of expected income, yields and the next ex-dividend dates.",
       "image": "/assets/tour/income.webp",
       "hotspots": [
         {
           "id": "summary",
           "title": "Income at a glance",
           "text": "Expected income for the next 12 months, what came in over the last 12, yield on cost and current yield.",
-          "x": 50,
-          "y": 22.61,
+          "x": 58.25,
+          "y": 21.72,
           "box": {
-            "x": 4.94,
-            "y": 18.56,
-            "w": 90.13,
+            "x": 21.44,
+            "y": 17.67,
+            "w": 73.63,
             "h": 8.11
           },
           "image": "/assets/tour/income-summary.webp",
           "width": 1100,
-          "height": 133
+          "height": 162
         },
         {
           "id": "calendar",
           "title": "Monthly income",
           "text": "Declared and estimated dividends, month by month.",
-          "x": 37.87,
-          "y": 43,
+          "x": 48.3,
+          "y": 42.11,
           "box": {
-            "x": 4.94,
-            "y": 30.11,
-            "w": 59.94,
+            "x": 21.44,
+            "y": 29.22,
+            "w": 48.92,
             "h": 25.78
           },
           "image": "/assets/tour/income-calendar.webp",
-          "width": 1098,
+          "width": 904,
           "height": 542
         },
         {
           "id": "upcoming",
           "title": "Next 30 days",
           "text": "Ex-dividend dates coming up, with the amount per share.",
-          "x": 80.21,
-          "y": 41.72,
+          "x": 82.96,
+          "y": 40.83,
           "box": {
-            "x": 65.35,
-            "y": 27.56,
-            "w": 29.71,
+            "x": 70.85,
+            "y": 26.67,
+            "w": 24.21,
             "h": 28.33
           },
           "image": "/assets/tour/income-upcoming.webp",
-          "width": 983,
+          "width": 807,
           "height": 241
         },
         {
           "id": "table",
           "title": "Per holding",
           "text": "Payment frequency, the next ex-date, both yields and the income expected from each position.",
-          "x": 50,
-          "y": 67.11,
+          "x": 58.25,
+          "y": 66.22,
           "box": {
-            "x": 4.94,
-            "y": 56.78,
-            "w": 90.13,
+            "x": 21.44,
+            "y": 55.89,
+            "w": 73.63,
             "h": 20.67
           },
           "image": "/assets/tour/income-table.webp",
-          "width": 1100,
-          "height": 297
+          "width": 1054,
+          "height": 345
+        },
+        {
+          "id": "sections",
+          "title": "Three views",
+          "text": "Exposure to sectors, countries and the stocks inside your funds, income and events, and the markets. One at a time.",
+          "x": 16.75,
+          "y": 19.72,
+          "box": {
+            "x": 3.63,
+            "y": 13.28,
+            "w": 15.75,
+            "h": 12.89
+          },
+          "image": "/assets/tour/income-sections.webp",
+          "width": 536,
+          "height": 264
         }
       ]
     },
@@ -475,17 +491,17 @@
           "id": "private",
           "title": "Weights only",
           "text": "The model never sees money amounts. The app computes them on your machine.",
-          "x": 23.59,
+          "x": 24.14,
           "y": 12.08,
           "box": {
             "x": 3.63,
             "y": 9.28,
-            "w": 39.94,
+            "w": 41.03,
             "h": 5.61
           },
           "image": "/assets/tour/suggestions-private.webp",
           "width": 1100,
-          "height": 112
+          "height": 109
         },
         {
           "id": "target",
