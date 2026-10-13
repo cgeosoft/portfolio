@@ -45,6 +45,12 @@ language:
   tier3: "Niektóre rodziny modeli AI obsługują ten język; raporty mogą brzmieć mniej naturalnie."
   tier4: "Niewiele rodzin modeli AI obsługuje ten język; raporty mogą zawierać błędy."
   supportedBy: "Oficjalnie obsługiwany przez {models}."
+  detected: "{name} · język systemu"
+  showMore:
+    one: "Pokaż jeszcze {count} język"
+    few: "Pokaż jeszcze {count} języki"
+    many: "Pokaż jeszcze {count} języków"
+    other: "Pokaż jeszcze {count} języka"
 
 layout:
   tabs:
@@ -1887,7 +1893,53 @@ settings:
     submit: "Otwórz zgłoszenie"
 
 setup:
-  _section: "setup"
+  title: "KONFIGURACJA"
+  stepOf: "Krok {step} z {total}"
+  acceptContinue: "Akceptuj i kontynuuj"
+  finishing: "Kończenie…"
+  start: "Zacznij korzystać z {app}"
+  language:
+    title: "Wybierz język"
+    description: "Będą go używać Portfolio, raporty AI i asystent. Zmienisz go w każdej chwili: Ustawienia, Wygląd."
+  welcome:
+    title: "Witaj w {app}"
+    subtitle: "Śledź akcje, ETF-y i kryptowaluty w jednym miejscu."
+    privateTitle: "Prywatność od podstaw"
+    privateText: "Twoje dane zostają na tym komputerze. Bez konta, bez chmury."
+    pricesTitle: "Ceny aktualizują się same"
+    pricesText: "Zobacz, ile są dziś warte twoje inwestycje, w twojej walucie."
+    assistantTitle: "Asystent AI"
+    assistantText: "Zadawaj pytania o swój portfel i otrzymuj raporty prostym językiem."
+    termsHighlights: "Najważniejsze warunki"
+    readTerms: "Przeczytaj pełne warunki"
+    termsPrices: "Ceny i wiadomości pochodzą z Yahoo Finance i Finnhub i mogą być opóźnione."
+    termsAdvice: "Raporty i odpowiedzi AI nie są poradą finansową."
+    termsFigures: "Dane są udostępniane w stanie, w jakim są. Sprawdź je, zanim podejmiesz działanie."
+    agreeBefore: "Przeczytałem(-am) i akceptuję"
+    termsLink: "Warunki użytkowania {app}"
+    agreeAfter: ""
+    acceptFailed: "Nie udało się zaakceptować warunków użytkowania."
+  demo:
+    title: "Wypróbuj portfel demo"
+    description: "Nie chcesz jeszcze dodawać własnych inwestycji? Zacznij od przykładowego portfela i poznaj każdy ekran na realistycznych liczbach."
+    history: "Rok historii: 100 transakcji z wpłatami, zakupami, sprzedażami i dywidendami."
+    holdings: "11 pozycji: Apple, Microsoft, Nvidia i cztery inne akcje, trzy ETF-y oraz Bitcoin."
+    prices: "Gdy jesteś online, ceny startują od dzisiejszego rynku."
+    ownPortfolio: "Znajduje się w osobnym portfelu „{name}”. Usuniesz go w każdej chwili na stronie Portfele."
+    toggle: "Dodaj portfel demo"
+    hintOn: "Gdy zechcesz, dodaj obok niego własne portfele."
+    hintOff: "Zaczynasz od zera. Zaimportuj CSV z Trade Republic, Scalable Capital, Interactive Brokers lub Degiro."
+    chart:
+      stocks: "Akcje"
+      etfs: "ETF-y"
+      crypto: "Krypto"
+  telemetry:
+    title: "Anonimowa analityka"
+    description: "Pomóż nam ulepszać {app}, udostępniając telemetrię chroniącą prywatność."
+    toggle: "Włącz anonimową telemetrię"
+    posthog: "Używamy PostHog do rejestrowania podstawowych zdarzeń aplikacji (np. uruchomienie aplikacji, import CSV, wygenerowanie raportu). Identyfikacja za pomocą losowego UUID."
+    guaranteeTitle: "Ścisła gwarancja prywatności:"
+    guaranteeText: "Nigdy nie są przesyłane pozycje portfela, wartości pieniężne, kwoty transakcji, nazwy brokerów ani dane osobowe. Możesz to zmienić w każdej chwili w Ustawieniach."
 
 service:
   assistant:

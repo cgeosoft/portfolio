@@ -47,6 +47,10 @@ language:
   tier3: "Seda keelt toetavad mõned tehisintellekti mudelipered; aruanded võivad kõlada vähem loomulikult."
   tier4: "Seda keelt toetavad vähesed tehisintellekti mudelipered; aruannetes võib esineda vigu."
   supportedBy: "Ametlikult toetab: {models}."
+  detected: "{name} · sinu süsteem"
+  showMore:
+    one: "Näita veel {count} keel"
+    other: "Näita veel {count} keelt"
 
 # ── layout ──
 layout:
@@ -1828,7 +1832,53 @@ settings:
 
 # ── setup ──
 setup:
-  _section: "setup"
+  title: "SEADISTAMINE"
+  stepOf: "Samm {step}/{total}"
+  acceptContinue: "Nõustu ja jätka"
+  finishing: "Lõpetamine…"
+  start: "Alusta rakenduse {app} kasutamist"
+  language:
+    title: "Vali keel"
+    description: "Seda kasutavad Portfolio, selle tehisintellekti aruanded ja assistent. Saad seda igal ajal muuta jaotises Seaded, Välimus."
+  welcome:
+    title: "Tere tulemast rakendusse {app}"
+    subtitle: "Jälgi oma aktsiaid, ETF-e ja krüptot ühes kohas."
+    privateTitle: "Privaatne juba ülesehituselt"
+    privateText: "Sinu andmed jäävad sellesse arvutisse. Pole kontot ega pilve."
+    pricesTitle: "Hinnad, mis uuenevad ise"
+    pricesText: "Vaata, kui palju su investeeringud täna väärt on, sinu enda valuutas."
+    assistantTitle: "Tehisintellekti assistent"
+    assistantText: "Küsi oma portfelli kohta küsimusi ja saa aruandeid lihtsas keeles."
+    termsHighlights: "Tingimuste põhipunktid"
+    readTerms: "Loe kõiki tingimusi"
+    termsPrices: "Hinnad ja uudised pärinevad teenustest Yahoo Finance ja Finnhub ning võivad hilineda."
+    termsAdvice: "Tehisintellekti aruanded ja vastused ei ole finantsnõustamine."
+    termsFigures: "Arvud esitatakse sellisena, nagu need on. Kontrolli neid enne tegutsemist."
+    agreeBefore: "Olen lugenud"
+    termsLink: "{app} kasutustingimusi"
+    agreeAfter: " ja nõustun nendega"
+    acceptFailed: "Kasutustingimustega nõustumine ebaõnnestus."
+  demo:
+    title: "Proovi näidisportfelli"
+    description: "Pole veel valmis oma investeeringuid lisama? Alusta näidisportfelliga ja uuri iga vaadet realistlike arvudega."
+    history: "Aasta ajalugu: 100 tehingut sissemaksete, ostude, müükide ja dividendidega."
+    holdings: "11 osalust: Apple, Microsoft, Nvidia ja veel neli aktsiat, kolm ETF-i ja Bitcoin."
+    prices: "Kui oled võrgus, lähtuvad hinnad tänasest turust."
+    ownPortfolio: "See asub eraldi portfellis „{name}“. Saad selle igal ajal kustutada lehel Portfellid."
+    toggle: "Lisa näidisportfell"
+    hintOn: "Lisa selle kõrvale oma portfellid, kui oled valmis."
+    hintOff: "Alustad tühjalt. Impordi CSV Trade Republicust, Scalable Capitalist, Interactive Brokersist või Degirost."
+    chart:
+      stocks: "Aktsiad"
+      etfs: "ETF-id"
+      crypto: "Krüpto"
+  telemetry:
+    title: "Anonüümne analüütika"
+    description: "Aita meil rakendust {app} paremaks teha, jagades privaatsust säilitavat telemeetriat."
+    toggle: "Luba anonüümne telemeetria"
+    posthog: "Kasutame PostHogi rakenduse põhisündmuste salvestamiseks (nt rakendus käivitati, CSV imporditi, aruanne loodi). Tuvastamiseks kasutatakse juhuslikku UUID-d."
+    guaranteeTitle: "Range privaatsuse tagatis:"
+    guaranteeText: "Portfelli osalusi, rahalisi väärtusi, tehingusummasid, maaklerite nimesid ega isikuandmeid ei edastata kunagi. Saad selle igal ajal sisse või välja lülitada jaotises Seaded."
 
 # ── service ──
 service:

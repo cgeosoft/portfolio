@@ -45,6 +45,12 @@ language:
   tier3: "Tento jazyk podporujú niektoré rodiny AI modelov; reporty môžu znieť menej prirodzene."
   tier4: "Tento jazyk podporuje len málo rodín AI modelov; reporty môžu obsahovať chyby."
   supportedBy: "Oficiálne podporované: {models}."
+  detected: "{name} · jazyk systému"
+  showMore:
+    one: "Zobraziť ďalší {count} jazyk"
+    few: "Zobraziť ďalšie {count} jazyky"
+    many: "Zobraziť ďalších {count} jazyka"
+    other: "Zobraziť ďalších {count} jazykov"
 
 layout:
   tabs:
@@ -1887,7 +1893,53 @@ settings:
     submit: "Otvoriť požiadavku"
 
 setup:
-  _section: "setup"
+  title: "NASTAVENIE"
+  stepOf: "Krok {step} z {total}"
+  acceptContinue: "Prijať a pokračovať"
+  finishing: "Dokončuje sa…"
+  start: "Začať používať {app}"
+  language:
+    title: "Vyberte jazyk"
+    description: "Bude ho používať Portfolio, jeho AI reporty aj asistent. Zmeniť ho môžete kedykoľvek v časti Nastavenia, Vzhľad."
+  welcome:
+    title: "Vitajte v {app}"
+    subtitle: "Sledujte akcie, ETF a kryptomeny na jednom mieste."
+    privateTitle: "Súkromie od základu"
+    privateText: "Vaše údaje zostávajú v tomto počítači. Žiadny účet, žiadny cloud."
+    pricesTitle: "Ceny, ktoré sa aktualizujú samy"
+    pricesText: "Zistite, akú hodnotu majú vaše investície dnes, vo vašej vlastnej mene."
+    assistantTitle: "AI asistent"
+    assistantText: "Pýtajte sa na svoje portfólio a dostávajte reporty zrozumiteľnými slovami."
+    termsHighlights: "To hlavné z podmienok"
+    readTerms: "Prečítať celé podmienky"
+    termsPrices: "Ceny a správy pochádzajú z Yahoo Finance a Finnhub a môžu sa oneskorovať."
+    termsAdvice: "AI reporty a odpovede nie sú finančným poradenstvom."
+    termsFigures: "Údaje sa poskytujú tak, ako sú. Skôr než začnete konať, overte si ich."
+    agreeBefore: "Prečítal(a) som si a súhlasím s"
+    termsLink: "podmienkami používania {app}"
+    agreeAfter: ""
+    acceptFailed: "Podmienky používania sa nepodarilo prijať."
+  demo:
+    title: "Vyskúšajte demo portfólio"
+    description: "Ešte nechcete pridávať vlastné investície? Začnite s ukážkovým portfóliom a prezrite si každú obrazovku s realistickými číslami."
+    history: "Rok histórie: 100 transakcií s vkladmi, nákupmi, predajmi a dividendami."
+    holdings: "11 pozícií: Apple, Microsoft, Nvidia a ďalšie štyri akcie, tri ETF a Bitcoin."
+    prices: "Keď ste online, ceny vychádzajú z dnešného trhu."
+    ownPortfolio: "Nachádza sa vo vlastnom portfóliu „{name}“. Odstrániť ho môžete kedykoľvek na stránke Portfóliá."
+    toggle: "Pridať demo portfólio"
+    hintOn: "Keď budete pripravení, pridajte vedľa neho vlastné portfóliá."
+    hintOff: "Začnete s prázdnou aplikáciou. Importujte CSV z Trade Republic, Scalable Capital, Interactive Brokers alebo Degiro."
+    chart:
+      stocks: "Akcie"
+      etfs: "ETF"
+      crypto: "Krypto"
+  telemetry:
+    title: "Anonymná analytika"
+    description: "Pomôžte nám vylepšiť {app} zdieľaním telemetrie, ktorá chráni súkromie."
+    toggle: "Zapnúť anonymnú telemetriu"
+    posthog: "PostHog používame na zaznamenávanie základných udalostí aplikácie (napr. spustenie aplikácie, import CSV, vytvorenie reportu). Identifikácia prebieha pomocou náhodného UUID."
+    guaranteeTitle: "Prísna záruka súkromia:"
+    guaranteeText: "Pozície v portfóliu, peňažné hodnoty, sumy transakcií, názvy brokerov ani osobné údaje sa nikdy neodosielajú. Zmeniť to môžete kedykoľvek v Nastaveniach."
 
 service:
   assistant:

@@ -47,6 +47,9 @@ language:
   tier3: "一部の AI モデルファミリーがこの言語に対応しています。レポートが不自然になる場合があります。"
   tier4: "この言語に対応する AI モデルファミリーはわずかです。レポートに誤りが含まれる場合があります。"
   supportedBy: "公式対応：{models}。"
+  detected: "{name} · お使いのシステム"
+  showMore:
+    other: "さらに {count} 言語を表示"
 
 # ── layout: menu bar, header, bottom bar, app-wide dialogs ────────────────
 layout:
@@ -1793,7 +1796,53 @@ settings:
 
 # ── setup: the first-run setup and the lock screen ────────────────────────
 setup:
-  _section: "setup"
+  title: "セットアップ"
+  stepOf: "ステップ {step}/{total}"
+  acceptContinue: "同意して続行"
+  finishing: "完了処理中…"
+  start: "{app} を使い始める"
+  language:
+    title: "言語を選択してください"
+    description: "Portfolio、その AI レポート、アシスタントがこの言語を使います。「設定」の「外観」でいつでも変更できます。"
+  welcome:
+    title: "{app} へようこそ"
+    subtitle: "株式、ETF、暗号資産をひとつの場所で管理できます。"
+    privateTitle: "プライバシーを重視した設計"
+    privateText: "データはこのコンピューターに保存されます。アカウントもクラウドも不要です。"
+    pricesTitle: "自動で更新される価格"
+    pricesText: "投資の今日の価値を、お使いの通貨で確認できます。"
+    assistantTitle: "AI アシスタント"
+    assistantText: "ポートフォリオについて質問し、わかりやすい言葉でレポートを受け取れます。"
+    termsHighlights: "規約の要点"
+    readTerms: "規約全文を読む"
+    termsPrices: "価格とニュースは Yahoo Finance と Finnhub から取得され、遅れる場合があります。"
+    termsAdvice: "AI のレポートと回答は金融アドバイスではありません。"
+    termsFigures: "数値は現状のまま提供されます。行動する前に確認してください。"
+    agreeBefore: ""
+    termsLink: "{app} 利用規約"
+    agreeAfter: "を読み、同意します"
+    acceptFailed: "利用規約に同意できませんでした。"
+  demo:
+    title: "デモポートフォリオを試す"
+    description: "まだ自分の投資を追加する準備ができていませんか？サンプルのポートフォリオで始めて、現実的な数値ですべての画面を試せます。"
+    history: "1 年分の履歴：入金、買付、売却、配当を含む 100 件の取引。"
+    holdings: "11 銘柄：Apple、Microsoft、Nvidia ほか株式 4 銘柄、ETF 3 本、ビットコイン。"
+    prices: "オンライン時は、価格が今日の相場から始まります。"
+    ownPortfolio: "専用のポートフォリオ「{name}」に入っています。「ポートフォリオ」ページでいつでも削除できます。"
+    toggle: "デモポートフォリオを追加"
+    hintOn: "準備ができたら、いつでもその横に自分のポートフォリオを追加できます。"
+    hintOff: "空の状態から始めます。Trade Republic、Scalable Capital、Interactive Brokers、Degiro の CSV をインポートできます。"
+    chart:
+      stocks: "株式"
+      etfs: "ETF"
+      crypto: "暗号資産"
+  telemetry:
+    title: "匿名の分析"
+    description: "プライバシーに配慮したテレメトリを共有して、{app} の改善にご協力ください。"
+    toggle: "匿名テレメトリを有効にする"
+    posthog: "PostHog を使って基本的なアプリのイベント（例：アプリの起動、CSV のインポート、レポートの生成）を記録します。ランダムな UUID で識別されます。"
+    guaranteeTitle: "厳格なプライバシー保証："
+    guaranteeText: "保有銘柄、金額、取引額、証券会社名、個人を特定する情報が送信されることは一切ありません。この設定は「設定」でいつでも切り替えられます。"
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

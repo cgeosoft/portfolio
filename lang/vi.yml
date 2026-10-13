@@ -45,6 +45,9 @@ language:
   tier3: "Một số dòng mô hình AI hỗ trợ ngôn ngữ này; báo cáo có thể kém tự nhiên hơn."
   tier4: "Ít dòng mô hình AI hỗ trợ ngôn ngữ này; báo cáo có thể có lỗi."
   supportedBy: "Được {models} hỗ trợ chính thức."
+  detected: "{name} · hệ thống của bạn"
+  showMore:
+    other: "Hiện thêm {count} ngôn ngữ"
 
 layout:
   tabs:
@@ -1782,7 +1785,53 @@ settings:
     submit: "Mở yêu cầu hỗ trợ"
 
 setup:
-  _section: "setup"
+  title: "THIẾT LẬP"
+  stepOf: "Bước {step}/{total}"
+  acceptContinue: "Chấp nhận & tiếp tục"
+  finishing: "Đang hoàn tất…"
+  start: "Bắt đầu dùng {app}"
+  language:
+    title: "Chọn ngôn ngữ của bạn"
+    description: "Portfolio, các báo cáo AI và trợ lý sẽ dùng ngôn ngữ này. Bạn có thể đổi bất cứ lúc nào trong Cài đặt, Giao diện."
+  welcome:
+    title: "Chào mừng bạn đến với {app}"
+    subtitle: "Theo dõi cổ phiếu, ETF và tiền mã hóa ở cùng một nơi."
+    privateTitle: "Riêng tư ngay từ thiết kế"
+    privateText: "Dữ liệu của bạn ở lại trên máy tính này. Không tài khoản, không đám mây."
+    pricesTitle: "Giá tự động cập nhật"
+    pricesText: "Xem giá trị hôm nay của các khoản đầu tư, bằng đồng tiền của bạn."
+    assistantTitle: "Trợ lý AI"
+    assistantText: "Đặt câu hỏi về danh mục của bạn và nhận báo cáo bằng ngôn từ dễ hiểu."
+    termsHighlights: "Điểm chính của điều khoản"
+    readTerms: "Đọc toàn bộ điều khoản"
+    termsPrices: "Giá và tin tức đến từ Yahoo Finance và Finnhub, có thể bị trễ."
+    termsAdvice: "Báo cáo và câu trả lời của AI không phải là tư vấn tài chính."
+    termsFigures: "Số liệu được cung cấp nguyên trạng. Hãy kiểm tra trước khi hành động."
+    agreeBefore: "Tôi đã đọc và đồng ý với"
+    termsLink: "Điều khoản sử dụng {app}"
+    agreeAfter: ""
+    acceptFailed: "Không thể chấp nhận Điều khoản sử dụng."
+  demo:
+    title: "Dùng thử danh mục mẫu"
+    description: "Chưa sẵn sàng thêm khoản đầu tư của riêng bạn? Hãy bắt đầu với một danh mục mẫu và khám phá mọi màn hình với số liệu sát thực tế."
+    history: "Lịch sử một năm: 100 giao dịch gồm nạp tiền, mua, bán và cổ tức."
+    holdings: "11 khoản nắm giữ: Apple, Microsoft, Nvidia và bốn cổ phiếu khác, ba ETF và Bitcoin."
+    prices: "Khi bạn trực tuyến, giá bắt đầu từ thị trường hôm nay."
+    ownPortfolio: "Nó nằm trong một danh mục riêng, “{name}”. Bạn có thể xóa nó bất cứ lúc nào trên trang Danh mục."
+    toggle: "Thêm danh mục mẫu"
+    hintOn: "Thêm danh mục của riêng bạn bên cạnh bất cứ khi nào bạn sẵn sàng."
+    hintOff: "Bạn bắt đầu với dữ liệu trống. Nhập CSV từ Trade Republic, Scalable Capital, Interactive Brokers hoặc Degiro."
+    chart:
+      stocks: "Cổ phiếu"
+      etfs: "ETF"
+      crypto: "Tiền mã hóa"
+  telemetry:
+    title: "Phân tích ẩn danh"
+    description: "Giúp chúng tôi cải thiện {app} bằng cách chia sẻ dữ liệu đo lường có bảo vệ quyền riêng tư."
+    toggle: "Bật đo lường ẩn danh"
+    posthog: "Chúng tôi dùng PostHog để ghi lại các sự kiện cơ bản của ứng dụng (ví dụ: khởi chạy ứng dụng, nhập CSV, tạo báo cáo). Được nhận dạng bằng một UUID ngẫu nhiên."
+    guaranteeTitle: "Cam kết quyền riêng tư nghiêm ngặt:"
+    guaranteeText: "Không bao giờ gửi đi khoản nắm giữ, giá trị tiền tệ, số tiền giao dịch, tên nhà môi giới hay danh tính cá nhân. Bạn có thể bật hoặc tắt tùy chọn này bất cứ lúc nào trong Cài đặt."
 
 service:
   assistant:

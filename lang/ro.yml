@@ -45,6 +45,11 @@ language:
   tier3: "Unele familii de modele AI acceptă această limbă; rapoartele pot suna mai puțin natural."
   tier4: "Puține familii de modele AI acceptă această limbă; rapoartele pot conține greșeli."
   supportedBy: "Acceptată oficial de {models}."
+  detected: "{name} · limba sistemului"
+  showMore:
+    one: "Afișare încă {count} limbă"
+    few: "Afișare încă {count} limbi"
+    other: "Afișare încă {count} de limbi"
 
 layout:
   tabs:
@@ -1852,7 +1857,53 @@ settings:
     submit: "Deschidere tichet de asistență"
 
 setup:
-  _section: "setup"
+  title: "CONFIGURARE"
+  stepOf: "Pasul {step} din {total}"
+  acceptContinue: "Acceptare și continuare"
+  finishing: "Se finalizează…"
+  start: "Începeți să utilizați {app}"
+  language:
+    title: "Alegeți limba"
+    description: "Portfolio, rapoartele AI și asistentul o vor folosi. O puteți schimba oricând din Setări, Aspect."
+  welcome:
+    title: "Bun venit în {app}"
+    subtitle: "Urmăriți acțiunile, ETF-urile și criptomonedele într-un singur loc."
+    privateTitle: "Confidențialitate încă din concepție"
+    privateText: "Datele dvs. rămân pe acest computer. Fără cont, fără cloud."
+    pricesTitle: "Prețuri care se actualizează singure"
+    pricesText: "Vedeți cât valorează astăzi investițiile dvs., în propria monedă."
+    assistantTitle: "Asistent AI"
+    assistantText: "Puneți întrebări despre portofoliul dvs. și primiți rapoarte pe înțelesul tuturor."
+    termsHighlights: "Esențialul din termeni"
+    readTerms: "Citire termeni compleți"
+    termsPrices: "Prețurile și știrile provin de la Yahoo Finance și Finnhub și pot avea întârzieri."
+    termsAdvice: "Rapoartele și răspunsurile AI nu reprezintă consultanță financiară."
+    termsFigures: "Cifrele sunt furnizate ca atare. Verificați-le înainte de a acționa."
+    agreeBefore: "Am citit și sunt de acord cu"
+    termsLink: "Termenii de utilizare {app}"
+    agreeAfter: ""
+    acceptFailed: "Termenii de utilizare nu au putut fi acceptați."
+  demo:
+    title: "Încercați un portofoliu demo"
+    description: "Nu sunteți încă pregătit să adăugați propriile investiții? Începeți cu un portofoliu exemplu și explorați fiecare ecran cu cifre realiste."
+    history: "Un an de istoric: 100 de tranzacții cu depuneri, cumpărări, vânzări și dividende."
+    holdings: "11 dețineri: Apple, Microsoft, Nvidia și încă patru acțiuni, trei ETF-uri și Bitcoin."
+    prices: "Când sunteți online, prețurile pornesc de la piața de astăzi."
+    ownPortfolio: "Se află într-un portofoliu separat, „{name}”. Îl puteți șterge oricând din pagina Portofolii."
+    toggle: "Adăugare portofoliu demo"
+    hintOn: "Adăugați propriile portofolii alături de el oricând sunteți pregătit."
+    hintOff: "Începeți fără date. Importați un CSV din Trade Republic, Scalable Capital, Interactive Brokers sau Degiro."
+    chart:
+      stocks: "Acțiuni"
+      etfs: "ETF-uri"
+      crypto: "Cripto"
+  telemetry:
+    title: "Analize anonime"
+    description: "Ajutați-ne să îmbunătățim {app} prin partajarea telemetriei care protejează confidențialitatea."
+    toggle: "Activare telemetrie anonimă"
+    posthog: "Folosim PostHog pentru a înregistra evenimente de bază din aplicație (de ex. aplicație pornită, CSV importat, raport generat). Identificare printr-un UUID aleatoriu."
+    guaranteeTitle: "Garanție strictă de confidențialitate:"
+    guaranteeText: "Nu se transmit niciodată dețineri din portofoliu, valori monetare, sume ale tranzacțiilor, nume de brokeri sau identități personale. Puteți modifica oricând această opțiune din Setări."
 
 service:
   assistant:

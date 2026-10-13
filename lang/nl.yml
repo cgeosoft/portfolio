@@ -45,6 +45,10 @@ language:
   tier3: "Sommige AI-modelfamilies ondersteunen deze taal; rapporten lezen mogelijk minder natuurlijk."
   tier4: "Weinig AI-modelfamilies ondersteunen deze taal; rapporten kunnen fouten bevatten."
   supportedBy: "Officieel ondersteund door {models}."
+  detected: "{name} · je systeem"
+  showMore:
+    one: "Nog {count} taal tonen"
+    other: "Nog {count} talen tonen"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Supportticket openen"
 
 setup:
-  _section: "setup"
+  title: "INSTELLEN"
+  stepOf: "Stap {step} van {total}"
+  acceptContinue: "Accepteren en doorgaan"
+  finishing: "Bezig met afronden…"
+  start: "Aan de slag met {app}"
+  language:
+    title: "Kies je taal"
+    description: "Portfolio, de AI-rapporten en de assistent gebruiken deze taal. Wijzig hem wanneer je wilt via Instellingen, Weergave."
+  welcome:
+    title: "Welkom bij {app}"
+    subtitle: "Volg je aandelen, ETF's en crypto op één plek."
+    privateTitle: "Privé door ontwerp"
+    privateText: "Je gegevens blijven op deze computer. Geen account, geen cloud."
+    pricesTitle: "Koersen die zichzelf bijwerken"
+    pricesText: "Zie wat je beleggingen vandaag waard zijn, in je eigen valuta."
+    assistantTitle: "Een AI-assistent"
+    assistantText: "Stel vragen over je portfolio en krijg rapporten in begrijpelijke taal."
+    termsHighlights: "Belangrijkste voorwaarden"
+    readTerms: "Volledige voorwaarden lezen"
+    termsPrices: "Koersen en nieuws komen van Yahoo Finance en Finnhub en kunnen achterlopen."
+    termsAdvice: "AI-rapporten en -antwoorden zijn geen financieel advies."
+    termsFigures: "Cijfers worden geleverd zoals ze zijn. Controleer ze voordat je iets doet."
+    agreeBefore: "Ik heb de"
+    termsLink: "Gebruiksvoorwaarden van {app}"
+    agreeAfter: " gelezen en ga ermee akkoord"
+    acceptFailed: "Kan de Gebruiksvoorwaarden niet accepteren."
+  demo:
+    title: "Probeer een demoportfolio"
+    description: "Nog niet klaar om je eigen beleggingen toe te voegen? Begin met een voorbeeldportfolio en verken elk scherm met realistische cijfers."
+    history: "Een jaar geschiedenis: 100 transacties met stortingen, aankopen, verkopen en dividenden."
+    holdings: "11 posities: Apple, Microsoft, Nvidia en nog vier aandelen, drie ETF's en Bitcoin."
+    prices: "Koersen starten vanaf de markt van vandaag als je online bent."
+    ownPortfolio: "De demo staat in een eigen portfolio, \"{name}\". Verwijder deze wanneer je wilt op de pagina Portfolio's."
+    toggle: "Demoportfolio toevoegen"
+    hintOn: "Voeg je eigen portfolio's ernaast toe wanneer je wilt."
+    hintOff: "Je begint zonder gegevens. Importeer een CSV van Trade Republic, Scalable Capital, Interactive Brokers of Degiro."
+    chart:
+      stocks: "Aandelen"
+      etfs: "ETF's"
+      crypto: "Crypto"
+  telemetry:
+    title: "Anonieme analyse"
+    description: "Help ons {app} te verbeteren door privacyvriendelijke telemetrie te delen."
+    toggle: "Anonieme telemetrie inschakelen"
+    posthog: "We gebruiken PostHog om basisgebeurtenissen in de app vast te leggen (bijv. app gestart, CSV geïmporteerd, rapport gemaakt). Herkenbaar aan een willekeurige UUID."
+    guaranteeTitle: "Strikte privacygarantie:"
+    guaranteeText: "Er worden nooit posities, geldbedragen, transactiebedragen, brokernamen of persoonlijke identiteiten verzonden. Je kunt dit altijd wijzigen in Instellingen."
 
 service:
   assistant:

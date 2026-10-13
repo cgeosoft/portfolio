@@ -45,6 +45,9 @@ language:
   tier3: "일부 AI 모델 계열이 이 언어를 지원합니다. 보고서가 덜 자연스러울 수 있습니다."
   tier4: "이 언어를 지원하는 AI 모델 계열이 적습니다. 보고서에 오류가 있을 수 있습니다."
   supportedBy: "{models}에서 공식 지원합니다."
+  detected: "{name} · 내 시스템"
+  showMore:
+    other: "언어 {count}개 더 보기"
 
 layout:
   tabs:
@@ -1782,7 +1785,53 @@ settings:
     submit: "지원 티켓 열기"
 
 setup:
-  _section: "setup"
+  title: "초기 설정"
+  stepOf: "{total}단계 중 {step}단계"
+  acceptContinue: "동의하고 계속"
+  finishing: "마무리하는 중…"
+  start: "{app} 사용 시작"
+  language:
+    title: "언어 선택"
+    description: "Portfolio와 AI 보고서, 어시스턴트가 이 언어를 사용합니다. 설정의 모양에서 언제든지 변경할 수 있습니다."
+  welcome:
+    title: "{app}에 오신 것을 환영합니다"
+    subtitle: "주식, ETF, 암호화폐를 한곳에서 추적하세요."
+    privateTitle: "설계부터 개인정보 보호"
+    privateText: "데이터는 이 컴퓨터에 그대로 보관됩니다. 계정도, 클라우드도 필요 없습니다."
+    pricesTitle: "자동으로 업데이트되는 가격"
+    pricesText: "내 투자의 오늘 가치를 내 통화로 확인하세요."
+    assistantTitle: "AI 어시스턴트"
+    assistantText: "포트폴리오에 대해 질문하고 쉬운 말로 된 보고서를 받아 보세요."
+    termsHighlights: "약관 주요 내용"
+    readTerms: "약관 전문 읽기"
+    termsPrices: "가격과 뉴스는 Yahoo Finance와 Finnhub에서 제공되며 지연될 수 있습니다."
+    termsAdvice: "AI 보고서와 답변은 금융 자문이 아닙니다."
+    termsFigures: "수치는 있는 그대로 제공됩니다. 행동하기 전에 확인하세요."
+    agreeBefore: ""
+    termsLink: "{app} 이용 약관"
+    agreeAfter: "을 읽었으며 이에 동의합니다"
+    acceptFailed: "이용 약관에 동의하지 못했습니다."
+  demo:
+    title: "데모 포트폴리오 사용해 보기"
+    description: "아직 내 투자를 추가할 준비가 되지 않았나요? 샘플 포트폴리오로 시작해 실제와 같은 숫자로 모든 화면을 살펴보세요."
+    history: "1년간의 기록: 입금, 매수, 매도, 배당을 포함한 거래 100건."
+    holdings: "보유 종목 11개: Apple, Microsoft, Nvidia 외 주식 4개, ETF 3개, 비트코인."
+    prices: "온라인 상태이면 가격은 오늘 시세에서 시작합니다."
+    ownPortfolio: "별도의 포트폴리오 “{name}”에 들어 있습니다. 포트폴리오 페이지에서 언제든지 삭제할 수 있습니다."
+    toggle: "데모 포트폴리오 추가"
+    hintOn: "준비되면 언제든지 그 옆에 내 포트폴리오를 추가하세요."
+    hintOff: "빈 상태로 시작합니다. Trade Republic, Scalable Capital, Interactive Brokers 또는 Degiro의 CSV를 가져오세요."
+    chart:
+      stocks: "주식"
+      etfs: "ETF"
+      crypto: "암호화폐"
+  telemetry:
+    title: "익명 분석"
+    description: "개인정보를 보호하는 원격 분석 데이터를 공유하여 {app} 개선에 도움을 주세요."
+    toggle: "익명 원격 분석 사용"
+    posthog: "PostHog를 사용해 기본 앱 이벤트(예: 앱 실행, CSV 가져오기, 보고서 생성)를 기록합니다. 무작위 UUID로 식별됩니다."
+    guaranteeTitle: "엄격한 개인정보 보호 보장:"
+    guaranteeText: "보유 종목, 금액, 거래 금액, 증권사 이름, 개인 신원 정보는 절대 전송되지 않습니다. 설정에서 언제든지 변경할 수 있습니다."
 
 service:
   assistant:

@@ -55,7 +55,7 @@ function storedLanguage(): string | undefined {
 export function preferredLanguage(): string {
   const saved = storedLanguage();
   if (findLanguage(saved)) return saved!;
-  return matchLanguage(navigator.languages?.length ? navigator.languages : [navigator.language]);
+  return systemLanguage();
 }
 
 /** Loads a language and makes it active. Unknown or broken files leave English active. */
@@ -80,6 +80,25 @@ export async function loadLanguage(code: string): Promise<void> {
   const root = document.documentElement;
   root.lang = language;
   root.dir = findLanguage(language)?.rtl ? "rtl" : "ltr";
+}
+
+/** The supported language closest to the system language (`navigator.languages` follows the OS locale in the desktop window). */
+export function systemLanguage(): string {
+  return matchLanguage(navigator.languages?.length ? navigator.languages : [navigator.language]);
+}
+
+/**
+ * Loads a language and saves it as this device's choice, without a reload. Only
+ * for screens shown before the app mounts, such as the setup wizard: anything
+ * already rendered keeps its old text until it renders again.
+ */
+export async function applyLanguageNow(code: string): Promise<void> {
+  await loadLanguage(code);
+  try {
+    localStorage.setItem(STORAGE_KEY, language);
+  } catch {
+    // localStorage unavailable: the choice lasts until the window closes.
+  }
 }
 
 /**

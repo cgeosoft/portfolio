@@ -45,6 +45,12 @@ language:
   tier3: "Šią kalbą palaiko kai kurios DI modelių šeimos; ataskaitos gali skambėti mažiau natūraliai."
   tier4: "Šią kalbą palaiko nedaug DI modelių šeimų; ataskaitose gali būti klaidų."
   supportedBy: "Oficialiai palaiko {models}."
+  detected: "{name} · jūsų sistema"
+  showMore:
+    one: "Rodyti dar {count} kalbą"
+    few: "Rodyti dar {count} kalbas"
+    many: "Rodyti dar {count} kalbos"
+    other: "Rodyti dar {count} kalbų"
 
 layout:
   tabs:
@@ -1887,7 +1893,53 @@ settings:
     submit: "Atidaryti pagalbos užklausą"
 
 setup:
-  _section: "setup"
+  title: "SĄRANKA"
+  stepOf: "{step} žingsnis iš {total}"
+  acceptContinue: "Sutikti ir tęsti"
+  finishing: "Baigiama…"
+  start: "Pradėti naudoti {app}"
+  language:
+    title: "Pasirinkite kalbą"
+    description: "Ją naudos Portfolio, jos DI ataskaitos ir asistentas. Bet kada galite pakeisti skiltyje Nustatymai, Išvaizda."
+  welcome:
+    title: "Sveiki atvykę į {app}"
+    subtitle: "Stebėkite savo akcijas, ETF ir kriptovaliutas vienoje vietoje."
+    privateTitle: "Privatumas iš esmės"
+    privateText: "Jūsų duomenys lieka šiame kompiuteryje. Jokios paskyros, jokio debesies."
+    pricesTitle: "Kainos, kurios atsinaujina pačios"
+    pricesText: "Matykite, kiek šiandien vertos jūsų investicijos, jūsų pačių valiuta."
+    assistantTitle: "DI asistentas"
+    assistantText: "Užduokite klausimus apie savo portfelį ir gaukite ataskaitas paprasta kalba."
+    termsHighlights: "Svarbiausios sąlygos"
+    readTerms: "Skaityti visas sąlygas"
+    termsPrices: "Kainos ir naujienos gaunamos iš Yahoo Finance ir Finnhub ir gali vėluoti."
+    termsAdvice: "DI ataskaitos ir atsakymai nėra finansinė konsultacija."
+    termsFigures: "Skaičiai pateikiami tokie, kokie yra. Patikrinkite juos prieš imdamiesi veiksmų."
+    agreeBefore: "Perskaičiau ir sutinku su"
+    termsLink: "{app} naudojimo sąlygomis"
+    agreeAfter: ""
+    acceptFailed: "Nepavyko priimti naudojimo sąlygų."
+  demo:
+    title: "Išbandykite demonstracinį portfelį"
+    description: "Dar nepasiruošę pridėti savo investicijų? Pradėkite nuo pavyzdinio portfelio ir apžiūrėkite kiekvieną ekraną su tikroviškais skaičiais."
+    history: "Metų istorija: 100 sandorių su įnašais, pirkimais, pardavimais ir dividendais."
+    holdings: "11 investicijų: Apple, Microsoft, Nvidia ir dar keturios akcijos, trys ETF ir Bitcoin."
+    prices: "Kai esate prisijungę prie interneto, kainos prasideda nuo šiandienos rinkos kainų."
+    ownPortfolio: "Jis yra atskirame portfelyje „{name}“. Bet kada galite jį ištrinti puslapyje Portfeliai."
+    toggle: "Pridėti demonstracinį portfelį"
+    hintOn: "Kai būsite pasiruošę, šalia jo pridėkite savo portfelius."
+    hintOff: "Pradedate nuo tuščio. Importuokite CSV iš Trade Republic, Scalable Capital, Interactive Brokers arba Degiro."
+    chart:
+      stocks: "Akcijos"
+      etfs: "ETF"
+      crypto: "Kripto"
+  telemetry:
+    title: "Anoniminė analitika"
+    description: "Padėkite mums tobulinti {app} bendrindami privatumą saugančią telemetriją."
+    toggle: "Įjungti anoniminę telemetriją"
+    posthog: "Naudojame PostHog pagrindiniams programos įvykiams registruoti (pvz., programa paleista, CSV importuotas, ataskaita sugeneruota). Identifikuojama atsitiktiniu UUID."
+    guaranteeTitle: "Griežta privatumo garantija:"
+    guaranteeText: "Portfelio investicijos, piniginės vertės, sandorių sumos, brokerių pavadinimai ar asmens tapatybės duomenys niekada neperduodami. Tai bet kada galite įjungti arba išjungti skiltyje Nustatymai."
 
 service:
   assistant:

@@ -45,6 +45,10 @@ language:
   tier3: "Einige KI-Modellfamilien unterstützen diese Sprache; Berichte lesen sich eventuell weniger natürlich."
   tier4: "Wenige KI-Modellfamilien unterstützen diese Sprache; Berichte können Fehler enthalten."
   supportedBy: "Offiziell unterstützt von {models}."
+  detected: "{name} · Ihr System"
+  showMore:
+    one: "{count} weitere Sprache anzeigen"
+    other: "{count} weitere Sprachen anzeigen"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Support-Ticket öffnen"
 
 setup:
-  _section: "setup"
+  title: "EINRICHTUNG"
+  stepOf: "Schritt {step} von {total}"
+  acceptContinue: "Akzeptieren und weiter"
+  finishing: "Wird abgeschlossen…"
+  start: "Mit {app} starten"
+  language:
+    title: "Sprache wählen"
+    description: "Portfolio, seine KI-Berichte und der Assistent verwenden sie. Sie können sie jederzeit unter Einstellungen, Darstellung ändern."
+  welcome:
+    title: "Willkommen bei {app}"
+    subtitle: "Verfolgen Sie Ihre Aktien, ETFs und Kryptowährungen an einem Ort."
+    privateTitle: "Privat von Grund auf"
+    privateText: "Ihre Daten bleiben auf diesem Computer. Kein Konto, keine Cloud."
+    pricesTitle: "Kurse, die sich selbst aktualisieren"
+    pricesText: "Sehen Sie, was Ihre Anlagen heute wert sind, in Ihrer eigenen Währung."
+    assistantTitle: "Ein KI-Assistent"
+    assistantText: "Stellen Sie Fragen zu Ihrem Portfolio und erhalten Sie Berichte in verständlichen Worten."
+    termsHighlights: "Das Wichtigste aus den Bedingungen"
+    readTerms: "Vollständige Bedingungen lesen"
+    termsPrices: "Kurse und Nachrichten stammen von Yahoo Finance und Finnhub und können verzögert sein."
+    termsAdvice: "KI-Berichte und -Antworten sind keine Finanzberatung."
+    termsFigures: "Alle Zahlen ohne Gewähr. Prüfen Sie sie, bevor Sie handeln."
+    agreeBefore: "Ich habe die"
+    termsLink: "Nutzungsbedingungen von {app}"
+    agreeAfter: " gelesen und stimme ihnen zu"
+    acceptFailed: "Die Nutzungsbedingungen konnten nicht akzeptiert werden."
+  demo:
+    title: "Demo-Portfolio ausprobieren"
+    description: "Noch nicht bereit, eigene Anlagen hinzuzufügen? Starten Sie mit einem Beispielportfolio und erkunden Sie jede Ansicht mit realistischen Zahlen."
+    history: "Ein Jahr Verlauf: 100 Transaktionen mit Einzahlungen, Käufen, Verkäufen und Dividenden."
+    holdings: "11 Positionen: Apple, Microsoft, Nvidia und vier weitere Aktien, drei ETFs und Bitcoin."
+    prices: "Die Kurse starten beim heutigen Markt, wenn Sie online sind."
+    ownPortfolio: "Es liegt in einem eigenen Portfolio, \"{name}\". Sie können es jederzeit auf der Seite Portfolios löschen."
+    toggle: "Demo-Portfolio hinzufügen"
+    hintOn: "Fügen Sie Ihre eigenen Portfolios daneben hinzu, wann immer Sie möchten."
+    hintOff: "Sie beginnen ohne Daten. Importieren Sie eine CSV von Trade Republic, Scalable Capital, Interactive Brokers oder Degiro."
+    chart:
+      stocks: "Aktien"
+      etfs: "ETFs"
+      crypto: "Krypto"
+  telemetry:
+    title: "Anonyme Analyse"
+    description: "Helfen Sie uns, {app} zu verbessern, indem Sie datenschutzfreundliche Telemetrie teilen."
+    toggle: "Anonyme Telemetrie aktivieren"
+    posthog: "Wir verwenden PostHog, um grundlegende App-Ereignisse zu erfassen (z. B. App gestartet, CSV importiert, Bericht erstellt). Identifiziert durch eine zufällige UUID."
+    guaranteeTitle: "Strenge Datenschutzgarantie:"
+    guaranteeText: "Portfoliopositionen, Geldwerte, Transaktionsbeträge, Brokernamen oder persönliche Identitäten werden niemals übertragen. Sie können dies jederzeit in den Einstellungen ändern."
 
 service:
   assistant:

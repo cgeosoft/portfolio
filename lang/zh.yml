@@ -47,6 +47,9 @@ language:
   tier3: "部分 AI 模型系列支持此语言；报告读起来可能不够自然。"
   tier4: "很少有 AI 模型系列支持此语言；报告可能包含错误。"
   supportedBy: "官方支持：{models}。"
+  detected: "{name} · 您的系统"
+  showMore:
+    other: "再显示 {count} 种语言"
 
 # ── layout: menu bar, header, bottom bar, app-wide dialogs ────────────────
 layout:
@@ -1793,7 +1796,53 @@ settings:
 
 # ── setup: the first-run setup and the lock screen ────────────────────────
 setup:
-  _section: "setup"
+  title: "初始设置"
+  stepOf: "第 {step} 步，共 {total} 步"
+  acceptContinue: "接受并继续"
+  finishing: "正在完成…"
+  start: "开始使用 {app}"
+  language:
+    title: "选择您的语言"
+    description: "Portfolio、其 AI 报告和助手将使用该语言。您可以随时在“设置”的“外观”中更改。"
+  welcome:
+    title: "欢迎使用 {app}"
+    subtitle: "在一个地方跟踪您的股票、ETF 和加密货币。"
+    privateTitle: "从设计上保护隐私"
+    privateText: "您的数据保存在这台电脑上。无需账户，不用云端。"
+    pricesTitle: "自动更新的价格"
+    pricesText: "以您自己的货币查看投资今天的价值。"
+    assistantTitle: "AI 助手"
+    assistantText: "就您的投资组合提问，并获得通俗易懂的报告。"
+    termsHighlights: "条款要点"
+    readTerms: "阅读完整条款"
+    termsPrices: "价格和新闻来自 Yahoo Finance 和 Finnhub，可能存在延迟。"
+    termsAdvice: "AI 报告和回答不构成财务建议。"
+    termsFigures: "数据按原样提供。请在采取行动前核实。"
+    agreeBefore: "我已阅读并同意"
+    termsLink: "{app} 使用条款"
+    agreeAfter: ""
+    acceptFailed: "无法接受使用条款。"
+  demo:
+    title: "试用示例投资组合"
+    description: "还没准备好添加自己的投资？先从示例投资组合开始，用逼真的数字浏览每个页面。"
+    history: "一年的历史记录：100 笔交易，包括入金、买入、卖出和股息。"
+    holdings: "11 项持仓：Apple、Microsoft、Nvidia 及另外四只股票、三只 ETF 和比特币。"
+    prices: "联网时，价格从今天的行情开始。"
+    ownPortfolio: "它位于单独的投资组合“{name}”中。可随时在“投资组合”页面将其删除。"
+    toggle: "添加示例投资组合"
+    hintOn: "准备好后，可随时在旁边添加您自己的投资组合。"
+    hintOff: "您将从空白开始。可从 Trade Republic、Scalable Capital、Interactive Brokers 或 Degiro 导入 CSV。"
+    chart:
+      stocks: "股票"
+      etfs: "ETF"
+      crypto: "加密货币"
+  telemetry:
+    title: "匿名分析"
+    description: "分享保护隐私的遥测数据，帮助我们改进 {app}。"
+    toggle: "启用匿名遥测"
+    posthog: "我们使用 PostHog 记录基本的应用事件（例如应用启动、CSV 导入、报告生成），以随机 UUID 标识。"
+    guaranteeTitle: "严格的隐私保证："
+    guaranteeText: "绝不会传输任何持仓、金额、交易金额、券商名称或个人身份信息。您可以随时在设置中更改此选项。"
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

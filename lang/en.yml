@@ -50,6 +50,10 @@ language:
   tier3: "Some AI model families support this language; reports may read less naturally."
   tier4: "Few AI model families support this language; reports may contain mistakes."
   supportedBy: "Officially supported by {models}."
+  detected: "{name} · your system"
+  showMore:
+    one: "Show {count} more language"
+    other: "Show {count} more languages"
 
 # ── layout: menu bar, header, bottom bar, app-wide dialogs ────────────────
 layout:
@@ -1831,7 +1835,53 @@ settings:
 
 # ── setup: the first-run setup and the lock screen ────────────────────────
 setup:
-  _section: "setup"
+  title: "SETUP"
+  stepOf: "Step {step} of {total}"
+  acceptContinue: "Accept & Continue"
+  finishing: "Finishing…"
+  start: "Start Using {app}"
+  language:
+    title: "Choose your language"
+    description: "Portfolio, its AI reports and the assistant will use it. Change it anytime in Settings, Appearance."
+  welcome:
+    title: "Welcome to {app}"
+    subtitle: "Track your stocks, ETFs and crypto in one place."
+    privateTitle: "Private by design"
+    privateText: "Your data stays on this computer. No account, no cloud."
+    pricesTitle: "Prices that update on their own"
+    pricesText: "See what your investments are worth today, in your own currency."
+    assistantTitle: "An AI assistant"
+    assistantText: "Ask questions about your portfolio and get reports in plain words."
+    termsHighlights: "Terms Highlights"
+    readTerms: "Read Full Terms"
+    termsPrices: "Prices and news come from Yahoo Finance and Finnhub and may lag."
+    termsAdvice: "AI reports and answers are not financial advice."
+    termsFigures: "Figures are provided as is. Check them before you act."
+    agreeBefore: "I have read and agree to the"
+    termsLink: "{app} Terms of Use"
+    agreeAfter: ""
+    acceptFailed: "Failed to accept the Terms of Use."
+  demo:
+    title: "Try a demo portfolio"
+    description: "Not ready to add your own investments yet? Start with a sample portfolio and explore every screen with realistic numbers."
+    history: "A year of history: 100 transactions with deposits, buys, sells and dividends."
+    holdings: "11 holdings: Apple, Microsoft, Nvidia and four more stocks, three ETFs and Bitcoin."
+    prices: "Prices start from today's market when you are online."
+    ownPortfolio: "It sits in its own portfolio, \"{name}\". Delete it anytime on the Portfolios page."
+    toggle: "Add the demo portfolio"
+    hintOn: "Add your own portfolios next to it whenever you are ready."
+    hintOff: "You start empty. Import a CSV from Trade Republic, Scalable Capital, Interactive Brokers or Degiro."
+    chart:
+      stocks: "Stocks"
+      etfs: "ETFs"
+      crypto: "Crypto"
+  telemetry:
+    title: "Anonymous Analytics"
+    description: "Help us improve {app} by sharing privacy-preserving telemetry."
+    toggle: "Enable Anonymous Telemetry"
+    posthog: "We use PostHog to record basic app events (e.g. app launched, CSV imported, report generated). Identified by a random UUID."
+    guaranteeTitle: "Strict Privacy Guarantee:"
+    guaranteeText: "No portfolio holdings, monetary values, transaction amounts, broker names, or personal identities are ever transmitted. You can toggle this anytime in Settings."
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

@@ -45,6 +45,12 @@ language:
   tier3: "Nekatere družine modelov UI podpirajo ta jezik; poročila se lahko berejo manj naravno."
   tier4: "Malo družin modelov UI podpira ta jezik; poročila lahko vsebujejo napake."
   supportedBy: "Uradno podpirajo: {models}."
+  detected: "{name} · jezik sistema"
+  showMore:
+    one: "Pokaži še {count} jezik"
+    two: "Pokaži še {count} jezika"
+    few: "Pokaži še {count} jezike"
+    other: "Pokaži še {count} jezikov"
 
 layout:
   tabs:
@@ -1887,7 +1893,53 @@ settings:
     submit: "Odpri zahtevek za podporo"
 
 setup:
-  _section: "setup"
+  title: "NASTAVITEV"
+  stepOf: "Korak {step} od {total}"
+  acceptContinue: "Sprejmi in nadaljuj"
+  finishing: "Dokončevanje…"
+  start: "Začni uporabljati {app}"
+  language:
+    title: "Izberite jezik"
+    description: "Uporabljali ga bodo Portfolio, njegova poročila UI in pomočnik. Kadar koli ga lahko spremenite v razdelku Nastavitve, Videz."
+  welcome:
+    title: "Dobrodošli v {app}"
+    subtitle: "Spremljajte delnice, ETF-je in kriptovalute na enem mestu."
+    privateTitle: "Zasebnost v temelju"
+    privateText: "Vaši podatki ostanejo v tem računalniku. Brez računa, brez oblaka."
+    pricesTitle: "Cene, ki se posodabljajo same"
+    pricesText: "Oglejte si, koliko so vaše naložbe vredne danes, v vaši valuti."
+    assistantTitle: "Pomočnik UI"
+    assistantText: "Postavljajte vprašanja o svojem portfelju in prejemajte poročila v preprostih besedah."
+    termsHighlights: "Bistveno iz pogojev"
+    readTerms: "Preberi celotne pogoje"
+    termsPrices: "Cene in novice prihajajo iz Yahoo Finance in Finnhub in lahko zamujajo."
+    termsAdvice: "Poročila in odgovori UI niso finančni nasvet."
+    termsFigures: "Podatki so na voljo takšni, kot so. Preverite jih, preden ukrepate."
+    agreeBefore: "Prebral(a) sem in se strinjam s"
+    termsLink: "pogoji uporabe aplikacije {app}"
+    agreeAfter: ""
+    acceptFailed: "Pogojev uporabe ni bilo mogoče sprejeti."
+  demo:
+    title: "Preizkusite demo portfelj"
+    description: "Še niste pripravljeni dodati svojih naložb? Začnite z vzorčnim portfeljem in raziščite vsak zaslon z realističnimi številkami."
+    history: "Leto zgodovine: 100 transakcij s pologi, nakupi, prodajami in dividendami."
+    holdings: "11 naložb: Apple, Microsoft, Nvidia in še štiri delnice, trije ETF-ji in Bitcoin."
+    prices: "Ko ste povezani v splet, cene izhajajo iz današnjega trga."
+    ownPortfolio: "Nahaja se v lastnem portfelju „{name}“. Kadar koli ga lahko izbrišete na strani Portfelji."
+    toggle: "Dodaj demo portfelj"
+    hintOn: "Ko boste pripravljeni, ob njem dodajte svoje portfelje."
+    hintOff: "Začnete brez podatkov. Uvozite CSV iz Trade Republic, Scalable Capital, Interactive Brokers ali Degiro."
+    chart:
+      stocks: "Delnice"
+      etfs: "ETF-ji"
+      crypto: "Kripto"
+  telemetry:
+    title: "Anonimna analitika"
+    description: "Pomagajte nam izboljšati {app} z deljenjem telemetrije, ki varuje zasebnost."
+    toggle: "Omogoči anonimno telemetrijo"
+    posthog: "PostHog uporabljamo za beleženje osnovnih dogodkov aplikacije (npr. zagon aplikacije, uvoz CSV, ustvarjeno poročilo). Prepoznava z naključnim UUID."
+    guaranteeTitle: "Strogo jamstvo zasebnosti:"
+    guaranteeText: "Naložbe v portfelju, denarne vrednosti, zneski transakcij, imena posrednikov in osebni podatki se nikoli ne pošiljajo. To lahko kadar koli spremenite v Nastavitvah."
 
 service:
   assistant:

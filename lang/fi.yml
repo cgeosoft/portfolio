@@ -47,6 +47,10 @@ language:
   tier3: "Osa tekoälymalliperheistä tukee tätä kieltä; raporttien kieli voi olla kömpelömpää."
   tier4: "Harvat tekoälymalliperheet tukevat tätä kieltä; raporteissa voi olla virheitä."
   supportedBy: "Virallisesti tuettu: {models}."
+  detected: "{name} · järjestelmäsi"
+  showMore:
+    one: "Näytä {count} kieli lisää"
+    other: "Näytä {count} kieltä lisää"
 
 # ── layout ──
 layout:
@@ -1828,7 +1832,53 @@ settings:
 
 # ── setup ──
 setup:
-  _section: "setup"
+  title: "KÄYTTÖÖNOTTO"
+  stepOf: "Vaihe {step}/{total}"
+  acceptContinue: "Hyväksy ja jatka"
+  finishing: "Viimeistellään…"
+  start: "Ota {app} käyttöön"
+  language:
+    title: "Valitse kieli"
+    description: "Portfolio, sen tekoälyraportit ja avustaja käyttävät sitä. Voit vaihtaa sen milloin tahansa kohdassa Asetukset, Ulkoasu."
+  welcome:
+    title: "Tervetuloa käyttämään sovellusta {app}"
+    subtitle: "Seuraa osakkeita, ETF:iä ja kryptoja yhdessä paikassa."
+    privateTitle: "Yksityinen jo lähtökohtaisesti"
+    privateText: "Tietosi pysyvät tällä tietokoneella. Ei tiliä, ei pilveä."
+    pricesTitle: "Hinnat päivittyvät itsestään"
+    pricesText: "Näe sijoitustesi arvo tänään omassa valuutassasi."
+    assistantTitle: "Tekoälyavustaja"
+    assistantText: "Kysy salkustasi ja saa raportteja selkeällä kielellä."
+    termsHighlights: "Ehtojen pääkohdat"
+    readTerms: "Lue ehdot kokonaan"
+    termsPrices: "Hinnat ja uutiset tulevat Yahoo Financesta ja Finnhubista, ja ne voivat olla viiveellä."
+    termsAdvice: "Tekoälyn raportit ja vastaukset eivät ole sijoitusneuvontaa."
+    termsFigures: "Luvut toimitetaan sellaisenaan. Tarkista ne ennen kuin toimit."
+    agreeBefore: "Olen lukenut ja hyväksyn"
+    termsLink: "sovelluksen {app} käyttöehdot"
+    agreeAfter: ""
+    acceptFailed: "Käyttöehtojen hyväksyminen epäonnistui."
+  demo:
+    title: "Kokeile esittelysalkkua"
+    description: "Etkö halua vielä lisätä omia sijoituksiasi? Aloita esimerkkisalkulla ja tutustu jokaiseen näkymään realistisilla luvuilla."
+    history: "Vuoden historia: 100 tapahtumaa, joissa on talletuksia, ostoja, myyntejä ja osinkoja."
+    holdings: "11 omistusta: Apple, Microsoft, Nvidia ja neljä muuta osaketta, kolme ETF:ää ja Bitcoin."
+    prices: "Hinnat lähtevät liikkeelle tämän päivän markkinahinnoista, kun olet verkossa."
+    ownPortfolio: "Se on omassa salkussaan, \"{name}\". Poista se milloin tahansa Salkut-sivulla."
+    toggle: "Lisää esittelysalkku"
+    hintOn: "Lisää omat salkkusi sen rinnalle, kun olet valmis."
+    hintOff: "Aloitat tyhjästä. Tuo CSV-tiedosto Trade Republicista, Scalable Capitalista, Interactive Brokersista tai Degirosta."
+    chart:
+      stocks: "Osakkeet"
+      etfs: "ETF:t"
+      crypto: "Krypto"
+  telemetry:
+    title: "Anonyymi analytiikka"
+    description: "Auta meitä parantamaan sovellusta {app} jakamalla yksityisyyttä suojaavaa telemetriaa."
+    toggle: "Ota anonyymi telemetria käyttöön"
+    posthog: "Käytämme PostHogia sovelluksen perustapahtumien tallentamiseen (esim. sovellus käynnistetty, CSV tuotu, raportti luotu). Tunnisteena on satunnainen UUID."
+    guaranteeTitle: "Tiukka yksityisyystakuu:"
+    guaranteeText: "Salkun omistuksia, rahamääriä, tapahtumien summia, välittäjien nimiä tai henkilötietoja ei koskaan lähetetä. Voit muuttaa tätä milloin tahansa Asetuksissa."
 
 # ── service ──
 service:

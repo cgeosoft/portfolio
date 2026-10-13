@@ -45,6 +45,10 @@ language:
   tier3: "Sinusuportahan ng ilang pamilya ng AI model ang wikang ito; maaaring hindi gaanong natural ang mga report."
   tier4: "Kakaunting pamilya ng AI model ang sumusuporta sa wikang ito; maaaring may mga mali ang mga report."
   supportedBy: "Opisyal na sinusuportahan ng {models}."
+  detected: "{name} · ang iyong system"
+  showMore:
+    one: "Ipakita ang {count} pang wika"
+    other: "Ipakita ang {count} pang wika"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Magbukas ng Support Ticket"
 
 setup:
-  _section: "setup"
+  title: "SETUP"
+  stepOf: "Hakbang {step} sa {total}"
+  acceptContinue: "Tanggapin at Magpatuloy"
+  finishing: "Tinatapos…"
+  start: "Simulang Gamitin ang {app}"
+  language:
+    title: "Piliin ang iyong wika"
+    description: "Gagamitin ito ng Portfolio, ng mga AI report nito at ng assistant. Palitan ito anumang oras sa Mga Setting, Hitsura."
+  welcome:
+    title: "Maligayang pagdating sa {app}"
+    subtitle: "Subaybayan ang iyong mga stock, ETF at crypto sa iisang lugar."
+    privateTitle: "Pribado mula sa disenyo"
+    privateText: "Nananatili ang iyong data sa computer na ito. Walang account, walang cloud."
+    pricesTitle: "Mga presyong kusang nag-a-update"
+    pricesText: "Tingnan ang halaga ng iyong mga investment ngayon, sa sarili mong currency."
+    assistantTitle: "Isang AI assistant"
+    assistantText: "Magtanong tungkol sa iyong portfolio at makakuha ng mga report sa simpleng salita."
+    termsHighlights: "Mahahalagang Punto ng Mga Tuntunin"
+    readTerms: "Basahin ang Buong Tuntunin"
+    termsPrices: "Galing sa Yahoo Finance at Finnhub ang mga presyo at balita at maaaring maantala."
+    termsAdvice: "Hindi payong pampinansyal ang mga AI report at sagot."
+    termsFigures: "Ibinibigay ang mga numero kung ano ang mga ito. Suriin ang mga ito bago ka kumilos."
+    agreeBefore: "Nabasa ko at sumasang-ayon ako sa"
+    termsLink: "Mga Tuntunin ng Paggamit ng {app}"
+    agreeAfter: ""
+    acceptFailed: "Hindi matanggap ang Mga Tuntunin ng Paggamit."
+  demo:
+    title: "Subukan ang isang demo portfolio"
+    description: "Hindi ka pa handang idagdag ang sarili mong mga investment? Magsimula sa isang sample na portfolio at tuklasin ang bawat screen gamit ang makatotohanang mga numero."
+    history: "Isang taon ng kasaysayan: 100 transaksyon na may mga deposito, pagbili, pagbenta at dibidendo."
+    holdings: "11 holdings: Apple, Microsoft, Nvidia at apat pang stock, tatlong ETF at Bitcoin."
+    prices: "Nagsisimula ang mga presyo sa merkado ngayong araw kapag online ka."
+    ownPortfolio: "Nasa sarili nitong portfolio ito, “{name}”. Burahin ito anumang oras sa pahina ng Mga Portfolio."
+    toggle: "Idagdag ang demo portfolio"
+    hintOn: "Idagdag ang sarili mong mga portfolio sa tabi nito kapag handa ka na."
+    hintOff: "Magsisimula kang walang laman. Mag-import ng CSV mula sa Trade Republic, Scalable Capital, Interactive Brokers o Degiro."
+    chart:
+      stocks: "Mga Stock"
+      etfs: "Mga ETF"
+      crypto: "Crypto"
+  telemetry:
+    title: "Anonymous na Analytics"
+    description: "Tulungan kaming mapabuti ang {app} sa pagbabahagi ng telemetry na nagpoprotekta sa privacy."
+    toggle: "I-enable ang Anonymous na Telemetry"
+    posthog: "Gumagamit kami ng PostHog para itala ang mga pangunahing event ng app (hal. nailunsad ang app, na-import ang CSV, nagawa ang report). Kinikilala sa pamamagitan ng random na UUID."
+    guaranteeTitle: "Mahigpit na Garantiya sa Privacy:"
+    guaranteeText: "Hindi kailanman ipinapadala ang holdings ng portfolio, mga halaga ng pera, halaga ng mga transaksyon, pangalan ng broker o personal na pagkakakilanlan. Maaari mo itong i-on o i-off anumang oras sa Mga Setting."
 
 service:
   assistant:

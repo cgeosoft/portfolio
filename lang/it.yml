@@ -45,6 +45,11 @@ language:
   tier3: "Alcune famiglie di modelli IA supportano questa lingua; i report potrebbero risultare meno naturali."
   tier4: "Poche famiglie di modelli IA supportano questa lingua; i report potrebbero contenere errori."
   supportedBy: "Supportata ufficialmente da {models}."
+  detected: "{name} · il tuo sistema"
+  showMore:
+    one: "Mostra {count} lingua in più"
+    many: "Mostra {count} lingue in più"
+    other: "Mostra {count} lingue in più"
 
 layout:
   tabs:
@@ -1852,7 +1857,53 @@ settings:
     submit: "Apri ticket di assistenza"
 
 setup:
-  _section: "setup"
+  title: "CONFIGURAZIONE"
+  stepOf: "Passaggio {step} di {total}"
+  acceptContinue: "Accetta e continua"
+  finishing: "Completamento…"
+  start: "Inizia a usare {app}"
+  language:
+    title: "Scegli la tua lingua"
+    description: "Portfolio, i suoi report IA e l'assistente la useranno. Puoi cambiarla in qualsiasi momento in Impostazioni, Aspetto."
+  welcome:
+    title: "Ti diamo il benvenuto in {app}"
+    subtitle: "Segui azioni, ETF e cripto in un unico posto."
+    privateTitle: "Privato per progettazione"
+    privateText: "I tuoi dati restano su questo computer. Nessun account, nessun cloud."
+    pricesTitle: "Prezzi che si aggiornano da soli"
+    pricesText: "Scopri quanto valgono oggi i tuoi investimenti, nella tua valuta."
+    assistantTitle: "Un assistente IA"
+    assistantText: "Fai domande sul tuo portafoglio e ricevi report in parole semplici."
+    termsHighlights: "Punti chiave delle condizioni"
+    readTerms: "Leggi le condizioni complete"
+    termsPrices: "Prezzi e notizie provengono da Yahoo Finance e Finnhub e possono essere in ritardo."
+    termsAdvice: "I report e le risposte dell'IA non sono consulenza finanziaria."
+    termsFigures: "I dati sono forniti così come sono. Verificali prima di agire."
+    agreeBefore: "Ho letto e accetto le"
+    termsLink: "Condizioni d'uso di {app}"
+    agreeAfter: ""
+    acceptFailed: "Impossibile accettare le Condizioni d'uso."
+  demo:
+    title: "Prova un portafoglio demo"
+    description: "Non vuoi ancora aggiungere i tuoi investimenti? Inizia con un portafoglio di esempio ed esplora ogni schermata con numeri realistici."
+    history: "Un anno di storico: 100 transazioni con depositi, acquisti, vendite e dividendi."
+    holdings: "11 posizioni: Apple, Microsoft, Nvidia e altre quattro azioni, tre ETF e Bitcoin."
+    prices: "I prezzi partono dal mercato di oggi quando sei online."
+    ownPortfolio: "Si trova in un portafoglio a sé, \"{name}\". Eliminalo quando vuoi nella pagina Portafogli."
+    toggle: "Aggiungi il portafoglio demo"
+    hintOn: "Aggiungi i tuoi portafogli accanto a questo quando vuoi."
+    hintOff: "Parti da zero. Importa un CSV da Trade Republic, Scalable Capital, Interactive Brokers o Degiro."
+    chart:
+      stocks: "Azioni"
+      etfs: "ETF"
+      crypto: "Cripto"
+  telemetry:
+    title: "Statistiche anonime"
+    description: "Aiutaci a migliorare {app} condividendo dati di telemetria che tutelano la privacy."
+    toggle: "Attiva la telemetria anonima"
+    posthog: "Usiamo PostHog per registrare eventi di base dell'app (ad es. app avviata, CSV importato, report generato). Identificati da un UUID casuale."
+    guaranteeTitle: "Rigorosa garanzia di privacy:"
+    guaranteeText: "Posizioni del portafoglio, valori monetari, importi delle transazioni, nomi dei broker o identità personali non vengono mai trasmessi. Puoi modificare questa scelta in qualsiasi momento in Impostazioni."
 
 service:
   assistant:

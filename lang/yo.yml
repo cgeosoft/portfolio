@@ -45,6 +45,9 @@ language:
   tier3: "Àwọn ìdílé àwòṣe AI kan ló ṣe àtìlẹ́yìn fún èdè yìí; àwọn ìjábọ̀ lè má dún bí èdè àbínibí."
   tier4: "Ìdílé àwòṣe AI díẹ̀ ló ṣe àtìlẹ́yìn fún èdè yìí; àwọn ìjábọ̀ lè ní àṣìṣe."
   supportedBy: "Àtìlẹ́yìn tí a fọwọ́ sí láti ọ̀dọ̀ {models}."
+  detected: "{name} · ètò ẹ̀rọ rẹ"
+  showMore:
+    other: "Fi èdè {count} míràn hàn"
 
 layout:
   tabs:
@@ -1782,7 +1785,53 @@ settings:
     submit: "Ṣí tíkẹ́ẹ̀tì ìrànlọ́wọ́"
 
 setup:
-  _section: "setup"
+  title: "ÌṢÈTÒ"
+  stepOf: "Ìgbésẹ̀ {step} nínú {total}"
+  acceptContinue: "Gbà kí o tẹ̀síwájú"
+  finishing: "Ó ń parí…"
+  start: "Bẹ̀rẹ̀ sí í lo {app}"
+  language:
+    title: "Yan èdè rẹ"
+    description: "Portfolio, àwọn ìjábọ̀ AI rẹ̀ àti olùrànlọ́wọ́ yóò lò ó. Yí i padà nígbàkúgbà nínú Ètò, Ìrísí."
+  welcome:
+    title: "Káàbọ̀ sí {app}"
+    subtitle: "Tọpinpin àwọn ìpín, ETF àti crypto rẹ ní ibì kan."
+    privateTitle: "Àṣírí láti ìpìlẹ̀"
+    privateText: "Dátà rẹ wà lórí kọ̀ǹpútà yìí. Kò sí àkọọ́lẹ̀, kò sí àwọsánmà."
+    pricesTitle: "Iye owó tí ń ṣe àtúnṣe fúnra rẹ̀"
+    pricesText: "Wo iye tí ìdókòwò rẹ tó lónìí, ní owó tìrẹ."
+    assistantTitle: "Olùrànlọ́wọ́ AI kan"
+    assistantText: "Béèrè ìbéèrè nípa àkójọ ìdókòwò rẹ kí o sì gba ìjábọ̀ ní ọ̀rọ̀ tí ó rọrùn."
+    termsHighlights: "Kókó àwọn òfin"
+    readTerms: "Ka gbogbo àwọn òfin"
+    termsPrices: "Iye owó àti ìròyìn wá láti Yahoo Finance àti Finnhub, wọ́n sì lè pẹ́ dé."
+    termsAdvice: "Ìjábọ̀ àti ìdáhùn AI kì í ṣe ìmọ̀ràn ìnáwó."
+    termsFigures: "A pèsè àwọn nọ́ńbà bí wọ́n ṣe wà. Ṣàyẹ̀wò wọn kí o tó ṣe ohunkóhun."
+    agreeBefore: "Mo ti ka mo sì gbà"
+    termsLink: "àwọn òfin ìlò {app}"
+    agreeAfter: ""
+    acceptFailed: "Kò ṣeé ṣe láti gba àwọn òfin ìlò."
+  demo:
+    title: "Gbìyànjú àkójọ ìdókòwò àpẹẹrẹ"
+    description: "Ṣé o kò tíì ṣetán láti fi ìdókòwò tìrẹ kún un? Bẹ̀rẹ̀ pẹ̀lú àkójọ àpẹẹrẹ kí o sì ṣàwárí gbogbo ojú-ìwé pẹ̀lú àwọn nọ́ńbà tó jọ ti gidi."
+    history: "Ìtàn ọdún kan: ìdúnàádúrà 100 pẹ̀lú ìfowópamọ́, rírà, títà àti èrè ìpín."
+    holdings: "Ohun-ìní 11: Apple, Microsoft, Nvidia àti ìpín mẹ́rin míràn, ETF mẹ́ta àti Bitcoin."
+    prices: "Iye owó bẹ̀rẹ̀ láti ọjà ti òní nígbà tí o bá wà lórí ayélujára."
+    ownPortfolio: "Ó wà nínú àkójọ ìdókòwò tirẹ̀, \"{name}\". Pa á rẹ́ nígbàkúgbà ní ojú-ìwé Àwọn àkójọ ìdókòwò."
+    toggle: "Fi àkójọ ìdókòwò àpẹẹrẹ kún un"
+    hintOn: "Fi àwọn àkójọ ìdókòwò tìrẹ kún un lẹ́gbẹ̀ẹ́ rẹ̀ nígbàkúgbà tí o bá ṣetán."
+    hintOff: "O bẹ̀rẹ̀ ní òfo. Gbé CSV wọlé láti Trade Republic, Scalable Capital, Interactive Brokers tàbí Degiro."
+    chart:
+      stocks: "Ìpín"
+      etfs: "ETF"
+      crypto: "Crypto"
+  telemetry:
+    title: "Ìtúpalẹ̀ láìdárúkọ"
+    description: "Ràn wá lọ́wọ́ láti mú {app} dára sí i nípa pínpín ìṣirò ìlò tí ó dáàbò bo àṣírí."
+    toggle: "Mú ìṣirò ìlò láìdárúkọ ṣiṣẹ́"
+    posthog: "A ń lo PostHog láti ṣàkọsílẹ̀ àwọn ìṣẹ̀lẹ̀ ìpìlẹ̀ ètò (bí àpẹẹrẹ, ètò ṣí, CSV wọlé, ìjábọ̀ ṣẹ̀dá). A ń fi UUID àìròtẹ́lẹ̀ dá a mọ̀."
+    guaranteeTitle: "Ìdánilójú àṣírí tó le:"
+    guaranteeText: "A kì í fi ohun-ìní àkójọ ìdókòwò, iye owó, iye ìdúnàádúrà, orúkọ alágbàtà tàbí ìdánimọ̀ ara ẹni ránṣẹ́ rí. O lè tan tàbí pa èyí nígbàkúgbà nínú Ètò."
 
 service:
   assistant:

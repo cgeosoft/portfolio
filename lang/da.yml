@@ -45,6 +45,10 @@ language:
   tier3: "Nogle AI-modelfamilier understøtter dette sprog; rapporter kan lyde mindre naturlige."
   tier4: "Få AI-modelfamilier understøtter dette sprog; rapporter kan indeholde fejl."
   supportedBy: "Officielt understøttet af {models}."
+  detected: "{name} · dit system"
+  showMore:
+    one: "Vis {count} sprog mere"
+    other: "Vis {count} sprog mere"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Opret supportsag"
 
 setup:
-  _section: "setup"
+  title: "OPSÆTNING"
+  stepOf: "Trin {step} af {total}"
+  acceptContinue: "Accepter og fortsæt"
+  finishing: "Afslutter…"
+  start: "Begynd at bruge {app}"
+  language:
+    title: "Vælg dit sprog"
+    description: "Portfolio, dets AI-rapporter og assistenten bruger det. Skift det når som helst under Indstillinger, Udseende."
+  welcome:
+    title: "Velkommen til {app}"
+    subtitle: "Følg dine aktier, ETF'er og krypto ét sted."
+    privateTitle: "Privat fra starten"
+    privateText: "Dine data bliver på denne computer. Ingen konto, ingen sky."
+    pricesTitle: "Kurser, der opdaterer sig selv"
+    pricesText: "Se, hvad dine investeringer er værd i dag, i din egen valuta."
+    assistantTitle: "En AI-assistent"
+    assistantText: "Stil spørgsmål om din portefølje, og få rapporter i et klart sprog."
+    termsHighlights: "Vilkårene i korte træk"
+    readTerms: "Læs de fulde vilkår"
+    termsPrices: "Kurser og nyheder kommer fra Yahoo Finance og Finnhub og kan være forsinkede."
+    termsAdvice: "AI-rapporter og -svar er ikke finansiel rådgivning."
+    termsFigures: "Tallene leveres, som de er. Kontrollér dem, før du handler."
+    agreeBefore: "Jeg har læst og accepterer"
+    termsLink: "Brugsvilkår for {app}"
+    agreeAfter: ""
+    acceptFailed: "Brugsvilkårene kunne ikke accepteres."
+  demo:
+    title: "Prøv en demoportefølje"
+    description: "Ikke klar til at tilføje dine egne investeringer endnu? Start med en eksempelportefølje, og udforsk alle skærmbilleder med realistiske tal."
+    history: "Et års historik: 100 transaktioner med indskud, køb, salg og udbytter."
+    holdings: "11 beholdninger: Apple, Microsoft, Nvidia og fire andre aktier, tre ETF'er og Bitcoin."
+    prices: "Kurserne tager udgangspunkt i dagens marked, når du er online."
+    ownPortfolio: "Den ligger i sin egen portefølje, \"{name}\". Slet den når som helst på siden Porteføljer."
+    toggle: "Tilføj demoporteføljen"
+    hintOn: "Tilføj dine egne porteføljer ved siden af, når du er klar."
+    hintOff: "Du starter uden data. Importér en CSV fra Trade Republic, Scalable Capital, Interactive Brokers eller Degiro."
+    chart:
+      stocks: "Aktier"
+      etfs: "ETF'er"
+      crypto: "Krypto"
+  telemetry:
+    title: "Anonym analyse"
+    description: "Hjælp os med at forbedre {app} ved at dele telemetri, der beskytter dit privatliv."
+    toggle: "Slå anonym telemetri til"
+    posthog: "Vi bruger PostHog til at registrere grundlæggende app-hændelser (f.eks. app startet, CSV importeret, rapport genereret). Identificeret med et tilfældigt UUID."
+    guaranteeTitle: "Streng privatlivsgaranti:"
+    guaranteeText: "Porteføljebeholdninger, pengeværdier, transaktionsbeløb, mæglernavne eller personlige identiteter sendes aldrig. Du kan ændre det når som helst under Indstillinger."
 
 service:
   assistant:

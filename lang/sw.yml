@@ -45,6 +45,10 @@ language:
   tier3: "Baadhi ya familia za miundo ya AI zinaauni lugha hii; ripoti huenda zisisomeke kwa ufasaha."
   tier4: "Familia chache za miundo ya AI zinaauni lugha hii; ripoti huenda zikawa na makosa."
   supportedBy: "Inaauniwa rasmi na {models}."
+  detected: "{name} · mfumo wako"
+  showMore:
+    one: "Onyesha lugha {count} zaidi"
+    other: "Onyesha lugha {count} zaidi"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Fungua Tiketi ya Msaada"
 
 setup:
-  _section: "setup"
+  title: "USANIDI"
+  stepOf: "Hatua {step} kati ya {total}"
+  acceptContinue: "Kubali na Uendelee"
+  finishing: "Inakamilisha…"
+  start: "Anza Kutumia {app}"
+  language:
+    title: "Chagua lugha yako"
+    description: "Portfolio, ripoti zake za AI na msaidizi vitaitumia. Ibadilishe wakati wowote katika Mipangilio, Mwonekano."
+  welcome:
+    title: "Karibu kwenye {app}"
+    subtitle: "Fuatilia hisa, ETF na kripto zako mahali pamoja."
+    privateTitle: "Faragha tangu mwanzo"
+    privateText: "Data yako inabaki kwenye kompyuta hii. Hakuna akaunti, hakuna wingu."
+    pricesTitle: "Bei zinazojisasisha zenyewe"
+    pricesText: "Ona thamani ya uwekezaji wako leo, kwa sarafu yako mwenyewe."
+    assistantTitle: "Msaidizi wa AI"
+    assistantText: "Uliza maswali kuhusu jalada lako na upate ripoti kwa maneno rahisi."
+    termsHighlights: "Mambo Muhimu ya Masharti"
+    readTerms: "Soma Masharti Kamili"
+    termsPrices: "Bei na habari zinatoka Yahoo Finance na Finnhub na huenda zikachelewa."
+    termsAdvice: "Ripoti na majibu ya AI si ushauri wa kifedha."
+    termsFigures: "Takwimu zinatolewa kama zilivyo. Zikague kabla ya kuchukua hatua."
+    agreeBefore: "Nimesoma na ninakubali"
+    termsLink: "Masharti ya Matumizi ya {app}"
+    agreeAfter: ""
+    acceptFailed: "Imeshindwa kukubali Masharti ya Matumizi."
+  demo:
+    title: "Jaribu jalada la mfano"
+    description: "Bado hauko tayari kuongeza uwekezaji wako? Anza na jalada la mfano na uchunguze kila skrini kwa namba zinazokaribia uhalisia."
+    history: "Historia ya mwaka mmoja: miamala 100 yenye amana, ununuzi, mauzo na magawio."
+    holdings: "Umiliki 11: Apple, Microsoft, Nvidia na hisa nyingine nne, ETF tatu na Bitcoin."
+    prices: "Bei zinaanza kutoka soko la leo ukiwa mtandaoni."
+    ownPortfolio: "Liko kwenye jalada lake lenyewe, \"{name}\". Lifute wakati wowote kwenye ukurasa wa Majalada."
+    toggle: "Ongeza jalada la mfano"
+    hintOn: "Ongeza majalada yako mwenyewe kando yake wakati wowote ukiwa tayari."
+    hintOff: "Unaanza bila chochote. Leta CSV kutoka Trade Republic, Scalable Capital, Interactive Brokers au Degiro."
+    chart:
+      stocks: "Hisa"
+      etfs: "ETF"
+      crypto: "Kripto"
+  telemetry:
+    title: "Takwimu Bila Kujitambulisha"
+    description: "Tusaidie kuboresha {app} kwa kushiriki telemetria inayolinda faragha."
+    toggle: "Washa Telemetria Bila Kujitambulisha"
+    posthog: "Tunatumia PostHog kurekodi matukio ya msingi ya programu (k.m. programu imefunguliwa, CSV imeletwa, ripoti imetengenezwa). Hutambuliwa kwa UUID ya nasibu."
+    guaranteeTitle: "Hakikisho Kali la Faragha:"
+    guaranteeText: "Umiliki wa jalada, thamani za fedha, kiasi cha miamala, majina ya madalali au utambulisho wa mtu binafsi havitumwi kamwe. Unaweza kuwasha au kuzima hili wakati wowote katika Mipangilio."
 
 service:
   assistant:

@@ -45,6 +45,11 @@ language:
   tier3: "Šo valodu atbalsta dažas MI modeļu saimes; pārskati var izklausīties mazāk dabiski."
   tier4: "Šo valodu atbalsta maz MI modeļu saimju; pārskatos var būt kļūdas."
   supportedBy: "Oficiāli atbalsta {models}."
+  detected: "{name} · jūsu sistēma"
+  showMore:
+    zero: "Rādīt vēl {count} valodas"
+    one: "Rādīt vēl {count} valodu"
+    other: "Rādīt vēl {count} valodas"
 
 layout:
   tabs:
@@ -1852,7 +1857,53 @@ settings:
     submit: "Atvērt atbalsta pieteikumu"
 
 setup:
-  _section: "setup"
+  title: "IESTATĪŠANA"
+  stepOf: "{step}. darbība no {total}"
+  acceptContinue: "Piekrist un turpināt"
+  finishing: "Pabeidz…"
+  start: "Sākt lietot {app}"
+  language:
+    title: "Izvēlieties valodu"
+    description: "To izmantos Portfolio, tā MI pārskati un asistents. To var jebkurā laikā mainīt sadaļā Iestatījumi, Izskats."
+  welcome:
+    title: "Laipni lūdzam {app}"
+    subtitle: "Sekojiet savām akcijām, ETF un kriptovalūtām vienuviet."
+    privateTitle: "Privātums jau pēc būtības"
+    privateText: "Jūsu dati paliek šajā datorā. Bez konta, bez mākoņa."
+    pricesTitle: "Cenas, kas atjaunojas pašas"
+    pricesText: "Redziet, cik šodien ir vērti jūsu ieguldījumi, jūsu pašu valūtā."
+    assistantTitle: "MI asistents"
+    assistantText: "Uzdodiet jautājumus par savu portfeli un saņemiet pārskatus vienkāršā valodā."
+    termsHighlights: "Noteikumu galvenie punkti"
+    readTerms: "Lasīt pilnos noteikumus"
+    termsPrices: "Cenas un ziņas nāk no Yahoo Finance un Finnhub, un tās var kavēties."
+    termsAdvice: "MI pārskati un atbildes nav finanšu konsultācija."
+    termsFigures: "Skaitļi tiek sniegti tādi, kādi tie ir. Pārbaudiet tos, pirms rīkojaties."
+    agreeBefore: "Esmu izlasījis(-usi) un piekrītu"
+    termsLink: "{app} lietošanas noteikumiem"
+    agreeAfter: ""
+    acceptFailed: "Neizdevās pieņemt lietošanas noteikumus."
+  demo:
+    title: "Izmēģiniet demo portfeli"
+    description: "Vēl neesat gatavs pievienot savus ieguldījumus? Sāciet ar parauga portfeli un izpētiet katru ekrānu ar reālistiskiem skaitļiem."
+    history: "Gada vēsture: 100 darījumi ar iemaksām, pirkumiem, pārdošanām un dividendēm."
+    holdings: "11 ieguldījumi: Apple, Microsoft, Nvidia un vēl četras akcijas, trīs ETF un Bitcoin."
+    prices: "Kad esat tiešsaistē, cenas sākas no šodienas tirgus cenām."
+    ownPortfolio: "Tas atrodas atsevišķā portfelī „{name}”. To var jebkurā laikā dzēst lapā Portfeļi."
+    toggle: "Pievienot demo portfeli"
+    hintOn: "Kad būsiet gatavs, pievienojiet tam blakus savus portfeļus."
+    hintOff: "Jūs sākat ar tukšu portfeli. Importējiet CSV no Trade Republic, Scalable Capital, Interactive Brokers vai Degiro."
+    chart:
+      stocks: "Akcijas"
+      etfs: "ETF"
+      crypto: "Kripto"
+  telemetry:
+    title: "Anonīma analītika"
+    description: "Palīdziet mums uzlabot {app}, kopīgojot privātumu saudzējošu telemetriju."
+    toggle: "Iespējot anonīmu telemetriju"
+    posthog: "Mēs izmantojam PostHog, lai reģistrētu pamata lietotnes notikumus (piem., lietotne palaista, CSV importēts, pārskats izveidots). Identificē pēc nejauša UUID."
+    guaranteeTitle: "Stingra privātuma garantija:"
+    guaranteeText: "Portfeļa ieguldījumi, naudas vērtības, darījumu summas, brokeru nosaukumi vai personas identitāte nekad netiek nosūtīti. To var jebkurā laikā ieslēgt vai izslēgt sadaļā Iestatījumi."
 
 service:
   assistant:

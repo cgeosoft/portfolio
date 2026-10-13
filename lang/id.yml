@@ -45,6 +45,9 @@ language:
   tier3: "Beberapa keluarga model AI mendukung bahasa ini; laporan mungkin terasa kurang alami."
   tier4: "Sedikit keluarga model AI mendukung bahasa ini; laporan mungkin mengandung kesalahan."
   supportedBy: "Didukung secara resmi oleh {models}."
+  detected: "{name} · sistem Anda"
+  showMore:
+    other: "Tampilkan {count} bahasa lagi"
 
 layout:
   tabs:
@@ -1782,7 +1785,53 @@ settings:
     submit: "Buka Tiket Dukungan"
 
 setup:
-  _section: "setup"
+  title: "PENYIAPAN"
+  stepOf: "Langkah {step} dari {total}"
+  acceptContinue: "Terima & Lanjutkan"
+  finishing: "Menyelesaikan…"
+  start: "Mulai Menggunakan {app}"
+  language:
+    title: "Pilih bahasa Anda"
+    description: "Portfolio, laporan AI-nya, dan asisten akan menggunakannya. Ubah kapan saja di Pengaturan, Tampilan."
+  welcome:
+    title: "Selamat datang di {app}"
+    subtitle: "Pantau saham, ETF, dan kripto Anda di satu tempat."
+    privateTitle: "Privat sejak dirancang"
+    privateText: "Data Anda tetap di komputer ini. Tanpa akun, tanpa cloud."
+    pricesTitle: "Harga yang diperbarui sendiri"
+    pricesText: "Lihat nilai investasi Anda hari ini, dalam mata uang Anda sendiri."
+    assistantTitle: "Asisten AI"
+    assistantText: "Ajukan pertanyaan tentang portofolio Anda dan dapatkan laporan dalam bahasa yang mudah dipahami."
+    termsHighlights: "Poin Penting Ketentuan"
+    readTerms: "Baca Ketentuan Lengkap"
+    termsPrices: "Harga dan berita berasal dari Yahoo Finance dan Finnhub dan mungkin tertunda."
+    termsAdvice: "Laporan dan jawaban AI bukan nasihat keuangan."
+    termsFigures: "Angka disediakan apa adanya. Periksa sebelum Anda bertindak."
+    agreeBefore: "Saya telah membaca dan menyetujui"
+    termsLink: "Ketentuan Penggunaan {app}"
+    agreeAfter: ""
+    acceptFailed: "Gagal menerima Ketentuan Penggunaan."
+  demo:
+    title: "Coba portofolio demo"
+    description: "Belum siap menambahkan investasi Anda sendiri? Mulailah dengan portofolio contoh dan jelajahi setiap layar dengan angka yang realistis."
+    history: "Riwayat satu tahun: 100 transaksi berisi setoran, pembelian, penjualan, dan dividen."
+    holdings: "11 kepemilikan: Apple, Microsoft, Nvidia dan empat saham lainnya, tiga ETF, dan Bitcoin."
+    prices: "Harga dimulai dari pasar hari ini saat Anda online."
+    ownPortfolio: "Data ini berada di portofolio tersendiri, “{name}”. Hapus kapan saja di halaman Portofolio."
+    toggle: "Tambahkan portofolio demo"
+    hintOn: "Tambahkan portofolio Anda sendiri di sampingnya kapan pun Anda siap."
+    hintOff: "Anda mulai dari kosong. Impor CSV dari Trade Republic, Scalable Capital, Interactive Brokers, atau Degiro."
+    chart:
+      stocks: "Saham"
+      etfs: "ETF"
+      crypto: "Kripto"
+  telemetry:
+    title: "Analitik Anonim"
+    description: "Bantu kami meningkatkan {app} dengan membagikan telemetri yang menjaga privasi."
+    toggle: "Aktifkan Telemetri Anonim"
+    posthog: "Kami menggunakan PostHog untuk mencatat peristiwa dasar aplikasi (mis. aplikasi dibuka, CSV diimpor, laporan dibuat). Diidentifikasi dengan UUID acak."
+    guaranteeTitle: "Jaminan Privasi Ketat:"
+    guaranteeText: "Kepemilikan portofolio, nilai uang, jumlah transaksi, nama broker, atau identitas pribadi tidak pernah dikirim. Anda dapat mengaktifkan atau menonaktifkannya kapan saja di Pengaturan."
 
 service:
   assistant:

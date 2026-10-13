@@ -45,6 +45,10 @@ language:
   tier3: "Bazı yapay zekâ model aileleri bu dili destekler; raporlar daha az doğal okunabilir."
   tier4: "Az sayıda yapay zekâ model ailesi bu dili destekler; raporlar hata içerebilir."
   supportedBy: "{models} tarafından resmî olarak desteklenir."
+  detected: "{name} · sisteminiz"
+  showMore:
+    one: "{count} dil daha göster"
+    other: "{count} dil daha göster"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Destek Talebi Aç"
 
 setup:
-  _section: "setup"
+  title: "KURULUM"
+  stepOf: "Adım {step} / {total}"
+  acceptContinue: "Kabul Et ve Devam Et"
+  finishing: "Tamamlanıyor…"
+  start: "{app} ile Başlayın"
+  language:
+    title: "Dilinizi seçin"
+    description: "Portfolio, yapay zekâ raporları ve asistan bu dili kullanır. İstediğiniz zaman Ayarlar, Görünüm bölümünden değiştirebilirsiniz."
+  welcome:
+    title: "{app} uygulamasına hoş geldiniz"
+    subtitle: "Hisselerinizi, ETF'lerinizi ve kriptolarınızı tek yerden takip edin."
+    privateTitle: "Tasarımı gereği gizli"
+    privateText: "Verileriniz bu bilgisayarda kalır. Hesap yok, bulut yok."
+    pricesTitle: "Kendiliğinden güncellenen fiyatlar"
+    pricesText: "Yatırımlarınızın bugün ne kadar ettiğini kendi para biriminizde görün."
+    assistantTitle: "Yapay zekâ asistanı"
+    assistantText: "Portföyünüz hakkında sorular sorun, raporları anlaşılır bir dille alın."
+    termsHighlights: "Koşullarda Öne Çıkanlar"
+    readTerms: "Koşulların Tamamını Okuyun"
+    termsPrices: "Fiyatlar ve haberler Yahoo Finance ile Finnhub'dan gelir ve gecikmeli olabilir."
+    termsAdvice: "Yapay zekâ raporları ve yanıtları finansal tavsiye değildir."
+    termsFigures: "Rakamlar olduğu gibi sunulur. Harekete geçmeden önce kontrol edin."
+    agreeBefore: ""
+    termsLink: "{app} Kullanım Koşulları"
+    agreeAfter: " metnini okudum ve kabul ediyorum"
+    acceptFailed: "Kullanım Koşulları kabul edilemedi."
+  demo:
+    title: "Demo portföyü deneyin"
+    description: "Kendi yatırımlarınızı eklemeye henüz hazır değil misiniz? Örnek bir portföyle başlayın ve her ekranı gerçekçi rakamlarla keşfedin."
+    history: "Bir yıllık geçmiş: para yatırma, alım, satım ve temettü içeren 100 işlem."
+    holdings: "11 varlık: Apple, Microsoft, Nvidia ve dört hisse daha, üç ETF ve Bitcoin."
+    prices: "Çevrimiçi olduğunuzda fiyatlar bugünkü piyasadan başlar."
+    ownPortfolio: "\"{name}\" adlı ayrı bir portföyde durur. İstediğiniz zaman Portföyler sayfasından silebilirsiniz."
+    toggle: "Demo portföyü ekle"
+    hintOn: "Hazır olduğunuzda yanına kendi portföylerinizi ekleyin."
+    hintOff: "Boş başlarsınız. Trade Republic, Scalable Capital, Interactive Brokers veya Degiro'dan bir CSV içe aktarın."
+    chart:
+      stocks: "Hisseler"
+      etfs: "ETF'ler"
+      crypto: "Kripto"
+  telemetry:
+    title: "Anonim Analiz"
+    description: "Gizliliği koruyan telemetri paylaşarak {app} uygulamasını geliştirmemize yardımcı olun."
+    toggle: "Anonim Telemetriyi Etkinleştir"
+    posthog: "Temel uygulama olaylarını (ör. uygulama başlatıldı, CSV içe aktarıldı, rapor oluşturuldu) kaydetmek için PostHog kullanıyoruz. Rastgele bir UUID ile tanımlanır."
+    guaranteeTitle: "Katı Gizlilik Güvencesi:"
+    guaranteeText: "Portföy varlıkları, parasal değerler, işlem tutarları, aracı kurum adları veya kişisel kimlikler asla iletilmez. Bunu istediğiniz zaman Ayarlar'dan değiştirebilirsiniz."
 
 service:
   assistant:

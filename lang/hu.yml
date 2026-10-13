@@ -45,6 +45,10 @@ language:
   tier3: "Néhány MI-modellcsalád támogatja ezt a nyelvet; a jelentések kevésbé természetesek lehetnek."
   tier4: "Kevés MI-modellcsalád támogatja ezt a nyelvet; a jelentések hibákat tartalmazhatnak."
   supportedBy: "Hivatalosan támogatja: {models}."
+  detected: "{name} · az Ön rendszere"
+  showMore:
+    one: "Még {count} nyelv megjelenítése"
+    other: "Még {count} nyelv megjelenítése"
 
 layout:
   tabs:
@@ -1817,7 +1821,53 @@ settings:
     submit: "Támogatási jegy megnyitása"
 
 setup:
-  _section: "setup"
+  title: "BEÁLLÍTÁS"
+  stepOf: "{step}. lépés / {total}"
+  acceptContinue: "Elfogadás és tovább"
+  finishing: "Befejezés…"
+  start: "A {app} használatba vétele"
+  language:
+    title: "Válassza ki a nyelvet"
+    description: "Ezt használja a Portfolio, az MI-jelentései és az asszisztens. Bármikor módosíthatja itt: Beállítások, Megjelenés."
+  welcome:
+    title: "Üdvözli a {app}"
+    subtitle: "Kövesse részvényeit, ETF-jeit és kriptoeszközeit egy helyen."
+    privateTitle: "Adatvédelem alapból"
+    privateText: "Adatai ezen a számítógépen maradnak. Nincs fiók, nincs felhő."
+    pricesTitle: "Magától frissülő árfolyamok"
+    pricesText: "Lássa, mennyit érnek ma a befektetései, a saját pénznemében."
+    assistantTitle: "MI-asszisztens"
+    assistantText: "Kérdezzen a portfóliójáról, és kapjon közérthető jelentéseket."
+    termsHighlights: "A feltételek lényege"
+    readTerms: "A teljes feltételek elolvasása"
+    termsPrices: "Az árfolyamok és a hírek a Yahoo Finance és a Finnhub szolgáltatásból származnak, és késhetnek."
+    termsAdvice: "Az MI-jelentések és -válaszok nem minősülnek pénzügyi tanácsadásnak."
+    termsFigures: "Az adatokat a jelenlegi formájukban biztosítjuk. Ellenőrizze őket, mielőtt cselekszik."
+    agreeBefore: "Elolvastam és elfogadom a"
+    termsLink: "{app} felhasználási feltételeit"
+    agreeAfter: ""
+    acceptFailed: "Nem sikerült elfogadni a felhasználási feltételeket."
+  demo:
+    title: "Próbáljon ki egy demóportfóliót"
+    description: "Még nem áll készen a saját befektetései felvételére? Kezdjen egy mintaportfólióval, és fedezzen fel minden képernyőt valósághű számokkal."
+    history: "Egyévnyi előzmény: 100 tranzakció befizetésekkel, vételekkel, eladásokkal és osztalékokkal."
+    holdings: "11 tétel: Apple, Microsoft, Nvidia és még négy részvény, három ETF és Bitcoin."
+    prices: "Ha van internetkapcsolat, az árak a mai piaci árakról indulnak."
+    ownPortfolio: "Saját portfólióban található: „{name}”. Bármikor törölheti a Portfóliók oldalon."
+    toggle: "Demóportfólió hozzáadása"
+    hintOn: "Ha készen áll, bármikor felvehet mellé saját portfóliókat."
+    hintOff: "Üresen indul. Importáljon CSV-t a Trade Republicból, a Scalable Capitalból, az Interactive Brokersből vagy a Degiróból."
+    chart:
+      stocks: "Részvények"
+      etfs: "ETF-ek"
+      crypto: "Kripto"
+  telemetry:
+    title: "Névtelen elemzés"
+    description: "Segítsen a {app} fejlesztésében adatvédelmet tiszteletben tartó telemetria megosztásával."
+    toggle: "Névtelen telemetria engedélyezése"
+    posthog: "A PostHog szolgáltatással alapvető alkalmazáseseményeket rögzítünk (pl. alkalmazás elindítva, CSV importálva, jelentés elkészítve). Az azonosítás véletlenszerű UUID alapján történik."
+    guaranteeTitle: "Szigorú adatvédelmi garancia:"
+    guaranteeText: "Portfóliótételek, pénzösszegek, tranzakciós összegek, brókernevek vagy személyes azonosító adatok soha nem kerülnek továbbításra. Ezt bármikor be- vagy kikapcsolhatja a Beállításokban."
 
 service:
   assistant:

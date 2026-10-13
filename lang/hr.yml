@@ -45,6 +45,11 @@ language:
   tier3: "Neke obitelji AI modela podržavaju ovaj jezik; izvješća mogu zvučati manje prirodno."
   tier4: "Malo obitelji AI modela podržava ovaj jezik; izvješća mogu sadržavati pogreške."
   supportedBy: "Službeno podržavaju: {models}."
+  detected: "{name} · jezik sustava"
+  showMore:
+    one: "Prikaži još {count} jezik"
+    few: "Prikaži još {count} jezika"
+    other: "Prikaži još {count} jezika"
 
 layout:
   tabs:
@@ -1852,7 +1857,53 @@ settings:
     submit: "Otvori zahtjev za podršku"
 
 setup:
-  _section: "setup"
+  title: "POSTAVLJANJE"
+  stepOf: "Korak {step} od {total}"
+  acceptContinue: "Prihvati i nastavi"
+  finishing: "Dovršavanje…"
+  start: "Počni koristiti {app}"
+  language:
+    title: "Odaberite jezik"
+    description: "Koristit će ga Portfolio, njegova AI izvješća i asistent. Možete ga promijeniti bilo kada u odjeljku Postavke, Izgled."
+  welcome:
+    title: "Dobro došli u {app}"
+    subtitle: "Pratite dionice, ETF-ove i kriptovalute na jednom mjestu."
+    privateTitle: "Privatnost u temelju"
+    privateText: "Vaši podaci ostaju na ovom računalu. Bez računa, bez oblaka."
+    pricesTitle: "Cijene koje se same ažuriraju"
+    pricesText: "Pogledajte koliko vaša ulaganja danas vrijede, u vašoj valuti."
+    assistantTitle: "AI asistent"
+    assistantText: "Postavljajte pitanja o svom portfelju i dobivajte izvješća jednostavnim riječima."
+    termsHighlights: "Najvažnije iz uvjeta"
+    readTerms: "Pročitaj cijele uvjete"
+    termsPrices: "Cijene i vijesti dolaze od Yahoo Finance i Finnhub i mogu kasniti."
+    termsAdvice: "AI izvješća i odgovori nisu financijski savjet."
+    termsFigures: "Podaci se pružaju takvi kakvi jesu. Provjerite ih prije nego što nešto poduzmete."
+    agreeBefore: "Pročitao/la sam i prihvaćam"
+    termsLink: "Uvjete korištenja aplikacije {app}"
+    agreeAfter: ""
+    acceptFailed: "Prihvaćanje uvjeta korištenja nije uspjelo."
+  demo:
+    title: "Isprobajte demo portfelj"
+    description: "Još niste spremni dodati vlastita ulaganja? Počnite s oglednim portfeljem i istražite svaki zaslon s realističnim brojkama."
+    history: "Godina povijesti: 100 transakcija s uplatama, kupnjama, prodajama i dividendama."
+    holdings: "11 ulaganja: Apple, Microsoft, Nvidia i još četiri dionice, tri ETF-a i Bitcoin."
+    prices: "Kada ste na mreži, cijene kreću od današnjeg tržišta."
+    ownPortfolio: "Nalazi se u zasebnom portfelju „{name}”. Možete ga izbrisati bilo kada na stranici Portfelji."
+    toggle: "Dodaj demo portfelj"
+    hintOn: "Dodajte vlastite portfelje uz njega kad god budete spremni."
+    hintOff: "Počinjete bez podataka. Uvezite CSV iz Trade Republic, Scalable Capital, Interactive Brokers ili Degiro."
+    chart:
+      stocks: "Dionice"
+      etfs: "ETF-ovi"
+      crypto: "Kripto"
+  telemetry:
+    title: "Anonimna analitika"
+    description: "Pomozite nam poboljšati {app} dijeljenjem telemetrije koja čuva privatnost."
+    toggle: "Uključi anonimnu telemetriju"
+    posthog: "Koristimo PostHog za bilježenje osnovnih događaja u aplikaciji (npr. pokretanje aplikacije, uvoz CSV-a, izrada izvješća). Identifikacija putem nasumičnog UUID-a."
+    guaranteeTitle: "Strogo jamstvo privatnosti:"
+    guaranteeText: "Ulaganja u portfelju, novčani iznosi, iznosi transakcija, nazivi brokera i osobni podaci nikada se ne šalju. Ovo možete promijeniti bilo kada u Postavkama."
 
 service:
   assistant:
