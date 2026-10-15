@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.14.1] - 2026-10-15
+
+### Changed
+- Suggestions is now a page inside the Analysis sidebar instead of its own tab
+- The Analysis tab and its Suggestions entry show the number of open suggestions
+- Each Analysis page now has its own link, but old suggestions links still work
+- The status bar now shows a Sponsorship page before Terms of Use
+- The Sponsorship page opens the website in a frame, similar to Terms of Use
+
+
 ## [0.14.0] - 2026-10-13
 
 ### Added
