@@ -107,6 +107,8 @@ layout:
     statusBar: "Bilah Status Aplikasi"
     openVendor: "Buka cgeosoft.com di browser"
     openTerms: "Buka Ketentuan Penggunaan di aplikasi"
+    openSponsorship: "Buka halaman sponsor di aplikasi"
+    sponsorship: "sponsor"
     terms: "ketentuan penggunaan"
     switchPortfolio: "Ganti Portofolio"
     portfoliosCount: "Portofolio ({count})"
@@ -155,6 +157,13 @@ layout:
     downloading: "Mengunduh…"
     downloadAgain: "Unduh Lagi"
     downloadLatest: "Unduh Versi Terbaru"
+  sponsorship:
+    title: "Sponsor"
+    frameTitle: "Sponsor {app}"
+    reloadTitle: "Muat ulang halaman sponsor"
+    openTitle: "Buka halaman sponsor di peramban web"
+    loading: "Memuat halaman sponsor {app} dari {url}…"
+    loadFailed: "Tidak dapat memuat halaman sponsor {app}"
   terms:
     title: "Ketentuan Penggunaan"
     frameTitle: "Ketentuan Penggunaan {app}"

@@ -14,7 +14,6 @@ import {
   PieChart,
   BarChart3,
   FileText,
-  Lightbulb,
   History,
   Eye,
   EyeOff,
@@ -187,7 +186,6 @@ export function AppMenuBar({
     { label: t("layout.tabs.analysis"), icon: BarChart3, checked: activeTab === "analysis", action: run(() => onSelectTab("analysis")) },
     { label: t("layout.tabs.transactions"), icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
     { label: t("layout.tabs.reports"), icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
-    { label: t("layout.tabs.suggestions"), icon: Lightbulb, checked: activeTab === "suggestions", action: run(() => onSelectTab("suggestions")) },
     { type: "separator" },
     ...(onToggleAssistant
       ? [{ label: t("layout.menu.view.assistant"), shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]

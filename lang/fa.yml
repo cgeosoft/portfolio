@@ -108,6 +108,8 @@ layout:
     statusBar: "نوار وضعیت برنامه"
     openVendor: "باز کردن cgeosoft.com در مرورگر"
     openTerms: "باز کردن شرایط استفاده در برنامه"
+    openSponsorship: "باز کردن صفحه حمایت مالی در برنامه"
+    sponsorship: "حمایت مالی"
     terms: "شرایط استفاده"
     switchPortfolio: "تغییر سبد"
     portfoliosCount: "سبدها ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "در حال دانلود…"
     downloadAgain: "دانلود دوباره"
     downloadLatest: "دانلود آخرین نسخه"
+  sponsorship:
+    title: "حمایت مالی"
+    frameTitle: "حمایت مالی از {app}"
+    reloadTitle: "بارگذاری دوباره صفحه حمایت مالی"
+    openTitle: "باز کردن صفحه حمایت مالی در مرورگر وب"
+    loading: "در حال بارگذاری صفحه حمایت مالی {app} از {url}…"
+    loadFailed: "بارگذاری صفحه حمایت مالی {app} ممکن نشد"
   terms:
     title: "شرایط استفاده"
     frameTitle: "شرایط استفاده {app}"

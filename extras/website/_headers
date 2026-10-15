@@ -7,14 +7,20 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
 
-# The app shows the Terms page in an iframe, from a loopback port in the
+# The app shows the Terms and Sponsorship pages in an iframe, from a loopback port in the
 # desktop window and from the LAN address in a browser on the network. Pages
-# joins the values of a header that two rules set, so this rule removes the
+# joins the values of a header that two rules set, so these rules remove the
 # frame block (`!`) instead of setting a second policy next to it.
 /terms
   ! X-Frame-Options
 
 /terms/*
+  ! X-Frame-Options
+
+/sponsorship
+  ! X-Frame-Options
+
+/sponsorship/*
   ! X-Frame-Options
 
 # The sponsorship page shows the sponsor banner in an iframe. Same origin only.

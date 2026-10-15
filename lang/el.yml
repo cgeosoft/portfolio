@@ -108,6 +108,8 @@ layout:
     statusBar: "Γραμμή κατάστασης εφαρμογής"
     openVendor: "Άνοιγμα του cgeosoft.com στο πρόγραμμα περιήγησης"
     openTerms: "Άνοιγμα των Όρων χρήσης στην εφαρμογή"
+    openSponsorship: "Άνοιγμα της σελίδας χορηγίας στην εφαρμογή"
+    sponsorship: "χορηγία"
     terms: "όροι χρήσης"
     switchPortfolio: "Αλλαγή χαρτοφυλακίου"
     portfoliosCount: "Χαρτοφυλάκια ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Λήψη…"
     downloadAgain: "Λήψη ξανά"
     downloadLatest: "Λήψη τελευταίας έκδοσης"
+  sponsorship:
+    title: "Χορηγία"
+    frameTitle: "Χορηγία του {app}"
+    reloadTitle: "Επαναφόρτωση της σελίδας χορηγίας"
+    openTitle: "Άνοιγμα της σελίδας χορηγίας στο πρόγραμμα περιήγησης"
+    loading: "Φόρτωση της σελίδας χορηγίας του {app} από {url}…"
+    loadFailed: "Δεν ήταν δυνατή η φόρτωση της σελίδας χορηγίας του {app}"
   terms:
     title: "Όροι χρήσης"
     frameTitle: "Όροι χρήσης του {app}"

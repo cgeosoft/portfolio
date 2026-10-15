@@ -110,6 +110,8 @@ layout:
     statusBar: "Рядок стану застосунку"
     openVendor: "Відкрити cgeosoft.com у браузері"
     openTerms: "Відкрити умови використання в застосунку"
+    openSponsorship: "Відкрити сторінку спонсорства в застосунку"
+    sponsorship: "спонсорство"
     terms: "умови використання"
     switchPortfolio: "Змінити портфель"
     portfoliosCount: "Портфелі ({count})"
@@ -158,6 +160,13 @@ layout:
     downloading: "Завантаження…"
     downloadAgain: "Завантажити знову"
     downloadLatest: "Завантажити останню версію"
+  sponsorship:
+    title: "Спонсорство"
+    frameTitle: "Спонсорство {app}"
+    reloadTitle: "Перезавантажити сторінку спонсорства"
+    openTitle: "Відкрити сторінку спонсорства у браузері"
+    loading: "Завантаження сторінки спонсорства {app} з {url}…"
+    loadFailed: "Не вдалося завантажити сторінку спонсорства {app}"
   terms:
     title: "Умови використання"
     frameTitle: "Умови використання {app}"

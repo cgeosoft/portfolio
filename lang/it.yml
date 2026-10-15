@@ -109,6 +109,8 @@ layout:
     statusBar: "Barra di stato dell'applicazione"
     openVendor: "Apri cgeosoft.com nel browser"
     openTerms: "Apri le condizioni d'uso nell'app"
+    openSponsorship: "Apri la pagina della sponsorizzazione nell'app"
+    sponsorship: "sponsorizzazione"
     terms: "condizioni d'uso"
     switchPortfolio: "Cambia portafoglio"
     portfoliosCount: "Portafogli ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "Download…"
     downloadAgain: "Scarica di nuovo"
     downloadLatest: "Scarica l'ultima versione"
+  sponsorship:
+    title: "Sponsorizzazione"
+    frameTitle: "Sponsorizzazione di {app}"
+    reloadTitle: "Ricarica la pagina della sponsorizzazione"
+    openTitle: "Apri la pagina della sponsorizzazione nel browser web"
+    loading: "Caricamento della pagina di sponsorizzazione di {app} da {url}…"
+    loadFailed: "Impossibile caricare la pagina di sponsorizzazione di {app}"
   terms:
     title: "Condizioni d'uso"
     frameTitle: "Condizioni d'uso di {app}"

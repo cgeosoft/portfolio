@@ -108,6 +108,8 @@ layout:
     statusBar: "Statusbalk van de applicatie"
     openVendor: "cgeosoft.com openen in browser"
     openTerms: "Gebruiksvoorwaarden openen in de app"
+    openSponsorship: "Sponsorpagina in de app openen"
+    sponsorship: "sponsoring"
     terms: "gebruiksvoorwaarden"
     switchPortfolio: "Andere portfolio kiezen"
     portfoliosCount: "Portfolio's ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Downloaden…"
     downloadAgain: "Opnieuw downloaden"
     downloadLatest: "Nieuwste versie downloaden"
+  sponsorship:
+    title: "Sponsoring"
+    frameTitle: "Sponsoring van {app}"
+    reloadTitle: "Sponsorpagina opnieuw laden"
+    openTitle: "Sponsorpagina in de webbrowser openen"
+    loading: "Sponsorpagina van {app} laden vanaf {url}…"
+    loadFailed: "Kan de sponsorpagina van {app} niet laden"
   terms:
     title: "Gebruiksvoorwaarden"
     frameTitle: "Gebruiksvoorwaarden van {app}"

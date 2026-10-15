@@ -110,6 +110,8 @@ layout:
     statusBar: "应用状态栏"
     openVendor: "在浏览器中打开 cgeosoft.com"
     openTerms: "在应用中打开使用条款"
+    openSponsorship: "在应用中打开赞助页面"
+    sponsorship: "赞助"
     terms: "使用条款"
     switchPortfolio: "切换投资组合"
     portfoliosCount: "投资组合（{count}）"
@@ -158,6 +160,13 @@ layout:
     downloading: "正在下载…"
     downloadAgain: "重新下载"
     downloadLatest: "下载最新版本"
+  sponsorship:
+    title: "赞助"
+    frameTitle: "{app} 赞助"
+    reloadTitle: "重新加载赞助页面"
+    openTitle: "在网页浏览器中打开赞助页面"
+    loading: "正在从 {url} 加载 {app} 赞助页面…"
+    loadFailed: "无法加载 {app} 赞助页面"
   terms:
     title: "使用条款"
     frameTitle: "{app} 使用条款"

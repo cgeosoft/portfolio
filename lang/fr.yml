@@ -109,6 +109,8 @@ layout:
     statusBar: "Barre d'état de l'application"
     openVendor: "Ouvrir cgeosoft.com dans le navigateur"
     openTerms: "Ouvrir les conditions d'utilisation dans l'application"
+    openSponsorship: "Ouvrir la page de parrainage dans l'application"
+    sponsorship: "parrainage"
     terms: "conditions d'utilisation"
     switchPortfolio: "Changer de portefeuille"
     portfoliosCount: "Portefeuilles ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "Téléchargement…"
     downloadAgain: "Télécharger à nouveau"
     downloadLatest: "Télécharger la dernière version"
+  sponsorship:
+    title: "Parrainage"
+    frameTitle: "Parrainage de {app}"
+    reloadTitle: "Recharger la page de parrainage"
+    openTitle: "Ouvrir la page de parrainage dans le navigateur web"
+    loading: "Chargement de la page de parrainage de {app} depuis {url}…"
+    loadFailed: "Impossible de charger la page de parrainage de {app}"
   terms:
     title: "Conditions d'utilisation"
     frameTitle: "Conditions d'utilisation de {app}"

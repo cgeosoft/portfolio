@@ -109,6 +109,8 @@ layout:
     statusBar: "שורת המצב של היישום"
     openVendor: "פתיחת cgeosoft.com בדפדפן"
     openTerms: "פתיחת תנאי השימוש ביישום"
+    openSponsorship: "פתיחת דף החסות באפליקציה"
+    sponsorship: "חסות"
     terms: "תנאי שימוש"
     switchPortfolio: "החלפת תיק"
     portfoliosCount: "תיקים ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "מוריד…"
     downloadAgain: "הורדה חוזרת"
     downloadLatest: "הורדת הגרסה האחרונה"
+  sponsorship:
+    title: "חסות"
+    frameTitle: "חסות ל-{app}"
+    reloadTitle: "טעינה מחדש של דף החסות"
+    openTitle: "פתיחת דף החסות בדפדפן האינטרנט"
+    loading: "טוען את דף החסות של {app} מ-{url}…"
+    loadFailed: "לא ניתן לטעון את דף החסות של {app}"
   terms:
     title: "תנאי שימוש"
     frameTitle: "תנאי השימוש של {app}"

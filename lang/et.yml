@@ -111,6 +111,8 @@ layout:
     statusBar: "Rakenduse olekuriba"
     openVendor: "Ava cgeosoft.com brauseris"
     openTerms: "Ava kasutustingimused rakenduses"
+    openSponsorship: "Ava sponsorluse leht rakenduses"
+    sponsorship: "sponsorlus"
     terms: "kasutustingimused"
     switchPortfolio: "Vaheta portfelli"
     portfoliosCount: "Portfellid ({count})"
@@ -159,6 +161,13 @@ layout:
     downloading: "Allalaadimine…"
     downloadAgain: "Laadi uuesti alla"
     downloadLatest: "Laadi alla uusim versioon"
+  sponsorship:
+    title: "Sponsorlus"
+    frameTitle: "{app} sponsorlus"
+    reloadTitle: "Laadi sponsorluse leht uuesti"
+    openTitle: "Ava sponsorluse leht veebibrauseris"
+    loading: "{app} sponsorluse lehte laaditakse aadressilt {url}…"
+    loadFailed: "{app} sponsorluse lehte ei õnnestunud laadida"
   terms:
     title: "Kasutustingimused"
     frameTitle: "{app} kasutustingimused"

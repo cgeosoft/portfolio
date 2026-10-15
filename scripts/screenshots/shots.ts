@@ -210,7 +210,7 @@ export const SCREENS: Screen[] = [
     id: "income",
     label: "Analysis",
     title: "Dividends you got and dividends to come",
-    text: "The Analysis tab: exposure, income and markets. Here, twelve months of expected income, yields and the next ex-dividend dates.",
+    text: "The Analysis tab: exposure, income, markets and suggestions. Here, twelve months of expected income, yields and the next ex-dividend dates.",
     hash: "analysis",
     ready: "Income & Events",
     prepare: async (page) => {
@@ -359,7 +359,7 @@ export const SCREENS: Screen[] = [
     label: "Suggestions",
     title: "Rebalancing ideas, with the math done",
     text: "The assistant proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
-    hash: "suggestions",
+    hash: "analysis/suggestions",
     ready: "Target Portfolio",
     hotspots: [
       {

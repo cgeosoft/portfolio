@@ -108,6 +108,8 @@ layout:
     statusBar: "Uygulama Durum Çubuğu"
     openVendor: "cgeosoft.com'u tarayıcıda aç"
     openTerms: "Kullanım Koşullarını uygulamada aç"
+    openSponsorship: "Sponsorluk sayfasını uygulamada aç"
+    sponsorship: "sponsorluk"
     terms: "kullanım koşulları"
     switchPortfolio: "Portföy Değiştir"
     portfoliosCount: "Portföyler ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "İndiriliyor…"
     downloadAgain: "Yeniden İndir"
     downloadLatest: "En Son Sürümü İndir"
+  sponsorship:
+    title: "Sponsorluk"
+    frameTitle: "{app} sponsorluğu"
+    reloadTitle: "Sponsorluk sayfasını yeniden yükle"
+    openTitle: "Sponsorluk sayfasını web tarayıcısında aç"
+    loading: "{app} sponsorluk sayfası {url} adresinden yükleniyor…"
+    loadFailed: "{app} sponsorluk sayfası yüklenemedi"
   terms:
     title: "Kullanım Koşulları"
     frameTitle: "{app} Kullanım Koşulları"

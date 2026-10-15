@@ -108,6 +108,8 @@ layout:
     statusBar: "Alkalmazás állapotsora"
     openVendor: "A cgeosoft.com megnyitása böngészőben"
     openTerms: "Felhasználási feltételek megnyitása az alkalmazásban"
+    openSponsorship: "Szponzorációs oldal megnyitása az alkalmazásban"
+    sponsorship: "szponzoráció"
     terms: "felhasználási feltételek"
     switchPortfolio: "Portfólióváltás"
     portfoliosCount: "Portfóliók ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Letöltés…"
     downloadAgain: "Letöltés újra"
     downloadLatest: "Legújabb verzió letöltése"
+  sponsorship:
+    title: "Szponzoráció"
+    frameTitle: "{app} szponzoráció"
+    reloadTitle: "Szponzorációs oldal újratöltése"
+    openTitle: "Szponzorációs oldal megnyitása a böngészőben"
+    loading: "A(z) {app} szponzorációs oldalának betöltése innen: {url}…"
+    loadFailed: "A(z) {app} szponzorációs oldala nem tölthető be"
   terms:
     title: "Felhasználási feltételek"
     frameTitle: "{app} – Felhasználási feltételek"

@@ -108,6 +108,8 @@ layout:
     statusBar: "Upau wa Hali ya Programu"
     openVendor: "Fungua cgeosoft.com kwenye kivinjari"
     openTerms: "Fungua Masharti ya Matumizi ndani ya programu"
+    openSponsorship: "Fungua ukurasa wa udhamini ndani ya programu"
+    sponsorship: "udhamini"
     terms: "masharti ya matumizi"
     switchPortfolio: "Badilisha Jalada"
     portfoliosCount: "Majalada ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Inapakua…"
     downloadAgain: "Pakua Tena"
     downloadLatest: "Pakua Toleo la Karibuni"
+  sponsorship:
+    title: "Udhamini"
+    frameTitle: "Udhamini wa {app}"
+    reloadTitle: "Pakia upya ukurasa wa udhamini"
+    openTitle: "Fungua ukurasa wa udhamini kwenye kivinjari"
+    loading: "Inapakia ukurasa wa udhamini wa {app} kutoka {url}…"
+    loadFailed: "Imeshindwa kupakia ukurasa wa udhamini wa {app}"
   terms:
     title: "Masharti ya Matumizi"
     frameTitle: "Masharti ya Matumizi ya {app}"

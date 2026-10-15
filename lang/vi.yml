@@ -107,6 +107,8 @@ layout:
     statusBar: "Thanh trạng thái ứng dụng"
     openVendor: "Mở cgeosoft.com trong trình duyệt"
     openTerms: "Mở Điều khoản sử dụng trong ứng dụng"
+    openSponsorship: "Mở trang tài trợ trong ứng dụng"
+    sponsorship: "tài trợ"
     terms: "điều khoản sử dụng"
     switchPortfolio: "Chuyển danh mục"
     portfoliosCount: "Danh mục ({count})"
@@ -155,6 +157,13 @@ layout:
     downloading: "Đang tải xuống…"
     downloadAgain: "Tải xuống lại"
     downloadLatest: "Tải phiên bản mới nhất"
+  sponsorship:
+    title: "Tài trợ"
+    frameTitle: "Tài trợ {app}"
+    reloadTitle: "Tải lại trang tài trợ"
+    openTitle: "Mở trang tài trợ trong trình duyệt web"
+    loading: "Đang tải trang tài trợ {app} từ {url}…"
+    loadFailed: "Không thể tải trang tài trợ {app}"
   terms:
     title: "Điều khoản sử dụng"
     frameTitle: "Điều khoản sử dụng {app}"

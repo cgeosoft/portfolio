@@ -109,6 +109,8 @@ layout:
     statusBar: "Statusna traka aplikacije"
     openVendor: "Otvori cgeosoft.com u pregledniku"
     openTerms: "Otvori uvjete korištenja u aplikaciji"
+    openSponsorship: "Otvori stranicu o sponzorstvu u aplikaciji"
+    sponsorship: "sponzorstvo"
     terms: "uvjeti korištenja"
     switchPortfolio: "Promijeni portfelj"
     portfoliosCount: "Portfelji ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "Preuzimanje…"
     downloadAgain: "Preuzmi ponovno"
     downloadLatest: "Preuzmi najnoviju verziju"
+  sponsorship:
+    title: "Sponzorstvo"
+    frameTitle: "Sponzorstvo za {app}"
+    reloadTitle: "Ponovno učitaj stranicu o sponzorstvu"
+    openTitle: "Otvori stranicu o sponzorstvu u web-pregledniku"
+    loading: "Učitavanje stranice o sponzorstvu za {app} s {url}…"
+    loadFailed: "Nije moguće učitati stranicu o sponzorstvu za {app}"
   terms:
     title: "Uvjeti korištenja"
     frameTitle: "Uvjeti korištenja aplikacije {app}"

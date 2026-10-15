@@ -107,6 +107,8 @@ layout:
     statusBar: "Ọ̀pá ipò ètò"
     openVendor: "Ṣí cgeosoft.com nínú aṣàwákiri"
     openTerms: "Ṣí àwọn òfin ìlò nínú ètò"
+    openSponsorship: "Ṣí ojú-ìwé ìgbọ̀wọ́ nínú áàpù"
+    sponsorship: "ìgbọ̀wọ́"
     terms: "àwọn òfin ìlò"
     switchPortfolio: "Yí àkójọ ìdókòwò padà"
     portfoliosCount: "Àwọn àkójọ ìdókòwò ({count})"
@@ -155,6 +157,13 @@ layout:
     downloading: "Ó ń ṣe ìgbàsílẹ̀…"
     downloadAgain: "Tún ṣe ìgbàsílẹ̀"
     downloadLatest: "Ṣe ìgbàsílẹ̀ ẹ̀yà tuntun jùlọ"
+  sponsorship:
+    title: "Ìgbọ̀wọ́"
+    frameTitle: "Ìgbọ̀wọ́ {app}"
+    reloadTitle: "Tún ojú-ìwé ìgbọ̀wọ́ gbé"
+    openTitle: "Ṣí ojú-ìwé ìgbọ̀wọ́ nínú aṣàwákiri wẹ́ẹ̀bù"
+    loading: "Ń gbé ojú-ìwé ìgbọ̀wọ́ {app} láti {url}…"
+    loadFailed: "Kò ṣeé ṣe láti gbé ojú-ìwé ìgbọ̀wọ́ {app}"
   terms:
     title: "Àwọn òfin ìlò"
     frameTitle: "Àwọn òfin ìlò {app}"

@@ -108,6 +108,8 @@ layout:
     statusBar: "Programmets statuslinje"
     openVendor: "Åbn cgeosoft.com i browseren"
     openTerms: "Åbn brugsvilkår i appen"
+    openSponsorship: "Åbn sponsorsiden i appen"
+    sponsorship: "sponsorat"
     terms: "brugsvilkår"
     switchPortfolio: "Skift portefølje"
     portfoliosCount: "Porteføljer ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Downloader…"
     downloadAgain: "Download igen"
     downloadLatest: "Download nyeste version"
+  sponsorship:
+    title: "Sponsorat"
+    frameTitle: "{app} sponsorat"
+    reloadTitle: "Genindlæs sponsorsiden"
+    openTitle: "Åbn sponsorsiden i webbrowseren"
+    loading: "Indlæser {app} sponsorsiden fra {url}…"
+    loadFailed: "Kunne ikke indlæse {app} sponsorsiden"
   terms:
     title: "Brugsvilkår"
     frameTitle: "Brugsvilkår for {app}"

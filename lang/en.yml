@@ -114,6 +114,8 @@ layout:
     statusBar: "Application Status Bar"
     openVendor: "Open cgeosoft.com in browser"
     openTerms: "Open Terms of Use in app"
+    openSponsorship: "Open the sponsorship page in app"
+    sponsorship: "sponsorship"
     terms: "terms of use"
     switchPortfolio: "Switch Portfolio"
     portfoliosCount: "Portfolios ({count})"
@@ -162,6 +164,13 @@ layout:
     downloading: "Downloading…"
     downloadAgain: "Download Again"
     downloadLatest: "Download Latest Version"
+  sponsorship:
+    title: "Sponsorship"
+    frameTitle: "{app} Sponsorship"
+    reloadTitle: "Reload the sponsorship page"
+    openTitle: "Open the sponsorship page in the web browser"
+    loading: "Loading the {app} sponsorship page from {url}…"
+    loadFailed: "Unable to Load the {app} Sponsorship Page"
   terms:
     title: "Terms of Use"
     frameTitle: "{app} Terms of Use"

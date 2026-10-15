@@ -108,6 +108,8 @@ layout:
     statusBar: "ऐप्लिकेशन स्टेटस बार"
     openVendor: "cgeosoft.com ब्राउज़र में खोलें"
     openTerms: "उपयोग की शर्तें ऐप में खोलें"
+    openSponsorship: "ऐप में प्रायोजन पेज खोलें"
+    sponsorship: "प्रायोजन"
     terms: "उपयोग की शर्तें"
     switchPortfolio: "पोर्टफोलियो बदलें"
     portfoliosCount: "पोर्टफोलियो ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "डाउनलोड हो रहा है…"
     downloadAgain: "फिर से डाउनलोड करें"
     downloadLatest: "नवीनतम वर्ज़न डाउनलोड करें"
+  sponsorship:
+    title: "प्रायोजन"
+    frameTitle: "{app} प्रायोजन"
+    reloadTitle: "प्रायोजन पेज फिर से लोड करें"
+    openTitle: "वेब ब्राउज़र में प्रायोजन पेज खोलें"
+    loading: "{url} से {app} प्रायोजन पेज लोड हो रहा है…"
+    loadFailed: "{app} प्रायोजन पेज लोड नहीं हो सका"
   terms:
     title: "उपयोग की शर्तें"
     frameTitle: "{app} उपयोग की शर्तें"

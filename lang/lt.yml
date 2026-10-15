@@ -110,6 +110,8 @@ layout:
     statusBar: "Programos būsenos juosta"
     openVendor: "Atidaryti cgeosoft.com naršyklėje"
     openTerms: "Atidaryti naudojimo sąlygas programoje"
+    openSponsorship: "Atidaryti rėmimo puslapį programoje"
+    sponsorship: "rėmimas"
     terms: "naudojimo sąlygos"
     switchPortfolio: "Perjungti portfelį"
     portfoliosCount: "Portfeliai ({count})"
@@ -158,6 +160,13 @@ layout:
     downloading: "Atsisiunčiama…"
     downloadAgain: "Atsisiųsti dar kartą"
     downloadLatest: "Atsisiųsti naujausią versiją"
+  sponsorship:
+    title: "Rėmimas"
+    frameTitle: "{app} rėmimas"
+    reloadTitle: "Iš naujo įkelti rėmimo puslapį"
+    openTitle: "Atidaryti rėmimo puslapį naršyklėje"
+    loading: "Įkeliamas {app} rėmimo puslapis iš {url}…"
+    loadFailed: "Nepavyko įkelti {app} rėmimo puslapio"
   terms:
     title: "Naudojimo sąlygos"
     frameTitle: "{app} naudojimo sąlygos"

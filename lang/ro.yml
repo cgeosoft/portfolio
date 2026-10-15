@@ -109,6 +109,8 @@ layout:
     statusBar: "Bara de stare a aplicației"
     openVendor: "Deschidere cgeosoft.com în browser"
     openTerms: "Deschidere Termeni de utilizare în aplicație"
+    openSponsorship: "Deschide pagina de sponsorizare în aplicație"
+    sponsorship: "sponsorizare"
     terms: "termeni de utilizare"
     switchPortfolio: "Schimbare portofoliu"
     portfoliosCount: "Portofolii ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "Se descarcă…"
     downloadAgain: "Descărcare din nou"
     downloadLatest: "Descărcare ultima versiune"
+  sponsorship:
+    title: "Sponsorizare"
+    frameTitle: "Sponsorizare {app}"
+    reloadTitle: "Reîncarcă pagina de sponsorizare"
+    openTitle: "Deschide pagina de sponsorizare în browser"
+    loading: "Se încarcă pagina de sponsorizare {app} de la {url}…"
+    loadFailed: "Pagina de sponsorizare {app} nu a putut fi încărcată"
   terms:
     title: "Termeni de utilizare"
     frameTitle: "Termeni de utilizare {app}"

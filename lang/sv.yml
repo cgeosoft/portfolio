@@ -108,6 +108,8 @@ layout:
     statusBar: "Programmets statusfält"
     openVendor: "Öppna cgeosoft.com i webbläsaren"
     openTerms: "Öppna användarvillkoren i appen"
+    openSponsorship: "Öppna sponsringssidan i appen"
+    sponsorship: "sponsring"
     terms: "användarvillkor"
     switchPortfolio: "Byt portfölj"
     portfoliosCount: "Portföljer ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Laddar ned…"
     downloadAgain: "Ladda ned igen"
     downloadLatest: "Ladda ned senaste versionen"
+  sponsorship:
+    title: "Sponsring"
+    frameTitle: "Sponsring av {app}"
+    reloadTitle: "Läs in sponsringssidan igen"
+    openTitle: "Öppna sponsringssidan i webbläsaren"
+    loading: "Läser in sponsringssidan för {app} från {url}…"
+    loadFailed: "Det gick inte att läsa in sponsringssidan för {app}"
   terms:
     title: "Användarvillkor"
     frameTitle: "Användarvillkor för {app}"

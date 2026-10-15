@@ -108,6 +108,8 @@ layout:
     statusBar: "Status Bar ng Application"
     openVendor: "Buksan ang cgeosoft.com sa browser"
     openTerms: "Buksan ang Mga Tuntunin ng Paggamit sa app"
+    openSponsorship: "Buksan ang pahina ng sponsorship sa app"
+    sponsorship: "sponsorship"
     terms: "mga tuntunin ng paggamit"
     switchPortfolio: "Lumipat ng Portfolio"
     portfoliosCount: "Mga Portfolio ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "Nagda-download…"
     downloadAgain: "I-download Muli"
     downloadLatest: "I-download ang Pinakabagong Bersyon"
+  sponsorship:
+    title: "Sponsorship"
+    frameTitle: "Sponsorship ng {app}"
+    reloadTitle: "I-reload ang pahina ng sponsorship"
+    openTitle: "Buksan ang pahina ng sponsorship sa web browser"
+    loading: "Nilo-load ang pahina ng sponsorship ng {app} mula sa {url}…"
+    loadFailed: "Hindi ma-load ang pahina ng sponsorship ng {app}"
   terms:
     title: "Mga Tuntunin ng Paggamit"
     frameTitle: "Mga Tuntunin ng Paggamit ng {app}"

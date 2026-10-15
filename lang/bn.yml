@@ -108,6 +108,8 @@ layout:
     statusBar: "অ্যাপ্লিকেশন স্ট্যাটাস বার"
     openVendor: "ব্রাউজারে cgeosoft.com খুলুন"
     openTerms: "অ্যাপে ব্যবহারের শর্তাবলি খুলুন"
+    openSponsorship: "অ্যাপে স্পনসরশিপ পৃষ্ঠা খুলুন"
+    sponsorship: "স্পনসরশিপ"
     terms: "ব্যবহারের শর্তাবলি"
     switchPortfolio: "পোর্টফোলিও বদলান"
     portfoliosCount: "পোর্টফোলিও ({count})"
@@ -156,6 +158,13 @@ layout:
     downloading: "ডাউনলোড হচ্ছে…"
     downloadAgain: "আবার ডাউনলোড করুন"
     downloadLatest: "সর্বশেষ সংস্করণ ডাউনলোড করুন"
+  sponsorship:
+    title: "স্পনসরশিপ"
+    frameTitle: "{app} স্পনসরশিপ"
+    reloadTitle: "স্পনসরশিপ পৃষ্ঠা আবার লোড করুন"
+    openTitle: "ওয়েব ব্রাউজারে স্পনসরশিপ পৃষ্ঠা খুলুন"
+    loading: "{url} থেকে {app} স্পনসরশিপ পৃষ্ঠা লোড হচ্ছে…"
+    loadFailed: "{app} স্পনসরশিপ পৃষ্ঠা লোড করা যায়নি"
   terms:
     title: "ব্যবহারের শর্তাবলি"
     frameTitle: "{app} ব্যবহারের শর্তাবলি"

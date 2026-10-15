@@ -20,7 +20,7 @@ import { rpc } from "../../rpc";
 import { applyLanguageNow, getLanguage, switchLanguage, systemLanguage, t } from "../../i18n";
 import { BrandScreen } from "./BrandScreen";
 import { LanguagePicker, LanguageTierNote } from "./LanguageSelect";
-import { TermsPage } from "./TermsPage";
+import { WebsitePage } from "./WebsitePage";
 import { APP_NAME } from "../../environment";
 
 /** 1 language, 2 welcome and Terms of Use, 3 demo portfolio, 4 telemetry. */
@@ -194,7 +194,7 @@ export function SetupWizardPage({
     return (
       <div className="fixed inset-0 z-[70] bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col p-2 sm:p-3">
         <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
-          <TermsPage onBack={() => setShowTerms(false)} webpageUrl={webpageUrl} />
+          <WebsitePage page="terms" onBack={() => setShowTerms(false)} webpageUrl={webpageUrl} />
         </main>
       </div>
     );

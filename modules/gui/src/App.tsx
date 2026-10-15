@@ -13,10 +13,15 @@ import { StatCard } from "./components/portfolio/StatCard";
 import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
 import { HoldingsTableCard } from "./components/portfolio/HoldingsTableCard";
-import { AnalysisPage } from "./components/portfolio/AnalysisPage";
+import {
+  AnalysisPage,
+  resolveAnalysisSection,
+  saveAnalysisSection,
+  savedAnalysisSection,
+  type AnalysisSectionId,
+} from "./components/portfolio/AnalysisPage";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
-import { SuggestionsPage } from "./components/portfolio/SuggestionsPage";
 import { TransactionModal } from "./components/portfolio/TransactionModal";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SETUP_STEP_AFTER_TERMS, SetupWizardPage, type SetupStep } from "./components/common/SetupWizardPage";
@@ -26,7 +31,7 @@ import { ChangelogModal } from "./components/common/ChangelogModal";
 import { DEFAULT_SETTINGS_SECTION, resolveSettingsSection, type SettingsSection } from "./components/settings/settings-nav";
 import { CONFIG_CHANGED_EVENT } from "./components/settings/SettingsFields";
 import { SupportTicketModal } from "./components/settings/SupportTicketModal";
-import { TermsPage } from "./components/common/TermsPage";
+import { WebsitePage, type WebsitePageId } from "./components/common/WebsitePage";
 import { BottomBar } from "./components/layout/BottomBar";
 import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
 import { MetricDashboard } from "./components/metrics/MetricDashboard";
@@ -103,7 +108,7 @@ function useOpenedOnce(open: boolean): boolean {
  */
 type LoadMode = "initial" | "reload" | "refresh";
 
-const VALID_TABS: readonly string[] = ["overview", "analysis", "reports", "suggestions", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "analysis", "reports", "transactions"];
 const INFO_MODAL_KEYS: readonly string[] = [
   "totalGain",
   "valuation",
@@ -116,17 +121,27 @@ const INFO_MODAL_KEYS: readonly string[] = [
 ];
 
 function getTabFromHash(hash: string): PortfolioTabKey {
-  const cleanHash = hash.replace(/^#/, "").toLowerCase().trim();
+  // `#analysis/<section>` opens a page of the Analysis tab.
+  const cleanHash = hash.replace(/^#/, "").toLowerCase().trim().split("/")[0]!;
   if (cleanHash === "charts" || cleanHash === "holdings") return "overview";
   if (cleanHash === "logs") return "transactions";
+  // Suggestions was a tab of its own before it moved under Analysis.
+  if (cleanHash === "suggestions") return "analysis";
   if (VALID_TABS.includes(cleanHash)) {
     return cleanHash as PortfolioTabKey;
   }
   return "overview";
 }
 
+/** The Analysis page a hash names: `#analysis/<section>`, or `#suggestions` from before it moved there. */
+function analysisSectionFromHash(hash: string): AnalysisSectionId | null {
+  const [tab, section] = hash.replace(/^#/, "").toLowerCase().trim().split("/");
+  if (tab === "suggestions") return "suggestions";
+  return tab === "analysis" ? resolveAnalysisSection(section) : null;
+}
+
 export default function App() {
-  const [view, setView] = useState<"dashboard" | "settings" | "portfolios" | "terms">(() => {
+  const [view, setView] = useState<"dashboard" | "settings" | "portfolios" | WebsitePageId>(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.toLowerCase();
       // The Portfolios page left Preferences; keep the old link working.
@@ -135,6 +150,7 @@ export default function App() {
       if (hash === "#metrics") return "settings";
       if (hash.startsWith("#settings")) return "settings";
       if (hash === "#terms") return "terms";
+      if (hash === "#sponsorship") return "sponsorship";
     }
     return "dashboard";
   });
@@ -158,12 +174,26 @@ export default function App() {
     }
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem("portfolio_active_tab");
-      if (saved && VALID_TABS.includes(saved)) {
-        return saved as PortfolioTabKey;
-      }
+      if (saved) return getTabFromHash(saved);
     }
     return "overview";
   });
+
+  const [analysisSection, setAnalysisSection] = useState<AnalysisSectionId>(
+    () => (typeof window !== "undefined" && analysisSectionFromHash(window.location.hash)) || savedAnalysisSection(),
+  );
+
+  // Moving between Analysis pages replaces the URL so a reload reopens the same page.
+  const handleAnalysisSectionChange = useCallback((section: AnalysisSectionId) => {
+    setAnalysisSection(section);
+    saveAnalysisSection(section);
+    if (typeof window !== "undefined") {
+      const newHash = `#analysis/${section}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
+      }
+    }
+  }, []);
 
   const handleTabChange = useCallback((tab: PortfolioTabKey) => {
     setView("dashboard");
@@ -211,15 +241,18 @@ export default function App() {
     }
   }, []);
 
-  const handleOpenTerms = useCallback(() => {
-    setView("terms");
+  // Terms of Use and Sponsorship: website pages in a frame, opened from the status bar.
+  const handleOpenWebsitePage = useCallback((page: WebsitePageId) => {
+    setView(page);
     if (typeof window !== "undefined") {
-      const newHash = "#terms";
+      const newHash = `#${page}`;
       if (window.location.hash !== newHash) {
         window.history.pushState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
       }
     }
   }, []);
+  const handleOpenTerms = useCallback(() => handleOpenWebsitePage("terms"), [handleOpenWebsitePage]);
+  const handleOpenSponsorship = useCallback(() => handleOpenWebsitePage("sponsorship"), [handleOpenWebsitePage]);
 
   const handleNavigateDashboard = useCallback((tab?: PortfolioTabKey) => {
     setView("dashboard");
@@ -263,12 +296,15 @@ export default function App() {
         setView("settings");
       } else if (hash === "#terms") {
         setView("terms");
+      } else if (hash === "#sponsorship") {
+        setView("sponsorship");
       } else {
         setView("dashboard");
-        const tab = window.location.hash
-          ? getTabFromHash(window.location.hash)
-          : (typeof localStorage !== "undefined" && (localStorage.getItem("portfolio_active_tab") as PortfolioTabKey)) || "overview";
+        const saved = typeof localStorage !== "undefined" ? localStorage.getItem("portfolio_active_tab") : null;
+        const tab = window.location.hash ? getTabFromHash(window.location.hash) : saved ? getTabFromHash(saved) : "overview";
         setActiveTab(tab);
+        const section = analysisSectionFromHash(window.location.hash);
+        if (section) setAnalysisSection(section);
       }
     };
     window.addEventListener("hashchange", handleRouting);
@@ -1701,6 +1737,7 @@ export default function App() {
           version={appVersion}
           lastQuotesSync={lastQuotesSync}
           onOpenTerms={handleOpenTerms}
+          onOpenSponsorship={handleOpenSponsorship}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
           quotesIntervalMins={quotesIntervalMins}
@@ -1799,6 +1836,7 @@ export default function App() {
           version={appVersion}
           lastQuotesSync={lastQuotesSync}
           onOpenTerms={handleOpenTerms}
+          onOpenSponsorship={handleOpenSponsorship}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
           quotesIntervalMins={quotesIntervalMins}
@@ -1974,16 +2012,16 @@ export default function App() {
         </Suspense>
       )}
 
-      {view === "terms" && (
+      {(view === "terms" || view === "sponsorship") && (
         <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
-          <TermsPage onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
+          <WebsitePage key={view} page={view} onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
         </main>
       )}
 
       {view === "dashboard" && (
         <main
           className={`flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
-            activeTab === "transactions" || activeTab === "reports" || activeTab === "suggestions"
+            activeTab === "transactions" || activeTab === "reports" || (activeTab === "analysis" && analysisSection === "suggestions")
               ? "flex flex-col h-full min-h-0 pb-2 sm:pb-3 overflow-hidden"
               : "pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar"
           }`}
@@ -2055,14 +2093,19 @@ export default function App() {
             </>
           )}
 
-          {/* TAB: ANALYSIS (exposure, income and events, markets; one at a time) */}
+          {/* TAB: ANALYSIS (exposure, income and events, markets, suggestions; one at a time) */}
           {activeTab === "analysis" && (
             <AnalysisPage
+              section={analysisSection}
+              onSectionChange={handleAnalysisSectionChange}
               portfolioId={activePortfolioId}
+              portfolioData={portfolioData}
               currency={currency}
               hideValues={hideCurrencyValues}
               theme={theme}
               dataVersion={summary?.lastUpdated}
+              suggestionsCount={suggestionsCount}
+              onSuggestionsChange={setSuggestions}
             />
           )}
 
@@ -2078,19 +2121,6 @@ export default function App() {
                 onRefreshReports={loadReports}
                 onDeleteReport={handleDeleteReport}
                 hideValues={hideCurrencyValues}
-              />
-            </div>
-          )}
-
-          {/* TAB: SUGGESTIONS */}
-          {activeTab === "suggestions" && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <SuggestionsPage
-                portfolioId={activePortfolioId}
-                portfolioData={portfolioData}
-                currency={currency}
-                hideValues={hideCurrencyValues}
-                onDataChange={setSuggestions}
               />
             </div>
           )}
@@ -2148,6 +2178,7 @@ export default function App() {
         version={appVersion}
         lastQuotesSync={summary?.lastUpdated || lastQuotesSync}
         onOpenTerms={handleOpenTerms}
+        onOpenSponsorship={handleOpenSponsorship}
         onSyncQuotes={handleSyncQuotes}
         isSyncingQuotes={isRefreshing}
         quotesIntervalMins={quotesIntervalMins}

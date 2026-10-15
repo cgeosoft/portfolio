@@ -111,6 +111,8 @@ layout:
     statusBar: "Sovelluksen tilapalkki"
     openVendor: "Avaa cgeosoft.com selaimessa"
     openTerms: "Avaa käyttöehdot sovelluksessa"
+    openSponsorship: "Avaa sponsorointisivu sovelluksessa"
+    sponsorship: "sponsorointi"
     terms: "käyttöehdot"
     switchPortfolio: "Vaihda salkkua"
     portfoliosCount: "Salkut ({count})"
@@ -159,6 +161,13 @@ layout:
     downloading: "Ladataan…"
     downloadAgain: "Lataa uudelleen"
     downloadLatest: "Lataa uusin versio"
+  sponsorship:
+    title: "Sponsorointi"
+    frameTitle: "{app}-sponsorointi"
+    reloadTitle: "Lataa sponsorointisivu uudelleen"
+    openTitle: "Avaa sponsorointisivu verkkoselaimessa"
+    loading: "Ladataan {app}-sponsorointisivua osoitteesta {url}…"
+    loadFailed: "{app}-sponsorointisivun lataus epäonnistui"
   terms:
     title: "Käyttöehdot"
     frameTitle: "Sovelluksen {app} käyttöehdot"

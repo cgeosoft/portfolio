@@ -5,12 +5,11 @@ import {
   PieChart,
   FileText,
   History,
-  Lightbulb,
   Settings,
 } from "lucide-react";
 import { t } from "../../i18n";
 
-export type PortfolioTabKey = "overview" | "analysis" | "reports" | "suggestions" | "transactions";
+export type PortfolioTabKey = "overview" | "analysis" | "reports" | "transactions";
 
 interface HeaderProps {
   currency?: string;
@@ -25,11 +24,11 @@ interface HeaderProps {
   lastUpdated?: string;
   activeTab?: PortfolioTabKey;
   onTabChange?: (tab: PortfolioTabKey) => void;
-  activeView?: "dashboard" | "settings" | "terms" | "portfolios";
+  activeView?: "dashboard" | "settings" | "terms" | "sponsorship" | "portfolios";
   onNavigateDashboard?: (tab?: PortfolioTabKey) => void;
   reportsCount?: number;
   transactionsCount?: number;
-  /** Open suggestions, shown next to the Suggestions tab. */
+  /** Open suggestions, shown next to the Analysis tab (Suggestions is one of its pages). */
   suggestionsCount?: number;
   hideCurrencyValues?: boolean;
   onToggleHideCurrency?: () => void;
@@ -57,7 +56,12 @@ export function Header({
 
   const tabs = [
     { id: "overview" as PortfolioTabKey, label: t("layout.tabs.overview"), icon: PieChart },
-    { id: "analysis" as PortfolioTabKey, label: t("layout.tabs.analysis"), icon: BarChart3 },
+    {
+      id: "analysis" as PortfolioTabKey,
+      label: t("layout.tabs.analysis"),
+      icon: BarChart3,
+      badge: suggestionsCount > 0 ? suggestionsCount : null,
+    },
     {
       id: "transactions" as PortfolioTabKey,
       label: t("layout.tabs.transactions"),
@@ -69,12 +73,6 @@ export function Header({
       label: t("layout.tabs.reports"),
       icon: FileText,
       badge: reportsCount > 0 ? reportsCount : null,
-    },
-    {
-      id: "suggestions" as PortfolioTabKey,
-      label: t("layout.tabs.suggestions"),
-      icon: Lightbulb,
-      badge: suggestionsCount > 0 ? suggestionsCount : null,
     },
   ];
 

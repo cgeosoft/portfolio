@@ -110,6 +110,8 @@ layout:
     statusBar: "Stavový řádek aplikace"
     openVendor: "Otevřít cgeosoft.com v prohlížeči"
     openTerms: "Otevřít podmínky použití v aplikaci"
+    openSponsorship: "Otevřít stránku o sponzorství v aplikaci"
+    sponsorship: "sponzorství"
     terms: "podmínky použití"
     switchPortfolio: "Přepnout portfolio"
     portfoliosCount: "Portfolia ({count})"
@@ -158,6 +160,13 @@ layout:
     downloading: "Stahování…"
     downloadAgain: "Stáhnout znovu"
     downloadLatest: "Stáhnout nejnovější verzi"
+  sponsorship:
+    title: "Sponzorství"
+    frameTitle: "Sponzorství {app}"
+    reloadTitle: "Znovu načíst stránku o sponzorství"
+    openTitle: "Otevřít stránku o sponzorství ve webovém prohlížeči"
+    loading: "Načítání stránky o sponzorství {app} z {url}…"
+    loadFailed: "Stránku o sponzorství {app} nelze načíst"
   terms:
     title: "Podmínky použití"
     frameTitle: "Podmínky použití {app}"

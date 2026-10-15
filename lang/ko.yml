@@ -107,6 +107,8 @@ layout:
     statusBar: "애플리케이션 상태 표시줄"
     openVendor: "브라우저에서 cgeosoft.com 열기"
     openTerms: "앱에서 이용 약관 열기"
+    openSponsorship: "앱에서 후원 페이지 열기"
+    sponsorship: "후원"
     terms: "이용 약관"
     switchPortfolio: "포트폴리오 전환"
     portfoliosCount: "포트폴리오 ({count})"
@@ -155,6 +157,13 @@ layout:
     downloading: "다운로드 중…"
     downloadAgain: "다시 다운로드"
     downloadLatest: "최신 버전 다운로드"
+  sponsorship:
+    title: "후원"
+    frameTitle: "{app} 후원"
+    reloadTitle: "후원 페이지 새로고침"
+    openTitle: "웹 브라우저에서 후원 페이지 열기"
+    loading: "{url}에서 {app} 후원 페이지를 불러오는 중…"
+    loadFailed: "{app} 후원 페이지를 불러올 수 없습니다"
   terms:
     title: "이용 약관"
     frameTitle: "{app} 이용 약관"

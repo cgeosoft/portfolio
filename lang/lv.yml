@@ -109,6 +109,8 @@ layout:
     statusBar: "Lietotnes statusa josla"
     openVendor: "Atvērt cgeosoft.com pārlūkā"
     openTerms: "Atvērt lietošanas noteikumus lietotnē"
+    openSponsorship: "Atvērt sponsorēšanas lapu lietotnē"
+    sponsorship: "sponsorēšana"
     terms: "lietošanas noteikumi"
     switchPortfolio: "Pārslēgt portfeli"
     portfoliosCount: "Portfeļi ({count})"
@@ -157,6 +159,13 @@ layout:
     downloading: "Lejupielādē…"
     downloadAgain: "Lejupielādēt vēlreiz"
     downloadLatest: "Lejupielādēt jaunāko versiju"
+  sponsorship:
+    title: "Sponsorēšana"
+    frameTitle: "{app} sponsorēšana"
+    reloadTitle: "Pārlādēt sponsorēšanas lapu"
+    openTitle: "Atvērt sponsorēšanas lapu tīmekļa pārlūkā"
+    loading: "Ielādē {app} sponsorēšanas lapu no {url}…"
+    loadFailed: "Neizdevās ielādēt {app} sponsorēšanas lapu"
   terms:
     title: "Lietošanas noteikumi"
     frameTitle: "{app} lietošanas noteikumi"

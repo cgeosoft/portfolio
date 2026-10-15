@@ -141,6 +141,7 @@ export function SidebarEntry({
   items,
   activeItem,
   onSelectItem,
+  badge,
 }: {
   section: SidebarSection;
   isActive: boolean;
@@ -148,6 +149,8 @@ export function SidebarEntry({
   items?: SidebarSection[];
   activeItem?: string;
   onSelectItem?: (id: string) => void;
+  /** A count shown at the end of the row, such as open suggestions. */
+  badge?: number;
 }) {
   const Icon = section.icon;
   const hasItems = Boolean(items && items.length > 0);
@@ -163,6 +166,7 @@ export function SidebarEntry({
       >
         <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-accent-500" : "text-slate-400"}`} />
         <span className="flex-1 min-w-0 truncate">{t(section.labelKey)}</span>
+        {badge !== undefined && <span className={`shrink-0 text-[11px] ${isActive ? "text-accent-500" : "text-slate-500"}`}>{badge}</span>}
         {hasItems && (
           <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isActive ? "rotate-90 text-accent-500" : "text-slate-500"}`} />
         )}

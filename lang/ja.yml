@@ -110,6 +110,8 @@ layout:
     statusBar: "アプリケーションステータスバー"
     openVendor: "ブラウザで cgeosoft.com を開く"
     openTerms: "アプリ内で利用規約を開く"
+    openSponsorship: "アプリ内でスポンサーページを開く"
+    sponsorship: "スポンサー"
     terms: "利用規約"
     switchPortfolio: "ポートフォリオを切り替え"
     portfoliosCount: "ポートフォリオ（{count}）"
@@ -158,6 +160,13 @@ layout:
     downloading: "ダウンロード中…"
     downloadAgain: "再ダウンロード"
     downloadLatest: "最新バージョンをダウンロード"
+  sponsorship:
+    title: "スポンサー"
+    frameTitle: "{app} スポンサー"
+    reloadTitle: "スポンサーページを再読み込み"
+    openTitle: "ウェブブラウザでスポンサーページを開く"
+    loading: "{url} から {app} のスポンサーページを読み込んでいます…"
+    loadFailed: "{app} のスポンサーページを読み込めません"
   terms:
     title: "利用規約"
     frameTitle: "{app} 利用規約"

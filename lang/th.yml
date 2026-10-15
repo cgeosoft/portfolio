@@ -107,6 +107,8 @@ layout:
     statusBar: "แถบสถานะแอปพลิเคชัน"
     openVendor: "เปิด cgeosoft.com ในเบราว์เซอร์"
     openTerms: "เปิดข้อกำหนดการใช้งานในแอป"
+    openSponsorship: "เปิดหน้าการสนับสนุนในแอป"
+    sponsorship: "การสนับสนุน"
     terms: "ข้อกำหนดการใช้งาน"
     switchPortfolio: "สลับพอร์ตโฟลิโอ"
     portfoliosCount: "พอร์ตโฟลิโอ ({count})"
@@ -155,6 +157,13 @@ layout:
     downloading: "กำลังดาวน์โหลด…"
     downloadAgain: "ดาวน์โหลดอีกครั้ง"
     downloadLatest: "ดาวน์โหลดเวอร์ชันล่าสุด"
+  sponsorship:
+    title: "การสนับสนุน"
+    frameTitle: "การสนับสนุน {app}"
+    reloadTitle: "โหลดหน้าการสนับสนุนใหม่"
+    openTitle: "เปิดหน้าการสนับสนุนในเว็บเบราว์เซอร์"
+    loading: "กำลังโหลดหน้าการสนับสนุนของ {app} จาก {url}…"
+    loadFailed: "ไม่สามารถโหลดหน้าการสนับสนุนของ {app} ได้"
   terms:
     title: "ข้อกำหนดการใช้งาน"
     frameTitle: "ข้อกำหนดการใช้งาน {app}"
