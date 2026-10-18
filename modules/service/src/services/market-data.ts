@@ -17,7 +17,7 @@ import {
 } from "./yahoo-finance.js";
 import { FinnhubService } from "./finnhub.js";
 import type { FmpService } from "./fmp.js";
-import { fillByKey, firstAvailable, type BatchChainResult, type ChainResult } from "./providers/chain.js";
+import { fillByKey, firstAvailable, providerOrder, type BatchChainResult, type ChainResult } from "./providers/chain.js";
 import { isCusip, isIsin } from "./providers/identifiers.js";
 import type { MarketNewsItem } from "./providers/types.js";
 
@@ -102,6 +102,18 @@ export class MarketDataCoordinator {
     const result = await this.getChartWithSource(symbol, range, interval, forceFresh);
     if (result.data) return result.data;
     throw result.error instanceof Error ? result.error : new Error("No chart data from any provider");
+  }
+
+  /**
+   * Fills the FMP quote cache for these symbols in batches when FMP serves
+   * charts before Yahoo, so the daily charts that follow do not each ask FMP
+   * for their live quote.
+   */
+  public async prefetchChartQuotes(symbols: string[]): Promise<void> {
+    if (!this.fmpReady() || symbols.length === 0) return;
+    const order = providerOrder({ category: "charts" });
+    if (order.indexOf("fmp") > order.indexOf("yahoo")) return;
+    await this.fmp!.prefetchQuotes(symbols);
   }
 
   /** Chart plus the provider that supplied it. FMP serves daily intervals only. */

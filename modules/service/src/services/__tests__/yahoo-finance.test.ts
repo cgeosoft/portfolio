@@ -7,6 +7,7 @@ import { appLogger } from "../../logger.js";
 /** The client's shared state, reset around every test. */
 const internals = YahooFinanceService as unknown as {
   pausedUntil: number;
+  offline: { reset(): void };
   sessionFailedAt: number;
   summarySession: unknown;
   chartCache: Map<string, unknown>;
@@ -15,6 +16,7 @@ const internals = YahooFinanceService as unknown as {
 
 function resetYahoo(): void {
   internals.pausedUntil = 0;
+  internals.offline.reset();
   internals.sessionFailedAt = 0;
   internals.summarySession = null;
   internals.chartCache.clear();
@@ -77,6 +79,50 @@ describe("YahooFinanceService", () => {
     internals.pausedUntil = Date.now() - 1;
     globalThis.fetch = mock(async () => new Response(chartBody(12), { status: 200 })) as any;
     expect((await yahoo.getChart("PAUSE2", "1y", "1d", true)).regularMarketPrice).toBe(12);
+  });
+
+  it("treats Yahoo as offline after repeated network failures and serves stale copies without asking", async () => {
+    const stale: YahooChartData = {
+      symbol: "OFF1",
+      currency: "USD",
+      regularMarketPrice: 7,
+      candles: [{ timestamp: 1, date: "2026-10-01", open: 7, high: 7, low: 7, close: 7, volume: 0 }],
+    };
+    marketCache.set("chart:OFF1:1y:1d", stale, -1000);
+    const fetchMock = mock(async () => {
+      throw new TypeError("Unable to connect");
+    });
+    globalThis.fetch = fetchMock as any;
+    const yahoo = new YahooFinanceService();
+
+    // A network failure skips the second host and serves the stale copy.
+    expect(await yahoo.getChart("OFF1", "1y", "1d", true)).toEqual(stale);
+    expect(fetchMock.mock.calls.length).toBe(1);
+    // The stale copy stays in memory briefly: the next plain call does not wait for the network.
+    expect(await yahoo.getChart("OFF1", "1y", "1d")).toEqual(stale);
+    expect(fetchMock.mock.calls.length).toBe(1);
+
+    for (let i = 2; i <= 5; i++) await yahoo.getChart(`OFF${i}`, "1y", "1d", true).catch(() => null);
+    expect(fetchMock.mock.calls.length).toBe(5);
+    // Offline now: no request goes out.
+    expect(await yahoo.getChart("OFF1", "1y", "1d", true)).toEqual(stale);
+    await expect(yahoo.getChart("OFF6", "1y", "1d", true)).rejects.toThrow("paused");
+    expect(fetchMock.mock.calls.length).toBe(5);
+  });
+
+  it("refreshes a quote with the 1y chart when that chart has expired, so the build needs no second request", async () => {
+    const fetchMock = mock(async (_url: string | URL | Request) => new Response(chartBody(30), { status: 200 }));
+    globalThis.fetch = fetchMock as any;
+    const yahoo = new YahooFinanceService();
+
+    expect((await yahoo.getQuotes(["ONEY"], true)).get("ONEY")?.regularMarketPrice).toBe(30);
+    expect(String(fetchMock.mock.calls[0]![0])).toContain("range=1y");
+    expect((await yahoo.getChart("ONEY", "1y", "1d")).regularMarketPrice).toBe(30);
+    expect(fetchMock.mock.calls.length).toBe(1);
+
+    // With a fresh 1y chart, a refresh asks only for the small 5d chart.
+    await yahoo.getQuotes(["ONEY"], true);
+    expect(String(fetchMock.mock.calls[1]![0])).toContain("range=5d");
   });
 
   it("checks the memory cache before it reads the disk row", async () => {

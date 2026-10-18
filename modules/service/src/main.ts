@@ -79,9 +79,11 @@ async function refreshMarketDataOnStart(): Promise<void> {
     return;
   }
   appLogger.logStep("info", "market", "startup", `Refreshing market data for ${stale.length} portfolio(s)`);
+  // One quote request per symbol, however many portfolios hold it.
+  const quotes = await services.portfolioService.fetchLiveQuotes(stale.map((p) => p.id));
   for (const p of stale) {
     try {
-      const data = await services.portfolioService.getPortfolioData(p.id, p.baseCurrency, true);
+      const data = await services.portfolioService.getPortfolioData(p.id, p.baseCurrency, true, quotes);
       services.portfolioService.saveDailySnapshot(p.id, data);
     } catch (err) {
       appLogger.logStep("warning", "market", "startup", `Refresh failed for one portfolio (${err instanceof Error ? err.name : typeof err})`);
