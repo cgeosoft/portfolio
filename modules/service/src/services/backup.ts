@@ -9,12 +9,13 @@
  * The copy leaves out the market cache, which the app downloads again, and
  * the sessions, so no client stays signed in through a restored copy. It
  * keeps the earnings call summaries, which a model wrote.
+ *
+ * The snapshot, the trim and the read run in a Worker on its own
+ * connection: with a large market cache they take seconds, and the event
+ * loop keeps serving requests meanwhile. The Worker source is inline, so the
+ * single-file service bundle needs no second entry point.
  */
-import { Database } from "bun:sqlite";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { getDatabase } from "../db/database";
+import { getDatabase, getDatabasePath } from "../db/database";
 
 export interface DatabaseBackup {
   fileName: string;
@@ -28,12 +29,23 @@ export function backupFileName(now = new Date()): string {
   return `portfolio-backup-${date}-${pad(now.getHours())}${pad(now.getMinutes())}.sqlite`;
 }
 
-/** Snapshots the live database into memory and returns the bytes with a file name. */
-export function createDatabaseBackup(): DatabaseBackup {
+const WORKER_SOURCE = `
+import { Database } from "bun:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+self.onmessage = async (event) => {
   const dir = mkdtempSync(join(tmpdir(), "portfolio-backup-"));
   const file = join(dir, "backup.sqlite");
   try {
-    getDatabase().run("VACUUM INTO ?", [file]);
+    const live = new Database(event.data.dbPath, { readonly: true });
+    try {
+      live.run("PRAGMA busy_timeout = 5000");
+      live.run("VACUUM INTO ?", [file]);
+    } finally {
+      live.close();
+    }
     // The snapshot is a private file in rollback journal mode: trimming it leaves the live database alone.
     const copy = new Database(file);
     try {
@@ -43,9 +55,37 @@ export function createDatabaseBackup(): DatabaseBackup {
     } finally {
       copy.close();
     }
-    // A Buffer is a Uint8Array: no second copy of a large file.
-    return { fileName: backupFileName(), bytes: readFileSync(file) };
+    const buffer = await Bun.file(file).arrayBuffer();
+    postMessage({ ok: true, buffer }, [buffer]);
+  } catch (err) {
+    postMessage({ ok: false, error: err instanceof Error ? err.message : String(err) });
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+};
+`;
+
+let workerUrl: string | undefined;
+
+type WorkerReply = { ok: true; buffer: ArrayBuffer } | { ok: false; error: string };
+
+/** Snapshots the live database off the event loop and returns the bytes with a file name. */
+export async function createDatabaseBackup(): Promise<DatabaseBackup> {
+  // The schema exists before the copy is taken, as with the direct backup before.
+  getDatabase();
+  workerUrl ??= URL.createObjectURL(new Blob([WORKER_SOURCE], { type: "application/javascript" }));
+  const worker = new Worker(workerUrl);
+  try {
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      worker.onmessage = (event: MessageEvent<WorkerReply>) => {
+        if (event.data.ok) resolve(event.data.buffer);
+        else reject(new Error(event.data.error));
+      };
+      worker.onerror = (event) => reject(new Error(event.message || "Database backup failed"));
+      worker.postMessage({ dbPath: getDatabasePath() });
+    });
+    return { fileName: backupFileName(), bytes: new Uint8Array(buffer) };
+  } finally {
+    worker.terminate();
   }
 }

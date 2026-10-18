@@ -442,25 +442,39 @@ export async function getMarketStatus(
     const code = exchangeForSymbol(s.symbol, s.assetType);
     if (code) codes.add(code === "NASDAQ" || code === "AMEX" ? "NYSE" : code);
   }
-  const markets: ExchangeStatus[] = [];
-  for (const code of codes) {
-    const status = await getExchangeStatus(code, now, fmp, options);
-    if (status) markets.push(status);
-  }
+  const statuses = await Promise.all([...codes].map((code) => getExchangeStatus(code, now, fmp, options)));
+  const markets = statuses.filter((status): status is ExchangeStatus => status !== null);
   markets.sort((a, b) => a.exchange.localeCompare(b.exchange));
   return { now: now.toISOString(), anyOpen: markets.length === 0 || markets.some((m) => m.open), markets };
 }
 
+type HeldSymbol = { symbol: string; assetType?: string };
+
+/** Held symbols per portfolio with the ledger version they were read at, so a status poll reads no transactions. */
+const heldCache = new WeakMap<PortfolioService, Map<string, { version: string; symbols: HeldSymbol[] }>>();
+
 /** Symbols and asset types held across every portfolio (private holdings and cash left out). */
-export function heldSymbols(portfolioService: PortfolioService): Array<{ symbol: string; assetType?: string }> {
-  const out = new Map<string, { symbol: string; assetType?: string }>();
+export function heldSymbols(portfolioService: PortfolioService): HeldSymbol[] {
+  let cache = heldCache.get(portfolioService);
+  if (!cache) heldCache.set(portfolioService, (cache = new Map()));
+  const out = new Map<string, HeldSymbol>();
+  const seen = new Set<string>();
   for (const portfolio of portfolioRepo.findAll()) {
-    const holdings = portfolioService.computeHoldingsFromTransactions(txRepo.findByPortfolio(portfolio.id));
-    for (const h of holdings) {
-      if (h.isPrivate || h.assetType === "Cash" || !(h.shares > 0)) continue;
-      out.set(h.symbol.toUpperCase(), { symbol: h.symbol, assetType: h.assetType });
+    seen.add(portfolio.id);
+    const version = portfolioService.ledgerVersion(portfolio.id);
+    let entry = cache.get(portfolio.id);
+    if (entry?.version !== version) {
+      const symbols: HeldSymbol[] = [];
+      for (const h of portfolioService.computeHoldingsFromTransactions(txRepo.findByPortfolio(portfolio.id))) {
+        if (h.isPrivate || h.assetType === "Cash" || !(h.shares > 0)) continue;
+        symbols.push({ symbol: h.symbol, assetType: h.assetType });
+      }
+      entry = { version, symbols };
+      cache.set(portfolio.id, entry);
     }
+    for (const s of entry.symbols) out.set(s.symbol.toUpperCase(), s);
   }
+  for (const id of cache.keys()) if (!seen.has(id)) cache.delete(id);
   return [...out.values()];
 }
 

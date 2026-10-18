@@ -433,6 +433,12 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/portfolios/:id/assistant/conversations", (ctx) => ({ conversations: chatService.getConversations(ctx.params.id!) }));
 
+  router.get("/api/portfolios/:id/assistant/conversations/:conversationId", (ctx) => {
+    const conversation = chatService.getConversation(ctx.params.id!, ctx.params.conversationId!);
+    if (!conversation) throw new HttpError(404, "Conversation not found");
+    return { conversation };
+  });
+
   router.delete("/api/portfolios/:id/assistant/conversations/:conversationId", (ctx) => ({
     success: chatService.deleteConversation(ctx.params.id!, ctx.params.conversationId!),
   }));
@@ -675,9 +681,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     });
   });
 
-  router.post("/api/app/backup", (ctx) => {
+  router.post("/api/app/backup", async (ctx) => {
     assertLocal(ctx, "Backing up the database");
-    const backup = createDatabaseBackup();
+    const backup = await createDatabaseBackup();
     const filePath = saveBytesToDownloads(backup.fileName, backup.bytes);
     appLogger.logStep("info", "app", "backup", "Database backup saved to Downloads");
     return { success: true, fileName: backup.fileName, filePath, sizeBytes: backup.bytes.length };

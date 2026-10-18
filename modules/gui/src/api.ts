@@ -5,7 +5,8 @@
  */
 import type {
   AppUpdateInfo,
-  AssistantConversation,
+  AssistantConversationSummary,
+  GetAssistantConversationResponse,
   CancelReportStreamResponse,
   ChatWithPortfolioRequest,
   ChatWithPortfolioResponse,
@@ -253,7 +254,9 @@ export const api = {
     request<PortfolioSuggestion>(`/api/portfolios/${enc(body.portfolioId)}/suggestions/${enc(body.suggestionId)}/status`, { method: "POST", body: json(body) }),
 
   // ---- assistant
-  getAssistantConversations: (portfolioId: string) => request<{ conversations: AssistantConversation[] }>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations`),
+  getAssistantConversations: (portfolioId: string) => request<{ conversations: AssistantConversationSummary[] }>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations`),
+  getAssistantConversation: (portfolioId: string, conversationId: string) =>
+    request<GetAssistantConversationResponse>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations/${enc(conversationId)}`),
   deleteAssistantConversation: (portfolioId: string, conversationId: string) =>
     request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations/${enc(conversationId)}`, { method: "DELETE" }),
   getAssistantSystemPrompt: (portfolioId: string) => request<GetAssistantSystemPromptResponse>(`/api/portfolios/${enc(portfolioId)}/assistant/system-prompt`),

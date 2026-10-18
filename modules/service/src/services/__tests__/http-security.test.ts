@@ -1,4 +1,5 @@
 import { describe, it, expect } from "bun:test";
+import { rememberJson } from "../../json-cache";
 import { Router, hostnameOf, isAllowedOrigin, isLoopbackHostname, jsonFor } from "../../http/router";
 
 function req(method: string, headers: Record<string, string> = {}, url = "http://127.0.0.1:4000/api/ping"): Request {
@@ -142,5 +143,12 @@ describe("jsonFor", () => {
   it("never compresses a HEAD response", () => {
     const res = jsonFor(req("HEAD", { "accept-encoding": "gzip" }), { text: "x".repeat(10_000) });
     expect(res.headers.get("Content-Encoding")).toBeNull();
+  });
+
+  it("sends the kept text of a remembered payload", async () => {
+    const data = { rows: [1, 2] };
+    rememberJson(data, '{"rows":[1,2],"kept":true}');
+    expect(await jsonFor(req("GET"), data).text()).toBe('{"rows":[1,2],"kept":true}');
+    expect(await jsonFor(req("GET"), { rows: [3] }).text()).toBe('{"rows":[3]}');
   });
 });

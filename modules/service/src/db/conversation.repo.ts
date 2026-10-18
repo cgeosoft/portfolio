@@ -13,11 +13,18 @@ export interface AssistantConversationRow {
   updatedAt: string;
 }
 
-export function findByPortfolio(portfolioId: string, limit = 50): AssistantConversationRow[] {
+export type AssistantConversationListRow = Omit<AssistantConversationRow, "messages"> & { messageCount: number };
+
+/** The newest conversations of a portfolio without their messages, in the order of idx_conversations_portfolio_updated. */
+export function listByPortfolio(portfolioId: string, limit = 50): AssistantConversationListRow[] {
   const db = getDatabase();
   return db
-    .query("SELECT * FROM assistant_conversations WHERE portfolioId = ? ORDER BY updatedAt DESC LIMIT ?")
-    .all(portfolioId, limit) as AssistantConversationRow[];
+    .query(
+      `SELECT id, portfolioId, title, createdAt, updatedAt,
+         CASE WHEN json_valid(messages) THEN json_array_length(messages) ELSE 0 END AS messageCount
+       FROM assistant_conversations WHERE portfolioId = ? ORDER BY updatedAt DESC LIMIT ?`,
+    )
+    .all(portfolioId, limit) as AssistantConversationListRow[];
 }
 
 export function findById(id: string, portfolioId?: string): AssistantConversationRow | null {

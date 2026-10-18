@@ -16,10 +16,10 @@ describe("backupFileName", () => {
 });
 
 describe("createDatabaseBackup", () => {
-  it("returns a complete SQLite copy of the live database", () => {
+  it("returns a complete SQLite copy of the live database", async () => {
     getDatabase();
     const created = portfolioRepo.create({ name: "Backup test", baseCurrency: "EUR" });
-    const backup = createDatabaseBackup();
+    const backup = await createDatabaseBackup();
     expect(backup.fileName).toMatch(/^portfolio-backup-\d{4}-\d{2}-\d{2}-\d{4}\.sqlite$/);
     expect(Buffer.from(backup.bytes.subarray(0, 15)).toString("utf-8")).toBe("SQLite format 3");
 
@@ -39,7 +39,7 @@ describe("createDatabaseBackup", () => {
     }
   });
 
-  it("leaves out the market cache and the sessions but keeps the call summaries", () => {
+  it("leaves out the market cache and the sessions but keeps the call summaries", async () => {
     const db = getDatabase();
     const summaryKey = "intel:transcript-summary:BKUP:2026Q3";
     marketCache.set("fmp:backup-test", { rows: [1, 2, 3] }, 60_000);
@@ -48,7 +48,7 @@ describe("createDatabaseBackup", () => {
     const dir = mkdtempSync(join(tmpdir(), "portfolio-backup-test-"));
     try {
       const file = join(dir, "copy.sqlite");
-      writeFileSync(file, createDatabaseBackup().bytes);
+      writeFileSync(file, (await createDatabaseBackup()).bytes);
       const copy = new Database(file, { readonly: true });
       const keys = (copy.query("SELECT key FROM market_cache").all() as { key: string }[]).map((r) => r.key);
       expect(keys).toContain(summaryKey);

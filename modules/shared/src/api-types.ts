@@ -408,8 +408,22 @@ export interface GetAssistantConversationsRequest {
   portfolioId: string;
 }
 
+/** A conversation in the history list, without its messages. */
+export interface AssistantConversationSummary {
+  id: string;
+  portfolioId: string;
+  title: string;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GetAssistantConversationsResponse {
-  conversations: AssistantConversation[];
+  conversations: AssistantConversationSummary[];
+}
+
+export interface GetAssistantConversationResponse {
+  conversation: AssistantConversation;
 }
 
 export interface DeleteAssistantConversationRequest {
