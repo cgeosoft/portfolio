@@ -538,7 +538,8 @@ export interface GetAppInfoResponse {
   lastQuotesSync?: string;
   /** True when this client runs on the machine of the service (the desktop window). */
   isLocalClient: boolean;
-  paths: { data: string; logs: string };
+  /** Data and log folders, only for the desktop window: they name the OS user. */
+  paths?: { data: string; logs: string };
 }
 
 /** `POST /api/app/backup` (desktop window only): a copy of the database written to the Downloads folder. */

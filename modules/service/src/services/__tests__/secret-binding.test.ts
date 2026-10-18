@@ -84,3 +84,44 @@ describe("stored push tokens", () => {
     expect(same.ntfyToken).toBeUndefined();
   });
 });
+
+describe("stored secrets with no server URL saved", () => {
+  const unsaved = () =>
+    updateConfig({
+      gotifyUrl: "",
+      gotifyToken: "g",
+      ntfyUrl: "",
+      ntfyToken: "n",
+      llmProvider: "",
+      llmBaseUrl: "",
+      llmBaseUrls: { "openai-compatible": "" },
+      llmApiKey: "sk-stored",
+      llmApiKeys: { "openai-compatible": "sk-stored" },
+    });
+
+  it("stay in the desktop window, where the user types the key before the URL", () => {
+    unsaved();
+    const out = unmaskUpdates({ gotifyUrl: "https://gotify.home", ntfyUrl: "https://ntfy.home", llmBaseUrl: "https://api.groq.com/openai/v1" });
+    expect(out.gotifyToken).toBeUndefined();
+    expect(out.ntfyToken).toBeUndefined();
+    expect(out.llmApiKey).toBeUndefined();
+  });
+
+  it("are cleared when another device names a server other than the default", () => {
+    unsaved();
+    const out = unmaskUpdates({ gotifyUrl: "https://evil.example", ntfyUrl: "https://evil.example", llmBaseUrl: "https://evil.example/v1" }, false);
+    expect(out.gotifyToken).toBe("");
+    expect(out.ntfyToken).toBe("");
+    expect(out.llmApiKey).toBe("");
+    expect(out.llmApiKeys?.["openai-compatible"]).toBe("");
+    const perProvider = unmaskUpdates({ llmBaseUrls: { "openai-compatible": "https://evil.example/v1" } }, false);
+    expect(perProvider.llmApiKeys?.["openai-compatible"]).toBe("");
+  });
+
+  it("stay when another device names the default server the key already goes to", () => {
+    unsaved();
+    const out = unmaskUpdates({ ntfyUrl: "https://ntfy.sh/", llmBaseUrl: "http://127.0.0.1:1234/v1" }, false);
+    expect(out.ntfyToken).toBeUndefined();
+    expect(out.llmApiKey).toBeUndefined();
+  });
+});

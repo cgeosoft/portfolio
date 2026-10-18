@@ -15,6 +15,7 @@ import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
+import { blockedRemoteTargets } from "../services/outbound-target";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
 import { createDatabaseBackup } from "../services/backup";
@@ -88,6 +89,12 @@ function authStatus() {
 
 function assertLocal(ctx: RequestContext, what: string): void {
   if (!ctx.isLocal) throw new HttpError(403, `${what} is only available from the desktop window`);
+}
+
+/** A client on another device may not point the service at a new address on this computer or the local network (outbound-target.ts). */
+async function assertRemoteTargets(ctx: RequestContext, ...urls: unknown[]): Promise<void> {
+  if (ctx.isLocal) return;
+  if ((await blockedRemoteTargets(urls)).length) throw new HttpError(403, "A server on this computer or the local network can be set only from the desktop window");
 }
 
 function str(value: unknown, name: string): string {
@@ -301,11 +308,13 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/metrics/preview", async (ctx) => {
     const body = await ctx.body<PreviewMetricInstallRequest>();
+    await assertRemoteTargets(ctx, body.url);
     return metricsService.previewInstall(str(body.url, "url"));
   });
 
   router.post("/api/metrics/install", async (ctx) => {
     const body = await ctx.body<InstallMetricRequest>();
+    await assertRemoteTargets(ctx, body.url);
     if (body.sha256 !== undefined && (typeof body.sha256 !== "string" || !/^[0-9a-f]{64}$/i.test(body.sha256))) throw new HttpError(400, "Invalid sha256");
     const sha256 = body.sha256?.toLowerCase();
     const metric = await metricsService.install(str(body.url, "url"), body.grantedScopes ?? [], sha256);
@@ -458,6 +467,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/llm/test", async (ctx) => {
     const body = await ctx.body<TestLlmRequest>();
+    await assertRemoteTargets(ctx, body.baseUrl);
     try {
       const result = await llm.chat(
         [
@@ -474,6 +484,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/llm/test-step", async (ctx) => {
     const body = await ctx.body<TestLlmStepRequest>();
+    await assertRemoteTargets(ctx, body.baseUrl);
     try {
       return await llm.testStep(body.step, { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, previousOutput: body.previousOutput });
     } catch (err) {
@@ -483,6 +494,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/llm/models", async (ctx) => {
     const body = await ctx.body<GetProviderModelsRequest>();
+    await assertRemoteTargets(ctx, body.baseUrl);
     try {
       return { models: await llm.getAvailableModels(body.provider, body.baseUrl, requestSecret(body.apiKey)) };
     } catch {
@@ -570,7 +582,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     const record = body as Record<string, unknown>;
     for (const key of Object.keys(record)) if (!CONFIG_KEYS.has(key)) delete record[key];
     for (const key of PROTECTED_CONFIG_KEYS) delete record[key];
-    const updated = updateConfig(unmaskUpdates(body));
+    await assertRemoteTargets(ctx, body.llmBaseUrl, ...Object.values(body.llmBaseUrls ?? {}), body.gotifyUrl, body.ntfyUrl);
+    const updated = updateConfig(unmaskUpdates(body, ctx.isLocal));
     if ("telemetryEnabled" in body) telemetry.reinitialize();
     if ("closeToTray" in body) writeDesktopSettingsFile();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});
@@ -581,6 +594,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/integrations/gotify/test", async (ctx) => {
     const body = await ctx.body<TestGotifyRequest>();
+    await assertRemoteTargets(ctx, body.url);
     return sendGotify(
       { title: "Portfolio", message: "Test message from Portfolio. Daily briefs will arrive here." },
       { url: body.url, token: requestSecret(body.token), priority: body.priority },
@@ -589,6 +603,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/integrations/ntfy/test", async (ctx) => {
     const body = await ctx.body<TestNtfyRequest>();
+    await assertRemoteTargets(ctx, body.url);
     return sendNtfy(
       { title: "Portfolio", message: "Test message from Portfolio. Daily briefs and weekly analyses will arrive here." },
       { url: body.url, topic: body.topic, token: requestSecret(body.token), priority: body.priority },
@@ -632,7 +647,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       channel: getEnvironmentName(),
       lastQuotesSync: loadConfig().lastQuotesSync,
       isLocalClient: ctx.isLocal,
-      paths: { data: getDatabasePath(), logs: getLogDir() },
+      // Absolute paths name the OS user; only the desktop window shows them.
+      paths: ctx.isLocal ? { data: getDatabasePath(), logs: getLogDir() } : undefined,
     };
   });
 

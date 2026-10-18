@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
-import { DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
+import { CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { DEFAULT_LANGUAGE, findLanguage } from "portfolio-shared/i18n";
 import { getDatabase } from "./db/database";
 import { DATA_DIR } from "./paths";
@@ -341,8 +341,8 @@ export function isSameServer(url: string | undefined, stored: string | undefined
   }
 }
 
-/** An update from the GUI with every SECRET_MASK put back to the stored key. */
-export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopConfig> {
+/** An update from the GUI with every SECRET_MASK put back to the stored key. `isLocal` is false for a client on another device. */
+export function unmaskUpdates(updates: Partial<DesktopConfig>, isLocal = true): Partial<DesktopConfig> {
   const cfg = loadConfig();
   const out = { ...updates };
   if (out.finnhubApiKey === SECRET_MASK) delete out.finnhubApiKey;
@@ -356,7 +356,7 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
     const provider = out.llmProvider || cfg.llmProvider;
     out.llmApiKey = cfg.llmApiKeys?.[provider] || cfg.llmApiKey;
   }
-  dropSecretsOfMovedServers(updates, out, cfg);
+  dropSecretsOfMovedServers(updates, out, cfg, isLocal);
   return out;
 }
 
@@ -364,27 +364,36 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>): Partial<DesktopC
  * A stored key or token belongs to the server it was saved for. An update
  * that points the LLM provider, Gotify or ntfy at another server (scheme,
  * host or port) without a new key in the same update clears the stored one,
- * so it is never sent to the new server and Settings asks for it again. Only
- * a URL the user saved counts: a key entered before the first URL stays.
+ * so it is never sent to the new server and Settings asks for it again.
+ * In the desktop window a key entered before the first URL stays: the user
+ * is setting up. From another device the key belongs to the server it goes
+ * to today, the default one when no URL is saved (ntfy.sh, the default
+ * OpenAI-compatible server), and with no server at all (Gotify) any URL
+ * clears it.
  */
-function dropSecretsOfMovedServers(updates: Partial<DesktopConfig>, out: Partial<DesktopConfig>, cfg: DesktopConfig): void {
+function dropSecretsOfMovedServers(updates: Partial<DesktopConfig>, out: Partial<DesktopConfig>, cfg: DesktopConfig, isLocal: boolean): void {
   const brings = (value: string | undefined) => value !== undefined && value !== SECRET_MASK;
-  const moved = (next: string, stored: string | undefined) => Boolean(stored?.trim()) && !isSameServer(next, stored);
+  const moved = (next: string, saved: string | undefined, fallback = "") => {
+    const stored = saved?.trim() || (isLocal ? "" : fallback);
+    return stored ? !isSameServer(next, stored) : !isLocal;
+  };
 
   if (updates.gotifyUrl !== undefined && moved(updates.gotifyUrl, cfg.gotifyUrl) && !brings(updates.gotifyToken)) out.gotifyToken = "";
   // loadConfig() fills in ntfy.sh when no server is saved; the row tells whether one is.
   const savedNtfyUrl = readRows().ntfyUrl;
-  if (updates.ntfyUrl !== undefined && moved(updates.ntfyUrl, typeof savedNtfyUrl === "string" ? savedNtfyUrl : undefined) && !brings(updates.ntfyToken)) {
+  if (updates.ntfyUrl !== undefined && moved(updates.ntfyUrl, typeof savedNtfyUrl === "string" ? savedNtfyUrl : undefined, DEFAULT_NTFY_URL) && !brings(updates.ntfyToken)) {
     out.ntfyToken = "";
   }
 
-  const provider = updates.llmProvider || cfg.llmProvider;
-  const savedUrl = (id: string) => cfg.llmBaseUrls?.[id] || (id === cfg.llmProvider ? cfg.llmBaseUrl : "");
+  // As LlmService resolves it: a CLI id stays, any other id (or none) is the OpenAI-compatible provider.
+  const providerId = (raw: string | undefined) => (raw && Object.hasOwn(CLI_PROVIDER_NAMES, raw) ? raw : "openai-compatible");
+  const provider = providerId(updates.llmProvider || cfg.llmProvider);
+  const savedUrl = (id: string) => cfg.llmBaseUrls?.[id] || (id === providerId(cfg.llmProvider) ? cfg.llmBaseUrl : "");
   const movedProviders = new Set<string>();
   for (const [id, url] of Object.entries(updates.llmBaseUrls ?? {})) {
-    if (moved(url || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(id))) movedProviders.add(id);
+    if (moved(url || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(id), DEFAULT_OPENAI_COMPATIBLE_URL)) movedProviders.add(id);
   }
-  if (updates.llmBaseUrl !== undefined && provider && moved(updates.llmBaseUrl || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(provider))) {
+  if (updates.llmBaseUrl !== undefined && moved(updates.llmBaseUrl || DEFAULT_OPENAI_COMPATIBLE_URL, savedUrl(provider), DEFAULT_OPENAI_COMPATIBLE_URL)) {
     movedProviders.add(provider);
   }
   for (const id of movedProviders) {
