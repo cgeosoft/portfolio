@@ -47,6 +47,8 @@ export type Middleware = (ctx: RequestContext) => Promise<void> | void;
 
 interface Route {
   method: string;
+  /** The pattern as registered, such as `/api/symbols/:symbol/intel`. Logs carry it instead of the real path, which can name a ticker or an ISIN. */
+  path: string;
   pattern: RegExp;
   keys: string[];
   handler: Handler;
@@ -59,6 +61,12 @@ const COMPRESS_MIN_BYTES = 4 * 1024;
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 /** Longest error message a response or a log line carries. */
 const MAX_ERROR_MESSAGE = 1000;
+
+/** The message of an error, cut to `MAX_ERROR_MESSAGE`: it can carry text a client, a module or a remote server chose. */
+export function boundedErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  return raw.length > MAX_ERROR_MESSAGE ? `${raw.slice(0, MAX_ERROR_MESSAGE - 1)}…` : raw;
+}
 
 function compile(path: string): { pattern: RegExp; keys: string[] } {
   const keys: string[] = [];
@@ -197,7 +205,7 @@ export class Router {
 
   add(method: string, path: string, handler: Handler): void {
     const { pattern, keys } = compile(path);
-    this.routes.push({ method: method.toUpperCase(), pattern, keys, handler });
+    this.routes.push({ method: method.toUpperCase(), path, pattern, keys, handler });
   }
 
   get(path: string, handler: Handler): void {
@@ -288,17 +296,15 @@ export class Router {
       return jsonFor(req, result ?? { success: true }, 200, ctx.responseHeaders, !isLoopbackAddress(ip));
     } catch (err) {
       const status = err instanceof HttpError ? err.status : 500;
-      // A message can carry text a client, a module or a remote server chose: keep it bounded.
-      const raw = err instanceof Error ? err.message : String(err);
-      const message = raw.length > MAX_ERROR_MESSAGE ? `${raw.slice(0, MAX_ERROR_MESSAGE - 1)}…` : raw;
+      const message = boundedErrorMessage(err);
       const durationMs = Math.round(performance.now() - started);
       if (status >= 500) {
-        appLogger.logStep("error", "http", requestId, `${method} ${url.pathname} -> ${status} ${message}`, durationMs, {
+        appLogger.logStep("error", "http", requestId, `${method} ${matched.path} -> ${status} ${message}`, durationMs, {
           stack: err instanceof Error ? err.stack?.split("\n").slice(1, 4).join(" | ") : undefined,
         });
       } else if (status !== 401 && status !== 404) {
         // Without a session anyone who reaches the port could fill the log file: only a debug record then.
-        appLogger.logStep(ctx.sessionId ? "warning" : "debug", "http", requestId, `${method} ${url.pathname} -> ${status} ${message}`, durationMs);
+        appLogger.logStep(ctx.sessionId ? "warning" : "debug", "http", requestId, `${method} ${matched.path} -> ${status} ${message}`, durationMs);
       }
       return json({ statusCode: status, message, requestId }, status, ctx.responseHeaders);
     }

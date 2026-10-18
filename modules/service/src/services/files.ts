@@ -69,7 +69,8 @@ export async function pickFolder(startDir: string, title: string): Promise<strin
     return runDialog(["osascript", "-e", script]);
   }
   if (process.platform === "win32") {
-    const quoted = (text: string) => `'${text.replace(/'/g, "''")}'`;
+    // PowerShell also ends a single-quoted string at the typographic quotes U+2018 to U+201B: double each of them too.
+    const quoted = (text: string) => `'${text.replace(/['\u2018-\u201B]/g, "$&$&")}'`;
     const script = [
       "Add-Type -AssemblyName System.Windows.Forms",
       "$owner = New-Object System.Windows.Forms.Form -Property @{ TopMost = $true }",
