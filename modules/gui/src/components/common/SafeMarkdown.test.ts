@@ -1,7 +1,8 @@
 import { describe, it, expect } from "bun:test";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { SafeMarkdown, externalLinkTarget, type InAppLinkRenderer, type MarkdownLinkPolicy } from "./SafeMarkdown";
+import { externalLinkTarget, type InAppLinkRenderer, type MarkdownLinkPolicy } from "./SafeMarkdown";
+import SafeMarkdown from "./SafeMarkdownRenderer";
 
 function render(markdown: string, links?: MarkdownLinkPolicy, renderInAppLink?: InAppLinkRenderer): string {
   return renderToStaticMarkup(createElement(SafeMarkdown, { links, renderInAppLink }, markdown));

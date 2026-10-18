@@ -57,6 +57,7 @@ export function AllocationCard({
 }: AllocationCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
+  const centerRef = useRef<{ label: string; total: string; count: string; textColor: string; textMuted: string } | null>(null);
 
   // Group holdings into categories
   const stockHoldings: PortfolioHolding[] = [];
@@ -164,14 +165,11 @@ export function AllocationCard({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (chartRef.current) {
-      chartRef.current.destroy();
+    if (!canvas || (outerHoldings.length === 0 && innerCategories.length === 0)) {
+      chartRef.current?.destroy();
       chartRef.current = null;
+      return;
     }
-
-    if (outerHoldings.length === 0 && innerCategories.length === 0) return;
 
     const isLight = theme === "light" || (theme === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
     const bgWidget = isLight ? "#ffffff" : "#090d16";
@@ -179,7 +177,10 @@ export function AllocationCard({
     const textColor = isLight ? "#0f172a" : "#f1f5f9";
     const textMuted = isLight ? "#64748b" : "#94a3b8";
 
-    // Center text plugin to display portfolio value & asset count inside the donut
+    centerRef.current = { label: t("dashboard.allocation.centerLabel"), total: fmtCurrency(totalVal, currency, hideValues), count: t("dashboard.allocation.assetsCount", { count: outerHoldings.length }), textColor, textMuted };
+
+    // Center text plugin to display portfolio value & asset count inside the donut.
+    // It reads centerRef, so an updated chart draws the current values with the same plugin.
     const centerTextPlugin = {
       id: "dualDonutCenterText",
       beforeDraw(chart: Chart) {
@@ -188,25 +189,27 @@ export function AllocationCard({
         const cx = (chartArea.left + chartArea.right) / 2;
         const cy = (chartArea.top + chartArea.bottom) / 2;
 
+        const center = centerRef.current;
+        if (!center) return;
+
         ctx.save();
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
         // Top label
         ctx.font = '600 9px monospace';
-        ctx.fillStyle = textMuted;
-        ctx.fillText(t("dashboard.allocation.centerLabel"), cx, cy - 13);
+        ctx.fillStyle = center.textMuted;
+        ctx.fillText(center.label, cx, cy - 13);
 
         // Middle Value
         ctx.font = 'bold 12px monospace';
-        ctx.fillStyle = textColor;
-        const totalStr = fmtCurrency(totalVal, currency, hideValues);
-        ctx.fillText(totalStr, cx, cy + 2);
+        ctx.fillStyle = center.textColor;
+        ctx.fillText(center.total, cx, cy + 2);
 
         // Bottom count
         ctx.font = '500 9px monospace';
         ctx.fillStyle = "#DD3C73";
-        ctx.fillText(t("dashboard.allocation.assetsCount", { count: outerHoldings.length }), cx, cy + 17);
+        ctx.fillText(center.count, cx, cy + 17);
 
         ctx.restore();
       },
@@ -342,13 +345,25 @@ export function AllocationCard({
       },
     };
 
+    // Update the existing chart in place: a refresh should not replay the opening animation.
+    const chart = chartRef.current;
+    if (chart && chart.canvas === canvas) {
+      chart.data = config.data;
+      chart.options = config.options as any;
+      chart.update("none");
+      return;
+    }
+    chart?.destroy();
     chartRef.current = new Chart(canvas, config as any);
+  }, [holdings, summary, currency, hideValues, totalVal, theme]);
 
-    return () => {
+  useEffect(
+    () => () => {
       chartRef.current?.destroy();
       chartRef.current = null;
-    };
-  }, [holdings, summary, currency, hideValues, totalVal, theme]);
+    },
+    []
+  );
 
   return (
     <div className="cx-card p-4 sm:p-5 flex flex-col justify-between font-mono h-full w-full max-w-full min-w-0 overflow-hidden">

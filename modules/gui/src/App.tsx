@@ -8,7 +8,6 @@ import type {
 import { Header, type PortfolioTabKey } from "./components/layout/Header";
 import { AppMenuBar } from "./components/layout/AppMenuBar";
 import { CreatePortfolioModal } from "./components/portfolio/CreatePortfolioModal";
-import { ExportPortfolioModal } from "./components/portfolio/ExportPortfolioModal";
 import { StatCard } from "./components/portfolio/StatCard";
 import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
@@ -22,21 +21,17 @@ import {
 } from "./components/portfolio/AnalysisPage";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { ReportsCard } from "./components/portfolio/ReportsCard";
-import { TransactionModal } from "./components/portfolio/TransactionModal";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
-import { SETUP_STEP_AFTER_TERMS, SetupWizardPage, type SetupStep } from "./components/common/SetupWizardPage";
+import { SETUP_STEP_AFTER_TERMS, type SetupStep } from "./components/common/setup-steps";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { Toaster } from "./components/common/Toaster";
-import { ChangelogModal } from "./components/common/ChangelogModal";
 import { DEFAULT_SETTINGS_SECTION, resolveSettingsSection, type SettingsSection } from "./components/settings/settings-nav";
 import { CONFIG_CHANGED_EVENT } from "./components/settings/SettingsFields";
-import { SupportTicketModal } from "./components/settings/SupportTicketModal";
 import { WebsitePage, type WebsitePageId } from "./components/common/WebsitePage";
 import { BottomBar } from "./components/layout/BottomBar";
-import { MetricInfoModal, type MetricKey } from "./components/portfolio/MetricInfoModal";
+import type { MetricKey } from "./components/portfolio/MetricInfoModal";
 import { MetricDashboard } from "./components/metrics/MetricDashboard";
 import { MetricsTab } from "./components/metrics/MetricsTab";
-import { MetricDetailsModal } from "./components/metrics/MetricDetailsModal";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
 import { HoldingLinksHost } from "./components/portfolio/holding-links";
 import { reloadPage } from "./components/portfolio/utils";
@@ -71,6 +66,14 @@ const SettingsPage = lazy(() => import("./components/settings/SettingsPage").the
 const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
 const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
 const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
+// Dialogs load on their first open and stay mounted after it, so they keep their state when closed.
+const SetupWizardPage = lazy(() => import("./components/common/SetupWizardPage").then((m) => ({ default: m.SetupWizardPage })));
+const ChangelogModal = lazy(() => import("./components/common/ChangelogModal").then((m) => ({ default: m.ChangelogModal })));
+const SupportTicketModal = lazy(() => import("./components/settings/SupportTicketModal").then((m) => ({ default: m.SupportTicketModal })));
+const TransactionModal = lazy(() => import("./components/portfolio/TransactionModal").then((m) => ({ default: m.TransactionModal })));
+const MetricInfoModal = lazy(() => import("./components/portfolio/MetricInfoModal").then((m) => ({ default: m.MetricInfoModal })));
+const MetricDetailsModal = lazy(() => import("./components/metrics/MetricDetailsModal").then((m) => ({ default: m.MetricDetailsModal })));
+const ExportPortfolioModal = lazy(() => import("./components/portfolio/ExportPortfolioModal").then((m) => ({ default: m.ExportPortfolioModal })));
 
 /** The overview sponsor banner. Off until the first sponsor signs; users cannot hide it. */
 const SPONSOR_BANNER_ENABLED = false;
@@ -836,6 +839,12 @@ export default function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isMetricModalOpen, setIsMetricModalOpen] = useState(false);
   const [selectedMetricKey, setSelectedMetricKey] = useState<MetricKey>("totalGain");
+  const setupWizardMounted = useOpenedOnce(isSetupWizardOpen);
+  const supportTicketMounted = useOpenedOnce(isSupportTicketOpen);
+  const txModalMounted = useOpenedOnce(isTxModalOpen);
+  const changelogModalMounted = useOpenedOnce(isChangelogModalOpen);
+  const exportModalMounted = useOpenedOnce(isExportModalOpen);
+  const metricModalMounted = useOpenedOnce(isMetricModalOpen);
 
   const handleOpenMetricModal = useCallback((metricKey: MetricKey) => {
     setSelectedMetricKey(metricKey);
@@ -877,6 +886,7 @@ export default function App() {
   const [metricEvaluations, setMetricEvaluations] = useState<Record<string, MetricEvaluation>>({});
   const [isSavingMetrics, setIsSavingMetrics] = useState(false);
   const [metricDetails, setMetricDetails] = useState<MetricListing | null>(null);
+  const metricDetailsMounted = useOpenedOnce(metricDetails !== null);
   const [metricRetryNonce, setMetricRetryNonce] = useState(0);
   const [metricRetryIds, setMetricRetryIds] = useState<string[]>([]);
 
@@ -1638,14 +1648,16 @@ export default function App() {
     }
     if (authState === "terms") {
       return (
-        <SetupWizardPage
-          isOpen
-          termsPending
-          onAcceptTerms={handleAcceptTerms}
-          webpageUrl={webpageUrl}
-          onComplete={() => {}}
-          onClose={() => {}}
-        />
+        <Suspense fallback={null}>
+          <SetupWizardPage
+            isOpen
+            termsPending
+            onAcceptTerms={handleAcceptTerms}
+            webpageUrl={webpageUrl}
+            onComplete={() => {}}
+            onClose={() => {}}
+          />
+        </Suspense>
       );
     }
     return (
@@ -1966,15 +1978,19 @@ export default function App() {
           />
 
           {/* Changelog Modal */}
-          <ChangelogModal
-            isOpen={isChangelogModalOpen && Boolean(updateInfo?.hasUpdate)}
-            onClose={() => setIsChangelogModalOpen(false)}
-            latestVersion={updateInfo?.latestVersion || ""}
-            currentVersion={appVersion}
-            releaseName={updateInfo?.releaseName || `v${updateInfo?.latestVersion || ""}`}
-            releaseUrl={updateInfo?.releaseUrl || `https://github.com/cgeosoft/portfolio/releases`}
-            releaseNotes={updateInfo?.releaseNotes || ""}
-          />
+          {changelogModalMounted && (
+            <Suspense fallback={null}>
+              <ChangelogModal
+                isOpen={isChangelogModalOpen && Boolean(updateInfo?.hasUpdate)}
+                onClose={() => setIsChangelogModalOpen(false)}
+                latestVersion={updateInfo?.latestVersion || ""}
+                currentVersion={appVersion}
+                releaseName={updateInfo?.releaseName || `v${updateInfo?.latestVersion || ""}`}
+                releaseUrl={updateInfo?.releaseUrl || `https://github.com/cgeosoft/portfolio/releases`}
+                releaseNotes={updateInfo?.releaseNotes || ""}
+              />
+            </Suspense>
+          )}
 
           {/* Main View Router */}
           {view === "settings" && (
@@ -2194,25 +2210,37 @@ export default function App() {
       />
 
       {/* Modals */}
-      <SetupWizardPage
-        isOpen={isSetupWizardOpen}
-        startStep={setupWizardStartStep}
-        webpageUrl={webpageUrl}
-        onComplete={handleSetupComplete}
-        onClose={() => setIsSetupWizardOpen(false)}
-      />
+      {setupWizardMounted && (
+        <Suspense fallback={null}>
+          <SetupWizardPage
+            isOpen={isSetupWizardOpen}
+            startStep={setupWizardStartStep}
+            webpageUrl={webpageUrl}
+            onComplete={handleSetupComplete}
+            onClose={() => setIsSetupWizardOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <SupportTicketModal isOpen={isSupportTicketOpen} onClose={() => setIsSupportTicketOpen(false)} />
+      {supportTicketMounted && (
+        <Suspense fallback={null}>
+          <SupportTicketModal isOpen={isSupportTicketOpen} onClose={() => setIsSupportTicketOpen(false)} />
+        </Suspense>
+      )}
 
-      <TransactionModal
-        isOpen={isTxModalOpen}
-        onClose={() => {
-          setIsTxModalOpen(false);
-          setEditingTx(null);
-        }}
-        onSave={handleSaveTransaction}
-        transaction={editingTx}
-      />
+      {txModalMounted && (
+        <Suspense fallback={null}>
+          <TransactionModal
+            isOpen={isTxModalOpen}
+            onClose={() => {
+              setIsTxModalOpen(false);
+              setEditingTx(null);
+            }}
+            onSave={handleSaveTransaction}
+            transaction={editingTx}
+          />
+        </Suspense>
+      )}
 
       {/* Mounted from the first open on: the import keeps its file and mapping when closed */}
       {importModalMounted && (
@@ -2245,17 +2273,25 @@ export default function App() {
         </Suspense>
       )}
 
-      <MetricInfoModal
-        isOpen={isMetricModalOpen}
-        onClose={() => setIsMetricModalOpen(false)}
-        selectedMetricKey={selectedMetricKey}
-        onSelectMetricKey={setSelectedMetricKey}
-        summary={summary}
-        currency={currency}
-        hideCurrencyValues={hideCurrencyValues}
-      />
+      {metricModalMounted && (
+        <Suspense fallback={null}>
+          <MetricInfoModal
+            isOpen={isMetricModalOpen}
+            onClose={() => setIsMetricModalOpen(false)}
+            selectedMetricKey={selectedMetricKey}
+            onSelectMetricKey={setSelectedMetricKey}
+            summary={summary}
+            currency={currency}
+            hideCurrencyValues={hideCurrencyValues}
+          />
+        </Suspense>
+      )}
 
-      <MetricDetailsModal listing={metricDetails} onClose={() => setMetricDetails(null)} />
+      {metricDetailsMounted && (
+        <Suspense fallback={null}>
+          <MetricDetailsModal listing={metricDetails} onClose={() => setMetricDetails(null)} />
+        </Suspense>
+      )}
 
       {/* Holding details, opened from any instrument reference */}
       <HoldingLinksHost holdings={portfolioData?.holdings} transactions={portfolioData?.transactions} />
@@ -2266,11 +2302,15 @@ export default function App() {
         onPortfolioCreated={handlePortfolioCreated}
       />
 
-      <ExportPortfolioModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        portfolio={activePortfolio}
-      />
+      {exportModalMounted && (
+        <Suspense fallback={null}>
+          <ExportPortfolioModal
+            isOpen={isExportModalOpen}
+            onClose={() => setIsExportModalOpen(false)}
+            portfolio={activePortfolio}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

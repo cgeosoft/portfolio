@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { PortfolioHolding, PortfolioTransaction } from "portfolio-shared/portfolio";
 import { HoldingIntelModal } from "./HoldingIntelModal";
@@ -113,8 +113,22 @@ export function buildHoldingIndex(holdings: PortfolioHolding[], transactions: Po
   return { holdings: bySymbol, exact, pattern, terms };
 }
 
+/**
+ * What the links depend on: symbols, names, asset types and ISINs, not prices. A refresh with
+ * the same key keeps the link patterns, so Markdown that was already rendered is not parsed again.
+ */
+export function holdingLinkKey(holdings: PortfolioHolding[], transactions: PortfolioTransaction[] = []): string {
+  const parts = holdings.map((h) => `${h.symbol}\u0001${h.name ?? ""}\u0001${h.assetType ?? ""}\u0001${h.isPrivate ? 1 : 0}`);
+  const isins = new Set<string>();
+  for (const tx of transactions) {
+    const isin = tx.isin?.trim().toUpperCase();
+    if (isin) isins.add(`${tx.symbol}\u0001${isin}`);
+  }
+  return `${parts.sort().join("\u0002")}\u0003${[...isins].sort().join("\u0002")}`;
+}
+
 /** The holding a whole reference ("VWCE", "IE00BK5BQT80", "Apple") names, if any. */
-export function findHoldingSymbol(index: HoldingIndex, text: string): string | null {
+export function findHoldingSymbol(index: Pick<HoldingIndex, "exact">, text: string): string | null {
   return index.exact.get(text.trim().toLowerCase()) ?? null;
 }
 
@@ -146,7 +160,22 @@ interface HoldingLinksHostProps {
 
 /** Mount once: publishes the linkable holdings and shows the holding details modal on request. */
 export function HoldingLinksHost({ holdings, transactions }: HoldingLinksHostProps) {
-  const index = useMemo(() => buildHoldingIndex(holdings ?? [], transactions), [holdings, transactions]);
+  const previous = useRef<{ key: string; index: HoldingIndex } | null>(null);
+  const index = useMemo(() => {
+    const key = holdingLinkKey(holdings ?? [], transactions);
+    const prev = previous.current;
+    let next: HoldingIndex;
+    if (prev && prev.key === key) {
+      // Same references: keep the patterns (and so the remark plugin), refresh the holdings the modal shows.
+      const bySymbol = new Map<string, PortfolioHolding>();
+      for (const h of holdings ?? []) if (prev.index.holdings.has(h.symbol)) bySymbol.set(h.symbol, h);
+      next = { ...prev.index, holdings: bySymbol };
+    } else {
+      next = buildHoldingIndex(holdings ?? [], transactions);
+    }
+    previous.current = { key, index: next };
+    return next;
+  }, [holdings, transactions]);
   const [open, setOpen] = useState<PortfolioHolding | null>(null);
 
   useEffect(() => {
@@ -267,7 +296,7 @@ function holdingLinkNode(symbol: string, children: MdNode[]): MdNode {
   return { type: "link", url: HOLDING_HREF_PREFIX + encodeURIComponent(symbol), children };
 }
 
-function splitText(value: string, index: HoldingIndex): MdNode[] | null {
+function splitText(value: string, index: LinkTerms): MdNode[] | null {
   if (!index.pattern) return null;
   const out: MdNode[] = [];
   let last = 0;
@@ -284,7 +313,10 @@ function splitText(value: string, index: HoldingIndex): MdNode[] | null {
   return out;
 }
 
-function linkHoldings(node: MdNode, index: HoldingIndex): void {
+/** The parts of the index that decide where links go; stable while the references stay the same. */
+type LinkTerms = Pick<HoldingIndex, "exact" | "pattern" | "terms">;
+
+function linkHoldings(node: MdNode, index: LinkTerms): void {
   const children = node.children;
   if (!children) return;
   for (let i = 0; i < children.length; i++) {
@@ -317,6 +349,6 @@ function linkHoldings(node: MdNode, index: HoldingIndex): void {
 
 /** A remark plugin that turns references to the portfolio's holdings into holding links. */
 export function useHoldingLinkPlugin(): () => (tree: MdNode) => void {
-  const index = useHoldingIndex();
-  return useMemo(() => () => (tree: MdNode) => linkHoldings(tree, index), [index]);
+  const { exact, pattern, terms } = useHoldingIndex();
+  return useMemo(() => () => (tree: MdNode) => linkHoldings(tree, { exact, pattern, terms }), [exact, pattern, terms]);
 }
