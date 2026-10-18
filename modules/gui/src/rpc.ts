@@ -11,7 +11,7 @@ import { buildConsoleLogLine, CONTINUATION_INDENT, type ConsoleLogLevel } from "
 export const rpc = {
   request: {
     logClientEvent: (p: LogClientEventRequest) => api.logClientEvent(p),
-    getPortfolios: (_p?: unknown) => api.getPortfolios(),
+    getPortfolios: (p?: { signal?: AbortSignal }) => api.getPortfolios(p?.signal),
     getPortfolioData: (p: { portfolioId: string; baseCurrency?: string; refresh?: boolean; signal?: AbortSignal }) =>
       api.getPortfolioData(p.portfolioId, p.baseCurrency, p.refresh, p.signal),
     createPortfolio: api.createPortfolio,
@@ -49,9 +49,9 @@ export const rpc = {
     testFmpConnection: (p: { apiKey?: string }) => api.testFmpConnection(p.apiKey),
     testYahooConnection: (_p?: unknown) => api.testYahooConnection(),
     clearMarketCache: (_p?: unknown) => api.clearMarketCache(),
-    getConfig: (_p?: unknown) => api.getConfig(),
+    getConfig: (p?: { signal?: AbortSignal }) => api.getConfig(p?.signal),
     saveConfig: api.saveConfig,
-    getAppInfo: (_p?: unknown) => api.getAppInfo(),
+    getAppInfo: (p?: { signal?: AbortSignal }) => api.getAppInfo(p?.signal),
     checkForUpdates: (p?: { force?: boolean }) => api.checkForUpdates(Boolean(p?.force)),
     getUpdateInfo: (_p?: unknown) => api.getUpdateInfo(),
     downloadUpdate: (p: { version: string }) => api.downloadUpdate(p.version),

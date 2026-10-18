@@ -1056,8 +1056,9 @@ export default function App() {
         attemptTimeoutMs,
       );
       try {
+        // Debug lines stay in the console; only retries reach the service log.
         clientLogger.log(
-          "info",
+          i === 0 ? "debug" : "info",
           `${name}:attempt`,
           `Starting RPC "${name}" (attempt ${i + 1}/${retries}, timeout=${attemptTimeoutMs}ms)`,
         );
@@ -1067,7 +1068,12 @@ export default function App() {
         });
         const res = await Promise.race([fn(attempt.signal), timedOut]);
         const dur = Math.round(performance.now() - attemptStart);
-        clientLogger.log("success", `${name}:success`, `RPC "${name}" succeeded on attempt ${i + 1} in ${dur}ms`, dur);
+        clientLogger.log(
+          i === 0 ? "debug" : "success",
+          `${name}:success`,
+          `RPC "${name}" succeeded on attempt ${i + 1} in ${dur}ms`,
+          dur,
+        );
         return res;
       } catch (err) {
         const dur = Math.round(performance.now() - attemptStart);
@@ -1092,7 +1098,7 @@ export default function App() {
       clientLogger.log("info", "initApp:start", "Initializing application config and system info");
       await ensureRpcReady();
       try {
-        const config = await callWithRetry<DesktopConfig>("getConfig", () => rpc.request.getConfig({}), 3, 200, 3000);
+        const config = await callWithRetry<DesktopConfig>("getConfig", (signal) => rpc.request.getConfig({ signal }), 3, 200, 3000);
         if (config.baseCurrency) setCurrency(config.baseCurrency);
         setHideCurrencyValues(config.hideCurrencyValues === true);
         if (config.llmProvider) setAssistantProvider(config.llmProvider);
@@ -1128,7 +1134,7 @@ export default function App() {
       }
 
       try {
-        const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", () => rpc.request.getAppInfo({}), 3, 200, 3000);
+        const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", (signal) => rpc.request.getAppInfo({ signal }), 3, 200, 3000);
         if (appInfo.version && appInfo.version !== "0.0.0") setAppVersion(appInfo.version);
         else if (appInfo.majorMinor && appInfo.majorMinor !== "0.0") setAppVersion(appInfo.majorMinor);
         else if (APP_VERSION) setAppVersion(APP_VERSION);
@@ -1164,7 +1170,7 @@ export default function App() {
     try {
       clientLogger.log("info", "loadPortfolios:start", "Loading portfolios list from database");
       await ensureRpcReady();
-      const data = await callWithRetry<GetPortfoliosResponse>("getPortfolios", () => rpc.request.getPortfolios({}), 3, 200, 3000);
+      const data = await callWithRetry<GetPortfoliosResponse>("getPortfolios", (signal) => rpc.request.getPortfolios({ signal }), 3, 200, 3000);
       const list: PortfolioItem[] = data.portfolios || [];
       setPortfolios(list);
       // Ids only: portfolio names are personal data and stay out of the logs.
@@ -1271,9 +1277,11 @@ export default function App() {
               refresh: mode === "refresh",
               signal,
             }),
-          inBackground ? 2 : 3,
+          // A cold first load builds the data from market sources and can take well over
+          // a few seconds; a short timeout showed an error while the service was still working.
+          2,
           250,
-          inBackground ? 30000 : 4000,
+          30000,
         );
         const dur = Math.round(performance.now() - loadStart);
         setPortfolioData(data);

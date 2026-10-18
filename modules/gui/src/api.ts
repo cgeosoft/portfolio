@@ -169,7 +169,7 @@ export const api = {
   setRemoteAccess: (update: UpdateRemoteAccessRequest) => request<RemoteAccessInfo>("/api/host/remote-access", { method: "PATCH", body: json(update) }),
 
   // ---- portfolios
-  getPortfolios: () => request<GetPortfoliosResponse>("/api/portfolios"),
+  getPortfolios: (signal?: AbortSignal) => request<GetPortfoliosResponse>("/api/portfolios", { signal }),
   /** `signal` aborts the request (a retry that timed out). */
   getPortfolioData: (portfolioId: string, baseCurrency?: string, refresh?: boolean, signal?: AbortSignal) => {
     const q = new URLSearchParams();
@@ -294,13 +294,13 @@ export const api = {
   runEventAlerts: () => request<RunAutomationResponse>("/api/automation/event-alerts/run", { method: "POST" }, { timeoutMs: 600_000 }),
 
   // ---- config and setup
-  getConfig: () => request<DesktopConfig>("/api/config"),
+  getConfig: (signal?: AbortSignal) => request<DesktopConfig>("/api/config", { signal }),
   getSettings: () => request<GetSettingsResponse>("/api/settings"),
   saveConfig: (updates: Partial<DesktopConfig>) => request<DesktopConfig>("/api/config", { method: "PATCH", body: json(updates) }),
   completeSetup: (body: CompleteSetupRequest) => request<{ success: boolean }>("/api/setup/complete", { method: "POST", body: json(body) }),
 
   // ---- app
-  getAppInfo: () => request<GetAppInfoResponse>("/api/app/info"),
+  getAppInfo: (signal?: AbortSignal) => request<GetAppInfoResponse>("/api/app/info", { signal }),
   getUpdateInfo: () => request<AppUpdateInfo>("/api/app/update"),
   checkForUpdates: (force = false) => request<AppUpdateInfo>("/api/app/update/check", { method: "POST", body: json({ force }) }),
   downloadUpdate: (version: string, dialogTitle?: string) =>
