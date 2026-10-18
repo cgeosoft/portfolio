@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Buksan sa ibang device"
       description: "Hayaang buksan ng iyong phone o ibang computer sa parehong home network ang Portfolio na ito sa browser nito. I-on muna ang app lock. Kapag naka-off, ang computer lang na ito ang makapagbubukas nito."
+      plainHttp: "Hindi naka-encrypt ang koneksyon sa ibang device. I-on lang ito sa network na pinagkakatiwalaan mo, o gumamit ng TLS proxy. Mananatiling naka-sign in ang ibang device nang isang araw mula sa huling paggamit."
       pinFirst: "Magtakda muna ng PIN"
       port: "Port"
       portHint: "Ginagamit ng ibang device ang numerong ito sa address. Palitan lang ito kung may ibang program na gumagamit na nito."

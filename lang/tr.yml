@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Diğer cihazlarda aç"
       description: "Aynı ev ağındaki telefonunuzun veya başka bir bilgisayarın bu Portfolio'yu tarayıcısında açmasına izin verin. Önce uygulama kilidini açın. Kapalıyken yalnızca bu bilgisayar açabilir."
+      plainHttp: "Diğer cihazlarla bağlantı şifrelenmez. Bunu yalnızca güvendiğiniz bir ağda açın veya bir TLS proxy üzerinden kullanın. Diğer cihazlar son kullanımdan sonra bir gün oturum açık kalır."
       pinFirst: "Önce bir PIN ayarlayın"
       port: "Bağlantı noktası"
       portHint: "Diğer cihazlar adreste bu numarayı kullanır. Yalnızca başka bir program zaten kullanıyorsa değiştirin."

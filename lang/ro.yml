@@ -1622,6 +1622,7 @@ settings:
     remote:
       title: "Deschidere pe alte dispozitive"
       description: "Permiteți telefonului sau altui computer din aceeași rețea de acasă să deschidă acest Portfolio în browser. Activați mai întâi blocarea aplicației. Când este dezactivat, doar acest computer îl poate deschide."
+      plainHttp: "Conexiunea cu alte dispozitive nu este criptată. Activați aceasta doar într-o rețea de încredere sau printr-un proxy TLS. Celelalte dispozitive rămân conectate o zi după ultima utilizare."
       pinFirst: "Setați mai întâi un PIN"
       port: "Port"
       portHint: "Celelalte dispozitive folosesc acest număr în adresă. Schimbați-l doar dacă alt program îl folosește deja."

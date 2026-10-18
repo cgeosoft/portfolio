@@ -304,6 +304,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
             </span>
           }
         >
+          <p className="text-[11px] text-amber-300">{t("settings.security.remote.plainHttp")}</p>
           <div className="flex items-center gap-2">
             <label htmlFor="remote-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               {t("settings.security.remote.port")}

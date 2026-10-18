@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Öppna på andra enheter"
       description: "Låt din telefon eller en annan dator i samma hemnätverk öppna den här Portfolio i webbläsaren. Aktivera applåset först. När detta är avstängt kan bara den här datorn öppna den."
+      plainHttp: "Anslutningen till andra enheter är inte krypterad. Slå på detta bara i ett nätverk du litar på, eller använd en TLS-proxy. Andra enheter förblir inloggade en dag efter senaste användning."
       pinFirst: "Ange en PIN först"
       port: "Port"
       portHint: "Andra enheter använder det här numret i adressen. Ändra det bara om ett annat program redan använder det."

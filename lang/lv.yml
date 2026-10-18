@@ -1622,6 +1622,7 @@ settings:
     remote:
       title: "Atvērt citās ierīcēs"
       description: "Ļaut jūsu tālrunim vai citam datoram tajā pašā mājas tīklā atvērt šo Portfolio savā pārlūkā. Vispirms ieslēdziet lietotnes bloķēšanu. Ja izslēgts, to var atvērt tikai šis dators."
+      plainHttp: "Savienojums ar citām ierīcēm nav šifrēts. Ieslēdziet to tikai uzticamā tīklā vai izmantojiet TLS starpniekserveri. Citas ierīces paliek pieteiktas vienu dienu pēc pēdējās lietošanas."
       pinFirst: "Vispirms iestatiet PIN"
       port: "Ports"
       portHint: "Citas ierīces izmanto šo numuru adresē. Mainiet to tikai tad, ja to jau izmanto cita programma."

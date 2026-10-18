@@ -1596,6 +1596,7 @@ settings:
     remote:
       title: "Ava teistes seadmetes"
       description: "Luba oma telefonil või mõnel teisel samas koduvõrgus oleval arvutil see Portfolio oma brauseris avada. Lülita esmalt sisse rakenduse lukk. Kui see on väljas, saab rakendust avada ainult see arvuti."
+      plainHttp: "Ühendus teiste seadmetega ei ole krüpteeritud. Lülita see sisse ainult usaldusväärses võrgus või kasuta TLS-puhverserverit. Teised seadmed jäävad sisselogituks ühe päeva pärast viimast kasutust."
       pinFirst: "Määra esmalt PIN-kood"
       port: "Port"
       portHint: "Teised seadmed kasutavad seda numbrit aadressis. Muuda seda ainult siis, kui mõni teine programm seda juba kasutab."

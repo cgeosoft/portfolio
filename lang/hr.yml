@@ -1622,6 +1622,7 @@ settings:
     remote:
       title: "Otvaranje na drugim uređajima"
       description: "Dopustite telefonu ili drugom računalu u istoj kućnoj mreži da otvori ovaj Portfolio u pregledniku. Najprije uključite zaključavanje aplikacije. Kada je ovo isključeno, aplikaciju može otvoriti samo ovo računalo."
+      plainHttp: "Veza s drugim uređajima nije šifrirana. Uključite ovo samo na mreži kojoj vjerujete ili putem TLS proxyja. Drugi uređaji ostaju prijavljeni jedan dan nakon zadnje upotrebe."
       pinFirst: "Najprije postavite PIN"
       port: "Port"
       portHint: "Drugi uređaji koriste ovaj broj u adresi. Promijenite ga samo ako ga već koristi drugi program."

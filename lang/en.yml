@@ -1599,6 +1599,7 @@ settings:
     remote:
       title: "Open on other devices"
       description: "Let your phone or another computer on the same home network open this Portfolio in its browser. Turn on the app lock first. When off, only this computer can open it."
+      plainHttp: "The connection to other devices is not encrypted. Turn this on only on a network you trust, or reach it through a TLS proxy. Other devices stay signed in for one day after their last use."
       pinFirst: "Set a PIN first"
       port: "Port"
       portHint: "Other devices use this number in the address. Change it only if another program already uses it."

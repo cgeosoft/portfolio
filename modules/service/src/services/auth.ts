@@ -4,7 +4,12 @@
  * (remote connections) gets its own session and the PIN applies to it too.
  * The table keeps the SHA-256 of each session id, not the id, so a copy of
  * the database (a backup in Downloads) opens no session. The PIN hash, the
- * attempt counter and the Terms of Use acceptance live in `kv_entries`.
+ * attempt counters and the Terms of Use acceptance live in `kv_entries`.
+ *
+ * The LAN listener speaks plain HTTP, so a session opened from another device
+ * lasts a day after its last use instead of a week, and wrong PINs from other
+ * devices count apart from the desktop window's: a LAN client cannot lock the
+ * window out.
  */
 import * as crypto from "node:crypto";
 import { resolve } from "node:path";
@@ -14,13 +19,20 @@ import { HttpError } from "../http/router";
 import { DATA_DIR } from "../paths";
 
 const PIN_RULE = /^[0-9]{6}$/;
+/** Wrong PINs allowed before a lockout; each further run of this many doubles the lockout. */
 const PIN_ATTEMPTS_LIMIT = 5;
-const PIN_ATTEMPTS_WINDOW_MS = 5 * 60 * 1000;
+const PIN_LOCKOUT_BASE_MS = 5 * 60 * 1000;
+const PIN_LOCKOUT_MAX_MS = 24 * 60 * 60 * 1000;
+/** A counter with no wrong PIN for this long after its lockout ends starts over. */
+const PIN_ATTEMPTS_FORGET_MS = 24 * 60 * 60 * 1000;
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** Lifetime of a session used from another device over the LAN listener. */
+export const REMOTE_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const SESSION_REFRESH_MS = 60 * 60 * 1000;
 const SCRYPT_KEYLEN = 32;
 const PIN_KEY = "auth:pinHash";
-const ATTEMPTS_KEY = "rate-limit:pin";
+/** One counter for the desktop window, one for other devices. */
+const ATTEMPTS_KEY = { local: "rate-limit:pin:local", remote: "rate-limit:pin:remote" } as const;
 const TERMS_KEY = "auth:acceptedTermsAt";
 
 /** The old cookie name, shared by every instance on the same host. Read only as a fallback. */
@@ -36,6 +48,27 @@ export const LEGACY_SESSION_COOKIE = "portfolio_session";
 export function sessionCookieName(dataDir: string = DATA_DIR): string {
   const hash = crypto.createHash("sha256").update(resolve(dataDir)).digest("hex").slice(0, 12);
   return `${LEGACY_SESSION_COOKIE}_${hash}`;
+}
+
+/** Where a request comes from: the loopback listener (`local`) or the LAN listener (`remote`). */
+export type ClientScope = keyof typeof ATTEMPTS_KEY;
+
+interface PinAttempts {
+  /** Wrong PINs since the counter started. */
+  failures: number;
+  /** Epoch ms until which every PIN is refused; 0 when not locked. */
+  lockedUntil: number;
+}
+
+/** Lockout after `failures` wrong PINs: 5 minutes after the 5th, doubling after every 5 more, at most a day. */
+export function pinLockoutMs(failures: number): number {
+  if (failures < PIN_ATTEMPTS_LIMIT || failures % PIN_ATTEMPTS_LIMIT !== 0) return 0;
+  const step = failures / PIN_ATTEMPTS_LIMIT - 1;
+  return Math.min(PIN_LOCKOUT_BASE_MS * 2 ** Math.min(step, 20), PIN_LOCKOUT_MAX_MS);
+}
+
+function sessionTtl(scope: ClientScope): number {
+  return scope === "remote" ? REMOTE_SESSION_TTL_MS : SESSION_TTL_MS;
 }
 
 interface KvRow {
@@ -99,31 +132,57 @@ export class AuthService {
     return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
   }
 
-  /** Verifies a PIN with a shared attempt counter across every client. */
-  private checkPin(pin: string | undefined): void {
+  private readAttempts(scope: ClientScope): PinAttempts {
+    const raw = this.kvGet(ATTEMPTS_KEY[scope]);
+    if (!raw) return { failures: 0, lockedUntil: 0 };
+    try {
+      const parsed = JSON.parse(raw) as Partial<PinAttempts>;
+      return { failures: Number(parsed.failures) || 0, lockedUntil: Number(parsed.lockedUntil) || 0 };
+    } catch {
+      return { failures: 0, lockedUntil: 0 };
+    }
+  }
+
+  /**
+   * Verifies a PIN. Each scope has its own counter: after 5 wrong PINs every
+   * PIN is refused for 5 minutes, and each further 5 doubles that, up to a day.
+   * The right PIN resets the counter.
+   */
+  private checkPin(pin: string | undefined, scope: ClientScope): void {
     const stored = this.kvGet(PIN_KEY);
     if (!stored) return;
     const attempt = (pin || "").trim();
     if (!attempt) throw new HttpError(401, "PIN required");
-    const attempts = Number(this.kvGet(ATTEMPTS_KEY) || 0) + 1;
-    this.kvSet(ATTEMPTS_KEY, String(attempts), PIN_ATTEMPTS_WINDOW_MS);
-    if (attempts > PIN_ATTEMPTS_LIMIT) throw new HttpError(401, "Too many attempts. Wait a few minutes and try again.");
-    if (!this.pinMatches(attempt, stored)) throw new HttpError(401, "Wrong PIN");
-    this.kvDel(ATTEMPTS_KEY);
+    const now = Date.now();
+    const state = this.readAttempts(scope);
+    if (state.lockedUntil > now) {
+      const minutes = Math.ceil((state.lockedUntil - now) / 60_000);
+      throw new HttpError(401, `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`);
+    }
+    if (this.pinMatches(attempt, stored)) {
+      this.kvDel(ATTEMPTS_KEY[scope]);
+      return;
+    }
+    const failures = state.failures + 1;
+    const lockout = pinLockoutMs(failures);
+    const lockedUntil = lockout ? now + lockout : 0;
+    this.kvSet(ATTEMPTS_KEY[scope], JSON.stringify({ failures, lockedUntil }), lockout + PIN_ATTEMPTS_FORGET_MS);
+    if (lockout) appLogger.logStep("warning", "auth", "pin", `${failures} wrong PINs from ${scope === "remote" ? "other devices" : "this computer"}; locked for ${Math.round(lockout / 60_000)} min`);
+    throw new HttpError(401, "Wrong PIN");
   }
 
   /** Sets or changes the PIN; the current PIN is required when one is set. */
-  setPin(pin: string, currentPin?: string): void {
+  setPin(pin: string, currentPin?: string, scope: ClientScope = "local"): void {
     if (!PIN_RULE.test(pin || "")) throw new HttpError(400, "PIN must be exactly 6 digits");
-    this.checkPin(currentPin);
+    this.checkPin(currentPin, scope);
     const hadPin = this.isPinEnabled();
     this.kvSet(PIN_KEY, this.hashPin(pin));
     appLogger.logStep("info", "auth", "pin", hadPin ? "PIN changed" : "PIN enabled");
   }
 
-  removePin(currentPin: string): void {
+  removePin(currentPin: string, scope: ClientScope = "local"): void {
     if (!this.isPinEnabled()) return;
-    this.checkPin(currentPin);
+    this.checkPin(currentPin, scope);
     this.kvDel(PIN_KEY);
     appLogger.logStep("info", "auth", "pin", "PIN disabled");
   }
@@ -168,16 +227,19 @@ export class AuthService {
   }
 
   /** Opens a session. Without a PIN this is automatic; with one it must match. */
-  login(pin?: string): string {
-    this.checkPin(pin);
+  login(pin?: string, scope: ClientScope = "local"): string {
+    this.checkPin(pin, scope);
     this.hashStoredSessions();
     const id = crypto.randomUUID();
-    getDatabase().run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", [sessionKey(id), Date.now() + SESSION_TTL_MS]);
+    getDatabase().run("INSERT INTO sessions (id, expiresAt) VALUES (?, ?)", [sessionKey(id), Date.now() + sessionTtl(scope)]);
     return id;
   }
 
-  /** True for a live session; extends it at most once per hour. */
-  validateSession(id: string | null | undefined): boolean {
+  /**
+   * True for a live session; extends it at most once per hour. A session used
+   * from another device lasts at most `REMOTE_SESSION_TTL_MS` from that use.
+   */
+  validateSession(id: string | null | undefined, scope: ClientScope = "local"): boolean {
     if (!id) return false;
     this.hashStoredSessions();
     const key = sessionKey(id);
@@ -188,8 +250,10 @@ export class AuthService {
       getDatabase().run("DELETE FROM sessions WHERE id = ?", [key]);
       return false;
     }
-    if (row.expiresAt - now < SESSION_TTL_MS - SESSION_REFRESH_MS) {
-      getDatabase().run("UPDATE sessions SET expiresAt = ? WHERE id = ?", [now + SESSION_TTL_MS, key]);
+    const ttl = sessionTtl(scope);
+    const remaining = row.expiresAt - now;
+    if (remaining < ttl - SESSION_REFRESH_MS || remaining > ttl) {
+      getDatabase().run("UPDATE sessions SET expiresAt = ? WHERE id = ?", [now + ttl, key]);
     }
     return true;
   }
@@ -258,8 +322,8 @@ export function readSessionCookie(req: Request): string | null {
  * opens the app without the session, so no request a foreign page starts
  * carries it, a GET included. The app's own requests carry it as before.
  */
-export function sessionCookie(id: string, secure: boolean): string {
-  const maxAge = Math.floor(SESSION_TTL_MS / 1000);
+export function sessionCookie(id: string, secure: boolean, scope: ClientScope = "local"): string {
+  const maxAge = Math.floor(sessionTtl(scope) / 1000);
   return `${sessionCookieName()}=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
 }
 

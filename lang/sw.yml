@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Fungua kwenye vifaa vingine"
       description: "Ruhusu simu yako au kompyuta nyingine kwenye mtandao uleule wa nyumbani kufungua Portfolio hii kwenye kivinjari chake. Washa kufuli ya programu kwanza. Ikiwa imezimwa, ni kompyuta hii tu inayoweza kuifungua."
+      plainHttp: "Muunganisho na vifaa vingine haujasimbwa. Washa hili tu kwenye mtandao unaouamini, au tumia proksi ya TLS. Vifaa vingine hubaki vimeingia kwa siku moja baada ya matumizi ya mwisho."
       pinFirst: "Weka PIN kwanza"
       port: "Lango"
       portHint: "Vifaa vingine hutumia nambari hii kwenye anwani. Ibadilishe tu ikiwa programu nyingine tayari inaitumia."

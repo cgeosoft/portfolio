@@ -1622,6 +1622,7 @@ settings:
     remote:
       title: "Ouvrir sur d'autres appareils"
       description: "Permettre à votre téléphone ou à un autre ordinateur du même réseau domestique d'ouvrir ce Portfolio dans son navigateur. Activez d'abord le verrouillage de l'application. Si cette option est désactivée, seul cet ordinateur peut l'ouvrir."
+      plainHttp: "La connexion avec les autres appareils n'est pas chiffrée. Activez cette option uniquement sur un réseau de confiance ou via un proxy TLS. Les autres appareils restent connectés un jour après leur dernière utilisation."
       pinFirst: "Définissez d'abord un code PIN"
       port: "Port"
       portHint: "Les autres appareils utilisent ce numéro dans l'adresse. Ne le changez que si un autre programme l'utilise déjà."

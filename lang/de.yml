@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Auf anderen Geräten öffnen"
       description: "Ihr Smartphone oder ein anderer Computer im selben Heimnetz kann dieses Portfolio im Browser öffnen. Schalten Sie zuerst die App-Sperre ein. Wenn aus, kann nur dieser Computer es öffnen."
+      plainHttp: "Die Verbindung zu anderen Geräten ist nicht verschlüsselt. Schalten Sie dies nur in einem Netz ein, dem Sie vertrauen, oder nutzen Sie einen TLS-Proxy. Andere Geräte bleiben einen Tag nach der letzten Nutzung angemeldet."
       pinFirst: "Zuerst eine PIN festlegen"
       port: "Port"
       portHint: "Andere Geräte verwenden diese Nummer in der Adresse. Ändern Sie sie nur, wenn ein anderes Programm sie bereits nutzt."
