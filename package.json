@@ -29,5 +29,10 @@
     "playwright-core": "^1.64.0",
     "typescript": "^5.7.3",
     "wrangler": "^4.150.0"
+  },
+  "overrides": {
+    "dompurify": "^3.4.17",
+    "postcss-selector-parser": "^7.1.6",
+    "source-map-js": "^1.2.2"
   }
 }
