@@ -6,22 +6,20 @@ export const APP_VERSION: string = typeof __APP_VERSION__ !== "undefined" ? __AP
 /**
  * Opens a URL outside the app. With target=_blank the desktop shell hands
  * http(s) and mailto links to the system browser or mail client; in a normal
- * browser they open in a new tab.
+ * browser they open in a new tab. One anchor click only: window.open with
+ * "noopener" always returns null, so a window.open-then-anchor fallback sent
+ * every link to the shell twice.
  */
 export function openExternal(url: string): boolean {
   const trimmed = (url || "").trim();
   if (!/^(https?:|mailto:)/i.test(trimmed)) return false;
-  const win = window.open(trimmed, "_blank", "noopener");
-  if (!win) {
-    // Popup blocked: navigate an anchor instead.
-    const a = document.createElement("a");
-    a.href = trimmed;
-    a.target = "_blank";
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
+  const a = document.createElement("a");
+  a.href = trimmed;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   return true;
 }
 
