@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.15.0] - 2026-10-20
+
+### Added
+- Wrong PIN attempts now cause a lockout. After 5 wrong PINs, every PIN is refused for 5 minutes. Each further 5 wrong PINs doubles the wait, up to one day.
+- Wrong PINs from the desktop window and from other devices are counted separately, so another device cannot lock out the desktop window.
+- Settings now says that the connection to other devices is not encrypted and is meant for trusted networks or a TLS proxy.
+
+### Changed
+- The app starts faster. The main part of the interface is smaller, and seven dialogs and the Markdown reader now load only when you first need them.
+- Price refreshes no longer re-read every chat message and report.
+- The allocation and portfolio charts now update in place, so a refresh no longer replays the animation.
+- Portfolio data is prepared once and reused, which makes loading faster.
+- The conversation list loads faster. A conversation loads when you open it.
+- Database backups now run in the background and no longer slow down the service.
+- Market status checks are faster and read held symbols only when the ledger changes.
+- Market data uses fewer requests per refresh. Quotes are fetched once for all portfolios during sync, startup refresh and the daily brief.
+- Yahoo and FMP data providers are treated as offline for one minute after repeated requests get no answer. Cached data is shown right away.
+- All Yahoo requests now share one limit on how many run at once and how many are sent per minute.
+- Sessions used from another device now last one day after last use instead of one week.
+- The first load now allows two attempts of 30 seconds each, so a slow first start no longer fails early.
+- Routine refreshes now write fewer lines to the service log.
+- Logs now show the route pattern instead of the full path, which could contain a ticker or an ISIN.
+- The GUI build tools were updated to Vite 6.
+
+### Fixed
+- External links now open once instead of twice in the desktop app.
+- Timed out startup requests are now cancelled properly.
+- Long error messages from the service are now cut to a safe length.
+
+### Security
+- The update installer is now checked before it is saved. It must come over https from GitHub or the website, must stay within the declared size, and must match the release SHA-256.
+- If the GitHub lookup fails, the installer from the website manifest is now checked against the SHA256SUMS of the GitHub release.
+- Redirects from public servers to internal addresses are now refused for LLM, Gotify, ntfy and metric requests. Key and token headers are dropped when a redirect goes to another origin.
+- The report routes now check the server address when called from another device.
+- Other devices can no longer point the LLM, Gotify, ntfy or metric routes to a new local or private network address. Servers already saved in Settings still work.
+- Stored ntfy tokens and LLM keys are now bound to their server when used from another device.
+- A Gotify token with no saved URL is now cleared when any new URL is set from another device.
+- Data and log paths are now shown only in the desktop window.
+- The database files are now private to the current user.
+- Typographic quotes are now escaped in the Windows folder dialog title.
+- Several dependency security advisories in the GUI tools were fixed.
+
+
 ## [0.14.1] - 2026-10-15
 
 ### Changed
