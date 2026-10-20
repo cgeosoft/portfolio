@@ -67,6 +67,69 @@ export function getReleaseAssetName(version: string, platform: NodeJS.Platform =
 
 const GITHUB_API_LATEST = "https://api.github.com/repos/cgeosoft/portfolio/releases/latest";
 
+/** Hosts an installer may come from, including GitHub's redirect targets for release assets. */
+const DOWNLOAD_HOSTS = new Set([
+  new URL(GITHUB_URL).hostname,
+  new URL(WEBPAGE_URL).hostname,
+  "objects.githubusercontent.com",
+  "release-assets.githubusercontent.com",
+]);
+const MAX_REDIRECTS = 5;
+/** Cap when the release does not declare a size. */
+const MAX_INSTALLER_BYTES = 1024 * 1024 * 1024;
+const RELEASE_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+const SHA256_HEX = /^[0-9a-f]{64}$/;
+
+/** True for an https URL on one of the release download hosts. */
+export function isAllowedDownloadUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password && DOWNLOAD_HOSTS.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Lowercase hex digest from `abc…` or GitHub's `sha256:abc…`, or undefined when it is not a SHA-256. */
+export function normalizeSha256(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const hex = value.trim().toLowerCase().replace(/^sha256:/, "");
+  return SHA256_HEX.test(hex) ? hex : undefined;
+}
+
+/** Digest for `fileName` in a `sha256sum` style listing (`<hex> *name` or `<hex>  name`). */
+export function sha256FromSums(sums: string, fileName: string): string | undefined {
+  for (const line of sums.split(/\r?\n/)) {
+    const m = line.trim().match(/^([0-9a-fA-F]{64})\s+\*?(.+)$/);
+    if (m && m[2] === fileName) return m[1]!.toLowerCase();
+  }
+  return undefined;
+}
+
+/** Fetch that follows redirects only to allowed download hosts. */
+async function fetchFromReleaseHost(url: string, headers: Record<string, string>, signal?: AbortSignal): Promise<Response> {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!isAllowedDownloadUrl(current)) throw new Error("Refusing download from a host outside the release hosts");
+    const response = await fetch(current, { headers, redirect: "manual", signal });
+    const location = response.headers.get("location");
+    if (response.status >= 300 && response.status < 400 && location) {
+      current = new URL(location, current).toString();
+      continue;
+    }
+    return response;
+  }
+  throw new Error("Too many redirects");
+}
+
+interface InstallerSource {
+  fileName: string;
+  url: string;
+  version: string;
+  size?: number;
+  sha256?: string;
+}
+
 export class AppUpdateService {
   private currentVersion: string;
   private intervalTimer: ReturnType<typeof setInterval> | null = null;
@@ -129,7 +192,8 @@ export class AppUpdateService {
             const assets = Array.isArray(gh.assets) ? gh.assets : [];
             const findAsset = (re: RegExp) => {
               const match = assets.find((a: any) => re.test(a.name));
-              return match ? { name: match.name, url: match.browser_download_url, size: match.size, sha256: "" } : undefined;
+              // GitHub reports `digest: "sha256:<hex>"` for assets; older ones fall back to SHA256SUMS at download.
+              return match ? { name: match.name, url: match.browser_download_url, size: match.size, sha256: normalizeSha256(match.digest) } : undefined;
             };
             manifest = {
               app: "portfolio",
@@ -214,14 +278,28 @@ export class AppUpdateService {
     }
   }
 
-  /** Installer name and URL of a version for this platform. */
-  private installerFor(version: string): { fileName: string; url: string } {
-    const cleanVersion = version.replace(/^[vV]/, "");
+  /** Installer name, URL, size and SHA-256 of a version for this platform. */
+  private installerFor(version: string): InstallerSource {
+    const cleanVersion = version.trim().replace(/^[vV]/, "");
+    if (!RELEASE_VERSION.test(cleanVersion)) throw new Error("Invalid release version");
     const platform = releasePlatformKey();
     const fromManifest = this.manifest?.version?.replace(/^[vV]/, "") === cleanVersion ? this.manifest?.files?.[platform]?.installer : undefined;
     const fileName = basename(fromManifest?.name || getReleaseAssetName(cleanVersion));
-    const url = fromManifest?.url || `${GITHUB_URL}/releases/download/v${cleanVersion}/${fileName}`;
-    return { fileName, url };
+    const url = fromManifest?.url || `${GITHUB_URL}/releases/download/v${cleanVersion}/${encodeURIComponent(fileName)}`;
+    if (!isAllowedDownloadUrl(url)) throw new Error("Installer URL is not on a release download host");
+    const size = typeof fromManifest?.size === "number" && fromManifest.size > 0 ? fromManifest.size : undefined;
+    return { fileName, url, version: cleanVersion, size, sha256: normalizeSha256(fromManifest?.sha256) };
+  }
+
+  /** SHA-256 the release publishes for the installer: from the manifest, else the release's SHA256SUMS. */
+  private async expectedSha256(source: InstallerSource): Promise<string> {
+    if (source.sha256) return source.sha256;
+    const sumsUrl = `${GITHUB_URL}/releases/download/v${source.version}/SHA256SUMS`;
+    const response = await fetchFromReleaseHost(sumsUrl, { "User-Agent": `Portfolio-Desktop/${this.currentVersion}` }, AbortSignal.timeout(15000));
+    if (!response.ok) throw new Error(`No checksum published for this release (HTTP ${response.status})`);
+    const digest = sha256FromSums(await response.text(), source.fileName);
+    if (!digest) throw new Error("No checksum published for this installer");
+    return digest;
   }
 
   /**
@@ -230,13 +308,19 @@ export class AppUpdateService {
    * installer there in the background; `getDownloadState()` reports progress.
    */
   public downloadUpdate(version: string, isLocal: boolean, dialogTitle: string): DownloadUpdateResponse {
-    const { fileName, url } = this.installerFor(version);
+    let source: InstallerSource;
+    try {
+      source = this.installerFor(version);
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    const { fileName, url } = source;
     if (!isLocal) return { success: true, url, fileName };
     if (this.download.status === "picking" || this.download.status === "downloading") {
       return { success: false, error: "A download is already in progress" };
     }
     this.download = { status: "picking", fileName };
-    void this.runDownload(url, fileName, dialogTitle);
+    void this.runDownload(source, dialogTitle);
     return { success: true, started: true, fileName };
   }
 
@@ -244,7 +328,8 @@ export class AppUpdateService {
     return this.download;
   }
 
-  private async runDownload(url: string, fileName: string, dialogTitle: string): Promise<void> {
+  private async runDownload(source: InstallerSource, dialogTitle: string): Promise<void> {
+    const { fileName, url } = source;
     const timer = appLogger.startTimer("update", "download");
     let partPath = "";
     try {
@@ -262,20 +347,33 @@ export class AppUpdateService {
         target = join(folder, `${fileName.slice(0, dot)}-${Date.now()}${fileName.slice(dot)}`);
       }
 
-      const response = await fetch(url, { headers: { "User-Agent": `Portfolio-Desktop/${this.currentVersion}` } });
+      const expectedSha256 = await this.expectedSha256(source);
+      const response = await fetchFromReleaseHost(url, { "User-Agent": `Portfolio-Desktop/${this.currentVersion}` });
       if (!response.ok || !response.body) throw new Error(`Download returned HTTP ${response.status}`);
-      const totalBytes = Number(response.headers.get("content-length")) || undefined;
+      const contentLength = Number(response.headers.get("content-length")) || undefined;
+      if (source.size && contentLength && contentLength !== source.size) throw new Error("Download size does not match the release");
+      const maxBytes = source.size ?? MAX_INSTALLER_BYTES;
+      if (contentLength && contentLength > maxBytes) throw new Error("Download is larger than the release allows");
+      const totalBytes = source.size ?? contentLength;
       this.download = { status: "downloading", fileName, receivedBytes: 0, totalBytes };
 
       partPath = `${target}.part`;
       const writer = Bun.file(partPath).writer();
+      const hasher = new Bun.CryptoHasher("sha256");
       let receivedBytes = 0;
-      for await (const chunk of response.body) {
-        writer.write(chunk);
-        receivedBytes += chunk.byteLength;
-        this.download = { status: "downloading", fileName, receivedBytes, totalBytes };
+      try {
+        for await (const chunk of response.body) {
+          receivedBytes += chunk.byteLength;
+          if (receivedBytes > maxBytes) throw new Error("Download is larger than the release allows");
+          writer.write(chunk);
+          hasher.update(chunk);
+          this.download = { status: "downloading", fileName, receivedBytes, totalBytes };
+        }
+      } finally {
+        await writer.end();
       }
-      await writer.end();
+      if (source.size && receivedBytes !== source.size) throw new Error("Download size does not match the release");
+      if (hasher.digest("hex") !== expectedSha256) throw new Error("Installer checksum does not match the release");
       renameSync(partPath, target);
       partPath = "";
       this.download = { status: "done", fileName, filePath: target, receivedBytes, totalBytes };

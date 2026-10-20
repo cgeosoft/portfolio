@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { parseSemver, isNewerVersion, getReleaseAssetName, AppUpdateService } from "../app-update";
+import { parseSemver, isNewerVersion, getReleaseAssetName, AppUpdateService, isAllowedDownloadUrl, normalizeSha256, sha256FromSums } from "../app-update";
 
 describe("Semver parsing and comparison", () => {
   it("parses valid semver versions correctly", () => {
@@ -52,5 +52,43 @@ describe("AppUpdateService", () => {
     expect(info.currentVersion).toBeDefined();
     expect(typeof info.enabled).toBe("boolean");
     expect(info.hasUpdate).toBe(false);
+  });
+});
+
+describe("Installer download checks", () => {
+  it("allows only https release hosts", () => {
+    expect(isAllowedDownloadUrl("https://github.com/cgeosoft/portfolio/releases/download/v1.0.0/a.deb")).toBe(true);
+    expect(isAllowedDownloadUrl("https://objects.githubusercontent.com/x")).toBe(true);
+    expect(isAllowedDownloadUrl("https://portfolio.cgeosoft.com/releases/1.0.0/a.deb")).toBe(true);
+    expect(isAllowedDownloadUrl("http://github.com/cgeosoft/portfolio/a.deb")).toBe(false);
+    expect(isAllowedDownloadUrl("https://evil.example/a.deb")).toBe(false);
+    expect(isAllowedDownloadUrl("https://github.com.evil.example/a.deb")).toBe(false);
+    expect(isAllowedDownloadUrl("https://user:pw@github.com/a.deb")).toBe(false);
+    expect(isAllowedDownloadUrl("file:///etc/passwd")).toBe(false);
+    expect(isAllowedDownloadUrl("not a url")).toBe(false);
+  });
+
+  it("normalizes SHA-256 digests", () => {
+    const hex = "a".repeat(64);
+    expect(normalizeSha256(hex)).toBe(hex);
+    expect(normalizeSha256(`sha256:${hex.toUpperCase()}`)).toBe(hex);
+    expect(normalizeSha256("")).toBeUndefined();
+    expect(normalizeSha256("sha512:abc")).toBeUndefined();
+    expect(normalizeSha256(undefined)).toBeUndefined();
+  });
+
+  it("reads a digest from a SHA256SUMS listing", () => {
+    const a = "1".repeat(64);
+    const b = "2".repeat(64);
+    const sums = `${a} *portfolio_1.0.0_amd64.deb\n${b}  portfolio_1.0.0_x64_setup.exe\n`;
+    expect(sha256FromSums(sums, "portfolio_1.0.0_amd64.deb")).toBe(a);
+    expect(sha256FromSums(sums, "portfolio_1.0.0_x64_setup.exe")).toBe(b);
+    expect(sha256FromSums(sums, "portfolio_1.0.0_universal.dmg")).toBeUndefined();
+  });
+
+  it("rejects a version that is not semver", () => {
+    const service = new AppUpdateService();
+    expect(service.downloadUpdate("1.0.0/../../x", false, "")).toEqual({ success: false, error: "Invalid release version" });
+    expect(service.downloadUpdate("v1.2.3", false, "").success).toBe(true);
   });
 });
