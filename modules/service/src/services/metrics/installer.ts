@@ -11,6 +11,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import * as installedRepo from "../../db/installed-metrics.repo.js";
 import { appLogger } from "../../logger.js";
+import { fetchWithCheckedRedirects } from "../outbound-target.js";
 import type { MetricManifest } from "portfolio-shared/metric-manifest";
 import { isMetricScope, type MetricScope } from "portfolio-shared/metric-abi";
 import type { PreviewMetricInstallResponse } from "portfolio-shared/api-types";
@@ -53,7 +54,7 @@ async function fetchBounded(url: URL, limit: number, what: string): Promise<Uint
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { signal: controller.signal, redirect: "follow" });
+    const res = await fetchWithCheckedRedirects(url, { signal: controller.signal });
     if (!res.ok) throw new Error(`${what} download failed (${res.status})`);
     const declared = Number(res.headers.get("content-length") ?? 0);
     if (declared > limit) throw new Error(`${what} exceeds the ${Math.round(limit / 1024)} KiB limit`);

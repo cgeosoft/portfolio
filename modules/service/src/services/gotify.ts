@@ -6,6 +6,7 @@
  */
 import { isSameServer, loadConfig } from "../config";
 import { appLogger } from "../logger";
+import { fetchWithCheckedRedirects } from "./outbound-target";
 import type { SendNotificationResponse } from "portfolio-shared/api-types";
 import type { PushMessage } from "./notify";
 
@@ -43,7 +44,7 @@ export async function sendGotify(msg: PushMessage, target: GotifyTarget = {}): P
 
   const started = Date.now();
   try {
-    const res = await fetch(gotifyMessageUrl(url), {
+    const res = await fetchWithCheckedRedirects(gotifyMessageUrl(url), {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Gotify-Key": token },
       body: JSON.stringify({

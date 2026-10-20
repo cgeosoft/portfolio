@@ -7,6 +7,7 @@
  */
 import { isSameServer, loadConfig } from "../config";
 import { appLogger } from "../logger";
+import { fetchWithCheckedRedirects } from "./outbound-target";
 import type { SendNotificationResponse } from "portfolio-shared/api-types";
 import type { PushMessage } from "./notify";
 
@@ -52,7 +53,7 @@ export async function sendNtfy(msg: PushMessage, target: NtfyTarget = {}): Promi
   if (token) headers.Authorization = `Bearer ${token}`;
   const started = Date.now();
   try {
-    const res = await fetch(ntfyPublishUrl(url), {
+    const res = await fetchWithCheckedRedirects(ntfyPublishUrl(url), {
       method: "POST",
       headers,
       body: JSON.stringify({

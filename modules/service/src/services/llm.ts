@@ -14,6 +14,7 @@
 
 import { isSameServer, loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
+import { fetchWithCheckedRedirects } from "./outbound-target.js";
 import { CLI_PROVIDER_MODELS, CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
 import type { CliProviderStatusResponse } from "portfolio-shared/api-types";
 import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
@@ -349,7 +350,7 @@ export class LlmService {
     const shapeKey = `${target.baseUrl}\n${target.model}`;
     let shape = LlmService.learnedShapes.get(shapeKey) ?? requestShapeFor(target.model);
     const send = (s: RequestShape) =>
-      fetch(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
+      fetchWithCheckedRedirects(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
         method: "POST",
         headers: requestHeaders(target.apiKey),
         body: JSON.stringify({
@@ -406,7 +407,7 @@ export class LlmService {
     const cached = LlmService.detectedModels.get(target.baseUrl);
     if (cached && Date.now() - cached.at < SERVER_MODEL_CACHE_MS) return cached.model;
     try {
-      const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
+      const res = await fetchWithCheckedRedirects(buildOpenAIUrl(target.baseUrl, "models"), {
         headers: requestHeaders(target.apiKey),
         signal: AbortSignal.timeout(4000),
       });
@@ -426,7 +427,7 @@ export class LlmService {
     if (isCliProvider(target.provider)) return [...CLI_PROVIDER_MODELS[target.provider]];
     if (!isHttpUrl(target.baseUrl)) return [];
     try {
-      const res = await fetch(buildOpenAIUrl(target.baseUrl, "models"), {
+      const res = await fetchWithCheckedRedirects(buildOpenAIUrl(target.baseUrl, "models"), {
         headers: requestHeaders(target.apiKey),
         signal: AbortSignal.timeout(3000),
       });
@@ -469,7 +470,7 @@ export class LlmService {
       // The model list is the cheapest authenticated call; the bare base URL still proves the host is up.
       for (const url of [buildOpenAIUrl(target.baseUrl, "models"), target.baseUrl]) {
         try {
-          res = await fetch(url, { headers, signal: AbortSignal.timeout(4000) });
+          res = await fetchWithCheckedRedirects(url, { headers, signal: AbortSignal.timeout(4000) });
           break;
         } catch (err) {
           failure = errorMessage(err);

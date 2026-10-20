@@ -84,3 +84,46 @@ export async function blockedRemoteTargets(urls: unknown[]): Promise<string[]> {
   }
   return blocked;
 }
+
+const MAX_REDIRECTS = 5;
+/** Headers that carry no credential and may follow a redirect to another origin. */
+const CROSS_ORIGIN_HEADERS = new Set(["accept", "content-type", "user-agent"]);
+
+/**
+ * `fetch` for a URL a client may name (LLM, Gotify, ntfy, metrics). It
+ * follows redirects itself and refuses one from a public server to a
+ * loopback, private or link-local address, so a redirect cannot get past
+ * `blockedRemoteTargets`. A redirect to another origin keeps no key or
+ * token header. 303, and 301 or 302 after a POST, continue as a GET without
+ * a body, as `fetch` does.
+ */
+export async function fetchWithCheckedRedirects(input: string | URL, init: RequestInit = {}): Promise<Response> {
+  let current = String(input);
+  let request: RequestInit = { ...init, redirect: "manual" };
+  let startsInternal: boolean | undefined;
+  for (let hop = 0; ; hop++) {
+    const res = await fetch(current, request);
+    const location = res.headers.get("location");
+    if (res.status < 300 || res.status >= 400 || !location) return res;
+    await res.body?.cancel().catch(() => {});
+    if (hop >= MAX_REDIRECTS) throw new Error("Too many redirects");
+    const next = new URL(location, current);
+    if (next.protocol !== "http:" && next.protocol !== "https:") throw new Error("Refusing a redirect to a non-HTTP address");
+    startsInternal ??= await isInternalTarget(current);
+    if (!startsInternal && (await isInternalTarget(next.toString()))) {
+      throw new Error("Refusing a redirect from a public server to this computer or the local network");
+    }
+    const method = (request.method ?? "GET").toUpperCase();
+    if (res.status === 303 || ((res.status === 301 || res.status === 302) && method === "POST")) {
+      request = { ...request, method: "GET", body: undefined };
+    }
+    if (next.origin !== new URL(current).origin) {
+      const headers = new Headers();
+      new Headers(request.headers).forEach((value, key) => {
+        if (CROSS_ORIGIN_HEADERS.has(key.toLowerCase())) headers.set(key, value);
+      });
+      request = { ...request, headers };
+    }
+    current = next.toString();
+  }
+}
