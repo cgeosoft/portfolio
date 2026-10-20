@@ -25,7 +25,7 @@ import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
 import { writeDesktopSettingsFile } from "./services/desktop-settings";
 import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
-import { MAX_BODY_BYTES, Router, hostnameOf, isLoopbackAddress, isLoopbackHostname, json } from "./http/router";
+import { MAX_BODY_BYTES, Router, boundedErrorMessage, hostnameOf, isLoopbackAddress, isLoopbackHostname, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
 import { type DevGuiServer, devGuiWebSocket, serveDevGui, startDevGuiLink } from "./http/dev-gui";
@@ -165,8 +165,9 @@ function serve(hostname: string, port: number): ReturnType<typeof Bun.serve> {
     fetch: (req, srv) => fetchHandler(req, srv, loopbackOnly),
     websocket: devGuiWebSocket,
     error(err) {
-      appLogger.logStep("error", "http", "unhandled", err.message);
-      return json({ statusCode: 500, message: err.message }, 500);
+      const message = boundedErrorMessage(err);
+      appLogger.logStep("error", "http", "unhandled", message);
+      return json({ statusCode: 500, message }, 500);
     },
   });
 }

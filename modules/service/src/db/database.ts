@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { getDatabaseFile } from "../paths";
 
@@ -25,10 +25,27 @@ export function getDatabase(): Database {
   db.run("PRAGMA synchronous = NORMAL");
   db.run("PRAGMA foreign_keys = ON");
   db.run("PRAGMA busy_timeout = 5000");
+  restrictFileModes(dbPath);
 
   initializeSchema(db);
 
   return db;
+}
+
+/**
+ * Makes the database and its WAL files readable by the owner only. The data
+ * folder is 0700, but a copied or restored folder can keep 0644 files.
+ * Windows has no POSIX modes, so this is a no-op there.
+ */
+function restrictFileModes(dbPath: string): void {
+  if (process.platform === "win32") return;
+  for (const file of [dbPath, `${dbPath}-wal`, `${dbPath}-shm`]) {
+    try {
+      if (existsSync(file)) chmodSync(file, 0o600);
+    } catch {
+      // A read-only or foreign-owned file keeps its mode; the 0700 folder still guards it.
+    }
+  }
 }
 
 /** Create tables and indexes if they do not exist */
