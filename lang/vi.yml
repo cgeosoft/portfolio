@@ -1550,6 +1550,7 @@ settings:
     remote:
       title: "Mở trên thiết bị khác"
       description: "Cho phép điện thoại hoặc máy tính khác trong cùng mạng gia đình mở Portfolio này trên trình duyệt. Hãy bật khóa ứng dụng trước. Khi tắt, chỉ máy tính này mới mở được."
+      plainHttp: "Kết nối với các thiết bị khác không được mã hóa. Chỉ bật tùy chọn này trên mạng bạn tin cậy, hoặc dùng proxy TLS. Các thiết bị khác vẫn đăng nhập trong một ngày sau lần dùng cuối."
       pinFirst: "Hãy đặt PIN trước"
       port: "Cổng"
       portHint: "Thiết bị khác dùng số này trong địa chỉ. Chỉ đổi nếu một chương trình khác đã dùng nó."

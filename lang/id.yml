@@ -1550,6 +1550,7 @@ settings:
     remote:
       title: "Buka di perangkat lain"
       description: "Izinkan ponsel atau komputer lain di jaringan rumah yang sama membuka Portfolio ini di browsernya. Aktifkan kunci aplikasi terlebih dahulu. Jika nonaktif, hanya komputer ini yang dapat membukanya."
+      plainHttp: "Koneksi ke perangkat lain tidak dienkripsi. Aktifkan hanya di jaringan yang Anda percaya, atau gunakan proxy TLS. Perangkat lain tetap masuk selama satu hari setelah terakhir digunakan."
       pinFirst: "Atur PIN terlebih dahulu"
       port: "Port"
       portHint: "Perangkat lain menggunakan nomor ini di alamat. Ubah hanya jika program lain sudah menggunakannya."

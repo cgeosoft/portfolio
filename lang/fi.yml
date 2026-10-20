@@ -1596,6 +1596,7 @@ settings:
     remote:
       title: "Avaa muilla laitteilla"
       description: "Anna puhelimesi tai toisen saman kotiverkon tietokoneen avata tämä Portfolio selaimessaan. Ota ensin sovelluslukko käyttöön. Kun tämä on pois päältä, vain tämä tietokone voi avata sen."
+      plainHttp: "Yhteys muihin laitteisiin ei ole salattu. Ota tämä käyttöön vain luotetussa verkossa tai käytä TLS-välityspalvelinta. Muut laitteet pysyvät kirjautuneina vuorokauden viimeisestä käytöstä."
       pinFirst: "Aseta ensin PIN-koodi"
       port: "Portti"
       portHint: "Muut laitteet käyttävät tätä numeroa osoitteessa. Vaihda se vain, jos jokin toinen ohjelma jo käyttää sitä."

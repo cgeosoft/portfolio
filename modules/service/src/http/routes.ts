@@ -13,7 +13,7 @@ import { REPO_ROOT, getLogDir } from "../paths";
 import { join } from "node:path";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
-import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie } from "../services/auth";
+import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie, type ClientScope } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
 import { blockedRemoteTargets } from "../services/outbound-target";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
@@ -118,6 +118,11 @@ function toItem(row: portfolioRepo.PortfolioRow) {
   return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, color: row.color, createdAt: row.createdAt, updatedAt: row.updatedAt };
 }
 
+/** The PIN counter and session lifetime a request gets: the desktop window's or other devices'. */
+function scopeOf(ctx: { isLocal: boolean }): ClientScope {
+  return ctx.isLocal ? "local" : "remote";
+}
+
 /** True behind a TLS proxy, where the session cookie gets `Secure`. */
 function isHttps(req: Request): boolean {
   return req.headers.get("x-forwarded-proto") === "https";
@@ -138,12 +143,12 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if (isPublicPath(ctx.url.pathname)) return;
     const session = readSession(ctx.req);
     const sessionId = session?.id ?? null;
-    if (!authService.validateSession(sessionId)) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
+    if (!authService.validateSession(sessionId, scopeOf(ctx))) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
     ctx.sessionId = sessionId;
     // A valid session under the old shared name is ours: move it to the new
     // name. Another instance's old cookie fails the check above and stays.
     if (session?.legacy) {
-      ctx.responseHeaders.append("Set-Cookie", sessionCookie(session.id, isHttps(ctx.req)));
+      ctx.responseHeaders.append("Set-Cookie", sessionCookie(session.id, isHttps(ctx.req), scopeOf(ctx)));
       ctx.responseHeaders.append("Set-Cookie", clearLegacySessionCookie());
     }
     if (!authService.hasAcceptedTerms() && !PRE_TERMS_PATHS.has(ctx.url.pathname)) {
@@ -172,8 +177,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/auth/login", async (ctx) => {
     // The one body read before a session exists: a PIN needs a few bytes, not 30 MB.
     const body = await ctx.body<{ pin?: unknown }>(4096);
-    const id = authService.login(typeof body.pin === "string" ? body.pin : undefined);
-    ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, isHttps(ctx.req)));
+    const id = authService.login(typeof body.pin === "string" ? body.pin : undefined, scopeOf(ctx));
+    ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, isHttps(ctx.req), scopeOf(ctx)));
     return { success: true, ...authStatus() };
   });
 
@@ -192,7 +197,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.put("/api/auth/pin", async (ctx) => {
     const body = await ctx.body<{ pin?: string; currentPin?: string }>();
-    authService.setPin(String(body.pin ?? ""), body.currentPin);
+    authService.setPin(String(body.pin ?? ""), body.currentPin, scopeOf(ctx));
     authService.revokeOtherSessions(ctx.sessionId);
     return { pinEnabled: true };
   });
@@ -203,7 +208,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.delete("/api/auth/pin", async (ctx) => {
     const body = await ctx.body<{ currentPin?: string }>();
-    authService.removePin(String(body.currentPin ?? ""));
+    authService.removePin(String(body.currentPin ?? ""), scopeOf(ctx));
     disableRemoteAccess();
     return { pinEnabled: false };
   });

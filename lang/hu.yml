@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Megnyitás más eszközökön"
       description: "Engedélyezi, hogy a telefonja vagy egy másik számítógép ugyanazon az otthoni hálózaton böngészőben megnyissa ezt a Portfoliót. Előbb kapcsolja be az alkalmazászárat. Kikapcsolt állapotban csak ez a számítógép nyithatja meg."
+      plainHttp: "A kapcsolat a többi eszközzel nincs titkosítva. Csak megbízható hálózaton kapcsolja be, vagy használjon TLS proxyt. A többi eszköz az utolsó használat után egy napig bejelentkezve marad."
       pinFirst: "Előbb állítson be PIN-kódot"
       port: "Port"
       portHint: "A többi eszköz ezt a számot használja a címben. Csak akkor módosítsa, ha egy másik program már használja."

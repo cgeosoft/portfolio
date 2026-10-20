@@ -1658,6 +1658,7 @@ settings:
     remote:
       title: "Odpiranje v drugih napravah"
       description: "Dovolite telefonu ali drugemu računalniku v istem domačem omrežju, da odpre ta Portfolio v brskalniku. Najprej vklopite zaklepanje aplikacije. Ko je to izklopljeno, ga lahko odpre samo ta računalnik."
+      plainHttp: "Povezava z drugimi napravami ni šifrirana. To vklopite le v omrežju, ki mu zaupate, ali prek posredniškega strežnika TLS. Druge naprave ostanejo prijavljene en dan po zadnji uporabi."
       pinFirst: "Najprej nastavite PIN"
       port: "Vrata"
       portHint: "Druge naprave uporabijo to številko v naslovu. Spremenite jo samo, če jo že uporablja drug program."

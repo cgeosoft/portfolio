@@ -1586,6 +1586,7 @@ settings:
     remote:
       title: "Openen op andere apparaten"
       description: "Laat je telefoon of een andere computer in hetzelfde thuisnetwerk deze Portfolio openen in de browser. Schakel eerst de app-vergrendeling in. Als dit uit staat, kan alleen deze computer het openen."
+      plainHttp: "De verbinding met andere apparaten is niet versleuteld. Zet dit alleen aan op een netwerk dat je vertrouwt, of gebruik een TLS-proxy. Andere apparaten blijven een dag na het laatste gebruik ingelogd."
       pinFirst: "Stel eerst een pincode in"
       port: "Poort"
       portHint: "Andere apparaten gebruiken dit nummer in het adres. Wijzig het alleen als een ander programma het al gebruikt."

@@ -1622,6 +1622,7 @@ settings:
     remote:
       title: "Abrir en otros dispositivos"
       description: "Permite que tu teléfono u otro equipo de la misma red doméstica abra este Portfolio en su navegador. Activa antes el bloqueo de la aplicación. Si está desactivado, solo este equipo puede abrirlo."
+      plainHttp: "La conexión con otros dispositivos no está cifrada. Actívalo solo en una red de confianza o a través de un proxy TLS. Los otros dispositivos siguen con la sesión iniciada un día después del último uso."
       pinFirst: "Define primero un PIN"
       port: "Puerto"
       portHint: "Los demás dispositivos usan este número en la dirección. Cámbialo solo si otro programa ya lo usa."

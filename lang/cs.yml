@@ -1658,6 +1658,7 @@ settings:
     remote:
       title: "Otevírat na jiných zařízeních"
       description: "Umožněte telefonu nebo jinému počítači ve stejné domácí síti otevřít toto Portfolio v prohlížeči. Nejprve zapněte zámek aplikace. Když je volba vypnutá, může ho otevřít jen tento počítač."
+      plainHttp: "Spojení s ostatními zařízeními není šifrované. Zapněte to jen v síti, které důvěřujete, nebo přes proxy s TLS. Ostatní zařízení zůstanou přihlášena jeden den od posledního použití."
       pinFirst: "Nejprve nastavte PIN"
       port: "Port"
       portHint: "Ostatní zařízení používají toto číslo v adrese. Změňte ho jen tehdy, když ho už používá jiný program."

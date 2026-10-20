@@ -1658,6 +1658,7 @@ settings:
     remote:
       title: "Atidaryti kituose įrenginiuose"
       description: "Leisti jūsų telefonui ar kitam kompiuteriui tame pačiame namų tinkle atidaryti šią Portfolio naršyklėje. Pirmiausia įjunkite programos užraktą. Kai išjungta, ją gali atidaryti tik šis kompiuteris."
+      plainHttp: "Ryšys su kitais įrenginiais nėra šifruojamas. Įjunkite tai tik patikimame tinkle arba naudokite TLS tarpinį serverį. Kiti įrenginiai lieka prisijungę vieną dieną po paskutinio naudojimo."
       pinFirst: "Pirmiausia nustatykite PIN"
       port: "Prievadas"
       portHint: "Kiti įrenginiai naudoja šį numerį adrese. Keiskite jį tik tada, jei jį jau naudoja kita programa."

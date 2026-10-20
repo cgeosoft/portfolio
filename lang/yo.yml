@@ -1550,6 +1550,7 @@ settings:
     remote:
       title: "Ṣí lórí àwọn ẹ̀rọ mìíràn"
       description: "Jẹ́ kí fóònù rẹ tàbí kọ̀ǹpútà mìíràn lórí nẹ́tíwọ́ọ̀kì ilé kan náà ṣí Portfolio yìí nínú aṣàwákiri rẹ̀. Kọ́kọ́ tan títì ètò. Tí ó bá wà ní pípa, kọ̀ǹpútà yìí nìkan ló lè ṣí i."
+      plainHttp: "Ìsopọ̀ pẹ̀lú àwọn ẹ̀rọ mìíràn kò ní ìpamọ́ àṣírí. Tan èyí nìkan lórí nẹ́tíwọ́ọ̀kì tí o gbẹ́kẹ̀lé, tàbí lo proxy TLS. Àwọn ẹ̀rọ mìíràn máa wà ní wọlé fún ọjọ́ kan lẹ́yìn ìlò tó kẹ́yìn."
       pinFirst: "Kọ́kọ́ fi PIN sí i"
       port: "Port"
       portHint: "Àwọn ẹ̀rọ mìíràn ń lo nọ́ńbà yìí nínú àdírẹ́sì. Yí i padà nìkan tí ètò mìíràn bá ti ń lò ó."
