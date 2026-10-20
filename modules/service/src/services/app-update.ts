@@ -136,6 +136,8 @@ export class AppUpdateService {
   private onUpdateAvailable: ((info: AppUpdateInfo) => void) | null = null;
   private cachedInfo: AppUpdateInfo;
   private manifest: ReleaseManifest | null = null;
+  /** True when `manifest` came from the GitHub API, false for the website fallback. */
+  private manifestFromGitHub = false;
   private download: UpdateDownloadState = { status: "idle" };
 
   constructor(private readonly manifestUrl: string = RELEASE_MANIFEST_URL) {
@@ -178,6 +180,7 @@ export class AppUpdateService {
     const timer = appLogger.startTimer("update", "check");
     try {
       let manifest: ReleaseManifest | null = null;
+      let fromGitHub = false;
 
       // 1. Check GitHub Releases API directly (no website deploy needed)
       try {
@@ -195,6 +198,7 @@ export class AppUpdateService {
               // GitHub reports `digest: "sha256:<hex>"` for assets; older ones fall back to SHA256SUMS at download.
               return match ? { name: match.name, url: match.browser_download_url, size: match.size, sha256: normalizeSha256(match.digest) } : undefined;
             };
+            fromGitHub = true;
             manifest = {
               app: "portfolio",
               version,
@@ -233,6 +237,7 @@ export class AppUpdateService {
       const nowIso = new Date().toISOString();
       updateConfig({ lastUpdateCheck: nowIso });
       this.manifest = manifest;
+      this.manifestFromGitHub = fromGitHub;
       this.cachedInfo = {
         enabled,
         currentVersion: this.currentVersion,
@@ -288,10 +293,13 @@ export class AppUpdateService {
     const url = fromManifest?.url || `${GITHUB_URL}/releases/download/v${cleanVersion}/${encodeURIComponent(fileName)}`;
     if (!isAllowedDownloadUrl(url)) throw new Error("Installer URL is not on a release download host");
     const size = typeof fromManifest?.size === "number" && fromManifest.size > 0 ? fromManifest.size : undefined;
-    return { fileName, url, version: cleanVersion, size, sha256: normalizeSha256(fromManifest?.sha256) };
+    // The website manifest names the installer URL too: a hash from the same file proves nothing
+    // if the website is changed, so that installer is checked against the GitHub release's SHA256SUMS.
+    const sha256 = this.manifestFromGitHub ? normalizeSha256(fromManifest?.sha256) : undefined;
+    return { fileName, url, version: cleanVersion, size, sha256 };
   }
 
-  /** SHA-256 the release publishes for the installer: from the manifest, else the release's SHA256SUMS. */
+  /** SHA-256 the release publishes for the installer: the GitHub asset digest, else the release's SHA256SUMS. */
   private async expectedSha256(source: InstallerSource): Promise<string> {
     if (source.sha256) return source.sha256;
     const sumsUrl = `${GITHUB_URL}/releases/download/v${source.version}/SHA256SUMS`;
