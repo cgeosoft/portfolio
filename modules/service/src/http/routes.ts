@@ -533,9 +533,12 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     try {
       appLogger.logStep("info", "market", "sync", "Refreshing quotes for every portfolio");
       const now = new Date().toISOString();
-      for (const portfolio of portfolioRepo.findAll()) {
+      const portfolios = portfolioRepo.findAll();
+      // One quote request per symbol, however many portfolios hold it.
+      const quotes = await portfolioService.fetchLiveQuotes(portfolios.map((p) => p.id));
+      for (const portfolio of portfolios) {
         try {
-          const data = await portfolioService.getPortfolioData(portfolio.id, portfolio.baseCurrency, true);
+          const data = await portfolioService.getPortfolioData(portfolio.id, portfolio.baseCurrency, true, quotes);
           portfolioService.saveDailySnapshot(portfolio.id, data);
         } catch (err) {
           appLogger.logStep("warning", "market", "sync", `Quotes refresh failed for one portfolio (${err instanceof Error ? err.name : typeof err})`);

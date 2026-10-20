@@ -16,6 +16,8 @@ export interface IMarketDataProvider {
   getQuotes(symbols: string[], forceFresh?: boolean): Promise<Map<string, YahooQuote>>;
   getExchangeRates(baseCurrency: string, targetCurrencies: string[], forceFresh?: boolean): Promise<Map<string, number>>;
   getChart(symbol: string, range?: string, interval?: string, forceFresh?: boolean): Promise<YahooChartData>;
+  /** Warms the quote caches the daily charts read, in batches. Optional. */
+  prefetchChartQuotes?(symbols: string[]): Promise<void>;
 }
 import { generateDemoTransactions, DEMO_ASSETS } from "./demo-portfolio.js";
 import type {
@@ -33,6 +35,8 @@ import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
+/** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
+const STALE_RETRY_MS = 60 * 1000;
 
 /** The setting that aims an automation at one portfolio ("" runs it for every portfolio), with its switch. */
 const AUTOMATION_TARGETS = [
@@ -74,6 +78,11 @@ function applyLiveClose(points: { date: string; close: number }[], quote: YahooQ
 /** A private holding has no public quote; it is valued at cost or at the user's price. */
 function isPrivateHolding(config: PortfolioHoldingConfig): boolean {
   return Boolean(config.isPrivate || config.assetType === "Other" || config.symbol.toUpperCase() === "LU3176111881");
+}
+
+/** Symbols with a market price: neither private, "Other" nor cash. */
+function publicSymbolsOf(holdings: PortfolioHoldingConfig[]): string[] {
+  return holdings.filter((h) => !h.isPrivate && h.assetType !== "Other" && h.symbol !== "CASH").map((h) => h.symbol);
 }
 
 function computeSMA(closes: number[], period: number): number | undefined {
@@ -412,7 +421,9 @@ export class PortfolioService {
   public async getPortfolioData(
     portfolioOrId: string | portfolioRepo.PortfolioRow,
     baseCurrency?: string,
-    forceFresh = false
+    forceFresh = false,
+    /** Quotes from `fetchLiveQuotes()`; a forced build then asks for no quotes of its own. */
+    liveQuotes?: Map<string, YahooQuote>,
   ): Promise<FinancialPortfolioData> {
     const portfolio = typeof portfolioOrId === "string" ? portfolioRepo.findById(portfolioOrId) : portfolioOrId;
     if (!portfolio) {
@@ -436,7 +447,9 @@ export class PortfolioService {
       // 2. Check persistent SQLite cache (instant return on app restart)
       const diskCached = marketCache.get<FinancialPortfolioData>(`portfolio:${cacheKey}`);
       if (diskCached?.data) {
-        this.cache.set(cacheKey, { data: diskCached.data, timestamp: now });
+        // The real build time; an expired copy counts as fresh only briefly, so a failed refresh is tried again.
+        const timestamp = diskCached.isExpired ? now - CACHE_TTL_MS + STALE_RETRY_MS : diskCached.expiresAt - CACHE_TTL_MS;
+        this.cache.set(cacheKey, { data: diskCached.data, timestamp });
         appLogger.logStep(
           "info",
           "portfolio",
@@ -486,7 +499,7 @@ export class PortfolioService {
       const buildTimer = appLogger.startTimer("portfolio", "build_data", "Building portfolio metrics and market quotes");
       let data: FinancialPortfolioData;
       try {
-        data = await this.buildPortfolioData(portfolio, holdings, transactions, effectiveCurrency, forceFresh);
+        data = await this.buildPortfolioData(portfolio, holdings, transactions, effectiveCurrency, forceFresh, liveQuotes);
       } catch (err) {
         buildTimer.end("error", `Build failed (${errorName(err)})`);
         // If calculation/network failed, check if we have a stale disk cache to use offline
@@ -501,7 +514,7 @@ export class PortfolioService {
         // The transactions, a manual price or the portfolio changed while this build ran, or the
         // portfolio was deleted: the result is stale, so it is not cached and every caller gets a new build.
         buildTimer.end("info", "The portfolio changed during the build; building it again");
-        return this.getPortfolioData(portfolio.id, baseCurrency, forceFresh);
+        return this.getPortfolioData(portfolio.id, baseCurrency, forceFresh, liveQuotes);
       }
       this.cache.set(cacheKey, { data, timestamp: Date.now() });
       marketCache.set(`portfolio:${cacheKey}`, data, CACHE_TTL_MS);
@@ -514,6 +527,28 @@ export class PortfolioService {
 
     this.inFlightRequests.set(cacheKey, computePromise);
     return computePromise;
+  }
+
+  /**
+   * Fresh quotes for the public holdings of several portfolios, asked once.
+   * Pass them to `getPortfolioData(id, currency, true, quotes)` so a symbol
+   * held in several portfolios is not fetched once per portfolio.
+   */
+  public async fetchLiveQuotes(portfolioIds: string[]): Promise<Map<string, YahooQuote>> {
+    const symbols = new Set<string>();
+    for (const id of portfolioIds) {
+      for (const sym of publicSymbolsOf(this.computeHoldingsFromTransactions(txRepo.findByPortfolio(id)))) symbols.add(sym);
+    }
+    if (symbols.size === 0) return new Map();
+    const timer = appLogger.startTimer("portfolio", "fetch_live_quotes", `Refreshing quotes for ${symbols.size} symbols in ${portfolioIds.length} portfolio(s)`);
+    try {
+      const quotes = await this.yahoo.getQuotes(Array.from(symbols), true);
+      timer.end("info", `Quotes refreshed (${quotes.size}/${symbols.size})`);
+      return quotes;
+    } catch (e) {
+      timer.end("warning", `Quote refresh failed (${errorName(e)})`);
+      return new Map();
+    }
   }
 
   public computeHoldingsFromTransactions(transactions: txRepo.TransactionRow[]): PortfolioHoldingConfig[] {
@@ -633,7 +668,8 @@ export class PortfolioService {
     holdingsConfig: PortfolioHoldingConfig[],
     transactions: txRepo.TransactionRow[],
     baseCurrency = "EUR",
-    forceFresh = false
+    forceFresh = false,
+    prefetchedQuotes?: Map<string, YahooQuote>,
   ): Promise<FinancialPortfolioData> {
     let totalCashInjected = 0;
     let totalCashWithdrawn = 0;
@@ -753,16 +789,13 @@ export class PortfolioService {
       };
     }
 
-    const publicHoldings = holdingsConfig.filter(
-      (h) => !h.isPrivate && h.assetType !== "Other" && h.symbol !== "CASH"
-    );
     // The user's price or NAV per private holding, in place of the buy price.
     const manualPrices = new Map<string, ManualPrice>();
     const privateSymbols = new Set(holdingsConfig.filter(isPrivateHolding).map((h) => h.symbol.toUpperCase()));
     for (const row of manualPriceRepo.findByPortfolio(portfolio.id)) {
       if (privateSymbols.has(row.symbol)) manualPrices.set(row.symbol, { price: row.price, currency: row.currency, setAt: row.setAt });
     }
-    const publicSymbols = publicHoldings.map((h) => h.symbol);
+    const publicSymbols = publicSymbolsOf(holdingsConfig);
 
     const individualCharts: Record<string, { date: string; close: number }[]> = {};
     const chartHistories: Map<string, { date: string; close: number }[]> = new Map();
@@ -771,7 +804,12 @@ export class PortfolioService {
     // 1. A forced refresh asks only for fresh quotes, in batches (FMP: 50 symbols a call). Daily
     // history changes once a day, so the charts below come from their caches and get the live price.
     let liveQuotes = new Map<string, YahooQuote>();
-    if (forceFresh && publicSymbols.length > 0) {
+    if (forceFresh && prefetchedQuotes) {
+      for (const sym of publicSymbols) {
+        const quote = prefetchedQuotes.get(sym);
+        if (quote) liveQuotes.set(sym, quote);
+      }
+    } else if (forceFresh && publicSymbols.length > 0) {
       const liveTimer = appLogger.startTimer("portfolio", "fetch_live_quotes", `Refreshing quotes for ${publicSymbols.length} symbols`);
       try {
         liveQuotes = await this.yahoo.getQuotes(publicSymbols, true);
@@ -782,6 +820,11 @@ export class PortfolioService {
     }
 
     // 2. The 1y daily chart of each symbol; without a live quote, its last candle gives the quote.
+    try {
+      await this.yahoo.prefetchChartQuotes?.(publicSymbols);
+    } catch {
+      // Each chart asks for its own quote instead.
+    }
     const chartFetchTimer = appLogger.startTimer(
       "portfolio",
       "fetch_charts",

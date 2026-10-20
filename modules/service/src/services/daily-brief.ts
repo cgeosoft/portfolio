@@ -240,10 +240,12 @@ export class DailyBriefService {
     const timer = appLogger.startTimer("brief", "run", `Writing the daily brief (${trigger}) for ${portfolios.length} portfolio(s)`);
 
     try {
+      // One quote request per symbol, however many portfolios hold it.
+      const quotes = await this.portfolioService.fetchLiveQuotes(portfolios.map((p) => p.id));
       for (const row of portfolios) {
         const portfolio: PortfolioItem = { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency };
         try {
-          const data = await this.portfolioService.getPortfolioData(row.id, row.baseCurrency || cfg.baseCurrency || "EUR", true);
+          const data = await this.portfolioService.getPortfolioData(row.id, row.baseCurrency || cfg.baseCurrency || "EUR", true, quotes);
           this.portfolioService.saveDailySnapshot(row.id, data);
           if (trigger === "schedule" && !(await this.hadSession(data, since, today))) {
             skipped++;

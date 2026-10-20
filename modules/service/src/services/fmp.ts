@@ -33,6 +33,7 @@ import * as marketCache from "../db/market-cache.repo.js";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { mapWithConcurrencyLimit, type YahooChartCandle, type YahooChartData, type YahooQuote, type YahooSymbolSearchResult } from "./yahoo-finance.js";
+import { OfflineBreaker } from "./providers/offline.js";
 import { RequestThrottle } from "./providers/throttle.js";
 import { isCusip, isIsin } from "./providers/identifiers.js";
 import type { MarketNewsItem } from "./providers/types.js";
@@ -80,6 +81,9 @@ export const FMP_THROTTLE = { maxConcurrent: 6, maxPerWindow: 300, windowMs: MIN
 export const FMP_BATCH_SIZE = 50;
 
 const REQUEST_TIMEOUT_MS = 10_000;
+/** After this many requests in a row without a response, FMP counts as offline for `OFFLINE_PAUSE_MS`. */
+const OFFLINE_THRESHOLD = 3;
+const OFFLINE_PAUSE_MS = MINUTE;
 /** Pause after HTTP 429 before the next call. */
 const RATE_LIMIT_PAUSE_MS = 30_000;
 /** Pause after HTTP 401 before the stored key is tried again. */
@@ -326,6 +330,8 @@ const RESTRICTED_PATTERN = /restricted|premium|subscription|upgrade your plan|ex
 
 export class FmpService {
   private static readonly throttle = new RequestThrottle(FMP_THROTTLE);
+  /** Opens after network failures: calls then return their cached copy (or null) at once. */
+  private static readonly offline = new OfflineBreaker({ threshold: OFFLINE_THRESHOLD, pauseMs: OFFLINE_PAUSE_MS });
   private static readonly inFlight = new Map<string, Promise<unknown>>();
   private static readonly lastLogged = new Map<string, number>();
   private static authFailedKey = "";
@@ -380,14 +386,18 @@ export class FmpService {
 
     if (this.isRestricted(fp, path, relative)) return null;
     if (!opts.apiKey && FmpService.authFailedKey === fp && Date.now() < FmpService.authFailedUntil) return null;
+    if (FmpService.offline.isOpen()) return opts.staleOnError !== false && cached ? cached.data : null;
 
     const flightKey = `${fp}:${relative}`;
     const existing = FmpService.inFlight.get(flightKey) as Promise<FetchOutcome<T>> | undefined;
     const pending =
       existing ??
-      FmpService.throttle.run(() => this.fetchJson<T>(relative, key)).finally(() => {
-        FmpService.inFlight.delete(flightKey);
-      });
+      FmpService.throttle
+        // A call still queued when FMP went offline fails at once.
+        .run(() => (FmpService.offline.isOpen() ? Promise.resolve<FetchOutcome<T>>({ kind: "error", message: "offline" }) : this.fetchJson<T>(relative, key)))
+        .finally(() => {
+          FmpService.inFlight.delete(flightKey);
+        });
     if (!existing) FmpService.inFlight.set(flightKey, pending);
 
     const outcome = await pending;
@@ -523,7 +533,16 @@ export class FmpService {
     // The key goes in the `apikey` header (documented by FMP), so no URL ever carries it.
     const url = `${this.baseUrl}${relative}`;
     try {
-      const res = await fetch(url, { headers: { Accept: "application/json", apikey: key }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+      let res: Response;
+      try {
+        res = await fetch(url, { headers: { Accept: "application/json", apikey: key }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+        FmpService.offline.success();
+      } catch (err) {
+        if (FmpService.offline.failure()) {
+          this.logOnce("offline", "warning", "offline", `FMP did not answer ${OFFLINE_THRESHOLD} requests in a row; using cached data for ${OFFLINE_PAUSE_MS / 1000}s`);
+        }
+        throw err;
+      }
       const text = await res.text();
       if (res.status === 401) return { kind: "auth" };
       if (res.status === 429) return { kind: "rate_limited" };
@@ -585,6 +604,15 @@ export class FmpService {
       }),
     );
     return out;
+  }
+
+  /**
+   * Fills the quote cache for these app symbols in batches, so each
+   * `getChart` that follows finds its live quote there instead of asking
+   * FMP for one symbol at a time.
+   */
+  public async prefetchQuotes(symbols: string[]): Promise<void> {
+    await this.getBatchQuotes(symbols.map(toFmpSymbol));
   }
 
   /**

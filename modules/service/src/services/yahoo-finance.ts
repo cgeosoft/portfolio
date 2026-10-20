@@ -5,6 +5,8 @@
 
 import * as marketCache from "../db/market-cache.repo.js";
 import { appLogger } from "../logger.js";
+import { OfflineBreaker } from "./providers/offline.js";
+import { RequestThrottle } from "./providers/throttle.js";
 
 export interface YahooSymbolSearchResult {
   symbol: string;
@@ -70,6 +72,16 @@ const FETCH_CONCURRENCY_LIMIT = 8;
 const RATE_LIMIT_PAUSE_MS = 60 * 1000;
 /** A failed cookie and crumb lookup is not repeated for this long. */
 const SESSION_RETRY_MS = 60 * 1000;
+/** After this many requests in a row without a response, Yahoo counts as offline for `OFFLINE_PAUSE_MS`. */
+const OFFLINE_THRESHOLD = 5;
+const OFFLINE_PAUSE_MS = 60 * 1000;
+/** How long a stale copy served after a failed request stays in the memory cache before the next try. */
+const STALE_RETRY_MS = 60 * 1000;
+/**
+ * One throttle for every Yahoo call, so a UI refresh, the daily brief and the
+ * exposure and income views together cannot stack up requests.
+ */
+export const YAHOO_THROTTLE = { maxConcurrent: 8, maxPerWindow: 300, windowMs: 60 * 1000 } as const;
 
 /**
  * An error's type and code for a log line ("TypeError, ConnectionRefused").
@@ -141,14 +153,41 @@ export class YahooFinanceService {
   private static readonly inFlightCharts = new Map<string, Promise<YahooChartData>>();
   /** No call goes to Yahoo before this time (epoch ms). Set by HTTP 429; shared by every call. */
   private static pausedUntil = 0;
+  private static readonly throttle = new RequestThrottle(YAHOO_THROTTLE);
+  private static readonly offline = new OfflineBreaker({ threshold: OFFLINE_THRESHOLD, pauseMs: OFFLINE_PAUSE_MS });
 
-  private static isPaused(): boolean {
+  private static isRateLimited(): boolean {
     return Date.now() < YahooFinanceService.pausedUntil;
+  }
+
+  /** True after HTTP 429 or while Yahoo counts as offline: callers use their cached copies. */
+  private static isPaused(): boolean {
+    return YahooFinanceService.isRateLimited() || YahooFinanceService.offline.isOpen();
+  }
+
+  /**
+   * GET through the shared throttle. The timeout starts when the request
+   * leaves the queue. A request still queued when Yahoo pauses fails at once.
+   */
+  private static request(url: string, timeoutMs: number, init: { headers?: Record<string, string>; redirect?: RequestRedirect } = {}): Promise<Response> {
+    return YahooFinanceService.throttle.run(async () => {
+      if (YahooFinanceService.isPaused()) throw new Error("Yahoo Finance is paused (rate limit or no network)");
+      try {
+        const res = await fetch(url, { headers: init.headers ?? DEFAULT_HEADERS, redirect: init.redirect, signal: AbortSignal.timeout(timeoutMs) });
+        YahooFinanceService.offline.success();
+        return res;
+      } catch (e: unknown) {
+        if (YahooFinanceService.offline.failure()) {
+          appLogger.logStep("warning", "yahoo", "offline", `Yahoo Finance did not answer ${OFFLINE_THRESHOLD} requests in a row (${errorKind(e)}); using cached data for ${OFFLINE_PAUSE_MS / 1000}s`);
+        }
+        throw e;
+      }
+    });
   }
 
   /** Pauses every Yahoo call after HTTP 429, so no other host or symbol adds to the limit. Logs once per pause. */
   private static pauseAfterRateLimit(): void {
-    if (!YahooFinanceService.isPaused()) {
+    if (!YahooFinanceService.isRateLimited()) {
       appLogger.logStep("warning", "yahoo", "rate_limit", `Yahoo Finance rate limit reached (HTTP 429); pausing Yahoo calls for ${RATE_LIMIT_PAUSE_MS / 1000}s`);
     }
     YahooFinanceService.pausedUntil = Date.now() + RATE_LIMIT_PAUSE_MS;
@@ -209,10 +248,7 @@ export class YahooFinanceService {
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
         const url = `${baseUrl}/v1/finance/search?q=market&quotesCount=0&newsCount=${Math.min(limit, 10)}`;
-        const res = await fetch(url, {
-          headers: DEFAULT_HEADERS,
-          signal: AbortSignal.timeout(6_000),
-        });
+        const res = await YahooFinanceService.request(url, 6_000);
         if (res.status === 429) {
           YahooFinanceService.pauseAfterRateLimit();
           break;
@@ -261,10 +297,7 @@ export class YahooFinanceService {
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
         const url = `${baseUrl}/v1/finance/search?q=${encodeURIComponent(query.trim())}&quotesCount=10&newsCount=0`;
-        const res = await fetch(url, {
-          headers: DEFAULT_HEADERS,
-          signal: AbortSignal.timeout(10_000),
-        });
+        const res = await YahooFinanceService.request(url, 10_000);
 
         if (res.status === 429) {
           YahooFinanceService.pauseAfterRateLimit();
@@ -337,10 +370,10 @@ export class YahooFinanceService {
       return existing;
     }
 
-    // 4. Paused after HTTP 429: the stale copy, without a request
+    // 4. Paused after HTTP 429 or offline: the stale copy, without a request
     if (YahooFinanceService.isPaused()) {
       if (diskCached?.data) return diskCached.data;
-      throw new Error("Yahoo Finance is paused after a rate limit (HTTP 429)");
+      throw new Error("Yahoo Finance is paused (rate limit or no network)");
     }
 
     const fetchPromise = (async (): Promise<YahooChartData> => {
@@ -352,10 +385,15 @@ export class YahooFinanceService {
       for (const baseUrl of BASE_QUERY_URLS) {
         try {
           const url = `${baseUrl}/v8/finance/chart/${encodeURIComponent(cleanSymbol)}?range=${range}&interval=${interval}`;
-          const res = await fetch(url, {
-            headers: DEFAULT_HEADERS,
-            signal: AbortSignal.timeout(4_000),
-          });
+          let res: Response;
+          try {
+            res = await YahooFinanceService.request(url, 4_000);
+          } catch (e: unknown) {
+            // No response (DNS, connection, timeout): the other host would most likely fail the same way.
+            lastError = e instanceof Error ? e : new Error(String(e));
+            failure = errorKind(e);
+            break;
+          }
 
           if (res.status === 429) {
             // The other host shares the limit: stop here.
@@ -450,7 +488,11 @@ export class YahooFinanceService {
 
       // Network query failed, check if we have stale disk cache for offline use
       if (diskCached && diskCached.data) {
-        appLogger.logStep("warning", "yahoo", "chart_stale_fallback", `Chart request failed (${failure}); using the stale cached copy`);
+        // Kept in memory for a short while, so the next caller does not wait for the network again.
+        YahooFinanceService.chartCache.set(cacheKey, { data: diskCached.data, expiresAt: Date.now() + STALE_RETRY_MS });
+        if (!YahooFinanceService.isPaused()) {
+          appLogger.logStep("warning", "yahoo", "chart_stale_fallback", `Chart request failed (${failure}); using the stale cached copy`);
+        }
         return diskCached.data;
       }
 
@@ -462,6 +504,14 @@ export class YahooFinanceService {
 
     YahooFinanceService.inFlightCharts.set(cacheKey, fetchPromise);
     return fetchPromise;
+  }
+
+  /** True when the memory or disk cache holds an unexpired chart under `cacheKey` (symbol:range:interval). */
+  private static hasFreshChart(cacheKey: string): boolean {
+    const mem = YahooFinanceService.chartCache.get(cacheKey);
+    if (mem && Date.now() < mem.expiresAt) return true;
+    const diskExpiresAt = marketCache.getExpiresAt(`chart:${cacheKey}`);
+    return diskExpiresAt !== null && Date.now() < diskExpiresAt;
   }
 
   public async getQuotes(symbols: string[], forceFresh = false): Promise<Map<string, YahooQuote>> {
@@ -479,7 +529,10 @@ export class YahooFinanceService {
       }
 
       try {
-        const chart = await this.getChart(sym, "5d", "1d", forceFresh);
+        // A refresh takes the 1y daily chart when its cache has expired: it carries the same quote,
+        // and the portfolio build reads it next, so one request serves both.
+        const range = forceFresh && !YahooFinanceService.hasFreshChart(`${sym}:1y:1d`) ? "1y" : "5d";
+        const chart = await this.getChart(sym, range, "1d", forceFresh);
         const quote = extractQuoteFromChart(chart);
         if (quote) {
           results.set(sym, quote);
@@ -626,12 +679,12 @@ export class YahooFinanceService {
 
     YahooFinanceService.summarySessionPromise = (async () => {
       try {
-        const res = await fetch("https://fc.yahoo.com", { headers: DEFAULT_HEADERS, redirect: "manual", signal: AbortSignal.timeout(8_000) });
+        const res = await YahooFinanceService.request("https://fc.yahoo.com", 8_000, { redirect: "manual" });
         const setCookies = typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [res.headers.get("set-cookie") ?? ""];
         const cookie = setCookies.map((c) => c.split(";")[0]?.trim() ?? "").filter(Boolean).join("; ");
         if (!cookie) return YahooFinanceService.sessionFailed();
         for (const baseUrl of BASE_QUERY_URLS) {
-          const crumbRes = await fetch(`${baseUrl}/v1/test/getcrumb`, { headers: { ...DEFAULT_HEADERS, Cookie: cookie }, signal: AbortSignal.timeout(8_000) });
+          const crumbRes = await YahooFinanceService.request(`${baseUrl}/v1/test/getcrumb`, 8_000, { headers: { ...DEFAULT_HEADERS, Cookie: cookie } });
           if (crumbRes.status === 429) {
             YahooFinanceService.pauseAfterRateLimit();
             break;
@@ -681,7 +734,7 @@ export class YahooFinanceService {
         for (const baseUrl of BASE_QUERY_URLS) {
           try {
             const url = `${baseUrl}/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=${encodeURIComponent(moduleList)}&formatted=false&crumb=${encodeURIComponent(session.crumb)}`;
-            const res = await fetch(url, { headers: { ...DEFAULT_HEADERS, Cookie: session.cookie }, signal: AbortSignal.timeout(10_000) });
+            const res = await YahooFinanceService.request(url, 10_000, { headers: { ...DEFAULT_HEADERS, Cookie: session.cookie } });
             if (res.status === 429) {
               YahooFinanceService.pauseAfterRateLimit();
               return cached ? cached.data : null;
@@ -736,7 +789,7 @@ export class YahooFinanceService {
     for (const baseUrl of BASE_QUERY_URLS) {
       try {
         const url = `${baseUrl}/v8/finance/chart/${encodeURIComponent(sym)}?range=${encodeURIComponent(range)}&interval=1mo&events=div%2Csplits`;
-        const res = await fetch(url, { headers: DEFAULT_HEADERS, signal: AbortSignal.timeout(6_000) });
+        const res = await YahooFinanceService.request(url, 6_000);
         if (res.status === 429) {
           YahooFinanceService.pauseAfterRateLimit();
           break;
