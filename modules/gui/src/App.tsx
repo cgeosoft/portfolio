@@ -46,7 +46,7 @@ import type {
   GetPortfoliosResponse,
   GetAppInfoResponse,
   PortfolioChatMessage,
-  AssistantConversation,
+  AssistantConversationSummary,
   AppUpdateInfo,
   MetricEvaluation,
   MetricListing,
@@ -484,7 +484,7 @@ export default function App() {
     }
     return false;
   });
-  const [conversations, setConversations] = useState<AssistantConversation[]>([]);
+  const [conversations, setConversations] = useState<AssistantConversationSummary[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<PortfolioChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -492,23 +492,35 @@ export default function App() {
   const [assistantProvider, setAssistantProvider] = useState<string | undefined>(undefined);
   const [assistantModel, setAssistantModel] = useState<string | undefined>(undefined);
 
+  // The list carries no messages: each conversation loads when it is opened.
+  // A newer open wins over a slower earlier one.
+  const conversationOpenRef = useRef(0);
+  const openConversation = useCallback(async (portfolioId: string, convId: string | null) => {
+    const ticket = ++conversationOpenRef.current;
+    setCurrentConversationId(convId);
+    setChatMessages([]);
+    setChatError(null);
+    if (!convId) return;
+    try {
+      await ensureRpcReady();
+      const res = await rpc.request.getAssistantConversation({ portfolioId, conversationId: convId });
+      if (ticket === conversationOpenRef.current) setChatMessages(res.conversation.messages);
+    } catch (err) {
+      console.error("Failed to load assistant conversation:", err);
+    }
+  }, []);
+
   const loadConversations = useCallback(async (portfolioId: string) => {
     try {
       await ensureRpcReady();
       const res = await rpc.request.getAssistantConversations({ portfolioId });
       const convs = res.conversations || [];
       setConversations(convs);
-      if (convs.length > 0) {
-        setCurrentConversationId(convs[0].id);
-        setChatMessages(convs[0].messages);
-      } else {
-        setCurrentConversationId(null);
-        setChatMessages([]);
-      }
+      await openConversation(portfolioId, convs[0]?.id ?? null);
     } catch (err) {
       console.error("Failed to load assistant conversations:", err);
     }
-  }, []);
+  }, [openConversation]);
 
   useEffect(() => {
     if (activePortfolioId) {
@@ -535,17 +547,13 @@ export default function App() {
 
   const handleSelectConversation = useCallback(
     (convId: string) => {
-      const found = conversations.find((c) => c.id === convId);
-      if (found) {
-        setCurrentConversationId(found.id);
-        setChatMessages(found.messages);
-        setChatError(null);
-      }
+      if (activePortfolioId && conversations.some((c) => c.id === convId)) void openConversation(activePortfolioId, convId);
     },
-    [conversations],
+    [activePortfolioId, conversations, openConversation],
   );
 
   const handleNewChat = useCallback(() => {
+    conversationOpenRef.current++;
     setCurrentConversationId(null);
     setChatMessages([]);
     setChatError(null);
@@ -560,24 +568,14 @@ export default function App() {
           portfolioId: activePortfolioId,
           conversationId: convId,
         });
-        setConversations((prev) => {
-          const next = prev.filter((c) => c.id !== convId);
-          if (currentConversationId === convId) {
-            if (next.length > 0) {
-              setCurrentConversationId(next[0].id);
-              setChatMessages(next[0].messages);
-            } else {
-              setCurrentConversationId(null);
-              setChatMessages([]);
-            }
-          }
-          return next;
-        });
+        const next = conversations.filter((c) => c.id !== convId);
+        setConversations(next);
+        if (currentConversationId === convId) void openConversation(activePortfolioId, next[0]?.id ?? null);
       } catch (err) {
         console.error("Failed to delete assistant conversation:", err);
       }
     },
-    [activePortfolioId, currentConversationId],
+    [activePortfolioId, conversations, currentConversationId, openConversation],
   );
 
   const handleClearChat = useCallback(async () => {
@@ -598,6 +596,8 @@ export default function App() {
         setChatError("Please select or create a portfolio first.");
         return false;
       }
+      // A conversation still loading must not replace this history when it arrives.
+      conversationOpenRef.current++;
       setChatMessages(updatedMessages);
       setIsChatLoading(true);
       setChatError(null);
@@ -617,11 +617,11 @@ export default function App() {
 
         setConversations((prev) => {
           const idx = prev.findIndex((c) => c.id === res.conversationId);
-          const updatedConv: AssistantConversation = {
+          const updatedConv: AssistantConversationSummary = {
             id: res.conversationId,
             portfolioId: activePortfolioId,
             title: res.title,
-            messages: fullMessages,
+            messageCount: fullMessages.length,
             createdAt: idx >= 0 ? prev[idx].createdAt : new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };

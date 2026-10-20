@@ -37,6 +37,7 @@ export const rpc = {
     chatWithPortfolio: api.chatWithPortfolio,
     getAssistantSystemPrompt: (p: { portfolioId: string }) => api.getAssistantSystemPrompt(p.portfolioId),
     getAssistantConversations: (p: { portfolioId: string }) => api.getAssistantConversations(p.portfolioId),
+    getAssistantConversation: (p: { portfolioId: string; conversationId: string }) => api.getAssistantConversation(p.portfolioId, p.conversationId),
     deleteAssistantConversation: (p: { portfolioId: string; conversationId: string }) => api.deleteAssistantConversation(p.portfolioId, p.conversationId),
     testLlm: api.testLlm,
     testLlmStep: api.testLlmStep,

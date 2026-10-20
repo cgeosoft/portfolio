@@ -93,8 +93,12 @@ function initializeSchema(database: Database): void {
     )
   `);
 
-  // Serves every portfolioId lookup, the delete cascade and the date order of the ledger read.
-  database.run(`CREATE INDEX IF NOT EXISTS idx_transactions_portfolio_date ON transactions(portfolioId, date, createdAt)`);
+  // Serves every portfolioId lookup, the delete cascade and the full order of the ledger read
+  // (transaction.repo.ts findByPortfolio), so that read needs no sort step.
+  database.run(
+    `CREATE INDEX IF NOT EXISTS idx_transactions_portfolio_order ON transactions(portfolioId, date, COALESCE(datetime, date), createdAt)`,
+  );
+  database.run("DROP INDEX IF EXISTS idx_transactions_portfolio_date");
   // No query filters on date or symbol alone, and the index above leads with portfolioId:
   // these three only cost a B-tree write per imported row.
   database.run("DROP INDEX IF EXISTS idx_transactions_portfolio");
@@ -170,8 +174,10 @@ function initializeSchema(database: Database): void {
     )
   `);
 
-  database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_portfolio ON assistant_conversations(portfolioId)`);
-  database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_updated ON assistant_conversations(updatedAt)`);
+  // Serves the history list (newest first per portfolio) and the delete cascade without a sort step.
+  database.run(`CREATE INDEX IF NOT EXISTS idx_conversations_portfolio_updated ON assistant_conversations(portfolioId, updatedAt DESC)`);
+  database.run("DROP INDEX IF EXISTS idx_conversations_portfolio");
+  database.run("DROP INDEX IF EXISTS idx_conversations_updated");
 
   // Metric modules installed from a URL. Built-in modules are embedded in the bundle.
   database.run(`

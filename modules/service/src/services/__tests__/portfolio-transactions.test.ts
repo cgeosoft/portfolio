@@ -73,7 +73,7 @@ describe("transactions stay inside their portfolio", () => {
 
   it("drops the transaction and snapshot indexes no query uses", () => {
     const names = (getDatabase().query("SELECT name FROM sqlite_master WHERE type = 'index'").all() as { name: string }[]).map((r) => r.name);
-    expect(names).toContain("idx_transactions_portfolio_date");
+    expect(names).toContain("idx_transactions_portfolio_order");
     for (const dropped of ["idx_transactions_portfolio", "idx_transactions_date", "idx_transactions_symbol", "idx_snapshots_portfolio"]) {
       expect(names).not.toContain(dropped);
     }

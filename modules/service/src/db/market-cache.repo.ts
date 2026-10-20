@@ -1,5 +1,6 @@
 import { getDatabase } from "./database.js";
 import { appLogger } from "../logger.js";
+import { rememberJson, toJson } from "../json-cache.js";
 
 /** How long `pruneExpired()` keeps an expired entry: providers fall back to it when a call fails. */
 export const STALE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -19,13 +20,15 @@ interface CacheRow {
   expiresAt: number;
 }
 
-export function get<T = unknown>(key: string): CacheEntry<T> | null {
+/** `keepJson` keeps the stored text with the parsed object (json-cache.ts), for a payload sent as is. */
+export function get<T = unknown>(key: string, options: { keepJson?: boolean } = {}): CacheEntry<T> | null {
   try {
     const db = getDatabase();
     const row = db.query("SELECT * FROM market_cache WHERE key = ?").get(key) as CacheRow | null;
     if (!row) return null;
 
     const data = JSON.parse(row.data) as T;
+    if (options.keepJson && data && typeof data === "object") rememberJson(data, row.data);
     const now = Date.now();
     return {
       key: row.key,
@@ -44,7 +47,7 @@ export function set<T = unknown>(key: string, data: T, ttlMs: number): void {
     const db = getDatabase();
     const now = new Date().toISOString();
     const expiresAt = Date.now() + ttlMs;
-    const serialized = JSON.stringify(data);
+    const serialized = toJson(data);
 
     db.run(
       `INSERT INTO market_cache (key, data, updatedAt, expiresAt)

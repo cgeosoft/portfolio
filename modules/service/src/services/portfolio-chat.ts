@@ -18,7 +18,7 @@ import { t } from "../i18n.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as conversationRepo from "../db/conversation.repo.js";
 import type { PortfolioItem, FinancialPortfolioData, HoldingPerformance } from "portfolio-shared/portfolio";
-import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
+import type { PortfolioChatMessage, AssistantConversation, AssistantConversationSummary } from "portfolio-shared/api-types";
 
 const TITLE_MAX_CHARS = 42;
 const RECENT_TRANSACTIONS = 10;
@@ -125,8 +125,14 @@ export class PortfolioChatService {
     return buildPortfolioSystemPrompt(portfolio, data, marketContext, config.language);
   }
 
-  public getConversations(portfolioId: string): AssistantConversation[] {
-    return conversationRepo.findByPortfolio(portfolioId).map((row) => ({ ...row, messages: parseMessages(row.messages) }));
+  /** The history list: no message bodies, which the GUI loads one conversation at a time. */
+  public getConversations(portfolioId: string): AssistantConversationSummary[] {
+    return conversationRepo.listByPortfolio(portfolioId);
+  }
+
+  public getConversation(portfolioId: string, conversationId: string): AssistantConversation | null {
+    const row = conversationRepo.findById(conversationId, portfolioId);
+    return row ? { ...row, messages: parseMessages(row.messages) } : null;
   }
 
   public deleteConversation(portfolioId: string, conversationId: string): boolean {

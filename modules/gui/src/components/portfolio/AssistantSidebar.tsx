@@ -1,7 +1,7 @@
 import { forwardRef, memo, useState, useRef, useEffect, useCallback, useImperativeHandle, useMemo, type ReactNode } from "react";
 import type { Components } from "react-markdown";
 import type { PortfolioItem, FinancialPortfolioData } from "portfolio-shared/portfolio";
-import type { PortfolioChatMessage, AssistantConversation } from "portfolio-shared/api-types";
+import type { PortfolioChatMessage, AssistantConversationSummary } from "portfolio-shared/api-types";
 import { cleanThinkTags, formatTimeAgo, maskFinancialValues } from "./utils";
 import { rpc } from "../../rpc";
 import { AssistantSystemPromptModal } from "./AssistantSystemPromptModal";
@@ -40,7 +40,7 @@ interface AssistantSidebarProps {
   portfolio: PortfolioItem | null;
   portfolioData: FinancialPortfolioData | null;
   onOpenSettings?: () => void;
-  conversations?: AssistantConversation[];
+  conversations?: AssistantConversationSummary[];
   currentConversationId?: string | null;
   onSelectConversation?: (id: string) => void;
   onNewChat?: () => void;
@@ -868,7 +868,7 @@ export function AssistantSidebar({
                         <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
                           <span>{formatTimeAgo(c.updatedAt)}</span>
                           <span>•</span>
-                          <span>{t("assistant.history.messages", { count: c.messages?.length || 0 })}</span>
+                          <span>{t("assistant.history.messages", { count: c.messageCount || 0 })}</span>
                         </div>
                       </div>
 

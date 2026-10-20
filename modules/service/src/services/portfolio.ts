@@ -31,6 +31,7 @@ import type {
 import type { DesktopConfig } from "portfolio-shared/config-types";
 import { loadConfig, updateConfig } from "../config.js";
 import { appLogger } from "../logger.js";
+import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 
@@ -255,6 +256,11 @@ export class PortfolioService {
     return `${this.allGeneration}:${this.generations.get(portfolioId) ?? 0}`;
   }
 
+  /** Changes whenever the transactions, manual prices or settings of the portfolio change (see clearPortfolioCache). */
+  public ledgerVersion(portfolioId: string): string {
+    return this.generationOf(portfolioId);
+  }
+
   public clearPortfolioCache(portfolioId?: string) {
     if (!portfolioId) {
       this.allGeneration++;
@@ -445,7 +451,7 @@ export class PortfolioService {
       }
 
       // 2. Check persistent SQLite cache (instant return on app restart)
-      const diskCached = marketCache.get<FinancialPortfolioData>(`portfolio:${cacheKey}`);
+      const diskCached = marketCache.get<FinancialPortfolioData>(`portfolio:${cacheKey}`, { keepJson: true });
       if (diskCached?.data) {
         // The real build time; an expired copy counts as fresh only briefly, so a failed refresh is tried again.
         const timestamp = diskCached.isExpired ? now - CACHE_TTL_MS + STALE_RETRY_MS : diskCached.expiresAt - CACHE_TTL_MS;
@@ -516,6 +522,8 @@ export class PortfolioService {
         buildTimer.end("info", "The portfolio changed during the build; building it again");
         return this.getPortfolioData(portfolio.id, baseCurrency, forceFresh, liveQuotes);
       }
+      // One serialization for the disk copy and every GET of this build.
+      rememberJson(data);
       this.cache.set(cacheKey, { data, timestamp: Date.now() });
       marketCache.set(`portfolio:${cacheKey}`, data, CACHE_TTL_MS);
       buildTimer.end("success", "Portfolio built", { holdingsCount: data.holdings?.length ?? 0 });

@@ -14,6 +14,7 @@
 import { randomUUID } from "node:crypto";
 import { appLogger } from "../logger";
 import { isDev } from "../environment";
+import { toJson } from "../json-cache";
 
 export class HttpError extends Error {
   constructor(
@@ -181,7 +182,7 @@ function acceptsGzip(req: Request): boolean {
  * and gzip would block the event loop for nothing.
  */
 export function jsonFor(req: Request, data: unknown, status = 200, headers?: Headers, compress = true): Response {
-  const body = JSON.stringify(data ?? null);
+  const body = toJson(data);
   const h = new Headers(headers);
   h.set("Content-Type", "application/json; charset=utf-8");
   h.set("Cache-Control", "no-store");
