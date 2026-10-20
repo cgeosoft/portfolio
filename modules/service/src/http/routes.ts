@@ -399,6 +399,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios/:id/reports/stream", async (ctx) => {
     const body = await ctx.body<StartReportStreamRequest>();
+    await assertRemoteTargets(ctx, body.baseUrl);
     const res = await reportService.startReportStream({ ...body, apiKey: requestSecret(body.apiKey), portfolioId: ctx.params.id! });
     telemetry.capture("report_generated", { provider: body.provider, streaming: true });
     return res;
@@ -409,6 +410,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios/:id/reports", async (ctx) => {
     const body = await ctx.body<GenerateReportRequest>();
+    await assertRemoteTargets(ctx, body.baseUrl);
     const portfolio = portfolioRepo.findById(ctx.params.id!);
     if (!portfolio) throw new HttpError(404, "Portfolio not found");
     const report = await reportService.generateReport(
