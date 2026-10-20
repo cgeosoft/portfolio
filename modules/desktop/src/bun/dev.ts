@@ -45,10 +45,15 @@ export function findRepoRoot(from: string): string | undefined {
   return undefined;
 }
 
-/** The service command of a development run: the checkout's `main.ts` under `bun --watch`. */
-export function devServiceCommand(repoRoot: string): { command: string[]; cwd: string } {
+/**
+ * The service command of a development run: the checkout's `main.ts` under `bun --watch`.
+ * `SERVICE_INSPECT=<host:port>` in the environment of `bun start` adds `--inspect=<host:port>`,
+ * so the service opens Bun's inspector and prints its debug.bun.sh link.
+ */
+export function devServiceCommand(repoRoot: string, inspect = process.env.SERVICE_INSPECT?.trim()): { command: string[]; cwd: string } {
   const serviceDir = join(repoRoot, "modules", "service");
-  return { command: [process.execPath, "--watch", join(serviceDir, "src", "main.ts")], cwd: serviceDir };
+  const flags = inspect ? ["--watch", `--inspect=${inspect}`] : ["--watch"];
+  return { command: [process.execPath, ...flags, join(serviceDir, "src", "main.ts")], cwd: serviceDir };
 }
 
 /** The Vite dev server of a development run (`modules/gui/scripts/dev-server.ts`). */
