@@ -51,22 +51,25 @@ export function YourDataSection() {
 
       <BackupCard />
 
-      <div className="space-y-2.5">
-        <div className={blockTitle}>
-          <FolderOpen className="w-3.5 h-3.5 text-[#DD3C73]" />
-          <span>{t("settings.data.whereTitle")}</span>
-        </div>
-        <div className="space-y-1.5 text-xs">
-          <div className={row}>
-            <span className="text-slate-400 text-[11px]">{t("settings.data.dataFile")}</span>
-            <code className={pathCode}>{paths?.data || "…"}</code>
+      {/* The service sends the paths only to the desktop window. */}
+      {paths && (
+        <div className="space-y-2.5">
+          <div className={blockTitle}>
+            <FolderOpen className="w-3.5 h-3.5 text-[#DD3C73]" />
+            <span>{t("settings.data.whereTitle")}</span>
           </div>
-          <div className={row}>
-            <span className="text-slate-400 text-[11px]">{t("settings.data.logFolder")}</span>
-            <code className={pathCode}>{paths?.logs || "…"}</code>
+          <div className="space-y-1.5 text-xs">
+            <div className={row}>
+              <span className="text-slate-400 text-[11px]">{t("settings.data.dataFile")}</span>
+              <code className={pathCode}>{paths.data}</code>
+            </div>
+            <div className={row}>
+              <span className="text-slate-400 text-[11px]">{t("settings.data.logFolder")}</span>
+              <code className={pathCode}>{paths.logs}</code>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2.5">
         <div className={blockTitle}>
