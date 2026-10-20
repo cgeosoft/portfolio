@@ -1,0 +1,24 @@
+// Zed tasks. F5 runs "Portfolio: debug" through the user keymap (task::Spawn).
+// Zed's JavaScript debugger (vscode-js-debug) cannot attach to Bun, so the service
+// opens Bun's own inspector instead: ctrl-click the debug.bun.sh link it prints.
+[
+  {
+    "label": "Portfolio: debug",
+    "command": "bun",
+    "args": ["start"],
+    "env": { "SERVICE_INSPECT": "127.0.0.1:6499" },
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Portfolio: start",
+    "command": "bun",
+    "args": ["start"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]
