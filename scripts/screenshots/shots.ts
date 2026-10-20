@@ -16,7 +16,7 @@ export interface Rect {
  * An element in the page. `text` (or `re`, a case-insensitive regex) matches
  * the deepest visible element containing it; `css` selects instead, and with
  * `text` keeps the selected elements that contain it.
- * `nth` picks among matches, `up` climbs parents, then `mode`:
+ * `nth` picks among matches (negative: from the last), `up` climbs parents, then `mode`:
  *   self     the element
  *   card     the closest card (`.cx-card` or a bordered, rounded box)
  *   control  the closest button, input, select or link
