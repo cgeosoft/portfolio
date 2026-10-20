@@ -77,6 +77,7 @@ export function PortfolioChartCard({
 }: PortfolioChartCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
+  const zeroLineColorRef = useRef("");
   // The timeframe lives in the settings (`chartRange`): localStorage does not
   // survive a restart, since the service picks a new port and origin each time.
   const [range, setRange] = useState<Timeframe>("1y");
@@ -154,14 +155,11 @@ export function PortfolioChartCard({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (chartRef.current) {
-      chartRef.current.destroy();
+    if (!canvas || filtered.length === 0) {
+      chartRef.current?.destroy();
       chartRef.current = null;
+      return;
     }
-
-    if (filtered.length === 0) return;
 
     const labels = filtered.map((pt) =>
       new Date(pt.date + "T12:00:00Z").toLocaleDateString(getLocale(), {
@@ -189,6 +187,9 @@ export function PortfolioChartCard({
     const border = isLight ? "#e2e8f0" : "#1e293b";
     const gridColor = isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.05)";
 
+    zeroLineColorRef.current = returnColor;
+
+    // Reads zeroLineColorRef, so an updated chart keeps this plugin and still follows the theme.
     const zeroLinePlugin = {
       id: "zeroLineY1",
       afterDraw(chart: Chart) {
@@ -200,7 +201,7 @@ export function PortfolioChartCard({
         ctx.save();
         ctx.beginPath();
         ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = returnColor;
+        ctx.strokeStyle = zeroLineColorRef.current;
         ctx.lineWidth = 1;
         ctx.globalAlpha = 0.45;
         ctx.moveTo(chart.chartArea.left, yPixel);
@@ -366,12 +367,25 @@ export function PortfolioChartCard({
       },
     };
 
+    // Update the existing chart in place: a refresh should not replay the opening animation.
+    const chart = chartRef.current;
+    if (chart && chart.canvas === canvas) {
+      chart.data = config.data;
+      chart.options = config.options!;
+      chart.update("none");
+      return;
+    }
+    chart?.destroy();
     chartRef.current = new Chart(canvas, config);
-    return () => {
+  }, [filtered, relative, currency, hideValues, theme]);
+
+  useEffect(
+    () => () => {
       chartRef.current?.destroy();
       chartRef.current = null;
-    };
-  }, [filtered, relative, currency, hideValues, theme]);
+    },
+    []
+  );
 
   return (
     <div className="cx-card p-4 sm:p-5 font-mono h-full flex flex-col justify-between w-full max-w-full min-w-0 overflow-hidden">
