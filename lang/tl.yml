@@ -1594,6 +1594,16 @@ settings:
       failed: "Hindi mabago ang setting."
       addresses: "Buksan ang isa sa mga address na ito sa browser ng ibang device:"
       noInterface: "Walang nakitang network interface. Ikonekta ang computer na ito sa iyong Wi-Fi o LAN."
+    mcp:
+      title: "Ibahagi sa mga AI app (MCP)"
+      description: "Hayaang basahin ng mga AI app sa computer na ito, gaya ng Claude Desktop, Claude Code o Cursor, ang iyong mga portfolio sa pamamagitan ng Model Context Protocol. Kapag naka-off, walang ibang app na makakabasa sa mga ito."
+      privacy: "Mga porsiyento lang ang lumalabas sa Portfolio: timbang, kita, exposure at dividend yield. Hindi kailanman ang halaga, presyo, dami o balanse."
+      address: "Address ng server:"
+      token: "Access token:"
+      tokenOnce: "Kopyahin na ang token. Fingerprint lang nito ang itinatago ng Portfolio at hindi na ito maipapakita muli."
+      tokenHidden: "Hindi na ipapakita muli ang token. Gumawa ng bago para magkonekta ng app; hihinto na ang luma."
+      newToken: "Bagong token"
+      setup: "Halimbawa para sa Claude Code:"
   automation:
     scheduled: "Naka-iskedyul"
     off: "Naka-off"

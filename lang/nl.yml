@@ -1594,6 +1594,16 @@ settings:
       failed: "Kan de instelling niet wijzigen."
       addresses: "Open een van deze adressen in de browser van het andere apparaat:"
       noInterface: "Geen netwerkinterface gevonden. Verbind deze computer met je wifi of LAN."
+    mcp:
+      title: "Delen met AI-apps (MCP)"
+      description: "Laat AI-apps op deze computer, zoals Claude Desktop, Claude Code of Cursor, je portefeuilles lezen via het Model Context Protocol. Uit betekent dat geen andere app ze kan lezen."
+      privacy: "Alleen percentages verlaten Portfolio: wegingen, rendementen, blootstelling en dividendrendementen. Nooit bedragen, koersen, aantallen of saldi."
+      address: "Serveradres:"
+      token: "Toegangstoken:"
+      tokenOnce: "Kopieer het token nu. Portfolio bewaart alleen een vingerafdruk ervan en kan het niet opnieuw tonen."
+      tokenHidden: "Het token wordt niet opnieuw getoond. Maak een nieuw token om een app te koppelen; het oude werkt dan niet meer."
+      newToken: "Nieuw token"
+      setup: "Voorbeeld voor Claude Code:"
   automation:
     scheduled: "Gepland"
     off: "Uit"

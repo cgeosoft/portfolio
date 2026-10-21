@@ -1666,6 +1666,16 @@ settings:
       failed: "Nepavyko pakeisti nustatymo."
       addresses: "Atidarykite vieną iš šių adresų kito įrenginio naršyklėje:"
       noInterface: "Tinklo sąsaja nerasta. Prijunkite šį kompiuterį prie savo Wi-Fi ar LAN."
+    mcp:
+      title: "Bendrinti su DI programėlėmis (MCP)"
+      description: "Leiskite šio kompiuterio DI programėlėms, pvz., Claude Desktop, Claude Code ar Cursor, skaityti jūsų portfelius per Model Context Protocol. Kai išjungta, jokia kita programėlė jų negali skaityti."
+      privacy: "Iš Portfolio išeina tik procentai: svoriai, grąža, pozicijos ir dividendų pajamingumas. Niekada sumos, kainos, kiekiai ar likučiai."
+      address: "Serverio adresas:"
+      token: "Prieigos raktas:"
+      tokenOnce: "Nukopijuokite raktą dabar. Portfolio saugo tik jo atspaudą ir negali jo parodyti dar kartą."
+      tokenHidden: "Raktas daugiau nerodomas. Sukurkite naują, kad prijungtumėte programėlę; senasis tada nustoja veikti."
+      newToken: "Naujas raktas"
+      setup: "Pavyzdys Claude Code:"
   automation:
     scheduled: "Suplanuota"
     off: "Išjungta"

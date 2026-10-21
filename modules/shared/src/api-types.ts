@@ -595,6 +595,29 @@ export interface UpdateRemoteAccessRequest {
   port?: number;
 }
 
+/** Desktop-only switch of the MCP server that other LLM clients on this computer connect to. */
+export interface McpAccessInfo {
+  enabled: boolean;
+  /** Port of the MCP listener on 127.0.0.1 (a setting). */
+  port: number;
+  /** Address an MCP client connects to (Streamable HTTP). */
+  url: string;
+  /** True while the MCP listener runs. */
+  listening: boolean;
+  /** True when an access token exists. The service keeps only its hash, so it cannot show it again. */
+  hasToken: boolean;
+  /** The new access token, only in the response that created it. */
+  token?: string;
+  /** Why the MCP listener is not running although the switch is on (e.g. the port is in use). */
+  error?: string;
+}
+
+/** `PATCH /api/host/mcp`: either field may be left out. */
+export interface UpdateMcpAccessRequest {
+  enabled?: boolean;
+  port?: number;
+}
+
 export interface AppUpdateInfo {
   enabled: boolean;
   currentVersion: string;

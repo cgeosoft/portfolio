@@ -1594,6 +1594,16 @@ settings:
       failed: "Ayar değiştirilemedi."
       addresses: "Diğer cihazın tarayıcısında şu adreslerden birini açın:"
       noInterface: "Ağ arabirimi bulunamadı. Bu bilgisayarı Wi-Fi veya yerel ağınıza bağlayın."
+    mcp:
+      title: "Yapay zekâ uygulamalarıyla paylaş (MCP)"
+      description: "Bu bilgisayardaki Claude Desktop, Claude Code veya Cursor gibi yapay zekâ uygulamalarının portföylerinizi Model Context Protocol üzerinden okumasına izin verin. Kapalıyken başka hiçbir uygulama onları okuyamaz."
+      privacy: "Portfolio'dan yalnızca yüzdeler çıkar: ağırlıklar, getiriler, maruziyet ve temettü verimleri. Tutarlar, fiyatlar, adetler ve bakiyeler asla."
+      address: "Sunucu adresi:"
+      token: "Erişim belirteci:"
+      tokenOnce: "Belirteci şimdi kopyalayın. Portfolio yalnızca parmak izini saklar ve onu tekrar gösteremez."
+      tokenHidden: "Belirteç tekrar gösterilmez. Bir uygulamayı bağlamak için yenisini oluşturun; eskisi o zaman çalışmayı bırakır."
+      newToken: "Yeni belirteç"
+      setup: "Claude Code için örnek:"
   automation:
     scheduled: "Zamanlandı"
     off: "Kapalı"

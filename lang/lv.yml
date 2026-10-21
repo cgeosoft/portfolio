@@ -1630,6 +1630,16 @@ settings:
       failed: "Neizdevās mainīt iestatījumu."
       addresses: "Atveriet vienu no šīm adresēm otras ierīces pārlūkā:"
       noInterface: "Tīkla saskarne nav atrasta. Pievienojiet šo datoru savam Wi-Fi vai LAN."
+    mcp:
+      title: "Kopīgot ar MI lietotnēm (MCP)"
+      description: "Ļaujiet šī datora MI lietotnēm, piemēram, Claude Desktop, Claude Code vai Cursor, lasīt jūsu portfeļus, izmantojot Model Context Protocol. Ja izslēgts, neviena cita lietotne tos nevar lasīt."
+      privacy: "No Portfolio iziet tikai procenti: svari, ienesīgums, ekspozīcija un dividenžu ienesīgums. Nekad summas, cenas, daudzumi vai atlikumi."
+      address: "Servera adrese:"
+      token: "Piekļuves marķieris:"
+      tokenOnce: "Nokopējiet marķieri tagad. Portfolio glabā tikai tā nospiedumu un nevar to parādīt vēlreiz."
+      tokenHidden: "Marķieris vairs netiek rādīts. Izveidojiet jaunu, lai pievienotu lietotni; vecais tad vairs nedarbojas."
+      newToken: "Jauns marķieris"
+      setup: "Piemērs Claude Code:"
   automation:
     scheduled: "Ieplānots"
     off: "Izslēgts"

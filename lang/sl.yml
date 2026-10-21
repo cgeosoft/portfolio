@@ -1666,6 +1666,16 @@ settings:
       failed: "Nastavitve ni bilo mogoče spremeniti."
       addresses: "V brskalniku druge naprave odprite enega od teh naslovov:"
       noInterface: "Omrežnega vmesnika ni bilo mogoče najti. Povežite ta računalnik z omrežjem Wi-Fi ali LAN."
+    mcp:
+      title: "Deli z aplikacijami UI (MCP)"
+      description: "Dovolite aplikacijam UI na tem računalniku, kot so Claude Desktop, Claude Code ali Cursor, da berejo vaše portfelje prek Model Context Protocol. Ko je izklopljeno, jih nobena druga aplikacija ne more brati."
+      privacy: "Iz Portfolia odhajajo le odstotki: uteži, donosi, izpostavljenost in dividendni donosi. Nikoli zneski, cene, količine ali stanja."
+      address: "Naslov strežnika:"
+      token: "Žeton za dostop:"
+      tokenOnce: "Kopirajte žeton zdaj. Portfolio hrani le njegov prstni odtis in ga ne more znova prikazati."
+      tokenHidden: "Žeton se ne prikaže več. Za povezavo aplikacije ustvarite novega; stari takrat preneha delovati."
+      newToken: "Nov žeton"
+      setup: "Primer za Claude Code:"
   automation:
     scheduled: "Načrtovano"
     off: "Izklopljeno"

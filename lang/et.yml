@@ -1604,6 +1604,16 @@ settings:
       failed: "Seade muutmine nurjus."
       addresses: "Ava teise seadme brauseris üks neist aadressidest:"
       noInterface: "Võrguliidest ei leitud. Ühenda see arvuti oma WiFi- või kohtvõrguga."
+    mcp:
+      title: "Jaga tehisintellekti rakendustega (MCP)"
+      description: "Luba selle arvuti tehisintellekti rakendustel, nagu Claude Desktop, Claude Code või Cursor, lugeda sinu portfelle Model Context Protocoli kaudu. Kui see on väljas, ei saa ükski teine rakendus neid lugeda."
+      privacy: "Portfoliost lahkuvad ainult protsendid: kaalud, tootlused, riskipositsioon ja dividenditootlus. Mitte kunagi summad, hinnad, kogused ega saldod."
+      address: "Serveri aadress:"
+      token: "Juurdepääsuluba:"
+      tokenOnce: "Kopeeri luba kohe. Portfolio hoiab sellest ainult sõrmejälge ega saa seda uuesti näidata."
+      tokenHidden: "Luba enam ei näidata. Loo rakenduse ühendamiseks uus; vana lakkab siis töötamast."
+      newToken: "Uus luba"
+      setup: "Näide Claude Code jaoks:"
   automation:
     scheduled: "Ajastatud"
     off: "Väljas"

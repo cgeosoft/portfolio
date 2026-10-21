@@ -1630,6 +1630,16 @@ settings:
       failed: "Impossible de modifier le paramètre."
       addresses: "Ouvrez l'une de ces adresses dans le navigateur de l'autre appareil :"
       noInterface: "Aucune interface réseau trouvée. Connectez cet ordinateur à votre Wi-Fi ou à votre réseau local."
+    mcp:
+      title: "Partager avec des apps d'IA (MCP)"
+      description: "Permettez aux apps d'IA de cet ordinateur, comme Claude Desktop, Claude Code ou Cursor, de lire vos portefeuilles via le Model Context Protocol. Désactivé, aucune autre app ne peut les lire."
+      privacy: "Seuls des pourcentages quittent Portfolio : poids, rendements, exposition et rendements de dividendes. Jamais les montants, prix, quantités ou soldes."
+      address: "Adresse du serveur :"
+      token: "Jeton d'accès :"
+      tokenOnce: "Copiez le jeton maintenant. Portfolio n'en garde qu'une empreinte et ne peut plus l'afficher."
+      tokenHidden: "Le jeton n'est plus affiché. Créez-en un nouveau pour connecter une app ; l'ancien cesse alors de fonctionner."
+      newToken: "Nouveau jeton"
+      setup: "Exemple pour Claude Code :"
   automation:
     scheduled: "Programmé"
     off: "Désactivé"

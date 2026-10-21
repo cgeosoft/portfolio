@@ -15,6 +15,7 @@ import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
 import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie, type ClientScope } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
+import { mcpAccessInfo, rotateMcpToken, setMcpAccess } from "../services/mcp-access";
 import { blockedRemoteTargets } from "../services/outbound-target";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
@@ -63,6 +64,7 @@ import type {
   TestLlmRequest,
   TestLlmStepRequest,
   UpdatePortfolioRequest,
+  UpdateMcpAccessRequest,
   UpdateRemoteAccessRequest,
   UpdateSuggestionStatusRequest,
 } from "portfolio-shared/api-types";
@@ -227,6 +229,27 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       enabled: typeof body.enabled === "boolean" ? body.enabled : undefined,
       port: body.port === undefined ? undefined : Number(body.port),
     });
+  });
+
+  // ── host (MCP server for other LLM clients) ─────────────────────────────
+
+  router.get("/api/host/mcp", (ctx) => {
+    assertLocal(ctx, "The MCP server setting");
+    return mcpAccessInfo();
+  });
+
+  router.patch("/api/host/mcp", async (ctx) => {
+    assertLocal(ctx, "The MCP server setting");
+    const body = await ctx.body<UpdateMcpAccessRequest>();
+    return setMcpAccess({
+      enabled: typeof body.enabled === "boolean" ? body.enabled : undefined,
+      port: body.port === undefined ? undefined : Number(body.port),
+    });
+  });
+
+  router.post("/api/host/mcp/token", (ctx) => {
+    assertLocal(ctx, "The MCP server setting");
+    return rotateMcpToken();
   });
 
   // ── portfolios ──────────────────────────────────────────────────────────

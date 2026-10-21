@@ -1558,6 +1558,16 @@ settings:
       failed: "Không thể thay đổi cài đặt."
       addresses: "Mở một trong các địa chỉ sau trên trình duyệt của thiết bị kia:"
       noInterface: "Không tìm thấy giao diện mạng. Hãy kết nối máy tính này với Wi-Fi hoặc LAN."
+    mcp:
+      title: "Chia sẻ với ứng dụng AI (MCP)"
+      description: "Cho phép các ứng dụng AI trên máy tính này, như Claude Desktop, Claude Code hoặc Cursor, đọc danh mục của bạn qua Model Context Protocol. Khi tắt, không ứng dụng nào khác đọc được."
+      privacy: "Chỉ có phần trăm rời khỏi Portfolio: tỷ trọng, lợi nhuận, mức phơi nhiễm và tỷ suất cổ tức. Không bao giờ có số tiền, giá, số lượng hay số dư."
+      address: "Địa chỉ máy chủ:"
+      token: "Mã truy cập:"
+      tokenOnce: "Hãy sao chép mã ngay. Portfolio chỉ giữ dấu vân tay của mã và không thể hiển thị lại."
+      tokenHidden: "Mã không được hiển thị lại. Tạo mã mới để kết nối ứng dụng; mã cũ khi đó ngừng hoạt động."
+      newToken: "Mã mới"
+      setup: "Ví dụ cho Claude Code:"
   automation:
     scheduled: "Đã lên lịch"
     off: "Tắt"

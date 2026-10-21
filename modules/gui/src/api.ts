@@ -49,6 +49,7 @@ import type {
   PrepareReportPromptResponse,
   PreviewMetricInstallResponse,
   RemoteAccessInfo,
+  McpAccessInfo,
   ResolvePortfolioSymbolsResponse,
   RevokeOtherSessionsResponse,
   RunAutomationResponse,
@@ -75,6 +76,7 @@ import type {
   TestYahooConnectionResponse,
   UpdatePortfolioRequest,
   UpdateRemoteAccessRequest,
+  UpdateMcpAccessRequest,
 } from "portfolio-shared/api-types";
 import type { PortfolioItem, PortfolioReport, PortfolioTransaction, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { MetricScope } from "portfolio-shared/metric-abi";
@@ -168,6 +170,9 @@ export const api = {
   // ---- remote access (desktop window only; 403 from a remote client)
   remoteAccess: () => request<RemoteAccessInfo>("/api/host/remote-access"),
   setRemoteAccess: (update: UpdateRemoteAccessRequest) => request<RemoteAccessInfo>("/api/host/remote-access", { method: "PATCH", body: json(update) }),
+  mcpAccess: () => request<McpAccessInfo>("/api/host/mcp"),
+  setMcpAccess: (update: UpdateMcpAccessRequest) => request<McpAccessInfo>("/api/host/mcp", { method: "PATCH", body: json(update) }),
+  rotateMcpToken: () => request<McpAccessInfo>("/api/host/mcp/token", { method: "POST" }),
 
   // ---- portfolios
   getPortfolios: (signal?: AbortSignal) => request<GetPortfoliosResponse>("/api/portfolios", { signal }),

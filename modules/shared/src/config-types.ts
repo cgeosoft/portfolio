@@ -133,6 +133,14 @@ export interface DesktopConfig {
   allowRemoteConnections: boolean;
   /** Port of the LAN listener on 0.0.0.0 while remote connections are on. */
   remotePort: number;
+  /**
+   * MCP server switch (Settings, Privacy & Security). Other LLM clients on this
+   * computer read percentages of the portfolios through it. Changed through
+   * `/api/host/mcp`, never `PATCH /api/config`.
+   */
+  mcpEnabled: boolean;
+  /** Port of the MCP listener on 127.0.0.1 while the MCP server is on. */
+  mcpPort: number;
   /** Closing the desktop window hides it to the tray (mirrored to desktop-settings.json for the shell). */
   closeToTray: boolean;
   /** Base URL of the Gotify server that receives push notifications (Settings, Notifications, Phone Apps). */
@@ -210,8 +218,11 @@ export const DEFAULT_NTFY_PRIORITY = 3;
 /** Default port of the LAN listener. The loopback listener of the desktop window uses a random port. */
 export const DEFAULT_REMOTE_PORT = 5130;
 
+/** Default port of the MCP listener on 127.0.0.1. */
+export const DEFAULT_MCP_PORT = 5131;
+
 /** Settings the GUI cannot change through `PATCH /api/config`. */
-export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"] as const;
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "mcpEnabled", "mcpPort", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
 

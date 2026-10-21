@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, MonitorSmartphone, ShieldCheck, Wifi } from "lucide-react";
+import { Bot, Lock, MonitorSmartphone, ShieldCheck, Wifi } from "lucide-react";
 import { api, ApiError } from "../../api";
 import { t } from "../../i18n";
-import type { RemoteAccessInfo } from "portfolio-shared/api-types";
+import type { McpAccessInfo, RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
 import { SectionHeader, SettingItem, SettingsFields, Toggle } from "./SettingsFields";
 
@@ -218,7 +218,143 @@ function SessionsCard() {
 }
 
 /**
- * The app lock and the remote-connections rows of Settings → Privacy & Security. The
+ * The MCP server row: other AI apps on this computer read percentages of the
+ * portfolios through it. Renders only in the desktop window (the service
+ * answers 403 for other clients). The access token is shown once, right
+ * after the service creates it.
+ */
+function McpCard() {
+  const [info, setInfo] = useState<McpAccessInfo | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [portText, setPortText] = useState("");
+  const [copied, setCopied] = useState<"token" | "setup" | null>(null);
+
+  useEffect(() => {
+    api
+      .mcpAccess()
+      .then((next) => {
+        setInfo(next);
+        setPortText(String(next.port));
+      })
+      .catch(() => setInfo(null));
+  }, []);
+
+  const apply = async (call: () => Promise<McpAccessInfo>) => {
+    if (!info || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const next = await call();
+      setInfo(next);
+      setPortText(String(next.port));
+      if (next.token) setToken(next.token);
+      else if (!next.enabled) setToken(null);
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : t("settings.security.remote.failed"));
+      setPortText(String(info.port));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const savePort = () => {
+    if (!info) return;
+    const port = Number(portText.trim());
+    if (portText.trim() === String(info.port)) return;
+    if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+      setError(t("settings.security.remote.portRule"));
+      setPortText(String(info.port));
+      return;
+    }
+    void apply(() => api.setMcpAccess({ port }));
+  };
+
+  const copy = async (what: "token" | "setup", text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(what);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      // The text stays selectable.
+    }
+  };
+
+  if (!info) return null;
+  const setup = `claude mcp add --transport http portfolio ${info.url} --header "Authorization: Bearer ${token ?? "<token>"}"`;
+  const buttonClass = "px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap";
+
+  return (
+    <SettingItem
+      icon={Bot}
+      title={t("settings.security.mcp.title")}
+      description={t("settings.security.mcp.description")}
+      control={<Toggle checked={info.enabled} disabled={busy} onChange={() => void apply(() => api.setMcpAccess({ enabled: !info.enabled }))} label={t("settings.security.mcp.title")} />}
+    >
+      <p className="text-[11px] text-emerald-300">{t("settings.security.mcp.privacy")}</p>
+      <div className="flex items-center gap-2">
+        <label htmlFor="mcp-port" className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          {t("settings.security.remote.port")}
+        </label>
+        <input
+          id="mcp-port"
+          type="text"
+          inputMode="numeric"
+          value={portText}
+          disabled={busy}
+          onChange={(e) => setPortText(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+          onBlur={savePort}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+        />
+      </div>
+      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {!error && info.error && <p className="text-xs text-rose-400">{info.error}</p>}
+      {info.enabled && (
+        <>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-slate-400">{t("settings.security.mcp.address")}</span>
+            <code className="self-start px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all">{info.url}</code>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-slate-400">{t("settings.security.mcp.token")}</span>
+            {token ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <code className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-800 text-xs font-mono text-sky-200 select-all break-all">{token}</code>
+                  <button type="button" onClick={() => void copy("token", token)} className={buttonClass}>
+                    {copied === "token" ? t("common.copied") : t("common.copy")}
+                  </button>
+                </div>
+                <p className="text-[11px] text-amber-300">{t("settings.security.mcp.tokenOnce")}</p>
+              </>
+            ) : (
+              <p className="text-[11px] text-slate-500">{t("settings.security.mcp.tokenHidden")}</p>
+            )}
+            <button type="button" disabled={busy} onClick={() => void apply(() => api.rotateMcpToken())} className={`self-start ${buttonClass}`}>
+              {t("settings.security.mcp.newToken")}
+            </button>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-slate-400">{t("settings.security.mcp.setup")}</span>
+            <div className="flex items-start gap-2">
+              <code className="px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-950/60 text-[11px] font-mono text-slate-300 select-all break-all">{setup}</code>
+              <button type="button" onClick={() => void copy("setup", setup)} className={buttonClass}>
+                {copied === "setup" ? t("common.copied") : t("common.copy")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </SettingItem>
+  );
+}
+
+/**
+ * The app lock, the remote-connections and the MCP server rows of Settings → Privacy & Security. The
  * remote row only renders in the desktop window (the service answers 403
  * for other clients) and needs a PIN before it can be turned on.
  */
@@ -344,6 +480,8 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
           )}
         </SettingItem>
       )}
+
+      <McpCard />
     </>
   );
 }
