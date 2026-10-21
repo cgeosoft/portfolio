@@ -1464,10 +1464,36 @@ export class PortfolioService {
         "currency",
       ];
 
-      for (const t of batchList) {
-        const candidateId = t.id || `tx_${t.date || "nodate"}_${t.type || "notype"}_${t.symbol || "nosym"}_${t.amount ?? ""}_${t.shares ?? ""}`;
-        const existing =
-          existingTxMap.get(candidateId) ?? existingTxMap.get(this.scopedTransactionId(candidateId, portfolio.id));
+      const candidateIds = batchList.map(
+        (t) => t.id || `tx_${t.date || "nodate"}_${t.type || "notype"}_${t.symbol || "nosym"}_${t.amount ?? ""}_${t.shares ?? ""}`,
+      );
+      const matches = candidateIds.map(
+        (candidateId) => existingTxMap.get(candidateId) ?? existingTxMap.get(this.scopedTransactionId(candidateId, portfolio.id)),
+      );
+      // A row without a broker id gets a "tx_" id from its place in the file, so an export
+      // that covers more days gives the same row a new id. Such rows match a stored row
+      // with a generated id on their content, each stored row once.
+      const fingerprint = (t: Partial<txRepo.TransactionInput>) =>
+        [String(t.date ?? "").slice(0, 10), t.type ?? "", (t.isin || t.symbol || "").toUpperCase(), t.amount ?? "", t.shares ?? ""].join("|");
+      const claimed = new Set(matches.filter((m): m is txRepo.TransactionRow => m !== undefined).map((m) => m.id));
+      const byFingerprint = new Map<string, txRepo.TransactionRow[]>();
+      for (const t of existingTransactions) {
+        if (!t.id.startsWith("tx_") || claimed.has(t.id)) continue;
+        const key = fingerprint(t);
+        byFingerprint.set(key, [...(byFingerprint.get(key) ?? []), t]);
+      }
+      batchList.forEach((t, i) => {
+        if (matches[i] || !candidateIds[i]!.startsWith("tx_")) return;
+        const match = byFingerprint.get(fingerprint(t))?.find((row) => !claimed.has(row.id));
+        if (match) {
+          matches[i] = match;
+          claimed.add(match.id);
+        }
+      });
+
+      for (const [i, t] of batchList.entries()) {
+        const candidateId = candidateIds[i]!;
+        const existing = matches[i];
 
         const id = existing ? existing.id : this.mintPortfolioTransactionId(candidateId, portfolio.id);
         const formattedTx = { ...t, id, portfolioId: portfolio.id } as txRepo.TransactionRow;

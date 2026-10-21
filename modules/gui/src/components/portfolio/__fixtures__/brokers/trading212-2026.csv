@@ -1,0 +1,6 @@
+Action,Time (UTC),ISIN,Ticker,Name,Notes,ID,No. of shares,Price / share,Currency (Price / share),Exchange rate,Result,Currency (Result),Total,Currency (Total),Withholding tax,Currency (Withholding tax),Currency conversion fee,Currency (Currency conversion fee)
+Deposit,2026-07-01 08:00:00+00:00,,,,"Bank Transfer",d0000000-0000-4000-8000-000000000002,,,,,,,250.00,"EUR",,,,
+Market buy,2026-07-02 14:30:05+00:00,US5949181045,MSFT,"Microsoft",,EOF0000000101,0.2000000000,500.00,USD,1.15000,,,87.09,"EUR",,,0.13,"EUR"
+Dividend (Ordinary),2026-07-10 00:00:00+00:00,US5949181045,MSFT,"Microsoft",,,0.2000000000,0.83,USD,Not available,,,0.12,"EUR",0.02,USD,,
+Stock split open,2026-07-20 07:24:24+00:00,US5949181045,MSFT,"Microsoft",,EOF0000000102,0.4000000000,250.00,USD,1.15000,,"EUR",87.09,"EUR",,,,
+Stock split close,2026-07-20 07:24:24+00:00,US5949181045,MSFT,"Microsoft",,EOF0000000103,0.2000000000,500.00,USD,1.15000,0.00,"EUR",87.09,"EUR",,,,

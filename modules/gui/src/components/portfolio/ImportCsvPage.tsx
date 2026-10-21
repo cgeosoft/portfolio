@@ -18,595 +18,30 @@ import type { PortfolioTransaction } from "portfolio-shared/portfolio";
 import { fmtCurrency } from "./utils";
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./PortfolioCard";
 
-/** Shape of an ISIN. The service checks the check digit and looks up the ticker on import. */
-const ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+import {
+  CSV_TEMPLATES,
+  SYSTEM_FIELDS,
+  applyTemplateToHeaders,
+  buildTransactions as buildImportTransactions,
+  decodeCsvBytes,
+  detectBestTemplate,
+  findTemplate,
+  parseCsvContent,
+  type CsvTable,
+  type SkippedRows,
+  type SystemFieldKey,
+} from "./csv-import";
+import { isZip, parseXlsx } from "./xlsx-import";
 
 /** Dry-run rows rendered before "Show all": a long broker history renders thousands of rows. */
 const PREVIEW_LIMIT = 200;
 
-export type SystemFieldKey =
-  | "none"
-  | "transaction_id"
-  | "date"
-  | "datetime"
-  | "type"
-  | "symbol"
-  | "isin"
-  | "name"
-  | "asset_class"
-  | "category"
-  | "shares"
-  | "price"
-  | "amount"
-  | "fee"
-  | "tax"
-  | "currency";
-
-interface SystemFieldDef {
-  key: SystemFieldKey;
-  label: string;
-  required?: boolean;
-  aliases: string[];
-}
-
-const SYSTEM_FIELDS: SystemFieldDef[] = [
-  {
-    key: "none",
-    label: "(Ignore / Skip Column)",
-    aliases: [],
-  },
-  {
-    key: "transaction_id",
-    label: "Transaction ID / Ref",
-    aliases: [
-      "transaction_id",
-      "transactionid",
-      "tx_id",
-      "txid",
-      "order_id",
-      "orderid",
-      "external_id",
-      "externalid",
-      "id",
-      "auftragsnummer",
-    ],
-  },
-  {
-    key: "datetime",
-    label: "Date & Time (ISO / Timestamp)",
-    aliases: [
-      "datetime",
-      "date_time",
-      "timestamp",
-      "timestamp_utc",
-      "date_and_time",
-      "time",
-    ],
-  },
-  {
-    key: "date",
-    label: "Date (YYYY-MM-DD)",
-    required: true,
-    aliases: [
-      "date",
-      "trade_date",
-      "execution_date",
-      "booking_date",
-      "settlement_date",
-      "datum",
-      "valutadatum",
-    ],
-  },
-  {
-    key: "type",
-    label: "Transaction Type (BUY/SELL/...)",
-    required: true,
-    aliases: [
-      "type",
-      "transaction_type",
-      "action",
-      "order_type",
-      "operation",
-      "side",
-      "direction",
-      "typ",
-      "transaktionsart",
-    ],
-  },
-  {
-    key: "symbol",
-    label: "Symbol / Ticker / ISIN",
-    required: true,
-    aliases: [
-      "symbol",
-      "ticker",
-      "instrument",
-      "asset",
-      "code",
-      "asset_id",
-      "security",
-      "wertpapiersymbol",
-    ],
-  },
-  {
-    key: "isin",
-    label: "ISIN Code",
-    aliases: [
-      "isin",
-      "isin_code",
-      "security_id",
-      "sec_id",
-      "wkn",
-    ],
-  },
-  {
-    key: "name",
-    label: "Asset / Security Name",
-    aliases: [
-      "name",
-      "security_name",
-      "asset_name",
-      "title",
-      "product",
-      "bezeichnung",
-      "name des wertpapiers",
-    ],
-  },
-  {
-    key: "asset_class",
-    label: "Asset Class (Stock/Fund/Crypto)",
-    aliases: [
-      "asset_class",
-      "assetclass",
-      "security_type",
-      "asset_type",
-      "instrument_type",
-      "gattung",
-    ],
-  },
-  {
-    key: "category",
-    label: "Category / Sector",
-    aliases: [
-      "category",
-      "sector",
-      "group",
-      "fund_category",
-      "kategorie",
-    ],
-  },
-  {
-    key: "shares",
-    label: "Shares / Quantity",
-    aliases: [
-      "shares",
-      "quantity",
-      "qty",
-      "units",
-      "amount_shares",
-      "count",
-      "number_of_shares",
-      "no. of shares",
-      "volume",
-      "stueck",
-      "anteile",
-      "nominal",
-    ],
-  },
-  {
-    key: "price",
-    label: "Unit Price",
-    aliases: [
-      "price",
-      "unit_price",
-      "share_price",
-      "price / share",
-      "rate",
-      "cost_per_share",
-      "execution_price",
-      "exec_price",
-      "kurs",
-      "ausfuehrungskurs",
-    ],
-  },
-  {
-    key: "amount",
-    label: "Total Amount / Net Value",
-    aliases: [
-      "amount",
-      "total",
-      "total_amount",
-      "total (eur)",
-      "total (usd)",
-      "total (gbp)",
-      "net_amount",
-      "gross_amount",
-      "value",
-      "settlement_amount",
-      "cost",
-      "betrag",
-      "gesamtbetrag",
-    ],
-  },
-  {
-    key: "fee",
-    label: "Fee / Commission",
-    aliases: [
-      "fee",
-      "fees",
-      "charge amount (eur)",
-      "commission",
-      "commissions",
-      "brokerage",
-      "charges",
-      "transaction_fee",
-      "order_fee",
-      "gebuehren",
-      "spesen",
-    ],
-  },
-  {
-    key: "tax",
-    label: "Tax / Withholding",
-    aliases: [
-      "tax",
-      "taxes",
-      "withholding tax (eur)",
-      "withholding_tax",
-      "vat",
-      "steuern",
-      "kapitalertragsteuer",
-    ],
-  },
-  {
-    key: "currency",
-    label: "Currency (EUR, USD, ...)",
-    aliases: [
-      "currency",
-      "currency (price / share)",
-      "currency (total)",
-      "curr",
-      "ccy",
-      "currency_code",
-      "iso_currency",
-      "waehrung",
-    ],
-  },
-];
-
-export interface CsvTemplate {
-  id: string;
-  name: string;
-  badge?: string;
-  description: string;
-  defaultCurrency?: string;
-  mappings: Record<string, SystemFieldKey>;
-  signatureHeaders: string[];
-}
-
-export const CSV_TEMPLATES: CsvTemplate[] = [
-  {
-    id: "trade_republic",
-    name: "Trade Republic",
-    badge: "TR",
-    description: "Standard Trade Republic statement / transaction export CSV",
-    defaultCurrency: "EUR",
-    signatureHeaders: ["datetime", "accounttype", "assetclass", "counterpartyiban", "mcccode", "paymentreference"],
-    mappings: {
-      datetime: "datetime",
-      date: "date",
-      type: "type",
-      assetclass: "asset_class",
-      name: "name",
-      symbol: "symbol",
-      shares: "shares",
-      price: "price",
-      amount: "amount",
-      fee: "fee",
-      tax: "tax",
-      currency: "currency",
-      transactionid: "transaction_id",
-      category: "category",
-    },
-  },
-  {
-    id: "ibkr",
-    name: "Interactive Brokers (IBKR)",
-    badge: "IBKR",
-    description: "Interactive Brokers Activity & Trades statement CSV",
-    defaultCurrency: "USD",
-    signatureHeaders: ["tradedate", "ibcommission", "proceeds", "assetcategory", "currencyprimary"],
-    mappings: {
-      tradedate: "date",
-      date: "date",
-      datetime: "datetime",
-      timestamp: "datetime",
-      symbol: "symbol",
-      isin: "isin",
-      description: "name",
-      quantity: "shares",
-      tradeprice: "price",
-      price: "price",
-      grossamount: "amount",
-      netamount: "amount",
-      proceeds: "amount",
-      amount: "amount",
-      ibcommission: "fee",
-      commission: "fee",
-      fee: "fee",
-      withholdingtax: "tax",
-      tax: "tax",
-      currencyprimary: "currency",
-      currency: "currency",
-      buysell: "type",
-      type: "type",
-      assetcategory: "asset_class",
-      transactionid: "transaction_id",
-    },
-  },
-  {
-    id: "scalable",
-    name: "Scalable Capital / Baader",
-    badge: "SC",
-    description: "Scalable Capital / Baader Bank transaction export CSV",
-    defaultCurrency: "EUR",
-    signatureHeaders: ["valutadatum", "buchungsdatum", "transaktionsart", "wertpapierbezeichnung", "ausfuehrungskurs"],
-    mappings: {
-      valutadatum: "date",
-      buchungsdatum: "date",
-      datum: "date",
-      date: "date",
-      transaktionsart: "type",
-      typ: "type",
-      type: "type",
-      isin: "isin",
-      wertpapierbezeichnung: "name",
-      name: "name",
-      stueck: "shares",
-      anzahl: "shares",
-      shares: "shares",
-      ausfuehrungskurs: "price",
-      kurs: "price",
-      price: "price",
-      betrag: "amount",
-      amount: "amount",
-      gebuehren: "fee",
-      spesen: "fee",
-      fee: "fee",
-      steuern: "tax",
-      tax: "tax",
-      waehrung: "currency",
-      currency: "currency",
-      referenz: "transaction_id",
-      orderid: "transaction_id",
-    },
-  },
-  {
-    id: "degiro",
-    name: "Degiro / Flatex",
-    badge: "DG",
-    description: "Degiro / Flatex transactions and portfolio statement CSV",
-    defaultCurrency: "EUR",
-    signatureHeaders: ["produkt", "aantal", "waarde", "autofx"],
-    mappings: {
-      datum: "date",
-      date: "date",
-      tijd: "datetime",
-      time: "datetime",
-      produkt: "name",
-      name: "name",
-      isin: "isin",
-      symbol: "symbol",
-      aantal: "shares",
-      anzahl: "shares",
-      shares: "shares",
-      kurs: "price",
-      price: "price",
-      waarde: "amount",
-      wert: "amount",
-      gesamt: "amount",
-      amount: "amount",
-      gebuehren: "fee",
-      kosten: "fee",
-      fee: "fee",
-      waehrung: "currency",
-      currency: "currency",
-      orderid: "transaction_id",
-      referenz: "transaction_id",
-    },
-  },
-  {
-    id: "auto",
-    name: "Auto-Detect (Smart Generic)",
-    badge: "AUTO",
-    description: "Intelligent automatic heuristic column detection for any broker",
-    signatureHeaders: [],
-    mappings: {},
-  },
-];
-
-function normalizeHeaderStr(str: string): string {
-  return str.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function autoDetectAllFields(headers: string[]): SystemFieldKey[] {
-  const assigned = new Set<SystemFieldKey>();
-  const mappings: SystemFieldKey[] = new Array(headers.length).fill("none");
-
-  // Pass 1: Exact alias matching
-  headers.forEach((h, idx) => {
-    const norm = normalizeHeaderStr(h);
-    if (!norm) return;
-
-    for (const def of SYSTEM_FIELDS) {
-      if (def.key === "none" || assigned.has(def.key)) continue;
-      for (const alias of def.aliases) {
-        if (norm === normalizeHeaderStr(alias)) {
-          mappings[idx] = def.key;
-          assigned.add(def.key);
-          return;
-        }
-      }
-    }
-  });
-
-  return mappings;
-}
-
-function detectBestTemplate(headers: string[]): string {
-  const normHeaders = headers.map((h) => normalizeHeaderStr(h));
-  let bestTemplateId = "auto";
-  let maxMatches = 0;
-
-  for (const template of CSV_TEMPLATES) {
-    if (template.id === "auto" || template.signatureHeaders.length === 0) continue;
-    let matches = 0;
-    for (const sig of template.signatureHeaders) {
-      if (normHeaders.includes(sig)) {
-        matches++;
-      }
-    }
-    if (matches > maxMatches && matches >= 2) {
-      maxMatches = matches;
-      bestTemplateId = template.id;
-    }
-  }
-
-  return bestTemplateId;
-}
-
-function applyTemplateToHeaders(
-  templateId: string,
-  headers: string[]
-): { mappings: SystemFieldKey[]; defaultCurrency?: string | undefined } {
-  const template = CSV_TEMPLATES.find((t) => t.id === templateId);
-  if (!template || template.id === "auto") {
-    return { mappings: autoDetectAllFields(headers) };
-  }
-
-  const assigned = new Set<SystemFieldKey>();
-  const mappings: SystemFieldKey[] = new Array(headers.length).fill("none");
-
-  headers.forEach((h, idx) => {
-    const norm = normalizeHeaderStr(h);
-    if (!norm) return;
-
-    const mappedKey = template.mappings[norm];
-    if (mappedKey && mappedKey !== "none" && !assigned.has(mappedKey)) {
-      mappings[idx] = mappedKey;
-      assigned.add(mappedKey);
-    }
-  });
-
-  return { mappings, defaultCurrency: template.defaultCurrency };
-}
-
-function parseCsvContent(content: string): { headers: string[]; rows: string[][] } {
-  let cleanContent = content;
-  if (cleanContent.charCodeAt(0) === 0xfeff) {
-    cleanContent = cleanContent.slice(1);
-  }
-
-  const rawLines = cleanContent
-    .split(/\r\n|\n|\r/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  if (rawLines.length === 0) {
-    return { headers: [], rows: [] };
-  }
-
-  const firstLine = rawLines[0]!;
-  const commaCount = (firstLine.match(/,/g) || []).length;
-  const semiCount = (firstLine.match(/;/g) || []).length;
-  const tabCount = (firstLine.match(/\t/g) || []).length;
-
-  let delimiter = ",";
-  if (semiCount > commaCount && semiCount >= tabCount) {
-    delimiter = ";";
-  } else if (tabCount > commaCount && tabCount > semiCount) {
-    delimiter = "\t";
-  }
-
-  const parseLine = (line: string): string[] => {
-    const result: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        result.push(current.trim().replace(/^["']|["']$/g, ""));
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    result.push(current.trim().replace(/^["']|["']$/g, ""));
-    return result;
-  };
-
-  const headers = parseLine(rawLines[0]!);
-  const rows: string[][] = [];
-
-  for (let i = 1; i < rawLines.length; i++) {
-    const cols = parseLine(rawLines[i]!);
-    if (cols.some((c) => c.length > 0)) {
-      while (cols.length < headers.length) {
-        cols.push("");
-      }
-      rows.push(cols);
-    }
-  }
-
-  return { headers, rows };
-}
-
-function parseNumber(val: string | undefined): number | undefined {
-  if (!val) return undefined;
-  let str = val.trim();
-  str = str.replace(/[€$£\s]/g, "");
-  if (str.includes(",") && !str.includes(".")) {
-    str = str.replace(",", ".");
-  } else if (str.includes(".") && str.includes(",")) {
-    if (str.indexOf(".") < str.indexOf(",")) {
-      str = str.replace(/\./g, "").replace(",", ".");
-    } else {
-      str = str.replace(/,/g, "");
-    }
-  }
-  const parsed = parseFloat(str);
-  return isNaN(parsed) ? undefined : parsed;
-}
-
-function parseDateStr(val: string | undefined): string {
-  if (!val) return new Date().toISOString().split("T")[0]!;
-  const trimmed = val.trim();
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
-    return trimmed.split("T")[0]!;
-  }
-
-  const euroMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
-  if (euroMatch) {
-    const day = euroMatch[1]!.padStart(2, "0");
-    const month = euroMatch[2]!.padStart(2, "0");
-    const year = euroMatch[3]!;
-    return `${year}-${month}-${day}`;
-  }
-
-  const d = new Date(trimmed);
-  if (!isNaN(d.getTime())) {
-    return d.toISOString().split("T")[0]!;
-  }
-
-  return new Date().toISOString().split("T")[0]!;
+/** Read a dropped or chosen file: an Excel workbook or CSV text. */
+async function readImportFile(file: File): Promise<CsvTable> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (/\.xlsx$|\.xlsm$/i.test(file.name) || isZip(bytes)) return parseXlsx(bytes);
+  if (/\.xls$/i.test(file.name)) throw new Error("This is an old Excel file (.xls). Save it as .xlsx or CSV and import that.");
+  return parseCsvContent(decodeCsvBytes(bytes));
 }
 
 export interface TransactionFieldDiff {
@@ -721,6 +156,8 @@ export function ImportCsvPage({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customBaseCurrency, setCustomBaseCurrency] = useState(baseCurrency);
+  const [customMapping, setCustomMapping] = useState(false);
+  const [skippedRows, setSkippedRows] = useState<SkippedRows[]>([]);
 
   const [stage, setStage] = useState<ImportStage>("upload");
   const [dryRunData, setDryRunData] = useState<DryRunResult | null>(null);
@@ -730,48 +167,50 @@ export function ImportCsvPage({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileProcess = useCallback((file: {name: string, content: string}) => {
+  const handleFileProcess = useCallback(async (file: File) => {
     setError(null);
     setSuccessInfo(null);
     setDryRunData(null);
+    setSkippedRows([]);
     setPreviewFilter("all");
     setFileName(file.name);
-    setFileSize(file.content.length);
+    setFileSize(file.size);
 
     try {
-      const text = file.content;
-        if (!text) {
-          setError("File appears to be empty.");
-          return;
-        }
-
-        const { headers: parsedHeaders, rows: parsedRows } = parseCsvContent(text);
-        if (parsedHeaders.length === 0 || parsedRows.length === 0) {
-          setError("Could not find any data rows or header columns in the CSV.");
-          return;
-        }
-
-        setHeaders(parsedHeaders);
-        setRows(parsedRows);
-
-        const bestTpl = detectBestTemplate(parsedHeaders);
-        setSelectedTemplate(bestTpl);
-
-        const { mappings, defaultCurrency } = applyTemplateToHeaders(bestTpl, parsedHeaders);
-        setColumnMappings(mappings);
-        if (defaultCurrency) {
-          setCustomBaseCurrency(defaultCurrency);
-        }
-
-        setStage("mapping");
-      } catch (err) {
-        console.error("[ImportCsvPage] Failed to parse CSV:", err);
-        setError(err instanceof Error ? err.message : "Failed to parse CSV file.");
+      if (file.size === 0) {
+        setError("File appears to be empty.");
+        return;
       }
+
+      const { headers: parsedHeaders, rows: parsedRows } = await readImportFile(file);
+      if (parsedHeaders.length === 0 || parsedRows.length === 0) {
+        setError("Could not find any data rows or header columns in the file.");
+        return;
+      }
+
+      setHeaders(parsedHeaders);
+      setRows(parsedRows);
+
+      const bestTpl = detectBestTemplate(parsedHeaders);
+      setSelectedTemplate(bestTpl);
+      setCustomMapping(false);
+
+      const { mappings, defaultCurrency } = applyTemplateToHeaders(bestTpl, parsedHeaders);
+      setColumnMappings(mappings);
+      if (defaultCurrency) {
+        setCustomBaseCurrency(defaultCurrency);
+      }
+
+      setStage("mapping");
+    } catch (err) {
+      console.error("[ImportCsvPage] Failed to read import file:", err);
+      setError(err instanceof Error ? err.message : "Failed to read the file.");
+    }
   }, []);
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
+    setCustomMapping(false);
     if (templateId === "custom") return;
 
     const { mappings, defaultCurrency } = applyTemplateToHeaders(templateId, headers);
@@ -795,32 +234,22 @@ export function ImportCsvPage({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file) {
-        const content = await file.text();
-        handleFileProcess({ name: file.name, content });
-      }
+      if (file) await handleFileProcess(file);
     }
   };
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const content = await file.text();
-        handleFileProcess({ name: file.name, content });
-      } catch (err) {
-        console.error("[ImportCsvPage] Failed to read file:", err);
-        setError("Failed to read selected file.");
-      }
-    }
+    if (file) await handleFileProcess(file);
   };
 
   const handleBrowseClick = () => {
     fileInputRef.current?.click();
   };
 
+  // A hand-edited column keeps the broker's rules (sign conventions, skipped rows).
   const handleMappingChange = (index: number, newField: SystemFieldKey) => {
-    setSelectedTemplate("custom");
+    setCustomMapping(true);
     setColumnMappings((prev) => {
       const updated = [...prev];
       updated[index] = newField;
@@ -835,6 +264,8 @@ export function ImportCsvPage({
     setRows([]);
     setColumnMappings([]);
     setSelectedTemplate("auto");
+    setCustomMapping(false);
+    setSkippedRows([]);
     setError(null);
     setDryRunData(null);
     setPreviewFilter("all");
@@ -849,107 +280,22 @@ export function ImportCsvPage({
     const mappedKeys = new Set(columnMappings.filter((k) => k !== "none"));
     return {
       hasDate: mappedKeys.has("date") || mappedKeys.has("datetime"),
-      hasType: mappedKeys.has("type"),
+      // Without a type column a row is a buy, or a sell when its shares are negative.
+      hasType: mappedKeys.has("type") || mappedKeys.has("shares") || Boolean(findTemplate(selectedTemplate)?.infersType),
       hasSymbol: mappedKeys.has("symbol") || mappedKeys.has("isin"),
       count: mappedKeys.size,
     };
-  }, [columnMappings]);
+  }, [columnMappings, selectedTemplate]);
 
-  // Construct structured transactions from parsed rows and active mappings
+  // Turn the rows into transactions with the mapping and the format's rules.
   const buildTransactions = useCallback((): PortfolioTransaction[] => {
-    const transactions: PortfolioTransaction[] = [];
-
-    const colIndexByField: Partial<Record<SystemFieldKey, number>> = {};
-    columnMappings.forEach((f, idx) => {
-      if (f !== "none" && colIndexByField[f] === undefined) {
-        colIndexByField[f] = idx;
-      }
+    const result = buildImportTransactions({ headers, rows }, columnMappings, {
+      templateId: selectedTemplate,
+      defaultCurrency: customBaseCurrency,
     });
-
-    const getVal = (rowCols: string[], field: SystemFieldKey): string => {
-      const idx = colIndexByField[field];
-      return idx !== undefined && idx >= 0 ? (rowCols[idx] ?? "").trim() : "";
-    };
-
-    // Stored tax is a cost: positive when paid, negative when refunded. Exports
-    // that write paid tax as a negative number (Trade Republic) also write a
-    // refund as a positive one, so flip the sign for those instead of using abs.
-    const taxPaidIsNegative = rows.some((rowCols) => (parseNumber(getVal(rowCols, "tax")) ?? 0) < 0);
-
-    for (let r = 0; r < rows.length; r++) {
-      const rowCols = rows[r]!;
-
-      const rawDatetime = getVal(rowCols, "datetime");
-      const rawDate = getVal(rowCols, "date") || rawDatetime;
-      const date = parseDateStr(rawDate);
-      const datetime = rawDatetime || undefined;
-      let rawType = (getVal(rowCols, "type") || "BUY").toUpperCase().replace(/\s+/g, "_");
-      if (rawType.includes("BUY")) rawType = "BUY";
-      else if (rawType.includes("SELL")) rawType = "SELL";
-      else if (rawType.includes("DIVIDEND")) rawType = "DIVIDEND";
-      else if (rawType.includes("DEPOSIT") || rawType.includes("INBOUND")) rawType = "CUSTOMER_INBOUND";
-      else if (rawType.includes("WITHDRAWAL") || rawType.includes("OUTBOUND")) rawType = "CUSTOMER_OUTBOUND";
-      else if (rawType.includes("INTEREST")) rawType = "INTEREST_PAYMENT";
-
-      const rawIsin = getVal(rowCols, "isin");
-      let rawSymbol = getVal(rowCols, "symbol");
-      const category = getVal(rowCols, "category");
-      const rawAssetClass = getVal(rowCols, "asset_class");
-
-      // Trade Republic puts the ISIN in its symbol column. The service swaps an
-      // ISIN-only symbol for the ticker (stored ISIN map, then provider search).
-      const isinCandidate = (rawIsin || rawSymbol).toUpperCase();
-      const isin = ISIN_PATTERN.test(isinCandidate) ? isinCandidate : undefined;
-      let symbol = rawSymbol;
-
-      if (!symbol && isin) {
-        symbol = isin;
-      } else if (!symbol && (category === "PRIVATE_FUND" || rawAssetClass === "PRIVATE_FUND")) {
-        symbol = "LU3176111881";
-      } else if (!symbol) {
-        symbol = "CASH";
-      }
-
-      const name = getVal(rowCols, "name") || undefined;
-      const shares = parseNumber(getVal(rowCols, "shares"));
-      const price = parseNumber(getVal(rowCols, "price"));
-      const amount = parseNumber(getVal(rowCols, "amount"));
-      const fee = parseNumber(getVal(rowCols, "fee")) !== undefined ? Math.abs(parseNumber(getVal(rowCols, "fee"))!) : undefined;
-      const rawTax = parseNumber(getVal(rowCols, "tax"));
-      const tax = rawTax === undefined ? undefined : taxPaidIsNegative ? 0 - rawTax || 0 : Math.abs(rawTax);
-      const currency = getVal(rowCols, "currency") || customBaseCurrency || "EUR";
-
-      const isPrivate =
-        category === "PRIVATE_FUND" ||
-        rawAssetClass === "PRIVATE_FUND" ||
-        symbol === "LU3176111881" ||
-        Boolean(rawAssetClass && rawAssetClass.toUpperCase().includes("PRIVATE"));
-
-      const assetClass = isPrivate ? "PRIVATE_FUND" : (rawAssetClass || (rawType.includes("CRYPTO") || symbol.includes("BTC") ? "CRYPTO" : undefined));
-
-      const explicitTxId = getVal(rowCols, "transaction_id");
-      const txId = explicitTxId || `tx_${date}_${rawType}_${symbol}_${amount ?? ""}_${shares ?? ""}_${r}`;
-
-      transactions.push({
-        id: txId,
-        date,
-        datetime,
-        type: rawType,
-        assetClass,
-        name,
-        symbol: symbol.toUpperCase(),
-        isin,
-        shares,
-        price,
-        amount,
-        fee,
-        tax,
-        currency,
-      });
-    }
-
-    return transactions;
-  }, [rows, columnMappings, customBaseCurrency]);
+    setSkippedRows(result.skipped);
+    return result.transactions;
+  }, [headers, rows, columnMappings, selectedTemplate, customBaseCurrency]);
 
   const targetUrl = useMemo(() => {
     return portfolioId
@@ -1010,7 +356,7 @@ export function ImportCsvPage({
     }
   };
 
-  const activeTemplateObj = CSV_TEMPLATES.find((t) => t.id === selectedTemplate);
+  const activeTemplateObj = findTemplate(selectedTemplate);
 
   const newItemsCount = dryRunData?.newTransactionsCount ?? dryRunData?.newCount ?? 0;
   const modItemsCount = dryRunData?.modifiedTransactionsCount ?? dryRunData?.modifiedCount ?? 0;
@@ -1119,7 +465,7 @@ export function ImportCsvPage({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,text/csv,text/plain"
+                accept=".csv,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
@@ -1147,7 +493,7 @@ export function ImportCsvPage({
                   <UploadCloud className="w-7 h-7" />
                 </div>
                 <div className="space-y-1">
-                  <span className="block font-bold text-sm uppercase tracking-wider text-slate-100">Drop a CSV file here</span>
+                  <span className="block font-bold text-sm uppercase tracking-wider text-slate-100">Drop a CSV or Excel file here</span>
                   <span className="block text-xs text-slate-500">or click to choose one from your computer</span>
                 </div>
                 <span className={SECONDARY_BUTTON}>
@@ -1165,7 +511,7 @@ export function ImportCsvPage({
                   <Layers className="w-3.5 h-3.5 text-accent-500" />
                   Recognised formats
                 </div>
-                <p className="text-[11px] text-slate-500">The columns of these exports are mapped for you. Any other CSV can be mapped by hand.</p>
+                <p className="text-[11px] text-slate-500">The columns of these exports are mapped for you. Any other CSV or Excel file can be mapped by hand.</p>
                 <ul className="flex flex-col gap-2 overflow-y-auto custom-scrollbar min-h-0">
                   {CSV_TEMPLATES.filter((t) => t.id !== "auto").map((tpl) => (
                     <li key={tpl.id} className="p-2.5 rounded-lg border border-line bg-card/60 flex flex-col gap-1">
@@ -1247,7 +593,9 @@ export function ImportCsvPage({
                 <span className="flex items-center gap-1.5">
                   <HelpCircle className="w-3.5 h-3.5 text-accent-500 shrink-0" />
                   {activeTemplateObj
-                    ? `Mapped with the ${activeTemplateObj.name} format. Change any column below if it is wrong.`
+                    ? customMapping
+                      ? `Mapped with the ${activeTemplateObj.name} format and your changes. Its rules still apply.`
+                      : `Mapped with the ${activeTemplateObj.name} format. Change any column below if it is wrong.`
                     : "Custom mapping. Pick a field for every column you want to import."}
                 </span>
                 <span className="font-bold text-accent-bright">
@@ -1357,6 +705,24 @@ export function ImportCsvPage({
                   </button>
                 ))}
               </div>
+
+              {skippedRows.length > 0 && (
+                <div className="shrink-0 p-3 rounded-xl border border-line bg-widget text-[11px] text-slate-400 flex items-start gap-2.5">
+                  <HelpCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent-500" />
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-slate-300">
+                      {skippedRows.reduce((n, s) => n + s.count, 0)} rows of the file are not imported:
+                    </span>
+                    <ul className="flex flex-col gap-0.5">
+                      {skippedRows.map((s) => (
+                        <li key={s.reason}>
+                          {s.reason}: <span className="text-slate-200 font-bold">{s.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-xl border border-line bg-widget overflow-hidden flex flex-col flex-1 min-h-[280px]">
                 <div className="overflow-auto flex-1 min-h-0 custom-scrollbar">

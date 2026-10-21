@@ -1,0 +1,7 @@
+Client ID,Trade Date,Value Date,Type,Instrument,Instrument ISIN,Instrument currency,Exchange Description,Instrument Symbol,Event,Amount,Order ID,Conversion Rate
+,16-Dec-2024,16-Dec-2024,Cash Transfer,,,EUR,,,Deposit,500,,1
+,17-Dec-2024,19-Dec-2024,Trade,NVIDIA Corp.,US67066G1040,USD,NASDAQ,NVDA:xnas,Buy 3 @ 134.85 USD,"-388,10",,0.9592
+,02-Jan-2025,06-Jan-2025,Trade,Vanguard FTSE All-World UCITS ETF,IE00BK5BQT80,USD,London Stock Exchange,VWRA:xlon,Sell 1 @ 130.00 USD,"124,50",,0.9577
+,02-Jan-2025,02-Jan-2025,Cash amount,,,USD,,,Custody Fee,-0.42,,0.9577
+,16-jan-2025,16-jan-2025,Transactie,Vanguard S&P 500 UCITS ETF,IE00B3XXRP09,EUR,Euronext Amsterdam,VUSA:xams,Koop 1.5 @ 110.01 EUR,"-165,02",,1
+,02-Apr-2025,02-Apr-2025,Corporate action,Vanguard S&P 500 UCITS ETF,IE00B3XXRP09,EUR,Euronext Amsterdam,VUSA:xams,Dividend,1.83,,1
