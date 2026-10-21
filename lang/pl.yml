@@ -1666,6 +1666,16 @@ settings:
       failed: "Nie udało się zmienić ustawienia."
       addresses: "Otwórz jeden z tych adresów w przeglądarce drugiego urządzenia:"
       noInterface: "Nie znaleziono interfejsu sieciowego. Połącz ten komputer z Wi-Fi lub siecią LAN."
+    mcp:
+      title: "Udostępniaj aplikacjom AI (MCP)"
+      description: "Pozwól aplikacjom AI na tym komputerze, takim jak Claude Desktop, Claude Code czy Cursor, odczytywać Twoje portfele przez Model Context Protocol. Gdy wyłączone, żadna inna aplikacja nie może ich odczytać."
+      privacy: "Z Portfolio wychodzą tylko procenty: wagi, stopy zwrotu, ekspozycja i stopy dywidendy. Nigdy kwoty, ceny, ilości ani salda."
+      address: "Adres serwera:"
+      token: "Token dostępu:"
+      tokenOnce: "Skopiuj token teraz. Portfolio przechowuje tylko jego odcisk i nie może go pokazać ponownie."
+      tokenHidden: "Token nie jest już pokazywany. Utwórz nowy, aby połączyć aplikację; stary przestanie wtedy działać."
+      newToken: "Nowy token"
+      setup: "Przykład dla Claude Code:"
   automation:
     scheduled: "Zaplanowane"
     off: "Wył."

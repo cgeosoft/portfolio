@@ -1558,6 +1558,16 @@ settings:
       failed: "설정을 변경할 수 없습니다."
       addresses: "다른 기기의 브라우저에서 다음 주소 중 하나를 여세요:"
       noInterface: "네트워크 인터페이스를 찾을 수 없습니다. 이 컴퓨터를 Wi-Fi 또는 LAN에 연결하세요."
+    mcp:
+      title: "AI 앱과 공유 (MCP)"
+      description: "이 컴퓨터의 AI 앱(Claude Desktop, Claude Code, Cursor 등)이 Model Context Protocol로 포트폴리오를 읽을 수 있게 합니다. 끄면 다른 앱은 읽을 수 없습니다."
+      privacy: "Portfolio 밖으로는 백분율만 나갑니다: 비중, 수익률, 노출, 배당수익률. 금액, 가격, 수량, 잔액은 절대 나가지 않습니다."
+      address: "서버 주소:"
+      token: "액세스 토큰:"
+      tokenOnce: "지금 토큰을 복사하세요. Portfolio는 지문만 보관하므로 다시 표시할 수 없습니다."
+      tokenHidden: "토큰은 다시 표시되지 않습니다. 앱을 연결하려면 새 토큰을 만드세요. 이전 토큰은 더 이상 작동하지 않습니다."
+      newToken: "새 토큰"
+      setup: "Claude Code 예시:"
   automation:
     scheduled: "예약됨"
     off: "꺼짐"

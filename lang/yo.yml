@@ -1558,6 +1558,16 @@ settings:
       failed: "Kò ṣeé ṣe láti yí ètò náà padà."
       addresses: "Ṣí ọ̀kan nínú àwọn àdírẹ́sì wọ̀nyí nínú aṣàwákiri ẹ̀rọ kejì:"
       noInterface: "A kò rí ojú-ìsopọ̀ nẹ́tíwọ́ọ̀kì kankan. So kọ̀ǹpútà yìí mọ́ Wi-Fi tàbí LAN rẹ."
+    mcp:
+      title: "Pín pẹ̀lú àwọn áàpù AI (MCP)"
+      description: "Jẹ́ kí àwọn áàpù AI lórí kọ̀ǹpútà yìí, bíi Claude Desktop, Claude Code tàbí Cursor, ka àwọn pọ́tífóló rẹ nípasẹ̀ Model Context Protocol. Tí ó bá wà ní pípa, kò sí áàpù mìíràn tí ó lè kà wọ́n."
+      privacy: "Ìpín-ọgọ́rùn-ún nìkan ló ń jáde kúrò ní Portfolio: ìwọ̀n, èrè, ìfarahàn àti èrè pínpín. Kì í ṣe iye owó, iye ọjà, iye ìpín tàbí ìyókù láé."
+      address: "Àdírẹ́sì sáàfà:"
+      token: "Tókìnì ìwọlé:"
+      tokenOnce: "Da tókìnì náà kọ báyìí. Portfolio ń tọ́jú àmì ìka rẹ̀ nìkan, kò sì lè fi hàn mọ́."
+      tokenHidden: "A kò ní fi tókìnì náà hàn mọ́. Ṣẹ̀dá tuntun láti so áàpù pọ̀; èyí àtijọ́ yóò dẹ́kun iṣẹ́."
+      newToken: "Tókìnì tuntun"
+      setup: "Àpẹẹrẹ fún Claude Code:"
   automation:
     scheduled: "A ti ṣètò rẹ̀"
     off: "Pa"

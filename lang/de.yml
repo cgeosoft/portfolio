@@ -1594,6 +1594,16 @@ settings:
       failed: "Die Einstellung konnte nicht geändert werden."
       addresses: "Öffnen Sie eine dieser Adressen im Browser des anderen Geräts:"
       noInterface: "Keine Netzwerkschnittstelle gefunden. Verbinden Sie diesen Computer mit Ihrem WLAN oder LAN."
+    mcp:
+      title: "Mit KI-Apps teilen (MCP)"
+      description: "KI-Apps auf diesem Computer, etwa Claude Desktop, Claude Code oder Cursor, können Ihre Portfolios über das Model Context Protocol lesen. Wenn aus, kann keine andere App sie lesen."
+      privacy: "Nur Prozentwerte verlassen Portfolio: Gewichte, Renditen, Engagement und Dividendenrenditen. Beträge, Preise, Stückzahlen und Salden nie."
+      address: "Serveradresse:"
+      token: "Zugriffstoken:"
+      tokenOnce: "Kopieren Sie das Token jetzt. Portfolio speichert nur einen Fingerabdruck davon und kann es nicht erneut anzeigen."
+      tokenHidden: "Das Token wird nicht erneut angezeigt. Erstellen Sie ein neues, um eine App zu verbinden; das alte funktioniert dann nicht mehr."
+      newToken: "Neues Token"
+      setup: "Beispiel für Claude Code:"
   automation:
     scheduled: "Geplant"
     off: "Aus"

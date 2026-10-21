@@ -1666,6 +1666,16 @@ settings:
       failed: "Nastavenie sa nepodarilo zmeniť."
       addresses: "Otvorte jednu z týchto adries v prehliadači druhého zariadenia:"
       noInterface: "Nenašlo sa žiadne sieťové rozhranie. Pripojte tento počítač k Wi-Fi alebo LAN."
+    mcp:
+      title: "Zdieľať s aplikáciami AI (MCP)"
+      description: "Povoľte aplikáciám AI na tomto počítači, ako Claude Desktop, Claude Code alebo Cursor, čítať vaše portfóliá cez Model Context Protocol. Keď je vypnuté, žiadna iná aplikácia ich neprečíta."
+      privacy: "Z Portfolia odchádzajú len percentá: váhy, výnosy, expozícia a dividendové výnosy. Nikdy sumy, ceny, množstvá ani zostatky."
+      address: "Adresa servera:"
+      token: "Prístupový token:"
+      tokenOnce: "Skopírujte token teraz. Portfolio si uchováva len jeho odtlačok a nemôže ho znova zobraziť."
+      tokenHidden: "Token sa už nezobrazí. Na pripojenie aplikácie vytvorte nový; starý potom prestane fungovať."
+      newToken: "Nový token"
+      setup: "Príklad pre Claude Code:"
   automation:
     scheduled: "Naplánované"
     off: "Vyp."

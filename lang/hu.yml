@@ -1594,6 +1594,16 @@ settings:
       failed: "A beállítás nem módosítható."
       addresses: "Nyissa meg a másik eszköz böngészőjében az alábbi címek egyikét:"
       noInterface: "Nem található hálózati csatoló. Csatlakoztassa ezt a számítógépet a Wi-Fi-hez vagy a helyi hálózathoz."
+    mcp:
+      title: "Megosztás MI-alkalmazásokkal (MCP)"
+      description: "Engedje, hogy a számítógép MI-alkalmazásai, például a Claude Desktop, a Claude Code vagy a Cursor, a Model Context Protocolon keresztül olvassák a portfólióit. Kikapcsolva más alkalmazás nem olvashatja őket."
+      privacy: "A Portfolióból csak százalékok távoznak: súlyok, hozamok, kitettség és osztalékhozamok. Összegek, árak, mennyiségek és egyenlegek soha."
+      address: "Szerver címe:"
+      token: "Hozzáférési token:"
+      tokenOnce: "Másolja ki a tokent most. A Portfolio csak az ujjlenyomatát őrzi meg, és nem tudja újra megmutatni."
+      tokenHidden: "A token nem jelenik meg újra. Alkalmazás csatlakoztatásához hozzon létre újat; a régi ekkor megszűnik működni."
+      newToken: "Új token"
+      setup: "Példa a Claude Code-hoz:"
   automation:
     scheduled: "Ütemezve"
     off: "Ki"

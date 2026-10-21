@@ -8,7 +8,8 @@
  * `Bun.serve` on 127.0.0.1 with a random port. Once it listens, the service
  * prints exactly one `SERVICE_PORT=<port>` line to stdout; the shell reads it
  * and polls `/api/health`. The LAN listener of the remote connections switch
- * starts last (services/remote-access.ts).
+ * starts last (services/remote-access.ts), then the loopback MCP listener for
+ * other LLM clients when its switch is on (services/mcp-access.ts).
  */
 import { ensureDataDir } from "./bootstrap";
 import { DATA_DIR, getGuiDir } from "./paths";
@@ -25,6 +26,7 @@ import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
 import { writeDesktopSettingsFile } from "./services/desktop-settings";
 import { isRemoteAccessAllowed, remotePort, startRemoteAccess, stopRemoteAccess } from "./services/remote-access";
+import { isMcpEnabled, mcpPort, startMcpAccess, stopMcpAccess } from "./services/mcp-access";
 import { MAX_BODY_BYTES, Router, boundedErrorMessage, hostnameOf, isLoopbackAddress, isLoopbackHostname, json } from "./http/router";
 import { registerRoutes } from "./http/routes";
 import { StaticSite } from "./http/static";
@@ -191,8 +193,28 @@ appLogger.log("info", `Data:     ${DATA_DIR}`);
 appLogger.log("info", `Database: ${getDatabasePath()}`);
 appLogger.log("info", `App lock: ${authService.isPinEnabled() ? "PIN set" : "off"}`);
 appLogger.log("info", `Remote:   ${isRemoteAccessAllowed() ? `on, port ${remotePort()}` : "off"}`);
+appLogger.log("info", `MCP:      ${isMcpEnabled() ? `on, port ${mcpPort()}` : "off"}`);
 
 startRemoteAccess(serve);
+
+// The MCP listener serves `/mcp` only, on loopback (services/mcp-server.ts).
+startMcpAccess(
+  (port, fetch) =>
+    Bun.serve({
+      hostname: LOOPBACK_HOST,
+      port,
+      idleTimeout: 120,
+      maxRequestBodySize: 1024 * 1024,
+      development: false,
+      fetch,
+      error(err) {
+        const message = boundedErrorMessage(err);
+        appLogger.logStep("error", "mcp", "unhandled", message);
+        return json({ statusCode: 500, message }, 500);
+      },
+    }),
+  services,
+);
 
 // ── shutdown ────────────────────────────────────────────────────────────────
 
@@ -208,6 +230,7 @@ async function shutdown(): Promise<void> {
   services.eventAlerts.stop();
   services.metricsService.shutdown();
   stopRemoteAccess();
+  stopMcpAccess();
   server.stop(true);
   await telemetry.shutdown();
   closeDatabase();

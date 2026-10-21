@@ -1594,6 +1594,16 @@ settings:
       failed: "Imeshindwa kubadilisha mpangilio."
       addresses: "Fungua mojawapo ya anwani hizi kwenye kivinjari cha kifaa kingine:"
       noInterface: "Hakuna kiolesura cha mtandao kilichopatikana. Unganisha kompyuta hii na Wi-Fi au LAN yako."
+    mcp:
+      title: "Shiriki na programu za AI (MCP)"
+      description: "Ruhusu programu za AI kwenye kompyuta hii, kama Claude Desktop, Claude Code au Cursor, zisome jalada zako kupitia Model Context Protocol. Ikizimwa, hakuna programu nyingine inayoweza kuzisoma."
+      privacy: "Asilimia pekee ndizo hutoka Portfolio: uzito, mapato, mfiduo na mavuno ya gawio. Kamwe si kiasi, bei, idadi wala salio."
+      address: "Anwani ya seva:"
+      token: "Tokeni ya ufikiaji:"
+      tokenOnce: "Nakili tokeni sasa. Portfolio huhifadhi alama yake tu na haiwezi kuionyesha tena."
+      tokenHidden: "Tokeni haionyeshwi tena. Unda mpya ili kuunganisha programu; ya zamani itaacha kufanya kazi."
+      newToken: "Tokeni mpya"
+      setup: "Mfano kwa Claude Code:"
   automation:
     scheduled: "Imeratibiwa"
     off: "Imezimwa"

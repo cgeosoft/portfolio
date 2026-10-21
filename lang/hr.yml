@@ -1630,6 +1630,16 @@ settings:
       failed: "Promjena postavke nije uspjela."
       addresses: "Otvorite jednu od ovih adresa u pregledniku drugog uređaja:"
       noInterface: "Nije pronađeno mrežno sučelje. Povežite ovo računalo s Wi-Fi mrežom ili LAN-om."
+    mcp:
+      title: "Dijeli s AI aplikacijama (MCP)"
+      description: "Dopustite AI aplikacijama na ovom računalu, poput Claude Desktop, Claude Code ili Cursor, da čitaju vaše portfelje putem Model Context Protocola. Kad je isključeno, nijedna druga aplikacija ih ne može čitati."
+      privacy: "Iz Portfolija izlaze samo postoci: udjeli, prinosi, izloženost i dividendni prinosi. Nikad iznosi, cijene, količine ili stanja."
+      address: "Adresa poslužitelja:"
+      token: "Pristupni token:"
+      tokenOnce: "Kopirajte token sada. Portfolio čuva samo njegov otisak i ne može ga ponovno prikazati."
+      tokenHidden: "Token se više ne prikazuje. Izradite novi za povezivanje aplikacije; stari tada prestaje raditi."
+      newToken: "Novi token"
+      setup: "Primjer za Claude Code:"
   automation:
     scheduled: "Zakazano"
     off: "Isključeno"

@@ -1568,6 +1568,16 @@ settings:
       failed: "无法更改此设置。"
       addresses: "在另一台设备的浏览器中打开以下地址之一："
       noInterface: "未找到网络接口。请将这台电脑连接到 Wi-Fi 或局域网。"
+    mcp:
+      title: "与 AI 应用共享 (MCP)"
+      description: "允许这台电脑上的 AI 应用（如 Claude Desktop、Claude Code 或 Cursor）通过 Model Context Protocol 读取你的投资组合。关闭时，其他应用都无法读取。"
+      privacy: "离开 Portfolio 的只有百分比：权重、收益率、敞口和股息率。金额、价格、数量和余额从不离开。"
+      address: "服务器地址："
+      token: "访问令牌："
+      tokenOnce: "请立即复制令牌。Portfolio 只保存它的指纹，无法再次显示。"
+      tokenHidden: "令牌不会再次显示。要连接应用，请创建新令牌；旧令牌随即失效。"
+      newToken: "新令牌"
+      setup: "Claude Code 示例："
   automation:
     scheduled: "已计划"
     off: "关闭"

@@ -1607,6 +1607,16 @@ settings:
       failed: "Could not change the setting."
       addresses: "Open one of these addresses in the browser of the other device:"
       noInterface: "No network interface found. Connect this computer to your Wi-Fi or LAN."
+    mcp:
+      title: "Share with AI apps (MCP)"
+      description: "Let AI apps on this computer, such as Claude Desktop, Claude Code or Cursor, read your portfolios through the Model Context Protocol. When off, no other app can read them."
+      privacy: "Only percentages leave Portfolio: weights, returns, exposure and yields. Amounts, prices, quantities and balances never do."
+      address: "Server address:"
+      token: "Access token:"
+      tokenOnce: "Copy the token now. Portfolio keeps only a fingerprint of it and cannot show it again."
+      tokenHidden: "The token is not shown again. Create a new one to connect an app; the old one then stops working."
+      newToken: "New token"
+      setup: "Example for Claude Code:"
   automation:
     scheduled: "Scheduled"
     off: "Off"

@@ -1568,6 +1568,16 @@ settings:
       failed: "設定を変更できませんでした。"
       addresses: "他のデバイスのブラウザで、次のいずれかのアドレスを開いてください："
       noInterface: "ネットワークインターフェースが見つかりません。このコンピューターを Wi-Fi または LAN に接続してください。"
+    mcp:
+      title: "AI アプリと共有 (MCP)"
+      description: "このコンピューターの AI アプリ（Claude Desktop、Claude Code、Cursor など）が Model Context Protocol でポートフォリオを読み取れるようにします。オフのときは、ほかのアプリは読み取れません。"
+      privacy: "Portfolio から出るのはパーセンテージだけです：比率、リターン、エクスポージャー、配当利回り。金額、価格、数量、残高は決して出ません。"
+      address: "サーバーのアドレス："
+      token: "アクセストークン："
+      tokenOnce: "今すぐトークンをコピーしてください。Portfolio はその指紋だけを保存し、再表示できません。"
+      tokenHidden: "トークンは再表示されません。アプリを接続するには新しいトークンを作成してください。古いトークンは使えなくなります。"
+      newToken: "新しいトークン"
+      setup: "Claude Code の例："
   automation:
     scheduled: "予定済み"
     off: "オフ"

@@ -1604,6 +1604,16 @@ settings:
       failed: "Asetuksen muuttaminen epäonnistui."
       addresses: "Avaa jokin näistä osoitteista toisen laitteen selaimessa:"
       noInterface: "Verkkoliitäntää ei löytynyt. Yhdistä tämä tietokone Wi-Fi- tai lähiverkkoon."
+    mcp:
+      title: "Jaa tekoälysovelluksille (MCP)"
+      description: "Anna tämän tietokoneen tekoälysovellusten, kuten Claude Desktopin, Claude Coden tai Cursorin, lukea salkkujasi Model Context Protocolin kautta. Kun pois päältä, mikään muu sovellus ei voi lukea niitä."
+      privacy: "Portfoliosta lähtee vain prosentteja: painot, tuotot, altistus ja osinkotuotot. Ei koskaan summia, hintoja, määriä tai saldoja."
+      address: "Palvelimen osoite:"
+      token: "Käyttötunniste:"
+      tokenOnce: "Kopioi tunniste nyt. Portfolio säilyttää siitä vain sormenjäljen eikä voi näyttää sitä uudelleen."
+      tokenHidden: "Tunnistetta ei näytetä uudelleen. Luo uusi yhdistääksesi sovelluksen; vanha lakkaa silloin toimimasta."
+      newToken: "Uusi tunniste"
+      setup: "Esimerkki Claude Codelle:"
   automation:
     scheduled: "Ajastettu"
     off: "Pois"

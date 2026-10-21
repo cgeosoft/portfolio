@@ -1558,6 +1558,16 @@ settings:
       failed: "Tidak dapat mengubah pengaturan."
       addresses: "Buka salah satu alamat ini di browser perangkat lain:"
       noInterface: "Tidak ditemukan antarmuka jaringan. Hubungkan komputer ini ke Wi-Fi atau LAN Anda."
+    mcp:
+      title: "Bagikan dengan aplikasi AI (MCP)"
+      description: "Izinkan aplikasi AI di komputer ini, seperti Claude Desktop, Claude Code, atau Cursor, membaca portofolio Anda melalui Model Context Protocol. Saat nonaktif, tidak ada aplikasi lain yang dapat membacanya."
+      privacy: "Hanya persentase yang keluar dari Portfolio: bobot, imbal hasil, eksposur, dan imbal hasil dividen. Tidak pernah jumlah uang, harga, kuantitas, atau saldo."
+      address: "Alamat server:"
+      token: "Token akses:"
+      tokenOnce: "Salin token sekarang. Portfolio hanya menyimpan sidik jarinya dan tidak dapat menampilkannya lagi."
+      tokenHidden: "Token tidak ditampilkan lagi. Buat yang baru untuk menghubungkan aplikasi; yang lama lalu berhenti bekerja."
+      newToken: "Token baru"
+      setup: "Contoh untuk Claude Code:"
   automation:
     scheduled: "Terjadwal"
     off: "Nonaktif"

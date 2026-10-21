@@ -10,7 +10,7 @@ import { existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkS
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
-import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
+import { DEFAULT_DATA_PROVIDER_ROUTING, DEFAULT_GOTIFY_PRIORITY, DEFAULT_NTFY_PRIORITY, DEFAULT_NTFY_URL, DEFAULT_REMOTE_PORT, DEFAULT_MCP_PORT, SECRET_MASK, type DesktopConfig, type DataProviderCategoryRouting } from "portfolio-shared/config-types";
 import { CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL } from "portfolio-shared/llm-defaults";
 import { DEFAULT_LANGUAGE, findLanguage } from "portfolio-shared/i18n";
 import { getDatabase } from "./db/database";
@@ -47,6 +47,8 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   language: DEFAULT_LANGUAGE,
   allowRemoteConnections: false,
   remotePort: DEFAULT_REMOTE_PORT,
+  mcpEnabled: false,
+  mcpPort: DEFAULT_MCP_PORT,
   closeToTray: true,
   gotifyUrl: "",
   gotifyToken: "",
@@ -235,6 +237,9 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   }
   if (!Number.isInteger(cfg.remotePort) || cfg.remotePort < 1024 || cfg.remotePort > 65535) {
     cfg.remotePort = DEFAULT_REMOTE_PORT;
+  }
+  if (!Number.isInteger(cfg.mcpPort) || cfg.mcpPort < 1024 || cfg.mcpPort > 65535) {
+    cfg.mcpPort = DEFAULT_MCP_PORT;
   }
   if (cfg.theme !== "dark" && cfg.theme !== "light" && cfg.theme !== "system") {
     cfg.theme = "dark";

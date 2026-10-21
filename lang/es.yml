@@ -1630,6 +1630,16 @@ settings:
       failed: "No se pudo cambiar la opción."
       addresses: "Abre una de estas direcciones en el navegador del otro dispositivo:"
       noInterface: "No se encontró ninguna interfaz de red. Conecta este equipo a tu wifi o red local."
+    mcp:
+      title: "Compartir con apps de IA (MCP)"
+      description: "Permite que las apps de IA de este ordenador, como Claude Desktop, Claude Code o Cursor, lean tus carteras mediante el Model Context Protocol. Si está desactivado, ninguna otra app puede leerlas."
+      privacy: "Solo salen porcentajes de Portfolio: pesos, rentabilidades, exposición y rentabilidad por dividendo. Nunca importes, precios, cantidades ni saldos."
+      address: "Dirección del servidor:"
+      token: "Token de acceso:"
+      tokenOnce: "Copia el token ahora. Portfolio solo guarda una huella de él y no puede volver a mostrarlo."
+      tokenHidden: "El token no se vuelve a mostrar. Crea uno nuevo para conectar una app; el anterior deja de funcionar."
+      newToken: "Nuevo token"
+      setup: "Ejemplo para Claude Code:"
   automation:
     scheduled: "Programado"
     off: "Desactivado"

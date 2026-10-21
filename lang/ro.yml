@@ -1630,6 +1630,16 @@ settings:
       failed: "Setarea nu a putut fi schimbată."
       addresses: "Deschideți una dintre aceste adrese în browserul celuilalt dispozitiv:"
       noInterface: "Nu s-a găsit nicio interfață de rețea. Conectați acest computer la Wi-Fi sau LAN."
+    mcp:
+      title: "Partajează cu aplicații AI (MCP)"
+      description: "Permite aplicațiilor AI de pe acest computer, precum Claude Desktop, Claude Code sau Cursor, să îți citească portofoliile prin Model Context Protocol. Când e oprit, nicio altă aplicație nu le poate citi."
+      privacy: "Din Portfolio ies doar procente: ponderi, randamente, expunere și randamente din dividende. Niciodată sume, prețuri, cantități sau solduri."
+      address: "Adresa serverului:"
+      token: "Token de acces:"
+      tokenOnce: "Copiază tokenul acum. Portfolio păstrează doar o amprentă a lui și nu îl poate afișa din nou."
+      tokenHidden: "Tokenul nu mai este afișat. Creează unul nou pentru a conecta o aplicație; cel vechi nu mai funcționează."
+      newToken: "Token nou"
+      setup: "Exemplu pentru Claude Code:"
   automation:
     scheduled: "Programat"
     off: "Dezactivat"

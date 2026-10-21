@@ -1594,6 +1594,16 @@ settings:
       failed: "Kunne ikke endre innstillingen."
       addresses: "Åpne en av disse adressene i nettleseren på den andre enheten:"
       noInterface: "Fant ikke noe nettverksgrensesnitt. Koble denne datamaskinen til Wi-Fi eller LAN."
+    mcp:
+      title: "Del med AI-apper (MCP)"
+      description: "La AI-apper på denne datamaskinen, som Claude Desktop, Claude Code eller Cursor, lese porteføljene dine via Model Context Protocol. Når det er av, kan ingen annen app lese dem."
+      privacy: "Bare prosenter forlater Portfolio: vekter, avkastning, eksponering og utbytteavkastning. Aldri beløp, kurser, antall eller saldoer."
+      address: "Serveradresse:"
+      token: "Tilgangstoken:"
+      tokenOnce: "Kopier tokenet nå. Portfolio lagrer bare et fingeravtrykk av det og kan ikke vise det igjen."
+      tokenHidden: "Tokenet vises ikke igjen. Lag et nytt for å koble til en app; det gamle slutter da å virke."
+      newToken: "Nytt token"
+      setup: "Eksempel for Claude Code:"
   automation:
     scheduled: "Planlagt"
     off: "Av"
