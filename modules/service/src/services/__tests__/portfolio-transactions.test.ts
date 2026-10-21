@@ -176,3 +176,47 @@ describe("deleting a portfolio", () => {
     }
   });
 });
+
+describe("re-importing a file without broker ids", () => {
+  let service: PortfolioService;
+  let p: portfolioRepo.PortfolioRow;
+
+  beforeAll(() => {
+    getDatabase();
+    service = new PortfolioService(offline);
+    p = portfolioRepo.create({ name: "Fingerprint", baseCurrency: "EUR" });
+  });
+
+  afterAll(() => {
+    service.destroy();
+    portfolioRepo.deleteById(p.id);
+  });
+
+  // The import page numbers a row without a broker id by its place in the file.
+  const row = (index: number, date: string, amount: number) => ({
+    id: `tx_${date}_DIVIDEND_FPTEST_${amount}__${index}`,
+    date,
+    type: "DIVIDEND",
+    symbol: "FPTEST",
+    amount,
+    currency: "EUR",
+  });
+
+  it("matches rows whose place in the file moved, each stored row once", async () => {
+    // Two identical rows: two payouts on one day.
+    const first = [row(0, "2026-02-01", 1.5), row(1, "2026-02-01", 1.5), row(2, "2026-03-01", 2)];
+    const saved = await service.manageTransactions(p.id, { action: "import", transactions: first });
+    expect(saved.newTransactionsCount).toBe(3);
+
+    // A longer export adds an older row on top, so every row moves down one place.
+    const longer = [row(0, "2026-01-01", 1), row(1, "2026-02-01", 1.5), row(2, "2026-02-01", 1.5), row(3, "2026-03-01", 2)];
+    const again = await service.manageTransactions(p.id, { action: "import", dryRun: true, transactions: longer });
+    expect(again.newTransactionsCount).toBe(1);
+    expect(again.unchangedTransactionsCount).toBe(3);
+
+    // A third payout on the same day is new.
+    const extra = [...longer, row(4, "2026-02-01", 1.5)];
+    const more = await service.manageTransactions(p.id, { action: "import", dryRun: true, transactions: extra });
+    expect(more.newTransactionsCount).toBe(2);
+  });
+});

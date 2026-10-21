@@ -1,0 +1,35 @@
+Statement,Header,Field Name,Field Value
+Statement,Data,BrokerName,Interactive Brokers Ireland Limited
+Statement,Data,Title,Activity Statement
+Statement,Data,Period,"January 1, 2025 - April 30, 2025"
+Account Information,Header,Field Name,Field Value
+Account Information,Data,Base Currency,EUR
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Stocks,EUR,VWCE,"2025-01-16, 10:15:00",5,120,120.4,-600,-1.25,601.25,0,2,O
+Trades,SubTotal,,Stocks,EUR,VWCE,,5,,,-600,-1.25,601.25,0,2,
+Trades,Data,Order,Stocks,USD,AAPL,"2025-01-15, 09:35:12","1,000",2.005,2.01,-2005,-1,2006,0,5,O
+Trades,Data,Order,Stocks,USD,AAPL,"2025-03-03, 15:00:00",-400,2.1,2.09,840,-1,-802.4,36.6,4,C
+Trades,SubTotal,,Stocks,USD,AAPL,,600,,,-1165,-2,1203.6,36.6,9,
+Trades,Total,,Stocks,EUR,,,,,,-1679.2,-3.1,,,,
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,,Proceeds,Comm in EUR,,,MTM in EUR,Code
+Trades,Data,Order,Forex,USD,EUR.USD,"2025-01-14, 08:00:00","1,000",1.03,,-1030,-1.9,,,0,
+Deposits & Withdrawals,Header,Currency,Settle Date,Description,Amount
+Deposits & Withdrawals,Data,EUR,2025-01-10,Electronic Fund Transfer,3000
+Deposits & Withdrawals,Data,EUR,2025-04-01,Disbursement Initiated by Example Person,-500
+Deposits & Withdrawals,Data,Total,,,2500
+Dividends,Header,Currency,Date,Description,Amount
+Dividends,Data,USD,2025-02-15,AAPL(US0378331005) Cash Dividend USD 0.25 per Share (Ordinary Dividend),1.5
+Dividends,Data,Total,,,1.5
+Dividends,Data,Total in EUR,,,1.43
+Withholding Tax,Header,Currency,Date,Description,Amount,Code
+Withholding Tax,Data,USD,2025-02-15,AAPL(US0378331005) Cash Dividend USD 0.25 per Share - US Tax,-0.23,
+Withholding Tax,Data,Total,,,-0.23,
+Interest,Header,Currency,Date,Description,Amount
+Interest,Data,EUR,2025-04-03,EUR Credit Interest for Mar-2025,0.42
+Interest,Data,Total,,,0.42
+Fees,Header,Subtitle,Currency,Date,Description,Amount
+Fees,Data,Other Fees,USD,2025-04-03,Balance of Monthly Minimum Fee for Mar 2025,-3
+Fees,Data,Total,,,,-3
+Financial Instrument Information,Header,Asset Category,Symbol,Description,Conid,Security ID,Underlying,Listing Exch,Multiplier,Type,Code
+Financial Instrument Information,Data,Stocks,AAPL,APPLE INC,265598,US0378331005,AAPL,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,VWCE,VANGUARD FTSE ALL-WORLD UCITS ETF,123456789,IE00BK5BQT80,VWCE,IBIS2,1,ETF,

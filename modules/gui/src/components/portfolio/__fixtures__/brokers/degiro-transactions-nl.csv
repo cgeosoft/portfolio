@@ -1,0 +1,3 @@
+Datum,Tijd,Product,ISIN,Beurs,Uitvoeringsplaats,Aantal,Koers,,Lokale waarde,,Waarde EUR,Wisselkoers,AutoFX Kosten,Transactiekosten en/of kosten van derden EUR,Totaal EUR,Order ID
+03-02-2025,15:45,APPLE INC. - COMMON STOCK,US0378331005,NDQ,XNAS,2,"230,00",USD,"-460,00",USD,"-441,72","1,0414","-1,10","-2,00","-444,82",a1b2c3d4-0000-4000-8000-000000000002
+15-01-2025,10:31,VANGUARD FTSE ALL-WORLD UCITS ETF USD ACC,IE00BK5BQT80,EAM,XAMS,5,"120,50",EUR,"-602,50",EUR,"-602,50",,"0,00","-1,00","-603,50",a1b2c3d4-0000-4000-8000-000000000001

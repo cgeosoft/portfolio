@@ -1,0 +1,9 @@
+date;time;status;reference;description;assetType;type;isin;shares;price;amount;fee;tax;currency
+2025-12-02;09:00:00;Executed;"WWEK00000001";"Deposit";Cash;Deposit;;;;"1.500,00";0,00;0,00;EUR
+2025-12-03;10:15:30;Executed;"SCAL00000001";"iShares Core MSCI World UCITS ETF USD (Acc)";Security;Buy;IE00B4L5Y983;5;100,50;-502,50;0,99;0,00;EUR
+2025-12-04;02:00:00;Executed;"SCAL00000002";"Vanguard FTSE All-World UCITS ETF (Acc)";Security;Savings plan;IE00BK5BQT80;0,5;120,00;-60,00;0,00;0,00;EUR
+2025-12-05;11:00:00;Cancelled;"SCAL00000003";"Apple Inc.";Security;Buy;US0378331005;1;230,00;-230,00;0,99;0,00;EUR
+2025-12-15;08:00:00;Executed;"WWEK00000002";"Vanguard FTSE All-World UCITS ETF (Dist)";Cash;Distribution;IE00B3RBWM25;;;2,00;0,00;0,30;EUR
+2025-12-20;12:00:00;Executed;"SCAL00000004";"iShares Core MSCI World UCITS ETF USD (Acc)";Security;Sell;IE00B4L5Y983;-1;110,00;110,00;0,99;1,20;EUR
+2025-12-31;23:00:00;Executed;"WWEK00000003";"Taxes";Cash;Taxes;;;;-0,50;0,00;;EUR
+2026-01-02;09:00:00;Executed;"WWEK00000004";"Withdrawal";Cash;Withdrawal;;;;-100,00;0,00;;EUR
