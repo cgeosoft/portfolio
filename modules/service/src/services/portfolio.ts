@@ -46,7 +46,7 @@ const AUTOMATION_TARGETS = [
   ["eventAlertsPortfolioId", "eventAlertsEnabled"],
 ] as const;
 
-/** An error for a log line: the message can carry a symbol (AGENTS.md rule 3), the name cannot. */
+/** An error for a log line: the message can carry a symbol (CLAUDE.md rule 3), the name cannot. */
 function errorName(err: unknown): string {
   return err instanceof Error ? err.name : typeof err;
 }

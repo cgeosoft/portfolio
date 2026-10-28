@@ -13,7 +13,7 @@
  * are null without it.
  *
  * Each piece carries the provider that supplied it. Logs name no symbol,
- * quantity or balance (AGENTS.md rule 3).
+ * quantity or balance (CLAUDE.md rule 3).
  */
 import type {
   EconomicEvent,

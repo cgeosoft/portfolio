@@ -9,7 +9,7 @@
  * A suggestion is identified by `action:SYMBOL`. A new generation updates an
  * open suggestion with the same key, skips a dismissed one until the weight
  * of its symbol moved by SUGGESTION_DISMISS_RESET_PP, and marks open ones the
- * model did not repeat as superseded. Logs never name a symbol (AGENTS.md rule 3).
+ * model did not repeat as superseded. Logs never name a symbol (CLAUDE.md rule 3).
  */
 
 import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/portfolio";

@@ -15,7 +15,7 @@
  * open; the GUI skips the automatic quotes refresh when none is. A manual
  * refresh never asks.
  *
- * Nothing here logs a symbol (AGENTS.md rule 3).
+ * Nothing here logs a symbol (CLAUDE.md rule 3).
  */
 import * as portfolioRepo from "../../db/portfolio.repo.js";
 import * as txRepo from "../../db/transaction.repo.js";

@@ -335,7 +335,7 @@ export class YahooFinanceService {
             typeDisp: q.typeDisp || q.quoteType || "Equity",
           }));
       } catch (e: unknown) {
-        // The query can be a ticker or an ISIN; log the error type only (AGENTS.md rule 3).
+        // The query can be a ticker or an ISIN; log the error type only (CLAUDE.md rule 3).
         appLogger.logStep("warning", "yahoo", "search", `Search failed on ${baseUrl} (${errorKind(e)})`);
       }
     }
@@ -345,7 +345,7 @@ export class YahooFinanceService {
   public async getChart(symbol: string, range = "1y", interval = "1d", forceFresh = false): Promise<YahooChartData> {
     const cleanSymbol = symbol.trim().toUpperCase();
     const cacheKey = `${cleanSymbol}:${range}:${interval}`;
-    // Logs and errors below never name the symbol (AGENTS.md rule 3): callers log the errors again.
+    // Logs and errors below never name the symbol (CLAUDE.md rule 3): callers log the errors again.
 
     // 1. Check in-memory cache, before any disk read
     if (!forceFresh) {
@@ -753,7 +753,7 @@ export class YahooFinanceService {
             marketCache.set(cacheKey, result, result ? ttlMs : 60 * 60 * 1000);
             return result;
           } catch (e: unknown) {
-            // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+            // The URL carries the symbol; log the error type only (CLAUDE.md rule 3).
             appLogger.logStep("warning", "yahoo", "quote_summary", `quoteSummary request failed (${errorKind(e)})`);
           }
         }
@@ -820,7 +820,7 @@ export class YahooFinanceService {
         marketCache.set(cacheKey, data, 12 * 60 * 60 * 1000);
         return data;
       } catch (e: unknown) {
-        // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+        // The URL carries the symbol; log the error type only (CLAUDE.md rule 3).
         appLogger.logStep("warning", "yahoo", "corporate_events", `Dividend and split request failed (${errorKind(e)})`);
       }
     }

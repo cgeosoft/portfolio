@@ -149,7 +149,7 @@ export function isEmptyValue(value: unknown): boolean {
 }
 
 function logFailure(category: DataCategory, provider: DataProviderId, err: unknown): void {
-  // The message can carry a symbol; log the error type only (AGENTS.md rule 3).
+  // The message can carry a symbol; log the error type only (CLAUDE.md rule 3).
   const kind = err instanceof Error ? err.name : typeof err;
   appLogger.logStep("warning", "market_data", `${category}_provider_failed`, `${provider} failed for ${category} (${kind}); trying the next provider`);
 }

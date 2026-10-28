@@ -59,7 +59,7 @@ export function set<T = unknown>(key: string, data: T, ttlMs: number): void {
       [key, serialized, now, expiresAt],
     );
   } catch (err) {
-    // The key can name a symbol (AGENTS.md rule 3), so the log names its kind only.
+    // The key can name a symbol (CLAUDE.md rule 3), so the log names its kind only.
     appLogger.logStep("warning", "db", "market_cache_set", `Failed to cache a "${key.split(":", 1)[0]}" entry`, undefined, {
       error: err instanceof Error ? err.message : String(err),
     });

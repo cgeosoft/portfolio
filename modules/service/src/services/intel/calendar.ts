@@ -12,7 +12,7 @@
  *
  * Per-symbol endpoints only: a portfolio holds a few dozen symbols and every
  * answer is cached for 12 hours, so the market-wide calendars would not save
- * calls. Symbols never reach a log line (AGENTS.md rule 3).
+ * calls. Symbols never reach a log line (CLAUDE.md rule 3).
  */
 import { mapWithConcurrencyLimit, type YahooCorporateEvents, type YahooFinanceService } from "../yahoo-finance.js";
 import type { FinnhubService } from "../finnhub.js";

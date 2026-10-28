@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## What this repo is
 
@@ -25,12 +25,12 @@ Load the matching skill before you change that area.
 
 | Skill | Use for |
 |---|---|
-| [`electrobun-engineer`](.agents/skills/electrobun-engineer/SKILL.md) | Desktop shell, staging, packaging, `release.sh` |
-| [`financial-engineer`](.agents/skills/financial-engineer/SKILL.md) | Portfolio math, Yahoo Finance, Finnhub, FX, indicators |
-| [`prompt-engineer`](.agents/skills/prompt-engineer/SKILL.md) | LLM reports, assistant chat, providers, output cleanup |
-| [`react-engineer`](.agents/skills/react-engineer/SKILL.md) | GUI components, HTTP client, Chart.js |
-| [`ui-engineer`](.agents/skills/ui-engineer/SKILL.md) | Tailwind styling, design tokens |
-| [`devops-engineer`](.agents/skills/devops-engineer/SKILL.md) | Build, packaging, release, website deploy |
+| [`electrobun-engineer`](.claude/skills/electrobun-engineer/SKILL.md) | Desktop shell, staging, packaging, `release.sh` |
+| [`financial-engineer`](.claude/skills/financial-engineer/SKILL.md) | Portfolio math, Yahoo Finance, Finnhub, FX, indicators |
+| [`prompt-engineer`](.claude/skills/prompt-engineer/SKILL.md) | LLM reports, assistant chat, providers, output cleanup |
+| [`react-engineer`](.claude/skills/react-engineer/SKILL.md) | GUI components, HTTP client, Chart.js |
+| [`ui-engineer`](.claude/skills/ui-engineer/SKILL.md) | Tailwind styling, design tokens |
+| [`devops-engineer`](.claude/skills/devops-engineer/SKILL.md) | Build, packaging, release, website deploy |
 
 ## Commands
 

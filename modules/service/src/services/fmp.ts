@@ -15,7 +15,7 @@
  * - returns an expired cache entry when FMP fails for a transient reason.
  *
  * Logs name the endpoint path only: never the key, a symbol, a quantity or a
- * balance (AGENTS.md rule 3).
+ * balance (CLAUDE.md rule 3).
  *
  * Other modules add endpoints in their own files on top of `get()`:
  *

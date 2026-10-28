@@ -17,7 +17,7 @@
  *
  * `describeIncomeForAssistant()` and `describeEventsForAssistant()` turn the
  * results into compact text for the assistant without money amounts,
- * quantities or balances. No log line names a symbol (AGENTS.md rule 3).
+ * quantities or balances. No log line names a symbol (CLAUDE.md rule 3).
  */
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as txRepo from "../db/transaction.repo.js";

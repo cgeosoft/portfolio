@@ -212,7 +212,7 @@ export class DailyBriefService {
 
   private async tick(): Promise<void> {
     if (this.running || !isBriefDue(loadConfig(), new Date())) return;
-    // Each portfolio's own errors go to the status. An unexpected one lands here; log its type only (AGENTS.md rule 3).
+    // Each portfolio's own errors go to the status. An unexpected one lands here; log its type only (CLAUDE.md rule 3).
     await this.run("schedule").catch((err) => appLogger.logStep("error", "brief", "run", `Daily brief failed (${err instanceof Error ? err.name : typeof err})`));
   }
 

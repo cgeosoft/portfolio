@@ -394,7 +394,7 @@ export class ExposureService {
       holdingsKnownPercent: pct(coverage.holdingsKnown),
     };
 
-    // Counts only (AGENTS.md rule 3).
+    // Counts only (CLAUDE.md rule 3).
     appLogger.logStep(
       "info",
       "exposure",

@@ -18,7 +18,7 @@
  * `formatCompanyIntelForPrompt` and `trimTranscript`. Company data is public;
  * none of it carries the user's holdings or balances.
  *
- * Logs never name a symbol (AGENTS.md rule 3).
+ * Logs never name a symbol (CLAUDE.md rule 3).
  */
 import * as marketCache from "../../db/market-cache.repo.js";
 import { appLogger } from "../../logger.js";

@@ -12,7 +12,7 @@
  * Every fetch has a time limit, so a slow provider never blocks a reply.
  * The text carries percentages, dates and public company data only, never
  * money amounts, quantities or balances. Logs never name a symbol
- * (AGENTS.md rule 3).
+ * (CLAUDE.md rule 3).
  */
 import type { DataProviderId } from "portfolio-shared/config-types";
 import type {

@@ -17,7 +17,7 @@
  * All weights are percent (0 to 100). Each result keeps its provider.
  * FMP responses are cached by `FmpService` (7 days for ETF data, 24 h for
  * profiles); Yahoo responses by `YahooFinanceService.getQuoteSummary`.
- * Nothing here logs a symbol or a weight (AGENTS.md rule 3).
+ * Nothing here logs a symbol or a weight (CLAUDE.md rule 3).
  */
 import { FMP_TTL, toFmpSymbol, type FmpCompanyProfile, type FmpService } from "../fmp.js";
 import type { FinnhubService } from "../finnhub.js";

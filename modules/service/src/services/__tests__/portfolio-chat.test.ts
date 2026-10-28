@@ -104,7 +104,7 @@ describe("PortfolioChatService & prompt builder", () => {
     expect(prompt).not.toContain("Market Price");
     expect(prompt).not.toContain("Position Value");
 
-    // Ensure no long dashes are used per AGENTS.md rule
+    // Ensure no long dashes are used per CLAUDE.md rule
     expect(prompt.includes("\u2014")).toBe(false);
   });
 

@@ -448,7 +448,7 @@ export class FinnhubService {
       marketCache.set(cacheKey, json, ttlMs);
       return json;
     } catch (err: unknown) {
-      // The URL carries the symbol; log the error type only (AGENTS.md rule 3).
+      // The URL carries the symbol; log the error type only (CLAUDE.md rule 3).
       appLogger.logStep("warning", "finnhub", "request_exception", `Finnhub request error (${err instanceof Error ? err.name : typeof err})`);
       if (cached) return cached.data;
       return null;
