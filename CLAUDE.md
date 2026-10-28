@@ -57,3 +57,4 @@ bun run website:publish                   # write latest.json and deploy website
 8. A metric never runs in the main process or webview; the ABI changes only with a new version.
 9. User-visible GUI text goes through `t("section.key")` with the English text in `lang/en.yml`, never at module top level (the language loads before the first render). Add new keys to every language; `bun run scripts/check-lang.ts` lists missing ones. LLM prompts stay English; `language` in the config sets the output language.
 10. Writing: short active sentences. No em-dashes, emojis or AI clichés. State only verified facts.
+11. Remotes: `origin` is `cg@cronus:/mnt/repos/portfolio.git`. `github` is `cgeosoft/portfolio` (PRs, Dependabot, Actions). Push only when Christos asks.
