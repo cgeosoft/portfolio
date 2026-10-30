@@ -282,6 +282,7 @@ dashboard:
     nativePrice: "현지 가격: {price} (환율: {rate})"
     noQuote: "시세 없음"
     noQuoteHint: "시세가 없습니다. 표시된 가격은 평균 매수가입니다."
+    oversell: "{date}에 보유량보다 많은 {symbol} 주식이 매도되었습니다. 실현 손익은 보유 주식만 계산합니다. 매수, 주식 분할 또는 입고 이체가 누락되었을 수 있습니다."
     manualPriceHint: "{date}에 직접 설정한 가격입니다. 편집하거나 지우세요."
     setPriceHint: "공개 시세가 없습니다. 표시된 가격은 평균 매수가입니다. 현재 가격 또는 NAV를 설정하세요."
     setPriceFor: "{symbol}의 가격 또는 NAV 설정"

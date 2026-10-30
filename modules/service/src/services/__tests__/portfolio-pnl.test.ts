@@ -208,14 +208,51 @@ describe("sells beyond the position", () => {
     expect(cash[0]?.weightPercent).toBe(100);
   });
 
-  // B6: the owner has not decided the rule for selling more than held.
-  it.todo("Owner decision (B6): realizedPnL and totalGainSinceStartPercent when a SELL exceeds the held shares (cap at held cost: realizedPnL 80?)");
+  // B6: realized P&L counts only the held shares; the full proceeds still reach cash.
+  it("pro-rates realized P&L to the held shares and warns about the oversell", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-02", type: "BUY", symbol: "PNLX", shares: 10, price: 10, amount: -100 }),
+      tx({ date: "2025-01-03", type: "SELL", symbol: "PNLX", shares: 15, price: 12, amount: 180 }),
+    ]);
+    // 180 * 10/15 - 100
+    expect(data.summary.realizedPnL).toBe(20);
+    expect(data.summary.cashBalance).toBe(80);
+    expect(data.warnings).toEqual([{ kind: "oversell", symbol: "PNLX", date: "2025-01-03" }]);
+  });
+
+  it("keeps the lifetime gain percent at 0 without cost or deposits", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-02", type: "BUY", symbol: "PNLX", shares: 10, price: 10, amount: -100 }),
+      tx({ date: "2025-01-03", type: "SELL", symbol: "PNLX", shares: 15, price: 12, amount: 180 }),
+    ]);
+    expect(data.summary.totalGainSinceStartDollar).toBe(20);
+    expect(data.summary.totalGainSinceStartPercent).toBe(0);
+  });
+
+  it("measures the lifetime gain percent against deposits after an oversell", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-01", type: "DEPOSIT", amount: 100 }),
+      tx({ date: "2025-01-02", type: "BUY", symbol: "PNLX", shares: 10, price: 10, amount: -100 }),
+      tx({ date: "2025-01-03", type: "SELL", symbol: "PNLX", shares: 15, price: 12, amount: 180 }),
+    ]);
+    expect(data.summary).toMatchObject({ realizedPnL: 20, cashBalance: 180, totalGainSinceStartPercent: 20 });
+  });
+
+  it("sends no warnings when no sell exceeds the holding", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-02", type: "BUY", symbol: "PNLX", shares: 10, price: 10, amount: -100 }),
+      tx({ date: "2025-01-03", type: "SELL", symbol: "PNLX", shares: 10, price: 12, amount: 120 }),
+    ]);
+    expect(data.summary.realizedPnL).toBe(20);
+    expect(data.warnings).toBeUndefined();
+  });
 
   it("ignores a SELL without any BUY for realized P&L", async () => {
     const { holdings, data } = await build([tx({ date: "2025-01-02", type: "SELL", symbol: "PNLX", shares: 5, amount: 60 })]);
     expect(holdings).toEqual([]);
     expect(data.summary.realizedPnL).toBe(0);
     expect(data.summary.cashBalance).toBe(60);
+    expect(data.warnings).toEqual([{ kind: "oversell", symbol: "PNLX", date: "2025-01-02" }]);
   });
 });
 

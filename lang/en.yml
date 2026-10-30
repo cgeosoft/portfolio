@@ -294,6 +294,7 @@ dashboard:
     nativePrice: "Native Price: {price} (FX Rate: {rate})"
     noQuote: "no quote"
     noQuoteHint: "No market quote. The price shown is the average buy price."
+    oversell: "On {date} more {symbol} shares were sold than held. Realized P&L counts only the held shares. A BUY, split or transfer in may be missing."
     manualPriceHint: "Price set by hand on {date}. Edit or clear it."
     setPriceHint: "No public quote. The price shown is the average buy price. Set the current price or NAV."
     setPriceFor: "Set the price or NAV of {symbol}"

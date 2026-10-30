@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import type { PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
+import type { PortfolioDataWarning, PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
-import { Search, ArrowUpDown, Layers, Pencil, Wand2, Loader2 } from "lucide-react";
+import { Search, ArrowUpDown, Layers, Pencil, Wand2, Loader2, TriangleAlert } from "lucide-react";
 import { Select } from "../common/Select";
 import { showToast } from "../common/Toaster";
 import { api } from "../../api";
@@ -27,6 +27,8 @@ interface HoldingsTableCardProps {
   portfolioId?: string | null;
   /** Reload after a symbol or a manual price changed. */
   onSymbolsChanged?: () => void | Promise<void>;
+  /** Hints that the transactions look incomplete, such as a sell beyond the holding. */
+  warnings?: PortfolioDataWarning[];
 }
 
 const VALID_ASSET_FILTERS = ["ALL", "Stock", "ETF", "Crypto", "Cash", "Other"] as const;
@@ -54,6 +56,7 @@ export function HoldingsTableCard({
   summary,
   portfolioId,
   onSymbolsChanged,
+  warnings,
 }: HoldingsTableCardProps) {
   const [search, setSearch] = useState("");
   const [symbolHolding, setSymbolHolding] = useState<HoldingWithIsin | null>(null);
@@ -445,6 +448,17 @@ export function HoldingsTableCard({
           </Select>
         </div>
       </div>
+
+      {warnings && warnings.length > 0 && (
+        <div className="space-y-1.5 px-4 sm:px-5 pb-4">
+          {warnings.map((w) => (
+            <div key={`${w.kind}:${w.symbol}:${w.date}`} className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/10 px-3 py-2 text-[11px] text-status-warning">
+              <TriangleAlert className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>{t("dashboard.holdings.oversell", { symbol: w.symbol, date: w.date })}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="overflow-x-auto w-full max-w-full min-w-0 custom-scrollbar">
         <table className="w-full text-left text-xs font-mono border-collapse">

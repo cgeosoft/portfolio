@@ -294,6 +294,7 @@ dashboard:
     nativePrice: "Cena v mene kótovania: {price} (kurz FX: {rate})"
     noQuote: "bez ceny"
     noQuoteHint: "Žiadna trhová cena. Zobrazená cena je priemerná nákupná cena."
+    oversell: "Dňa {date} sa predalo viac akcií {symbol}, než bolo v držbe. Realizovaný zisk/strata počíta len držané akcie. Možno chýba nákup, split alebo prichádzajúci prevod."
     manualPriceHint: "Cena nastavená ručne {date}. Upravte ju alebo vymažte."
     setPriceHint: "Žiadna verejná cena. Zobrazená cena je priemerná nákupná cena. Nastavte aktuálnu cenu alebo NAV."
     setPriceFor: "Nastaviť cenu alebo NAV pre {symbol}"

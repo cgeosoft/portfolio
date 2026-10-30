@@ -290,6 +290,7 @@ dashboard:
     nativePrice: "Izvorna cijena: {price} (tečaj: {rate})"
     noQuote: "nema cijene"
     noQuoteHint: "Nema tržišne cijene. Prikazana je prosječna kupovna cijena."
+    oversell: "Dana {date} prodano je više dionica {symbol} nego što ih je bilo u posjedu. Ostvarena dobit/gubitak broji samo dionice u posjedu. Možda nedostaje kupnja, podjela dionica ili dolazni prijenos."
     manualPriceHint: "Cijena je ručno postavljena {date}. Uredite je ili uklonite."
     setPriceHint: "Nema javne cijene. Prikazana je prosječna kupovna cijena. Postavite trenutačnu cijenu ili NAV."
     setPriceFor: "Postavi cijenu ili NAV za {symbol}"

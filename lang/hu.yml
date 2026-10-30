@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Eredeti ár: {price} (devizaárfolyam: {rate})"
     noQuote: "nincs árfolyam"
     noQuoteHint: "Nincs piaci árfolyam. A megjelenített ár az átlagos vételi ár."
+    oversell: "{date} napon több {symbol} részvényt adtak el, mint amennyi volt. A realizált nyereség/veszteség csak a birtokolt részvényeket számolja. Hiányozhat egy vétel, egy részvényfelosztás vagy egy bejövő transzfer."
     manualPriceHint: "Kézzel megadott ár, dátum: {date}. Szerkessze vagy törölje."
     setPriceHint: "Nincs nyilvános árfolyam. A megjelenített ár az átlagos vételi ár. Adja meg az aktuális árat vagy a NAV-ot."
     setPriceFor: "Ár vagy NAV megadása: {symbol}"

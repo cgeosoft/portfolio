@@ -24,6 +24,7 @@ import type {
   FinancialPortfolioData,
   HoldingPerformance,
   ManualPrice,
+  PortfolioDataWarning,
   PortfolioHoldingConfig,
   PortfolioSummary,
   PortfolioHistoricalPoint,
@@ -710,6 +711,7 @@ export class PortfolioService {
     // Without any deposit the ledger is incomplete (a trades-only export), so
     // cash is clamped at zero instead of showing every buy as an overdraft.
     const hasFunding = transactions.some((tx) => INFLOW_TYPES.has(tx.type));
+    const oversells: PortfolioDataWarning[] = [];
 
     for (const tx of transactions) {
       const amt = tx.amount ?? 0;
@@ -753,18 +755,26 @@ export class PortfolioService {
         }
       } else if (tx.type === "SELL") {
         const proceeds = absNum(amt) > 0 ? absNum(amt) : pr * absNum(sh);
-        if (sym && sym !== "CASH") addCash(tx, proceeds);
+        if (sym && sym !== "CASH") {
+          addCash(tx, proceeds);
+          // Selling more than held points to a missing BUY, an unrecorded split or a transfer in.
+          if (absNum(sh) - (cumulativeCostMap.get(sym)?.shares ?? 0) > 0.000001) {
+            const date = (tx.date || tx.datetime || "").split("T")[0]!;
+            if (!oversells.some((w) => w.symbol === sym && w.date === date)) oversells.push({ kind: "oversell", symbol: sym, date });
+          }
+        }
         if (sym && sym !== "CASH" && cumulativeCostMap.has(sym)) {
           const pos = cumulativeCostMap.get(sym)!;
           if (pos.shares > 0) {
             const avgCost = pos.totalCost / pos.shares;
-            const costBasisOfSold = absNum(sh) * avgCost;
+            // Beyond the held shares, only the held part of the proceeds counts toward realized P&L.
+            const soldHeld = Math.min(absNum(sh), pos.shares);
+            const costBasisOfSold = soldHeld * avgCost;
             // Proceeds count in the trade currency, the sold cost in each currency it was bought in.
-            txNative.realizedPnL += proceeds;
+            txNative.realizedPnL += proceeds * (soldHeld / absNum(sh));
             for (const [curr, cost] of pos.costByCurrency) {
-              const soldCost = absNum(sh) * (cost / pos.shares);
-              native(curr).realizedPnL -= soldCost;
-              pos.costByCurrency.set(curr, cost - soldCost);
+              native(curr).realizedPnL -= soldHeld * (cost / pos.shares);
+              pos.costByCurrency.set(curr, cost - absNum(sh) * (cost / pos.shares));
             }
 
             pos.shares -= absNum(sh);
@@ -1101,8 +1111,9 @@ export class PortfolioService {
     const dayGainLossPercent = totalPreviousValue > 0 ? (dayGainLossDollar / totalPreviousValue) * 100 : 0;
 
     const totalGainSinceStartDollar = (totalValue - totalCost) + realizedPnL + totalDividends + totalInterest - totalFees;
-    const capitalDenominator = totalCost > 0 ? totalCost : (totalCashInjected > 0 ? totalCashInjected : 1);
-    const totalGainSinceStartPercent = (totalGainSinceStartDollar / capitalDenominator) * 100;
+    // Without cost or deposits there is no capital to measure against, so the percent stays 0.
+    const capitalDenominator = totalCost > 0 ? totalCost : totalCashInjected;
+    const totalGainSinceStartPercent = capitalDenominator > 0 ? (totalGainSinceStartDollar / capitalDenominator) * 100 : 0;
 
     const sortedByDayChange = [...holdings.filter((h) => h.assetType !== "Cash")].sort((a, b) => b.dayChangePercent - a.dayChangePercent);
     const bestPerformer = sortedByDayChange.length > 0 ? { symbol: sortedByDayChange[0]!.symbol, changePercent: sortedByDayChange[0]!.dayChangePercent } : undefined;
@@ -1289,6 +1300,7 @@ export class PortfolioService {
       chartHistory,
       individualCharts,
       transactions,
+      ...(oversells.length > 0 ? { warnings: oversells } : {}),
     };
   }
 

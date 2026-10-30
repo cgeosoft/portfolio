@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Originalkurs: {price} (Wechselkurs: {rate})"
     noQuote: "kein Kurs"
     noQuoteHint: "Kein Marktkurs. Angezeigt wird der durchschnittliche Kaufkurs."
+    oversell: "Am {date} wurden mehr {symbol}-Anteile verkauft als gehalten. Der realisierte Gewinn/Verlust zählt nur die gehaltenen Anteile. Möglicherweise fehlt ein Kauf, ein Split oder ein Depotübertrag."
     manualPriceHint: "Kurs am {date} von Hand festgelegt. Bearbeiten oder löschen."
     setPriceHint: "Kein öffentlicher Kurs. Angezeigt wird der durchschnittliche Kaufkurs. Legen Sie den aktuellen Kurs oder NAV fest."
     setPriceFor: "Kurs oder NAV von {symbol} festlegen"

@@ -290,6 +290,7 @@ dashboard:
     nativePrice: "Cena oriģinālvalūtā: {price} (valūtas kurss: {rate})"
     noQuote: "nav kotācijas"
     noQuoteHint: "Nav tirgus kotācijas. Parādītā cena ir vidējā pirkuma cena."
+    oversell: "{date} pārdots vairāk {symbol} akciju, nekā bija turējumā. Realizētā peļņa/zaudējumi ietver tikai turētās akcijas. Iespējams, trūkst pirkuma, akciju sadalīšanas vai ienākoša pārveduma."
     manualPriceHint: "Cena iestatīta manuāli {date}. Rediģējiet vai notīriet to."
     setPriceHint: "Nav publiskas kotācijas. Parādītā cena ir vidējā pirkuma cena. Iestatiet pašreizējo cenu vai NAV."
     setPriceFor: "Iestatīt {symbol} cenu vai NAV"

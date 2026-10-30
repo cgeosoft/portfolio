@@ -294,6 +294,7 @@ dashboard:
     nativePrice: "Izvirna cena: {price} (menjalni tečaj: {rate})"
     noQuote: "ni cene"
     noQuoteHint: "Ni tržne cene. Prikazana je povprečna nakupna cena."
+    oversell: "Dne {date} je bilo prodanih več delnic {symbol}, kot jih je bilo v lasti. Realizirani dobiček/izguba šteje le delnice v lasti. Morda manjka nakup, razdelitev delnic ali dohodni prenos."
     manualPriceHint: "Cena je bila ročno nastavljena {date}. Uredite ali odstranite jo."
     setPriceHint: "Ni javne cene. Prikazana je povprečna nakupna cena. Nastavite trenutno ceno ali NAV."
     setPriceFor: "Nastavi ceno ali NAV za {symbol}"

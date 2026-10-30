@@ -287,6 +287,7 @@ dashboard:
     nativePrice: "現地価格：{price}（為替レート：{rate}）"
     noQuote: "相場なし"
     noQuoteHint: "市場相場がありません。表示価格は平均取得単価です。"
+    oversell: "{date} に保有数を超える {symbol} が売却されました。実現損益は保有分のみを計上します。購入、株式分割、または入庫の記録が抜けている可能性があります。"
     manualPriceHint: "{date} に手動で設定した価格です。編集またはクリアできます。"
     setPriceHint: "公開相場がありません。表示価格は平均取得単価です。現在価格または基準価額を設定してください。"
     setPriceFor: "{symbol} の価格または基準価額を設定"

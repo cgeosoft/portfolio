@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Native na Presyo: {price} (FX Rate: {rate})"
     noQuote: "walang quote"
     noQuoteHint: "Walang market quote. Ang ipinapakitang presyo ay ang average na presyo ng pagbili."
+    oversell: "Noong {date}, mas maraming {symbol} shares ang naibenta kaysa hawak. Binibilang lang ng realized P&L ang hawak na shares. Maaaring may kulang na BUY, split o transfer papasok."
     manualPriceHint: "Presyong itinakda nang mano-mano noong {date}. I-edit o i-clear ito."
     setPriceHint: "Walang pampublikong quote. Ang ipinapakitang presyo ay ang average na presyo ng pagbili. Itakda ang kasalukuyang presyo o NAV."
     setPriceFor: "Itakda ang presyo o NAV ng {symbol}"

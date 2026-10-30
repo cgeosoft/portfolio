@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Bei Asilia: {price} (Kiwango cha FX: {rate})"
     noQuote: "hakuna bei"
     noQuoteHint: "Hakuna bei ya soko. Bei inayoonyeshwa ni wastani wa bei ya kununua."
+    oversell: "Tarehe {date} hisa nyingi za {symbol} ziliuzwa kuliko zilizomilikiwa. Faida/hasara iliyopatikana inahesabu hisa zilizomilikiwa pekee. Huenda ununuzi, mgawanyo wa hisa au uhamisho wa kuingia haupo."
     manualPriceHint: "Bei iliwekwa kwa mkono tarehe {date}. Ihariri au uifute."
     setPriceHint: "Hakuna bei ya umma. Bei inayoonyeshwa ni wastani wa bei ya kununua. Weka bei ya sasa au NAV."
     setPriceFor: "Weka bei au NAV ya {symbol}"
