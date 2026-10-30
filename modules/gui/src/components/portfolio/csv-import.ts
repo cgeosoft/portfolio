@@ -422,7 +422,9 @@ const MONTHS: Record<string, number> = {
 };
 
 function isoDate(year: number, month: number, day: number): string | undefined {
-  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2200) return undefined;
+  if (month < 1 || month > 12 || day < 1 || year < 1900 || year > 2200) return undefined;
+  // Day 0 of the next month is the last day of this one, leap years included.
+  if (day > new Date(Date.UTC(year, month, 0)).getUTCDate()) return undefined;
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 

@@ -427,8 +427,7 @@ describe("parseDate edge cases", () => {
     }
   });
 
-  // Suspected bug: modules/gui/src/components/portfolio/csv-import.ts:425 isoDate checks only day <= 31
-  it.failing("rejects impossible calendar days", () => {
+  it("rejects impossible calendar days", () => {
     expect(parseDate("2025-02-31")).toBeUndefined();
     expect(parseDate("31.04.2025")).toBeUndefined();
     expect(parseDate("2025-02-29")).toBeUndefined();
