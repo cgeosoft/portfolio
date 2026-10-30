@@ -107,8 +107,7 @@ describe("Yahoo FX", () => {
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
-  // Suspected bug: yahoo-finance.ts:568 upper-cased GBp matches the GBP base before the pence branch, so pence get 1.
-  it.failing("prices GBp at 0.01 for a GBP base (B2)", async () => {
+  it("prices GBp at 0.01 for a GBP base (B2)", async () => {
     const fetchMock = mock(async () => new Response("", { status: 500 }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
     const rates = await new YahooFinanceService().getExchangeRates("GBP", ["GBp", "gbp", "GBP"]);
