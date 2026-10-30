@@ -286,7 +286,8 @@ export function updateConfig(updates: Partial<DesktopConfig>): DesktopConfig {
   if (updates.llmModels) updated.llmModels = { ...(current.llmModels || {}), ...updates.llmModels };
   writeRows({ ...updates, ...pickMerged(updated, updates) });
   if (typeof updates.startWithBoot === "boolean") syncAutostart(updates.startWithBoot);
-  return updated;
+  // Read back so the caller gets the normalized values, as loadConfig() would.
+  return loadConfig();
 }
 
 /** The record-valued keys are written back merged, not as the partial that came in. */

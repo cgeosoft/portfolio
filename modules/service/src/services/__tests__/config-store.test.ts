@@ -406,8 +406,7 @@ describe("suspected bugs", () => {
     expect("leak" in next.llmModels).toBe(false);
   });
 
-  // Suspected bug: modules/service/src/config.ts:277-289 updateConfig returns values before normalization
-  it.failing("returns the same normalized values from updateConfig as from loadConfig", () => {
+  it("returns the same normalized values from updateConfig as from loadConfig", () => {
     const returned = updateConfig({ zoomLevel: 99, theme: "neon" as any, remotePort: 80 });
     expect(returned.zoomLevel).toBe(1);
     expect(returned.theme).toBe("dark");
