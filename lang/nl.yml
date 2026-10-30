@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Oorspronkelijke koers: {price} (wisselkoers: {rate})"
     noQuote: "geen koers"
     noQuoteHint: "Geen marktkoers. De getoonde koers is de gemiddelde aankoopkoers."
+    oversell: "Op {date} zijn meer {symbol}-aandelen verkocht dan aangehouden. Gerealiseerde winst/verlies telt alleen de aangehouden aandelen. Mogelijk ontbreekt een aankoop, split of inkomende overboeking."
     manualPriceHint: "Koers handmatig ingesteld op {date}. Bewerk of wis deze."
     setPriceHint: "Geen openbare koers. De getoonde koers is de gemiddelde aankoopkoers. Stel de actuele koers of NAV in."
     setPriceFor: "Koers of NAV van {symbol} instellen"

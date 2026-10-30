@@ -290,6 +290,7 @@ dashboard:
     nativePrice: "Preț nativ: {price} (curs FX: {rate})"
     noQuote: "fără cotație"
     noQuoteHint: "Nicio cotație de piață. Prețul afișat este prețul mediu de cumpărare."
+    oversell: "Pe {date} s-au vândut mai multe acțiuni {symbol} decât erau deținute. Profitul/pierderea realizată numără doar acțiunile deținute. Poate lipsi o cumpărare, o divizare sau un transfer de intrare."
     manualPriceHint: "Preț setat manual la {date}. Editați-l sau ștergeți-l."
     setPriceHint: "Nicio cotație publică. Prețul afișat este prețul mediu de cumpărare. Setați prețul curent sau NAV."
     setPriceFor: "Setare preț sau NAV pentru {symbol}"

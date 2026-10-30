@@ -282,6 +282,7 @@ dashboard:
     nativePrice: "Iye owó àbínibí: {price} (Ìwọ̀n FX: {rate})"
     noQuote: "kò sí iye owó"
     noQuoteHint: "Kò sí iye owó ọjà. Iye owó tí a fi hàn ni àròpín iye owó ìrà."
+    oversell: "Ní {date}, wọ́n ta ìpín {symbol} ju èyí tí ó wà lọ́wọ́ lọ. Èrè/àdánù tí a ti rí ka ìpín tí ó wà lọ́wọ́ nìkan. Ó ṣeé ṣe kí ìrà, pípín ìpín tàbí ìfiránṣẹ́ wọlé kan sọnù."
     manualPriceHint: "A fi iye owó sí fúnra ẹni ní {date}. Ṣàtúnṣe rẹ̀ tàbí pa á rẹ́."
     setPriceHint: "Kò sí iye owó ní gbangba. Iye owó tí a fi hàn ni àròpín iye owó ìrà. Fi iye owó lọ́wọ́lọ́wọ́ tàbí NAV sí i."
     setPriceFor: "Fi iye owó tàbí NAV {symbol} sí i"

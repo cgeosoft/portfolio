@@ -2113,6 +2113,7 @@ export default function App() {
                 summary={summary}
                 portfolioId={activePortfolioId}
                 onSymbolsChanged={() => loadData("reload")}
+                warnings={portfolioData?.warnings}
               />
             </>
           )}

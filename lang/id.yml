@@ -282,6 +282,7 @@ dashboard:
     nativePrice: "Harga Asli: {price} (Kurs FX: {rate})"
     noQuote: "tanpa kuotasi"
     noQuoteHint: "Tidak ada kuotasi pasar. Harga yang ditampilkan adalah harga beli rata-rata."
+    oversell: "Pada {date} terjual lebih banyak saham {symbol} daripada yang dimiliki. Laba/rugi terealisasi hanya menghitung saham yang dimiliki. Mungkin ada pembelian, pemecahan saham, atau transfer masuk yang hilang."
     manualPriceHint: "Harga diatur manual pada {date}. Edit atau hapus."
     setPriceHint: "Tidak ada kuotasi publik. Harga yang ditampilkan adalah harga beli rata-rata. Atur harga saat ini atau NAV."
     setPriceFor: "Atur harga atau NAV {symbol}"

@@ -294,6 +294,7 @@ dashboard:
     nativePrice: "Cena w walucie notowania: {price} (kurs FX: {rate})"
     noQuote: "brak notowania"
     noQuoteHint: "Brak notowania rynkowego. Pokazana cena to średnia cena zakupu."
+    oversell: "W dniu {date} sprzedano więcej akcji {symbol}, niż posiadano. Zrealizowany zysk/strata liczy tylko posiadane akcje. Może brakować zakupu, splitu lub przelewu przychodzącego."
     manualPriceHint: "Cena ustawiona ręcznie {date}. Edytuj lub wyczyść ją."
     setPriceHint: "Brak publicznego notowania. Pokazana cena to średnia cena zakupu. Ustaw bieżącą cenę lub NAV."
     setPriceFor: "Ustaw cenę lub NAV dla {symbol}"

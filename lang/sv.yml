@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Ursprunglig kurs: {price} (valutakurs: {rate})"
     noQuote: "ingen kurs"
     noQuoteHint: "Ingen marknadskurs. Kursen som visas är den genomsnittliga köpkursen."
+    oversell: "Den {date} såldes fler {symbol}-aktier än innehavet. Realiserad vinst/förlust räknar bara de ägda aktierna. Ett köp, en split eller en inkommande överföring kan saknas."
     manualPriceHint: "Kursen angavs manuellt {date}. Redigera eller rensa den."
     setPriceHint: "Ingen offentlig kurs. Kursen som visas är den genomsnittliga köpkursen. Ange aktuell kurs eller NAV."
     setPriceFor: "Ange kurs eller NAV för {symbol}"

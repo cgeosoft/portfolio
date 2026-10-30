@@ -291,6 +291,7 @@ dashboard:
     nativePrice: "Alkuperäinen hinta: {price} (valuuttakurssi: {rate})"
     noQuote: "ei hintaa"
     noQuoteHint: "Ei markkinahintaa. Näytetty hinta on keskimääräinen ostohinta."
+    oversell: "{date} myytiin enemmän {symbol}-osakkeita kuin omistettiin. Toteutunut voitto/tappio laskee vain omistetut osakkeet. Osto, osakesplit tai sisääntuleva siirto voi puuttua."
     manualPriceHint: "Hinta asetettu käsin {date}. Muokkaa tai poista se."
     setPriceHint: "Ei julkista hintaa. Näytetty hinta on keskimääräinen ostohinta. Aseta nykyinen hinta tai NAV."
     setPriceFor: "Aseta kohteen {symbol} hinta tai NAV"

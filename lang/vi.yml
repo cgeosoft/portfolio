@@ -282,6 +282,7 @@ dashboard:
     nativePrice: "Giá gốc: {price} (Tỷ giá: {rate})"
     noQuote: "không có giá"
     noQuoteHint: "Không có giá thị trường. Giá hiển thị là giá mua trung bình."
+    oversell: "Ngày {date} đã bán nhiều cổ phiếu {symbol} hơn số đang nắm giữ. Lãi/lỗ đã thực hiện chỉ tính số cổ phiếu nắm giữ. Có thể thiếu một giao dịch mua, chia tách hoặc chuyển vào."
     manualPriceHint: "Giá được đặt thủ công ngày {date}. Hãy sửa hoặc xóa."
     setPriceHint: "Không có giá công khai. Giá hiển thị là giá mua trung bình. Hãy đặt giá hiện tại hoặc NAV."
     setPriceFor: "Đặt giá hoặc NAV của {symbol}"

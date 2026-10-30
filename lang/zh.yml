@@ -287,6 +287,7 @@ dashboard:
     nativePrice: "原币价格：{price}（汇率：{rate}）"
     noQuote: "无行情"
     noQuoteHint: "无市场行情。显示的价格为平均买入价。"
+    oversell: "{date} 卖出的 {symbol} 股数超过持仓。已实现盈亏只计算持有的股份。可能缺少一笔买入、拆股或转入记录。"
     manualPriceHint: "价格于 {date} 手动设置。可编辑或清除。"
     setPriceHint: "无公开行情。显示的价格为平均买入价。请设置当前价格或净值。"
     setPriceFor: "设置 {symbol} 的价格或净值"

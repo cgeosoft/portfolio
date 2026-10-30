@@ -290,6 +290,7 @@ dashboard:
     nativePrice: "Prix d'origine : {price} (taux de change : {rate})"
     noQuote: "pas de cours"
     noQuoteHint: "Aucun cours de marché. Le prix affiché est le prix d'achat moyen."
+    oversell: "Le {date}, plus d'actions {symbol} ont été vendues que détenues. Le gain/perte réalisé ne compte que les actions détenues. Un achat, un fractionnement ou un transfert entrant manque peut-être."
     manualPriceHint: "Prix saisi à la main le {date}. Modifiez-le ou effacez-le."
     setPriceHint: "Aucun cours public. Le prix affiché est le prix d'achat moyen. Saisissez le prix actuel ou la VL."
     setPriceFor: "Définir le prix ou la VL de {symbol}"

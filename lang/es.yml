@@ -290,6 +290,7 @@ dashboard:
     nativePrice: "Precio original: {price} (tipo de cambio: {rate})"
     noQuote: "sin cotización"
     noQuoteHint: "Sin cotización de mercado. El precio mostrado es el precio medio de compra."
+    oversell: "El {date} se vendieron más acciones de {symbol} de las que se tenían. La ganancia/pérdida realizada cuenta solo las acciones en cartera. Puede faltar una compra, un split o una transferencia de entrada."
     manualPriceHint: "Precio definido a mano el {date}. Edítalo o bórralo."
     setPriceHint: "Sin cotización pública. El precio mostrado es el precio medio de compra. Define el precio actual o el NAV."
     setPriceFor: "Definir el precio o el NAV de {symbol}"

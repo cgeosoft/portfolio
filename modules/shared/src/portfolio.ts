@@ -152,6 +152,15 @@ export interface PortfolioReport {
 
 export type ReportMetrics = PortfolioReport["metrics"];
 
+/** A hint that the transactions look incomplete. Only a hint; data is never changed. */
+export interface PortfolioDataWarning {
+  /** `oversell`: a SELL of more shares than held (a missing BUY, an unrecorded split or a transfer in). */
+  kind: "oversell";
+  symbol: string;
+  /** Date of the transaction, YYYY-MM-DD. */
+  date: string;
+}
+
 export interface FinancialPortfolioData {
   summary: PortfolioSummary;
   holdings: PortfolioHolding[];
@@ -159,6 +168,8 @@ export interface FinancialPortfolioData {
   individualCharts: Record<string, { date: string; close: number }[]>;
   transactions?: PortfolioTransaction[];
   portfolio?: PortfolioItem;
+  /** Present only when there is at least one warning. */
+  warnings?: PortfolioDataWarning[];
 }
 
 // Service-side holding config type (used for computations)

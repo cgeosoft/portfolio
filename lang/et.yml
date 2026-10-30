@@ -291,6 +291,7 @@ dashboard:
     nativePrice: "Algne hind: {price} (vahetuskurss: {rate})"
     noQuote: "hind puudub"
     noQuoteHint: "Turuhind puudub. Näidatud hind on keskmine ostuhind."
+    oversell: "{date} müüdi rohkem {symbol} aktsiaid, kui oli olemas. Realiseeritud kasum/kahjum arvestab ainult olemasolevaid aktsiaid. Võib puududa ost, aktsiate split või sissetulev ülekanne."
     manualPriceHint: "Hind määrati käsitsi {date}. Muuda või eemalda see."
     setPriceHint: "Avalik hind puudub. Näidatud hind on keskmine ostuhind. Määra praegune hind või NAV."
     setPriceFor: "Määra {symbol} hind või NAV"

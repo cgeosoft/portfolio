@@ -286,6 +286,7 @@ dashboard:
     nativePrice: "Yerel Fiyat: {price} (Kur: {rate})"
     noQuote: "fiyat yok"
     noQuoteHint: "Piyasa fiyatı yok. Gösterilen fiyat ortalama alış fiyatıdır."
+    oversell: "{date} tarihinde eldekinden fazla {symbol} hissesi satıldı. Gerçekleşen kâr/zarar yalnızca eldeki hisseleri sayar. Bir alım, hisse bölünmesi veya gelen transfer eksik olabilir."
     manualPriceHint: "Fiyat {date} tarihinde elle ayarlandı. Düzenleyin veya temizleyin."
     setPriceHint: "Kamuya açık fiyat yok. Gösterilen fiyat ortalama alış fiyatıdır. Güncel fiyatı veya NAV'ı ayarlayın."
     setPriceFor: "{symbol} için fiyatı veya NAV'ı ayarla"

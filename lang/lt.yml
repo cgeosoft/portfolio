@@ -294,6 +294,7 @@ dashboard:
     nativePrice: "Kaina originalia valiuta: {price} (valiutos kursas: {rate})"
     noQuote: "nėra kotiruotės"
     noQuoteHint: "Nėra rinkos kotiruotės. Rodoma kaina yra vidutinė pirkimo kaina."
+    oversell: "{date} parduota daugiau {symbol} akcijų, nei turėta. Realizuotas pelnas/nuostolis skaičiuoja tik turėtas akcijas. Gali trūkti pirkimo, akcijų skaidymo ar gaunamo pervedimo."
     manualPriceHint: "Kaina nustatyta rankiniu būdu {date}. Redaguokite arba išvalykite ją."
     setPriceHint: "Nėra viešos kotiruotės. Rodoma kaina yra vidutinė pirkimo kaina. Nustatykite dabartinę kainą arba NAV."
     setPriceFor: "Nustatyti {symbol} kainą arba NAV"
