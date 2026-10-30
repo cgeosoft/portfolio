@@ -87,7 +87,14 @@ function compile(path: string): { pattern: RegExp; keys: string[] } {
 export function isLoopbackAddress(address: string | undefined | null): boolean {
   if (!address) return false;
   const ip = address.startsWith("::ffff:") ? address.slice("::ffff:".length) : address;
-  return ip === "::1" || ip.startsWith("127.");
+  return ip === "::1" || isLoopbackIPv4(ip);
+}
+
+/** A dotted IPv4 literal in 127.0.0.0/8. A DNS name such as `127.0.0.1.evil.example` does not count. */
+function isLoopbackIPv4(value: string): boolean {
+  const parts = value.split(".");
+  if (parts.length !== 4 || parts[0] !== "127") return false;
+  return parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
 }
 
 /** Host part of a `Host` or `Origin` value without the port: `127.0.0.1:5130` -> `127.0.0.1`, `[::1]:80` -> `::1`. */

@@ -53,8 +53,7 @@ describe("hostnameOf edge cases", () => {
 });
 
 describe("DNS rebinding", () => {
-  // Suspected bug: modules/service/src/http/router.ts:89-93 a name starting with "127." counts as loopback
-  it.failing("does not treat a DNS name that starts with 127. as loopback", () => {
+  it("does not treat a DNS name that starts with 127. as loopback", () => {
     expect(isLoopbackHostname("127.0.0.1.evil.example")).toBe(false);
     expect(isLoopbackHostname(hostnameOf("127.0.0.1.evil.example:4000"))).toBe(false);
     expect(isLoopbackAddress("127.evil")).toBe(false);

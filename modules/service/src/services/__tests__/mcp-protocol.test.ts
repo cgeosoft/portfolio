@@ -227,8 +227,7 @@ describe("MCP HTTP transport", () => {
     expect(await foreign.json()).toEqual({ error: "Invalid Host header" });
   });
 
-  // Suspected bug: modules/service/src/http/router.ts:89-93 isLoopbackHostname accepts any name starting with "127." (DNS rebinding)
-  it.failing("refuses a host name that only starts with 127.", async () => {
+  it("refuses a host name that only starts with 127.", async () => {
     const res = await handleMcpHttp(post(PING, { host: "127.0.0.1.evil.example:5131" }), NO_DEPS, ok);
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ error: "Invalid Host header" });
