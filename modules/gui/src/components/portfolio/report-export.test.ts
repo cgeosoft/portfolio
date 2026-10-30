@@ -115,8 +115,7 @@ describe("report export fallbacks", () => {
     expect(generateReportMarkdown(bare, 'He said "hi"', false)).toContain('portfolio: "He said \\"hi\\""');
   });
 
-  // Suspected bug: modules/gui/src/components/portfolio/report-export.ts:87 .filter(Boolean) drops the line break after the closing ---
-  it.failing("closes the frontmatter on its own line", () => {
+  it("closes the frontmatter on its own line", () => {
     const md = generateReportMarkdown(bare, undefined as any, false);
     expect(md.startsWith("---\nreport_id:")).toBe(true);
     expect(md).toContain("\n---\n# Portfolio Tactical Briefing (r1)\n");
