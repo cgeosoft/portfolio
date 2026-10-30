@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { DomPlatform } from "chart.js";
-import { installChartZoomFix } from "./chart-zoom";
+import { containerContentSize, installChartZoomFix } from "./chart-zoom";
 
 function fakeStyle(el: { padding?: string }) {
   const pad = el.padding ?? "0px";
@@ -57,5 +57,48 @@ describe("chart zoom fix", () => {
 
   it("keeps explicit sizes from the ResizeObserver", () => {
     expect(new DomPlatform().getMaximumSize(zoomedCanvas(), 500, 200)).toEqual({ width: 500, height: 200 });
+  });
+});
+
+describe("containerContentSize", () => {
+  const original = globalThis.getComputedStyle;
+  const canvas = (parent: object | null) => ({ parentNode: parent, ownerDocument }) as unknown as HTMLCanvasElement;
+  const box = (clientWidth: number, clientHeight: number, padding: string) => canvas({ ownerDocument, clientWidth, clientHeight, padding });
+
+  beforeAll(() => {
+    globalThis.getComputedStyle = fakeStyle as unknown as typeof getComputedStyle;
+  });
+
+  afterAll(() => {
+    globalThis.getComputedStyle = original;
+  });
+
+  it("returns null without a measurable parent", () => {
+    expect(containerContentSize(canvas(null))).toBeNull();
+    expect(containerContentSize(canvas({ ownerDocument }))).toBeNull();
+    expect(containerContentSize(box(0, 0, "0px"))).toBeNull();
+  });
+
+  it("subtracts the padding", () => {
+    expect(containerContentSize(box(200, 100, "10px"))).toEqual({ width: 180, height: 80 });
+  });
+
+  it("never goes below zero", () => {
+    expect(containerContentSize(box(10, 10, "20px"))).toEqual({ width: 0, height: 0 });
+  });
+
+  it("keeps a height with zero width", () => {
+    expect(containerContentSize(box(0, 100, "0px"))).toEqual({ width: 0, height: 100 });
+  });
+
+  it("counts non-numeric padding as zero", () => {
+    expect(containerContentSize(box(200, 100, "auto"))).toEqual({ width: 200, height: 100 });
+  });
+
+  it("installs the fix only once", () => {
+    installChartZoomFix();
+    const first = DomPlatform.prototype.getMaximumSize;
+    installChartZoomFix();
+    expect(DomPlatform.prototype.getMaximumSize).toBe(first);
   });
 });

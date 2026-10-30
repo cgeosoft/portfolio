@@ -1,5 +1,16 @@
-import { describe, it, expect } from "bun:test";
-import { escapeCsvField, fmtCurrency, formatMoney, maskFinancialValues, numberFormat } from "./utils";
+import { afterAll, beforeAll, describe, it, expect, setSystemTime } from "bun:test";
+import {
+  cleanThinkTags,
+  escapeCsvField,
+  fmtCurrency,
+  formatMoney,
+  formatTimeAgo,
+  getAssetTypeBadgeClass,
+  getDeltaColorClass,
+  getRsiZone,
+  maskFinancialValues,
+  numberFormat,
+} from "./utils";
 
 describe("maskFinancialValues", () => {
   it("masks transaction quantities in the prompt line format", () => {
@@ -118,5 +129,106 @@ describe("number formatting", () => {
     expect(formatMoney(0.123456, "CHF", 6)).toBe("Fr 0.123456");
     expect(formatMoney(12, "USD", 0)).toBe("$12");
     expect(numberFormat("en-US", 0, 4).format(1234.56789)).toBe((1234.56789).toLocaleString("en-US", { maximumFractionDigits: 4 }));
+  });
+});
+
+describe("cleanThinkTags", () => {
+  it("removes reasoning blocks", () => {
+    expect(cleanThinkTags(undefined)).toBe("");
+    expect(cleanThinkTags("<thinking>x</thinking>ok")).toBe("ok");
+    expect(cleanThinkTags("a<think>never closed")).toBe("a");
+  });
+
+  // Suspected bug: modules/gui/src/components/portfolio/utils.ts:122 stripThinkTags skips past the next ">" after </think>
+  it.failing("keeps the text after a closing tag", () => {
+    expect(cleanThinkTags("  a<think>x</think>b  ")).toBe("ab");
+    expect(cleanThinkTags("<think>plan</think>\n\n# Report\nBody")).toBe("# Report\nBody");
+    expect(cleanThinkTags("<THINK foo=1>x<think>y</think>z</think>done")).toBe("done");
+    expect(cleanThinkTags("a</think>b")).toBe("ab");
+  });
+
+  it("strips a short prefix before the first heading in report mode", () => {
+    expect(cleanThinkTags("junk\n# Title\nbody", true)).toBe("# Title\nbody");
+    expect(cleanThinkTags("junk\n# Title", false)).toBe("junk\n# Title");
+    expect(cleanThinkTags("intro\n1. **Point**", true)).toBe("1. **Point**");
+  });
+
+  it("keeps a long or multi-paragraph prefix in report mode", () => {
+    expect(cleanThinkTags("p1\n\np2\n# T", true)).toBe("p1\n\np2\n# T");
+    expect(cleanThinkTags("x".repeat(120) + "\n# T", true).length).toBe(124);
+  });
+});
+
+describe("formatTimeAgo", () => {
+  beforeAll(() => {
+    setSystemTime(new Date("2026-06-15T12:00:00Z"));
+  });
+
+  afterAll(() => {
+    setSystemTime();
+  });
+
+  it("formats elapsed time in the largest whole unit", () => {
+    const cases: [string | null | undefined, string][] = [
+      [null, "never"],
+      [undefined, "never"],
+      ["", "never"],
+      ["2026-06-15T12:00:30Z", "just now"],
+      ["2026-06-16T00:00:00Z", "just now"],
+      ["garbage", "just now"],
+      ["2026-06-15T11:59:16Z", "just now"],
+      ["2026-06-15T11:59:15Z", "0m ago"],
+      ["2026-06-15T11:00:01Z", "59m ago"],
+      ["2026-06-15T11:00:00Z", "1h ago"],
+      ["2026-06-14T12:00:01Z", "23h ago"],
+      ["2026-06-14T12:00:00Z", "1d ago"],
+      ["2026-05-17T12:00:00Z", "29d ago"],
+      ["2026-05-16T12:00:00Z", "1mo ago"],
+      ["2025-06-20T12:00:00Z", "1y ago"],
+      ["2024-06-01T12:00:00Z", "2y ago"],
+    ];
+    for (const [input, expected] of cases) expect([input, formatTimeAgo(input as any)]).toEqual([input, expected]);
+  });
+});
+
+describe("style helpers", () => {
+  it("colours deltas beyond a small threshold", () => {
+    for (const v of [undefined, NaN, 0.0009, -0.0009]) expect(getDeltaColorClass(v as any)).toBe("text-slate-400");
+    expect(getDeltaColorClass(0.001)).toBe("text-mint");
+    expect(getDeltaColorClass(-0.5)).toBe("text-rose-400");
+  });
+
+  it("styles asset type badges", () => {
+    expect(getAssetTypeBadgeClass("Stock")).toBe("bg-royal/20 text-royal-bright border-royal/40");
+    expect(getAssetTypeBadgeClass("ETF")).toBe("bg-plum/25 text-plum-bright border-plum/50");
+    expect(getAssetTypeBadgeClass("Fund")).toBe("bg-plum/25 text-plum-bright border-plum/50");
+    expect(getAssetTypeBadgeClass("Crypto")).toBe("bg-[#DD3C73]/15 text-[#DD3C73] border-[#DD3C73]/30");
+    expect(getAssetTypeBadgeClass("Cash")).toBe("bg-mint/15 text-mint border-mint/30");
+    expect(getAssetTypeBadgeClass("Private")).toBe("bg-cream/15 text-cream border-cream/30");
+    expect(getAssetTypeBadgeClass("Other")).toBe("bg-cream/15 text-cream border-cream/30");
+    expect(getAssetTypeBadgeClass("MutualFund")).toBe("bg-slate-500/10 text-slate-400 border-slate-500/20");
+  });
+
+  it("labels RSI zones", () => {
+    expect(getRsiZone(undefined as any).label).toBe("N/A");
+    expect(getRsiZone(NaN).label).toBe("N/A");
+    expect(getRsiZone(70).label).toBe("OVERBOUGHT");
+    expect(getRsiZone(69.9).label).toBe("NEUTRAL");
+    expect(getRsiZone(30).label).toBe("OVERSOLD");
+    expect(getRsiZone(0).label).toBe("OVERSOLD");
+    expect(getRsiZone(30.1).label).toBe("NEUTRAL");
+    expect(getRsiZone(75).textClass).toBe("text-[#DD3C73]");
+  });
+});
+
+describe("escapeCsvField extra", () => {
+  it("handles nulls, numbers, booleans, tabs and formula prefixes", () => {
+    expect(escapeCsvField(null)).toBe("");
+    expect(escapeCsvField(-5)).toBe("-5");
+    expect(escapeCsvField("-5")).toBe("'-5");
+    expect(escapeCsvField(true as any)).toBe("true");
+    expect(escapeCsvField("a\tb")).toBe("a\tb");
+    expect(escapeCsvField("\tx")).toBe("'\tx");
+    expect(escapeCsvField("=a,b")).toBe("\"'=a,b\"");
   });
 });

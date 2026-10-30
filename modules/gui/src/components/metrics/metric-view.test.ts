@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { Gauge, Receipt } from "lucide-react";
 import type { MetricEvaluation } from "portfolio-shared/api-types";
-import { getMetricIcon } from "../portfolio/metrics-catalog";
-import { displayMetric } from "./metric-view";
+import { getMetricAccentClass, getMetricIcon, METRIC_ICON_NAMES } from "../portfolio/metrics-catalog";
+import { displayMetric, metricShortTitle, metricTitle } from "./metric-view";
 
 const result: MetricEvaluation = {
   id: "acme-metric",
@@ -51,5 +51,35 @@ describe("getMetricIcon", () => {
   it("never returns a property of Object.prototype", () => {
     expect(getMetricIcon("constructor")).toBe(Gauge);
     expect(getMetricIcon("__proto__")).toBe(Gauge);
+  });
+});
+
+describe("displayMetric states", () => {
+  it("is pending without a result", () => {
+    expect(displayMetric(undefined, hidden, null)).toEqual({ kind: "pending" } as any);
+  });
+
+  it("keeps the unavailable reason unmasked", () => {
+    expect(displayMetric({ id: "m", status: "unavailable", error: "Needs key 2" } as any, hidden, null)).toEqual({ kind: "unavailable", reason: "Needs key 2" } as any);
+  });
+
+  it("keeps digits of a quarantined verified module", () => {
+    expect(displayMetric({ id: "m", status: "quarantined", error: "bad 12" } as any, hidden, verified)).toEqual({ kind: "failed", status: "quarantined", error: "bad 12" } as any);
+  });
+});
+
+describe("metric titles and accents", () => {
+  it("uses the manifest name and short name", () => {
+    expect(metricTitle({ manifest: { name: "Beta" } } as any)).toBe("Beta");
+    expect(metricShortTitle({ manifest: { name: "Beta", shortName: "B" } } as any)).toBe("B");
+    expect(metricShortTitle({ manifest: { name: "Beta", shortName: "" } } as any)).toBe("Beta");
+  });
+
+  it("maps accents and lists the icon names", () => {
+    expect(getMetricAccentClass("mint")).toBe("text-mint");
+    expect(getMetricAccentClass("nope" as any)).toBe("text-slate-400");
+    expect(METRIC_ICON_NAMES.length).toBe(45);
+    expect(METRIC_ICON_NAMES).toContain("gauge");
+    expect(METRIC_ICON_NAMES).not.toContain("constructor");
   });
 });

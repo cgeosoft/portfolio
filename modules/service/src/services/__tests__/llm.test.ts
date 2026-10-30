@@ -357,3 +357,73 @@ describe("chat: rejected request fields", () => {
     }
   });
 });
+
+describe("sanitizeLlmResponse: edge cases", () => {
+  it("handles missing, empty and padded text", () => {
+    expect(sanitizeLlmResponse(undefined as unknown as string)).toBe("");
+    expect(sanitizeLlmResponse("")).toBe("");
+    expect(sanitizeLlmResponse("  x  ")).toBe("x");
+  });
+
+  it("matches think tags in any case", () => {
+    expect(sanitizeLlmResponse("<THINK>x</THINK>Answer")).toBe("Answer");
+    expect(sanitizeLlmResponse("<Think>x</think>A")).toBe("A");
+  });
+
+  it("strips a think tag with attributes", () => {
+    expect(sanitizeLlmResponse('<think type="r">x</think>A')).toBe("A");
+  });
+
+  it("treats any tag starting with <think as a thinking block", () => {
+    expect(sanitizeLlmResponse("<thinking>plan</thinking>Answer")).toBe("Answer");
+  });
+
+  it("drops a stray closing tag outside a block", () => {
+    expect(sanitizeLlmResponse("Answer</think> tail")).toBe("Answer tail");
+  });
+
+  it("drops an unterminated opening tag", () => {
+    expect(sanitizeLlmResponse("Answer <think")).toBe("Answer");
+  });
+
+  it("returns empty for a lone closing tag", () => {
+    expect(sanitizeLlmResponse("</think>")).toBe("");
+  });
+
+  it("over-matches a tag such as <thinker> (documented behaviour)", () => {
+    expect(sanitizeLlmResponse("a<thinker>b")).toBe("a");
+  });
+
+  it("strips a huge truncated thinking block quickly", () => {
+    const started = performance.now();
+    expect(sanitizeLlmResponse("<think>" + "a".repeat(1_000_000))).toBe("");
+    expect(performance.now() - started).toBeLessThan(2000);
+  });
+
+  it("drops a short chat preamble before a report heading only for reports", () => {
+    const raw = "Sure! Here is your report:\n# Title\nBody";
+    expect(sanitizeLlmResponse(raw, true)).toBe("# Title\nBody");
+    expect(sanitizeLlmResponse(raw, false)).toBe(raw);
+  });
+
+  it("starts a report at a numbered bold section", () => {
+    expect(sanitizeLlmResponse("Intro\n1. **Summary**\ntext", true)).toBe("1. **Summary**\ntext");
+    expect(sanitizeLlmResponse("1. **Executive Summary**\ntext", true)).toBe("1. **Executive Summary**\ntext");
+    expect(sanitizeLlmResponse("# Title\ntext", true)).toBe("# Title\ntext");
+  });
+
+  it("keeps a long preamble and a preamble with a blank line", () => {
+    const long = "x".repeat(100) + "\n# H\nb";
+    expect(sanitizeLlmResponse(long, true)).toBe(long);
+    const paragraphs = "Intro\n\nMore\n# H\nb";
+    expect(sanitizeLlmResponse(paragraphs, true)).toBe(paragraphs);
+  });
+
+  it("needs the heading at the start of a line", () => {
+    expect(sanitizeLlmResponse("Price is #1 today\nmore", true)).toBe("Price is #1 today\nmore");
+  });
+
+  it("strips a thinking block and then the preamble", () => {
+    expect(sanitizeLlmResponse("<think>x</think>Okay.\n## H\nb", true)).toBe("## H\nb");
+  });
+});

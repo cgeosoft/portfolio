@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, afterEach, setSystemTime } from "bun:test";
 import { getDatabase } from "../../db/database";
 import * as portfolioRepo from "../../db/portfolio.repo";
 import * as txRepo from "../../db/transaction.repo";
 import * as symbolMapRepo from "../../db/symbol-map.repo";
 import { PortfolioService, type IMarketDataProvider } from "../portfolio";
-import { SymbolResolver, cryptoPair, listingCurrency, pickListing, type SymbolSearcher } from "../symbol-resolver";
+import { SymbolResolver, cryptoPair, listingCurrency, pickListing, transactionIsin, type SymbolSearcher } from "../symbol-resolver";
 import { isIsin } from "../providers/identifiers";
 import type { YahooSymbolSearchResult } from "../yahoo-finance";
 
@@ -173,5 +173,47 @@ describe("PortfolioService with the resolver", () => {
     }
     const holdings = service.computeHoldingsFromTransactions(txRepo.findByPortfolio(other.id));
     expect(holdings[0]).toMatchObject({ symbol: "HO.PA", isin: THALES });
+  });
+});
+
+describe("transactionIsin", () => {
+  const ASML = "NL0010273215";
+
+  afterEach(() => {
+    setSystemTime();
+    symbolMapRepo.remove(ASML);
+  });
+
+  it("reads a valid ISIN from the isin field or the symbol", () => {
+    expect(transactionIsin({ isin: "us0378331005" })).toBe("US0378331005");
+    expect(transactionIsin({ symbol: "IE00B4L5Y983" })).toBe("IE00B4L5Y983");
+    expect(transactionIsin({ isin: "US0378331006", symbol: "AAPL" })).toBeUndefined();
+    expect(transactionIsin({})).toBeUndefined();
+  });
+
+  it("reads more listing currencies and prefers the home market", () => {
+    expect(listingCurrency("BTC-USDT")).toBe("USD");
+    expect(listingCurrency("SHOP.TO")).toBe("CAD");
+    expect(pickListing("CA0679011084", [hit("GOLD"), hit("ABX.TO")], "USD")?.symbol).toBe("ABX.TO");
+  });
+
+  it("records a miss when the search throws and retries after an hour", async () => {
+    const start = new Date("2026-03-15T12:00:00Z");
+    setSystemTime(start);
+    const calls: string[] = [];
+    const resolver = new SymbolResolver({
+      searchSymbols: async (q: string) => {
+        calls.push(q);
+        throw new Error("search down");
+      },
+    });
+    await resolver.applyToTransactions([{ symbol: ASML, isin: ASML }], "EUR");
+    expect(calls).toEqual([ASML]);
+    await resolver.applyToTransactions([{ symbol: ASML, isin: ASML }], "EUR");
+    expect(calls).toEqual([ASML]);
+
+    setSystemTime(new Date(start.getTime() + 61 * 60 * 1000));
+    await resolver.applyToTransactions([{ symbol: ASML, isin: ASML }], "EUR");
+    expect(calls).toEqual([ASML, ASML]);
   });
 });

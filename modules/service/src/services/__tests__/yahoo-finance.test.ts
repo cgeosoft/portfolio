@@ -199,3 +199,235 @@ describe("YahooFinanceService", () => {
     expect((await yahoo.getExchangeRates("EUR", ["USD"], true)).get("USD")).toBeCloseTo(0.8, 6);
   });
 });
+
+/** Replaces fetch with a router and records each URL and the request headers. */
+function routeFetch(route: (url: URL, n: number) => Response | Promise<Response>): { url: URL; headers: Record<string, string> }[] {
+  const calls: { url: URL; headers: Record<string, string> }[] = [];
+  globalThis.fetch = mock(async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(String(input));
+    calls.push({ url, headers: Object.fromEntries(new Headers(init?.headers).entries()) });
+    return route(url, calls.length);
+  }) as unknown as typeof fetch;
+  return calls;
+}
+
+describe("YahooFinanceService chart parsing", () => {
+  const originalFetch = globalThis.fetch;
+  beforeEach(resetYahoo);
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    resetYahoo();
+  });
+
+  it("maps meta and candles and skips a null close", async () => {
+    routeFetch(() =>
+      Response.json({
+        chart: {
+          result: [
+            {
+              meta: { currency: "EUR", regularMarketPrice: 101, previousClose: 99, fiftyTwoWeekHigh: 120, fiftyTwoWeekLow: 80, shortName: "Short", instrumentType: "ETF" },
+              timestamp: [1767225600, 1767312000, 1767398400],
+              indicators: { quote: [{ open: [1, null, 3], high: [2, null, 4], low: [0.5, null, 2], close: [1.5, null, 3.5], volume: [10, null, null] }] },
+            },
+          ],
+          error: null,
+        },
+      }),
+    );
+    const chart = await new YahooFinanceService().getChart("ZQPARSE", "1y", "1d");
+    expect(chart).toEqual({
+      symbol: "ZQPARSE",
+      currency: "EUR",
+      regularMarketPrice: 101,
+      previousClose: 99,
+      fiftyTwoWeekHigh: 120,
+      fiftyTwoWeekLow: 80,
+      shortName: "Short",
+      longName: "Short",
+      instrumentType: "ETF",
+      candles: [
+        { timestamp: 1767225600000, date: "2026-01-01", open: 1, high: 2, low: 0.5, close: 1.5, volume: 10 },
+        { timestamp: 1767398400000, date: "2026-01-03", open: 3, high: 4, low: 2, close: 3.5, volume: 0 },
+      ],
+    } as YahooChartData);
+  });
+
+  it("fills defaults from a bare meta and writes a quote row", async () => {
+    routeFetch(() =>
+      Response.json({
+        chart: {
+          result: [{ meta: {}, timestamp: [1767225600, 1767312000], indicators: { quote: [{ open: [1, 2], high: [1, 2], low: [1, 2], close: [1, 2], volume: [0, 0] }] } }],
+          error: null,
+        },
+      }),
+    );
+    const chart = await new YahooFinanceService().getChart("ZQBARE", "1y", "1d");
+    expect(chart.currency).toBe("USD");
+    expect(chart.regularMarketPrice).toBe(2);
+    expect(chart.longName).toBe("ZQBARE");
+    expect(chart.instrumentType).toBeUndefined();
+    expect(marketCache.get("quote:ZQBARE")).not.toBeNull();
+  });
+
+  it("tries query1 after an HTTP 500 from query2", async () => {
+    const calls = routeFetch((_url, n) => (n === 1 ? new Response("err", { status: 500 }) : new Response(chartBody(5), { status: 200 })));
+    const chart = await new YahooFinanceService().getChart("ZQHOST", "1y", "1d");
+    expect(chart.regularMarketPrice).toBe(5);
+    expect(calls.length).toBe(2);
+    expect(calls[0]!.url.host).toBe("query2.finance.yahoo.com");
+    expect(calls[1]!.url.host).toBe("query1.finance.yahoo.com");
+  });
+
+  it("rejects with Yahoo's error code and without the symbol", async () => {
+    routeFetch(() => Response.json({ chart: { result: null, error: { code: "Not Found" } } }));
+    const error = await new YahooFinanceService().getChart("ZQNOTFOUND", "1y", "1d").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("Not Found");
+    expect((error as Error).message).not.toContain("ZQNOTFOUND");
+  });
+
+  it("shares one fetch between two concurrent chart calls", async () => {
+    const calls = routeFetch(() => new Response(chartBody(8), { status: 200 }));
+    const yahoo = new YahooFinanceService();
+    const [a, b] = await Promise.all([yahoo.getChart("ZQDEDUP", "1y", "1d"), yahoo.getChart("ZQDEDUP", "1y", "1d")]);
+    expect(a.regularMarketPrice).toBe(8);
+    expect(b.regularMarketPrice).toBe(8);
+    expect(calls.length).toBe(1);
+  });
+});
+
+describe("YahooFinanceService search filtering", () => {
+  const originalFetch = globalThis.fetch;
+  beforeEach(resetYahoo);
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    resetYahoo();
+  });
+
+  it("drops options, futures and rows without a symbol and fills defaults", async () => {
+    const calls = routeFetch(() =>
+      Response.json({
+        quotes: [
+          { symbol: "A", quoteType: "EQUITY", longname: "Long", shortname: "S", exchange: "NMS", typeDisp: "Equity" },
+          { symbol: "O", quoteType: "OPTION" },
+          { symbol: "F", quoteType: "FUTURE" },
+          { quoteType: "ETF" },
+          { symbol: "I", quoteType: "INDEX" },
+          { symbol: "C", quoteType: "CRYPTOCURRENCY", shortname: "Coin" },
+        ],
+      }),
+    );
+    const yahoo = new YahooFinanceService();
+    const res = await yahoo.searchSymbols("zqsearch");
+    expect(res.length).toBe(3);
+    expect(res[0]).toMatchObject({ symbol: "A", name: "Long", exchange: "NMS", quoteType: "EQUITY", typeDisp: "Equity" });
+    expect(res[1]).toMatchObject({ symbol: "I", name: "I", exchange: "US", quoteType: "INDEX", typeDisp: "INDEX" });
+    expect(res[2]).toMatchObject({ symbol: "C", name: "Coin", exchange: "US", quoteType: "CRYPTOCURRENCY", typeDisp: "CRYPTOCURRENCY" });
+
+    expect(await yahoo.searchSymbols("   ")).toEqual([]);
+    expect(calls.length).toBe(1);
+  });
+});
+
+describe("YahooFinanceService corporate events", () => {
+  const originalFetch = globalThis.fetch;
+  beforeEach(resetYahoo);
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    resetYahoo();
+  });
+
+  it("sorts dividends, drops zero amounts and invalid splits", async () => {
+    const calls = routeFetch(() =>
+      Response.json({
+        chart: {
+          result: [
+            {
+              meta: { currency: "GBp" },
+              events: {
+                dividends: { a: { amount: 0.2, date: 1767225600 }, b: { amount: 0, date: 1767312000 }, c: { amount: 0.1, date: 1735689600 } },
+                splits: { s: { date: 1767398400, numerator: "2", denominator: "1" }, bad: { date: 1767398400, numerator: 0, denominator: 1 } },
+              },
+            },
+          ],
+        },
+      }),
+    );
+    const events = await new YahooFinanceService().getCorporateEvents("ZQEV");
+    expect(events).toEqual({
+      symbol: "ZQEV",
+      currency: "GBp",
+      dividends: [
+        { date: "2025-01-01", amount: 0.1 },
+        { date: "2026-01-01", amount: 0.2 },
+      ],
+      splits: [{ date: "2026-01-03", numerator: 2, denominator: 1 }],
+    });
+    const href = calls[0]!.url.href;
+    expect(href).toContain("interval=1mo&events=div%2Csplits");
+    expect(calls[0]!.url.searchParams.get("range")).toBe("5y");
+  });
+
+  it("caches a 404 as a miss", async () => {
+    const calls = routeFetch(() => new Response("Not Found", { status: 404 }));
+    const yahoo = new YahooFinanceService();
+    expect(await yahoo.getCorporateEvents("ZQEV404")).toBeNull();
+    const after = calls.length;
+    expect(await yahoo.getCorporateEvents("ZQEV404")).toBeNull();
+    expect(calls.length).toBe(after);
+  });
+});
+
+describe("YahooFinanceService quoteSummary session", () => {
+  const originalFetch = globalThis.fetch;
+  beforeEach(resetYahoo);
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    resetYahoo();
+  });
+
+  /** Session router; `summary` answers the quoteSummary request. */
+  function sessionRouter(summary: (url: URL, n: number) => Response) {
+    let summaryCalls = 0;
+    return routeFetch((url) => {
+      if (url.host === "fc.yahoo.com") return new Response("", { status: 200, headers: { "Set-Cookie": "A3=abc; Path=/" } });
+      if (url.pathname === "/v1/test/getcrumb") return new Response("crumb123", { status: 200 });
+      if (url.pathname.startsWith("/v10/finance/quoteSummary/")) return summary(url, ++summaryCalls);
+      return new Response("", { status: 404 });
+    });
+  }
+
+  it("opens a session, dedupes and sorts modules, and caches the answer", async () => {
+    const calls = sessionRouter(() => Response.json({ quoteSummary: { result: [{ price: { longName: "X" } }] } }));
+    const yahoo = new YahooFinanceService();
+    expect(await yahoo.getQuoteSummary("zqsum", ["price", "quoteType", "price"])).toEqual({ price: { longName: "X" } } as never);
+    const summary = calls.find((c) => c.url.pathname === "/v10/finance/quoteSummary/ZQSUM");
+    expect(summary).toBeDefined();
+    expect(summary!.url.href).toContain("modules=price%2CquoteType");
+    expect(summary!.url.searchParams.get("formatted")).toBe("false");
+    expect(summary!.url.searchParams.get("crumb")).toBe("crumb123");
+    expect(summary!.headers.cookie).toBe("A3=abc");
+    expect(marketCache.get("yahoo:summary:ZQSUM:price,quoteType")).not.toBeNull();
+
+    const before = calls.length;
+    await yahoo.getQuoteSummary("ZQSUM", ["price", "quoteType"]);
+    expect(calls.length).toBe(before);
+  });
+
+  it("opens a new session once after a 401", async () => {
+    const calls = sessionRouter((_url, n) => (n === 1 ? new Response("", { status: 401 }) : Response.json({ quoteSummary: { result: [{ price: { longName: "Y" } }] } })));
+    const res = await new YahooFinanceService().getQuoteSummary("ZQSUM401", ["price"]);
+    expect(res).toEqual({ price: { longName: "Y" } } as never);
+    expect(calls.filter((c) => c.url.pathname.startsWith("/v10/finance/quoteSummary/")).length).toBe(2);
+    expect(calls.filter((c) => c.url.host === "fc.yahoo.com").length).toBe(2);
+  });
+
+  it("caches a 404 as a miss", async () => {
+    const calls = sessionRouter(() => new Response("", { status: 404 }));
+    const yahoo = new YahooFinanceService();
+    expect(await yahoo.getQuoteSummary("ZQSUM404", ["price"])).toBeNull();
+    const before = calls.length;
+    expect(await yahoo.getQuoteSummary("ZQSUM404", ["price"])).toBeNull();
+    expect(calls.length).toBe(before);
+  });
+});

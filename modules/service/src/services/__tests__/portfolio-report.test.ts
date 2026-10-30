@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, setSystemTime } from "bun:test";
 import { getDatabase } from "../../db/database.js";
 import * as reportRepo from "../../db/report.repo.js";
 import * as portfolioRepo from "../../db/portfolio.repo.js";
-import { PortfolioReportService } from "../portfolio-report.js";
+import { PortfolioReportService, getIsoWeekKey } from "../portfolio-report.js";
+import { updateConfig } from "../../config.js";
 import { EMPTY_REPORT_INTEL, type ReportIntel } from "../ai-context.js";
 import type { CompanyIntel } from "portfolio-shared/company-intel";
 import type { LlmService } from "../llm.js";
@@ -290,3 +291,230 @@ describe("Portfolio Report Prompt Persistence", () => {
   });
 });
 
+
+const extPortfolioId = "test-portfolio-prompt-123";
+
+function resetReportRow(): void {
+  const db = getDatabase();
+  db.run("DELETE FROM reports WHERE portfolioId = ?", [extPortfolioId]);
+  db.run("DELETE FROM portfolios WHERE id = ?", [extPortfolioId]);
+}
+
+/** Distinctive money numbers that must never reach a prompt. */
+const privateData: FinancialPortfolioData = {
+  summary: {
+    totalValue: 876543.21,
+    totalCost: 765432.1,
+    totalGainLossDollar: 11111.11,
+    totalGainLossPercent: 12.5,
+    dayGainLossDollar: 2468.13,
+    dayGainLossPercent: -0.4,
+    totalGainSinceStartDollar: 11111.11,
+    totalGainSinceStartPercent: 12.5,
+    totalCashInjected: 765432.1,
+    cashBalance: 13579.24,
+    totalPortfolioValue: 987654.32,
+    realizedPnL: 0,
+    totalDividends: 0,
+    totalInterest: 0,
+    totalFees: 0,
+    totalTaxes: 0,
+    stockWeightPercent: 60,
+    etfWeightPercent: 30,
+    cryptoWeightPercent: 0,
+    cashWeightPercent: 10,
+    baseCurrency: "EUR",
+    lastUpdated: new Date().toISOString(),
+  },
+  holdings: [
+    {
+      symbol: "SAP",
+      name: "SAP SE",
+      assetType: "Stock",
+      shares: 777,
+      buyPrice: 123.45,
+      currentPrice: 234.56,
+      previousClose: 231.97,
+      totalCost: 44444.44,
+      currentValue: 55555.55,
+      dayChangeDollar: 0,
+      dayChangePercent: 1.12,
+      totalGainLossDollar: 0,
+      totalGainLossPercent: 20,
+      weightPercent: 30,
+      currency: "EUR",
+    },
+  ],
+  chartHistory: [],
+  individualCharts: {},
+};
+
+function reportService(chat: (messages: { role: string; content: string }[], options?: Record<string, unknown>) => Promise<string>) {
+  const llm = { chat } as unknown as LlmService;
+  const portfolioService = { getPortfolioData: async () => privateData } as unknown as PortfolioService;
+  return new PortfolioReportService(llm, portfolioService, async () => EMPTY_REPORT_INTEL);
+}
+
+const extPortfolio: PortfolioItem = { id: extPortfolioId, name: "Prompt Test Portfolio", baseCurrency: "EUR" };
+
+describe("ISO week keys", () => {
+  beforeEach(() => {
+    resetReportRow();
+    getDatabase().run("INSERT INTO portfolios (id, name, baseCurrency) VALUES (?, ?, ?)", [extPortfolioId, "Prompt Test Portfolio", "EUR"]);
+  });
+  afterEach(resetReportRow);
+
+  it("numbers weeks by ISO 8601 across year ends", () => {
+    expect(getIsoWeekKey(new Date(2026, 0, 1))).toBe("2026-w01");
+    expect(getIsoWeekKey(new Date(2027, 0, 1))).toBe("2026-w53");
+    expect(getIsoWeekKey(new Date(2024, 11, 30))).toBe("2025-w01");
+    expect(getIsoWeekKey(new Date(2021, 0, 3))).toBe("2020-w53");
+    expect(getIsoWeekKey(new Date(2026, 9, 30))).toBe("2026-w44");
+  });
+
+  it("normalizes a given week key and derives its dates", async () => {
+    const svc = reportService(async () => "ok");
+    const res = await svc.prepareReportPrompt(extPortfolioId, { weekKey: "2026-W5" });
+    expect(res.weekKey).toBe("2026-w05");
+    expect(res.weekStartDate).toBe("2026-01-26");
+    expect(res.weekEndDate).toBe("2026-02-01");
+    expect(res.period).toBe("Jan 26 - Feb 1, 2026");
+  });
+
+  it("puts week 1 in the days that belong to it across the year end", async () => {
+    const svc = reportService(async () => "ok");
+    const res = await svc.prepareReportPrompt(extPortfolioId, { weekKey: "2026-w1" });
+    expect(res.weekStartDate).toBe("2025-12-29");
+    expect(res.weekEndDate).toBe("2026-01-04");
+    expect(res.period).toBe("Dec 29 - Jan 4, 2026");
+  });
+
+  it("falls back to the current week for an invalid key", async () => {
+    const svc = reportService(async () => "ok");
+    for (const weekKey of ["2026-w54", "2026-w00", "garbage"]) {
+      const res = await svc.prepareReportPrompt(extPortfolioId, { weekKey });
+      expect(res.weekKey).toBe(getIsoWeekKey(new Date()));
+    }
+  });
+
+  // Suspected bug: modules/service/src/services/portfolio-report.ts:190-205 current-week dates use the UTC date of local now
+  it.failing("gives the local Monday to Sunday for the current week east of UTC just after midnight", async () => {
+    const oldTz = process.env.TZ;
+    process.env.TZ = "Pacific/Auckland";
+    setSystemTime(new Date("2026-10-25T12:00:00Z"));
+    try {
+      const svc = reportService(async () => "ok");
+      const res = await svc.prepareReportPrompt(extPortfolioId);
+      expect(res.weekStartDate).toBe("2026-10-26");
+      expect(res.weekEndDate).toBe("2026-11-01");
+      expect(res.weekKey).toBe("2026-w44");
+    } finally {
+      setSystemTime();
+      if (oldTz === undefined) delete process.env.TZ;
+      else process.env.TZ = oldTz;
+    }
+  });
+});
+
+describe("report prompt privacy and fallback", () => {
+  beforeEach(() => {
+    resetReportRow();
+    getDatabase().run("INSERT INTO portfolios (id, name, baseCurrency) VALUES (?, ?, ?)", [extPortfolioId, "Prompt Test Portfolio", "EUR"]);
+  });
+  afterEach(resetReportRow);
+
+  it("shows weights and percentages but no amounts in the prompt", async () => {
+    const res = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
+    const text = res.systemPrompt + "\n" + res.userPrompt;
+    expect(text).toContain("**SAP** (SAP SE, Stock): 30% weight | Day: +1.12% | Total Gain: +20% | SMA50: N/A | SMA200: N/A | RSI: N/A");
+    expect(text).toContain("**Cash Liquidity**: 10%");
+    for (const secret of ["987654", "876543", "13579", "2468", "11111", "55555", "44444", "777", "123.45", "234.56"]) {
+      expect(text).not.toContain(secret);
+    }
+  });
+
+  it("keeps the amounts in the stored metrics only", async () => {
+    const res = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
+    expect(res.metrics.totalPortfolioValue).toBe(987654.32);
+    expect(res.metrics.cashBalance).toBe(13579.24);
+    expect(res.metrics.holdingsCount).toBe(1);
+    expect(res.metrics.topWinner).toEqual({ symbol: "SAP", changePercent: 1.12 });
+    expect(res.metrics.topLoser).toBeUndefined();
+  });
+
+  it("writes the style rules for English and adds a language rule for other languages", async () => {
+    const english = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
+    expect(english.userPrompt).toContain("1. Use ASD-STE100 simplified english text");
+    expect(english.userPrompt.split("\n").some((l) => l.startsWith("5. "))).toBe(false);
+
+    updateConfig({ language: "de" });
+    try {
+      const german = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
+      expect(german.userPrompt).toContain("1. Use short, simple sentences");
+      expect(german.userPrompt).toContain("5. Write your whole answer in German, headings included.");
+    } finally {
+      updateConfig({ language: "en" });
+    }
+  });
+
+  it("keeps the four-part structure without market intelligence", async () => {
+    const res = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
+    expect(res.userPrompt).toContain("4. **Tactical Action Items");
+    expect(res.userPrompt).not.toContain("Real-Time Market Intelligence");
+  });
+
+  it("stores a fallback briefing when the model call fails", async () => {
+    const message = "API request failed with status 503: echo SAP";
+    const svc = reportService(async () => {
+      throw new Error(message);
+    });
+    const report = await svc.generateReport(extPortfolio, { portfolioData: privateData });
+    expect(report.isFallback).toBe(true);
+    expect(report.status).toBe("fallback");
+    expect(report.error).toBe(message);
+    expect(report.content.startsWith("### Automated Portfolio Briefing (")).toBe(true);
+    expect(report.content).toContain(
+      `*Note: Detailed LLM report model was temporarily unreachable (${message}). Technical metrics and ledger values remain verified.*`,
+    );
+  });
+
+  it("cleans the model answer and asks for report mode", async () => {
+    const options: Record<string, unknown>[] = [];
+    const replies = ["Sure, here you go:\n# Weekly\nBody", "<think>x</think>## A"];
+    const svc = reportService(async (_m, o) => {
+      options.push(o ?? {});
+      return replies.shift()!;
+    });
+    expect((await svc.generateReport(extPortfolio, { portfolioData: privateData, weekKey: "2026-w40" })).content).toBe("# Weekly\nBody");
+    expect((await svc.generateReport(extPortfolio, { portfolioData: privateData, weekKey: "2026-w41" })).content).toBe("## A");
+    expect(options[0]!.isReport).toBe(true);
+  });
+
+  it("cleans stored content when listing reports", () => {
+    reportRepo.upsert({
+      id: `${extPortfolioId}_2026-w30`,
+      portfolioId: extPortfolioId,
+      period: "Jul 20 - Jul 26, 2026",
+      weekStartDate: "2026-07-20",
+      weekEndDate: "2026-07-26",
+      weekKey: "2026-w30",
+      title: "T",
+      summary: "S",
+      content: "<think>x</think># Hi",
+      prompt: "p",
+      metrics: { totalPortfolioValue: 1, cashBalance: 0, baseCurrency: "EUR", holdingsCount: 0 },
+      model: "m",
+      provider: "ollama",
+    });
+    const svc = reportService(async () => "ok");
+    expect(svc.getReports(extPortfolioId).reports[0]!.content).toBe("# Hi");
+  });
+
+  it("keeps one report per portfolio and week", async () => {
+    const svc = reportService(async () => "# Report");
+    const first = await svc.generateReport(extPortfolio, { portfolioData: privateData, weekKey: "2026-w44" });
+    await svc.generateReport(extPortfolio, { portfolioData: privateData, weekKey: "2026-w44" });
+    expect(first.id).toBe(`${extPortfolioId}_2026-w44`);
+    expect(svc.getReports(extPortfolioId).reports.length).toBe(1);
+  });
+});

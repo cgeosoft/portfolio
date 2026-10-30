@@ -145,3 +145,142 @@ describe.skipIf(process.platform === "win32")("Claude CLI process", () => {
     expect(runs[0]!.args).not.toContain("--system-prompt");
   });
 });
+
+/** A fake `claude` that records args/stdin, prints the given raw lines on stdout, optional stderr, then exits. */
+function framesCli(lines: string[], opts: { code?: number; stderr?: string } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), "fake-claude-frames-"));
+  fakeDirs.push(dir);
+  const log = join(dir, "runs.jsonl");
+  const bin = join(dir, "claude");
+  writeFileSync(
+    bin,
+    `#!${process.execPath}
+const fs = require("node:fs");
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), stdin: fs.readFileSync(0, "utf8") }) + "\\n");
+for (const l of ${JSON.stringify(lines)}) console.log(l);
+${opts.stderr ? `console.error(${JSON.stringify(opts.stderr)});` : ""}
+process.exit(${opts.code ?? 0});
+`,
+  );
+  chmodSync(bin, 0o755);
+  const runs = () =>
+    existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").map((l) => JSON.parse(l) as { args: string[]; stdin: string }) : [];
+  return { bin, runs };
+}
+const delta = (text: string) => JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text } } });
+const assistant = (content: object[]) => JSON.stringify({ type: "assistant", message: { content } });
+const result = (text: string, isError = false) => JSON.stringify({ type: "result", result: text, is_error: isError });
+const userOnly: LlmMessage[] = [{ role: "user", content: "Hi" }];
+const BASE_ARGS = [
+  "-p",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--include-partial-messages",
+  "--tools",
+  "",
+  "--strict-mcp-config",
+  "--disable-slash-commands",
+  "--no-session-persistence",
+];
+
+describe.skipIf(process.platform === "win32")("Claude CLI stream frames", () => {
+  it("streams text deltas to onChunk and resolves with the result frame", async () => {
+    const cli = framesCli([delta("Hel"), delta("lo"), assistant([{ type: "text", text: "Hello" }]), result("Hello")]);
+    const chunks: string[] = [];
+    expect(await claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) })).toBe("Hello");
+    expect(chunks).toEqual(["Hel", "lo"]);
+  });
+
+  it("joins the deltas when no result frame arrives", async () => {
+    const cli = framesCli([delta("A"), delta("B")]);
+    expect(await claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout() })).toBe("AB");
+  });
+
+  it("joins the text of assistant frames without calling onChunk", async () => {
+    const cli = framesCli([assistant([{ type: "text", text: "X" }, { type: "tool_use" }]), assistant([{ type: "text", text: "Y" }])]);
+    const chunks: string[] = [];
+    expect(await claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) })).toBe("XY");
+    expect(chunks).toEqual([]);
+  });
+
+  it("does not call onChunk for an empty delta", async () => {
+    const cli = framesCli([delta(""), delta("A"), result("A")]);
+    const chunks: string[] = [];
+    await claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) });
+    expect(chunks).toEqual(["A"]);
+  });
+
+  it("ignores lines that are not JSON", async () => {
+    const cli = framesCli(["warning: slow", "", delta("Hello"), "", result("Hello")]);
+    expect(await claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout() })).toBe("Hello");
+  });
+
+  it("rejects on an error result even when the exit code is 0", async () => {
+    const cli = framesCli([result("Rate limited", true)]);
+    await expect(claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout() })).rejects.toThrow("Claude CLI request failed: Rate limited");
+  });
+
+  it("reports the last three stderr lines on a failed exit", async () => {
+    const cli = framesCli([], { code: 2, stderr: "line1\nline2\nline3\nline4" });
+    await expect(claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout() })).rejects.toThrow(
+      "Claude CLI request failed: line2 line3 line4",
+    );
+  });
+
+  it("reports the exit code when stderr is empty", async () => {
+    const cli = framesCli([], { code: 3 });
+    await expect(claudeCliComplete(userOnly, { bin: cli.bin, signal: timeout() })).rejects.toThrow("Claude CLI request failed: exit code 3");
+  });
+
+  it("rejects an empty or blank result and does not replace it with streamed text", async () => {
+    const empty = framesCli([delta("streamed"), result("")]);
+    await expect(claudeCliComplete(userOnly, { bin: empty.bin, signal: timeout() })).rejects.toThrow(
+      "No completion content returned from Claude CLI",
+    );
+    const blank = framesCli([result("   ")]);
+    await expect(claudeCliComplete(userOnly, { bin: blank.bin, signal: timeout() })).rejects.toThrow(
+      "No completion content returned from Claude CLI",
+    );
+  });
+
+  it("passes the fixed arguments and the model", async () => {
+    const withModel = framesCli([result("ok")]);
+    await claudeCliComplete(userOnly, { bin: withModel.bin, model: "opus", signal: timeout() });
+    expect(withModel.runs()[0]!.args).toEqual([...BASE_ARGS, "--model", "opus"]);
+
+    const noModel = framesCli([result("ok")]);
+    await claudeCliComplete(userOnly, { bin: noModel.bin, signal: timeout() });
+    expect(noModel.runs()[0]!.args).toEqual(BASE_ARGS);
+  });
+
+  it("writes a multi-turn conversation as a transcript on stdin", async () => {
+    const cli = framesCli([result("ok")]);
+    const turns: LlmMessage[] = [
+      { role: "user", content: "Hi" },
+      { role: "assistant", content: "Hello" },
+      { role: "user", content: "How?" },
+    ];
+    await claudeCliComplete(turns, { bin: cli.bin, signal: timeout() });
+    expect(cli.runs()[0]!.stdin).toBe("User: Hi\n\nAssistant: Hello\n\nUser: How?\n\nReply to the last User message as the Assistant.");
+  });
+
+  it("rejects with an AbortError and never starts when the signal is already aborted", async () => {
+    const cli = framesCli([result("ok")]);
+    const error = await claudeCliComplete(userOnly, { bin: cli.bin, signal: AbortSignal.abort() }).then(
+      () => null,
+      (e: unknown) => e as Error,
+    );
+    expect(error?.name).toBe("AbortError");
+    expect(cli.runs()).toEqual([]);
+  });
+
+  it("rejects when the binary does not exist", async () => {
+    await expect(claudeCliComplete(userOnly, { bin: "/nonexistent/claude", signal: timeout() })).rejects.toThrow();
+  });
+});
+
+// Bun.which reads PATH from the start-up environment, so a runtime PATH change cannot point it at a fake CLI.
+describe("getClaudeCliStatus", () => {
+  it.skip("parses version and sign-in state from a fake CLI on PATH (Bun.which ignores a runtime PATH change)", () => {});
+});

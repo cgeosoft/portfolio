@@ -141,3 +141,77 @@ describe("SupportTicketService", () => {
     expect(ticket.zip).toBeInstanceOf(Buffer);
   });
 });
+
+describe("anonymizeLogContent: more cases", () => {
+  const logDir = join(tmpdir(), `support-ticket-more-${Date.now()}`, "logs");
+  const service = new SupportTicketService(logDir);
+  const anon = (text: string, names?: string[]) => service.anonymizeLogContent(text, names);
+
+  it("redacts provider keys by prefix", () => {
+    const groq = anon("key gsk_" + "a".repeat(25));
+    expect(groq).toContain("gsk_[REDACTED_KEY]");
+    expect(groq).not.toContain("a".repeat(25));
+    expect(anon("AIzaSy" + "b".repeat(25))).toContain("AIzaSy[REDACTED_KEY]");
+    expect(anon("sk-ant-api03-" + "c".repeat(30))).not.toContain("c".repeat(30));
+    expect(anon("sk-or-v1-" + "d".repeat(30))).not.toContain("d".repeat(30));
+  });
+
+  it("redacts secret JSON fields", () => {
+    const out = anon('{"apiKey": "abc", "token":"t", "llmApiKey":"z"}');
+    expect(out).toContain('"apiKey":"[REDACTED]"');
+    expect(out).toContain('"token":"[REDACTED]"');
+    expect(out).toContain('"llmApiKey":"[REDACTED]"');
+  });
+
+  it("redacts a lowercase bearer token", () => {
+    expect(anon("bearer abc.def")).toContain("Bearer [REDACTED_TOKEN]");
+  });
+
+  it("hides the user name in Windows and macOS paths", () => {
+    expect(anon("C:\\Users\\Jane.Doe\\AppData")).toContain("C:\\Users\\[USER]\\AppData");
+    expect(anon("/Users/jane/Library")).toContain("/home/[USER]/Library");
+  });
+
+  it("redacts numeric weight, value, quantity and price fields", () => {
+    const out = anon('{"weight": 12.5, "value":-1.5e3, "quantity":10, "price":0.5}');
+    expect(out.split("[REDACTED]").length - 1).toBe(4);
+    for (const n of ["12.5", "1.5e3", ":10", "0.5"]) expect(out).not.toContain(n);
+  });
+
+  it("redacts short portfolio ids and cache keys", () => {
+    expect(anon("portfolioId=1a2b3c4d")).toContain("portfolioId=[PORTFOLIO_ID_REDACTED]");
+    expect(anon("getPortfolioData:deadbeef")).toContain("getPortfolioData:[REDACTED]");
+  });
+
+  it("redacts a portfolio name in a structured log without a names list", () => {
+    expect(anon('{"name":"My Pension","baseCurrency":"EUR"}')).toBe('{"name":"[PORTFOLIO_NAME]","baseCurrency":"EUR"}');
+    expect(anon('{"name":"Apple Inc","symbol":"AAPL"}')).toContain('"name":"Apple Inc"');
+  });
+
+  it("replaces listed names literally, trimmed, and ignores one-letter names", () => {
+    expect(anon("Portfolio A", ["A"])).toBe("Portfolio A");
+    const kids = anon("Kids savings", ["  Kids  "]);
+    expect(kids).not.toContain("Kids");
+    expect(kids).toContain("[PORTFOLIO_NAME]");
+    const literal = anon("x Fund (2026)+ y", ["Fund (2026)+"]);
+    expect(literal).not.toContain("Fund (2026)+");
+    expect(literal).toContain("[PORTFOLIO_NAME]");
+  });
+
+  // Suspected bug: modules/service/src/services/support-ticket.ts:81 JSON key redaction misses gotifyToken and ntfyToken
+  it.failing("redacts notification tokens", () => {
+    const out = anon('{"gotifyToken":"g-secret","ntfyToken":"n-secret"}');
+    expect(out).not.toContain("g-secret");
+    expect(out).not.toContain("n-secret");
+  });
+
+  it("builds a default ticket without logs", async () => {
+    const ticket = await service.buildSupportTicket({});
+    expect(ticket.subject).toBe("Portfolio Support Request");
+    expect(ticket.body.startsWith("Issue Description:\n(Please write your question or issue description here)")).toBe(true);
+    expect(ticket.logCount).toBe(0);
+    expect(ticket.zip).toBeUndefined();
+    expect((await service.buildSupportTicket({ subject: "  " })).subject).toBe("Portfolio Support Request");
+    expect((await service.buildSupportTicket({ message: "  Help  " })).body.startsWith("Issue Description:\nHelp")).toBe(true);
+  });
+});

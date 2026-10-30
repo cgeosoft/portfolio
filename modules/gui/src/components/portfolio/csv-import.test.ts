@@ -4,13 +4,19 @@ import { join } from "node:path";
 import {
   applyTemplateToHeaders,
   buildTransactions,
+  CSV_TEMPLATES,
   decodeCsvBytes,
   detectBestTemplate,
+  findHeaderRow,
+  findTemplate,
+  ISIN_PATTERN,
+  normalizeHeader,
   normalizeType,
   parseCsvContent,
   parseDate,
   parseDateTime,
   parseNumber,
+  tableFromRecords,
   type CsvTable,
 } from "./csv-import";
 import { parseXlsx } from "./xlsx-import";
@@ -24,6 +30,8 @@ function importTable(table: CsvTable) {
   const result = buildTransactions(table, mappings, { templateId: template, defaultCurrency: defaultCurrency ?? "EUR" });
   return { template, ...result };
 }
+
+const importText = (text: string) => importTable(parseCsvContent(text));
 
 function importFixture(name: string) {
   return importTable(parseCsvContent(decodeCsvBytes(readFileSync(join(FIXTURES, name)))));
@@ -351,5 +359,389 @@ describe("generic files", () => {
     expect(table.headers).toEqual(["Date", "Type", "Symbol", "Amount"]);
     const { transactions } = importTable(table);
     expect(transactions[0]).toMatchObject({ date: "2025-01-02", type: "CUSTOMER_INBOUND", amount: 100.5 });
+  });
+});
+
+describe("parseNumber edge cases", () => {
+  it("reads grouping styles, currency prefixes and brackets", () => {
+    expect(parseNumber("1 757,95")).toBe(1757.95);
+    expect(parseNumber("1'234.50")).toBe(1234.5);
+    expect(parseNumber("1.234.567")).toBe(1234567);
+    expect(parseNumber("1,234,567")).toBe(1234567);
+    expect(parseNumber("€ 1.234,56")).toBe(1234.56);
+    expect(parseNumber("EUR -1.234,56")).toBe(-1234.56);
+    expect(parseNumber("(1,234.56)")).toBe(-1234.56);
+  });
+
+  it("reads unicode minus, dashes and plus", () => {
+    expect(parseNumber("−3,5")).toBe(-3.5);
+    expect(parseNumber("–2")).toBe(-2);
+    expect(parseNumber("+5")).toBe(5);
+  });
+
+  it("reads zero, padded and exponent values", () => {
+    expect(parseNumber("0")).toBe(0);
+    expect(parseNumber("0,00")).toBe(0);
+    expect(parseNumber(" 12 ")).toBe(12);
+    expect(parseNumber("1.5e3")).toBe(1500);
+  });
+
+  it("reads a lone separator with three digits as a decimal", () => {
+    expect(parseNumber("12,345")).toBe(12.345);
+    expect(parseNumber("1.234")).toBe(1.234);
+  });
+
+  it("honours a fixed decimal separator", () => {
+    expect(parseNumber("1.234", ",")).toBe(1234);
+    expect(parseNumber("12.345", ",")).toBe(12345);
+    expect(parseNumber("1,5", ".")).toBe(15);
+    expect(parseNumber("1.234,5", ".")).toBe(1.2345);
+  });
+
+  it("returns undefined for missing or blank cells", () => {
+    expect(parseNumber(undefined as any)).toBeUndefined();
+    expect(parseNumber("   ")).toBeUndefined();
+  });
+});
+
+describe("parseDate edge cases", () => {
+  it("reads separators, day-first dates, padding and timestamps", () => {
+    expect(parseDate("2025/01/15")).toBe("2025-01-15");
+    expect(parseDate("2025.1.5")).toBe("2025-01-05");
+    expect(parseDate("5.1.2025")).toBe("2025-01-05");
+    expect(parseDate("  2025-01-15  ")).toBe("2025-01-15");
+    expect(parseDate("2025-01-15T10:00:00Z")).toBe("2025-01-15");
+  });
+
+  it("reads month names in several languages", () => {
+    expect(parseDate("15. Mär. 2025")).toBe("2025-03-15");
+    expect(parseDate("1 févr. 2025")).toBe("2025-02-01");
+    expect(parseDate("3 dic 2024")).toBe("2024-12-03");
+    expect(parseDate("Dec 31 2024")).toBe("2024-12-31");
+    expect(parseDate("December 31, 2024")).toBe("2024-12-31");
+  });
+
+  it("rejects out-of-range and malformed dates", () => {
+    for (const s of ["2025-13-01", "1899-01-01", "32/01/2025", "00/01/2025", "Foo 3, 2025", "2025011", "202501150"]) {
+      expect(parseDate(s)).toBeUndefined();
+    }
+  });
+
+  // Suspected bug: modules/gui/src/components/portfolio/csv-import.ts:425 isoDate checks only day <= 31
+  it.failing("rejects impossible calendar days", () => {
+    expect(parseDate("2025-02-31")).toBeUndefined();
+    expect(parseDate("31.04.2025")).toBeUndefined();
+    expect(parseDate("2025-02-29")).toBeUndefined();
+  });
+
+  it("keeps a leap day", () => {
+    expect(parseDate("2024-02-29")).toBe("2024-02-29");
+  });
+
+  // Suspected bug: modules/gui/src/components/portfolio/csv-import.ts MONTHS lacks the "mae" prefix of "März"
+  it.failing("reads the German full month name März", () => {
+    expect(parseDate("15 März 2025")).toBe("2025-03-15");
+  });
+});
+
+describe("parseDateTime edge cases", () => {
+  it("pads short times", () => {
+    expect(parseDateTime("9:05", "2025-01-01")).toBe("2025-01-01T09:05:00");
+    expect(parseDateTime("09:05:07", "2025-01-01")).toBe("2025-01-01T09:05:07");
+  });
+
+  it("joins a day-first date with its time only on the same day", () => {
+    expect(parseDateTime("15.01.2025 09:30", "2025-01-15")).toBe("2025-01-15T09:30:00");
+    expect(parseDateTime("15.01.2025 09:30", "2025-01-16")).toBe("15.01.2025 09:30");
+  });
+
+  it("keeps milliseconds and the zone", () => {
+    expect(parseDateTime("2025-01-15 10:31:00.123Z", "2025-01-15")).toBe("2025-01-15T10:31:00.123Z");
+  });
+
+  it("returns undefined without a time", () => {
+    expect(parseDateTime("noon", "2025-01-15")).toBeUndefined();
+    expect(parseDateTime("", "")).toBeUndefined();
+  });
+});
+
+describe("normalizeType languages", () => {
+  it("maps broker words in several languages", () => {
+    const cases: [string, string][] = [
+      ["Kauf", "BUY"],
+      ["Verkauf", "SELL"],
+      ["Achat", "BUY"],
+      ["Vente", "SELL"],
+      ["Compra", "BUY"],
+      ["Venta", "SELL"],
+      ["Dividende", "DIVIDEND"],
+      ["Zinsen", "INTEREST_PAYMENT"],
+      ["Einzahlung", "CUSTOMER_INBOUND"],
+      ["Auszahlung", "CUSTOMER_OUTBOUND"],
+      ["Gebühr", "FEE"],
+      ["Αγορά", "BUY"],
+      ["Πώληση", "SELL"],
+      ["Μέρισμα", "DIVIDEND"],
+      ["Commission", "FEE"],
+      ["Tax refund", "TAX"],
+      ["buy  limit", "BUY"],
+    ];
+    for (const [input, expected] of cases) expect([input, normalizeType(input)]).toEqual([input, expected]);
+  });
+
+  it("keeps unknown types as written", () => {
+    expect(normalizeType("Storno Kauf")).toBe("STORNO_KAUF");
+    expect(normalizeType("Stock distribution")).toBe("STOCK_DISTRIBUTION");
+    expect(normalizeType("Transfer in")).toBe("TRANSFER_IN");
+    expect(normalizeType("")).toBe("");
+  });
+});
+
+describe("normalizeHeader", () => {
+  it("folds case, umlauts, accents and punctuation", () => {
+    expect(normalizeHeader("Datum/Zeit")).toBe("datumzeit");
+    expect(normalizeHeader("Gebühr (EUR)")).toBe("gebuehreur");
+    expect(normalizeHeader("Größe")).toBe("groesse");
+    expect(normalizeHeader("Prix unitaire €")).toBe("prixunitaire");
+    expect(normalizeHeader("Ημερομηνία")).toBe("ημερομηνια");
+    expect(normalizeHeader("No. of shares")).toBe("noofshares");
+  });
+});
+
+describe("reading CSV text", () => {
+  const HEADERS = ["Date", "Type", "Symbol", "Amount"];
+
+  it("strips a BOM and reads CRLF lines", () => {
+    const table = parseCsvContent('﻿Date,Type,Symbol,Amount\r\n2025-01-02,Buy,AAPL,"1,234.50"\r\n');
+    expect(table.headers).toEqual(HEADERS);
+    expect(table.rows).toEqual([["2025-01-02", "Buy", "AAPL", "1,234.50"]]);
+  });
+
+  it("honours a sep= line", () => {
+    const table = parseCsvContent("sep=;\nDate;Type;Symbol;Amount\n2025-01-02;Buy;AAPL;1,5\n");
+    expect(table.headers).toEqual(HEADERS);
+    expect(table.rows).toEqual([["2025-01-02", "Buy", "AAPL", "1,5"]]);
+  });
+
+  it("detects tab and pipe delimiters", () => {
+    for (const d of ["\t", "|"]) {
+      const table = parseCsvContent(`Date${d}Type${d}Symbol${d}Amount\n2025-01-02${d}Buy${d}AAPL${d}10\n`);
+      expect(table.headers).toEqual(HEADERS);
+      expect(table.rows).toEqual([["2025-01-02", "Buy", "AAPL", "10"]]);
+    }
+  });
+
+  it("reads quoted line breaks and doubled quotes", () => {
+    const table = parseCsvContent('Date,Type,Name,Amount\n2025-01-02,Buy,"Line one\nline ""two""",10\n');
+    expect(table.rows).toEqual([["2025-01-02", "Buy", 'Line one\nline "two"', "10"]]);
+  });
+
+  it("pads short rows, drops empty rows and keeps long rows", () => {
+    const table = parseCsvContent("Date,Type,Symbol,Amount\n2025-01-02,Buy,AAPL\n\n,,,\n2025-01-03,Sell,AAPL,5,extra\n");
+    expect(table.rows).toEqual([
+      ["2025-01-02", "Buy", "AAPL", ""],
+      ["2025-01-03", "Sell", "AAPL", "5", "extra"],
+    ]);
+  });
+
+  it("trims cells and drops one leading apostrophe", () => {
+    const table = parseCsvContent("Date,Type,Symbol,Amount\n2025-01-02,Buy,'=SUM(A1),  10  ");
+    expect(table.rows).toEqual([["2025-01-02", "Buy", "=SUM(A1)", "10"]]);
+  });
+
+  it("names empty headers after the previous one", () => {
+    expect(parseCsvContent("Date,Type,,Amount,\n1,2,3,4,5").headers).toEqual(["Date", "Type", "Type (2)", "Amount", "Amount (2)"]);
+  });
+
+  it("returns an empty table for empty input", () => {
+    expect(parseCsvContent("")).toEqual({ headers: [], rows: [] });
+    expect(tableFromRecords([])).toEqual({ headers: [], rows: [] });
+  });
+
+  it("uses the first row when no known header is found", () => {
+    expect(findHeaderRow([["a", "b"], ["c", "d"]])).toBe(0);
+  });
+});
+
+describe("template detection and mapping", () => {
+  it("falls back to auto for generic headers", () => {
+    expect(detectBestTemplate(["Date", "Type", "Symbol"])).toBe("auto");
+    expect(detectBestTemplate([])).toBe("auto");
+  });
+
+  it("needs the required headers of a template", () => {
+    expect(detectBestTemplate(["Action", "Time", "No. of shares", "Price / share"])).toBe("trading212");
+    expect(detectBestTemplate(["No. of shares", "Price / share"])).toBe("auto");
+  });
+
+  it("auto-maps known headers once", () => {
+    const result = applyTemplateToHeaders("auto", ["Date", "Type", "Ticker", "Quantity", "Price", "Total", "Commission", "Currency", "ISIN", "Status", "Datum"]);
+    expect(result).toEqual({ mappings: ["date", "type", "symbol", "shares", "price", "amount", "fee", "currency", "isin", "status", "none"] } as any);
+    expect(result.defaultCurrency).toBeUndefined();
+  });
+
+  it("auto-detects for an unknown template id", () => {
+    expect(applyTemplateToHeaders("nope", ["Date", "Date"]).mappings).toEqual(["date", "none"] as any);
+  });
+
+  it("finds templates by id", () => {
+    expect(findTemplate("xtb")?.name).toBe("XTB");
+    expect(findTemplate("nope")).toBeUndefined();
+    expect(CSV_TEMPLATES.map((t) => t.id)).toEqual([
+      "trade_republic",
+      "trading212",
+      "ibkr",
+      "ibkr_statement",
+      "degiro",
+      "degiro_account",
+      "etoro",
+      "revolut",
+      "xtb",
+      "scalable",
+      "scalable_baader",
+      "saxo",
+      "auto",
+    ]);
+  });
+
+  it("matches upper-case ISINs with a valid layout", () => {
+    expect(ISIN_PATTERN.test("US0378331005")).toBe(true);
+    expect(ISIN_PATTERN.test("us0378331005")).toBe(false);
+    expect(ISIN_PATTERN.test("US037833100X")).toBe(false);
+  });
+});
+
+describe("building generic transactions", () => {
+  it("upper-cases symbols and stores fees positive", () => {
+    const { template, transactions } = importText(
+      "Date,Type,Symbol,Shares,Price,Amount,Fee,Tax,Currency\n2025-01-02,Buy,aapl,2,100,-200,-1,,usd\n2025-01-03,Sell,AAPL,-1,110,110,1,,USD\n",
+    );
+    expect(template).toBe("auto");
+    expect(transactions[0]).toMatchObject({ id: "tx_2025-01-02_BUY_AAPL_-200_2_0", type: "BUY", symbol: "AAPL", shares: 2, price: 100, amount: -200, fee: 1, currency: "USD" });
+    expect(transactions[0].tax).toBeUndefined();
+    expect(transactions[1]).toMatchObject({ id: "tx_2025-01-03_SELL_AAPL_110_-1_1", type: "SELL", shares: -1, amount: 110, fee: 1 });
+  });
+
+  it("uses the sign of shares without a type column", () => {
+    const { transactions } = importText("Date,Symbol,Shares,Amount\n2025-01-02,AAPL,2,-200\n2025-01-03,AAPL,-1,110\n");
+    expect(transactions.map((t) => t.type)).toEqual(["BUY", "SELL"] as any);
+    expect(transactions[0].currency).toBe("EUR");
+  });
+
+  it("skips orders that did not execute", () => {
+    const { transactions, skipped } = importText(
+      "Date,Type,Symbol,Amount,Status\n2025-01-02,Buy,AAPL,10,Cancelled\n2025-01-02,Buy,AAPL,10,Executed\n2025-01-02,Buy,AAPL,10,\n",
+    );
+    expect(transactions.length).toBe(2);
+    expect(skipped).toEqual([{ reason: "Orders not executed (cancelled, rejected or pending)", count: 1 }]);
+  });
+
+  it("skips empty and total rows", () => {
+    const { transactions, skipped } = importText("Date,Type,Symbol,Amount\n2025-01-02,Buy,AAPL,0\n2025-01-02,Deposit,,100\nTotal,,,100\n");
+    expect(transactions.length).toBe(1);
+    expect(transactions[0]).toMatchObject({ type: "CUSTOMER_INBOUND", symbol: "CASH", amount: 100 });
+    expect(skipped).toEqual([
+      { reason: "Rows without an amount, shares, fee or tax", count: 1 },
+      { reason: "Total and summary rows", count: 1 },
+    ]);
+  });
+
+  it("flips tax signs when the file writes paid tax as negative", () => {
+    const head = "Date,Type,Symbol,Amount,Tax\n";
+    const file = (a: string, b: string) => `${head}2025-01-02,Dividend,AAPL,10,${a}\n2025-01-03,Dividend,AAPL,10,${b}\n`;
+    expect(importText(file("-1.5", "0.5")).transactions.map((t) => t.tax)).toEqual([1.5, -0.5]);
+    expect(importText(file("1.5", "-0.5")).transactions.map((t) => t.tax)).toEqual([-1.5, 0.5]);
+    expect(importText(file("1.5", "0.5")).transactions.map((t) => t.tax)).toEqual([1.5, 0.5]);
+  });
+
+  it("applies the cash conventions", () => {
+    const { transactions, skipped } = importText(
+      "Date,Type,Symbol,Amount\n2025-01-02,Tax,AAPL,-3\n2025-01-02,Fee,,-2\n2025-01-02,Fee,,2\n2025-01-02,Dividend,AAPL,-1\n2025-01-02,Interest,,-1\n2025-01-02,Deposit,,-50\n2025-01-02,Stock split,AAPL,5\n",
+    );
+    expect(transactions.length).toBe(6);
+    expect(transactions).toMatchObject([
+      { type: "TAX", symbol: "AAPL", tax: 3 },
+      { type: "FEE", symbol: "CASH", fee: 2 },
+      { type: "FEE_REFUND", amount: 2 },
+      { type: "DIVIDEND_CORRECTION", amount: -1 },
+      { type: "INTEREST_CHARGE", amount: -1 },
+      { type: "CUSTOMER_OUTBOUND", amount: -50 },
+    ] as any);
+    expect(transactions[0].amount).toBeUndefined();
+    expect(transactions[1].amount).toBeUndefined();
+    expect(skipped).toEqual([{ reason: "Rows without an amount, shares, fee or tax", count: 1 }]);
+  });
+
+  it("normalises symbols and ISINs", () => {
+    const { transactions } = importText(
+      "Date,Type,Symbol,ISIN,Amount,Currency\n2025-01-02,Buy,VWCE,IE00BK5BQT80,-100,EUR\n2025-01-02,Buy,BRK.B,US0846707026,-100,USD\n2025-01-02,Buy,BRK B,,-100,USD\n2025-01-02,Buy,,IE00BK5BQT80,-100,EUR\n2025-01-02,Buy,ie00bk5bqt80,,-100,EUR\n",
+    );
+    expect(transactions.map((t) => t.symbol)).toEqual(["IE00BK5BQT80", "BRK-B", "BRK-B", "IE00BK5BQT80", "IE00BK5BQT80"]);
+    expect(transactions.map((t) => t.isin)).toEqual(["IE00BK5BQT80", "US0846707026", undefined, "IE00BK5BQT80", "IE00BK5BQT80"]);
+  });
+
+  it("numbers repeated broker ids", () => {
+    const row = "2025-01-02,Buy,AAPL,10,X1\n";
+    const { transactions } = importText("Date,Type,Symbol,Amount,ID\n" + row + row + row + "2025-01-02,Buy,AAPL,10,\n");
+    expect(transactions.map((t) => t.id)).toEqual(["X1", "X1#2", "X1#3", "tx_2025-01-02_BUY_AAPL_10__3"]);
+  });
+
+  it("assigns asset classes", () => {
+    const { transactions } = importText(
+      "Date,Type,Symbol,Amount,Asset Class\n2025-01-02,Buy,,10,PRIVATE_FUND\n2025-01-02,Buy,BTC-EUR,10,\n2025-01-02,Buy,XYZ,10,Private Equity\n",
+    );
+    expect(transactions).toMatchObject([
+      { symbol: "LU3176111881", assetClass: "PRIVATE_FUND" },
+      { symbol: "BTC-EUR", assetClass: "CRYPTO" },
+      { symbol: "XYZ", assetClass: "PRIVATE_FUND" },
+    ] as any);
+  });
+
+  it("reads a German generic file", () => {
+    const { transactions } = importText("Datum;Typ;Symbol;Betrag\n02.01.2025;Kauf;SAP;-1.234,56\n");
+    expect(transactions[0]).toMatchObject({ date: "2025-01-02", type: "BUY", symbol: "SAP", amount: -1234.56, currency: "EUR" });
+  });
+
+  it("upper-cases the default currency option", () => {
+    const table = parseCsvContent("Date,Type,Symbol,Amount\n2025-01-02,Buy,AAPL,10\n");
+    const { mappings } = applyTemplateToHeaders("auto", table.headers);
+    const { transactions } = buildTransactions(table, mappings, { templateId: "auto", defaultCurrency: "gbp" });
+    expect(transactions[0].currency).toBe("GBP");
+  });
+
+  it("reads a time column and timestamps in the date column", () => {
+    const { transactions } = importText("Date,Time,Type,Symbol,Amount\n2025-01-02,14:05,Buy,AAPL,10\n2025-01-02 09:01:02,,Buy,AAPL,10\n");
+    expect(transactions.map((t) => t.datetime)).toEqual(["2025-01-02T14:05:00", "2025-01-02T09:01:02"]);
+    expect(transactions.map((t) => t.date)).toEqual(["2025-01-02", "2025-01-02"]);
+  });
+});
+
+describe("Interactive Brokers rules", () => {
+  it("skips derivatives, cancelled trades, summaries and FX and maps exchanges", () => {
+    const text =
+      "ClientAccountID,CurrencyPrimary,AssetClass,Symbol,ISIN,ListingExchange,TradeDate,Quantity,TradePrice,Proceeds,IBCommission,Buy/Sell,TransactionID,LevelOfDetail\n" +
+      [
+        "U1,USD,OPT,AAPL 250117C00200000,,CBOE,20250115,1,2,-200,-1,BUY,1,EXECUTION",
+        "U1,USD,FUT,ES,,CME,20250115,1,2,-200,-1,BUY,2,EXECUTION",
+        "U1,USD,STK,AAPL,US0378331005,NASDAQ,20250115,1,200,-200,-1,BUY (Ca.),3,EXECUTION",
+        "U1,USD,STK,AAPL,US0378331005,NASDAQ,20250115,1,200,-200,-1,BUY,4,ORDER",
+        "U1,GBP,STK,VUSA,IE00B3XXRP09,LSE,20250115,1,70,-70,-1,BUY,5,EXECUTION",
+        'U1,EUR,STK,SAP,DE0007164600,IBIS,20250115,1,1000,"-1,000",-1,BUY,6,EXECUTION',
+        "U1,USD,STK,BRK B,US0846707026,NYSE,20250115,1,1000,-1000,-1,BUY,7,EXECUTION",
+        "U1,USD,CASH,EUR.USD,,IDEALFX,20250115,1,1,-1,0,BUY,8,EXECUTION",
+        "U1,CAD,STK,SHOP,CA82509L1076,TSE,20250115,1,1,-1,0,BUY,9,EXECUTION",
+      ].join("\n") +
+      "\n";
+    const { template, transactions, skipped } = importText(text);
+    expect(template).toBe("ibkr");
+    expect(transactions.map((t) => t.id)).toEqual(["5", "6", "7", "9"]);
+    expect(transactions.map((t) => t.symbol)).toEqual(["VUSA.L", "SAP.DE", "BRK-B", "SHOP.TO"]);
+    expect(transactions.find((t) => t.id === "6")?.amount).toBe(-1000);
+    expect(skipped).toEqual([
+      { reason: "Options, futures, bonds and other derivatives", count: 2 },
+      { reason: "Cancelled trades", count: 1 },
+      { reason: "Order summaries and closed lots (the executions are imported)", count: 1 },
+      { reason: "Currency conversions (FX trades)", count: 1 },
+    ]);
   });
 });

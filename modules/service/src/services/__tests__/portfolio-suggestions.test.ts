@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterEach } from "bun:test";
 import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/portfolio";
 import * as portfolioRepo from "../../db/portfolio.repo.js";
 import * as suggestionRepo from "../../db/suggestion.repo.js";
@@ -10,6 +10,8 @@ import {
   type SuggestionQuote,
 } from "portfolio-shared/suggestions";
 import { buildSuggestionPrompt, extractJsonObject, isStillDismissed, mergeSuggestions, parseSuggestionAnswer, type SuggestionProposal } from "../portfolio-suggestions.js";
+import { PortfolioSuggestionService } from "../portfolio-suggestions.js";
+import { EMPTY_REPORT_INTEL } from "../ai-context.js";
 
 const NOW = new Date("2026-10-12T10:00:00Z");
 
@@ -274,5 +276,202 @@ describe("buildSuggestionPrompt", () => {
     expect(text).not.toContain("8000");
     expect(text).not.toContain("shares 18");
     expect(text).toContain("private asset");
+  });
+});
+
+describe("parseSuggestionAnswer: edges", () => {
+  const parse = (suggestions: unknown, extraQuotes: SuggestionQuote[] = []) =>
+    parseSuggestionAnswer({ summary: "S", suggestions }, data, [...quotes, ...extraQuotes], NOW);
+  const trim = (extra: Record<string, unknown> = {}) => ({ action: "decrease", symbol: "NVDA", fromWeight: 40, targetWeight: 30, title: "Trim NVDA", ...extra });
+
+  it("closes at zero whatever target the model gave", () => {
+    const [p] = parse([{ action: "close", symbol: "SPY", targetWeight: 99, title: "Exit SPY" }]).proposals;
+    expect(p).toMatchObject({ key: "close:SPY", action: "close", targetWeight: 0, currentWeight: 30 });
+  });
+
+  it("clamps and rounds the priority", () => {
+    expect(parse([trim({ priority: "0" })]).proposals[0]!.priority).toBe(1);
+    expect(parse([trim({ priority: 9 })]).proposals[0]!.priority).toBe(5);
+    expect(parse([trim()]).proposals[0]!.priority).toBe(3);
+    expect(parse([trim({ priority: 2.6 })]).proposals[0]!.priority).toBe(3);
+  });
+
+  it("bounds the validity days", () => {
+    expect(parse([trim()]).proposals[0]!.validity.expiresAt).toBe("2026-10-19T10:00:00.000Z");
+    expect(parse([trim({ validity: { days: 0 } })]).proposals[0]!.validity.expiresAt).toBe("2026-10-13T10:00:00.000Z");
+    expect(parse([trim({ validity: { days: "45" } })]).proposals[0]!.validity.expiresAt).toBe("2026-11-11T10:00:00.000Z");
+  });
+
+  it("keeps a weight range only when it contains the current weight", () => {
+    expect(parse([trim({ validity: { weightMin: 35, weightMax: 45 } })]).proposals[0]!.validity.weight).toEqual({ min: 35, max: 45 });
+    expect("weight" in parse([trim({ validity: { weightMin: 41, weightMax: 39 } })]).proposals[0]!.validity).toBe(false);
+  });
+
+  it("keeps a price range in the quote currency", () => {
+    expect(parse([trim({ validity: { priceMin: 200, priceMax: 250 } })]).proposals[0]!.validity.price).toEqual({ min: 200, max: 250, currency: "USD" });
+    expect("price" in parse([trim({ validity: { priceMin: 0 } })]).proposals[0]!.validity).toBe(false);
+  });
+
+  it("drops a change that is too small", () => {
+    const small = parse([trim({ targetWeight: 39.5 })]);
+    expect(small.proposals).toEqual([]);
+    expect(small.notes.join(" ")).toContain("too small");
+    expect(parse([trim({ targetWeight: 39 })]).proposals.length).toBe(1);
+  });
+
+  it("accepts numeric strings", () => {
+    const [p] = parse([trim({ targetWeight: "30", fromWeight: "40" })]).proposals;
+    expect(p!.targetWeight).toBe(30);
+  });
+
+  it("keeps at most eight proposals", () => {
+    const qs: SuggestionQuote[] = Array.from({ length: 8 }, (_, i) => ({ symbol: `Q${i + 1}`, name: `Q${i + 1}`, price: 10, currency: "EUR", toBase: 1 }));
+    const opens = qs.map((q) => ({ action: "open", symbol: q.symbol, targetWeight: 2, title: `Open ${q.symbol}` }));
+    const res = parse([trim(), ...opens], qs);
+    expect(res.proposals.length).toBe(8);
+    expect(res.notes).toContain("1 suggestion was dropped: only 8 are kept.");
+  });
+
+  it("drops a repeated symbol", () => {
+    const res = parse([trim(), { action: "increase", symbol: "NVDA", targetWeight: 50, title: "Add NVDA" }]);
+    expect(res.proposals.map((p) => p.key)).toEqual(["decrease:NVDA"]);
+    expect(res.notes).toContain("1 suggestion was dropped: it repeated a symbol.");
+  });
+
+  it("normalizes the action and drops incomplete items", () => {
+    const res = parse([
+      trim({ action: " Decrease " }),
+      { action: "decrease", symbol: "CASH", targetWeight: 10, title: "Less cash" },
+      { action: "decrease", symbol: "SPY", targetWeight: 20 },
+      { action: "decrease", symbol: "SPY", targetWeight: 20, title: "<think>x</think>" },
+      null,
+    ]);
+    expect(res.proposals.map((p) => p.key)).toEqual(["decrease:NVDA"]);
+    expect(res.notes).toContain("4 suggestions were dropped: the answer was incomplete.");
+  });
+
+  it("returns nothing when suggestions is not a list, and trims a long summary", () => {
+    const none = parseSuggestionAnswer({ summary: "S", suggestions: "nope" }, data, quotes, NOW);
+    expect(none.proposals).toEqual([]);
+    expect(none.notes).toEqual([]);
+    const long = parseSuggestionAnswer({ summary: "x".repeat(700), suggestions: [] }, data, quotes, NOW) as { summary?: string };
+    expect(long.summary).toBe("x".repeat(597) + "...");
+  });
+
+  it("keeps only valid funding sources, once each", () => {
+    const res = parse([
+      trim(),
+      {
+        action: "open",
+        symbol: "VWCE.DE",
+        targetWeight: 5,
+        title: "Add world ETF",
+        fundedBy: [
+          { key: "cash", weight: 5 },
+          { key: "CASH", weight: 3 },
+          { key: "decrease:nvda", weight: "2.5" },
+          { key: "decrease:NVDA", weight: 1 },
+          { key: "x", weight: 1 },
+          { key: "CASH", weight: -1 },
+          { key: "close:SPY", weight: 2 },
+        ],
+      },
+    ]);
+    expect(res.proposals.find((p) => p.key === "open:VWCE.DE")!.fundedBy).toEqual([
+      { key: "CASH", weight: 5 },
+      { key: "decrease:NVDA", weight: 2.5 },
+    ]);
+  });
+});
+
+describe("extractJsonObject: edges", () => {
+  it("rejects arrays, two objects and reversed braces, and reads nested JSON", () => {
+    expect(() => extractJsonObject("[1,2]")).toThrow("The assistant did not return a JSON object");
+    expect(() => extractJsonObject('{"a":1} and {"b":2}')).toThrow("The assistant returned JSON that is not valid");
+    expect(() => extractJsonObject("}{")).toThrow("did not return");
+    expect(extractJsonObject('{"a":[1,{"b":2}]}')).toEqual({ a: [1, { b: 2 }] });
+  });
+});
+
+describe("PortfolioSuggestionService.generate", () => {
+  type Call = { m: { role: string; content: string }[]; o: unknown };
+  const VALID =
+    '{"summary":"Trim.","suggestions":[{"action":"decrease","symbol":"NVDA","fromWeight":40,"targetWeight":30,"title":"Trim NVDA","why":"Too big."}]}';
+  const created: string[] = [];
+  afterEach(() => {
+    for (const id of created.splice(0)) portfolioRepo.deleteById(id);
+  });
+
+  /**
+   * One stub object serves as portfolio service, market data and LLM, so the
+   * test does not depend on the order of the first three constructor arguments.
+   */
+  function setup(replies: string[]) {
+    const id = portfolioRepo.create({ name: "Suggestion generate", baseCurrency: "EUR" }).id;
+    created.push(id);
+    const calls: Call[] = [];
+    const stub = {
+      getPortfolioData: async () => data,
+      getQuotes: async () => new Map(),
+      getExchangeRates: async () => new Map(),
+      chat: async (m: Call["m"], o: unknown) => {
+        calls.push({ m, o });
+        return replies.shift()!;
+      },
+      resolve: () => ({ provider: "openai-compatible", model: "m" }),
+    };
+    type Ctor = new (...args: unknown[]) => PortfolioSuggestionService;
+    const svc = new (PortfolioSuggestionService as unknown as Ctor)(stub, stub, stub, async () => EMPTY_REPORT_INTEL);
+    return { id, calls, svc };
+  }
+
+  it("retries once with the parse error and stores the result", async () => {
+    const { id, calls, svc } = setup(["not json", VALID]);
+    await svc.generate(id, "EUR");
+    expect(calls.length).toBe(2);
+    expect(calls[0]!.o).toEqual({ temperature: 0.2 });
+    expect(calls[1]!.o).toEqual({ temperature: 0.1 });
+    expect(calls[1]!.m.length).toBe(4);
+    expect(calls[1]!.m[2]).toEqual({ role: "assistant", content: "not json" });
+    expect(calls[1]!.m[3]!.content).toBe("The assistant did not return a JSON object. Reply again with only the JSON object in the given shape.");
+
+    const rows = suggestionRepo.findByPortfolio(id);
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({ key: "decrease:NVDA", status: "active", fromWeight: 40, targetWeight: 30 });
+    const run = suggestionRepo.findRun(id);
+    expect(run?.summary).toBe("Trim.");
+    expect(run?.provider).toBe("openai-compatible");
+  });
+
+  it("fails after two invalid answers and stores no run", async () => {
+    const { id, svc } = setup(["not json", "still not json"]);
+    await expect(svc.generate(id, "EUR")).rejects.toThrow("The assistant did not return a JSON object");
+    expect(suggestionRepo.findRun(id)).toBeNull();
+  });
+
+  it("runs a generation in the background and reports its failure", async () => {
+    const { id, svc } = setup(["not json", "still not json"]);
+    const job = svc.startGeneration(id) as { status: string; startedAt?: string };
+    expect(job.status).toBe("running");
+    expect(typeof job.startedAt).toBe("string");
+    expect(svc.startGeneration(id) as unknown).toBe(job);
+
+    const end = Date.now() + 2000;
+    let generation: unknown;
+    while (Date.now() < end) {
+      generation = (await svc.getSuggestions(id)).generation;
+      if ((generation as { status?: string } | undefined)?.status !== "running") break;
+      await Bun.sleep(5);
+    }
+    expect(generation).toEqual({ status: "fail", error: "The assistant did not return a JSON object" });
+  });
+
+  it("sends no amounts or quantities to the model", async () => {
+    const { id, calls, svc } = setup([VALID]);
+    await svc.generate(id, "EUR");
+    const text = calls[0]!.m.map((m) => m.content).join("\n");
+    expect(text).not.toContain("10000");
+    expect(text).not.toContain("8000");
+    expect(text).not.toContain("shares 18");
   });
 });

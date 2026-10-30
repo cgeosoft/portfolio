@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import {
+  ENGLISH_REPORT_EXPORT_TEXT,
   generateReportMarkdown,
   generateReportPdf,
   getDefaultReportFilename,
@@ -58,5 +59,73 @@ describe("Report Export Utilities", () => {
     expect(blob).toBeDefined();
     expect(blob.size).toBeGreaterThan(1000);
     expect(blob.type).toBe("application/pdf");
+  });
+});
+
+describe("report export fallbacks", () => {
+  const bare: PortfolioReport = {
+    id: "r1",
+    createdAt: "2026-09-07T08:00:00.000Z",
+    period: "",
+    weekStartDate: "",
+    weekEndDate: "",
+    title: "",
+    summary: "",
+    content: "<think>hidden</think>Body $1,234",
+    model: "",
+    provider: "",
+    metrics: { totalPortfolioValue: 0, cashBalance: 0, baseCurrency: "", holdingsCount: 0 },
+  };
+
+  it("falls back to the created date, period or week key in filenames", () => {
+    expect(getDefaultReportFilename(bare, "pdf")).toBe("portfolio-report-2026-09-07.pdf");
+    expect(getDefaultReportFilename({ ...bare, period: "Q3 2026" }, "markdown", "My  Portfolio_1")).toBe("my-portfolio_1-report-q3-2026.md");
+    expect(getDefaultReportFilename({ ...bare, weekKey: "2026-W01" }, "markdown", "Ünïcode Fund!!")).toBe("n-code-fund-report-2026-w01.md");
+  });
+
+  it("falls back to the report id in the title and leaves out empty fields", () => {
+    const md = generateReportMarkdown(bare, undefined as any, false);
+    expect(md).toContain("# Portfolio Tactical Briefing (r1)");
+    expect(md).not.toContain("Executive Summary");
+    expect(md).toContain('status: "success"');
+    expect(md).toContain("portfolio_valuation: 0");
+    expect(md).toContain("holdings_count: 0");
+    expect(md).not.toContain("base_currency");
+    expect(md).not.toMatch(/^portfolio:/m);
+  });
+
+  it("leaves out metric lines without metrics", () => {
+    const md = generateReportMarkdown({ ...bare, metrics: undefined as any }, undefined as any, false);
+    expect(md).not.toContain("portfolio_valuation");
+    expect(md).not.toContain("holdings_count");
+  });
+
+  it("masks the summary when values are hidden", () => {
+    expect(generateReportMarkdown({ ...bare, summary: "Cash is $1,234.56" }, "P", true)).toContain("> Cash is $••••");
+  });
+
+  it("uses a custom text bundle", () => {
+    const text = { ...ENGLISH_REPORT_EXPORT_TEXT, markdownTitle: (p: string) => `T(${p})`, markdownSummary: "Sum:" };
+    const md = (generateReportMarkdown as any)({ ...bare, summary: "S" }, undefined, false, text);
+    expect(md).toContain("# T(r1)");
+    expect(md).toContain("> **Sum:**");
+  });
+
+  it("quotes the portfolio name as JSON", () => {
+    expect(generateReportMarkdown(bare, 'He said "hi"', false)).toContain('portfolio: "He said \\"hi\\""');
+  });
+
+  // Suspected bug: modules/gui/src/components/portfolio/report-export.ts:87 .filter(Boolean) drops the line break after the closing ---
+  it.failing("closes the frontmatter on its own line", () => {
+    const md = generateReportMarkdown(bare, undefined as any, false);
+    expect(md.startsWith("---\nreport_id:")).toBe(true);
+    expect(md).toContain("\n---\n# Portfolio Tactical Briefing (r1)\n");
+  });
+
+  // Suspected bug: modules/gui/src/components/portfolio/utils.ts:122 stripThinkTags drops the text after </think>
+  it.failing("removes think blocks and keeps the rest", () => {
+    const md = generateReportMarkdown(bare, undefined as any, false);
+    expect(md).toContain("Body $1,234");
+    expect(md).not.toContain("hidden");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll } from "bun:test";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { codexCliComplete, codexCliWorkDir } from "../codex-cli.js";
@@ -122,4 +122,45 @@ describe.skipIf(process.platform === "win32")("Codex CLI process", () => {
     const cli = fakeCli([{ type: "turn.started" }, { type: "turn.completed" }]);
     await expect(codexCliComplete(messages, { bin: cli.bin, signal: timeout() })).rejects.toThrow("No completion content");
   });
+});
+
+describe.skipIf(process.platform === "win32")("Codex CLI failures and streaming", () => {
+  it("reports an error event on a failed exit", async () => {
+    const cli = fakeCli([{ type: "error", message: "stream disconnected" }], 1);
+    await expect(codexCliComplete(messages, { bin: cli.bin, signal: timeout() })).rejects.toThrow("Codex CLI request failed: stream disconnected");
+  });
+
+  it("reports a failed turn without a message", async () => {
+    const cli = fakeCli([{ type: "turn.failed", error: {} }], 0);
+    await expect(codexCliComplete(messages, { bin: cli.bin, signal: timeout() })).rejects.toThrow("Codex CLI request failed: turn failed");
+  });
+
+  it("reports the exit code when there are no events", async () => {
+    const cli = fakeCli([], 7);
+    await expect(codexCliComplete(messages, { bin: cli.bin, signal: timeout() })).rejects.toThrow("Codex CLI request failed: exit code 7");
+  });
+
+  it("rejects an aborted request with an AbortError, leaves no instructions file and never starts", async () => {
+    const cli = fakeCli(SUCCESS);
+    const error = await codexCliComplete(messages, { bin: cli.bin, signal: AbortSignal.abort() }).then(
+      () => null,
+      (e: unknown) => e as Error,
+    );
+    expect(error?.name).toBe("AbortError");
+    expect(readdirSync(codexCliWorkDir()).filter((f) => f.startsWith("system-"))).toEqual([]);
+    expect(cli.runs()).toEqual([]);
+  });
+
+  it("hands a reply without a system message to onChunk once", async () => {
+    const cli = fakeCli(SUCCESS);
+    const chunks: string[] = [];
+    const answer = await codexCliComplete([{ role: "user", content: "Hello" }], { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) });
+    expect(answer).toBe("Fine.");
+    expect(chunks).toEqual(["Fine."]);
+  });
+});
+
+// Bun.which reads PATH from the start-up environment, so a runtime PATH change cannot point it at a fake CLI.
+describe("getCodexCliStatus", () => {
+  it.skip("parses version and sign-in state from a fake CLI on PATH (Bun.which ignores a runtime PATH change)", () => {});
 });

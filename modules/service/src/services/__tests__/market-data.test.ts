@@ -240,3 +240,131 @@ describe("MarketDataCoordinator & Provider Isolation", () => {
     expect(marketCache.get("finnhub:news")).toBeNull();
   });
 });
+
+describe("coordinator chain details", () => {
+  const originalConfig = loadConfig();
+
+  const quote = (symbol: string, price: number): YahooQuote => ({
+    symbol,
+    regularMarketPrice: price,
+    regularMarketChange: 0,
+    regularMarketChangePercent: 0,
+    currency: "USD",
+    updatedAt: new Date().toISOString(),
+  });
+
+  /** Quote provider stub answering only the listed symbols. */
+  const quoteProvider = (known: Record<string, number>) =>
+    mock(async (symbols: string[]) => new Map(symbols.filter((s) => s in known).map((s) => [s, quote(s, known[s]!)])));
+
+  const route = (overrides: Record<string, string>) =>
+    saveConfig({
+      ...originalConfig,
+      finnhubApiKey: "test-finnhub-key",
+      dataProviderRouting: { ...DEFAULT_DATA_PROVIDER_ROUTING, ...overrides },
+    } as never);
+
+  beforeEach(() => {
+    getDatabase().run("DELETE FROM market_cache");
+    route({ quotes: "yahoo", news: "finnhub", charts: "yahoo", fx: "yahoo", fundamentals: "finnhub", search: "yahoo" });
+  });
+
+  afterEach(() => {
+    saveConfig(originalConfig);
+    getDatabase().run("DELETE FROM market_cache");
+  });
+
+  const coordinator = (yahoo: unknown, finnhub: unknown, fmp: unknown) =>
+    new (MarketDataCoordinator as unknown as new (...a: unknown[]) => MarketDataCoordinator)(yahoo, finnhub, fmp);
+
+  it("normalizes and dedupes the requested symbols", async () => {
+    const yahoo = { getQuotes: quoteProvider({ AAPL: 1 }) };
+    const fmp = { isConfigured: () => false, getQuotes: quoteProvider({}) };
+    const finnhub = { isConfigured: () => true, getQuotes: quoteProvider({}) };
+    const res = await coordinator(yahoo, finnhub, fmp).getQuotesWithSource([" aapl ", "AAPL", ""]);
+    expect(yahoo.getQuotes.mock.calls.length).toBe(1);
+    expect(yahoo.getQuotes.mock.calls[0]![0]).toEqual(["AAPL"]);
+    expect(res.data.get("AAPL")?.regularMarketPrice).toBe(1);
+  });
+
+  it("fills each symbol from the next provider in the chain", async () => {
+    route({ quotes: "fmp" });
+    const fmp = { isConfigured: () => true, getQuotes: quoteProvider({ A: 1 }) };
+    const yahoo = { getQuotes: quoteProvider({ B: 2 }) };
+    const finnhub = { isConfigured: () => true, getQuotes: quoteProvider({ C: 3 }) };
+    const res = await coordinator(yahoo, finnhub, fmp).getQuotesWithSource(["A", "B", "C"]);
+    expect(yahoo.getQuotes.mock.calls[0]![0]).toEqual(["B", "C"]);
+    expect(finnhub.getQuotes.mock.calls[0]![0]).toEqual(["C"]);
+    expect(Object.fromEntries(res.sources)).toEqual({ A: "fmp", B: "yahoo", C: "finnhub" });
+    expect(res.tried).toEqual(["fmp", "yahoo", "finnhub"]);
+  });
+
+  it("searches an ISIN with FMP first and falls back to the normal chain", async () => {
+    const fmpResults = [{ symbol: "AAPL", name: "Apple", exchange: "FMP", quoteType: "EQUITY" }];
+    const yahooResults = [{ symbol: "AAPL", name: "Apple Inc.", exchange: "NMS", quoteType: "EQUITY" }];
+    const yahoo = { searchSymbols: mock(async () => yahooResults) };
+    const finnhub = { isConfigured: () => false, searchSymbols: mock(async () => []) };
+    const fmp = { isConfigured: () => true, searchIdentifier: mock(async () => fmpResults), searchSymbols: mock(async () => []) };
+    const md = coordinator(yahoo, finnhub, fmp);
+    expect(await md.searchSymbolsWithSource("US0378331005")).toEqual({ data: fmpResults, source: "fmp", tried: ["fmp"] } as never);
+    expect(yahoo.searchSymbols.mock.calls.length).toBe(0);
+
+    fmp.searchIdentifier = mock(async () => {
+      throw new Error("fmp down");
+    });
+    const fallback = await md.searchSymbolsWithSource("US0378331005");
+    expect(fallback.data).toEqual(yahooResults);
+    expect(yahoo.searchSymbols.mock.calls.length).toBe(1);
+
+    expect(await md.searchSymbolsWithSource("  ")).toEqual({ data: [], source: null, tried: [] } as never);
+  });
+
+  it("prefetches chart quotes from FMP only when it serves charts", async () => {
+    route({});
+    const prefetchQuotes = mock(async (_s: string[]) => {});
+    const off = coordinator({}, { isConfigured: () => false }, { isConfigured: () => false, prefetchQuotes });
+    await off.prefetchChartQuotes(["A"]);
+    expect(prefetchQuotes.mock.calls.length).toBe(0);
+
+    const on = coordinator({}, { isConfigured: () => false }, { isConfigured: () => true, prefetchQuotes });
+    await on.prefetchChartQuotes(["A"]);
+    expect(prefetchQuotes.mock.calls).toEqual([[["A"]]]);
+    await on.prefetchChartQuotes([]);
+    expect(prefetchQuotes.mock.calls.length).toBe(1);
+
+    route({ charts: "yahoo" });
+    await on.prefetchChartQuotes(["A"]);
+    expect(prefetchQuotes.mock.calls.length).toBe(1);
+  });
+
+  it("rejects a chart with the provider error or a generic message", async () => {
+    const fmp = { isConfigured: () => false, getChart: mock(async () => null) };
+    const finnhub = { isConfigured: () => false };
+    const failing = coordinator(
+      {
+        getChart: mock(async () => {
+          throw new Error("boom");
+        }),
+      },
+      finnhub,
+      fmp,
+    );
+    await expect(failing.getChart("ZQCH1", "1y", "1d")).rejects.toThrow("boom");
+
+    const empty = coordinator({ getChart: mock(async () => null) }, finnhub, fmp);
+    await expect(empty.getChart("ZQCH2", "1y", "1d")).rejects.toThrow("No chart data from any provider");
+
+    // An empty candle list counts as an empty answer, which the chain still returns.
+    const noCandles: YahooChartData = { symbol: "ZQCH3", currency: "USD", regularMarketPrice: 1, candles: [] };
+    const blank = coordinator({ getChart: mock(async () => noCandles) }, finnhub, fmp);
+    expect(await blank.getChart("ZQCH3", "1y", "1d")).toEqual(noCandles);
+  });
+
+  it("maps Finnhub news to the shared fields only", async () => {
+    const item = { headline: "H", summary: "S", source: "Src", datetime: 1772445600, url: "https://example.com/n", id: 9, image: "img", category: "general", related: "X" };
+    const finnhub = { isConfigured: () => true, getMarketNews: mock(async () => [item]), getCompanyNews: mock(async () => [item]) };
+    const md = coordinator({ getMarketNews: mock(async () => []) }, finnhub, { isConfigured: () => false });
+    const news = await md.getMarketNews();
+    expect(news).toEqual([{ headline: "H", summary: "S", source: "Src", datetime: 1772445600, url: "https://example.com/n" }] as never);
+  });
+});

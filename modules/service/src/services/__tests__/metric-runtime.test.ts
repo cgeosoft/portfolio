@@ -6,9 +6,9 @@
  * install validation.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import asc from "assemblyscript/asc";
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { FinancialPortfolioData, PortfolioSummary } from "portfolio-shared/portfolio";
 import { METRIC_SCOPES, SUMMARY_FIELDS } from "portfolio-shared/metric-abi";
@@ -17,7 +17,8 @@ import { BUILTIN_METRIC_IDS } from "portfolio-shared/metrics";
 import { fmtCurrency, fmtPercent } from "portfolio-shared/format";
 import { getBuiltinMetrics } from "../metrics/builtins.js";
 import { encodeMetricPayload } from "../metrics/payload.js";
-import { MetricRegistry } from "../metrics/registry.js";
+import { MetricRegistry, getInstalledModulePath } from "../metrics/registry.js";
+import * as installedRepo from "../../db/installed-metrics.repo.js";
 import { MetricInstaller } from "../metrics/installer.js";
 import { MetricRuntime, MetricTimeoutError } from "../metrics/runtime.js";
 
@@ -583,5 +584,96 @@ runtime:
     expect(previews.size).toBe(8);
     expect(previews.has(`${baseUrl}/ok/manifest.yml?copy=9`)).toBe(true);
     expect(previews.has(`${baseUrl}/ok/manifest.yml?copy=1`)).toBe(false);
+  });
+
+  describe("Metric installer edge cases", () => {
+    const FIXTURE_ID = "acme-fixture";
+    const FIXTURE_VERSION = "1.2.3";
+    const moduleDir = () => {
+      const path = getInstalledModulePath(FIXTURE_ID, FIXTURE_VERSION);
+      const marker = `modules/${FIXTURE_ID}`;
+      const at = path.replaceAll("\\", "/").indexOf(marker);
+      expect(at).toBeGreaterThanOrEqual(0);
+      return path.slice(0, at + marker.length);
+    };
+    const newInstaller = (onChange: (id: string) => void = () => undefined) =>
+      new MetricInstaller(runtime, new MetricRegistry(), onChange);
+
+    beforeAll(() => {
+      const bytes = builtin("broker-fees").bytes;
+      served.set("/edge/module.wasm", { body: bytes, type: "application/wasm" });
+      served.set("/edge/manifest.yml", { body: manifestYaml("module.wasm", sha(bytes), bytes.length), type: "text/yaml" });
+    });
+
+    afterAll(() => {
+      installedRepo.remove(FIXTURE_ID);
+      rmSync(moduleDir(), { recursive: true, force: true });
+    });
+
+    it("rejects a manifest URL that is not http or https", async () => {
+      const installer = newInstaller();
+      await expect(installer.preview("ftp://x/manifest.yml")).rejects.toThrow("Manifest URL must use http or https");
+      await expect(installer.preview("nope")).rejects.toThrow("Manifest URL is not a valid URL");
+    });
+
+    it("reports a failed manifest download", async () => {
+      await expect(newInstaller().preview(`${baseUrl}/missing/manifest.yml`)).rejects.toThrow("Manifest download failed (404)");
+    });
+
+    it("requires a module block", async () => {
+      const bytes = builtin("broker-fees").bytes;
+      const yaml = manifestYaml("module.wasm", sha(bytes), bytes.length).replace(
+        /module:\n {2}url: .*\n {2}sha256: .*\n {2}size: .*\n/,
+        "source:\n  entry: assembly/index.ts\n",
+      );
+      expect(yaml).not.toContain("module:");
+      served.set("/source/manifest.yml", { body: yaml, type: "text/yaml" });
+      await expect(newInstaller().preview(`${baseUrl}/source/manifest.yml`)).rejects.toThrow(
+        "manifest has no module block (url, sha256, size)",
+      );
+    });
+
+    it("caps the declared module size", async () => {
+      served.set("/huge/manifest.yml", { body: manifestYaml("module.wasm", "0".repeat(64), 3000000), type: "text/yaml" });
+      await expect(newInstaller().preview(`${baseUrl}/huge/manifest.yml`)).rejects.toThrow("module.size exceeds the 2048 KiB limit");
+    });
+
+    it("accepts an absolute module URL", async () => {
+      const bytes = builtin("broker-fees").bytes;
+      served.set("/abs/module.wasm", { body: bytes, type: "application/wasm" });
+      served.set("/abs/manifest.yml", { body: manifestYaml(`${baseUrl}/abs/module.wasm`, sha(bytes), bytes.length), type: "text/yaml" });
+      const preview = await newInstaller().preview(`${baseUrl}/abs/manifest.yml`);
+      expect(preview.sha256).toBe(sha(bytes));
+    });
+
+    it("installs a module", async () => {
+      const onChange = mock((_id: string) => undefined);
+      const id = await newInstaller(onChange).install(`${baseUrl}/edge/manifest.yml`, ["portfolio.summary"]);
+      expect(id).toBe(FIXTURE_ID);
+      const row = installedRepo.findById(FIXTURE_ID)!;
+      expect(row).toBeDefined();
+      expect(row.verified).toBe(0);
+      expect(row.scopesGranted).toBe('["portfolio.summary"]');
+      expect(existsSync(getInstalledModulePath(FIXTURE_ID, FIXTURE_VERSION))).toBe(true);
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0][0]).toBe(FIXTURE_ID);
+      expect(new MetricRegistry().get(FIXTURE_ID)?.source).toBe("url");
+    });
+
+    it("uninstalls an installed module and nothing else", async () => {
+      const installer = newInstaller();
+      if (!installedRepo.findById(FIXTURE_ID)) await installer.install(`${baseUrl}/edge/manifest.yml`, ["portfolio.summary"]);
+      expect(await installer.uninstall(FIXTURE_ID)).toBe(true);
+      expect(installedRepo.findById(FIXTURE_ID)).toBeFalsy();
+      expect(existsSync(moduleDir())).toBe(false);
+      expect(await installer.uninstall("broker-fees")).toBe(false);
+      expect(await installer.uninstall("no-such-metric")).toBe(false);
+    });
+
+    it("accepts an expected hash in upper case with spaces", async () => {
+      const bytes = builtin("broker-fees").bytes;
+      const id = await newInstaller().install(`${baseUrl}/edge/manifest.yml`, ["portfolio.summary"], `  ${sha(bytes).toUpperCase()}  `);
+      expect(id).toBe(FIXTURE_ID);
+    });
   });
 });

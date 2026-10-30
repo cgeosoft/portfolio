@@ -13,7 +13,8 @@
   "scripts": {
     "start": "bun run --cwd modules/desktop start",
     "typecheck": "bun --filter '*' typecheck",
-    "test": "bun --filter portfolio-service --filter portfolio-gui --filter portfolio-desktop test",
+    "test": "bun run test:metrics && bun --filter portfolio-shared --filter portfolio-service --filter portfolio-gui --filter portfolio-desktop test",
+    "test:metrics": "bun test ./extras/metrics",
     "build": "bun run --cwd modules/desktop build",
     "build:metrics": "bun run scripts/build-metrics.ts",
     "release": "bash scripts/release.sh release",
