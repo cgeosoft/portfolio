@@ -437,8 +437,7 @@ describe("parseDate edge cases", () => {
     expect(parseDate("2024-02-29")).toBe("2024-02-29");
   });
 
-  // Suspected bug: modules/gui/src/components/portfolio/csv-import.ts MONTHS lacks the "mae" prefix of "März"
-  it.failing("reads the German full month name März", () => {
+  it("reads the German full month name März", () => {
     expect(parseDate("15 März 2025")).toBe("2025-03-15");
   });
 });
