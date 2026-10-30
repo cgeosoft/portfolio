@@ -397,8 +397,7 @@ describe("ISO week keys", () => {
     }
   });
 
-  // Suspected bug: modules/service/src/services/portfolio-report.ts:190-205 current-week dates use the UTC date of local now
-  it.failing("gives the local Monday to Sunday for the current week east of UTC just after midnight", async () => {
+  it("gives the local Monday to Sunday for the current week east of UTC just after midnight", async () => {
     const oldTz = process.env.TZ;
     process.env.TZ = "Pacific/Auckland";
     setSystemTime(new Date("2026-10-25T12:00:00Z"));
