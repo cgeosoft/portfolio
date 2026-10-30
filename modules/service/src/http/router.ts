@@ -299,7 +299,10 @@ export class Router {
       for (const mw of this.middlewares) await mw(ctx);
       const result = await matched.handler(ctx);
       if (result instanceof Response) {
-        for (const [k, v] of ctx.responseHeaders) if (!result.headers.has(k)) result.headers.set(k, v);
+        for (const [k, v] of ctx.responseHeaders) {
+          if (k.toLowerCase() !== "set-cookie" && !result.headers.has(k)) result.headers.set(k, v);
+        }
+        for (const cookie of ctx.responseHeaders.getSetCookie()) result.headers.append("Set-Cookie", cookie);
         if (!result.headers.has("Cache-Control")) result.headers.set("Cache-Control", "no-store");
         return result;
       }
