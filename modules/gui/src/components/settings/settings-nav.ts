@@ -60,8 +60,7 @@ export const sectionOf = (section: SettingsSection): SettingsSectionId => (isNot
 export function resolveSettingsSection(raw: string | undefined): SettingsSection | null {
   if (!raw) return null;
   const name = raw.toLowerCase();
-  const alias = ALIASES[name];
-  if (alias) return alias;
+  if (Object.hasOwn(ALIASES, name)) return ALIASES[name]!;
   if (isNotificationPage(name)) return name;
   if (name !== "notifications" && SECTIONS.some((section) => section.id === name)) return name as SettingsSection;
   return null;
