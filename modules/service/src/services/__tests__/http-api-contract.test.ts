@@ -154,8 +154,7 @@ describe("HTTP API contract", () => {
     expect(broken.body.message).toBe("Request body is not valid JSON");
   });
 
-  // Suspected bug: modules/service/src/http/routes.ts:259-273 PortfolioService validation errors answer 500
-  it.failing("answers 400 for a missing name or a bad colour", async () => {
+  it("answers 400 for a missing name or a bad colour", async () => {
     const empty = await api("POST", "/api/portfolios", { name: "" });
     expect(empty.status).toBe(400);
     expect(empty.body.message).toBe("Portfolio name is required");
