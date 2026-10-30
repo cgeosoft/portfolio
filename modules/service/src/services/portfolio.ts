@@ -219,6 +219,19 @@ export function portfolioColor(value: unknown): string | null | undefined {
   return value.toLowerCase();
 }
 
+/**
+ * Throws a `ValidationError` naming the required fields a new transaction
+ * lacks, before SQLite refuses the row (NOT NULL columns without a default).
+ * A cash row has an empty symbol, so the symbol only has to be a string.
+ */
+export function assertNewTransaction(tx: Partial<txRepo.TransactionInput>): void {
+  const missing: string[] = [];
+  if (typeof tx.date !== "string" || !tx.date.trim()) missing.push("date");
+  if (typeof tx.type !== "string" || !tx.type.trim()) missing.push("type");
+  if (typeof tx.symbol !== "string") missing.push("symbol");
+  if (missing.length > 0) throw new ValidationError(`Transaction is missing: ${missing.join(", ")}`);
+}
+
 export class PortfolioService {
   private cache = new Map<string, { data: FinancialPortfolioData; timestamp: number }>();
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
@@ -1434,6 +1447,7 @@ export class PortfolioService {
 
     if (action === "add" && txData) {
       await this.resolveImportSymbols([txData], portfolio.baseCurrency);
+      assertNewTransaction(txData);
       const id = this.mintPortfolioTransactionId(txData.id, portfolio.id);
       const dataToSave = { ...txData, id, portfolioId: portfolio.id } as Parameters<typeof txRepo.create>[0];
       let entity = txData as txRepo.TransactionRow;

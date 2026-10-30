@@ -303,11 +303,11 @@ describe("HTTP API contract", () => {
     expect(body).toEqual({ success: false, action: "add", totalTransactions: 0, error: "Portfolio not found" });
   });
 
-  // Suspected bug: modules/service/src/services/portfolio.ts:1388-1399 a raw SQLite constraint error answers 500
-  it.failing("answers 400 naming the missing field for an incomplete transaction", async () => {
+  it("answers 400 naming the missing field for an incomplete transaction", async () => {
     const { status, body } = await api("POST", `/api/portfolios/${pid}/transactions`, { action: "add", transaction: { symbol: "X" } });
     expect(status).toBe(400);
     expect(String(body.message)).not.toContain("constraint");
+    expect(body.message).toBe("Transaction is missing: date, type");
   });
 
   it("deletes a transaction", async () => {
