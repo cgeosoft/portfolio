@@ -32,11 +32,11 @@ describe("generateDemoTransactions", () => {
     expect(counts).toEqual({ CUSTOMER_INBOUND: 6, BUY: 64, SELL: 10, DIVIDEND: 20 });
     expect(new Set(rows.map((r) => r.id)).size).toBe(100);
     const ids = rows.map((r) => r.id).sort();
-    expect(ids[0]).toBe("demo_tx_001");
-    expect(ids[99]).toBe("demo_tx_100");
+    expect(ids[0]).toBe("zq-demo_demo_tx_001");
+    expect(ids[99]).toBe("zq-demo_demo_tx_100");
     const keys = rows.map((r) => `${r.date}|${r.datetime ?? ""}`);
     expect(keys).toEqual([...keys].sort());
-    expect(rows[0]).toMatchObject({ date: "2025-07-01", datetime: "2025-07-01T14:30:00.000Z", id: "demo_tx_001", symbol: "CASH", amount: 60000 });
+    expect(rows[0]).toMatchObject({ date: "2025-07-01", datetime: "2025-07-01T14:30:00.000Z", id: "zq-demo_demo_tx_001", symbol: "CASH", amount: 60000 });
     expect(rows[99]!.date).toBe("2026-06-22");
   });
 
@@ -51,7 +51,7 @@ describe("generateDemoTransactions", () => {
       tax: 0,
       currency: "EUR",
       assetClass: "STOCK",
-      id: "demo_tx_007",
+      id: "zq-demo_demo_tx_007",
     });
     expect(aapl.find((r) => r.type === "SELL")).toMatchObject({ date: "2026-02-10", shares: 3, price: 268.8, amount: 806.4, fee: 2, tax: 1.61 });
     expect(rows.find((r) => r.type === "DIVIDEND")).toMatchObject({
@@ -97,8 +97,7 @@ describe("generateDemoTransactions", () => {
 });
 
 describe("createDemoPortfolio", () => {
-  // Suspected bug: demo-portfolio.ts:66 ids are always demo_tx_001..100, so a second demo portfolio fails the UNIQUE insert and stays empty.
-  it.failing("creates a full demo portfolio every time", async () => {
+  it("creates a full demo portfolio every time", async () => {
     const counts: number[] = [];
     for (let i = 0; i < 2; i++) {
       const res = (await service.createDemoPortfolio("EUR")) as unknown as { id?: string; portfolio?: { id: string } };

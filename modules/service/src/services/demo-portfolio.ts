@@ -61,9 +61,10 @@ export function generateDemoTransactions(
     return asset.refPrice;
   };
 
+  // Transaction ids are unique across the table, so they carry the portfolio id.
   let txIndex = 1;
   const createTxId = (): string => {
-    const id = `demo_tx_${String(txIndex).padStart(3, "0")}`;
+    const id = `${portfolioId}_demo_tx_${String(txIndex).padStart(3, "0")}`;
     txIndex++;
     return id;
   };
