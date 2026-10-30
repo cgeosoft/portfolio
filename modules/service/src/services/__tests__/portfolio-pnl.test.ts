@@ -234,8 +234,7 @@ describe("multi-currency realized P&L (B1)", () => {
     expect(data.summary).toMatchObject({ cashBalance: 993.25, totalCashInjected: 1000, stockWeightPercent: 4.79, cashWeightPercent: 95.21 });
   });
 
-  // Suspected bug: portfolio.ts:717 realized P&L, income, fees and taxes are summed in trade currency, never converted to base.
-  it.failing("converts realized P&L, dividends, fees and taxes to the base currency", async () => {
+  it("converts realized P&L, dividends, fees and taxes to the base currency", async () => {
     const { data } = await build(txs);
     expect(data.summary).toMatchObject({
       realizedPnL: 15,
