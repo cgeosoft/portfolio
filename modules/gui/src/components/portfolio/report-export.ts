@@ -84,7 +84,7 @@ export function generateReportMarkdown(
     "---",
     "",
   ]
-    .filter(Boolean)
+    .filter((line) => line !== null)
     .join("\n");
 
   const titleHeader = `# ${report.title || text.markdownTitle(report.period || report.id)}\n`;
