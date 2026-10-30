@@ -1,0 +1,70 @@
+name: Notify
+
+# Posts to the ntfy topic URL in the NTFY_URL secret when a workflow run
+# starts or finishes, and when a GitHub release is published. Add new
+# workflows to the `workflows` list by their `name:`. workflow_run only fires
+# for this file as it is on the default branch.
+
+on:
+  workflow_run:
+    workflows: ["Dependency audit", "CVE report"]
+    types: [requested, completed]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      NTFY_URL: ${{ secrets.NTFY_URL }}
+    steps:
+      - name: Post to ntfy
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          RUN_NAME: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_TRIGGER: ${{ github.event.workflow_run.event }}
+          RUN_ACTOR: ${{ github.event.workflow_run.triggering_actor.login }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          STARTED: ${{ github.event.workflow_run.run_started_at }}
+          UPDATED: ${{ github.event.workflow_run.updated_at }}
+          TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          if [ -z "$NTFY_URL" ]; then
+            echo "::warning::NTFY_URL secret is not set; skipping notification."
+            exit 0
+          fi
+          REPO=${GITHUB_REPOSITORY#*/}
+
+          if [ "$EVENT" = release ]; then
+            KIND=release
+            [ "$PRERELEASE" = true ] && KIND=pre-release
+            TITLE="$REPO ${RELEASE_NAME:-$TAG} released"
+            MSG="New $KIND $TAG is published on GitHub."
+            PRIO=high; TAGS=tada; CLICK=$RELEASE_URL
+          elif [ "$ACTION" = requested ]; then
+            TITLE="$REPO: $RUN_NAME started"
+            MSG="Triggered by $RUN_TRIGGER on $RUN_BRANCH ($RUN_ACTOR)."
+            PRIO=min; TAGS=hourglass_flowing_sand; CLICK=$RUN_URL
+          else
+            SECS=$(( $(date -d "$UPDATED" +%s) - $(date -d "$STARTED" +%s) ))
+            MSG="Finished in $((SECS / 60))m $((SECS % 60))s ($RUN_TRIGGER on $RUN_BRANCH)."
+            CLICK=$RUN_URL
+            case "$CONCLUSION" in
+              success)   TITLE="$REPO: $RUN_NAME succeeded"; PRIO=low;     TAGS=white_check_mark ;;
+              cancelled|skipped) TITLE="$REPO: $RUN_NAME $CONCLUSION"; PRIO=low; TAGS=heavy_minus_sign ;;
+              *)         TITLE="$REPO: $RUN_NAME ${CONCLUSION:-failed}"; PRIO=high; TAGS=x ;;
+            esac
+          fi
+
+          curl -fsS -X POST "$NTFY_URL" \
+            -H "Title: $TITLE" -H "Priority: $PRIO" -H "Tags: $TAGS" -H "Click: $CLICK" \
+            --data-binary "$MSG" > /dev/null
