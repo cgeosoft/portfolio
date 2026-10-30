@@ -561,9 +561,10 @@ export class FmpService {
       // FMP reports some failures as 200 with { "Error Message": "..." }.
       if (data && typeof data === "object" && !Array.isArray(data) && typeof (data as Record<string, unknown>)["Error Message"] === "string") {
         const message = String((data as Record<string, unknown>)["Error Message"]);
+        // The daily "Limit Reach" text also says "upgrade your plan"; check it before the restricted pattern.
+        if (/limit reach/i.test(message)) return { kind: "rate_limited" };
         if (RESTRICTED_PATTERN.test(message)) return { kind: "restricted", scope: /parameter|symbol/i.test(message) ? "request" : "endpoint" };
         if (/api key/i.test(message)) return { kind: "auth" };
-        if (/limit reach/i.test(message)) return { kind: "rate_limited" };
         return { kind: "error", message: "FMP returned an error message" };
       }
       return { kind: "ok", data: data as T };
