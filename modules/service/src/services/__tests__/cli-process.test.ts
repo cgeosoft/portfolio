@@ -84,7 +84,7 @@ describe("parseJsonLine / stderrTail", () => {
     expect(parseJsonLine("   ")).toBeNull();
     expect(parseJsonLine("{bad")).toBeNull();
     expect(parseJsonLine("warning: x")).toBeNull();
-    expect(parseJsonLine('{"a":1}')).toEqual({ a: 1 });
+    expect(parseJsonLine<{ a: number }>('{"a":1}')).toEqual({ a: 1 });
     expect(parseJsonLine<number>("42")).toBe(42);
   });
 
