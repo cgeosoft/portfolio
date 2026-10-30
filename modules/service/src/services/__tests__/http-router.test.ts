@@ -108,12 +108,12 @@ describe("Router matching", () => {
     expect(res?.status).toBe(405);
     expect(await bodyOf(res)).toEqual({ statusCode: 405, message: "Method DELETE not allowed" });
     expect(res!.headers.get("X-Request-Id")).toBeNull();
-    const head = await send(router, "HEAD", "/api/a");
+    router.post("/api/p", () => ({}));
+    const head = await send(router, "HEAD", "/api/p");
     expect(head?.status).toBe(405);
   });
 
-  // Suspected bug: modules/service/src/http/router.ts:247-265 HEAD of a GET route answers 405
-  it.failing("answers HEAD on a GET route like GET without a body", async () => {
+  it("answers HEAD on a GET route like GET without a body", async () => {
     const router = new Router();
     router.get("/api/a", () => ({ ok: true }));
     const res = await send(router, "HEAD", "/api/a");
