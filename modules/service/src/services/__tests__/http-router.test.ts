@@ -321,8 +321,7 @@ describe("Router Response pass-through", () => {
     expect(res!.headers.getSetCookie()).toEqual(["a=1", "b=2"]);
   });
 
-  // Suspected bug: modules/service/src/http/router.ts:292-294 only the first Set-Cookie is copied onto a handler Response
-  it.failing("keeps every Set-Cookie when the handler returns a Response", async () => {
+  it("keeps every Set-Cookie when the handler returns a Response", async () => {
     const res = await send(withCookies(), "GET", "/api/response");
     expect(res!.headers.getSetCookie()).toEqual(["a=1", "b=2"]);
   });
