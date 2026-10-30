@@ -118,8 +118,8 @@ function stripThinkTags(input: string): string {
         (input[i + 5] === "n" || input[i + 5] === "N") &&
         (input[i + 6] === "k" || input[i + 6] === "K")) {
       // Found ` response`
-      // Fast-forward to `>`
-      i += 8;
+      // Fast-forward to the `>` that ends the closing tag
+      i += 7;
       while (i < len && input[i] !== ">") i++;
       if (i < len) i++; // skip `>`
       if (depth > 0) depth--;

@@ -139,8 +139,7 @@ describe("cleanThinkTags", () => {
     expect(cleanThinkTags("a<think>never closed")).toBe("a");
   });
 
-  // Suspected bug: modules/gui/src/components/portfolio/utils.ts:122 stripThinkTags skips past the next ">" after </think>
-  it.failing("keeps the text after a closing tag", () => {
+  it("keeps the text after a closing tag", () => {
     expect(cleanThinkTags("  a<think>x</think>b  ")).toBe("ab");
     expect(cleanThinkTags("<think>plan</think>\n\n# Report\nBody")).toBe("# Report\nBody");
     expect(cleanThinkTags("<THINK foo=1>x<think>y</think>z</think>done")).toBe("done");
