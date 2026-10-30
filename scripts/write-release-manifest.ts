@@ -11,7 +11,13 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const args = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, "").split("=") as [string, string]));
+const args = Object.fromEntries(
+  process.argv.slice(2).map((a) => {
+    // Split on the first "=" only, so a value such as a URL keeps its own "=".
+    const [key, ...value] = a.replace(/^--/, "").split("=");
+    return [key, value.length ? value.join("=") : undefined] as [string, string];
+  }),
+);
 const app = args.app!;
 const name = args.name || app;
 const version = args.version!;

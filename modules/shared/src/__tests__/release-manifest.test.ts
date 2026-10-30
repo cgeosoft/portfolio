@@ -92,8 +92,7 @@ describe("write-release-manifest", () => {
     expect(r.json.files).toEqual({ linux: {}, windows: {}, macos: {} });
   });
 
-  // Suspected bug: scripts/write-release-manifest.ts:14 splits --key=value on every "=", cutting the value
-  it.failing("keeps a value containing =", () => {
+  it("keeps a value containing =", () => {
     const args = baseArgs().map((a) => (a.startsWith("--site=") ? "--site=https://example.test/a=b" : a));
     expect(manifest(args).json.url).toBe("https://example.test/a=b/#downloads");
   });
