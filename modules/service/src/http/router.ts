@@ -229,8 +229,15 @@ export class Router {
    * Returns null when no route matches (the caller serves static files).
    * `isLocal` defaults to a loopback client address; main.ts passes false
    * for every request on the LAN listener.
+   * HEAD runs the matching GET route and drops the body.
    */
   async handle(req: Request, ip: string, isLocal: boolean = isLoopbackAddress(ip)): Promise<Response | null> {
+    const res = await this.dispatch(req, ip, isLocal);
+    if (!res || req.method.toUpperCase() !== "HEAD") return res;
+    return new Response(null, { status: res.status, statusText: res.statusText, headers: res.headers });
+  }
+
+  private async dispatch(req: Request, ip: string, isLocal: boolean): Promise<Response | null> {
     const url = new URL(req.url);
     const method = req.method.toUpperCase();
     let matched: Route | null = null;
@@ -240,7 +247,7 @@ export class Router {
       const m = route.pattern.exec(url.pathname);
       if (!m) continue;
       pathMatched = true;
-      if (route.method !== method) continue;
+      if (route.method !== method && !(method === "HEAD" && route.method === "GET")) continue;
       matched = route;
       try {
         params = Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1] ?? "")]));
