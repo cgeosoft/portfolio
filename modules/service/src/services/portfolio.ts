@@ -34,7 +34,7 @@ import { appLogger } from "../logger.js";
 import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
-import { ValidationError } from "./errors.js";
+import { NotFoundError, ValidationError } from "./errors.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 /** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
@@ -214,7 +214,7 @@ export { mapWithConcurrencyLimit, extractQuoteFromChart };
 export function portfolioColor(value: unknown): string | null | undefined {
   if (value === undefined) return undefined;
   if (value === null || value === "") return null;
-  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new Error("Portfolio colour must be #rrggbb");
+  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new ValidationError("Portfolio colour must be #rrggbb");
   return value.toLowerCase();
 }
 
@@ -406,14 +406,14 @@ export class PortfolioService {
   public getPortfolio(portfolioId: string): portfolioRepo.PortfolioRow {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) {
-      throw new Error(`Portfolio not found (${portfolioId})`);
+      throw new NotFoundError(`Portfolio not found (${portfolioId})`);
     }
     return portfolio;
   }
 
   public createPortfolio(data: { name: string; description?: string; baseCurrency?: string; color?: string | null }): portfolioRepo.PortfolioRow {
-    if (!data.name || !data.name.trim()) {
-      throw new Error("Portfolio name is required");
+    if (typeof data.name !== "string" || !data.name.trim()) {
+      throw new ValidationError("Portfolio name is required");
     }
 
     const config = loadConfig();
@@ -430,8 +430,8 @@ export class PortfolioService {
     data: { name?: string; description?: string; baseCurrency?: string; color?: string | null }
   ): portfolioRepo.PortfolioRow {
     const portfolio = this.getPortfolio(portfolioId);
-    if (data.name !== undefined && !data.name.trim()) {
-      throw new Error("Portfolio name cannot be empty");
+    if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim())) {
+      throw new ValidationError("Portfolio name cannot be empty");
     }
 
     const saved = portfolioRepo.update(portfolioId, { ...data, color: portfolioColor(data.color) });
@@ -442,7 +442,7 @@ export class PortfolioService {
   public deletePortfolio(portfolioId: string): boolean {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) {
-      throw new Error("Portfolio not found");
+      throw new NotFoundError("Portfolio not found");
     }
 
     portfolioRepo.deleteById(portfolioId);
@@ -475,7 +475,7 @@ export class PortfolioService {
   ): Promise<FinancialPortfolioData> {
     const portfolio = typeof portfolioOrId === "string" ? portfolioRepo.findById(portfolioOrId) : portfolioOrId;
     if (!portfolio) {
-      throw new Error(`Portfolio not found: ${typeof portfolioOrId === "string" ? portfolioOrId : ""}`);
+      throw new NotFoundError(`Portfolio not found: ${typeof portfolioOrId === "string" ? portfolioOrId : ""}`);
     }
     const effectiveCurrency = baseCurrency || portfolio.baseCurrency || "EUR";
     const cacheKey = `${portfolio.id}_${effectiveCurrency}`;
