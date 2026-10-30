@@ -193,8 +193,7 @@ describe("HTTP API contract", () => {
     expect(bad.body.message).toBe("Invalid currency");
   });
 
-  // Suspected bug: modules/service/src/http/routes.ts:269 not found from PortfolioService answers 500
-  it.failing("answers 404 when updating an unknown portfolio", async () => {
+  it("answers 404 when updating an unknown portfolio", async () => {
     const { status } = await api("PATCH", "/api/portfolios/nope", { name: "x" });
     expect(status).toBe(404);
   });
@@ -273,8 +272,7 @@ describe("HTTP API contract", () => {
     expect(bad.body.message).toBe("Invalid currency");
   });
 
-  // Suspected bug: modules/service/src/services/portfolio.ts:364-404 unknown portfolio data answers 500
-  it.failing("answers 404 for data of an unknown portfolio", async () => {
+  it("answers 404 for data of an unknown portfolio", async () => {
     const { status } = await api("GET", "/api/portfolios/nope/data");
     expect(status).toBe(404);
   });
@@ -354,8 +352,7 @@ describe("HTTP API contract", () => {
     expect(txRepo.findById(depId)).toBeNull();
   });
 
-  // Suspected bug: modules/service/src/http/routes.ts:275-287 deleting a deleted portfolio answers 500
-  it.failing("answers 404 when deleting a portfolio twice", async () => {
+  it("answers 404 when deleting a portfolio twice", async () => {
     const { status } = await api("DELETE", `/api/portfolios/${pid}`);
     expect(status).toBe(404);
   });

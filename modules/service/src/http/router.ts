@@ -1,7 +1,8 @@
 /**
  * Small HTTP router on top of Bun.serve. Routes are `METHOD /path/:param`
  * patterns; handlers receive a request context and return JSON (plain
- * objects), a `Response`, or throw an `HttpError`. Every request gets an id
+ * objects), a `Response`, or throw an `HttpError`. A `ServiceError` from a
+ * service (services/errors.ts) keeps its status too. Every request gets an id
  * for log correlation (X-Request-Id).
  *
  * Two transport checks run before any route: a request that changes state
@@ -15,6 +16,7 @@ import { randomUUID } from "node:crypto";
 import { appLogger } from "../logger";
 import { isDev } from "../environment";
 import { toJson } from "../json-cache";
+import { ServiceError } from "../services/errors";
 
 export class HttpError extends Error {
   constructor(
@@ -296,7 +298,7 @@ export class Router {
       }
       return jsonFor(req, result ?? { success: true }, 200, ctx.responseHeaders, !isLoopbackAddress(ip));
     } catch (err) {
-      const status = err instanceof HttpError ? err.status : 500;
+      const status = err instanceof HttpError || err instanceof ServiceError ? err.status : 500;
       const message = boundedErrorMessage(err);
       const durationMs = Math.round(performance.now() - started);
       if (status >= 500) {
