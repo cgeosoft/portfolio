@@ -310,6 +310,29 @@ describe("HTTP API contract", () => {
     expect(body.message).toBe("Transaction is missing: date, type");
   });
 
+  it("answers 400 naming each incomplete import row and imports none of them", async () => {
+    const good = { id: "imp-ok-" + crypto.randomUUID(), date: "2025-02-01", type: "CUSTOMER_INBOUND", symbol: "", amount: 5, currency: "EUR" };
+    const before = txRepo.countByPortfolio(pid);
+    for (const dryRun of [true, false]) {
+      const { status, body } = await api("POST", `/api/portfolios/${pid}/transactions`, {
+        action: "import",
+        dryRun,
+        transactions: [good, { symbol: "X", type: "BUY", shares: 1 }, { date: "2025-02-02", amount: 1 }],
+      });
+      expect(status).toBe(400);
+      expect(String(body.message)).not.toContain("constraint");
+      expect(body.message).toBe("Import rows are missing required fields: row 2 (date); row 3 (type, symbol)");
+    }
+    expect(txRepo.countByPortfolio(pid)).toBe(before);
+    expect(txRepo.findById(good.id)).toBeNull();
+  });
+
+  it("answers 400 for an import row that is not an object", async () => {
+    const { status, body } = await api("POST", `/api/portfolios/${pid}/transactions`, { action: "import", transactions: [null] });
+    expect(status).toBe(400);
+    expect(body.message).toBe("Import rows are missing required fields: row 1 (date, type, symbol)");
+  });
+
   it("deletes a transaction", async () => {
     const { body } = await api("POST", `/api/portfolios/${pid}/transactions`, { action: "delete", transactionId: buyId });
     expect(body.success).toBe(true);

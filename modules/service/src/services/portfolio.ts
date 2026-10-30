@@ -225,11 +225,39 @@ export function portfolioColor(value: unknown): string | null | undefined {
  * A cash row has an empty symbol, so the symbol only has to be a string.
  */
 export function assertNewTransaction(tx: Partial<txRepo.TransactionInput>): void {
-  const missing: string[] = [];
-  if (typeof tx.date !== "string" || !tx.date.trim()) missing.push("date");
-  if (typeof tx.type !== "string" || !tx.type.trim()) missing.push("type");
-  if (typeof tx.symbol !== "string") missing.push("symbol");
+  const missing = missingTransactionFields(tx);
   if (missing.length > 0) throw new ValidationError(`Transaction is missing: ${missing.join(", ")}`);
+}
+
+/** The required fields a new transaction lacks; a value that is not an object lacks all of them. */
+function missingTransactionFields(tx: unknown): string[] {
+  const t = (tx && typeof tx === "object" ? tx : {}) as Partial<txRepo.TransactionInput>;
+  const missing: string[] = [];
+  if (typeof t.date !== "string" || !t.date.trim()) missing.push("date");
+  if (typeof t.type !== "string" || !t.type.trim()) missing.push("type");
+  if (typeof t.symbol !== "string") missing.push("symbol");
+  return missing;
+}
+
+/** How many incomplete import rows the error message names before it sums up the rest. */
+const MAX_NAMED_IMPORT_ROWS = 10;
+
+/**
+ * Throws one `ValidationError` naming every import row (1-based position in
+ * the list) that `isNew` marks as a new row and that lacks a required field.
+ * It runs before anything is saved, so a bad row imports nothing.
+ */
+function assertImportRows(rows: unknown[], isNew: (index: number) => boolean): void {
+  const problems: string[] = [];
+  rows.forEach((row, i) => {
+    if (!isNew(i)) return;
+    const missing = missingTransactionFields(row);
+    if (missing.length > 0) problems.push(`row ${i + 1} (${missing.join(", ")})`);
+  });
+  if (problems.length === 0) return;
+  const named = problems.slice(0, MAX_NAMED_IMPORT_ROWS).join("; ");
+  const more = problems.length > MAX_NAMED_IMPORT_ROWS ? `; and ${problems.length - MAX_NAMED_IMPORT_ROWS} more rows` : "";
+  throw new ValidationError(`Import rows are missing required fields: ${named}${more}`);
 }
 
 export class PortfolioService {
@@ -1491,6 +1519,8 @@ export class PortfolioService {
       if (!Array.isArray(batchList)) {
         return { success: false, action: "import", totalTransactions: 0, error: "No transactions list provided" };
       }
+      // A row that is not an object cannot be matched or resolved: reject the import first.
+      assertImportRows(batchList, (i) => !batchList[i] || typeof batchList[i] !== "object");
 
       await this.resolveImportSymbols(batchList, portfolio.baseCurrency);
 
@@ -1551,6 +1581,10 @@ export class PortfolioService {
           claimed.add(match.id);
         }
       });
+
+      // A row that matches a stored one updates it and keeps the stored value of an empty
+      // field (txRepo.update); a new row needs every NOT NULL column.
+      assertImportRows(batchList, (i) => !matches[i]);
 
       for (const [i, t] of batchList.entries()) {
         const candidateId = candidateIds[i]!;
