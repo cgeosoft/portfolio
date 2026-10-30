@@ -277,9 +277,14 @@ describe("Semver parsing extras", () => {
     expect(parseSemver("1.x.0")).toBeNull();
   });
 
-  // Suspected bug: modules/service/src/services/app-update.ts:35-44 prereleases of the same version are never compared
-  it.failing("orders two prereleases of the same version", () => {
+  it("orders two prereleases of the same version", () => {
     expect(isNewerVersion("1.0.0-beta.1", "1.0.0-beta.2")).toBe(true);
+    expect(isNewerVersion("1.0.0-beta.2", "1.0.0-beta.1")).toBe(false);
+    expect(isNewerVersion("1.0.0-beta.2", "1.0.0-beta.10")).toBe(true);
+    expect(isNewerVersion("1.0.0-beta", "1.0.0-beta.1")).toBe(true);
+    expect(isNewerVersion("1.0.0-alpha.1", "1.0.0-alpha.beta")).toBe(true);
+    expect(isNewerVersion("1.0.0-beta.9", "1.0.0-rc.1")).toBe(true);
+    expect(isNewerVersion("1.0.0-beta.1", "1.0.0-beta.1")).toBe(false);
   });
 
   it("does not treat an older prerelease or a prerelease of the current version as newer", () => {
