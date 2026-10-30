@@ -198,11 +198,13 @@ describe("anonymizeLogContent: more cases", () => {
     expect(literal).toContain("[PORTFOLIO_NAME]");
   });
 
-  // Suspected bug: modules/service/src/services/support-ticket.ts:81 JSON key redaction misses gotifyToken and ntfyToken
-  it.failing("redacts notification tokens", () => {
+  it("redacts notification tokens", () => {
     const out = anon('{"gotifyToken":"g-secret","ntfyToken":"n-secret"}');
     expect(out).not.toContain("g-secret");
     expect(out).not.toContain("n-secret");
+    expect(out).toContain('"gotifyToken":"[REDACTED]"');
+    expect(out).toContain('"ntfyToken":"[REDACTED]"');
+    expect(anon('{"token":"t-secret"}')).toBe('{"token":"[REDACTED]"}');
   });
 
   it("builds a default ticket without logs", async () => {
