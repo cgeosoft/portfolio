@@ -10,7 +10,7 @@
   "dependencies": {
     "jszip": "^3.10.1",
     "portfolio-shared": "workspace:*",
-    "posthog-node": "^4.0.0"
+    "posthog-node": "^5.57.2"
   },
   "devDependencies": {
     "@types/jszip": "^3.4.1",
