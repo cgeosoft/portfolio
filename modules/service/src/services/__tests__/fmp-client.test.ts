@@ -159,8 +159,7 @@ describe("get() error classification", () => {
     expect(await fmp.requestStatus("/zq7-badkey", { symbol: "A" })).toBe("key_rejected");
   });
 
-  // Suspected bug: fmp.ts:564 the daily "Limit Reach" text contains "upgrade your plan" and marks the endpoint restricted.
-  it.failing("treats the daily limit message as a rate limit, not as a plan restriction", async () => {
+  it("treats the daily limit message as a rate limit, not as a plan restriction", async () => {
     const calls = stubFetch(() =>
       Response.json({
         "Error Message": "Limit Reach . Please upgrade your plan or visit our documentation for more details at https://site.financialmodelingprep.com/",
