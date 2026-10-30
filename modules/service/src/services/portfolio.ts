@@ -34,6 +34,7 @@ import { appLogger } from "../logger.js";
 import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
+import { ValidationError } from "./errors.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 /** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
@@ -215,6 +216,19 @@ export function portfolioColor(value: unknown): string | null | undefined {
   if (value === null || value === "") return null;
   if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) throw new Error("Portfolio colour must be #rrggbb");
   return value.toLowerCase();
+}
+
+/**
+ * Throws a `ValidationError` naming the required fields a new transaction
+ * lacks, before SQLite refuses the row (NOT NULL columns without a default).
+ * A cash row has an empty symbol, so the symbol only has to be a string.
+ */
+export function assertNewTransaction(tx: Partial<txRepo.TransactionInput>): void {
+  const missing: string[] = [];
+  if (typeof tx.date !== "string" || !tx.date.trim()) missing.push("date");
+  if (typeof tx.type !== "string" || !tx.type.trim()) missing.push("type");
+  if (typeof tx.symbol !== "string") missing.push("symbol");
+  if (missing.length > 0) throw new ValidationError(`Transaction is missing: ${missing.join(", ")}`);
 }
 
 export class PortfolioService {
@@ -1387,6 +1401,7 @@ export class PortfolioService {
 
     if (action === "add" && txData) {
       await this.resolveImportSymbols([txData], portfolio.baseCurrency);
+      assertNewTransaction(txData);
       const id = this.mintPortfolioTransactionId(txData.id, portfolio.id);
       const dataToSave = { ...txData, id, portfolioId: portfolio.id } as Parameters<typeof txRepo.create>[0];
       let entity = txData as txRepo.TransactionRow;
