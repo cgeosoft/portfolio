@@ -679,15 +679,21 @@ export class PortfolioService {
     forceFresh = false,
     prefetchedQuotes?: Map<string, YahooQuote>,
   ): Promise<FinancialPortfolioData> {
-    let totalCashInjected = 0;
-    let totalCashWithdrawn = 0;
-    // Realized P&L, income, fees and taxes per transaction currency, converted to the base currency once FX is known.
-    type NativeTotals = { realizedPnL: number; dividends: number; interest: number; fees: number; taxes: number };
+    // Cash flows, realized P&L, income, fees and taxes per transaction currency, converted to the base currency once FX is known.
+    type NativeTotals = {
+      injected: number;
+      withdrawn: number;
+      realizedPnL: number;
+      dividends: number;
+      interest: number;
+      fees: number;
+      taxes: number;
+    };
     const nativeByCurrency = new Map<string, NativeTotals>();
     const native = (curr: string): NativeTotals => {
       let t = nativeByCurrency.get(curr);
       if (!t) {
-        t = { realizedPnL: 0, dividends: 0, interest: 0, fees: 0, taxes: 0 };
+        t = { injected: 0, withdrawn: 0, realizedPnL: 0, dividends: 0, interest: 0, fees: 0, taxes: 0 };
         nativeByCurrency.set(curr, t);
       }
       return t;
@@ -717,9 +723,9 @@ export class PortfolioService {
       addCash(tx, nonTradeCashFlow(tx));
 
       if (INFLOW_TYPES.has(tx.type)) {
-        totalCashInjected += absNum(amt);
+        txNative.injected += absNum(amt);
       } else if (OUTFLOW_TYPES.has(tx.type)) {
-        totalCashWithdrawn += absNum(amt);
+        txNative.withdrawn += absNum(amt);
       } else if (tx.type === "DIVIDEND") {
         txNative.dividends += absNum(amt);
       } else if (tx.type === "INTEREST_PAYMENT") {
@@ -914,6 +920,8 @@ export class PortfolioService {
     fxTimer.end("info", `FX rates resolved for ${fxRates.size} currency pairs`);
 
     const toBase = (curr: string) => fxRates.get(curr) ?? 1;
+    let totalCashInjected = 0;
+    let totalCashWithdrawn = 0;
     let realizedPnL = 0;
     let totalDividends = 0;
     let totalInterest = 0;
@@ -921,6 +929,8 @@ export class PortfolioService {
     let totalTaxes = 0;
     for (const [curr, t] of nativeByCurrency) {
       const rate = toBase(curr);
+      totalCashInjected += t.injected * rate;
+      totalCashWithdrawn += t.withdrawn * rate;
       realizedPnL += t.realizedPnL * rate;
       totalDividends += t.dividends * rate;
       totalInterest += t.interest * rate;
