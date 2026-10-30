@@ -72,11 +72,15 @@ export function formatLogTime(timestamp?: string | Date): string {
 /** `4ms`, `340ms`, `1.2s`, `1m04s` — whichever reads fastest at a glance. */
 export function formatDuration(durationMs?: number): string {
   if (durationMs === undefined || !Number.isFinite(durationMs) || durationMs < 0) return "";
-  if (durationMs < 1000) return `${Math.round(durationMs)}ms`;
-  if (durationMs < 60_000) return `${(durationMs / 1000).toFixed(durationMs < 10_000 ? 2 : 1)}s`;
-  const minutes = Math.floor(durationMs / 60_000);
-  const seconds = Math.round((durationMs % 60_000) / 1000);
-  return `${minutes}m${two(seconds)}s`;
+  // Round to each unit's precision first, then pick the unit, so 59999 ms reads 1m00s, not 60.0s.
+  const ms = Math.round(durationMs);
+  if (ms < 1000) return `${ms}ms`;
+  const centis = Math.round(ms / 10);
+  if (centis < 1000) return `${(centis / 100).toFixed(2)}s`;
+  const decis = Math.round(ms / 100);
+  if (decis < 600) return `${(decis / 10).toFixed(1)}s`;
+  const seconds = Math.round(ms / 1000);
+  return `${Math.floor(seconds / 60)}m${two(seconds % 60)}s`;
 }
 
 function formatValue(value: unknown): string {

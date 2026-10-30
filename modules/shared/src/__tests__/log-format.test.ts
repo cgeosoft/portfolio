@@ -42,13 +42,11 @@ describe("formatDuration boundaries", () => {
     expect(formatDuration(3_600_000)).toBe("60m00s");
   });
 
-  // Suspected bug: modules/shared/src/log-format.ts:75-78 seconds round up to 60 inside the minute format
-  it.failing("carries rounded seconds into the minute", () => {
+  it("carries rounded seconds into the minute", () => {
     expect(formatDuration(119_500)).toBe("2m00s");
   });
 
-  // Suspected bug: modules/shared/src/log-format.ts:75-78 rounding crosses the unit boundary without switching unit
-  it.failing("switches unit when rounding reaches the next one", () => {
+  it("switches unit when rounding reaches the next one", () => {
     expect(formatDuration(59_999)).toBe("1m00s");
     expect(formatDuration(999.6)).toBe("1.00s");
   });
