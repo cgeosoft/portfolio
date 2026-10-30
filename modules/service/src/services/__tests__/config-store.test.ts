@@ -395,8 +395,7 @@ describe("secrets", () => {
 });
 
 describe("suspected bugs", () => {
-  // Suspected bug: modules/service/src/config.ts:109-123 returned config shares record objects with the cache and defaults
-  it.failing("does not leak a mutation of a returned config into the next load", () => {
+  it("does not leak a mutation of a returned config into the next load", () => {
     const c = loadConfig();
     (c.llmApiKeys as Record<string, string>).leak = "x";
     (c.llmBaseUrls as Record<string, string>).leak = "x";
