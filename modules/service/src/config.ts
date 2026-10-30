@@ -226,7 +226,8 @@ function migrateLlmProvider(cfg: DesktopConfig, parsed: Record<string, unknown>)
 }
 
 function normalize(parsed: Record<string, unknown>): DesktopConfig {
-  const cfg = { ...DEFAULT_CONFIG, ...parsed } as DesktopConfig;
+  // A deep copy, so a caller that mutates a record cannot change the cache or the defaults.
+  const cfg = structuredClone({ ...DEFAULT_CONFIG, ...parsed }) as DesktopConfig;
   cfg.dataProviderRouting = {
     ...DEFAULT_DATA_PROVIDER_ROUTING,
     ...((parsed.dataProviderRouting as Partial<DataProviderCategoryRouting> | undefined) || {}),
