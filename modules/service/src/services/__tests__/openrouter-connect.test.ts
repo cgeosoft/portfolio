@@ -108,7 +108,7 @@ describe("OpenRouter key exchange", () => {
     expect(c.llmModel).toBe("openrouter/auto");
     expect(c.llmBaseUrls["openai-compatible"]).toBe(OPENROUTER_BASE_URL);
     expect(c.llmApiKeys["openai-compatible"]).toBe("sk-or-v1-test");
-    expect(c.llmModels["openai-compatible"]).toBe("openrouter/auto");
+    expect(c.llmModels?.["openai-compatible"]).toBe("openrouter/auto");
 
     expect(openRouterConnectStatus(state)).toEqual({ status: "connected", message: "Connected to OpenRouter." });
     expect((await completeOpenRouterConnect(state, "c0de")).ok).toBe(false);

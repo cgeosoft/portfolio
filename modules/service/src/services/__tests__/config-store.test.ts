@@ -112,7 +112,7 @@ describe("defaults and storage", () => {
     for (const key of ["lastQuotesSync", "lastUpdateCheck", "dismissedUpdateVersion", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"]) {
       expect(all[key]).toBeUndefined();
     }
-    const routing = DEFAULT_DATA_PROVIDER_ROUTING as Record<string, string>;
+    const routing = DEFAULT_DATA_PROVIDER_ROUTING as unknown as Record<string, string>;
     expect(Object.keys(routing).length).toBe(15);
     for (const [k, v] of Object.entries(routing)) expect(v).toBe(k === "etfAssetClasses" ? "yahoo" : "fmp");
   });
@@ -355,7 +355,7 @@ describe("secrets", () => {
     expect(masked.llmApiKeys).toEqual({ x: "********", y: "" });
     const secretKeys = new Set(["llmApiKey", "finnhubApiKey", "fmpApiKey", "gotifyToken", "ntfyToken", "llmApiKeys"]);
     for (const [k, v] of Object.entries(input)) {
-      if (!secretKeys.has(k)) expect((masked as Record<string, unknown>)[k]).toEqual(v);
+      if (!secretKeys.has(k)) expect((masked as unknown as Record<string, unknown>)[k]).toEqual(v);
     }
     expect(input).toEqual(before);
   });
@@ -403,7 +403,7 @@ describe("suspected bugs", () => {
     const next = loadConfig();
     expect("leak" in next.llmApiKeys).toBe(false);
     expect("leak" in next.llmBaseUrls).toBe(false);
-    expect("leak" in next.llmModels).toBe(false);
+    expect("leak" in (next.llmModels ?? {})).toBe(false);
   });
 
   it("returns the same normalized values from updateConfig as from loadConfig", () => {
