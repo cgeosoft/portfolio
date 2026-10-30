@@ -61,7 +61,10 @@ export class DevGuiServer {
   private proc: Bun.Subprocess<"pipe", "pipe", "pipe"> | null = null;
   private url: string | null = null;
   private exited = false;
+  /** Last complete output lines, without their newline. */
   private readonly recent: string[] = [];
+  /** The unfinished last line of each open stream. */
+  private readonly openLines = new Set<{ text: string }>();
 
   constructor(
     private readonly repoRoot: string,
@@ -105,7 +108,14 @@ export class DevGuiServer {
 
   /** Last lines of output, for the failure page. */
   tail(lines = 40): string {
-    return this.recent.slice(-lines).join("");
+    const unfinished = [...this.openLines].map((line) => line.text).filter(Boolean);
+    const last = [...this.recent, ...unfinished].slice(-lines);
+    return last.length ? `${last.join("\n")}\n` : "";
+  }
+
+  private remember(line: string): void {
+    this.recent.push(line);
+    if (this.recent.length > 200) this.recent.splice(0, this.recent.length - 200);
   }
 
   stop(): void {
@@ -114,17 +124,17 @@ export class DevGuiServer {
 
   private async pump(stream: ReadableStream<Uint8Array>, readUrl: boolean): Promise<void> {
     const decoder = new TextDecoder();
-    let partial = "";
+    const open = { text: "" };
+    this.openLines.add(open);
     try {
       for await (const chunk of stream) {
         const text = decoder.decode(chunk, { stream: true });
         process.stdout.write(text);
         const plain = text.replace(ANSI_PATTERN, "");
-        this.recent.push(plain);
-        if (this.recent.length > 200) this.recent.splice(0, this.recent.length - 200);
+        const lines = (open.text + plain).split("\n");
+        open.text = lines.pop() ?? "";
+        for (const line of lines) this.remember(line);
         if (!readUrl) continue;
-        const lines = (partial + plain).split("\n");
-        partial = lines.pop() ?? "";
         for (const line of lines) {
           const match = GUI_URL_LINE.exec(line.trim());
           if (match) this.url = match[1].replace(/\/+$/, "");
@@ -133,5 +143,7 @@ export class DevGuiServer {
     } catch {
       // Stream closed by kill or exit.
     }
+    this.openLines.delete(open);
+    if (open.text) this.remember(open.text);
   }
 }
