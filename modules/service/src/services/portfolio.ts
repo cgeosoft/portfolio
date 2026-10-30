@@ -680,13 +680,25 @@ export class PortfolioService {
     forceFresh = false,
     prefetchedQuotes?: Map<string, YahooQuote>,
   ): Promise<FinancialPortfolioData> {
-    let totalCashInjected = 0;
-    let totalCashWithdrawn = 0;
-    let realizedPnL = 0;
-    let totalDividends = 0;
-    let totalInterest = 0;
-    let totalFees = 0;
-    let totalTaxes = 0;
+    // Cash flows, realized P&L, income, fees and taxes per transaction currency, converted to the base currency once FX is known.
+    type NativeTotals = {
+      injected: number;
+      withdrawn: number;
+      realizedPnL: number;
+      dividends: number;
+      interest: number;
+      fees: number;
+      taxes: number;
+    };
+    const nativeByCurrency = new Map<string, NativeTotals>();
+    const native = (curr: string): NativeTotals => {
+      let t = nativeByCurrency.get(curr);
+      if (!t) {
+        t = { injected: 0, withdrawn: 0, realizedPnL: 0, dividends: 0, interest: 0, fees: 0, taxes: 0 };
+        nativeByCurrency.set(curr, t);
+      }
+      return t;
+    };
 
     // costByCurrency splits totalCost by trade currency, so the summary converts each part at its own rate.
     const cumulativeCostMap = new Map<string, { shares: number; totalCost: number; costByCurrency: Map<string, number> }>();
@@ -706,19 +718,20 @@ export class PortfolioService {
       const sh = tx.shares ?? 0;
       const pr = tx.price ?? 0;
       const sym = (tx.symbol || "").toUpperCase();
+      const txNative = native((tx.currency || baseCurrency).trim());
 
-      totalFees += absNum(tx.fee ?? 0);
-      totalTaxes += tx.tax ?? 0;
+      txNative.fees += absNum(tx.fee ?? 0);
+      txNative.taxes += tx.tax ?? 0;
       addCash(tx, nonTradeCashFlow(tx));
 
       if (INFLOW_TYPES.has(tx.type)) {
-        totalCashInjected += absNum(amt);
+        txNative.injected += absNum(amt);
       } else if (OUTFLOW_TYPES.has(tx.type)) {
-        totalCashWithdrawn += absNum(amt);
+        txNative.withdrawn += absNum(amt);
       } else if (tx.type === "DIVIDEND") {
-        totalDividends += absNum(amt);
+        txNative.dividends += absNum(amt);
       } else if (tx.type === "INTEREST_PAYMENT") {
-        totalInterest += absNum(amt);
+        txNative.interest += absNum(amt);
       } else if (isBuyTransaction(tx)) {
         if (sym && sym !== "CASH") {
           let pos = cumulativeCostMap.get(sym);
@@ -757,9 +770,12 @@ export class PortfolioService {
             // Beyond the held shares, only the held part of the proceeds counts toward realized P&L.
             const soldHeld = Math.min(absNum(sh), pos.shares);
             const costBasisOfSold = soldHeld * avgCost;
-            const tradePnL = proceeds * (soldHeld / absNum(sh)) - costBasisOfSold;
-            realizedPnL += tradePnL;
-            for (const [curr, cost] of pos.costByCurrency) pos.costByCurrency.set(curr, cost - absNum(sh) * (cost / pos.shares));
+            // Proceeds count in the trade currency, the sold cost in each currency it was bought in.
+            txNative.realizedPnL += proceeds * (soldHeld / absNum(sh));
+            for (const [curr, cost] of pos.costByCurrency) {
+              native(curr).realizedPnL -= soldHeld * (cost / pos.shares);
+              pos.costByCurrency.set(curr, cost - absNum(sh) * (cost / pos.shares));
+            }
 
             pos.shares -= absNum(sh);
             pos.totalCost -= costBasisOfSold;
@@ -914,6 +930,23 @@ export class PortfolioService {
     fxTimer.end("info", `FX rates resolved for ${fxRates.size} currency pairs`);
 
     const toBase = (curr: string) => fxRates.get(curr) ?? 1;
+    let totalCashInjected = 0;
+    let totalCashWithdrawn = 0;
+    let realizedPnL = 0;
+    let totalDividends = 0;
+    let totalInterest = 0;
+    let totalFees = 0;
+    let totalTaxes = 0;
+    for (const [curr, t] of nativeByCurrency) {
+      const rate = toBase(curr);
+      totalCashInjected += t.injected * rate;
+      totalCashWithdrawn += t.withdrawn * rate;
+      realizedPnL += t.realizedPnL * rate;
+      totalDividends += t.dividends * rate;
+      totalInterest += t.interest * rate;
+      totalFees += t.fees * rate;
+      totalTaxes += t.taxes * rate;
+    }
     // The rate of the trade currencies, as the history converts each trade. One currency takes its rate;
     // several take the blend of their converted cost. Holdings without trades fall back to the holding's currency.
     const tradeCostRate = (sym: string): number | undefined => {

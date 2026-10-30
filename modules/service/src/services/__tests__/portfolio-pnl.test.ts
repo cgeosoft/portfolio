@@ -271,8 +271,7 @@ describe("multi-currency realized P&L (B1)", () => {
     expect(data.summary).toMatchObject({ cashBalance: 993.25, totalCashInjected: 1000, stockWeightPercent: 4.79, cashWeightPercent: 95.21 });
   });
 
-  // Suspected bug: portfolio.ts:717 realized P&L, income, fees and taxes are summed in trade currency, never converted to base.
-  it.failing("converts realized P&L, dividends, fees and taxes to the base currency", async () => {
+  it("converts realized P&L, dividends, fees and taxes to the base currency", async () => {
     const { data } = await build(txs);
     expect(data.summary).toMatchObject({
       realizedPnL: 15,
@@ -281,6 +280,29 @@ describe("multi-currency realized P&L (B1)", () => {
       totalTaxes: 0.75,
       totalGainSinceStartDollar: 44,
       totalGainSinceStartPercent: 176,
+    });
+  });
+
+  it("converts deposits and withdrawals to the base currency", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-01", type: "DEPOSIT", amount: 1000, currency: "USD" }),
+      tx({ date: "2025-01-02", type: "DEPOSIT", amount: 100 }),
+      tx({ date: "2025-01-03", type: "WITHDRAWAL", amount: -200, currency: "USD" }),
+    ]);
+    expect(data.summary).toMatchObject({ totalCashInjected: 600, totalCashWithdrawn: 100, cashBalance: 500 });
+  });
+
+  it("uses the converted deposits as the capital of the gain percent without holdings", async () => {
+    const { data } = await build([
+      tx({ date: "2025-01-01", type: "DEPOSIT", amount: 1000, currency: "USD" }),
+      tx({ date: "2025-01-02", type: "INTEREST_PAYMENT", amount: 20, currency: "USD" }),
+    ]);
+    expect(data.summary).toMatchObject({
+      totalCost: 0,
+      totalCashInjected: 500,
+      totalInterest: 10,
+      totalGainSinceStartDollar: 10,
+      totalGainSinceStartPercent: 2,
     });
   });
 });
