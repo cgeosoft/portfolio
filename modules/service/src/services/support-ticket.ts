@@ -78,7 +78,7 @@ export class SupportTicketService {
     text = text.replace(/sk-ant-[a-zA-Z0-9_-]{20,}/g, "sk-ant-[REDACTED_KEY]");
     text = text.replace(/sk-or-v1-[a-zA-Z0-9_-]{20,}/g, "sk-or-v1-[REDACTED_KEY]");
     text = text.replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED_TOKEN]");
-    text = text.replace(/"(llmApiKey|apiKey|token|key)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"');
+    text = text.replace(/"(llmApiKey|apiKey|key|[a-z]*token)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"');
 
     // 2. Redact file system paths and usernames
     const home = homedir();
