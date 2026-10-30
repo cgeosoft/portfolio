@@ -126,6 +126,7 @@ export function stopRemoteAccess(): void {
 export function setRemoteAccess(update: { enabled?: boolean; port?: number }): RemoteAccessInfo {
   const cfg = loadConfig();
   const previous = { allowRemoteConnections: cfg.allowRemoteConnections, remotePort: cfg.remotePort };
+  const previousError = bindError;
   const enabled = update.enabled ?? cfg.allowRemoteConnections;
   const port = update.port ?? cfg.remotePort;
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new HttpError(400, "The port must be a whole number from 1024 to 65535");
@@ -135,7 +136,9 @@ export function setRemoteAccess(update: { enabled?: boolean; port?: number }): R
   try {
     apply();
   } catch (err) {
+    // The old settings and listener stay, so the error state they had stays too.
     updateConfig(previous);
+    bindError = previousError;
     throw new HttpError(409, errorText(err));
   }
   return remoteAccessInfo();

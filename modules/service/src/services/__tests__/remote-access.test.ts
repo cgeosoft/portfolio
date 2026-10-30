@@ -115,8 +115,7 @@ describe("remote access switch", () => {
     expect(isRemoteListening()).toBe(true);
   });
 
-  // Suspected bug: modules/service/src/services/remote-access.ts:66-74 bindError stays set after a failed port change
-  it.failing("reports no error while the configured port is listening after a failed change", () => {
+  it("reports no error while the configured port is listening after a failed change", () => {
     authService.setPin(PIN);
     setRemoteAccess({ enabled: true, port: 5231 });
     failPort = 5232;
