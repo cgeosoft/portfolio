@@ -57,8 +57,7 @@ describe("formatMoney", () => {
     expect(formatMoney(undefined, "EUR")).toBe("€0.00");
   });
 
-  // Suspected bug: modules/shared/src/format.ts:31 formatMoney ignores the currency for a missing amount
-  it.failing("prints zero with the currency's own symbol for a missing amount", () => {
+  it("prints zero with the currency's own symbol for a missing amount", () => {
     expect(formatMoney(undefined, "USD")).toBe("$0.00");
     expect(formatMoney(NaN, "GBP")).toBe("£0.00");
   });

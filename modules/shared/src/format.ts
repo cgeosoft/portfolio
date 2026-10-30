@@ -28,7 +28,7 @@ export function fmtCurrency(amount: number | undefined, currency = "EUR", hideVa
 
 export function formatMoney(val: number | undefined, currency = "EUR", maxDecimals = 2, hideValues = false): string {
   if (hideValues) return fmtCurrency(val, currency, true);
-  if (val === undefined || isNaN(val)) return `€0.00`;
+  if (val === undefined || isNaN(val)) return fmtCurrency(undefined, currency);
   const symbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "CHF" ? "Fr " : "€";
   const minDecimals = Math.min(2, maxDecimals);
   return `${symbol}${numberFormat("en-US", minDecimals, maxDecimals).format(val)}`;
