@@ -237,9 +237,8 @@ describe("ServiceProcess", () => {
     expect(codes[0]).not.toBe(0);
   }, 10_000);
 
-  // Suspected bug: modules/desktop/src/bun/service.ts:221 tail(lines) slices stream chunks, not lines.
-  it.failing("returns only the last line from tail(1)", async () => {
-    // One write of three lines arrives as one chunk, so the chunk-based tail returns all three.
+  it("returns only the last line from tail(1)", async () => {
+    // One write of three lines arrives as one chunk; tail counts lines, not chunks.
     const { sp } = service('process.stdout.write("one\\ntwo\\nthree\\n");');
     await new Promise((r) => sp.start(r));
     await Bun.sleep(50);

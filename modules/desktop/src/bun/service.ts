@@ -153,7 +153,10 @@ export interface ServiceOptions {
  */
 export class ServiceProcess {
   private proc: Bun.Subprocess<"pipe", "pipe", "pipe"> | null = null;
+  /** Last complete output lines, without their newline. */
   private readonly recent: string[] = [];
+  /** The unfinished last line of each open stream. */
+  private readonly openLines = new Set<{ text: string }>();
   private readonly portListeners: ((port: number) => void)[] = [];
   /** The port of the last `SERVICE_PORT=` line, or null before the first one. */
   port: number | null = null;
@@ -219,7 +222,14 @@ export class ServiceProcess {
 
   /** Last lines of output, for the failure page. */
   tail(lines = 40): string {
-    return this.recent.slice(-lines).join("");
+    const unfinished = [...this.openLines].map((line) => line.text).filter(Boolean);
+    const last = [...this.recent, ...unfinished].slice(-lines);
+    return last.length ? `${last.join("\n")}\n` : "";
+  }
+
+  private remember(line: string): void {
+    this.recent.push(line);
+    if (this.recent.length > 200) this.recent.splice(0, this.recent.length - 200);
   }
 
   stop(): void {
@@ -240,18 +250,18 @@ export class ServiceProcess {
   private async pump(stream: ReadableStream<Uint8Array>, echo: boolean, readPort: boolean): Promise<void> {
     const decoder = new TextDecoder();
     const serviceLog = writerFor(this.options.logDir, "service");
-    let partial = "";
+    const open = { text: "" };
+    this.openLines.add(open);
     try {
       for await (const chunk of stream) {
         const text = decoder.decode(chunk, { stream: true });
         const plain = text.replace(ANSI_PATTERN, "");
-        this.recent.push(plain);
-        if (this.recent.length > 200) this.recent.splice(0, this.recent.length - 200);
+        const lines = (open.text + plain).split("\n");
+        open.text = lines.pop() ?? "";
+        for (const line of lines) this.remember(line);
         serviceLog.write(plain);
         if (echo) process.stdout.write(text);
         if (!readPort) continue;
-        const lines = (partial + plain).split("\n");
-        partial = lines.pop() ?? "";
         for (const line of lines) {
           const port = parseServicePort(line);
           if (port === null) continue;
@@ -263,5 +273,7 @@ export class ServiceProcess {
     } catch {
       // Stream closed by kill or exit.
     }
+    this.openLines.delete(open);
+    if (open.text) this.remember(open.text);
   }
 }
