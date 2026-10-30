@@ -46,8 +46,7 @@ describe("settings navigation", () => {
     for (const [input, expected] of cases) expect([input, resolveSettingsSection(input as any)]).toEqual([input, expected]);
   });
 
-  // Suspected bug: modules/gui/src/components/settings/settings-nav.ts:63 ALIASES[name] reads Object.prototype keys
-  it.failing("does not resolve prototype keys", () => {
+  it("does not resolve prototype keys", () => {
     expect(resolveSettingsSection("constructor")).toBeNull();
     expect(resolveSettingsSection("__proto__")).toBeNull();
     expect(resolveSettingsSection("hasOwnProperty")).toBeNull();
