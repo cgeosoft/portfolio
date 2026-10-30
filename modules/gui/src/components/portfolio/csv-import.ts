@@ -416,7 +416,7 @@ export function parseNumber(val: string | undefined, decimal?: "." | ","): numbe
 
 /** Month abbreviations in English, Dutch, German, French, Spanish and Italian. */
 const MONTHS: Record<string, number> = {
-  jan: 1, ene: 1, gen: 1, feb: 2, fev: 2, mar: 3, mrt: 3, maa: 3, maer: 3, mrz: 3, apr: 4, avr: 4, abr: 4,
+  jan: 1, ene: 1, gen: 1, feb: 2, fev: 2, mar: 3, mrt: 3, maa: 3, maer: 3, maerz: 3, mrz: 3, apr: 4, avr: 4, abr: 4,
   may: 5, mai: 5, mei: 5, mag: 5, jun: 6, juin: 6, giu: 6, jul: 7, juil: 7, lug: 7, aug: 8, aou: 8, ago: 8,
   sep: 9, set: 9, oct: 10, okt: 10, ott: 10, nov: 11, dec: 12, dez: 12, dic: 12,
 };
