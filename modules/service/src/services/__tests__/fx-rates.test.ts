@@ -153,8 +153,7 @@ describe("Finnhub FX", () => {
     expect(calls[0]?.headers["X-Finnhub-Token"]).toBe("test-finnhub-key");
   });
 
-  // Suspected bug: finnhub.ts:339 getExchangeRates ignores the pence sub-unit (GBp gets the GBP rate, or 1 for a GBP base).
-  it.failing("prices GBp as a hundredth of GBP (B3)", async () => {
+  it("prices GBp as a hundredth of GBP (B3)", async () => {
     saveConfig({ ...originalConfig, finnhubApiKey: "test-finnhub-key" });
     stubForex();
     const svc = new FinnhubService();
