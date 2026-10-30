@@ -565,7 +565,8 @@ export class YahooFinanceService {
       const curr = (rawCurr || base).trim();
       const upper = curr.toUpperCase();
 
-      if (upper === base) {
+      // GBp (pence) upper-cases to GBP but is a hundredth of it; the pence branch below prices it.
+      if (upper === base && curr !== "GBp") {
         result.set(curr, 1);
         continue;
       }
