@@ -14,6 +14,7 @@ import type { ReportMetrics } from "../db/report.repo.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
 import { isEnglishOutput, languageInstruction, plainStyle } from "./output-language.js";
 import { t } from "../i18n.js";
+import { localDate } from "./daily-brief.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type {
   PrepareReportPromptResponse,
@@ -206,8 +207,8 @@ export class PortfolioReportService {
       sunday.setDate(monday.getDate() + 6);
     }
 
-    const weekStartDate = monday.toISOString().split("T")[0]!;
-    const weekEndDate = sunday.toISOString().split("T")[0]!;
+    const weekStartDate = localDate(monday);
+    const weekEndDate = localDate(sunday);
     const period = formatDateRange(monday, sunday);
 
     const summary = data.summary;
