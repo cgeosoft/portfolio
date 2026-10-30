@@ -24,7 +24,9 @@ export interface ParsedSemver {
 export function parseSemver(version: string): ParsedSemver | null {
   if (!version || typeof version !== "string") return null;
   const clean = version.trim().replace(/^[vV]/, "");
-  const [core, prerelease] = clean.split("-");
+  const dash = clean.indexOf("-");
+  const core = dash < 0 ? clean : clean.slice(0, dash);
+  const prerelease = dash < 0 ? undefined : clean.slice(dash + 1);
   if (!core) return null;
   const parts = core.split(".").map((p) => parseInt(p, 10));
   if (parts.some((n) => isNaN(n))) return null;
@@ -39,8 +41,30 @@ export function isNewerVersion(current: string, candidate: string): boolean {
   if (cand.major !== c.major) return cand.major > c.major;
   if (cand.minor !== c.minor) return cand.minor > c.minor;
   if (cand.patch !== c.patch) return cand.patch > c.patch;
-  if (c.prerelease && !cand.prerelease) return true;
-  return false;
+  if (!c.prerelease || !cand.prerelease) return !!c.prerelease && !cand.prerelease;
+  return comparePrerelease(cand.prerelease, c.prerelease) > 0;
+}
+
+/** Semver precedence of two prerelease strings such as "beta.2" and "rc.1". */
+function comparePrerelease(a: string, b: string): number {
+  const pa = a.split(".");
+  const pb = b.split(".");
+  for (let i = 0; i < Math.min(pa.length, pb.length); i++) {
+    const x = pa[i]!;
+    const y = pb[i]!;
+    const xNum = /^\d+$/.test(x);
+    const yNum = /^\d+$/.test(y);
+    if (xNum && yNum) {
+      const diff = Number(x) - Number(y);
+      if (diff !== 0) return diff;
+    } else if (xNum !== yNum) {
+      // Numeric identifiers rank below alphanumeric ones.
+      return xNum ? -1 : 1;
+    } else if (x !== y) {
+      return x < y ? -1 : 1;
+    }
+  }
+  return pa.length - pb.length;
 }
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
