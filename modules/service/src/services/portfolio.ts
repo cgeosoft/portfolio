@@ -35,7 +35,7 @@ import { appLogger } from "../logger.js";
 import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
-import { ValidationError } from "./errors.js";
+import { NotFoundError, ValidationError } from "./errors.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 /** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
@@ -366,7 +366,7 @@ export class PortfolioService {
   public getPortfolio(portfolioId: string): portfolioRepo.PortfolioRow {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) {
-      throw new Error(`Portfolio not found (${portfolioId})`);
+      throw new NotFoundError(`Portfolio not found (${portfolioId})`);
     }
     return portfolio;
   }
@@ -402,7 +402,7 @@ export class PortfolioService {
   public deletePortfolio(portfolioId: string): boolean {
     const portfolio = portfolioRepo.findById(portfolioId);
     if (!portfolio) {
-      throw new Error("Portfolio not found");
+      throw new NotFoundError("Portfolio not found");
     }
 
     portfolioRepo.deleteById(portfolioId);
@@ -435,7 +435,7 @@ export class PortfolioService {
   ): Promise<FinancialPortfolioData> {
     const portfolio = typeof portfolioOrId === "string" ? portfolioRepo.findById(portfolioOrId) : portfolioOrId;
     if (!portfolio) {
-      throw new Error(`Portfolio not found: ${typeof portfolioOrId === "string" ? portfolioOrId : ""}`);
+      throw new NotFoundError(`Portfolio not found: ${typeof portfolioOrId === "string" ? portfolioOrId : ""}`);
     }
     const effectiveCurrency = baseCurrency || portfolio.baseCurrency || "EUR";
     const cacheKey = `${portfolio.id}_${effectiveCurrency}`;
