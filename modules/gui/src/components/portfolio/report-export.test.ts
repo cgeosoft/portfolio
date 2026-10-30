@@ -122,8 +122,7 @@ describe("report export fallbacks", () => {
     expect(md).toContain("\n---\n# Portfolio Tactical Briefing (r1)\n");
   });
 
-  // Suspected bug: modules/gui/src/components/portfolio/utils.ts:122 stripThinkTags drops the text after </think>
-  it.failing("removes think blocks and keeps the rest", () => {
+  it("removes think blocks and keeps the rest", () => {
     const md = generateReportMarkdown(bare, undefined as any, false);
     expect(md).toContain("Body $1,234");
     expect(md).not.toContain("hidden");
