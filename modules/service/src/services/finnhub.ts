@@ -337,7 +337,8 @@ export class FinnhubService {
     for (const rawCurr of targetCurrencies) {
       const curr = (rawCurr || base).trim();
       if (curr.toUpperCase() === base) {
-        result.set(curr, 1);
+        // GBp (pence) is a hundredth of GBP.
+        result.set(curr, curr === "GBp" ? 0.01 : 1);
       }
     }
 
@@ -365,7 +366,7 @@ export class FinnhubService {
 
         if (ratesData.quote[upper] !== undefined && ratesData.quote[upper] > 0) {
           const rate = ratesData.quote[upper]!;
-          const multiplier = 1 / rate;
+          const multiplier = curr === "GBp" ? 0.01 / rate : 1 / rate;
           result.set(curr, multiplier);
         }
       }
