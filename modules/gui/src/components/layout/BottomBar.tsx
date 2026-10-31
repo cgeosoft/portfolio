@@ -106,7 +106,7 @@ export function BottomBar({
       {/* Left side: portfolio v<version> - cgeosoft - sponsorship - terms of use */}
       <div className="flex items-center gap-1.5 min-w-0 truncate">
         <span className="text-slate-300">
-          portfolio v{version}
+          Portfolio v{version}
         </span>
         <span className="text-slate-600">-</span>
         <button
