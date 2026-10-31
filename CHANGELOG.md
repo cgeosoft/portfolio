@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.16.0] - 2026-10-31
+
+### Added
+- You can now import exports from major European brokers, including Trade Republic, Trading 212, DEGIRO, Interactive Brokers, eToro, Revolut, Scalable Capital, XTB and Saxo.
+- Excel files (.xlsx) can now be imported.
+- Rows with an unreadable date are left out of an import and listed for you to see.
+- Currency conversions, CFDs, derivatives and orders that did not execute are left out of an import and counted on the review step.
+- Importing a longer export again no longer adds moved rows twice, even when the export has no broker ids.
+- Other AI apps on your computer, such as Claude Desktop, Claude Code and Cursor, can now read your portfolios through an MCP server.
+- The MCP server is off by default and you turn it on in Settings, Privacy and Security.
+- The MCP server shares only percentages, dates and names, never amounts.
+- The MCP server needs an access token. You see the token once and can create a new one at any time.
+- Holdings now show a warning when you sell more shares than you hold, which can point to a missing buy, an unrecorded split or a transfer in.
+
+### Changed
+- Realized profit on a sell larger than the holding now counts only the part of the proceeds that belongs to the shares you held.
+- Deposits, withdrawals, realized profit, dividends, interest, fees and taxes are now converted to the portfolio currency.
+- The desktop app now uses Electrobun 2.0.5, and the app libraries were updated.
+- Sells without a type column, and tax, fee, refund and correction rows, now get the right transaction types on import.
+
+### Fixed
+- Adding a transaction without a date or type now shows a clear error instead of a server error.
+- Importing rows without a date, type or symbol now shows a clear error that names the rows, and nothing is saved.
+- Updating or opening a portfolio that does not exist now gives a clear not found error.
+- An invalid portfolio name or colour now gives a clear error.
+- Prices in pence (GBp) are now converted correctly to pounds in exchange rates.
+- A failed change of the remote access port no longer leaves a wrong error message in Settings.
+- The daily limit message from one data provider is now treated as a short limit and not as a 24 hour block.
+- The report week range is now correct near midnight for users east of UTC.
+- Two Electrobun apps no longer share the same internal port, so another app cannot take this app's requests.
+- Demo portfolios can now be created more than once.
+- Settings now returns the cleaned values after you save them.
+- The German month name März is now read correctly in imported dates.
+- Impossible dates such as 31 April or 29 February in a non leap year are now rejected on import.
+- The missing money amount now shows the symbol of the right currency.
+- Time durations no longer show values such as 1m60s or 1000ms.
+- The Markdown report export now puts the title on its own line after the header.
+- Text after a closing think tag in a report is no longer lost.
+- The log output shown for support now counts lines and not chunks.
+- Update checks now rank beta versions of the same release in the right order.
+- Several cookies set by the service are now all kept.
+
+### Security
+- Support logs now hide every value whose key ends in token, such as notification tokens.
+- The local service and the MCP server now reject host names that only look like 127.0.0.1, which protects against DNS rebinding.
+- Two dependencies with known security advisories were updated.
+
+
 ## [0.15.0] - 2026-10-20
 
 ### Added
