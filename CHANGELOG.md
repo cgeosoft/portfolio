@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.16.1] - 2026-10-31
+
+### Changed
+- The app now uses Tailwind CSS 4 for its look. The design stays the same as before.
+- The name in the bottom bar was updated.
+
+### Fixed
+- The app can be built again, so the desktop packages are available for this version.
+- The desktop app starts again with `bun start` and the build process.
+- The background service of the desktop app now starts without errors about missing features.
+
+
 ## [0.16.0] - 2026-10-31
 
 ### Added
