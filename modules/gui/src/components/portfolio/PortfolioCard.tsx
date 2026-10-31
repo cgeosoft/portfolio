@@ -13,7 +13,7 @@ function Badge({ tone, children }: { tone: "accent" | "slate"; children: string 
     accent: "bg-accent-500/15 text-accent-300 border-accent-500/30",
     slate: "bg-slate-800/80 text-slate-400 border-slate-700",
   };
-  return <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${tones[tone]}`}>{children}</span>;
+  return <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm border shrink-0 ${tones[tone]}`}>{children}</span>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -27,11 +27,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /** The button look of the cards and the portfolio modals: grey frame, one height. */
 export const SECONDARY_BUTTON =
-  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 text-xs font-semibold whitespace-nowrap text-slate-200 transition-colors cursor-pointer hover:border-slate-600 hover:bg-slate-700 hover:text-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 text-xs font-semibold whitespace-nowrap text-slate-200 transition-colors cursor-pointer hover:border-slate-600 hover:bg-slate-700 hover:text-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 /** The confirming action of a modal: the accent fill. */
 export const PRIMARY_BUTTON =
-  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent-600 bg-accent-600 px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors cursor-pointer hover:border-accent-500 hover:bg-accent-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent-600 bg-accent-600 px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors cursor-pointer hover:border-accent-500 hover:bg-accent-500 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function formatCreated(createdAt?: string): string {
   if (!createdAt) return "-";
@@ -64,7 +64,7 @@ export function PortfolioCard({ portfolio, isActive, onOpen, onEdit, onExport }:
       onClick={edit}
       onKeyDown={onKeyDown}
       title={t("dashboard.portfolioCard.edit", { name: portfolio.name })}
-      className={`group relative cx-card overflow-hidden p-4 flex flex-col gap-3.5 cursor-pointer transition-colors hover:border-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60 ${
+      className={`group relative cx-card overflow-hidden p-4 flex flex-col gap-3.5 cursor-pointer transition-colors hover:border-slate-600! focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-500/60 ${
         isActive ? "ring-1 ring-accent-500/50" : ""
       }`}
     >

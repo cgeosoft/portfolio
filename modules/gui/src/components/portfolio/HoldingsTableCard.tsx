@@ -236,14 +236,14 @@ export function HoldingsTableCard({
                     setSymbolHolding(h as HoldingWithIsin);
                   }}
                   onKeyDown={(e) => e.stopPropagation()}
-                  className={`p-0.5 rounded hover:bg-slate-800 cursor-pointer ${showsIsin(h) ? "text-cream" : "text-slate-600 hover:text-slate-300"}`}
+                  className={`p-0.5 rounded-sm hover:bg-slate-800 cursor-pointer ${showsIsin(h) ? "text-cream" : "text-slate-600 hover:text-slate-300"}`}
                   title={showsIsin(h) ? t("dashboard.holdings.noTickerSet") : t("dashboard.holdings.changeTicker")}
                   aria-label={t("dashboard.holdings.setTickerFor", { isin: h.isin ?? "" })}
                 >
                   <Pencil className="w-3 h-3" />
                 </button>
               )}
-              <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border ${badgeClass}`}>
+              <span className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded-sm border ${badgeClass}`}>
                 {assetTypeLabel(h.isPrivate ? "Private" : h.assetType)}
               </span>
             </div>
@@ -269,7 +269,7 @@ export function HoldingsTableCard({
             <span>{isCash ? fmtCurrency(1, h.currency || currency, false) : fmtCurrency(h.currentPrice, h.currency || currency, hideValues)}</span>
             {!isCash && h.nativeCurrency && h.nativeCurrency !== currency && h.nativePrice !== undefined && (
               <span
-                className="text-[10px] font-normal px-1 py-0.5 rounded border border-cream/40 bg-cream/10 text-cream"
+                className="text-[10px] font-normal px-1 py-0.5 rounded-sm border border-cream/40 bg-cream/10 text-cream"
                 title={t("dashboard.holdings.nativePrice", { price: fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues), rate: h.fxRate ?? "—" })}
               >
                 {fmtCurrency(h.nativePrice, h.nativeCurrency, hideValues)}
@@ -277,7 +277,7 @@ export function HoldingsTableCard({
             )}
             {!isCash && h.quoteMissing && (
               <span
-                className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                className="text-[10px] font-normal px-1 py-0.5 rounded-sm border border-amber-500/40 bg-amber-500/10 text-amber-300"
                 title={t("dashboard.holdings.noQuoteHint")}
               >
                 {t("dashboard.holdings.noQuote")}
@@ -309,7 +309,7 @@ export function HoldingsTableCard({
             )}
             {!isCash && h.fxMissing && (
               <span
-                className="text-[10px] font-normal px-1 py-0.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                className="text-[10px] font-normal px-1 py-0.5 rounded-sm border border-amber-500/40 bg-amber-500/10 text-amber-300"
                 title={h.nativeCurrency ? t("dashboard.holdings.noFxFor", { currency: h.nativeCurrency }) : t("dashboard.holdings.noFxUnknown")}
               >
                 {t("dashboard.holdings.noFx")}
@@ -349,16 +349,16 @@ export function HoldingsTableCard({
         <td className="px-4 py-3 text-center">
           {isCash ? (
             <span
-              className="text-[10px] font-bold text-slate-300 border border-slate-700/80 px-2 py-0.5 rounded inline-block shadow-inner"
+              className="text-[10px] font-bold text-slate-300 border border-slate-700/80 px-2 py-0.5 rounded-sm inline-block shadow-inner"
               style={{ background: "repeating-linear-gradient(-45deg, #334155, #334155 3px, #1e293b 3px, #1e293b 6px)" }}
             >
               {t("dashboard.holdings.unallocated")}
             </span>
           ) : h.fiftyTwoWeekHigh && h.fiftyTwoWeekLow ? (
             <div className="flex flex-col items-center gap-1 w-24 mx-auto">
-              <div className="w-full h-1.5 rounded bg-slate-800 border border-slate-700 relative overflow-hidden">
+              <div className="w-full h-1.5 rounded-sm bg-slate-800 border border-slate-700 relative overflow-hidden">
                 <div
-                  className="h-full bg-mint rounded transition-all"
+                  className="h-full bg-mint rounded-sm transition-all"
                   style={{ width: `${rangePercent}%` }}
                 />
               </div>
@@ -426,7 +426,7 @@ export function HoldingsTableCard({
               placeholder={t("dashboard.holdings.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-hidden focus:border-[#DD3C73]/50 font-mono"
             />
           </div>
 
@@ -504,7 +504,7 @@ export function HoldingsTableCard({
                     <td colSpan={7} className="px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-slate-400">
                       <div className="flex items-center gap-2">
                         <span
-                          className="w-2.5 h-2.5 rounded-sm border border-slate-500/60 inline-block shrink-0"
+                          className="w-2.5 h-2.5 rounded-xs border border-slate-500/60 inline-block shrink-0"
                           style={{ background: "repeating-linear-gradient(-45deg, #64748b, #64748b 2px, #334155 2px, #334155 4px)" }}
                         />
                         <span className="font-semibold text-slate-300">{t("dashboard.holdings.cashDivider")}</span>

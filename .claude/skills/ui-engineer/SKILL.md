@@ -25,7 +25,7 @@ Keeps the visual layer consistent: stylesheet entry point, design tokens, typogr
 
 ## Project Instructions
 
-- Tailwind CSS 3.4 with `modules/gui/tailwind.config.js`; tokens are CSS custom properties in `modules/gui/src/index.css` (dark navy canvas, indigo accent `#6366f1`, `Plus Jakarta Sans` body, `JetBrains Mono` numbers). Vite compiles the CSS; no separate build step.
+- Tailwind CSS 4 via `@tailwindcss/postcss`; the theme lives in the `@theme inline` block at the top of `modules/gui/src/index.css` (no `tailwind.config.js`). Custom component classes sit in `@layer utilities` so they keep the Tailwind 3 cascade; a `hover:`/`sm:` variant that must beat one of them needs the `!` suffix. Tokens are CSS custom properties in `modules/gui/src/index.css` (dark navy canvas, indigo accent `#6366f1`, `Plus Jakarta Sans` body, `JetBrains Mono` numbers). Vite compiles the CSS; no separate build step.
 - `JetBrains Mono` for numbers, tickers and tables; `Inter` for prose. Dark default (`color-scheme: dark`).
 - Tokens: canvas `#0b0f19` (`--background`), widget `#111726`, card `#151d30`; border `#1e293b`; primary accent Cyber Pink `#DD3C73` (`--accent`, `--accent-rgb`); status mint `#A7E2C0` success, `#DD3C73` error, `#E3EACD` warning, `#243C8F` info; text `#f8fafc` main, `#94a3b8` muted.
 - `input.css`: `@tailwind` directives, `@layer base` with color-scheme, custom properties, font stack, scrollbar; shared surfaces `.cx-card`, `.custom-scrollbar`.

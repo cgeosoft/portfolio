@@ -222,7 +222,7 @@ export const PinInput = forwardRef<PinInputHandle, PinInputProps>(function PinIn
             onPaste={(e) => handlePaste(i, e)}
             onFocus={(e) => handleFocus(i, e)}
             aria-label={ariaLabel ? t("layout.pin.namedDigit", { label: ariaLabel, index: i + 1 }) : t("layout.pin.digit", { index: i + 1, total: PIN_LENGTH })}
-            className={`${sizeClass} ${stateClass} text-center font-mono font-bold caret-[#DD3C73] border transition-colors duration-100 focus:outline-none focus:ring-2 focus:bg-slate-900/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner`}
+            className={`${sizeClass} ${stateClass} text-center font-mono font-bold caret-[#DD3C73] border transition-colors duration-100 focus:outline-hidden focus:ring-2 focus:bg-slate-900/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-inner`}
           />
         );
       })}

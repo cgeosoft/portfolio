@@ -112,7 +112,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={handleOpenCgeosoft}
-          className="text-slate-400 hover:text-accent-300 transition-colors inline-flex items-center gap-1 focus:outline-none cursor-pointer"
+          className="text-slate-400 hover:text-accent-300 transition-colors inline-flex items-center gap-1 focus:outline-hidden cursor-pointer"
           title={t("layout.bottomBar.openVendor")}
         >
           <span>cgeosoft</span>
@@ -122,7 +122,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={onOpenSponsorship}
-          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-none cursor-pointer"
+          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-hidden cursor-pointer"
           title={t("layout.bottomBar.openSponsorship")}
         >
           {t("layout.bottomBar.sponsorship")}
@@ -131,7 +131,7 @@ export function BottomBar({
         <button
           type="button"
           onClick={onOpenTerms}
-          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-none cursor-pointer"
+          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-hidden cursor-pointer"
           title={t("layout.bottomBar.openTerms")}
         >
           {t("layout.bottomBar.terms")}
@@ -145,7 +145,7 @@ export function BottomBar({
             <button
               type="button"
               onClick={() => setIsPortfolioMenuOpen((open) => !open)}
-              className="px-1.5 py-0.5 rounded flex items-center gap-1.5 max-w-[200px] text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
+              className="px-1.5 py-0.5 rounded-sm flex items-center gap-1.5 max-w-[200px] text-slate-300 hover:text-slate-100 hover:bg-slate-800/60 transition-colors focus:outline-hidden cursor-pointer"
               aria-haspopup="listbox"
               aria-expanded={isPortfolioMenuOpen}
               title={t("layout.bottomBar.switchPortfolio")}
@@ -206,7 +206,7 @@ export function BottomBar({
           <button
             type="button"
             onClick={onToggleHideCurrency}
-            className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-none cursor-pointer hover:bg-slate-800/60 ${
+            className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-hidden cursor-pointer hover:bg-slate-800/60 ${
               hideCurrencyValues ? "text-cream hover:text-[#f0f5db]" : "hover:text-accent-300"
             }`}
             title={hideCurrencyValues ? t("layout.bottomBar.privacyShowTitle", { shortcut: "Ctrl+H" }) : t("layout.bottomBar.privacyHideTitle", { shortcut: "Ctrl+H" })}
@@ -229,7 +229,7 @@ export function BottomBar({
             onBlur={() => setIsSyncInfoOpen(false)}
             aria-disabled={isSyncingQuotes}
             aria-label={isSyncingQuotes ? t("layout.bottomBar.refreshingLabel") : t("layout.bottomBar.refreshLabel")}
-            className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-none ${
+            className={`px-1.5 py-0.5 rounded flex items-center gap-1.5 transition-colors focus:outline-hidden ${
               isSyncingQuotes ? "cursor-default" : "cursor-pointer hover:bg-slate-800/60 hover:text-accent-300"
             }`}
           >

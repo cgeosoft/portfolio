@@ -429,7 +429,7 @@ export function PortfolioChartCard({
             selectSize="sm"
             aria-label={t("dashboard.chart.benchmark")}
             title={t("dashboard.chart.benchmarkHint")}
-            wrapperClassName="min-w-[8.5rem]"
+            wrapperClassName="min-w-34"
           >
             <option value={NO_BENCHMARK}>{t("dashboard.chart.noBenchmark")}</option>
             {BENCHMARK_OPTIONS.map((o) => (
@@ -466,7 +466,7 @@ export function PortfolioChartCard({
         </span>
         <span className="flex items-center gap-1">
           <span
-            className="w-2.5 h-1.5 rounded-sm border border-[#DD3C73]/60 inline-block"
+            className="w-2.5 h-1.5 rounded-xs border border-[#DD3C73]/60 inline-block"
             style={{ background: "rgba(221, 60, 115, 0.25)" }}
           />
           <span>{t("dashboard.chart.legend.invested")}</span>
@@ -476,7 +476,7 @@ export function PortfolioChartCard({
           <span>{t("dashboard.chart.legend.cost")}</span>
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-1 rounded-sm bg-[#6d8bf7] inline-block" />
+          <span className="w-2.5 h-1 rounded-xs bg-[#6d8bf7] inline-block" />
           <span>{relative ? t("dashboard.chart.legend.portfolio") : t("dashboard.chart.series.return")}</span>
         </span>
         {relative && (

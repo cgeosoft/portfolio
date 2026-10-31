@@ -148,8 +148,8 @@ function TargetRange({ low, high, price, consensus, currency }: { low: number; h
   const at = (v: number) => `${((v - min) / span) * 100}%`;
   return (
     <div className="pt-4 pb-1">
-      <div className="relative h-2 rounded bg-slate-800 border border-slate-700">
-        <div className="absolute inset-y-0 rounded bg-accent/30" style={{ left: at(low), width: `${((high - low) / span) * 100}%` }} />
+      <div className="relative h-2 rounded-sm bg-slate-800 border border-slate-700">
+        <div className="absolute inset-y-0 rounded-sm bg-accent/30" style={{ left: at(low), width: `${((high - low) / span) * 100}%` }} />
         {consensus !== undefined && <div className="absolute -top-1 -bottom-1 w-0.5 bg-cream" style={{ left: at(consensus) }} title={t("assistant.intel.range.consensus", { value: fmtCurrency(consensus, currency) })} />}
         {price !== undefined && (
           <div className="absolute -top-3 -translate-x-1/2 flex flex-col items-center" style={{ left: at(price) }} title={t("assistant.intel.range.priceTitle", { value: fmtCurrency(price, currency) })}>
@@ -172,7 +172,7 @@ function ScoreRow({ name, value, info }: { name: string; value: string; info: { 
       <div className="flex items-center gap-2 text-xs">
         <span className="text-slate-300">{name}</span>
         <span className="font-bold text-slate-100">{value}</span>
-        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${TONE_CLASS[info.tone]}`}>{info.label}</span>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded-sm border ${TONE_CLASS[info.tone]}`}>{info.label}</span>
       </div>
       <p className="text-[11px] text-slate-500 mt-0.5 font-sans">{info.explanation}</p>
     </div>
@@ -190,7 +190,7 @@ function RecommendationBar({ counts }: { counts: AnalystRecommendationCounts }) 
   const total = rows.reduce((sum, row) => sum + row[1], 0) || 1;
   return (
     <>
-      <div className="flex h-2 rounded overflow-hidden border border-slate-700">
+      <div className="flex h-2 rounded-sm overflow-hidden border border-slate-700">
         {rows.map(([label, n, color]) => (n > 0 ? <div key={label} className={color} style={{ width: `${(n / total) * 100}%` }} title={`${label}: ${n}`} /> : null))}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500 mt-1">
@@ -330,7 +330,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-2 sm:p-4 overflow-y-auto font-mono" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <div
-        className="cx-card w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl shadow-2xl relative my-auto flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] overflow-hidden"
+        className="cx-card w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl! shadow-2xl relative my-auto flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -613,7 +613,7 @@ export function HoldingIntelModal({ holding, onClose }: HoldingIntelModalProps) 
                 {intel.peers ? (
                   <div className="flex flex-wrap gap-1.5">
                     {intel.peers.data.map((p) => (
-                      <span key={p.symbol} className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-900/60 text-slate-300" title={[p.name, p.marketCap ? t("assistant.intel.peerMarketCap", { value: fmtCompact(p.marketCap) }) : ""].filter(Boolean).join(" · ")}>
+                      <span key={p.symbol} className="text-[11px] px-2 py-0.5 rounded-sm border border-slate-700 bg-slate-900/60 text-slate-300" title={[p.name, p.marketCap ? t("assistant.intel.peerMarketCap", { value: fmtCompact(p.marketCap) }) : ""].filter(Boolean).join(" · ")}>
                         <span className="font-bold text-slate-100">{p.symbol}</span>
                         {p.name && <span className="text-slate-500"> {p.name}</span>}
                       </span>

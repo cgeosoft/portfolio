@@ -49,14 +49,14 @@ export function PortfolioColorField({ color, onChange, disabled }: { color: stri
             type="button"
             disabled={disabled}
             onClick={() => onChange(swatch)}
-            className={`h-7 w-7 rounded-full inline-flex items-center justify-center transition-transform cursor-pointer hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+            className={`h-7 w-7 rounded-full inline-flex items-center justify-center transition-transform cursor-pointer hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white/60 ${
               color === swatch ? "ring-2 ring-white/80 ring-offset-2 ring-offset-slate-900" : ""
             }`}
             style={{ backgroundColor: swatch }}
             aria-label={t("portfolios.color.swatch", { color: swatch })}
             aria-pressed={color === swatch}
           >
-            {color === swatch && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
+            {color === swatch && <Check className="w-3.5 h-3.5 text-white drop-shadow-sm" />}
           </button>
         ))}
         <label

@@ -117,7 +117,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
           {error && (
             <div className="p-2.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-2 text-[#DD3C73]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="break-words">{error}</span>
+              <span className="wrap-break-word">{error}</span>
             </div>
           )}
 
@@ -132,7 +132,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
                 placeholder={t("transactions.manualPrice.pricePlaceholder")}
                 autoFocus
                 autoComplete="off"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-hidden focus:border-[#DD3C73]"
               />
             </label>
             <label className="flex flex-col gap-1 w-24">
@@ -142,7 +142,7 @@ export function ManualPriceModal({ portfolioId, holding, currency, hideValues = 
                 value={priceCurrency}
                 onChange={(e) => setPriceCurrency(e.target.value)}
                 maxLength={3}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73]"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-hidden focus:border-[#DD3C73]"
               />
             </label>
           </div>

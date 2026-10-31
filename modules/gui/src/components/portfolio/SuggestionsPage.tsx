@@ -279,7 +279,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
       {(error || data?.generation.status === "fail") && (
         <div className="rounded-xl border border-[#DD3C73]/40 bg-[#DD3C73]/10 px-3.5 py-2.5 flex items-center gap-2 text-xs text-[#DD3C73] shrink-0">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span className="min-w-0 break-words">{error || data?.generation.error || t("assistant.suggestions.generationFailed")}</span>
+          <span className="min-w-0 wrap-break-word">{error || data?.generation.error || t("assistant.suggestions.generationFailed")}</span>
         </div>
       )}
 
@@ -428,7 +428,7 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
       <div className="flex items-start gap-3">
         {/* Done checkbox */}
         {compact ? (
-          <span className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 ${ev.status === "done" ? "border-mint/60 text-mint" : "border-line text-slate-500"}`}>
+          <span className={`mt-0.5 w-5 h-5 rounded-sm border flex items-center justify-center shrink-0 ${ev.status === "done" ? "border-mint/60 text-mint" : "border-line text-slate-500"}`}>
             {ev.status === "done" ? <Check className="w-3.5 h-3.5" /> : <X className="w-3 h-3" />}
           </span>
         ) : (
@@ -449,8 +449,8 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-            <span className="px-1.5 py-0.5 rounded border border-line bg-widget text-slate-300">{t("assistant.suggestions.priority", { priority: s.priority })}</span>
-            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-line bg-widget ${tone}`}>
+            <span className="px-1.5 py-0.5 rounded-sm border border-line bg-widget text-slate-300">{t("assistant.suggestions.priority", { priority: s.priority })}</span>
+            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm border border-line bg-widget ${tone}`}>
               <Arrow className="w-3 h-3" />
               {actionLabel(s.action)}
             </span>
@@ -460,7 +460,7 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
             <span className="text-slate-500 normal-case tracking-normal font-normal truncate max-w-[220px]" title={s.name}>
               {s.name}
             </span>
-            {!active && <span className={`px-1.5 py-0.5 rounded border ${STATUS_CLASS[ev.status]}`}>{statusLabel(ev.status)}</span>}
+            {!active && <span className={`px-1.5 py-0.5 rounded-sm border ${STATUS_CLASS[ev.status]}`}>{statusLabel(ev.status)}</span>}
           </div>
 
           <div className={`mt-1 text-sm font-bold text-slate-100 font-sans ${done ? "line-through decoration-slate-500" : ""}`}>{s.title}</div>
@@ -600,7 +600,7 @@ function TargetPanel({ target, open, onToggle, activeCount }: { target: TargetPo
                   <tr key={r.symbol} className={`border-t border-line ${moved ? "" : "text-slate-500"}`}>
                     <td className={`py-1 pr-2 min-w-0 ${r.isClosed ? "line-through" : ""}`}>
                       <span className={moved ? "text-slate-200" : ""}>{r.symbol}</span>
-                      {r.isNew && <span className="ml-1 px-1 rounded border border-mint/40 bg-mint/10 text-mint text-[9px] font-bold uppercase">{t("assistant.suggestions.target.new")}</span>}
+                      {r.isNew && <span className="ml-1 px-1 rounded-sm border border-mint/40 bg-mint/10 text-mint text-[9px] font-bold uppercase">{t("assistant.suggestions.target.new")}</span>}
                     </td>
                     <td className="py-1 text-right">{pct(r.currentWeight)}</td>
                     <td className={`py-1 text-right ${moved ? "text-slate-100 font-bold" : ""}`}>{pct(r.targetWeight)}</td>

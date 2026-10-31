@@ -428,7 +428,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
       {/* Section Header */}
       <SectionHeader icon={Database} title={t("settings.market.title")} description={t("settings.market.description")} />
 
-      <div className="divide-y divide-slate-800/80 -mt-4">
+      <div className="divide-y divide-slate-800/80">
         <SettingsFields section="market" />
       </div>
 
@@ -481,7 +481,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   onBlur={() => handleSaveFinnhubKey(finnhubApiKey)}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                   placeholder={finnhubApiKey === SECRET_MASK ? t("settings.textField.storedPlaceholder") : t("settings.market.finnhub.placeholder")}
-                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
                 />
                 <button
                   type="button"
@@ -518,7 +518,7 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                   onBlur={() => handleSaveFmpKey(fmpApiKey)}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                   placeholder={fmpApiKey === SECRET_MASK ? t("settings.textField.storedPlaceholder") : t("settings.market.fmp.placeholder")}
-                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-lg pl-9 pr-9 py-2 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
                 />
                 <button
                   type="button"
@@ -575,11 +575,11 @@ export function DataProvidersSection({ config, onUpdateConfig }: DataProvidersSe
                       type="button"
                       disabled={!cat.providers.includes(provider) || !isProviderConfigured(provider)}
                       onClick={() => cat.routed && handleSelectProvider(cat.id as RoutedCategoryId, provider)}
-                      className={`w-[4.5rem] flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-mono transition-all disabled:cursor-not-allowed disabled:opacity-30 ${
+                      className={`w-18 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-mono transition-all disabled:cursor-not-allowed disabled:opacity-30 ${
                         cat.routed ? "cursor-pointer" : "cursor-default"
                       } ${
                         selected === provider
-                          ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold shadow-sm"
+                          ? "bg-[#DD3C73]/20 text-[#DD3C73] font-bold shadow-xs"
                           : cat.routed
                             ? "text-slate-400 hover:text-slate-200 disabled:hover:text-slate-400"
                             : "text-slate-400"

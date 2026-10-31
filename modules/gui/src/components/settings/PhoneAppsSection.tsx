@@ -117,7 +117,7 @@ function PhoneAppCard({
 
       {children}
 
-      <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-800/80 min-h-[2rem]">
+      <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-800/80 min-h-8">
         <button
           type="button"
           onClick={onTest}

@@ -358,14 +358,14 @@ export function MetricInfoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto font-mono"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto font-mono"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby={modalTitleId}
     >
       <div
-        className="cx-card w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl shadow-2xl relative my-auto flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden"
+        className="cx-card w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl! shadow-2xl relative my-auto flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -409,7 +409,7 @@ export function MetricInfoModal({
                   onClick={() => onSelectMetricKey(key)}
                   className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all cursor-pointer border shrink-0 sm:shrink ${
                     isSelected
-                      ? "bg-[#DD3C73]/20 text-[#DD3C73] border-[#DD3C73]/40 shadow-sm shadow-[#DD3C73]/10"
+                      ? "bg-[#DD3C73]/20 text-[#DD3C73] border-[#DD3C73]/40 shadow-xs shadow-[#DD3C73]/10"
                       : "bg-slate-950/40 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
                   }`}
                 >
@@ -434,7 +434,7 @@ export function MetricInfoModal({
                   <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
                     {defText(currentDef.key, "title")}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                  <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-sm bg-slate-800 text-slate-300 border border-slate-700 font-mono">
                     {defText(currentDef.key, "category")}
                   </span>
                 </div>
@@ -478,7 +478,7 @@ export function MetricInfoModal({
               <span>{t("metrics.info.formula")}</span>
             </div>
             <div className="p-3 sm:p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 font-mono space-y-2">
-              <div className="p-2 sm:p-2.5 rounded-lg bg-canvas border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold break-words sm:break-normal">
+              <div className="p-2 sm:p-2.5 rounded-lg bg-canvas border border-[#DD3C73]/20 text-[#DD3C73] text-[11px] sm:text-xs font-bold wrap-break-word sm:break-normal">
                 {defText(currentDef.key, "formula")}
               </div>
               <p className="text-[10.5px] sm:text-[11px] text-slate-400 leading-relaxed">

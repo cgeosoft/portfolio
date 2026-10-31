@@ -34,7 +34,7 @@ const NOTES_MARKDOWN: Components = {
   strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
   em: ({ node: _n, ...props }) => <em className="italic text-slate-200" {...props} />,
   code: ({ node: _n, ...props }) => (
-    <code className="px-1 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[10px]" {...props} />
+    <code className="px-1 py-0.5 rounded-sm bg-slate-950 border border-slate-800 text-cream font-mono text-[10px]" {...props} />
   ),
   pre: ({ node: _n, ...props }) => (
     <pre
@@ -176,7 +176,7 @@ export function ChangelogModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
       <div
         className="relative w-full max-w-lg max-h-[85vh] bg-widget border border-line rounded-2xl shadow-2xl p-6 sm:p-7 text-slate-100 font-mono flex flex-col"
         role="dialog"
@@ -186,7 +186,7 @@ export function ChangelogModal({
         {/* Header */}
         <div className="flex items-start justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-plum via-royal to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-plum via-royal to-[#DD3C73] p-[1.5px] shadow-lg shadow-[#DD3C73]/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Download className="w-5 h-5 text-[#DD3C73]" />
               </div>
@@ -202,7 +202,7 @@ export function ChangelogModal({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-hidden cursor-pointer"
             aria-label={t("layout.changelog.closeLabel")}
           >
             <X className="w-4 h-4" />

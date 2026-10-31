@@ -160,7 +160,7 @@ export function MetricLibrary({ listings, repository, display, onInfo, onInstall
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <Icon className="w-3.5 h-3.5 text-[#DD3C73] shrink-0" />
-                    <span className="text-sm font-bold text-slate-100 truncate group-enabled:group-hover:text-white">{manifest.name}</span>
+                    <span className="text-sm font-bold text-slate-100 truncate group-hover:group-enabled:text-white">{manifest.name}</span>
                     {listing && <VerifiedBadge listing={listing} />}
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5 pl-[22px] line-clamp-2">{manifest.summary}</p>

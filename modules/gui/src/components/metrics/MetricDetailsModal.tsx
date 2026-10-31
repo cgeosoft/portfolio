@@ -28,7 +28,7 @@ export function MetricDetailsModal({ listing, onClose }: MetricDetailsModalProps
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono"
       role="dialog"
       aria-modal="true"
       aria-labelledby="metric-details-title"

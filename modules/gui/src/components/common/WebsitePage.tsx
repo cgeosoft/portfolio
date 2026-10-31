@@ -69,7 +69,7 @@ export function WebsitePage({ page, onBack, webpageUrl }: WebsitePageProps) {
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-none"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-hidden"
             title={t("common.back")}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -79,7 +79,7 @@ export function WebsitePage({ page, onBack, webpageUrl }: WebsitePageProps) {
           <button
             type="button"
             onClick={handleReload}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-none"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-50 transition-colors cursor-pointer focus:outline-hidden"
             title={t(`layout.${page}.reloadTitle`)}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-[#DD3C73]" : ""}`} />
@@ -89,7 +89,7 @@ export function WebsitePage({ page, onBack, webpageUrl }: WebsitePageProps) {
           <button
             type="button"
             onClick={handleOpenBrowser}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-[#DD3C73] transition-colors cursor-pointer focus:outline-none"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-[#DD3C73] transition-colors cursor-pointer focus:outline-hidden"
             title={t(`layout.${page}.openTitle`)}
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -107,7 +107,7 @@ export function WebsitePage({ page, onBack, webpageUrl }: WebsitePageProps) {
       <div className="flex-1 min-h-[500px] h-[calc(100vh-160px)] relative rounded-2xl overflow-hidden border border-slate-800 bg-widget shadow-2xl flex flex-col">
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-canvas/80 backdrop-blur-sm gap-3">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-canvas/80 backdrop-blur-xs gap-3">
             <RefreshCw className="w-6 h-6 text-[#DD3C73] animate-spin" />
             <span className="text-xs text-slate-400 tracking-wider">
               {t(`layout.${page}.loading`, { app: APP_NAME, url: pageUrl })}

@@ -92,7 +92,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono"
       role="dialog"
       aria-modal="true"
       aria-labelledby="install-metric-title"
@@ -139,7 +139,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
                     if (e.key === "Enter") void handleFetch();
                   }}
                   placeholder="https://example.com/my-metric/manifest.yml"
-                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-none focus:border-[#DD3C73]/60 disabled:opacity-60"
+                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 text-xs placeholder:text-slate-600 focus:outline-hidden focus:border-[#DD3C73]/60 disabled:opacity-60"
                   autoFocus
                 />
               </div>
@@ -161,7 +161,7 @@ export function InstallMetricDialog({ isOpen, onClose, onInstalled }: InstallMet
           {error && (
             <div className="p-3 rounded-xl flex items-start gap-2 text-rose-400 bg-rose-950/40 border border-rose-800/50">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="break-words min-w-0">{error}</span>
+              <span className="wrap-break-word min-w-0">{error}</span>
             </div>
           )}
 

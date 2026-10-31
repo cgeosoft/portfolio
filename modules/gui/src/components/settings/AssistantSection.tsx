@@ -395,7 +395,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
               }}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               placeholder={DEFAULT_OPENAI_COMPATIBLE_URL}
-              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
             />
           </div>
           <p className="text-[10px] text-slate-500">
@@ -425,7 +425,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
               }}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               placeholder={reportApiKey === SECRET_MASK ? "•••••••• (stored)" : "The key from your cloud service account"}
-              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
             />
             <button
               type="button"
@@ -495,7 +495,7 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
               onBlur={(e) => saveModel(reportProvider, e.target.value.trim())}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               placeholder={cliInfo ? cliInfo.modelPlaceholder : "e.g. llama-3.3-70b-versatile, or leave empty for the server default"}
-              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
             />
             <p className="text-[10px] text-slate-500 mt-1">
               {cliInfo ? `Any model name ${cliInfo.app} accepts with its model option.` : "The model name as your program or service lists it."}

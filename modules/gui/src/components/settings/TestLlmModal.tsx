@@ -291,7 +291,7 @@ export function TestLlmModal({
                   key={step.id}
                   className={`p-3.5 rounded-xl border transition-all ${
                     isPassed
-                      ? "bg-slate-950/40 border-mint/30 shadow-sm"
+                      ? "bg-slate-950/40 border-mint/30 shadow-xs"
                       : isRunningStep
                       ? "bg-[#DD3C73]/10 border-[#DD3C73]/50 shadow-md shadow-[#DD3C73]/5"
                       : isFailed
@@ -304,7 +304,7 @@ export function TestLlmModal({
                     <div className="mt-0.5 shrink-0">
                       {isPassed ? (
                         <div className="w-5 h-5 rounded-full bg-mint/20 border border-mint flex items-center justify-center text-mint">
-                          <Check className="w-3 h-3 stroke-[3]" />
+                          <Check className="w-3 h-3 stroke-3" />
                         </div>
                       ) : isRunningStep ? (
                         <div className="w-5 h-5 rounded-full bg-[#DD3C73]/20 border border-[#DD3C73] flex items-center justify-center text-[#DD3C73]">
@@ -368,7 +368,7 @@ export function TestLlmModal({
                       {/* Step Status Feedback Message */}
                       {step.message && (
                         <div
-                          className={`text-[11px] mt-2 p-2 rounded-lg font-mono break-words ${
+                          className={`text-[11px] mt-2 p-2 rounded-lg font-mono wrap-break-word ${
                             isPassed
                               ? "bg-slate-900 text-mint border border-mint/20"
                               : isFailed
@@ -400,7 +400,7 @@ export function TestLlmModal({
                   </span>
                 )}
               </div>
-              <div className="text-xs text-slate-200 bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono leading-relaxed break-words">
+              <div className="text-xs text-slate-200 bg-slate-900/90 p-3 rounded-lg border border-slate-800 font-mono leading-relaxed wrap-break-word">
                 &ldquo;{generatedOutput}&rdquo;
               </div>
             </div>

@@ -207,10 +207,10 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
         <div className="lg:col-span-2 min-w-0">
           <div className="flex items-center gap-4 text-[10px] uppercase tracking-wider text-slate-500 mb-2">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-mint" /> {t("dashboard.income.declared")}
+              <span className="w-2.5 h-2.5 rounded-xs bg-mint" /> {t("dashboard.income.declared")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm border border-mint bg-mint/30" /> {t("dashboard.income.estimated")}
+              <span className="w-2.5 h-2.5 rounded-xs border border-mint bg-mint/30" /> {t("dashboard.income.estimated")}
             </span>
           </div>
           <div className="h-[220px] w-full relative">
@@ -232,7 +232,7 @@ export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = f
             {(events?.events ?? []).map((e) => (
               <li key={`${e.kind}:${e.symbol}:${e.date}`} className="flex items-start gap-2 text-[11px] min-w-0">
                 <span className="w-12 shrink-0 text-slate-400">{shortDate(e.date)}</span>
-                <span className={`shrink-0 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${EVENT_BADGES[e.kind]}`}>{eventLabel(e.kind)}</span>
+                <span className={`shrink-0 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm border ${EVENT_BADGES[e.kind]}`}>{eventLabel(e.kind)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="font-bold text-slate-100"><HoldingLink reference={e.symbol} /></span>
                   <span className="text-slate-500"> {eventDetail(e, baseCurrency, hideValues)}</span>

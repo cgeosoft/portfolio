@@ -483,7 +483,7 @@ export function ImportCsvPage({
                     handleBrowseClick();
                   }
                 }}
-                className={`flex-1 min-h-[260px] border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-4 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:border-accent-500 ${
+                className={`flex-1 min-h-[260px] border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center gap-4 text-center cursor-pointer transition-colors focus-visible:outline-hidden focus-visible:border-accent-500 ${
                   isDragging
                     ? "border-accent-500 bg-accent-500/10"
                     : "border-slate-800 bg-widget/60 hover:border-accent-500/50 hover:bg-widget"
@@ -518,7 +518,7 @@ export function ImportCsvPage({
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-bold text-xs text-slate-200 truncate">{tpl.name}</span>
                         {tpl.badge && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-500/15 text-accent-bright border border-accent-500/30 shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-accent-500/15 text-accent-bright border border-accent-500/30 shrink-0">
                             {tpl.badge}
                           </span>
                         )}
@@ -618,9 +618,9 @@ export function ImportCsvPage({
                                 <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold flex items-center justify-between">
                                   <span>Field</span>
                                   {isMapped ? (
-                                    <span className="text-[9px] text-accent-bright bg-accent-500/15 px-1.5 rounded font-bold border border-accent-500/30">MAPPED</span>
+                                    <span className="text-[9px] text-accent-bright bg-accent-500/15 px-1.5 rounded-sm font-bold border border-accent-500/30">MAPPED</span>
                                   ) : (
-                                    <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 rounded border border-slate-800">IGNORED</span>
+                                    <span className="text-[9px] text-slate-500 bg-slate-900 px-1.5 rounded-sm border border-slate-800">IGNORED</span>
                                   )}
                                 </div>
                                 <Select
@@ -783,7 +783,7 @@ export function ImportCsvPage({
                                   {diffs.map((d, dIdx) => (
                                     <span
                                       key={`diff-${dIdx}`}
-                                      className="px-1.5 rounded text-[10px] bg-cream/15 text-cream border border-cream/30"
+                                      className="px-1.5 rounded-sm text-[10px] bg-cream/15 text-cream border border-cream/30"
                                       title={`${d.field}: ${String(d.oldVal)} → ${String(d.newVal)}`}
                                     >
                                       {d.field}: {String(d.oldVal ?? "-")} → {String(d.newVal ?? "-")}

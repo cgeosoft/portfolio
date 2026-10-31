@@ -94,7 +94,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({ locked, authError, onUnl
             <button
               type="submit"
               disabled={loading || pin.length < 6}
-              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-accent-600 to-purple-600 text-white text-xs font-semibold shadow-lg shadow-accent-500/25 hover:from-accent-500 hover:to-purple-500 transition-all disabled:opacity-50 cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 rounded-2xl bg-linear-to-r from-accent-600 to-purple-600 text-white text-xs font-semibold shadow-lg shadow-accent-500/25 hover:from-accent-500 hover:to-purple-500 transition-all disabled:opacity-50 cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2"
             >
               {loading ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />

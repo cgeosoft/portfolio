@@ -19,7 +19,7 @@ interface EditPortfolioModalProps {
 }
 
 const INPUT_CLASS =
-  "w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono";
+  "w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-hidden transition-colors font-mono";
 
 const LABEL_CLASS = "text-[10px] uppercase tracking-wider text-slate-400 font-semibold";
 
@@ -85,7 +85,7 @@ export function EditPortfolioModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono">
       <div role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40 shrink-0">
           <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export function EditPortfolioModal({
           <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
             <PortfolioDot color={color} className="w-3 h-3" />
             <span className="font-bold text-slate-50 truncate">{name.trim() || t("portfolios.form.namePreview")}</span>
-            <span className="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border bg-slate-800/80 text-slate-400 border-slate-700 shrink-0">
+            <span className="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm border bg-slate-800/80 text-slate-400 border-slate-700 shrink-0">
               {portfolio.baseCurrency || "EUR"}
             </span>
           </div>

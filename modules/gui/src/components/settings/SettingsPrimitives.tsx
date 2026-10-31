@@ -101,7 +101,7 @@ export function TextField({
           placeholder={secret && isSet && draft === undefined ? t("settings.textField.storedPlaceholder") : placeholder}
           autoComplete="off"
           spellCheck={false}
-          className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
+          className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-slate-100 placeholder-slate-600 focus:outline-hidden transition-colors font-mono"
         />
         {secret && (
           <button

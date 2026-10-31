@@ -187,8 +187,8 @@ export function SetupWizardPage({
 
   if (showTerms) {
     return (
-      <div className="fixed inset-0 z-[70] bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col p-2 sm:p-3">
-        <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+      <div className="fixed inset-0 z-70 bg-(--app-bg) text-(--text-main) flex flex-col p-2 sm:p-3">
+        <main className="flex-1 w-full max-w-(--breakpoint-2xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           <WebsitePage page="terms" onBack={() => setShowTerms(false)} webpageUrl={webpageUrl} />
         </main>
       </div>
@@ -400,7 +400,7 @@ export function SetupWizardPage({
                   role="switch"
                   aria-checked={populateDemo}
                   onClick={() => setPopulateDemo((prev) => !prev)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                     populateDemo ? "bg-[#DD3C73]" : "bg-slate-800"
                   }`}
                 >
@@ -442,7 +442,7 @@ export function SetupWizardPage({
                   role="switch"
                   aria-checked={enableTelemetry}
                   onClick={() => setEnableTelemetry((prev) => !prev)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                     enableTelemetry ? "bg-[#DD3C73]" : "bg-slate-800"
                   }`}
                 >

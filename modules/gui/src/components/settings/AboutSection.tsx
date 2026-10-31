@@ -192,7 +192,7 @@ export function AboutSection({ config, onReportIssue }: AboutSectionProps) {
           {SHORTCUTS.map((sc) => (
             <div key={sc.key} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-slate-300 text-[11px]">{t(`settings.about.shortcuts.${sc.desc}`)}</span>
-              <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 shadow-sm">{sc.key}</kbd>
+              <kbd className="px-2 py-0.5 rounded-sm bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-300 shadow-xs">{sc.key}</kbd>
             </div>
           ))}
         </div>

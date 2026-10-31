@@ -63,7 +63,7 @@ export function DeletePortfolioModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="delete-portfolio-title"
@@ -117,7 +117,7 @@ export function DeletePortfolioModal({
                 )}
               </div>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-300 font-bold shrink-0">
+            <span className="text-[10px] px-2 py-0.5 rounded-sm border border-slate-700 bg-slate-800 text-slate-300 font-bold shrink-0">
               {portfolio.baseCurrency || "EUR"}
             </span>
           </div>
@@ -170,7 +170,7 @@ export function DeletePortfolioModal({
           {error && (
             <div className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/30 flex items-start gap-2 text-xs text-rose-300">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <div className="flex-1 break-words">{error}</div>
+              <div className="flex-1 wrap-break-word">{error}</div>
             </div>
           )}
         </div>

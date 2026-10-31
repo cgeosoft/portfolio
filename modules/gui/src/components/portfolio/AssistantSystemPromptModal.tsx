@@ -41,12 +41,12 @@ const PROMPT_MARKDOWN: Components = {
     <strong className="font-bold text-slate-100">{children}</strong>
   ),
   code: ({ children }) => (
-    <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
+    <code className="bg-slate-900 px-1 py-0.5 rounded-sm text-[11px] text-mint font-mono border border-slate-800">
       {children}
     </code>
   ),
   table: ({ children }) => (
-    <div className="overflow-x-auto my-2 border border-slate-800 rounded">
+    <div className="overflow-x-auto my-2 border border-slate-800 rounded-sm">
       <table className="w-full text-left text-[11px] border-collapse">{children}</table>
     </div>
   ),
@@ -108,7 +108,7 @@ export function AssistantSystemPromptModal({
   const approxTokens = Math.round(charCount / 4);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono overflow-y-auto">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono overflow-y-auto">
       <div
         className="relative w-full max-w-2xl sm:max-w-3xl flex flex-col rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden max-h-[calc(100dvh-1rem)] sm:max-h-[90dvh] my-auto"
         role="dialog"
