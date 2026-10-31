@@ -82,6 +82,11 @@ export default {
     mainProcess: "cottontail",
     cottontail: {
       entrypoint: "src/bun/index.ts",
+      // Hutch finds capabilities by scanning the main-process bundle only, so it
+      // misses the service child: hashing (Bun.CryptoHasher, metrics runtime, MCP
+      // tokens), sqlite (bun:sqlite), compression (gzip responses), yaml (metric
+      // manifests) and websocket (Vite HMR proxy in dev).
+      capabilities: ["hashing", "sqlite", "compression", "yaml", "websocket"],
     },
     copy: {
       ...copyTree("service"),
