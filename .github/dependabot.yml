@@ -10,6 +10,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # 2.0.5 makes Bun the default main process and refuses the build.cottontail
+      # config. Upgrade by hand together with the config change.
+      - dependency-name: electrobun
 
   - package-ecosystem: github-actions
     directory: /
