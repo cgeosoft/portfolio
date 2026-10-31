@@ -81,7 +81,7 @@ export function MetricPickerModal({ slot, candidates, display, onPick, onClose }
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("metrics.picker.search")}
-              className="flex-1 min-w-0 bg-transparent text-xs text-slate-200 placeholder:text-slate-600 outline-none"
+              className="flex-1 min-w-0 bg-transparent text-xs text-slate-200 placeholder:text-slate-600 outline-hidden"
             />
           </label>
         </div>

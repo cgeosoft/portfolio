@@ -36,7 +36,7 @@ export function UpdatePopover({
               <button
                 type="button"
                 onClick={onDismiss}
-                className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors shrink-0 cursor-pointer"
+                className="text-slate-500 hover:text-slate-300 p-0.5 rounded-sm transition-colors shrink-0 cursor-pointer"
                 aria-label={t("layout.update.dismissLabel")}
               >
                 <X className="w-3.5 h-3.5" />

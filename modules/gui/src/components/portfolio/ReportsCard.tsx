@@ -67,7 +67,7 @@ const REPORT_MARKDOWN: Components = {
   td: ({ node: _n, ...props }) => <td className="px-3 py-2 text-slate-400" {...props} />,
   strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
   code: ({ node: _n, ...props }) => (
-    <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
+    <code className="px-1.5 py-0.5 rounded-sm bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
   ),
 };
 
@@ -291,7 +291,7 @@ export function ReportsCard({
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isRepFallback && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded border border-cream/40 bg-cream/10 text-cream font-bold uppercase">
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-sm border border-cream/40 bg-cream/10 text-cream font-bold uppercase">
                                 {t("reports.card.fallbackBadge")}
                               </span>
                             )}

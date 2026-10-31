@@ -103,7 +103,7 @@ export function SettingsPage({
   };
 
   return (
-    <div className="container max-w-screen-xl mx-auto w-full space-y-6 font-mono">
+    <div className="max-w-(--breakpoint-xl) mx-auto w-full space-y-6 font-mono">
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
         <aside className="w-full lg:sticky lg:top-0">
           <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">

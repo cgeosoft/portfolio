@@ -112,7 +112,7 @@ export function ManagePortfoliosPage({
                     placeholder={t("portfolios.page.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full h-8 bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-accent-500/50 font-mono"
+                    className="w-full h-8 bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-hidden focus:border-accent-500/50 font-mono"
                   />
                 </div>
               )}
@@ -136,7 +136,7 @@ export function ManagePortfoliosPage({
             {portfolios.length === 0 ? t("portfolios.page.empty") : t("portfolios.page.noMatch")}
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 min-[1200px]:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 min-[75rem]:grid-cols-3 gap-4">
             {filtered.map((p) => (
               <PortfolioCard
                 key={p.id}

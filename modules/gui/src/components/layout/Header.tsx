@@ -88,7 +88,7 @@ export function Header({
                 onClick={() => handlePageClick(tab.id)}
                 className={`h-7 flex items-center gap-1.5 px-3 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
+                    ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-xs"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
                 }`}
               >
@@ -121,7 +121,7 @@ export function Header({
               onClick={() => onOpenSettings()}
               className={`h-7 w-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${
                 activeView === "settings"
-                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-sm"
+                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-xs"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
               }`}
               title={t("layout.header.settingsShortcut", { shortcut: "Ctrl+," })}

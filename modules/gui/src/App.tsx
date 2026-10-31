@@ -1529,12 +1529,12 @@ export default function App() {
         const onRelease = (up: KeyboardEvent) => {
           if (up.key !== "Control" && up.key !== "Meta") return;
           window.removeEventListener("keyup", onRelease, true);
-          window.removeEventListener("blur", onBlur);
+          window.removeEventListener("blur-sm", onBlur);
           setTimeout(handleReload, 0);
         };
         const onBlur = () => {
           window.removeEventListener("keyup", onRelease, true);
-          window.removeEventListener("blur", onBlur);
+          window.removeEventListener("blur-sm", onBlur);
         };
         window.addEventListener("keyup", onRelease, true);
         window.addEventListener("blur", onBlur);
@@ -1649,7 +1649,7 @@ export default function App() {
   if (authState !== "ready") {
     if (authState === "loading") {
       return (
-        <div className="h-dvh flex items-center justify-center bg-[var(--app-bg)]">
+        <div className="h-dvh flex items-center justify-center bg-(--app-bg)">
           <RefreshCw className="w-6 h-6 text-accent-400 animate-spin" />
         </div>
       );
@@ -1680,7 +1680,7 @@ export default function App() {
 
   if (isLoading && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
+      <div className="h-dvh min-h-0 overflow-hidden bg-(--app-bg) text-(--text-main) flex flex-col w-full max-w-full min-w-0">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1746,7 +1746,7 @@ export default function App() {
                   setIsLoading(false);
                   setIsRefreshing(false);
                 }}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition-colors border border-slate-700 cursor-pointer font-mono"
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-sm text-xs transition-colors border border-slate-700 cursor-pointer font-mono"
               >
                 Continue Offline
               </button>
@@ -1774,7 +1774,7 @@ export default function App() {
 
   if (!isLoading && loadError && !portfolioData && view === "dashboard") {
     return (
-      <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
+      <div className="h-dvh min-h-0 overflow-hidden bg-(--app-bg) text-(--text-main) flex flex-col w-full max-w-full min-w-0">
         <AppMenuBar
           portfolios={portfolios}
           activePortfolio={activePortfolio}
@@ -1838,7 +1838,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => void loadData()}
-              className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#DD3C73]/20"
+              className="px-4 py-2 bg-[#DD3C73] hover:bg-[#DD3C73]/90 text-white rounded-sm text-xs font-mono transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-[#DD3C73]/20"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Retry Sync
@@ -1846,7 +1846,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleReload}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono transition-colors border border-slate-700 cursor-pointer"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-sm text-xs font-mono transition-colors border border-slate-700 cursor-pointer"
             >
               Reload
             </button>
@@ -1897,7 +1897,7 @@ export default function App() {
   );
 
   return (
-    <div className="h-dvh min-h-0 overflow-hidden bg-[var(--app-bg)] text-[var(--text-main)] flex flex-col w-full max-w-full min-w-0">
+    <div className="h-dvh min-h-0 overflow-hidden bg-(--app-bg) text-(--text-main) flex flex-col w-full max-w-full min-w-0">
       {/* Application Menu Bar (Native HTML Menu for Linux); hidden on the Portfolios page and the CSV import page */}
       {view !== "portfolios" && !isImportModalOpen && (
       <AppMenuBar
@@ -2002,7 +2002,7 @@ export default function App() {
 
           {/* Main View Router */}
           {view === "settings" && (
-        <main className="flex-1 w-full container max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
+        <main className="flex-1 w-full max-w-(--breakpoint-xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar">
           <Suspense fallback={<PageLoading />}>
             <SettingsPage
               onBack={() => handleNavigateDashboard()}
@@ -2037,14 +2037,14 @@ export default function App() {
       )}
 
       {(view === "terms" || view === "sponsorship") && (
-        <main className="flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 w-full max-w-(--breakpoint-2xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           <WebsitePage key={view} page={view} onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
         </main>
       )}
 
       {view === "dashboard" && (
         <main
-          className={`flex-1 w-full container max-w-screen-2xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
+          className={`flex-1 w-full max-w-(--breakpoint-2xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
             activeTab === "transactions" || activeTab === "reports" || (activeTab === "analysis" && analysisSection === "suggestions")
               ? "flex flex-col h-full min-h-0 pb-2 sm:pb-3 overflow-hidden"
               : "pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar"

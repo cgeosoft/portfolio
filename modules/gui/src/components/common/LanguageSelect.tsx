@@ -163,7 +163,7 @@ export function LanguagePicker({ value, onChange, detected, disabled }: Language
           placeholder={t("language.search")}
           aria-label={t("language.search")}
           disabled={disabled}
-          className="flex-1 min-w-0 bg-transparent font-sans text-sm text-slate-100 placeholder:text-slate-500 outline-none"
+          className="flex-1 min-w-0 bg-transparent font-sans text-sm text-slate-100 placeholder:text-slate-500 outline-hidden"
         />
       </label>
       <div ref={listRef} role="radiogroup" aria-label={t("language.label")} className="relative h-72 overflow-y-auto custom-scrollbar">

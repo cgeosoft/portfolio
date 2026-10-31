@@ -7,7 +7,7 @@ import { SectionHeader } from "./SettingsFields";
 
 const blockTitle = "text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5";
 const row = "flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60";
-const pathCode = "text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 break-all";
+const pathCode = "text-slate-200 text-[11px] bg-slate-950 px-2 py-0.5 rounded-sm border border-slate-800 break-all";
 
 /** Settings → Your Data: backup, where the files live, and the stored market data. */
 export function YourDataSection() {

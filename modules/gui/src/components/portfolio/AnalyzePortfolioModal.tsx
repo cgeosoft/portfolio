@@ -52,7 +52,7 @@ const PROMPT_MARKDOWN: Components = {
   ),
   strong: ({ node: _n, ...props }) => <strong className="font-bold text-slate-100" {...props} />,
   code: ({ node: _n, ...props }) => (
-    <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
+    <code className="px-1.5 py-0.5 rounded-sm bg-slate-950 border border-slate-800 text-cream font-mono text-[11px]" {...props} />
   ),
 };
 
@@ -384,7 +384,7 @@ export function AnalyzePortfolioModal({
       : 3;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-mono overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200 font-mono overflow-y-auto">
       <div className="relative w-full max-w-2xl flex flex-col rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden h-[calc(100dvh-1rem)] sm:h-[min(90dvh,44rem)] my-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-3.5 py-2.5 sm:px-5 sm:py-3 shrink-0">
@@ -426,7 +426,7 @@ export function AnalyzePortfolioModal({
                     }`}
                   >
                     {isPassed ? (
-                      <Check className="w-3 h-3 shrink-0 stroke-[3]" />
+                      <Check className="w-3 h-3 shrink-0 stroke-3" />
                     ) : (
                       <span className="w-4 h-4 rounded-full bg-slate-800 text-[10px] flex items-center justify-center text-slate-400 font-mono">
                         {idx + 1}
@@ -585,7 +585,7 @@ export function AnalyzePortfolioModal({
                   <div className="flex items-center gap-2">
                     {promptData.contextSources && promptData.contextSources.length > 0 ? (
                       <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded border border-mint/30 bg-mint/10 text-mint uppercase flex items-center gap-1"
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-sm border border-mint/30 bg-mint/10 text-mint uppercase flex items-center gap-1"
                         title={(promptData.contextSections ?? []).join("\n")}
                       >
                         <Sparkles className="w-3 h-3" />
@@ -597,11 +597,11 @@ export function AnalyzePortfolioModal({
                         </span>
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-400 px-2 py-0.5 rounded border border-slate-800 bg-slate-950 font-mono">
+                      <span className="text-[10px] text-slate-400 px-2 py-0.5 rounded-sm border border-slate-800 bg-slate-950 font-mono">
                         {t("reports.analyze.prompt.noMarketContext")}
                       </span>
                     )}
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-mint/30 bg-mint/10 text-mint uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm border border-mint/30 bg-mint/10 text-mint uppercase">
                       {t("reports.analyze.prompt.contextReady")}
                     </span>
                   </div>
@@ -628,7 +628,7 @@ export function AnalyzePortfolioModal({
                   <button
                     type="button"
                     onClick={() => void loadPromptContext(selectedWeekKey)}
-                    className="self-start mt-1 px-3 py-1 rounded bg-[#DD3C73] text-white text-xs font-bold hover:bg-[#c82f63] cursor-pointer"
+                    className="self-start mt-1 px-3 py-1 rounded-sm bg-[#DD3C73] text-white text-xs font-bold hover:bg-[#c82f63] cursor-pointer"
                   >
                     {t("reports.analyze.prompt.retry")}
                   </button>
@@ -659,7 +659,7 @@ export function AnalyzePortfolioModal({
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
                           {t("reports.analyze.prompt.fullPrompt")}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-slate-800 text-slate-400 font-mono">
                           Markdown
                         </span>
                       </div>
@@ -667,7 +667,7 @@ export function AnalyzePortfolioModal({
                       <button
                         type="button"
                         onClick={() => void handleCopyPrompt()}
-                        className="h-6 inline-flex items-center gap-1 px-2 rounded border border-slate-800 bg-slate-950 text-[10px] font-medium text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors cursor-pointer"
+                        className="h-6 inline-flex items-center gap-1 px-2 rounded-sm border border-slate-800 bg-slate-950 text-[10px] font-medium text-slate-300 hover:text-slate-50 hover:border-slate-700 transition-colors cursor-pointer"
                         title={t("reports.analyze.prompt.copyTitle")}
                       >
                         {copiedPrompt ? (
@@ -808,7 +808,7 @@ export function AnalyzePortfolioModal({
                         {t("reports.analyze.result.cancelledDescription")}
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-cream/40 bg-cream/10 text-cream uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm border border-cream/40 bg-cream/10 text-cream uppercase">
                       {t("reports.analyze.result.cancelledBadge")}
                     </span>
                   </div>
@@ -824,7 +824,7 @@ export function AnalyzePortfolioModal({
                       <div className="text-xs font-bold text-[#DD3C73] uppercase tracking-wider">
                         {t("reports.analyze.result.failedTitle")}
                       </div>
-                      <div className="text-xs text-[#DD3C73] font-mono break-words leading-relaxed mt-1.5 p-2 rounded-lg bg-black/40 border border-[#DD3C73]/20">
+                      <div className="text-xs text-[#DD3C73] font-mono wrap-break-word leading-relaxed mt-1.5 p-2 rounded-lg bg-black/40 border border-[#DD3C73]/20">
                         {errorMessage || t("reports.analyze.result.failedFallback")}
                       </div>
                     </div>

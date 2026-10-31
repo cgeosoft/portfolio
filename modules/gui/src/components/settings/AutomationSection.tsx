@@ -210,7 +210,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
         }
       />
 
-      <div className="divide-y divide-slate-800/80 -mt-2">
+      <div className="divide-y divide-slate-800/80">
         <SettingItem
           icon={def.icon}
           title={msg(def, "toggleTitle")}
@@ -231,7 +231,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               disabled={saving}
               aria-label={t("settings.automation.timeOfDay")}
-              className="h-9 w-28 shrink-0 bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-lg px-2.5 text-xs text-slate-100 focus:outline-none transition-colors font-mono"
+              className="h-9 w-28 shrink-0 bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-accent-500 rounded-lg px-2.5 text-xs text-slate-100 focus:outline-hidden transition-colors font-mono"
             />
           }
         />
@@ -310,7 +310,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
         </SettingItem>
       </div>
 
-      <div className="flex items-center gap-3 pt-4 border-t border-slate-800/80 min-h-[2rem]">
+      <div className="flex items-center gap-3 pt-4 border-t border-slate-800/80 min-h-8">
         {saving ? (
           <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("common.saving")}

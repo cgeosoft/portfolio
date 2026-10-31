@@ -45,7 +45,7 @@ export function Toaster() {
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed top-16 right-6 z-[60] flex flex-col gap-2 max-w-sm pointer-events-none">
+    <div className="fixed top-16 right-6 z-60 flex flex-col gap-2 max-w-sm pointer-events-none">
       {items.map((toast) => (
         <div
           key={toast.id}
@@ -59,7 +59,7 @@ export function Toaster() {
           <button
             type="button"
             onClick={() => dismissToast(toast.id)}
-            className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors shrink-0 cursor-pointer"
+            className="text-slate-500 hover:text-slate-300 p-0.5 rounded-sm transition-colors shrink-0 cursor-pointer"
             aria-label={t("common.dismiss")}
           >
             <X className="w-3.5 h-3.5" />

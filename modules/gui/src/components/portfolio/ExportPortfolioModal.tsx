@@ -290,7 +290,7 @@ export function ExportPortfolioModal({
   const sanitizedFileName = `portfolio-${portfolio.name.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "export"}-${new Date().toISOString().split("T")[0]}.zip`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 font-mono overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200 font-mono overflow-y-auto">
       <div className="relative w-full max-w-lg flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden max-h-[calc(100dvh-1.5rem)] my-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 py-3 sm:px-5 sm:py-3.5 shrink-0">
@@ -386,7 +386,7 @@ export function ExportPortfolioModal({
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
-                    {includeTransactions && <Check className="w-3 h-3 stroke-[3]" />}
+                    {includeTransactions && <Check className="w-3 h-3 stroke-3" />}
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
@@ -394,7 +394,7 @@ export function ExportPortfolioModal({
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>{t("transactions.export.transactions")}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-sm bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           .csv
                         </span>
                       </div>
@@ -439,7 +439,7 @@ export function ExportPortfolioModal({
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
-                    {includeReports && <Check className="w-3 h-3 stroke-[3]" />}
+                    {includeReports && <Check className="w-3 h-3 stroke-3" />}
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
@@ -447,7 +447,7 @@ export function ExportPortfolioModal({
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>{t("transactions.export.reports")}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-sm bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           .md
                         </span>
                       </div>
@@ -492,7 +492,7 @@ export function ExportPortfolioModal({
                         : "border-slate-700 bg-slate-900"
                     }`}
                   >
-                    {includeReadme && <Check className="w-3 h-3 stroke-[3]" />}
+                    {includeReadme && <Check className="w-3 h-3 stroke-3" />}
                   </div>
 
                   <div className="min-w-0 flex items-center gap-2">
@@ -500,7 +500,7 @@ export function ExportPortfolioModal({
                     <div>
                       <div className="font-bold text-xs flex items-center gap-2">
                         <span>{t("transactions.export.readme")}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-sm bg-slate-900 border border-slate-800 text-slate-400 uppercase font-normal">
                           README.md
                         </span>
                       </div>

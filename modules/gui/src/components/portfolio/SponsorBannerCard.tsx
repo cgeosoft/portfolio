@@ -90,7 +90,7 @@ export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCar
       <div className="relative w-full">
         {/* Card containing the iframe with rounded corners and overflow hidden */}
         <div
-          className="w-full rounded-2xl overflow-hidden border border-[#DD3C73] bg-canvas shadow-sm shadow-[#DD3C73]/10"
+          className="w-full rounded-2xl overflow-hidden border border-[#DD3C73] bg-canvas shadow-xs shadow-[#DD3C73]/10"
           style={{ height: `${bannerHeight}px` }}
         >
           <iframe
@@ -108,19 +108,19 @@ export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCar
         {/* Skeleton over the frame until the banner reports its size */}
         {status === "loading" && (
           <div
-            className="absolute inset-0 w-full rounded-2xl bg-widget border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-sm shadow-[#DD3C73]/10"
+            className="absolute inset-0 w-full rounded-2xl bg-widget border border-[#DD3C73] flex items-center justify-between px-6 animate-pulse shadow-xs shadow-[#DD3C73]/10"
             style={{ height: `${bannerHeight}px` }}
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-yellow-500/10 border border-yellow-500/20" />
               <div className="space-y-1.5">
-                <div className="w-28 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded" />
-                <div className="w-44 h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded" />
+                <div className="w-28 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded-sm" />
+                <div className="w-44 h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded-sm" />
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-3">
-              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
-              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded" />
+              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded-sm" />
+              <div className="w-20 h-6 bg-slate-100 dark:bg-slate-800/40 rounded-sm" />
             </div>
             <div className="w-28 h-8 bg-yellow-500/20 rounded-lg" />
           </div>
@@ -131,7 +131,7 @@ export function SponsorBannerCard({ devEmail, theme = "dark" }: SponsorBannerCar
           <button
             type="button"
             onClick={() => setIsInfoModalOpen(true)}
-            className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-none"
+            className="absolute -top-2 -left-2 z-30 w-5 h-5 rounded-full bg-widget hover:bg-[#DD3C73]/20 border border-border hover:border-[#DD3C73] text-muted hover:text-[#DD3C73] flex items-center justify-center transition-all cursor-pointer shadow-md focus:outline-hidden"
             title={t("portfolios.sponsor.about")}
             aria-label={t("portfolios.sponsor.about")}
           >

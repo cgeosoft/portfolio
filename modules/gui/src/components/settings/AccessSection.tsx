@@ -308,7 +308,7 @@ function McpCard() {
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
           }}
-          className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+          className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-hidden focus:border-accent-500/60 disabled:opacity-60"
         />
       </div>
       {error && <p className="text-xs text-rose-400">{error}</p>}
@@ -456,7 +456,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
               }}
-              className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-none focus:border-accent-500/60 disabled:opacity-60"
+              className="w-24 h-8 px-2.5 rounded-lg border border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-200 focus:outline-hidden focus:border-accent-500/60 disabled:opacity-60"
             />
             <span className="text-[11px] text-slate-500">{t("settings.security.remote.portHint")}</span>
           </div>
@@ -491,7 +491,7 @@ export function SecuritySection({ onPinEnabledChange }: { onPinEnabledChange?: (
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
       <SectionHeader icon={ShieldCheck} title={t("settings.security.title")} description={t("settings.security.description")} />
-      <div className="divide-y divide-slate-800/80 -mt-2">
+      <div className="divide-y divide-slate-800/80">
         <AccessRows onPinEnabledChange={onPinEnabledChange} />
         <SettingsFields section="security" />
       </div>

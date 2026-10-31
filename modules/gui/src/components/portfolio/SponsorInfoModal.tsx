@@ -58,7 +58,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
@@ -83,7 +83,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-none cursor-pointer"
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors focus:outline-hidden cursor-pointer"
             aria-label={t("portfolios.sponsor.closeLabel")}
           >
             <X className="w-4 h-4" />
@@ -120,7 +120,7 @@ export function SponsorInfoModal({ isOpen, onClose, devEmail }: SponsorInfoModal
               <button
                 type="button"
                 onClick={handleCopyEmail}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer shrink-0"
+                className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer shrink-0"
               >
                 {copied ? (
                   <>

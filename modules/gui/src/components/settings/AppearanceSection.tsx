@@ -45,7 +45,7 @@ export function AppearanceSection({ theme, onChangeTheme, zoomLevel, onChangeZoo
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
       <SectionHeader icon={Palette} title={t("settings.appearance.title")} description={t("settings.appearance.description")} />
 
-      <div className="divide-y divide-slate-800/80 -mt-2">
+      <div className="divide-y divide-slate-800/80">
         <SettingItem icon={Languages} title={t("language.label")} description={t("language.description")}>
           <LanguageSelect value={language} onChange={(code) => void handleLanguage(code)} disabled={switching} />
           <LanguageTierNote code={language} />

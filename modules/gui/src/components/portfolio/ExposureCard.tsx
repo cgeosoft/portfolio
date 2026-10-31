@@ -161,9 +161,9 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
               <div className="bg-slate-600" style={{ width: `${data.coverage.unknownPercent}%` }} title={t("dashboard.exposure.unknownShare", { percent: pct(data.coverage.unknownPercent) })} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-royal-bright" />{t("dashboard.exposure.directShare", { percent: pct(data.coverage.directPercent) })}</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-mint" />{t("dashboard.exposure.lookedThrough", { percent: pct(data.coverage.lookedThroughPercent) })}</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-slate-600" />{t("dashboard.exposure.unknown", { percent: pct(data.coverage.unknownPercent) })}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-royal-bright" />{t("dashboard.exposure.directShare", { percent: pct(data.coverage.directPercent) })}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-mint" />{t("dashboard.exposure.lookedThrough", { percent: pct(data.coverage.lookedThroughPercent) })}</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-xs bg-slate-600" />{t("dashboard.exposure.unknown", { percent: pct(data.coverage.unknownPercent) })}</span>
               <span>{t("dashboard.exposure.singleNamesKnown", { percent: pct(data.coverage.holdingsKnownPercent) })}</span>
             </div>
           </div>

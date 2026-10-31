@@ -104,7 +104,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="support-ticket-title"
@@ -143,7 +143,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               <Mail className="w-3.5 h-3.5 text-[#DD3C73]" />
               <span>{t("settings.support.recipient")}</span>
             </label>
-            <input type="text" readOnly value={WEBPAGE_EMAIL} className="w-full bg-slate-950/90 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono focus:outline-none cursor-default select-all" />
+            <input type="text" readOnly value={WEBPAGE_EMAIL} className="w-full bg-slate-950/90 border border-slate-800/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-300 font-mono focus:outline-hidden cursor-default select-all" />
           </div>
 
           {/* Subject */}
@@ -158,7 +158,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               onChange={(e) => setSubject(e.target.value)}
               placeholder={t("settings.support.subjectPlaceholder")}
               autoFocus
-              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono"
+              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-hidden transition-colors font-mono"
             />
           </div>
 
@@ -173,7 +173,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t("settings.support.messagePlaceholder")}
-              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition-colors font-mono resize-none"
+              className="w-full bg-slate-950/90 border border-slate-800 hover:border-slate-700 focus:border-[#DD3C73] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-hidden transition-colors font-mono resize-none"
             />
           </div>
 
@@ -184,7 +184,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
               id="ticket-include-logs"
               checked={includeLogs}
               onChange={(e) => setIncludeLogs(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
+              className="mt-0.5 h-4 w-4 rounded-sm border-slate-700 bg-slate-950 text-[#DD3C73] focus:ring-[#DD3C73]/40 cursor-pointer accent-[#DD3C73]"
             />
             <label htmlFor="ticket-include-logs" className="cursor-pointer select-none space-y-0.5">
               <div className="text-xs font-semibold text-slate-200">{t("settings.support.includeLogs")}</div>
@@ -202,7 +202,7 @@ export function SupportTicketModal({ isOpen, onClose }: SupportTicketModalProps)
 
               {status.zipPath && (
                 <div className="pt-2 border-t border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <code className="text-[10px] text-emerald-200 bg-slate-950/70 px-2 py-1 rounded border border-emerald-800/40 truncate max-w-md">{status.zipPath}</code>
+                  <code className="text-[10px] text-emerald-200 bg-slate-950/70 px-2 py-1 rounded-sm border border-emerald-800/40 truncate max-w-md">{status.zipPath}</code>
                   <div className="flex items-center gap-2 shrink-0">
                     {isLocalClient && (
                       <button

@@ -120,7 +120,7 @@ export function TransactionsCard({
               placeholder={t("transactions.ledger.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#DD3C73]/50 font-mono"
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-hidden focus:border-[#DD3C73]/50 font-mono"
             />
           </div>
 
@@ -187,7 +187,7 @@ export function TransactionsCard({
                   <tr key={tx.id} className="hover:bg-slate-800/20 transition-colors group">
                     <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{tx.date}</td>
                     <td className="py-2.5 px-3">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium border ${getTypeBadge(tx.type)}`}>
+                      <span className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-medium border ${getTypeBadge(tx.type)}`}>
                         {tx.type}
                       </span>
                     </td>

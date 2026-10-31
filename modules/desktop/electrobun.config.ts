@@ -76,6 +76,10 @@ export default {
     description: APP.description,
   },
   build: {
+    // Electrobun's toolchain now defaults to the Bun main process and refuses a
+    // `cottontail` block without this. Moving to `build.bun` changes the runtime,
+    // so that is its own change, tested on all three platforms.
+    mainProcess: "cottontail",
     cottontail: {
       entrypoint: "src/bun/index.ts",
     },

@@ -104,12 +104,12 @@ const REPLY_MARKDOWN: Components = {
     <strong className="font-bold text-slate-100">{children}</strong>
   ),
   code: ({ children }) => (
-    <code className="bg-slate-900 px-1 py-0.5 rounded text-[11px] text-mint font-mono border border-slate-800">
+    <code className="bg-slate-900 px-1 py-0.5 rounded-sm text-[11px] text-mint font-mono border border-slate-800">
       {children}
     </code>
   ),
   table: ({ children }) => (
-    <div className="overflow-x-auto my-2 border border-slate-800 rounded">
+    <div className="overflow-x-auto my-2 border border-slate-800 rounded-sm">
       <table className="w-full text-left text-[11px] border-collapse">{children}</table>
     </div>
   ),
@@ -188,9 +188,9 @@ const ChatMessage = memo(function ChatMessage({
       </div>
 
       <div
-        className={`relative rounded-xl text-xs leading-relaxed max-w-[92%] px-3.5 py-2.5 break-words ${
+        className={`relative rounded-xl text-xs leading-relaxed max-w-[92%] px-3.5 py-2.5 wrap-break-word ${
           isUser
-            ? "bg-[#DD3C73]/15 border border-[#DD3C73]/40 text-slate-100 font-mono shadow-sm"
+            ? "bg-[#DD3C73]/15 border border-[#DD3C73]/40 text-slate-100 font-mono shadow-xs"
             : "bg-widget border border-slate-800 text-slate-200 shadow-md"
         }`}
       >
@@ -206,7 +206,7 @@ const ChatMessage = memo(function ChatMessage({
             {onRegenerate && (
               <button
                 onClick={() => onRegenerate()}
-                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
+                className="absolute left-0 top-full mt-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity px-1 py-0.5 rounded-sm text-[10px] text-slate-500 hover:text-[#DD3C73] flex items-center gap-1 cursor-pointer"
                 title={t("assistant.chat.regenerateTitle")}
                 type="button"
               >
@@ -306,7 +306,7 @@ const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput
           placeholder={t("assistant.input.placeholder")}
           rows={1}
           disabled={isLoading}
-          className="flex-1 bg-transparent border-0 resize-none text-xs text-slate-100 placeholder-slate-500 focus:outline-none custom-scrollbar max-h-[120px] py-1 font-mono leading-relaxed"
+          className="flex-1 bg-transparent border-0 resize-none text-xs text-slate-100 placeholder-slate-500 focus:outline-hidden custom-scrollbar max-h-[120px] py-1 font-mono leading-relaxed"
         />
         <button
           type="button"
@@ -478,7 +478,7 @@ export function AssistantSidebar({
                 </span>
                 {activeConversation?.title && (
                   <span
-                    className="text-[10px] text-slate-400 font-normal truncate max-w-[130px] px-1.5 py-0.5 rounded bg-slate-800/60 border border-slate-700/50"
+                    className="text-[10px] text-slate-400 font-normal truncate max-w-[130px] px-1.5 py-0.5 rounded-sm bg-slate-800/60 border border-slate-700/50"
                     title={mask(activeConversation.title)}
                   >
                     {mask(activeConversation.title)}
@@ -492,7 +492,7 @@ export function AssistantSidebar({
             <button
               type="button"
               onClick={() => setCurrentView("chat")}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#DD3C73] py-1 px-2 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-[#DD3C73] py-1 px-2 rounded-sm hover:bg-slate-800/60 transition-colors cursor-pointer"
               title={t("assistant.history.returnTitle")}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -524,7 +524,7 @@ export function AssistantSidebar({
               >
                 <History className="w-3.5 h-3.5" />
                 {conversations.length > 0 && (
-                  <span className="text-[9.5px] px-1 rounded bg-slate-800 text-slate-300 font-bold">
+                  <span className="text-[9.5px] px-1 rounded-sm bg-slate-800 text-slate-300 font-bold">
                     {conversations.length}
                   </span>
                 )}
@@ -565,7 +565,7 @@ export function AssistantSidebar({
               {onNewChat && (
                 <button
                   onClick={handleStartNewChat}
-                  className="px-2 py-1 text-[10.5px] font-bold tracking-wider rounded bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1 uppercase"
+                  className="px-2 py-1 text-[10.5px] font-bold tracking-wider rounded-sm bg-[#DD3C73]/15 hover:bg-[#DD3C73]/25 text-[#DD3C73] border border-[#DD3C73]/40 transition-colors cursor-pointer flex items-center gap-1 uppercase"
                   title={t("assistant.header.newChatTitle")}
                   type="button"
                 >
@@ -605,7 +605,7 @@ export function AssistantSidebar({
               <span className="uppercase text-slate-500 font-semibold text-[10px] tracking-wider">{t("assistant.status.model")}</span>
               <span className="text-slate-300 truncate font-mono text-xs">{activeModel || activeProvider}</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-mono truncate max-w-[150px] px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700/50">
+            <div className="text-[10px] text-slate-400 font-mono truncate max-w-[150px] px-2 py-0.5 rounded-sm bg-slate-800/50 border border-slate-700/50">
               {portfolio?.name || t("assistant.status.noPortfolio")}
             </div>
           </div>
@@ -633,7 +633,7 @@ export function AssistantSidebar({
                       <Cpu className="w-3.5 h-3.5 text-[#DD3C73]" />
                       <span>{t("assistant.context.title")}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                    <span className="text-[10px] text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded-sm border border-slate-700/60">
                       {t("assistant.context.holdings", { count: holdingsCount })}
                     </span>
                   </div>
@@ -763,7 +763,7 @@ export function AssistantSidebar({
                 {onOpenSettings && error.toLowerCase().includes("api key") && (
                   <button
                     onClick={onOpenSettings}
-                    className="w-full py-1.5 px-2.5 rounded bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-semibold tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-1.5 px-2.5 rounded-sm bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-semibold tracking-wide transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     type="button"
                   >
                     <Settings className="w-3.5 h-3.5" />
@@ -797,7 +797,7 @@ export function AssistantSidebar({
                 value={searchHistoryQuery}
                 onChange={(e) => setSearchHistoryQuery(e.target.value)}
                 placeholder={t("assistant.history.searchPlaceholder")}
-                className="w-full bg-widget border border-slate-800 focus:border-[#DD3C73]/60 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-colors font-mono"
+                className="w-full bg-widget border border-slate-800 focus:border-[#DD3C73]/60 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-hidden transition-colors font-mono"
               />
               {searchHistoryQuery && (
                 <button
@@ -845,7 +845,7 @@ export function AssistantSidebar({
                     onClick={() => handleSelectConv(c.id)}
                     className={`group relative rounded-xl p-3 border transition-all cursor-pointer text-left ${
                       isActive
-                        ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 shadow-sm"
+                        ? "bg-[#DD3C73]/10 border-[#DD3C73]/40 shadow-xs"
                         : "bg-widget/70 hover:bg-card border-slate-800 hover:border-slate-700"
                     }`}
                   >
@@ -874,7 +874,7 @@ export function AssistantSidebar({
 
                       <div className="flex items-center gap-1 shrink-0 pt-0.5">
                         {isActive && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-[#DD3C73]/20 text-[#DD3C73] border border-[#DD3C73]/30">
                             {t("assistant.history.active")}
                           </span>
                         )}
@@ -885,7 +885,7 @@ export function AssistantSidebar({
                               e.stopPropagation();
                               onDeleteConversation(c.id);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition-all cursor-pointer"
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded-sm hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition-all cursor-pointer"
                             title={t("assistant.history.deleteTitle")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />

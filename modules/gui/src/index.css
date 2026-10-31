@@ -1,6 +1,114 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+/* inline: utilities use the rgb(var(...)) value itself, so a scoped override of
+   a token (for example the dark palette inside .app-bottombar) still applies. */
+@theme inline {
+  --color-accent-200: #f5abc5;
+  --color-accent-300: #ee84aa;
+  --color-accent-400: #e65f8e;
+  --color-accent-500: #dd3c73;
+  --color-accent-600: #c72d65;
+  --color-accent-700: #b32053;
+  --color-accent: #dd3c73;
+  --color-accent-bright: rgb(var(--accent-bright-rgb, 245 171 197));
+
+  --color-canvas: rgb(var(--bg-canvas-rgb, 7 9 14));
+  --color-widget: rgb(var(--bg-widget-rgb, 19 23 34));
+  --color-card: rgb(var(--bg-card-rgb, 24 29 43));
+  --color-line: rgb(var(--border-rgb, 30 41 59));
+  --color-mint: rgb(var(--palette-mint-rgb, 167 226 192));
+  --color-cream: rgb(var(--palette-cream-rgb, 227 234 205));
+
+  --color-royal: rgb(var(--palette-blue-rgb, 36 60 143));
+  --color-royal-bright: rgb(var(--palette-blue-bright-rgb, 109 139 247));
+
+  --color-plum: rgb(var(--palette-purple-rgb, 139 92 246));
+  --color-plum-bright: rgb(var(--palette-purple-bright-rgb, 168 85 247));
+
+  --color-slate-50: rgb(var(--slate-50-rgb));
+  --color-slate-100: rgb(var(--slate-100-rgb));
+  --color-slate-200: rgb(var(--slate-200-rgb));
+  --color-slate-300: rgb(var(--slate-300-rgb));
+  --color-slate-400: rgb(var(--slate-400-rgb));
+  --color-slate-500: rgb(var(--slate-500-rgb));
+  --color-slate-600: rgb(var(--slate-600-rgb));
+  --color-slate-700: rgb(var(--slate-700-rgb));
+  --color-slate-800: rgb(var(--slate-800-rgb));
+  --color-slate-900: rgb(var(--slate-900-rgb));
+  --color-slate-950: rgb(var(--slate-950-rgb));
+
+  --color-emerald-400: rgb(var(--emerald-400-rgb));
+  --color-emerald-500: rgb(var(--emerald-500-rgb));
+  --color-emerald-600: rgb(var(--emerald-600-rgb));
+  --color-emerald-800: rgb(var(--emerald-800-rgb));
+  --color-emerald-950: rgb(var(--emerald-950-rgb));
+
+  --color-rose-400: rgb(var(--rose-400-rgb));
+  --color-rose-500: rgb(var(--rose-500-rgb));
+  --color-rose-600: rgb(var(--rose-600-rgb));
+  --color-rose-800: rgb(var(--rose-800-rgb));
+  --color-rose-950: rgb(var(--rose-950-rgb));
+
+  --color-status-success: var(--status-success);
+  --color-status-error: var(--status-error);
+  --color-status-warning: var(--status-warning);
+  --color-status-info: var(--status-info);
+
+  /* Tailwind 3 line heights were absolute, so text with an arbitrary size
+     (text-[11px]) inherited the parent's line height in px. Tailwind 4 uses
+     ratios; keep the v3 values so rows and cards keep their height. */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+
+  --font-sans: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
+  --font-mono:
+    'JetBrains Mono', monospace, ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* Tailwind 3 defaults that Tailwind 4 changed: gray placeholders and a
+     pointer cursor on buttons. */
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Tailwind 3 kept the browser's 1px cell padding; Tailwind 4 resets it to 0. */
+  th,
+  td {
+    padding: 1px;
+  }
+}
 
 /* Design tokens: dark navy canvas, glass panels, pink accent (#DD3C73) and
  * chart palette (mint, cream, blue, purple). */
@@ -47,30 +155,30 @@
     --glass-border-hover: rgba(221, 60, 115, 0.35);
 
     /* Slate scale RGB channels for Tailwind (Dark Mode) */
-    --color-slate-50: 248 250 252;
-    --color-slate-100: 241 245 249;
-    --color-slate-200: 226 232 240;
-    --color-slate-300: 203 213 225;
-    --color-slate-400: 148 163 184;
-    --color-slate-500: 100 116 139;
-    --color-slate-600: 71 85 105;
-    --color-slate-700: 51 65 85;
-    --color-slate-800: 30 41 59;
-    --color-slate-900: 15 23 42;
-    --color-slate-950: 2 6 23;
+    --slate-50-rgb: 248 250 252;
+    --slate-100-rgb: 241 245 249;
+    --slate-200-rgb: 226 232 240;
+    --slate-300-rgb: 203 213 225;
+    --slate-400-rgb: 148 163 184;
+    --slate-500-rgb: 100 116 139;
+    --slate-600-rgb: 71 85 105;
+    --slate-700-rgb: 51 65 85;
+    --slate-800-rgb: 30 41 59;
+    --slate-900-rgb: 15 23 42;
+    --slate-950-rgb: 2 6 23;
 
     /* Semantic Emerald & Rose RGB channels */
-    --color-emerald-400: 52 211 153;
-    --color-emerald-500: 16 185 129;
-    --color-emerald-600: 5 150 105;
-    --color-emerald-800: 6 95 70;
-    --color-emerald-950: 2 44 34;
+    --emerald-400-rgb: 52 211 153;
+    --emerald-500-rgb: 16 185 129;
+    --emerald-600-rgb: 5 150 105;
+    --emerald-800-rgb: 6 95 70;
+    --emerald-950-rgb: 2 44 34;
 
-    --color-rose-400: 251 113 133;
-    --color-rose-500: 244 63 94;
-    --color-rose-600: 225 29 72;
-    --color-rose-800: 159 18 57;
-    --color-rose-950: 76 5 25;
+    --rose-400-rgb: 251 113 133;
+    --rose-500-rgb: 244 63 94;
+    --rose-600-rgb: 225 29 72;
+    --rose-800-rgb: 159 18 57;
+    --rose-950-rgb: 76 5 25;
   }
 
   html.light {
@@ -115,30 +223,30 @@
     --glass-border-hover: rgba(221, 60, 115, 0.4);
 
     /* Slate scale RGB channels for Tailwind (Light Mode) */
-    --color-slate-50: 15 23 42;
-    --color-slate-100: 15 23 42;
-    --color-slate-200: 30 41 59;
-    --color-slate-300: 51 65 85;
-    --color-slate-400: 71 85 105;
-    --color-slate-500: 100 116 139;
-    --color-slate-600: 148 163 184;
-    --color-slate-700: 203 213 225;
-    --color-slate-800: 226 232 240;
-    --color-slate-900: 255 255 255;
-    --color-slate-950: 241 245 249;
+    --slate-50-rgb: 15 23 42;
+    --slate-100-rgb: 15 23 42;
+    --slate-200-rgb: 30 41 59;
+    --slate-300-rgb: 51 65 85;
+    --slate-400-rgb: 71 85 105;
+    --slate-500-rgb: 100 116 139;
+    --slate-600-rgb: 148 163 184;
+    --slate-700-rgb: 203 213 225;
+    --slate-800-rgb: 226 232 240;
+    --slate-900-rgb: 255 255 255;
+    --slate-950-rgb: 241 245 249;
 
     /* Semantic Emerald & Rose RGB channels in Light Mode */
-    --color-emerald-400: 5 150 105;
-    --color-emerald-500: 16 185 129;
-    --color-emerald-600: 4 120 87;
-    --color-emerald-800: 167 243 208;
-    --color-emerald-950: 236 253 245;
+    --emerald-400-rgb: 5 150 105;
+    --emerald-500-rgb: 16 185 129;
+    --emerald-600-rgb: 4 120 87;
+    --emerald-800-rgb: 167 243 208;
+    --emerald-950-rgb: 236 253 245;
 
-    --color-rose-400: 225 29 72;
-    --color-rose-500: 244 63 94;
-    --color-rose-600: 190 18 60;
-    --color-rose-800: 254 205 211;
-    --color-rose-950: 255 241 242;
+    --rose-400-rgb: 225 29 72;
+    --rose-500-rgb: 244 63 94;
+    --rose-600-rgb: 190 18 60;
+    --rose-800-rgb: 254 205 211;
+    --rose-950-rgb: 255 241 242;
   }
 
   @media (prefers-color-scheme: light) {
@@ -183,29 +291,29 @@
       --glass-border: rgba(15, 23, 42, 0.08);
       --glass-border-hover: rgba(221, 60, 115, 0.4);
 
-      --color-slate-50: 15 23 42;
-      --color-slate-100: 15 23 42;
-      --color-slate-200: 30 41 59;
-      --color-slate-300: 51 65 85;
-      --color-slate-400: 71 85 105;
-      --color-slate-500: 100 116 139;
-      --color-slate-600: 148 163 184;
-      --color-slate-700: 203 213 225;
-      --color-slate-800: 226 232 240;
-      --color-slate-900: 255 255 255;
-      --color-slate-950: 241 245 249;
+      --slate-50-rgb: 15 23 42;
+      --slate-100-rgb: 15 23 42;
+      --slate-200-rgb: 30 41 59;
+      --slate-300-rgb: 51 65 85;
+      --slate-400-rgb: 71 85 105;
+      --slate-500-rgb: 100 116 139;
+      --slate-600-rgb: 148 163 184;
+      --slate-700-rgb: 203 213 225;
+      --slate-800-rgb: 226 232 240;
+      --slate-900-rgb: 255 255 255;
+      --slate-950-rgb: 241 245 249;
 
-      --color-emerald-400: 5 150 105;
-      --color-emerald-500: 16 185 129;
-      --color-emerald-600: 4 120 87;
-      --color-emerald-800: 167 243 208;
-      --color-emerald-950: 236 253 245;
+      --emerald-400-rgb: 5 150 105;
+      --emerald-500-rgb: 16 185 129;
+      --emerald-600-rgb: 4 120 87;
+      --emerald-800-rgb: 167 243 208;
+      --emerald-950-rgb: 236 253 245;
 
-      --color-rose-400: 225 29 72;
-      --color-rose-500: 244 63 94;
-      --color-rose-600: 190 18 60;
-      --color-rose-800: 254 205 211;
-      --color-rose-950: 255 241 242;
+      --rose-400-rgb: 225 29 72;
+      --rose-500-rgb: 244 63 94;
+      --rose-600-rgb: 190 18 60;
+      --rose-800-rgb: 254 205 211;
+      --rose-950-rgb: 255 241 242;
     }
   }
 
@@ -321,6 +429,14 @@
     background-image: none;
   }
 }
+
+/* Tailwind 3 put these rules after its utilities with no cascade layer, so a
+   utility with a higher specificity (hover:, [&_.cx-card]:border-0) won over
+   them and a plain utility lost to them. In Tailwind 4 unlayered CSS beats every
+   utility, so they live in the utilities layer to keep the Tailwind 3 order.
+   Tailwind 3 also emitted variants (hover:, sm:) after these rules; Tailwind 4
+   does not, so a variant that must beat one of them carries `!`. */
+@layer utilities {
 
 /* iOS Safari zooms the page when a focused field is smaller than 16px. */
 @media (pointer: coarse) and (max-width: 1023px) {
@@ -529,17 +645,17 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
 .app-menubar,
 .app-bottombar,
 .app-menu {
-  --color-slate-50: 248 250 252;
-  --color-slate-100: 241 245 249;
-  --color-slate-200: 226 232 240;
-  --color-slate-300: 203 213 225;
-  --color-slate-400: 148 163 184;
-  --color-slate-500: 100 116 139;
-  --color-slate-600: 71 85 105;
-  --color-slate-700: 51 65 85;
-  --color-slate-800: 30 41 59;
-  --color-slate-900: 15 23 42;
-  --color-slate-950: 2 6 23;
+  --slate-50-rgb: 248 250 252;
+  --slate-100-rgb: 241 245 249;
+  --slate-200-rgb: 226 232 240;
+  --slate-300-rgb: 203 213 225;
+  --slate-400-rgb: 148 163 184;
+  --slate-500-rgb: 100 116 139;
+  --slate-600-rgb: 71 85 105;
+  --slate-700-rgb: 51 65 85;
+  --slate-800-rgb: 30 41 59;
+  --slate-900-rgb: 15 23 42;
+  --slate-950-rgb: 2 6 23;
 }
 
 .app-menubar {
@@ -1093,3 +1209,5 @@ html.light .cx-menu-trigger[data-variant="outlined"]:hover {
   border-color: rgba(var(--accent-rgb), 0.45);
   background-color: #f8fafc;
 }
+
+}  /* @layer utilities */

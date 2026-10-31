@@ -88,7 +88,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
           {error && (
             <div className="p-2.5 rounded-lg border border-[#DD3C73]/40 bg-[#DD3C73]/10 flex items-start gap-2 text-[#DD3C73]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="break-words">{error}</span>
+              <span className="wrap-break-word">{error}</span>
             </div>
           )}
 
@@ -101,7 +101,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
               placeholder={t("transactions.symbol.tickerPlaceholder")}
               autoFocus
               maxLength={32}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-none focus:border-[#DD3C73]"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 uppercase focus:outline-hidden focus:border-[#DD3C73]"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -111,7 +111,7 @@ export function SymbolEditModal({ holding, onClose, onSaved }: SymbolEditModalPr
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("common.optional")}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#DD3C73]"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-hidden focus:border-[#DD3C73]"
             />
           </label>
         </div>

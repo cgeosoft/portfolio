@@ -228,7 +228,7 @@ export function MetricsTab({
                           disabled={isSaving}
                           draggable={false}
                           onClick={() => removeFromDashboard(listing.id)}
-                          className="w-4 h-4 inline-flex items-center justify-center rounded text-slate-500 cursor-pointer hover:text-rose-300 hover:bg-rose-500/15 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="w-4 h-4 inline-flex items-center justify-center rounded-sm text-slate-500 cursor-pointer hover:text-rose-300 hover:bg-rose-500/15 disabled:opacity-40 disabled:cursor-not-allowed"
                           title={t("metrics.tab.removeHint")}
                           aria-label={t("metrics.tab.removeLabel", { name: title })}
                         >
