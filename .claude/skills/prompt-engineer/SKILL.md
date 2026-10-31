@@ -1,6 +1,6 @@
 ---
 name: prompt-engineer
-description: LLM inference features: provider clients, model configuration, prompts, tool calling, streaming, output cleanup and the data allowed to reach a model. Use for model, prompt, tool, provider, or inference changes.
+description: "LLM inference features: provider clients, model configuration, prompts, tool calling, streaming, output cleanup and the data allowed to reach a model. Use for model, prompt, tool, provider, or inference changes."
 ---
 
 # Prompt Engineer

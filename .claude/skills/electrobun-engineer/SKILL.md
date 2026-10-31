@@ -1,6 +1,6 @@
 ---
 name: electrobun-engineer
-description: Electrobun desktop app: Bun main process, window lifecycle, webview bridge, config, logging, staging and packaging. Use for desktop features, main-process changes, RPC methods, or packaging.
+description: "Electrobun desktop app: Bun main process, window lifecycle, webview bridge, config, logging, staging and packaging. Use for desktop features, main-process changes, RPC methods, or packaging."
 ---
 
 # Electrobun Engineer

@@ -1,6 +1,6 @@
 ---
 name: financial-engineer
-description: Financial calculation engine: market data and quote caching, FX conversion, valuation and P&L math, technical indicators and demo data. Use for valuation math, FX, quotes, charts, or analytics bugs.
+description: "Financial calculation engine: market data and quote caching, FX conversion, valuation and P&L math, technical indicators and demo data. Use for valuation math, FX, quotes, charts, or analytics bugs."
 ---
 
 # Financial Engineer
