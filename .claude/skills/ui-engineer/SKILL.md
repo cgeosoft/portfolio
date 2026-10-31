@@ -1,6 +1,6 @@
 ---
 name: ui-engineer
-description: Styling and design system: CSS or Tailwind setup, colour tokens, typography, shared surface classes, responsive layout and theme consistency. Use for CSS issues, visual styling, theme or token changes.
+description: "Styling and design system: CSS or Tailwind setup, colour tokens, typography, shared surface classes, responsive layout and theme consistency. Use for CSS issues, visual styling, theme or token changes."
 ---
 
 # UI Engineer

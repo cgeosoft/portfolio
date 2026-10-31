@@ -1,6 +1,6 @@
 ---
 name: react-engineer
-description: React frontend: components, hooks, client state, routing, the typed backend client, streams and rendering. Use for UI features, client state, data fetching, or rendering issues.
+description: "React frontend: components, hooks, client state, routing, the typed backend client, streams and rendering. Use for UI features, client state, data fetching, or rendering issues."
 ---
 
 # React Engineer

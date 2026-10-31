@@ -1,6 +1,6 @@
 ---
 name: devops-engineer
-description: Build, verify, package, deploy and release the project: workspace scripts, containers or static output, environment and secrets, CI and release tags. Use for build errors, deployment, releases, or configuration.
+description: "Build, verify, package, deploy and release the project: workspace scripts, containers or static output, environment and secrets, CI and release tags. Use for build errors, deployment, releases, or configuration."
 ---
 
 # DevOps Engineer
