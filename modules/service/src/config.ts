@@ -420,6 +420,18 @@ function desktopLauncher(): string | undefined {
   return existsSync(launcher) ? launcher : undefined;
 }
 
+/**
+ * Set in the autostart entry so the desktop shell knows the desktop session started it at login
+ * (`launchedAtLogin()` in modules/desktop/src/bun/app.ts). Keep the two in step.
+ */
+export const AUTOSTART_ENV = "PORTFOLIO_AUTOSTART";
+
+/** The `Exec=` value: a path with a space goes in double quotes, as the desktop entry spec asks. */
+function autostartExec(command: string): string {
+  const arg = /[\s"]/.test(command) ? `"${command.replace(/(["`$\\])/g, "\\$1")}"` : command;
+  return `env ${AUTOSTART_ENV}=1 ${arg}`;
+}
+
 /** Linux autostart entry (~/.config/autostart/portfolio.desktop). */
 export function syncAutostart(enabled: boolean): void {
   if (process.platform !== "linux") return;
@@ -432,7 +444,7 @@ export function syncAutostart(enabled: boolean): void {
       const execCommand = desktopLauncher() ?? "portfolio";
       writeFileSync(
         desktopFilePath,
-        `[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=${execCommand}\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n`,
+        `[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=${autostartExec(execCommand)}\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n`,
         "utf-8",
       );
     } else if (existsSync(desktopFilePath)) {
@@ -441,4 +453,14 @@ export function syncAutostart(enabled: boolean): void {
   } catch {
     // Best-effort Linux autostart management
   }
+}
+
+/**
+ * Rewrites the autostart entry at start-up when "Start with boot" is on, so an entry written by
+ * an older version gains the login marker and follows a moved install. Only the installed app
+ * does this; a run from a checkout has no launcher and would point the entry at the wrong binary.
+ */
+export function refreshAutostart(): void {
+  if (process.platform !== "linux" || !desktopLauncher()) return;
+  if (loadConfig().startWithBoot === true) syncAutostart(true);
 }

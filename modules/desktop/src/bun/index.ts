@@ -17,11 +17,15 @@
  * The window closes into the system tray when the "Close to tray" setting is on (the service
  * mirrors it into `<data>/desktop-settings.json`, which the shell reads at close time). The tray
  * menu and File > Quit end the app. Without a tray the close button quits.
+ *
+ * `window-state.json` also records whether the window was hidden in the tray. A launch at login
+ * (`launchedAtLogin()` in `app.ts`) restores that: the app starts in the tray only when it was in
+ * the tray when it last ran, else the window shows. A launch by the user always shows the window.
  */
 import Electrobun, { BrowserWindow, BuildConfig, PATHS, Tray, Utils } from "electrobun/bun";
 import { chmodSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { APP, simulatedVersion, startQuery, userDataDir } from "./app";
+import { APP, launchedAtLogin, simulatedVersion, startQuery, userDataDir } from "./app";
 import { DevGuiServer, devServiceCommand, findRepoRoot } from "./dev";
 import { classifyExternalUrl, encodeForShell } from "./external-url";
 import { installDesktopEntry, setNativeWindowIcon } from "./linux-desktop";
@@ -232,6 +236,7 @@ async function main(): Promise<void> {
   // Created once; without a tray the close button quits (nothing could bring the window back).
   let tray: Tray | null = null;
   const showWindow = () => {
+    windowStateManager.setInTray(false);
     try {
       if (mainWindow.isMinimized()) mainWindow.unminimize();
       mainWindow.show();
@@ -260,6 +265,19 @@ async function main(): Promise<void> {
     });
   }
 
+  // A launch at login goes back to the tray when the app was in the tray when it last ran.
+  // Without a tray the window stays up, since nothing could bring it back.
+  if (launchedAtLogin() && windowState.inTray && tray) {
+    try {
+      mainWindow.hide();
+      service.log("launched at login; starting in the tray as last time");
+    } catch {
+      // Best effort; the window stays up.
+    }
+  } else {
+    windowStateManager.setInTray(false);
+  }
+
   // Close button: hide into the tray when the setting is on and a tray exists, else quit.
   mainWindow.on("will-close", (event: unknown) => {
     const e = event as { response?: { allow: boolean } };
@@ -268,6 +286,7 @@ async function main(): Promise<void> {
     if (quitting) return;
     if (tray && readCloseToTray(dataDir)) {
       e.response = { allow: false };
+      windowStateManager.setInTray(true);
       mainWindow.hide();
       return;
     }
@@ -306,6 +325,7 @@ async function main(): Promise<void> {
   ready = await service.waitUntilReady(repoRoot ? Number.POSITIVE_INFINITY : STARTUP_TIMEOUT_MS);
   if (!ready || service.port === null) {
     service.stop();
+    showWindow();
     showFailure(failedPage(service.serviceLogFile, service.tail(), dataDir));
     return;
   }
@@ -316,6 +336,7 @@ async function main(): Promise<void> {
     const guiUrl = await devGui.waitForUrl(DEV_GUI_TIMEOUT_MS);
     if (!guiUrl) {
       service.log("the Vite dev server did not report its URL");
+      showWindow();
       showFailure(failedPage(service.serviceLogFile, devGui.tail(), dataDir, "The Vite dev server did not start."));
       return;
     }

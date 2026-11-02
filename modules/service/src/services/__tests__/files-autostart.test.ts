@@ -105,7 +105,7 @@ describe("syncAutostart", () => {
 
   it.skipIf(linuxOnly)("writes the autostart entry", () => {
     expect(readFileSync(entry(), "utf8")).toBe(
-      "[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=portfolio\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n",
+      "[Desktop Entry]\nType=Application\nName=Portfolio\nComment=Personal Investment Tracker\nExec=env PORTFOLIO_AUTOSTART=1 portfolio\nIcon=portfolio\nTerminal=false\nCategories=Finance;Office;\nX-GNOME-Autostart-enabled=true\n",
     );
   });
 

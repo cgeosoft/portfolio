@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it } from "bun:test";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { WEBPAGE_URL } from "../../../shared/src/brand";
-import { APP, simulatedVersion, startQuery, userDataDir } from "./app";
+import { APP, AUTOSTART_ENV, launchedAtLogin, simulatedVersion, startQuery, userDataDir } from "./app";
 
-const ENV_KEYS = ["PORTFOLIO_ONBOARDING", "PORTFOLIO_SIMULATE_VERSION"] as const;
+const ENV_KEYS = ["PORTFOLIO_ONBOARDING", "PORTFOLIO_SIMULATE_VERSION", "PORTFOLIO_AUTOSTART"] as const;
 const saved: Record<string, string | undefined> = {};
 for (const key of ENV_KEYS) saved[key] = process.env[key];
 
@@ -31,6 +31,18 @@ describe("startQuery", () => {
     expect(startQuery()).toBe("");
     setEnv("PORTFOLIO_ONBOARDING", "0");
     expect(startQuery()).toBe("");
+  });
+});
+
+describe("launchedAtLogin", () => {
+  it("is true only when the autostart entry set the variable to 1", () => {
+    expect(AUTOSTART_ENV).toBe("PORTFOLIO_AUTOSTART");
+    setEnv("PORTFOLIO_AUTOSTART", undefined);
+    expect(launchedAtLogin()).toBe(false);
+    setEnv("PORTFOLIO_AUTOSTART", "1");
+    expect(launchedAtLogin()).toBe(true);
+    setEnv("PORTFOLIO_AUTOSTART", "true");
+    expect(launchedAtLogin()).toBe(false);
   });
 });
 
