@@ -1968,12 +1968,54 @@ service:
       note: "The assistant was not available, so this brief shows the numbers only."
   weeklyAnalysis:
     notificationTitle: "{portfolio}: weekly analysis"
-    openReports: "Open Portfolio, Reports for the full analysis."
+    openReports: "Open Portfolio, Analysis for the full report."
+    guidedHeading: "Guided Analysis of the week"
+    openAnalysis: "Open Portfolio, Analysis for the findings, the graph and the reasons behind each suggestion."
     fallback:
       heading: "Weekly analysis {period}"
       weekReturn: "Return of the week: {change}"
       topGainer: "Top gainer: {symbol} {change}"
       topDecliner: "Top decliner: {symbol} {change}"
+  analysis:
+    noFindingsSummary: "The analysis found nothing that calls for a change against the brief."
+    live:
+      seed: "Building the centre of the graph: brief, allocation and holdings"
+      survey: "Opening the questions to check"
+      expand: "Gathering evidence"
+      synthesise: "Linking the findings into themes"
+      suggest: "Deciding on suggestions"
+      report: "Writing the short report"
+      done: "Done"
+      tool: "Running {tool}"
+    notes:
+      seedMissing: "Some starting data was not available: {parts}."
+      defaultQuestions: "The model did not open questions, so the standard questions were used."
+      timeBudget: "The time limit of the run was reached; the later phases used what was found."
+      modelFailures: "The model failed twice in a row, so the evidence gathering stopped early."
+      stepBudget: "The step limit was reached before every question was answered."
+      toolBudget: "The data request limit of the run was reached."
+      findingsDropped:
+        one: "{count} finding was dropped: it cited no evidence or used numbers the evidence does not have."
+        other: "{count} findings were dropped: they cited no evidence or used numbers the evidence does not have."
+      themesDropped:
+        one: "{count} theme was dropped: it needs two cited facts and numbers from them."
+        other: "{count} themes were dropped: they need two cited facts and numbers from them."
+      suggestionsWithoutFinding:
+        one: "{count} suggestion was dropped: it acted on no finding of this run."
+        other: "{count} suggestions were dropped: they acted on no finding of this run."
+      suggestFailed: "The model did not answer the suggestion step, so the suggestions stay as they were."
+      reportTrimmed: "Sentences with numbers the evidence does not have were left out of the report."
+    report:
+      title: "{portfolio} - Guided Analysis ({date})"
+      nodeTitle: "Short report"
+      whereYouStand: "Where you stand"
+      whatMatters: "What matters now"
+      whatChanged: "What changed since the last run"
+      actions: "Suggested actions"
+      firstRun: "This is the first analysis, so there is nothing to compare yet."
+      changedFallback: "New findings: {added}. Resolved findings: {resolved}. Holdings that moved by 1 point or more: {moved}."
+      nothingMatters: "No finding needs attention now."
+      noActions: "No change is suggested."
   eventAlerts:
     notificationTitle: "Portfolio: upcoming events"
     heading: "Events of your holdings up to {date}"

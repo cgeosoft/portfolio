@@ -74,6 +74,8 @@ import type {
   BriefWizardDraftRequest,
   ScanAmountsRequest,
   ScanAmountsResponse,
+  AiCapabilityResponse,
+  StartAnalysisRunRequest,
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
@@ -148,7 +150,7 @@ function isHttps(req: Request): boolean {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis, briefService } = services;
+  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis, briefService, analysis } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -513,6 +515,26 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     if (status !== "active" && status !== "done" && status !== "dismissed") throw new HttpError(400, "status must be active, done or dismissed");
     return suggestionService.updateStatus(ctx.params.id!, ctx.params.suggestionId!, status, currencyParam(body.baseCurrency));
   });
+
+  // ── guided analysis ─────────────────────────────────────────────────────
+
+  /** Whether the AI features can run: an AI setup that answered, and tool calling for Guided Analysis. */
+  router.get("/api/ai/capability", (ctx): Promise<AiCapabilityResponse> => analysis.capability(ctx.url.searchParams.get("probe") === "1"));
+
+  router.get("/api/portfolios/:id/analysis/runs", (ctx) => analysis.list(ctx.params.id!));
+
+  router.post("/api/portfolios/:id/analysis/runs", async (ctx) => {
+    const body = await ctx.body<Partial<StartAnalysisRunRequest>>();
+    return { run: await analysis.start(ctx.params.id!, { baseCurrency: currencyParam(body.baseCurrency), trigger: "manual" }) };
+  });
+
+  router.delete("/api/portfolios/:id/analysis/runs/:runId", (ctx) => ({ success: analysis.delete(ctx.params.id!, ctx.params.runId!) }));
+
+  router.get("/api/analysis/runs/:runId", (ctx) => analysis.get(ctx.params.runId!));
+
+  router.post("/api/analysis/runs/:runId/cancel", (ctx) => ({ success: analysis.cancel(ctx.params.runId!) }));
+
+  router.get("/api/analysis/runs/:runId/compare", (ctx) => analysis.compare(ctx.params.runId!));
 
   // ── assistant ───────────────────────────────────────────────────────────
 

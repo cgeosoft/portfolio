@@ -1374,8 +1374,11 @@ export interface AnalysisNode {
   runId: string;
   kind: AnalysisNodeKind;
   title: string;
+  /** Percent-only facts, checked by the privacy gate; the only part a prompt sees. */
   facts: Record<string, unknown>;
+  /** Amounts and quantities for the GUI only; follows the hide-values switch. Never sent to a model. */
   local?: Record<string, unknown>;
+  /** At most 300 characters: the text the model sees. */
   summary: string;
   source?: AnalysisNodeSource;
   createdBy: string;
@@ -1399,26 +1402,46 @@ export interface AnalysisStep {
   id: string;
   runId: string;
   stepIndex: number;
-  phase: string;
+  phase: AnalysisPhase;
+  /** One line on what the step asked, for the side log. */
   requestSummary?: string;
+  /** Tool calls and model outputs of the step, prompt-safe. */
   actions?: unknown;
+  /** Short results: node ids made, errors. */
   results?: unknown;
+  /** The model's own short note of the step, cleaned. */
+  note?: string;
   durationMs: number;
   createdAt: string;
 }
 
+export type AnalysisPhase = "seed" | "survey" | "expand" | "synthesise" | "suggest" | "report" | "done";
+
+export const ANALYSIS_PHASES: readonly AnalysisPhase[] = ["seed", "survey", "expand", "synthesise", "suggest", "report"];
+
 export type AnalysisRunStatus = "running" | "completed" | "failed" | "cancelled";
+
+/** How the harness talks to the model: real tools, the JSON action protocol, or not at all. */
+export type AnalysisToolMode = "native" | "json" | "none";
 
 export interface AnalysisRun {
   id: string;
   portfolioId: string;
   status: AnalysisRunStatus;
-  phase: string;
+  phase: AnalysisPhase;
   briefSnapshot: import("./portfolio").PortfolioBrief;
   provider?: string;
   model?: string;
+  toolMode?: AnalysisToolMode;
+  /** "manual" or "schedule". */
+  trigger?: string;
   stepCount: number;
   toolCount: number;
+  nodeCount: number;
+  /** Two or three sentences: where the portfolio stands against its brief. */
+  summary?: string;
+  /** Notes for the user: budgets reached, dropped suggestions, failed tools. */
+  notes: string[];
   startedAt: string;
   endedAt?: string;
   error?: string;
@@ -1426,23 +1449,54 @@ export interface AnalysisRun {
   updatedAt: string;
 }
 
+/** A run as the list shows it, with flags computed on read. */
+export interface AnalysisRunListItem extends AnalysisRun {
+  /** The brief was saved after this run started. */
+  briefChanged: boolean;
+  /** Transactions changed after this run started. */
+  stale: boolean;
+  findingsCount: number;
+  suggestionsCount: number;
+}
+
 export interface StartAnalysisRunRequest {
   portfolioId: string;
-  provider?: string;
-  model?: string;
+  baseCurrency?: string;
 }
 
 export interface GetAnalysisRunResponse {
-  run: AnalysisRun;
+  run: AnalysisRunListItem;
   nodes: AnalysisNode[];
   edges: AnalysisEdge[];
   steps: AnalysisStep[];
   report?: import("./portfolio").PortfolioReport | null;
   suggestions?: import("./suggestions").PortfolioSuggestion[];
+  /** While running: what the harness does right now. */
+  live?: { phase: AnalysisPhase; message: string; since: string };
 }
 
 export interface ListAnalysisRunsResponse {
-  runs: AnalysisRun[];
+  portfolioId: string;
+  runs: AnalysisRunListItem[];
+  /** The run in progress for this portfolio, if any. */
+  activeRunId?: string;
+}
+
+/** Whether the AI features can run with the current setup. */
+export interface AiCapabilityResponse {
+  /** An AI provider is chosen in Settings. */
+  configured: boolean;
+  /** The current setup answered a request (the Settings test or any feature). Gates the brief wizard. */
+  aiReady: boolean;
+  provider: string;
+  providerName: string;
+  model: string;
+  /** How Guided Analysis would talk to the model; "none" blocks a run. Undefined until probed. */
+  toolMode?: AnalysisToolMode;
+  /** True when the tool mode is forced in Settings, not probed. */
+  toolModeForced?: boolean;
+  /** Why a run cannot start, for the note under the Run button. */
+  reason?: "not_configured" | "not_verified" | "no_tool_calling" | "turned_off";
 }
 
 export interface WeightDriftComparison {
@@ -1454,8 +1508,11 @@ export interface WeightDriftComparison {
 
 export interface CompareAnalysisRunsResponse {
   currentRunId: string;
-  previousRunId: string;
+  /** Undefined when there is no earlier finished run to compare with. */
+  previousRunId?: string;
   newFindings: AnalysisNode[];
   resolvedFindings: AnalysisNode[];
+  /** Findings of both runs, matched by title and holdings. */
+  keptFindings: AnalysisNode[];
   changedWeights: WeightDriftComparison[];
 }

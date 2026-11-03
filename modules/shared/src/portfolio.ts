@@ -157,6 +157,8 @@ export interface PortfolioReport {
   content: string;
   /** The exact prompt; null in the reports list, which leaves it out (`GET /api/portfolios/:id/reports/:reportId/prompt`). */
   prompt?: string | null;
+  /** The Guided Analysis run of a short report; absent for the long report. */
+  runId?: string | null;
   metrics: {
     totalPortfolioValue: number;
     periodGainLossDollar?: number;

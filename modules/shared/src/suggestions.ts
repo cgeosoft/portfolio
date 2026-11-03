@@ -54,9 +54,23 @@ export interface PortfolioSuggestion {
   statusReason?: string;
   /** Weight of the symbol when the user dismissed the suggestion. */
   dismissedAtWeight?: number;
+  /** The Guided Analysis run that made or last repeated it; absent for the old generator. */
+  runId?: string;
+  /** Why, as graph node ids of that run. */
+  evidence?: SuggestionEvidence;
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
+}
+
+/** The reasoning path of a suggestion: brief field, findings, evidence nodes. */
+export interface SuggestionEvidence {
+  /** Finding node ids the suggestion acts on; at least one. */
+  findings: string[];
+  /** Fact node ids that support it. */
+  nodes: string[];
+  /** The brief field it serves. */
+  goal?: string;
 }
 
 /** Live price of a suggestion symbol that the portfolio does not hold. */

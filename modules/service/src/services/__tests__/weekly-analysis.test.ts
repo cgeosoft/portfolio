@@ -160,7 +160,7 @@ describe("WeeklyAnalysisService.run", () => {
 
   it("writes the report and pushes a summary", async () => {
     const res = await newService().run("manual");
-    expect(res).toMatchObject({ success: true, portfolios: 1, delivered: 1, message: "Wrote 1 weekly report(s) and delivered 1 summary(ies) through Gotify." });
+    expect(res).toMatchObject({ success: true, portfolios: 1, delivered: 1, message: "Wrote 1 weekly analysis(es) and delivered 1 summary(ies) through Gotify." });
     expect(calls[0]!.opts.weekKey).toBe("2026-w44");
     expect(calls[0]!.opts.portfolioData).toBeDefined();
     expect(calls[0]!.portfolio).toEqual({ id: row.id, name: "Growth", description: row.description, baseCurrency: "EUR" });
@@ -206,7 +206,7 @@ describe("WeeklyAnalysisService.run", () => {
       expect(res).toMatchObject({
         success: true,
         delivered: 0,
-        message: "Wrote 1 weekly report(s) to Reports. Set up a phone app under Settings, Notifications to receive a summary as a push notification.",
+        message: "Wrote 1 weekly analysis(es) to the Analysis tab. Set up a phone app under Settings, Notifications to receive a summary as a push notification.",
       });
     } finally {
       updateConfig({ gotifyUrl: "https://gotify.example.com" });

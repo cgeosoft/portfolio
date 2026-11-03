@@ -16,6 +16,7 @@ import type { FinancialPortfolioData, PortfolioBrief, PortfolioHolding } from "p
 import type { GetSuggestionsResponse, SuggestionGeneration } from "portfolio-shared/api-types";
 import {
   SUGGESTION_ACTIONS,
+  type SuggestionEvidence,
   SUGGESTION_DEFAULT_TTL_DAYS,
   SUGGESTION_DISMISS_RESET_PP,
   SUGGESTION_MAX_TTL_DAYS,
@@ -47,13 +48,13 @@ import { briefPromptSection, readBrief } from "./portfolio-brief.js";
 export { extractJsonObject } from "./json-reply.js";
 
 /** Most suggestions kept from one answer. */
-const MAX_SUGGESTIONS = 8;
+export const MAX_SUGGESTIONS = 8;
 /** Largest gap between the weight the model echoes and the real weight, in percentage points. */
 const WEIGHT_ECHO_TOLERANCE_PP = 2;
 /** Smallest weight change worth a suggestion, in percentage points. Smaller trades are noise next to fees and spreads. */
-const MIN_CHANGE_PP = 1;
+export const MIN_CHANGE_PP = 1;
 /** Cash weight from which the prompt invites new positions. */
-const NEW_POSITION_CASH_PERCENT = 10;
+export const NEW_POSITION_CASH_PERCENT = 10;
 
 export type SuggestionIntelLoader = (req: ReportIntelRequest) => Promise<ReportIntel>;
 
@@ -86,7 +87,7 @@ const text = (v: unknown, max: number): string => {
   return clean.length > max ? `${clean.slice(0, max - 3).trimEnd()}...` : clean;
 };
 
-function heldHoldings(data: FinancialPortfolioData): PortfolioHolding[] {
+export function heldHoldings(data: FinancialPortfolioData): PortfolioHolding[] {
   return (data.holdings ?? []).filter((h) => h.assetType !== "Cash" && h.shares > 0);
 }
 
@@ -351,7 +352,7 @@ export function isStillDismissed(dismissed: Pick<PortfolioSuggestion, "dismissed
 const pct = (n: number) => `${n.toFixed(2)}%`;
 const signedPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 
-function describeHolding(h: PortfolioHolding): string {
+export function describeHolding(h: PortfolioHolding): string {
   const parts = [`weight ${pct(h.weightPercent)}`];
   if (h.isPrivate) parts.push("private asset, cannot be traded");
   // Only a live market price is public. Without a quote the price is the user's buy price or manual price.
@@ -513,21 +514,27 @@ export class PortfolioSuggestionService {
     return job;
   }
 
+  /** Keys of the open suggestions and of the dismissals that still hold, for a prompt. */
+  public promptKeys(portfolioId: string, data: FinancialPortfolioData): { openKeys: string[]; dismissedKeys: string[] } {
+    const existing = suggestionRepo.findByPortfolio(portfolioId);
+    const holdings = heldHoldings(data);
+    return {
+      openKeys: existing.filter((s) => s.status === "active").map((s) => s.key),
+      dismissedKeys: [
+        ...new Set(
+          existing
+            .filter((s) => s.status === "dismissed" && isStillDismissed(s, marketForSymbol(s.symbol, holdings, []).weight))
+            .map((s) => s.key),
+        ),
+      ],
+    };
+  }
+
   public async generate(portfolioId: string, baseCurrency: string): Promise<void> {
     const now = new Date();
     const fingerprint = suggestionRepo.transactionFingerprint(portfolioId);
     const data = await this.portfolioService.getPortfolioData(portfolioId, baseCurrency);
-    const holdings = heldHoldings(data);
-    const existing = suggestionRepo.findByPortfolio(portfolioId);
-
-    const openKeys = existing.filter((s) => s.status === "active").map((s) => s.key);
-    const dismissedKeys = [
-      ...new Set(
-        existing
-          .filter((s) => s.status === "dismissed" && isStillDismissed(s, marketForSymbol(s.symbol, holdings, []).weight))
-          .map((s) => s.key),
-      ),
-    ];
+    const { openKeys, dismissedKeys } = this.promptKeys(portfolioId, data);
 
     let intelText = "";
     try {
@@ -558,7 +565,33 @@ export class PortfolioSuggestionService {
       );
       raw = extractJsonObject(retry);
     }
+    await this.applyAnswer(portfolioId, baseCurrency, data, raw, { now, fingerprint, provider: target.provider, model: target.model || null });
+  }
 
+  /**
+   * Checks a model answer against the portfolio, merges it with the stored
+   * list and saves it. Used by the generator above and by Guided Analysis,
+   * which passes its run id and the evidence of each symbol.
+   */
+  public async applyAnswer(
+    portfolioId: string,
+    baseCurrency: string,
+    data: FinancialPortfolioData,
+    raw: Record<string, unknown>,
+    options: {
+      now: Date;
+      fingerprint: string;
+      provider: string;
+      model: string | null;
+      runId?: string;
+      /** Evidence by upper-case symbol. */
+      evidence?: ReadonlyMap<string, SuggestionEvidence>;
+      extraNotes?: string[];
+    },
+  ): Promise<{ summary: string; kept: PortfolioSuggestion[]; notes: string[] }> {
+    const { now } = options;
+    const holdings = heldHoldings(data);
+    const existing = suggestionRepo.findByPortfolio(portfolioId);
     const newSymbols = Array.isArray(raw.suggestions)
       ? raw.suggestions
           .map((s) => (s && typeof s === "object" ? (s as Record<string, unknown>).symbol : undefined))
@@ -572,18 +605,27 @@ export class PortfolioSuggestionService {
     const allQuotes = [...quotes, ...(await this.quotesFor(oldSymbols, baseCurrency))];
     const merged = mergeSuggestions(portfolioId, existing, parsed.proposals, (symbol) => marketForSymbol(symbol, holdings, allQuotes), totalValueOf(data), now);
 
-    const notes = [...parsed.notes];
+    // Rows this answer made or repeated carry the run and their evidence.
+    const proposedKeys = new Set(parsed.proposals.map((p) => p.key));
+    const rows = merged.suggestions.map((s) =>
+      options.runId && proposedKeys.has(s.key) && s.status === "active"
+        ? { ...s, runId: options.runId, evidence: options.evidence?.get(s.symbol.toUpperCase()) ?? s.evidence }
+        : s,
+    );
+
+    const notes = [...(options.extraNotes ?? []), ...parsed.notes];
     if (merged.skippedDismissed > 0) notes.push(t("service.suggestions.dismissedLeftOut", { count: merged.skippedDismissed }));
-    suggestionRepo.saveGeneration(merged.suggestions, {
+    suggestionRepo.saveGeneration(rows, {
       portfolioId,
       generatedAt: now.toISOString(),
-      txFingerprint: fingerprint,
+      txFingerprint: options.fingerprint,
       summary: parsed.summary || null,
       notes,
-      provider: target.provider,
-      model: target.model || null,
+      provider: options.provider,
+      model: options.model,
     });
-    appLogger.logStep("info", "suggestions", "generate", "Suggestions generated", undefined, { kept: parsed.proposals.length, notes: notes.length });
+    appLogger.logStep("info", "suggestions", "generate", "Suggestions generated", undefined, { kept: parsed.proposals.length, notes: notes.length, guided: Boolean(options.runId) });
+    return { summary: parsed.summary, kept: rows.filter((s) => s.status === "active" && proposedKeys.has(s.key)), notes };
   }
 
   /** Dismiss, mark done, or reopen one suggestion. A dismissal remembers the current weight of the symbol. */

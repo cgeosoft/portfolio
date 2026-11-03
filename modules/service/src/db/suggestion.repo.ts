@@ -1,11 +1,13 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { PortfolioSuggestion, SuggestionFunding, SuggestionStoredStatus, SuggestionValidity } from "portfolio-shared/suggestions";
+import type { PortfolioSuggestion, SuggestionEvidence, SuggestionFunding, SuggestionStoredStatus, SuggestionValidity } from "portfolio-shared/suggestions";
 import { getDatabase } from "./database.js";
 
 /** Rows the history keeps per portfolio, besides the active ones. */
 const HISTORY_LIMIT = 200;
 
-interface SuggestionRow extends Omit<PortfolioSuggestion, "validity" | "fundedBy" | "statusReason" | "dismissedAtWeight" | "resolvedAt"> {
+interface SuggestionRow extends Omit<PortfolioSuggestion, "validity" | "fundedBy" | "statusReason" | "dismissedAtWeight" | "resolvedAt" | "runId" | "evidence"> {
+  runId: string | null;
+  evidenceJson: string | null;
   validity: string;
   fundedBy: string;
   statusReason: string | null;
@@ -24,9 +26,21 @@ export interface SuggestionRunRow {
   model: string | null;
 }
 
+function parseEvidence(json: string | null): SuggestionEvidence | undefined {
+  if (!json) return undefined;
+  try {
+    return JSON.parse(json) as SuggestionEvidence;
+  } catch {
+    return undefined;
+  }
+}
+
 function toSuggestion(row: SuggestionRow): PortfolioSuggestion {
+  const { evidenceJson, runId, ...rest } = row;
   return {
-    ...row,
+    ...rest,
+    runId: runId ?? undefined,
+    evidence: parseEvidence(evidenceJson),
     validity: JSON.parse(row.validity) as SuggestionValidity,
     fundedBy: JSON.parse(row.fundedBy) as SuggestionFunding[],
     statusReason: row.statusReason ?? undefined,
@@ -53,12 +67,13 @@ export function findById(portfolioId: string, id: string): PortfolioSuggestion |
 
 export function upsert(s: PortfolioSuggestion): void {
   getDatabase().run(
-    `INSERT INTO suggestions (id, portfolioId, key, action, symbol, name, fromWeight, targetWeight, title, why, priority, validity, fundedBy, status, statusReason, dismissedAtWeight, createdAt, updatedAt, resolvedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO suggestions (id, portfolioId, key, action, symbol, name, fromWeight, targetWeight, title, why, priority, validity, fundedBy, status, statusReason, dismissedAtWeight, createdAt, updatedAt, resolvedAt, runId, evidenceJson)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name, fromWeight = excluded.fromWeight, targetWeight = excluded.targetWeight, title = excluded.title, why = excluded.why,
        priority = excluded.priority, validity = excluded.validity, fundedBy = excluded.fundedBy, status = excluded.status,
-       statusReason = excluded.statusReason, dismissedAtWeight = excluded.dismissedAtWeight, updatedAt = excluded.updatedAt, resolvedAt = excluded.resolvedAt`,
+       statusReason = excluded.statusReason, dismissedAtWeight = excluded.dismissedAtWeight, updatedAt = excluded.updatedAt, resolvedAt = excluded.resolvedAt,
+       runId = excluded.runId, evidenceJson = excluded.evidenceJson`,
     [
       s.id,
       s.portfolioId,
@@ -79,6 +94,8 @@ export function upsert(s: PortfolioSuggestion): void {
       s.createdAt,
       s.updatedAt,
       s.resolvedAt ?? null,
+      s.runId ?? null,
+      s.evidence ? JSON.stringify(s.evidence) : null,
     ],
   );
 }

@@ -22,7 +22,12 @@ declare const promptSafe: unique symbol;
 /** Prompt content that passed `toPromptSafe()`. `LlmMessage` accepts nothing else. */
 export type PromptSafe = string & { readonly [promptSafe]: true };
 
-/** Numbers that are not portfolio money: counts, an index from 0 to 100, day spans and public instrument data. */
+/**
+ * Numbers that are not portfolio money: counts, an index from 0 to 100, day
+ * spans, public instrument data, and the unitless ratios and scales of the
+ * Guided Analysis graph (beta, correlation, effective number of holdings,
+ * the 1 to 5 risk score of the brief, the 1 to 3 severity of a finding).
+ */
 export const ALLOWED_NUMBER_KEYS: ReadonlySet<string> = new Set([
   "rsi",
   "holdingsCount",
@@ -31,6 +36,12 @@ export const ALLOWED_NUMBER_KEYS: ReadonlySet<string> = new Set([
   "publicPrice",
   "peRatio",
   "dividendPerShare",
+  "beta",
+  "correlation",
+  "effectiveHoldings",
+  "score",
+  "severity",
+  "count",
 ]);
 
 const isAllowedNumberKey = (key: string) => /^percent$|Percent$/.test(key) || ALLOWED_NUMBER_KEYS.has(key);
