@@ -13,14 +13,22 @@ import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
 import { HoldingsTableCard } from "./components/portfolio/HoldingsTableCard";
 import {
-  AnalysisPage,
-  resolveAnalysisSection,
-  saveAnalysisSection,
-  savedAnalysisSection,
-  type AnalysisSectionId,
-} from "./components/portfolio/AnalysisPage";
+  InsightsPage,
+  resolveInsightsSection,
+  saveInsightsSection,
+  savedInsightsSection,
+  type InsightsSectionId,
+} from "./components/portfolio/InsightsPage";
+import {
+  AnalysisTab,
+  GUIDED_FILL_SECTIONS,
+  resolveGuidedSection,
+  saveGuidedSection,
+  savedGuidedSection,
+  type GuidedSectionId,
+} from "./components/analysis/AnalysisTab";
+import { SuggestedActionsCard } from "./components/analysis/SuggestedActionsCard";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
-import { ReportsCard } from "./components/portfolio/ReportsCard";
 import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SETUP_STEP_AFTER_TERMS, type SetupStep } from "./components/common/setup-steps";
 import { UpdatePopover } from "./components/common/UpdatePopover";
@@ -111,7 +119,11 @@ function useOpenedOnce(open: boolean): boolean {
  */
 type LoadMode = "initial" | "reload" | "refresh";
 
-const VALID_TABS: readonly string[] = ["overview", "analysis", "reports", "transactions"];
+const VALID_TABS: readonly string[] = ["overview", "insights", "analysis", "transactions"];
+/** localStorage key of the open tab. */
+const TAB_STORAGE_KEY = "portfolio_tab";
+/** The key of releases before Insights and Analysis: "analysis" was the data pages, "reports" the reports. */
+const OLD_TAB_STORAGE_KEY = "portfolio_active_tab";
 const INFO_MODAL_KEYS: readonly string[] = [
   "totalGain",
   "valuation",
@@ -123,24 +135,55 @@ const INFO_MODAL_KEYS: readonly string[] = [
   "topPerformer",
 ];
 
-function getTabFromHash(hash: string): PortfolioTabKey {
-  // `#analysis/<section>` opens a page of the Analysis tab.
-  const cleanHash = hash.replace(/^#/, "").toLowerCase().trim().split("/")[0]!;
-  if (cleanHash === "charts" || cleanHash === "holdings") return "overview";
-  if (cleanHash === "logs") return "transactions";
-  // Suggestions was a tab of its own before it moved under Analysis.
-  if (cleanHash === "suggestions") return "analysis";
-  if (VALID_TABS.includes(cleanHash)) {
-    return cleanHash as PortfolioTabKey;
-  }
-  return "overview";
+/** The tab and page a hash names, with the links of earlier releases mapped to where they moved. */
+interface HashRoute {
+  tab: PortfolioTabKey;
+  insights?: InsightsSectionId;
+  guided?: GuidedSectionId;
+  /** The current form of an old link, written back to the address bar. */
+  redirect?: string;
 }
 
-/** The Analysis page a hash names: `#analysis/<section>`, or `#suggestions` from before it moved there. */
-function analysisSectionFromHash(hash: string): AnalysisSectionId | null {
-  const [tab, section] = hash.replace(/^#/, "").toLowerCase().trim().split("/");
-  if (tab === "suggestions") return "suggestions";
-  return tab === "analysis" ? resolveAnalysisSection(section) : null;
+function routeFromHash(hash: string): HashRoute {
+  const [head = "", sub] = hash.replace(/^#/, "").toLowerCase().trim().split("/");
+  if (head === "charts" || head === "holdings") return { tab: "overview", redirect: "#overview" };
+  if (head === "logs") return { tab: "transactions", redirect: "#transactions" };
+  if (head === "insights") return { tab: "insights", insights: resolveInsightsSection(sub) ?? undefined };
+  // Suggestions was a tab, then a page of the old Analysis tab; it lives in the new Analysis tab now.
+  if (head === "suggestions") return { tab: "analysis", guided: "suggestions", redirect: "#analysis/suggestions" };
+  // The Reports tab became the Reports page of Analysis.
+  if (head === "reports") return { tab: "analysis", guided: "reports", redirect: "#analysis/reports" };
+  if (head === "analysis") {
+    // `#analysis/<exposure|income|markets>` named the data pages, which are Insights now.
+    const insights = resolveInsightsSection(sub);
+    if (insights) return { tab: "insights", insights, redirect: `#insights/${insights}` };
+    return { tab: "analysis", guided: resolveGuidedSection(sub) ?? undefined };
+  }
+  if (VALID_TABS.includes(head)) return { tab: head as PortfolioTabKey };
+  return { tab: "overview" };
+}
+
+/** The tab open at the last close, mapping the key of earlier releases. */
+function savedTab(): PortfolioTabKey | null {
+  if (typeof localStorage === "undefined") return null;
+  const saved = localStorage.getItem(TAB_STORAGE_KEY);
+  if (saved && VALID_TABS.includes(saved)) return saved as PortfolioTabKey;
+  const old = localStorage.getItem(OLD_TAB_STORAGE_KEY);
+  if (old === "analysis") return "insights";
+  if (old === "reports") return "analysis";
+  if (old && VALID_TABS.includes(old)) return old as PortfolioTabKey;
+  return null;
+}
+
+function saveTab(tab: PortfolioTabKey): void {
+  if (typeof localStorage !== "undefined") localStorage.setItem(TAB_STORAGE_KEY, tab);
+}
+
+/** Writes the current form of an old link to the address bar. */
+function applyRedirect(route: HashRoute): void {
+  if (route.redirect && typeof window !== "undefined" && window.location.hash.toLowerCase() !== route.redirect) {
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${route.redirect}`);
+  }
 }
 
 export default function App() {
@@ -171,25 +214,35 @@ export default function App() {
     return DEFAULT_SETTINGS_SECTION;
   });
 
+  const initialRoute = useMemo(() => (typeof window !== "undefined" && window.location.hash ? routeFromHash(window.location.hash) : null), []);
+
   const [activeTab, setActiveTab] = useState<PortfolioTabKey>(() => {
-    if (typeof window !== "undefined" && window.location.hash) {
-      return getTabFromHash(window.location.hash);
+    if (initialRoute) {
+      applyRedirect(initialRoute);
+      return initialRoute.tab;
     }
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("portfolio_active_tab");
-      if (saved) return getTabFromHash(saved);
-    }
-    return "overview";
+    return savedTab() ?? "overview";
   });
 
-  const [analysisSection, setAnalysisSection] = useState<AnalysisSectionId>(
-    () => (typeof window !== "undefined" && analysisSectionFromHash(window.location.hash)) || savedAnalysisSection(),
-  );
+  const [insightsSection, setInsightsSection] = useState<InsightsSectionId>(() => initialRoute?.insights || savedInsightsSection());
+  const [guidedSection, setGuidedSection] = useState<GuidedSectionId>(() => initialRoute?.guided || savedGuidedSection());
 
-  // Moving between Analysis pages replaces the URL so a reload reopens the same page.
-  const handleAnalysisSectionChange = useCallback((section: AnalysisSectionId) => {
-    setAnalysisSection(section);
-    saveAnalysisSection(section);
+  // Moving between Insights pages replaces the URL so a reload reopens the same page.
+  const handleInsightsSectionChange = useCallback((section: InsightsSectionId) => {
+    setInsightsSection(section);
+    saveInsightsSection(section);
+    if (typeof window !== "undefined") {
+      const newHash = `#insights/${section}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${newHash}`);
+      }
+    }
+  }, []);
+
+  // The same for the pages of the Analysis tab.
+  const handleGuidedSectionChange = useCallback((section: GuidedSectionId) => {
+    setGuidedSection(section);
+    saveGuidedSection(section);
     if (typeof window !== "undefined") {
       const newHash = `#analysis/${section}`;
       if (window.location.hash !== newHash) {
@@ -201,9 +254,7 @@ export default function App() {
   const handleTabChange = useCallback((tab: PortfolioTabKey) => {
     setView("dashboard");
     setActiveTab(tab);
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("portfolio_active_tab", tab);
-    }
+    saveTab(tab);
     if (typeof window !== "undefined") {
       const newHash = `#${tab}`;
       if (window.location.hash !== newHash) {
@@ -261,9 +312,7 @@ export default function App() {
     setView("dashboard");
     const targetTab = tab || activeTab;
     setActiveTab(targetTab);
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("portfolio_active_tab", targetTab);
-    }
+    saveTab(targetTab);
     if (typeof window !== "undefined") {
       const newHash = `#${targetTab}`;
       if (window.location.hash !== newHash) {
@@ -303,11 +352,11 @@ export default function App() {
         setView("sponsorship");
       } else {
         setView("dashboard");
-        const saved = typeof localStorage !== "undefined" ? localStorage.getItem("portfolio_active_tab") : null;
-        const tab = window.location.hash ? getTabFromHash(window.location.hash) : saved ? getTabFromHash(saved) : "overview";
-        setActiveTab(tab);
-        const section = analysisSectionFromHash(window.location.hash);
-        if (section) setAnalysisSection(section);
+        const route = window.location.hash ? routeFromHash(window.location.hash) : null;
+        if (route) applyRedirect(route);
+        setActiveTab(route?.tab ?? savedTab() ?? "overview");
+        if (route?.insights) setInsightsSection(route.insights);
+        if (route?.guided) setGuidedSection(route.guided);
       }
     };
     window.addEventListener("hashchange", handleRouting);
@@ -2045,7 +2094,7 @@ export default function App() {
       {view === "dashboard" && (
         <main
           className={`flex-1 w-full max-w-(--breakpoint-2xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 space-y-6 min-w-0 ${
-            activeTab === "transactions" || activeTab === "reports" || (activeTab === "analysis" && analysisSection === "suggestions")
+            activeTab === "transactions" || (activeTab === "analysis" && GUIDED_FILL_SECTIONS.has(guidedSection))
               ? "flex flex-col h-full min-h-0 pb-2 sm:pb-3 overflow-hidden"
               : "pb-6 sm:pb-8 overflow-y-auto min-h-0 custom-scrollbar"
           }`}
@@ -2062,6 +2111,21 @@ export default function App() {
                 hideValues={hideCurrencyValues}
                 onInfo={handleMetricInfo}
                 onOpenMetrics={() => handleOpenSettings("metrics")}
+              />
+
+              {/* Suggested actions from Guided Analysis */}
+              <SuggestedActionsCard
+                portfolioId={activePortfolioId}
+                portfolioName={activePortfolio?.name}
+                portfolioData={portfolioData}
+                currency={currency}
+                suggestions={suggestions}
+                onSuggestionsChange={setSuggestions}
+                onOpenAnalysis={(section) => {
+                  handleGuidedSectionChange(section);
+                  handleTabChange("analysis");
+                }}
+                onOpenSettings={() => handleOpenSettings("assistant")}
               />
 
               {/* Sponsor Banner Box */}
@@ -2118,36 +2182,37 @@ export default function App() {
             </>
           )}
 
-          {/* TAB: ANALYSIS (exposure, income and events, markets, suggestions; one at a time) */}
-          {activeTab === "analysis" && (
-            <AnalysisPage
-              section={analysisSection}
-              onSectionChange={handleAnalysisSectionChange}
+          {/* TAB: INSIGHTS (exposure, income and events, markets; one at a time) */}
+          {activeTab === "insights" && (
+            <InsightsPage
+              section={insightsSection}
+              onSectionChange={handleInsightsSectionChange}
               portfolioId={activePortfolioId}
-              portfolioData={portfolioData}
               currency={currency}
               hideValues={hideCurrencyValues}
               theme={theme}
               dataVersion={summary?.lastUpdated}
-              suggestionsCount={suggestionsCount}
-              onSuggestionsChange={setSuggestions}
             />
           )}
 
-          {/* TAB: REPORTS */}
-          {activeTab === "reports" && (
-            <div className="flex-1 flex flex-col min-h-0">
-              <ReportsCard
-                reports={reports}
-                portfolioData={portfolioData}
-                currency={currency}
-                portfolioId={activePortfolioId || undefined}
-                portfolioName={activePortfolio?.name}
-                onRefreshReports={loadReports}
-                onDeleteReport={handleDeleteReport}
-                hideValues={hideCurrencyValues}
-              />
-            </div>
+          {/* TAB: ANALYSIS (Guided Analysis, suggestions, graph, history, reports) */}
+          {activeTab === "analysis" && (
+            <AnalysisTab
+              section={guidedSection}
+              onSectionChange={handleGuidedSectionChange}
+              portfolioId={activePortfolioId}
+              portfolioName={activePortfolio?.name}
+              portfolioData={portfolioData}
+              currency={currency}
+              hideValues={hideCurrencyValues}
+              theme={theme}
+              reports={reports}
+              onRefreshReports={loadReports}
+              onDeleteReport={handleDeleteReport}
+              suggestionsCount={suggestionsCount}
+              onSuggestionsChange={setSuggestions}
+              onOpenSettings={() => handleOpenSettings("assistant")}
+            />
           )}
 
           {/* TAB: TRANSACTIONS */}
@@ -2276,7 +2341,8 @@ export default function App() {
             hideCurrencyValues={hideCurrencyValues}
             onReportGenerated={async () => {
               await loadReports();
-              handleTabChange("reports");
+              handleGuidedSectionChange("reports");
+              handleTabChange("analysis");
             }}
           />
         </Suspense>

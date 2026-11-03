@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ArrowDownToLine, BarChart3, Download, Power, RefreshCw, Settings2, type LucideIcon } from "lucide-react";
+import { AlertCircle, ArrowDownToLine, BarChart3, Download, Power, RefreshCw, Settings2, type LucideIcon, BrainCircuit } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SettingSection, SettingView } from "portfolio-shared/api-types";
 import type { DesktopConfig } from "portfolio-shared/config-types";
@@ -39,6 +39,7 @@ const SETTING_ICONS: Record<string, LucideIcon> = {
   closeToTray: ArrowDownToLine,
   telemetryEnabled: BarChart3,
   checkForUpdates: Download,
+  llmToolMode: BrainCircuit,
 };
 
 /**

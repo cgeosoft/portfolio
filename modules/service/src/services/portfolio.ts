@@ -36,7 +36,7 @@ import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 import { NotFoundError, ValidationError } from "./errors.js";
-import { rememberPrivateValues } from "./llm-privacy.js";
+import { rememberPrivateValues, scanForAmounts } from "./llm-privacy.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 /** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
@@ -261,6 +261,16 @@ function assertImportRows(rows: unknown[], isNew: (index: number) => boolean): v
   throw new ValidationError(`Import rows are missing required fields: ${named}${more}`);
 }
 
+/**
+ * The description is the prose of the portfolio brief, which reaches the
+ * model; a money amount in it is refused (llm-privacy.ts, scanForAmounts).
+ */
+function assertNoAmountInDescription(description: string | undefined): void {
+  if (typeof description !== "string") return;
+  const found = scanForAmounts(description);
+  if (found.hasAmounts) throw new ValidationError(`The description names an amount (${found.matches.slice(0, 3).join(", ")}). Describe it in percent of the portfolio instead.`);
+}
+
 export class PortfolioService {
   private cache = new Map<string, { data: FinancialPortfolioData; timestamp: number }>();
   private inFlightRequests = new Map<string, Promise<FinancialPortfolioData>>();
@@ -417,6 +427,7 @@ export class PortfolioService {
     if (typeof data.name !== "string" || !data.name.trim()) {
       throw new ValidationError("Portfolio name is required");
     }
+    assertNoAmountInDescription(data.description);
 
     const config = loadConfig();
     return portfolioRepo.create({
@@ -435,6 +446,7 @@ export class PortfolioService {
     if (data.name !== undefined && (typeof data.name !== "string" || !data.name.trim())) {
       throw new ValidationError("Portfolio name cannot be empty");
     }
+    assertNoAmountInDescription(data.description);
 
     const saved = portfolioRepo.update(portfolioId, { ...data, color: portfolioColor(data.color) });
     this.clearPortfolioCache(portfolioId);

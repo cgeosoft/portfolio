@@ -3,13 +3,14 @@ import type { PortfolioItem } from "portfolio-shared/portfolio";
 import {
   BarChart3,
   PieChart,
-  FileText,
+  BrainCircuit,
   History,
   Settings,
 } from "lucide-react";
 import { t } from "../../i18n";
 
-export type PortfolioTabKey = "overview" | "analysis" | "reports" | "transactions";
+/** `insights`: the data pages (exposure, income, markets); `analysis`: Guided Analysis and the reports. */
+export type PortfolioTabKey = "overview" | "insights" | "analysis" | "transactions";
 
 interface HeaderProps {
   currency?: string;
@@ -28,7 +29,7 @@ interface HeaderProps {
   onNavigateDashboard?: (tab?: PortfolioTabKey) => void;
   reportsCount?: number;
   transactionsCount?: number;
-  /** Open suggestions, shown next to the Analysis tab (Suggestions is one of its pages). */
+  /** Open suggestions, shown next to the Overview tab, where the Suggested actions card lists them. */
   suggestionsCount?: number;
   hideCurrencyValues?: boolean;
   onToggleHideCurrency?: () => void;
@@ -42,7 +43,6 @@ export function Header({
   activeView = "dashboard",
   onNavigateDashboard,
   onOpenSettings,
-  reportsCount = 0,
   transactionsCount = 0,
   suggestionsCount = 0,
 }: HeaderProps) {
@@ -54,26 +54,16 @@ export function Header({
     }
   };
 
-  const tabs = [
-    { id: "overview" as PortfolioTabKey, label: t("layout.tabs.overview"), icon: PieChart },
+  const tabs: { id: PortfolioTabKey; label: string; icon: typeof PieChart; badge?: number | null }[] = [
+    { id: "overview", label: t("layout.tabs.overview"), icon: PieChart, badge: suggestionsCount > 0 ? suggestionsCount : null },
+    { id: "insights", label: t("layout.tabs.insights"), icon: BarChart3 },
     {
-      id: "analysis" as PortfolioTabKey,
-      label: t("layout.tabs.analysis"),
-      icon: BarChart3,
-      badge: suggestionsCount > 0 ? suggestionsCount : null,
-    },
-    {
-      id: "transactions" as PortfolioTabKey,
+      id: "transactions",
       label: t("layout.tabs.transactions"),
       icon: History,
       badge: transactionsCount > 0 ? transactionsCount : null,
     },
-    {
-      id: "reports" as PortfolioTabKey,
-      label: t("layout.tabs.reports"),
-      icon: FileText,
-      badge: reportsCount > 0 ? reportsCount : null,
-    },
+    { id: "analysis", label: t("layout.tabs.analysis"), icon: BrainCircuit },
   ];
 
   return (

@@ -6,7 +6,8 @@ import { SECRET_MASK } from "portfolio-shared/config-types";
 import { Select } from "../common/Select";
 import { rpc } from "../../rpc";
 import { openExternal } from "../../environment";
-import { SectionHeader } from "./SettingsFields";
+import { t } from "../../i18n";
+import { SectionHeader, SettingsFields } from "./SettingsFields";
 import { TestLlmModal } from "./TestLlmModal";
 
 type LlmProviderId = "openai-compatible" | CliProviderId;
@@ -513,6 +514,11 @@ export function AssistantSection({ config, saveConfig, onConfigChange }: Assista
           <PlayCircle className="w-3.5 h-3.5 text-[#DD3C73]" />
           <span>Test the assistant</span>
         </button>
+        <p className="text-[10px] text-slate-500">{t("settings.assistantSection.testUnlocks")}</p>
+      </div>
+
+      <div className="space-y-3 pt-3 border-t border-slate-800/80">
+        <SettingsFields section="assistant" />
       </div>
 
       <TestLlmModal
