@@ -170,7 +170,7 @@ describe("existing database files", () => {
     seed.close();
 
     const db = openDir(dir);
-    expect(cols(db, "portfolios")).toEqual(["id", "name", "description", "baseCurrency", "createdAt", "updatedAt", "metricsJson", "color"]);
+    expect(cols(db, "portfolios")).toEqual(["id", "name", "description", "baseCurrency", "createdAt", "updatedAt", "metricsJson", "color", "briefJson", "briefUpdatedAt"]);
     const p = portfolioRepo.findById("p-old");
     expect(p).not.toBeNull();
     expect(p!.name).toBe("Old");
@@ -197,7 +197,7 @@ describe("existing database files", () => {
       closeDatabase();
       getDatabase();
     }).not.toThrow();
-    expect(cols(getDatabase(), "portfolios").length).toBe(8);
+    expect(cols(getDatabase(), "portfolios").length).toBe(10);
   });
 
   it("keeps an existing schema_version value", () => {

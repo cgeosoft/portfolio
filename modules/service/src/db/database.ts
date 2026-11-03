@@ -70,6 +70,13 @@ function initializeSchema(database: Database): void {
   if (!portfolioColumns.some((col) => col.name === "color")) {
     database.run("ALTER TABLE portfolios ADD COLUMN color TEXT");
   }
+  // Portfolio brief: structured JSON and updated timestamp
+  if (!portfolioColumns.some((col) => col.name === "briefJson")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN briefJson TEXT");
+  }
+  if (!portfolioColumns.some((col) => col.name === "briefUpdatedAt")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN briefUpdatedAt TEXT");
+  }
 
   database.run(`
     CREATE TABLE IF NOT EXISTS transactions (

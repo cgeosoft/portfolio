@@ -1289,3 +1289,162 @@ export interface SummarizeTranscriptResponse {
   /** Why there is no summary: no transcript, or the model failed. */
   error?: string;
 }
+
+// ── portfolio brief & wizard ────────────────────────────────────────────────
+
+export type { PortfolioBrief, TargetBand } from "./portfolio";
+
+export interface UpdatePortfolioBriefRequest {
+  brief: import("./portfolio").PortfolioBrief;
+}
+
+export interface GetPortfolioBriefResponse {
+  portfolioId: string;
+  brief: import("./portfolio").PortfolioBrief | null;
+  briefUpdatedAt?: string | null;
+}
+
+export interface BriefWizardFollowupRequest {
+  answers: Record<string, unknown>;
+}
+
+export interface BriefWizardFollowupResponse {
+  followups: Array<{ id: string; question: string; options?: string[] }>;
+}
+
+export interface BriefWizardDraftRequest {
+  answers: Record<string, unknown>;
+  followupAnswers?: Record<string, unknown>;
+}
+
+export interface BriefWizardDraftResponse {
+  prose: string;
+  brief: import("./portfolio").PortfolioBrief;
+}
+
+// ── guided portfolio analysis graph ─────────────────────────────────────────
+
+export type AnalysisNodeKind =
+  | "brief"
+  | "allocation"
+  | "holding"
+  | "question"
+  | "news"
+  | "indicator"
+  | "metric"
+  | "calc"
+  | "macro"
+  | "company"
+  | "event"
+  | "theme"
+  | "finding"
+  | "suggestion"
+  | "report";
+
+export type AnalysisEdgeType =
+  | "about"
+  | "measures"
+  | "exposes"
+  | "derived_from"
+  | "answers"
+  | "supports"
+  | "contradicts"
+  | "against_goal"
+  | "motivates";
+
+export interface AnalysisNodeSource {
+  provider?: string;
+  url?: string;
+  fetchTime?: string;
+}
+
+export interface AnalysisNode {
+  id: string;
+  runId: string;
+  kind: AnalysisNodeKind;
+  title: string;
+  facts: Record<string, unknown>;
+  local?: Record<string, unknown>;
+  summary: string;
+  source?: AnalysisNodeSource;
+  createdBy: string;
+  depth: number;
+  relevance: number;
+  status: "ready" | "failed" | "pruned";
+  createdAt: string;
+}
+
+export interface AnalysisEdge {
+  id: string;
+  runId: string;
+  sourceId: string;
+  targetId: string;
+  type: AnalysisEdgeType;
+  rationale: string;
+  createdAt: string;
+}
+
+export interface AnalysisStep {
+  id: string;
+  runId: string;
+  stepIndex: number;
+  phase: string;
+  requestSummary?: string;
+  actions?: unknown;
+  results?: unknown;
+  durationMs: number;
+  createdAt: string;
+}
+
+export type AnalysisRunStatus = "running" | "completed" | "failed" | "cancelled";
+
+export interface AnalysisRun {
+  id: string;
+  portfolioId: string;
+  status: AnalysisRunStatus;
+  phase: string;
+  briefSnapshot: import("./portfolio").PortfolioBrief;
+  provider?: string;
+  model?: string;
+  stepCount: number;
+  toolCount: number;
+  startedAt: string;
+  endedAt?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StartAnalysisRunRequest {
+  portfolioId: string;
+  provider?: string;
+  model?: string;
+}
+
+export interface GetAnalysisRunResponse {
+  run: AnalysisRun;
+  nodes: AnalysisNode[];
+  edges: AnalysisEdge[];
+  steps: AnalysisStep[];
+  report?: import("./portfolio").PortfolioReport | null;
+  suggestions?: import("./suggestions").PortfolioSuggestion[];
+}
+
+export interface ListAnalysisRunsResponse {
+  runs: AnalysisRun[];
+}
+
+export interface WeightDriftComparison {
+  symbol: string;
+  previousWeight: number;
+  currentWeight: number;
+  diff: number;
+}
+
+export interface CompareAnalysisRunsResponse {
+  currentRunId: string;
+  previousRunId: string;
+  newFindings: AnalysisNode[];
+  resolvedFindings: AnalysisNode[];
+  changedWeights: WeightDriftComparison[];
+}
