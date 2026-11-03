@@ -190,7 +190,7 @@ export function BriefFieldEditor({ field, brief, onChange, disabled }: BriefFiel
             <button
               type="button"
               disabled={disabled}
-              onClick={() => set({ targetBands: [...bands, { assetClass: BRIEF_ASSET_CLASSES.find((c) => !bands.some((b) => b.assetClass === c)) ?? "other", minPercent: 0, maxPercent: 100 }] })}
+              onClick={() => set({ targetBands: [...bands, { assetClass: BRIEF_ASSET_CLASSES.find((c) => !bands.some((b) => b.assetClass === c)) ?? "misc", minPercent: 0, maxPercent: 100 }] })}
               className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-slate-100 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />

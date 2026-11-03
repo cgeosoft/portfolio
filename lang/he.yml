@@ -1308,7 +1308,7 @@ analysis:
         growth: "צמיחה"
         preservation: "שימור הון"
         education: "לימודים"
-        other: "אחר"
+        misc: "אחר"
       horizon:
         lt3: "פחות מ-3 שנים"
         3to7: "3 עד 7 שנים"
@@ -1336,7 +1336,7 @@ analysis:
         crypto: "קריפטו"
         real_estate: "נדל״ן"
         commodities: "סחורות"
-        other: "אחר"
+        misc: "אחר"
   run:
     title: "ניתוח מודרך"
     subtitle: "העוזר בונה גרף ראיות סביב התקציר וההקצאה, ואז כותב את הממצאים, ההצעות ודוח קצר."

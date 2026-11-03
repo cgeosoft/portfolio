@@ -1242,7 +1242,7 @@ analysis:
         growth: "Pertumbuhan"
         preservation: "Menjaga modal"
         education: "Pendidikan"
-        other: "Lainnya"
+        misc: "Lainnya"
       horizon:
         lt3: "Kurang dari 3 tahun"
         3to7: "3 sampai 7 tahun"
@@ -1270,7 +1270,7 @@ analysis:
         crypto: "Kripto"
         real_estate: "Properti"
         commodities: "Komoditas"
-        other: "Lainnya"
+        misc: "Lainnya"
   run:
     title: "Analisis Terpandu"
     subtitle: "Asisten membangun grafik bukti di sekitar profil dan alokasi, lalu menulis temuan, saran, dan laporan singkat."

@@ -1242,7 +1242,7 @@ analysis:
         growth: "Tăng trưởng"
         preservation: "Bảo toàn vốn"
         education: "Học tập"
-        other: "Khác"
+        misc: "Khác"
       horizon:
         lt3: "Dưới 3 năm"
         3to7: "3 đến 7 năm"
@@ -1270,7 +1270,7 @@ analysis:
         crypto: "Tiền mã hóa"
         real_estate: "Bất động sản"
         commodities: "Hàng hóa"
-        other: "Khác"
+        misc: "Khác"
   run:
     title: "Phân tích có hướng dẫn"
     subtitle: "Trợ lý xây dựng một đồ thị bằng chứng quanh bản mô tả và phân bổ, rồi viết các phát hiện, các đề xuất và một báo cáo ngắn."

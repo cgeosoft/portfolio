@@ -1287,7 +1287,7 @@ analysis:
         growth: "Growth"
         preservation: "Capital preservation"
         education: "Education"
-        other: "Other"
+        misc: "Other"
       horizon:
         lt3: "Under 3 years"
         3to7: "3 to 7 years"
@@ -1315,7 +1315,7 @@ analysis:
         crypto: "Crypto"
         real_estate: "Real estate"
         commodities: "Commodities"
-        other: "Other"
+        misc: "Other"
   run:
     title: "Guided Analysis"
     subtitle: "The assistant grows an evidence graph around the brief and the allocation, then writes the findings, the suggestions and a short report."

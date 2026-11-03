@@ -18,7 +18,7 @@ import { loadConfig, saveConfig } from "../../config";
 const BASE = "http://127.0.0.1:4000";
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const ITEM_KEYS = ["baseCurrency", "color", "createdAt", "description", "id", "name", "updatedAt"];
+const ITEM_KEYS = ["baseCurrency", "brief", "briefUpdatedAt", "color", "createdAt", "description", "id", "name", "updatedAt"];
 
 const offline: IMarketDataProvider = {
   getQuotes: async () => new Map(),
@@ -125,7 +125,7 @@ describe("HTTP API contract", () => {
     expect(body.id).toMatch(UUID);
     pid = body.id;
     created.push(pid);
-    expect(body).toEqual({ id: pid, name: "Contract", description: "d", baseCurrency: "USD", color: "#aabbcc", createdAt: body.createdAt, updatedAt: body.updatedAt });
+    expect(body).toEqual({ id: pid, name: "Contract", description: "d", baseCurrency: "USD", color: "#aabbcc", brief: { prose: "d" }, briefUpdatedAt: null, createdAt: body.createdAt, updatedAt: body.updatedAt });
     expect(body.createdAt).toMatch(ISO);
     expect(body.createdAt).toBe(body.updatedAt);
     const list = await api("GET", "/api/portfolios");

@@ -1308,7 +1308,7 @@ analysis:
         growth: "Izaugsme"
         preservation: "Kapitāla saglabāšana"
         education: "Izglītība"
-        other: "Cits"
+        misc: "Cits"
       horizon:
         lt3: "Mazāk par 3 gadiem"
         3to7: "No 3 līdz 7 gadiem"
@@ -1336,7 +1336,7 @@ analysis:
         crypto: "Kriptovalūtas"
         real_estate: "Nekustamais īpašums"
         commodities: "Izejvielas"
-        other: "Cits"
+        misc: "Cits"
   run:
     title: "Vadītā analīze"
     subtitle: "Asistents ap profilu un sadalījumu izveido pierādījumu grafu, tad uzraksta secinājumus, ieteikumus un īsu pārskatu."

@@ -1251,7 +1251,7 @@ analysis:
         growth: "成長"
         preservation: "資本の保全"
         education: "教育"
-        other: "その他"
+        misc: "その他"
       horizon:
         lt3: "3 年未満"
         3to7: "3～7 年"
@@ -1279,7 +1279,7 @@ analysis:
         crypto: "暗号資産"
         real_estate: "不動産"
         commodities: "コモディティ"
-        other: "その他"
+        misc: "その他"
   run:
     title: "ガイド付き分析"
     subtitle: "アシスタントが方針と配分を中心に根拠のグラフを広げ、所見、提案、短いレポートを作成します。"

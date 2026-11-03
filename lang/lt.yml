@@ -1341,7 +1341,7 @@ analysis:
         growth: "Augimas"
         preservation: "Kapitalo išsaugojimas"
         education: "Mokslas"
-        other: "Kita"
+        misc: "Kita"
       horizon:
         lt3: "Mažiau nei 3 metai"
         3to7: "Nuo 3 iki 7 metų"
@@ -1369,7 +1369,7 @@ analysis:
         crypto: "Kriptovaliutos"
         real_estate: "Nekilnojamasis turtas"
         commodities: "Žaliavos"
-        other: "Kita"
+        misc: "Kita"
   run:
     title: "Valdoma analizė"
     subtitle: "Asistentas aplink profilį ir paskirstymą sukuria įrodymų grafą, tada parašo išvadas, pasiūlymus ir trumpą ataskaitą."

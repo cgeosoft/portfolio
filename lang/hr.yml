@@ -1308,7 +1308,7 @@ analysis:
         growth: "Rast"
         preservation: "Očuvanje kapitala"
         education: "Obrazovanje"
-        other: "Ostalo"
+        misc: "Ostalo"
       horizon:
         lt3: "Manje od 3 godine"
         3to7: "Od 3 do 7 godina"
@@ -1336,7 +1336,7 @@ analysis:
         crypto: "Kriptovalute"
         real_estate: "Nekretnine"
         commodities: "Sirovine"
-        other: "Ostalo"
+        misc: "Ostalo"
   run:
     title: "Vođena analiza"
     subtitle: "Asistent oko smjernica i alokacije gradi graf dokaza, a zatim piše nalaze, prijedloge i kratko izvješće."

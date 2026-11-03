@@ -31,11 +31,11 @@ export function isBriefField(value: unknown): value is BriefField {
   return typeof value === "string" && (BRIEF_FIELDS as readonly string[]).includes(value);
 }
 
-export const BRIEF_PURPOSES = ["retirement", "house", "income", "growth", "preservation", "education", "other"] as const;
+export const BRIEF_PURPOSES = ["retirement", "house", "income", "growth", "preservation", "education", "misc"] as const;
 export const BRIEF_HORIZONS = ["lt3", "3to7", "7to15", "gt15"] as const;
 export const BRIEF_CASH_FLOWS = ["contributions", "lump_sum", "drawdown", "none"] as const;
 export const BRIEF_CONSTRAINTS = ["no_crypto", "esg", "home_bias", "tax_wrapper", "no_single_stocks", "no_leverage"] as const;
-export const BRIEF_ASSET_CLASSES = ["equity", "bonds", "cash", "crypto", "real_estate", "commodities", "other"] as const;
+export const BRIEF_ASSET_CLASSES = ["equity", "bonds", "cash", "crypto", "real_estate", "commodities", "misc"] as const;
 
 /** Longest text the brief keeps per field. */
 export const BRIEF_LIMITS = { prose: 2_000, text: 300, constraints: 12, bands: 8 } as const;
@@ -71,7 +71,7 @@ export const BRIEF_OPTION_TEXT: Record<string, string> = {
   growth: "long-term growth",
   preservation: "capital preservation",
   education: "education costs",
-  other: "other",
+  misc: "other",
   lt3: "less than 3 years",
   "3to7": "3 to 7 years",
   "7to15": "7 to 15 years",

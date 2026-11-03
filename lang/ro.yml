@@ -1308,7 +1308,7 @@ analysis:
         growth: "Creștere"
         preservation: "Conservarea capitalului"
         education: "Educație"
-        other: "Altul"
+        misc: "Altul"
       horizon:
         lt3: "Sub 3 ani"
         3to7: "Între 3 și 7 ani"
@@ -1336,7 +1336,7 @@ analysis:
         crypto: "Cripto"
         real_estate: "Imobiliare"
         commodities: "Mărfuri"
-        other: "Altele"
+        misc: "Altele"
   run:
     title: "Analiză ghidată"
     subtitle: "Asistentul construiește un graf de dovezi în jurul profilului și al alocării, apoi scrie constatările, sugestiile și un raport scurt."

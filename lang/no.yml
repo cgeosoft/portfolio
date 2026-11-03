@@ -1275,7 +1275,7 @@ analysis:
         growth: "Vekst"
         preservation: "Kapitalbevaring"
         education: "Utdanning"
-        other: "Annet"
+        misc: "Annet"
       horizon:
         lt3: "Under 3 år"
         3to7: "3 til 7 år"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Krypto"
         real_estate: "Eiendom"
         commodities: "Råvarer"
-        other: "Annet"
+        misc: "Annet"
   run:
     title: "Guidet analyse"
     subtitle: "Assistenten bygger en bevisgraf rundt planen og fordelingen, og skriver deretter funnene, forslagene og en kort rapport."

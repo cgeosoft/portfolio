@@ -1242,7 +1242,7 @@ analysis:
         growth: "Ìdàgbàsókè"
         preservation: "Ìdáàbòbò olú-owó"
         education: "Ẹ̀kọ́"
-        other: "Òmíràn"
+        misc: "Òmíràn"
       horizon:
         lt3: "Kò tó ọdún 3"
         3to7: "Ọdún 3 sí 7"
@@ -1270,7 +1270,7 @@ analysis:
         crypto: "Crypto"
         real_estate: "Ilé àti ilẹ̀"
         commodities: "Ọjà àdáyébá"
-        other: "Òmíràn"
+        misc: "Òmíràn"
   run:
     title: "Àyẹ̀wò Ìtọ́sọ́nà"
     subtitle: "Olùrànlọ́wọ́ ń kọ́ àwòrán ìsopọ̀ ẹ̀rí yí àpèjúwe àti ìpínkiri ká, lẹ́yìn náà ó kọ àwọn àwárí, àwọn àbá àti ìjábọ̀ kúkúrú."

@@ -234,7 +234,7 @@ export const runMetric: AnalysisTool = {
     const listing = id ? metrics.getCatalog().installed.find((m) => m.id === id) : undefined;
     if (!listing) throw new ToolInputError(`Unknown metric "${id}".`);
     const [result] = await metrics.evaluateForPortfolio({ portfolioId: ctx.portfolioId, baseCurrency: ctx.baseCurrency, ids: [id] });
-    if (!result || result.status !== "ok") throw new Error(result && result.status !== "ok" ? result.error : "The metric returned nothing");
+    if (!result || result.status !== "ok") throw new Error(result ? result.error : "The metric returned nothing");
     const value = result.output.value;
     if (value.format !== "percent" || value.amount === null || !Number.isFinite(value.amount)) throw new ToolInputError("This metric does not return a percentage, so it stays out of the analysis.");
     const subs = (result.output.sub ?? []).filter((p): p is { amount: number; format: "percent" } => "amount" in p && p.format === "percent" && typeof p.amount === "number");

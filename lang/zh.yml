@@ -1251,7 +1251,7 @@ analysis:
         growth: "增长"
         preservation: "保本"
         education: "教育"
-        other: "其他"
+        misc: "其他"
       horizon:
         lt3: "3 年以内"
         3to7: "3 至 7 年"
@@ -1279,7 +1279,7 @@ analysis:
         crypto: "加密货币"
         real_estate: "房地产"
         commodities: "大宗商品"
-        other: "其他"
+        misc: "其他"
   run:
     title: "引导式分析"
     subtitle: "助手围绕纲要和配置构建证据图谱，然后写出发现、建议和一份简短报告。"

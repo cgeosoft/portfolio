@@ -1308,7 +1308,7 @@ analysis:
         growth: "Crescita"
         preservation: "Conservazione del capitale"
         education: "Istruzione"
-        other: "Altro"
+        misc: "Altro"
       horizon:
         lt3: "Meno di 3 anni"
         3to7: "Da 3 a 7 anni"
@@ -1336,7 +1336,7 @@ analysis:
         crypto: "Cripto"
         real_estate: "Immobili"
         commodities: "Materie prime"
-        other: "Altro"
+        misc: "Altro"
   run:
     title: "Analisi guidata"
     subtitle: "L'assistente costruisce un grafo di prove attorno alla scheda e all'allocazione, poi scrive i risultati, i suggerimenti e un report breve."

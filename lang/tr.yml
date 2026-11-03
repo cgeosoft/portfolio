@@ -1275,7 +1275,7 @@ analysis:
         growth: "Büyüme"
         preservation: "Sermayeyi koruma"
         education: "Eğitim"
-        other: "Diğer"
+        misc: "Diğer"
       horizon:
         lt3: "3 yıldan az"
         3to7: "3 ile 7 yıl"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Kripto"
         real_estate: "Gayrimenkul"
         commodities: "Emtia"
-        other: "Diğer"
+        misc: "Diğer"
   run:
     title: "Rehberli Analiz"
     subtitle: "Asistan tanım ve dağılım etrafında bir kanıt grafiği oluşturur, ardından bulguları, önerileri ve kısa bir rapor yazar."

@@ -98,7 +98,7 @@ describe("scanForAmounts", () => {
 
 describe("assertPercentOnly", () => {
   it("allows percent keys and the listed number keys", () => {
-    const valid = { weightPercent: 42.5, totalReturnPercent: -3.2, rsi: 55, holdingsCount: 12, days: 30, publicPrice: 150.25, peRatio: 22.4, dividendPerShare: 1.8 };
+    const valid = { weightPercent: 42.5, totalReturnPercent: -3.2, rsi: 55, holdingsCount: 12, days: 30, publicPrice: 150.25, peRatio: 22.4, dividendPerShare: 1.8, beta: 1.1, correlation: 0.8, effectiveHoldings: 6.2, riskScore: 3, severity: 2, count: 4 };
     expect(() => assertPercentOnly(valid)).not.toThrow();
     expect<string>(toPromptSafe(valid)).toBe(JSON.stringify(valid));
   });

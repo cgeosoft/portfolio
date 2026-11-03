@@ -1242,7 +1242,7 @@ analysis:
         growth: "성장"
         preservation: "자본 보존"
         education: "교육"
-        other: "기타"
+        misc: "기타"
       horizon:
         lt3: "3년 미만"
         3to7: "3~7년"
@@ -1270,7 +1270,7 @@ analysis:
         crypto: "암호화폐"
         real_estate: "부동산"
         commodities: "원자재"
-        other: "기타"
+        misc: "기타"
   run:
     title: "가이드 분석"
     subtitle: "어시스턴트가 지침과 배분을 중심으로 근거 그래프를 넓힌 뒤 발견 사항, 제안, 짧은 보고서를 작성합니다."

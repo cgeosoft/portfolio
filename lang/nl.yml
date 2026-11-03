@@ -1275,7 +1275,7 @@ analysis:
         growth: "Groei"
         preservation: "Vermogensbehoud"
         education: "Opleiding"
-        other: "Anders"
+        misc: "Anders"
       horizon:
         lt3: "Korter dan 3 jaar"
         3to7: "3 tot 7 jaar"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Crypto"
         real_estate: "Vastgoed"
         commodities: "Grondstoffen"
-        other: "Overig"
+        misc: "Overig"
   run:
     title: "Begeleide analyse"
     subtitle: "De assistent bouwt een bewijsgraaf rond het plan en de allocatie, en schrijft daarna de bevindingen, de suggesties en een kort rapport."

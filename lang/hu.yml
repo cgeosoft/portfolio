@@ -1275,7 +1275,7 @@ analysis:
         growth: "Növekedés"
         preservation: "Tőkemegőrzés"
         education: "Oktatás"
-        other: "Egyéb"
+        misc: "Egyéb"
       horizon:
         lt3: "3 évnél kevesebb"
         3to7: "3 és 7 év között"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Kripto"
         real_estate: "Ingatlan"
         commodities: "Nyersanyagok"
-        other: "Egyéb"
+        misc: "Egyéb"
   run:
     title: "Irányított elemzés"
     subtitle: "Az asszisztens bizonyítékgráfot épít a profil és az allokáció köré, majd megírja a megállapításokat, a javaslatokat és egy rövid jelentést."

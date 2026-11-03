@@ -188,7 +188,7 @@ export class AnalysisService {
       updatedAt: now,
     };
     analysisRepo.insertRun(row);
-    telemetry.capture("analysis_run_started", { trigger: row.trigger, toolMode: row.toolMode });
+    telemetry.capture("analysis_run_started");
     appLogger.logStep("info", "analysis", "start", `Guided Analysis started (${row.toolMode})`);
     this.launch(row, false);
     return this.listItem(row);
@@ -268,7 +268,11 @@ export class AnalysisService {
     analysisRepo.updateRun(row.id, { status, error, endedAt: new Date().toISOString(), ...(status === "completed" ? { phase: "done" as const } : {}) });
     analysisRepo.pruneRuns(row.portfolioId);
     const final = analysisRepo.findRunRow(row.id);
-    telemetry.capture("analysis_run_finished", { status, steps: final?.stepCount ?? 0, tools: final?.toolCount ?? 0, nodes: final?.nodeCount ?? 0 });
+    // Counts only: the number of model steps of the run.
+    const steps = final?.stepCount ?? 0;
+    if (status === "completed") telemetry.capture("analysis_run_completed", { count: steps });
+    else if (status === "failed") telemetry.capture("analysis_run_failed", { count: steps });
+    else telemetry.capture("analysis_run_cancelled", { count: steps });
     appLogger.logStep(status === "failed" ? "warning" : "info", "analysis", "finish", `Guided Analysis ${status}`, Date.now() - started, {
       steps: final?.stepCount ?? 0,
       tools: final?.toolCount ?? 0,

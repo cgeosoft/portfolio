@@ -1284,7 +1284,7 @@ analysis:
         growth: "Kasv"
         preservation: "Kapitali säilitamine"
         education: "Haridus"
-        other: "Muu"
+        misc: "Muu"
       horizon:
         lt3: "Alla 3 aasta"
         3to7: "3 kuni 7 aastat"
@@ -1312,7 +1312,7 @@ analysis:
         crypto: "Krüpto"
         real_estate: "Kinnisvara"
         commodities: "Toorained"
-        other: "Muu"
+        misc: "Muu"
   run:
     title: "Juhitud analüüs"
     subtitle: "Assistent koostab profiili ja varade jaotuse ümber tõendite graafi ning kirjutab seejärel leiud, soovitused ja lühiaruande."

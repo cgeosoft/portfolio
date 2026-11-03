@@ -22,7 +22,7 @@ function briefFacts(brief: PortfolioBrief): Record<string, unknown> {
   const facts: Record<string, unknown> = {};
   if (brief.purpose) facts.purpose = optionText(brief.purpose);
   if (brief.horizon) facts.horizon = optionText(brief.horizon);
-  if (brief.riskTolerance) facts.riskTolerance = { score: brief.riskTolerance.score, maxDropPercent: brief.riskTolerance.maxDropPercent };
+  if (brief.riskTolerance) facts.riskTolerance = { riskScore: brief.riskTolerance.score, maxDropPercent: brief.riskTolerance.maxDropPercent };
   if (brief.incomeNeed) facts.incomeNeed = { required: brief.incomeNeed.required, targetYieldPercent: brief.incomeNeed.targetYieldPercent };
   if (brief.cashFlowPattern) facts.cashFlowPattern = optionText(brief.cashFlowPattern);
   if (brief.targetBands?.length) facts.targetBands = brief.targetBands.map((b) => ({ assetClass: optionText(b.assetClass), minPercent: b.minPercent, maxPercent: b.maxPercent }));

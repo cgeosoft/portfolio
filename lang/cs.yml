@@ -1341,7 +1341,7 @@ analysis:
         growth: "Růst"
         preservation: "Ochrana kapitálu"
         education: "Vzdělání"
-        other: "Jiné"
+        misc: "Jiné"
       horizon:
         lt3: "Méně než 3 roky"
         3to7: "3 až 7 let"
@@ -1369,7 +1369,7 @@ analysis:
         crypto: "Kryptoměny"
         real_estate: "Nemovitosti"
         commodities: "Komodity"
-        other: "Jiné"
+        misc: "Jiné"
   run:
     title: "Řízená analýza"
     subtitle: "Asistent kolem zadání a alokace postaví graf důkazů a pak napíše zjištění, návrhy a krátký report."

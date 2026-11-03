@@ -1275,7 +1275,7 @@ analysis:
         growth: "رشد"
         preservation: "حفظ سرمایه"
         education: "تحصیل"
-        other: "سایر"
+        misc: "سایر"
       horizon:
         lt3: "کمتر از 3 سال"
         3to7: "3 تا 7 سال"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "رمزارز"
         real_estate: "املاک"
         commodities: "کالاها"
-        other: "سایر"
+        misc: "سایر"
   run:
     title: "تحلیل هدایت‌شده"
     subtitle: "دستیار گرافی از شواهد پیرامون شرح و تخصیص می‌سازد و سپس یافته‌ها، پیشنهادها و یک گزارش کوتاه می‌نویسد."

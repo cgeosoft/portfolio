@@ -1275,7 +1275,7 @@ analysis:
         growth: "Ukuaji"
         preservation: "Kulinda mtaji"
         education: "Elimu"
-        other: "Nyingine"
+        misc: "Nyingine"
       horizon:
         lt3: "Chini ya miaka 3"
         3to7: "Miaka 3 hadi 7"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Kripto"
         real_estate: "Mali isiyohamishika"
         commodities: "Bidhaa"
-        other: "Nyingine"
+        misc: "Nyingine"
   run:
     title: "Uchambuzi Elekezi"
     subtitle: "Msaidizi hujenga grafu ya ushahidi kuzunguka maelezo na mgawanyo, kisha huandika matokeo, mapendekezo na ripoti fupi."

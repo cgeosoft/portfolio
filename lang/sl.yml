@@ -1341,7 +1341,7 @@ analysis:
         growth: "Rast"
         preservation: "Ohranjanje kapitala"
         education: "Izobraževanje"
-        other: "Drugo"
+        misc: "Drugo"
       horizon:
         lt3: "Manj kot 3 leta"
         3to7: "Od 3 do 7 let"
@@ -1369,7 +1369,7 @@ analysis:
         crypto: "Kriptovalute"
         real_estate: "Nepremičnine"
         commodities: "Surovine"
-        other: "Drugo"
+        misc: "Drugo"
   run:
     title: "Vodena analiza"
     subtitle: "Pomočnik okoli izhodišč in alokacije zgradi graf dokazov, nato napiše ugotovitve, predloge in kratko poročilo."

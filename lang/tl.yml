@@ -1275,7 +1275,7 @@ analysis:
         growth: "Paglago"
         preservation: "Pagpapanatili ng kapital"
         education: "Edukasyon"
-        other: "Iba pa"
+        misc: "Iba pa"
       horizon:
         lt3: "Wala pang 3 taon"
         3to7: "3 hanggang 7 taon"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Crypto"
         real_estate: "Real estate"
         commodities: "Commodities"
-        other: "Iba pa"
+        misc: "Iba pa"
   run:
     title: "Ginabayang Pagsusuri"
     subtitle: "Bumubuo ang assistant ng graph ng ebidensya sa paligid ng brief at alokasyon, pagkatapos ay isinusulat ang mga natuklasan, mga mungkahi at isang maikling report."

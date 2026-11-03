@@ -26,7 +26,7 @@ export type PromptSafe = string & { readonly [promptSafe]: true };
  * Numbers that are not portfolio money: counts, an index from 0 to 100, day
  * spans, public instrument data, and the unitless ratios and scales of the
  * Guided Analysis graph (beta, correlation, effective number of holdings,
- * the 1 to 5 risk score of the brief, the 1 to 3 severity of a finding).
+ * the 1 to 5 risk score of the brief (`riskScore`), the 1 to 3 severity of a finding).
  */
 export const ALLOWED_NUMBER_KEYS: ReadonlySet<string> = new Set([
   "rsi",
@@ -39,7 +39,7 @@ export const ALLOWED_NUMBER_KEYS: ReadonlySet<string> = new Set([
   "beta",
   "correlation",
   "effectiveHoldings",
-  "score",
+  "riskScore",
   "severity",
   "count",
 ]);

@@ -1341,7 +1341,7 @@ analysis:
         growth: "Wzrost"
         preservation: "Ochrona kapitału"
         education: "Edukacja"
-        other: "Inne"
+        misc: "Inne"
       horizon:
         lt3: "Poniżej 3 lat"
         3to7: "Od 3 do 7 lat"
@@ -1369,7 +1369,7 @@ analysis:
         crypto: "Kryptowaluty"
         real_estate: "Nieruchomości"
         commodities: "Surowce"
-        other: "Inne"
+        misc: "Inne"
   run:
     title: "Analiza prowadzona"
     subtitle: "Asystent buduje graf dowodów wokół założeń i alokacji, a potem pisze ustalenia, sugestie i krótki raport."

@@ -1275,7 +1275,7 @@ analysis:
         growth: "Wachstum"
         preservation: "Kapitalerhalt"
         education: "Ausbildung"
-        other: "Sonstiges"
+        misc: "Sonstiges"
       horizon:
         lt3: "Unter 3 Jahren"
         3to7: "3 bis 7 Jahre"
@@ -1303,7 +1303,7 @@ analysis:
         crypto: "Krypto"
         real_estate: "Immobilien"
         commodities: "Rohstoffe"
-        other: "Sonstiges"
+        misc: "Sonstiges"
   run:
     title: "Geführte Analyse"
     subtitle: "Der Assistent baut um den Steckbrief und die Aufteilung einen Graphen aus Belegen auf und schreibt dann die Befunde, die Vorschläge und einen kurzen Bericht."

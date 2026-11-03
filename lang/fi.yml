@@ -1284,7 +1284,7 @@ analysis:
         growth: "Kasvu"
         preservation: "Pääoman säilyttäminen"
         education: "Koulutus"
-        other: "Muu"
+        misc: "Muu"
       horizon:
         lt3: "Alle 3 vuotta"
         3to7: "3-7 vuotta"
@@ -1312,7 +1312,7 @@ analysis:
         crypto: "Krypto"
         real_estate: "Kiinteistöt"
         commodities: "Raaka-aineet"
-        other: "Muu"
+        misc: "Muu"
   run:
     title: "Ohjattu analyysi"
     subtitle: "Avustaja rakentaa näyttögraafin suunnitelman ja jakauman ympärille ja kirjoittaa sitten havainnot, ehdotukset ja lyhyen raportin."
