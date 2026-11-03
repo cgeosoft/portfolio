@@ -1304,6 +1304,16 @@ export interface GetPortfolioBriefResponse {
   briefUpdatedAt?: string | null;
 }
 
+export interface ScanAmountsRequest {
+  texts: string[];
+}
+
+export interface ScanAmountsResponse {
+  hasAmounts: boolean;
+  /** The amounts found, as written, so the form can name them. */
+  matches: string[];
+}
+
 export interface BriefWizardFollowupRequest {
   answers: Record<string, unknown>;
 }
@@ -1314,7 +1324,8 @@ export interface BriefWizardFollowupResponse {
 
 export interface BriefWizardDraftRequest {
   answers: Record<string, unknown>;
-  followupAnswers?: Record<string, unknown>;
+  /** Keyed by follow-up id: `{ question, answer }`. */
+  followupAnswers?: Record<string, { question: string; answer: string }>;
 }
 
 export interface BriefWizardDraftResponse {

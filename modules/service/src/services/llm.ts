@@ -12,7 +12,7 @@
  * defaults.
  */
 
-import { isSameServer, loadConfig } from "../config.js";
+import { isSameServer, loadConfig, updateConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { fetchWithCheckedRedirects } from "./outbound-target.js";
 import { CLI_PROVIDER_MODELS, CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
@@ -287,6 +287,25 @@ function stripThinkTags(input: string): string {
 
 // ── service ─────────────────────────────────────────────────────────────────
 
+/** The identity of a model setup: provider, model and server. Secrets stay out. */
+export function setupSignature(target: Pick<LlmTarget, "provider" | "model" | "baseUrl">): string {
+  return `${target.provider}|${target.model.trim()}|${target.baseUrl.trim().replace(/\/+$/, "")}`;
+}
+
+/**
+ * Records that a model setup answered. The brief wizard and Guided Analysis
+ * are open only while the stored setup is one that answered. Writes only on
+ * a change, so a busy feature does not write the settings on every call.
+ */
+function markVerified(target: LlmTarget): void {
+  const signature = setupSignature(target);
+  try {
+    if (loadConfig().llmVerified !== signature) updateConfig({ llmVerified: signature });
+  } catch {
+    // A settings write failure must not fail the model call that succeeded.
+  }
+}
+
 export class LlmService {
   /** Model auto-detected per server base URL, see detectServerModel(). */
   private static readonly detectedModels = new Map<string, { model: string; at: number }>();
@@ -340,12 +359,15 @@ export class LlmService {
     });
 
     if (isCliProvider(target.provider)) {
-      return CLI_PROVIDERS[target.provider].complete(messages, {
+      const text = await CLI_PROVIDERS[target.provider].complete(messages, {
         model: target.model,
         signal: requestSignal(options.signal, CLI_TIMEOUT_MS),
         onChunk,
       });
+      if (text.trim()) markVerified(target);
+      return text;
     }
+    const verifiedAs = { ...target };
 
     if (!isHttpUrl(target.baseUrl)) throw new Error(`${target.name} server URL must start with http:// or https://`);
     if (!target.model) target.model = await this.detectServerModel(target);
@@ -386,6 +408,7 @@ export class LlmService {
     if (!onChunk) {
       const text = replyText((await res.json()) as ChatReply);
       if (!text) throw new Error(`No completion content returned from ${target.name}`);
+      markVerified(verifiedAs);
       return text;
     }
     if (!res.body) throw new Error(`No response body returned from ${target.name}`);
@@ -396,6 +419,7 @@ export class LlmService {
       full += delta;
       onChunk(delta);
     });
+    if (full.trim()) markVerified(verifiedAs);
     return full;
   }
 
@@ -521,6 +545,17 @@ export class LlmService {
     }
 
     return fail(`Unknown step identifier: ${step}`);
+  }
+
+  /**
+   * Whether the stored model setup has answered a request: the gate of the
+   * brief wizard and Guided Analysis. Empty provider means no AI is set up.
+   */
+  public isReady(): { ready: boolean; target: LlmTarget; configured: boolean } {
+    const config = loadConfig();
+    const target = this.resolve();
+    const configured = Boolean(config.llmProvider?.trim());
+    return { ready: configured && config.llmVerified === setupSignature(target), target, configured };
   }
 
   /** Whether the CLI of a CLI provider is installed on this machine and signed in. */

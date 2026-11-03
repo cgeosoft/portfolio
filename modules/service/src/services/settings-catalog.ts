@@ -62,6 +62,19 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
     label: "Check for updates",
     description: "Look for a new version when Portfolio starts and every hour after that.",
   },
+  {
+    key: "llmToolMode",
+    section: "assistant",
+    kind: "choice",
+    label: "Guided Analysis tool calling",
+    description: "How Guided Analysis asks the model for data. Automatic tests the model once. Native sends real tools; JSON actions work with any model that follows instructions. Off hides the Run button for this setup.",
+    options: [
+      { value: "auto", label: "Automatic" },
+      { value: "native", label: "Native tools" },
+      { value: "json", label: "JSON actions" },
+      { value: "off", label: "Off" },
+    ],
+  },
 ];
 
 /** Every catalog setting with its current value. */

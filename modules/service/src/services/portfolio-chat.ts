@@ -17,6 +17,7 @@ import { buildAssistantMarketContext, type AiContextDeps } from "./ai-context.js
 import { plainStyle, withLanguageInstruction } from "./output-language.js";
 import { t } from "../i18n.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
+import { formatBriefForPrompt, readBrief } from "./portfolio-brief.js";
 import * as conversationRepo from "../db/conversation.repo.js";
 import type { PortfolioItem, FinancialPortfolioData, HoldingPerformance } from "portfolio-shared/portfolio";
 import type { PortfolioChatMessage, AssistantConversation, AssistantConversationSummary } from "portfolio-shared/api-types";
@@ -29,6 +30,13 @@ const signedPct = (value = 0) => `${value >= 0 ? "+" : ""}${pct(value)}`;
 const priceNote = (h: HoldingPerformance) =>
   h.isPrivate ? " (private asset, no market price)" : h.quoteMissing ? " (no market quote, valued at buy price)" : "";
 const indicator = (value: number | undefined, digits: number) => (value !== undefined && !isNaN(value) ? value.toFixed(digits) : "N/A");
+
+/** The brief of the portfolio for the system prompt; the plain description when there is no brief. */
+function portfolioBriefLines(portfolio: PortfolioItem): string {
+  const brief = formatBriefForPrompt(portfolio.brief);
+  if (brief) return `Portfolio Brief (the user's purpose and goal):\n${brief}`;
+  return portfolio.description ? `Description: ${portfolio.description}` : "";
+}
 
 /** `language` is the code of Settings, Appearance; the assistant answers in it. */
 export function buildPortfolioSystemPrompt(portfolio: PortfolioItem, data: FinancialPortfolioData, marketContext = "", language?: string): string {
@@ -59,7 +67,7 @@ Answer questions objectively, clearly, and concisely. Ground your answers strict
 
 === CURRENT PORTFOLIO PROFILE ===
 Portfolio Name: ${portfolio.name}
-${portfolio.description ? `Description: ${portfolio.description}` : ""}
+${portfolioBriefLines(portfolio)}
 Cash Allocation: ${pct(summary?.cashWeightPercent)} of total portfolio
 Lifetime Unrealized Return: ${signedPct(summary?.totalGainLossPercent)}
 Today's Return: ${signedPct(summary?.dayGainLossPercent)}
@@ -123,7 +131,7 @@ export class PortfolioChatService {
       this.portfolioService.getPortfolioData(portfolio.id, baseCurrency),
       this.aiContext ? buildAssistantMarketContext(this.aiContext, portfolio.id, baseCurrency).catch(() => "") : Promise.resolve(""),
     ]);
-    return buildPortfolioSystemPrompt(portfolio, data, marketContext, config.language);
+    return buildPortfolioSystemPrompt({ ...portfolio, brief: readBrief(portfolio) }, data, marketContext, config.language);
   }
 
   /** The history list: no message bodies, which the GUI loads one conversation at a time. */

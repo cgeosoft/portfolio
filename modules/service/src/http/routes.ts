@@ -29,7 +29,8 @@ import { sendNtfy } from "../services/ntfy";
 import { OPENROUTER_CALLBACK_PATH, callbackPage, completeOpenRouterConnect, openRouterConnectStatus, startOpenRouterConnect } from "../services/openrouter-connect";
 import * as portfolioMetrics from "../services/portfolio-metrics";
 import { suggestMetricLayout } from "../services/metric-advisor";
-import { toPromptSafe } from "../services/llm-privacy";
+import { scanForAmounts, toPromptSafe } from "../services/llm-privacy";
+import { readBrief } from "../services/portfolio-brief";
 import { getMacroSnapshot } from "../services/intel/macro";
 import { getBenchmarkComparison, getBenchmarkHistory, normalizeBenchmarkRange } from "../services/intel/benchmark";
 import { getHeldMarketStatus } from "../services/intel/market-hours";
@@ -68,6 +69,11 @@ import type {
   UpdateMcpAccessRequest,
   UpdateRemoteAccessRequest,
   UpdateSuggestionStatusRequest,
+  UpdatePortfolioBriefRequest,
+  BriefWizardFollowupRequest,
+  BriefWizardDraftRequest,
+  ScanAmountsRequest,
+  ScanAmountsResponse,
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
@@ -118,7 +124,17 @@ function currencyParam(value: unknown): string | undefined {
 }
 
 function toItem(row: portfolioRepo.PortfolioRow) {
-  return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, color: row.color, createdAt: row.createdAt, updatedAt: row.updatedAt };
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    baseCurrency: row.baseCurrency,
+    color: row.color,
+    brief: readBrief(row),
+    briefUpdatedAt: row.briefUpdatedAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }
 
 /** The PIN counter and session lifetime a request gets: the desktop window's or other devices'. */
@@ -132,7 +148,7 @@ function isHttps(req: Request): boolean {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
+  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis, briefService } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -272,6 +288,35 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.delete("/api/portfolios/:id", (ctx) => ({ success: portfolioService.deletePortfolio(ctx.params.id!) }));
+
+  // ── portfolio brief and wizard ──────────────────────────────────────────
+
+  router.get("/api/portfolios/:id/brief", (ctx) => briefService.getBrief(ctx.params.id!));
+
+  router.put("/api/portfolios/:id/brief", async (ctx) => {
+    const body = await ctx.body<UpdatePortfolioBriefRequest>();
+    const res = briefService.saveBrief(ctx.params.id!, body.brief ?? {});
+    telemetry.capture("portfolio_brief_saved");
+    return res;
+  });
+
+  router.post("/api/portfolios/:id/brief/wizard/followups", async (ctx) => {
+    const body = await ctx.body<BriefWizardFollowupRequest>();
+    return briefService.followups(ctx.params.id!, body.answers ?? {});
+  });
+
+  router.post("/api/portfolios/:id/brief/wizard/draft", async (ctx) => {
+    const body = await ctx.body<BriefWizardDraftRequest>();
+    return briefService.draft(ctx.params.id!, body.answers ?? {}, body.followupAnswers ?? {});
+  });
+
+  /** Amounts in the user's own text, so a form can ask for percentages before it saves. */
+  router.post("/api/privacy/scan-amounts", async (ctx): Promise<ScanAmountsResponse> => {
+    const body = await ctx.body<ScanAmountsRequest>();
+    const texts = Array.isArray(body.texts) ? body.texts.filter((x): x is string => typeof x === "string").slice(0, 50) : [];
+    const matches = [...new Set(texts.flatMap((text) => scanForAmounts(text.slice(0, 4_000)).matches))];
+    return { hasAmounts: matches.length > 0, matches };
+  });
 
   router.get("/api/portfolios/:id/data", async (ctx) => {
     const timer = appLogger.startTimer("api", "portfolioData");

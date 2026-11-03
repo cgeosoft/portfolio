@@ -12,7 +12,7 @@
  * model did not repeat as superseded. Logs never name a symbol (CLAUDE.md rule 3).
  */
 
-import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/portfolio";
+import type { FinancialPortfolioData, PortfolioBrief, PortfolioHolding } from "portfolio-shared/portfolio";
 import type { GetSuggestionsResponse, SuggestionGeneration } from "portfolio-shared/api-types";
 import {
   SUGGESTION_ACTIONS,
@@ -41,6 +41,10 @@ import type { MarketDataCoordinator } from "./market-data.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
 import { plainStyle, withLanguageInstruction } from "./output-language.js";
 import { t } from "../i18n.js";
+import { extractJsonObject } from "./json-reply.js";
+import { briefPromptSection, readBrief } from "./portfolio-brief.js";
+
+export { extractJsonObject } from "./json-reply.js";
 
 /** Most suggestions kept from one answer. */
 const MAX_SUGGESTIONS = 8;
@@ -93,20 +97,6 @@ function findHolding(data: FinancialPortfolioData, symbol: string): PortfolioHol
 
 function totalValueOf(data: FinancialPortfolioData): number {
   return data.summary?.totalPortfolioValue || data.summary?.totalValue || 0;
-}
-
-/** Find the first JSON object in the reply; models sometimes wrap it in a code fence or text. */
-export function extractJsonObject(reply: string): Record<string, unknown> {
-  const start = reply.indexOf("{");
-  const end = reply.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("The assistant did not return a JSON object");
-  try {
-    const parsed = JSON.parse(reply.slice(start, end + 1)) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("not an object");
-    return parsed as Record<string, unknown>;
-  } catch {
-    throw new Error("The assistant returned JSON that is not valid");
-  }
 }
 
 /**
@@ -377,7 +367,7 @@ function describeHolding(h: PortfolioHolding): string {
 export function buildSuggestionPrompt(
   data: FinancialPortfolioData,
   /** `language`: interface language code for the text fields; English when left out. */
-  ctx: { baseCurrency: string; intelText: string; openKeys: string[]; dismissedKeys: string[]; today: string; language?: string },
+  ctx: { baseCurrency: string; intelText: string; openKeys: string[]; dismissedKeys: string[]; today: string; language?: string; brief?: PortfolioBrief | null },
 ): LlmMessage[] {
   const summary = data.summary;
   const cash = summary?.cashWeightPercent ?? 0;
@@ -393,6 +383,7 @@ You see weights in percent of the total portfolio, never money amounts. Never wr
 When to suggest:
 - An empty list is a good answer and the expected one for a sound portfolio. Never fill the list to have something to say.
 - Suggest an action only when a specific fact in the data calls for it: a position that dominates the portfolio, a large drift in the allocation, a broken long-term trend, or a material news event for that holding.
+- When a portfolio brief is given, it is the user's goal. Prefer actions that move the portfolio toward the brief, and never suggest one that breaks its constraints.
 - Not a reason: a small tweak, a generic idea such as "diversify more" that fits any portfolio, a short-term price move or RSI reading on its own, or holding cash.
 - Each action must change the weight by at least ${MIN_CHANGE_PP} percentage point. Fewer, larger actions beat many small ones.
 - When the list is empty, "summary" says in 1 or 2 sentences why the portfolio needs no change.
@@ -420,7 +411,7 @@ or, when nothing needs to change:
     : "";
 
   const user = `Date: ${ctx.today}. Base currency: ${ctx.baseCurrency}.
-
+${briefPromptSection(ctx.brief)}
 ## Allocation
 - Cash: ${pct(cash)}
 - Stocks ${pct(summary?.stockWeightPercent ?? 0)}, ETFs ${pct(summary?.etfWeightPercent ?? 0)}, Crypto ${pct(summary?.cryptoWeightPercent ?? 0)}, Private and other ${pct(summary?.otherWeightPercent ?? 0)}
@@ -547,7 +538,9 @@ export class PortfolioSuggestionService {
       appLogger.logStep("warning", "suggestions", "intel_failed", `Suggestion market context failed (${err instanceof Error ? err.name : typeof err})`);
     }
 
-    const messages = buildSuggestionPrompt(data, { baseCurrency, intelText, openKeys, dismissedKeys, today: now.toISOString().slice(0, 10), language: loadConfig().language });
+    const row = portfolioRepo.findById(portfolioId);
+    const brief = row ? readBrief(row) : null;
+    const messages = buildSuggestionPrompt(data, { baseCurrency, intelText, openKeys, dismissedKeys, today: now.toISOString().slice(0, 10), language: loadConfig().language, brief });
     const target = this.llm.resolve({ temperature: 0.2 });
     let raw: Record<string, unknown>;
     const first = await this.llm.chat(messages, { temperature: 0.2 });
