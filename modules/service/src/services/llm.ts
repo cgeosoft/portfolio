@@ -19,10 +19,13 @@ import { CLI_PROVIDER_MODELS, CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL,
 import type { CliProviderStatusResponse } from "portfolio-shared/api-types";
 import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
 import { codexCliComplete, getCodexCliStatus } from "./codex-cli.js";
+import { toPromptSafe, type PromptSafe } from "./llm-privacy.js";
+export { toPromptSafe, type PromptSafe } from "./llm-privacy.js";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  /** Only `toPromptSafe()` makes this type, so every prompt passes the privacy gate. */
+  content: PromptSafe;
 }
 
 export interface LlmChatOptions {
@@ -488,8 +491,8 @@ export class LlmService {
       try {
         const raw = await this.complete(
           [
-            { role: "system", content: "You are a concise assistant." },
-            { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
+            { role: "system", content: toPromptSafe("You are a concise assistant.") },
+            { role: "user", content: toPromptSafe("Say 'LLM connection verified' in exactly those words.") },
           ],
           { ...typed, maxTokens: TEST_INFERENCE_MAX_TOKENS },
         );

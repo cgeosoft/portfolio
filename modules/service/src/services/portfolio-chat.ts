@@ -11,6 +11,7 @@
 
 import { loadConfig } from "../config.js";
 import type { LlmService, LlmMessage } from "./llm.js";
+import { toPromptSafe } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import { buildAssistantMarketContext, type AiContextDeps } from "./ai-context.js";
 import { plainStyle, withLanguageInstruction } from "./output-language.js";
@@ -146,8 +147,8 @@ export class PortfolioChatService {
   ): Promise<{ message: PortfolioChatMessage; conversationId: string; title: string; provider: string; model: string }> {
     const target = this.llm.resolve(options);
     const history: LlmMessage[] = [
-      { role: "system", content: await this.getSystemPrompt(portfolioId) },
-      ...messages.map(({ role, content }) => ({ role, content })),
+      { role: "system", content: toPromptSafe(await this.getSystemPrompt(portfolioId)) },
+      ...messages.map(({ role, content }) => ({ role, content: toPromptSafe(content) })),
     ];
     const reply: PortfolioChatMessage = { role: "assistant", content: await this.llm.chat(history, target) };
 

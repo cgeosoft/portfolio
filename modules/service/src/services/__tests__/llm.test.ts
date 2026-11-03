@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { LlmService, sanitizeLlmResponse, buildOpenAIUrl, requestShapeFor } from "../llm.js";
+import { LlmService, sanitizeLlmResponse, buildOpenAIUrl, requestShapeFor, toPromptSafe } from "../llm.js";
 
 describe("sanitizeLlmResponse: reasoning models", () => {
   it("keeps the answer that follows a closed thinking block", () => {
@@ -329,11 +329,11 @@ describe("chat: rejected request fields", () => {
     try {
       const service = new LlmService();
       const options = { provider: "openai-compatible", model: "future-model-1", baseUrl: "http://127.0.0.1:19103" };
-      expect(await service.chat([{ role: "user", content: "hi" }], options)).toBe("ok");
+      expect(await service.chat([{ role: "user", content: toPromptSafe("hi") }], options)).toBe("ok");
       expect(bodies.length).toBe(2);
       expect("temperature" in bodies[1]!).toBe(false);
       // The next request skips the rejected field straight away.
-      expect(await service.chat([{ role: "user", content: "hi" }], options)).toBe("ok");
+      expect(await service.chat([{ role: "user", content: toPromptSafe("hi") }], options)).toBe("ok");
       expect(bodies.length).toBe(3);
     } finally {
       globalThis.fetch = originalFetch;
@@ -350,7 +350,7 @@ describe("chat: rejected request fields", () => {
     try {
       const service = new LlmService();
       const options = { provider: "openai-compatible", model: "local-model", baseUrl: "http://127.0.0.1:19104" };
-      await expect(service.chat([{ role: "user", content: "hi" }], options)).rejects.toThrow("status 400");
+      await expect(service.chat([{ role: "user", content: toPromptSafe("hi") }], options)).rejects.toThrow("status 400");
       expect(calls).toBe(1);
     } finally {
       globalThis.fetch = originalFetch;

@@ -13,6 +13,7 @@ import * as portfolioRepo from "../db/portfolio.repo.js";
 import type { ReportMetrics } from "../db/report.repo.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
 import { isEnglishOutput, languageInstruction, plainStyle } from "./output-language.js";
+import { toPromptSafe } from "./llm-privacy.js";
 import { t } from "../i18n.js";
 import { localDate } from "./daily-brief.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
@@ -384,8 +385,8 @@ ${languageRule ? `5. ${languageRule}\n` : ""}`;
         try {
           content = await this.llm.chatStream(
             [
-              { role: "system", content: ctx.systemPrompt },
-              { role: "user", content: ctx.userPrompt },
+              { role: "system", content: toPromptSafe(ctx.systemPrompt) },
+              { role: "user", content: toPromptSafe(ctx.userPrompt) },
             ],
             (chunk) => {
               if (session.status !== "running") return;
@@ -518,8 +519,8 @@ ${languageRule ? `5. ${languageRule}\n` : ""}`;
     try {
       content = await this.llm.chat(
         [
-          { role: "system", content: ctx.systemPrompt },
-          { role: "user", content: ctx.userPrompt },
+          { role: "system", content: toPromptSafe(ctx.systemPrompt) },
+          { role: "user", content: toPromptSafe(ctx.userPrompt) },
         ],
         { provider, model, apiKey, baseUrl, isReport: true },
       );

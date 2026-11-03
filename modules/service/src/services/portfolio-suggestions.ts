@@ -35,6 +35,7 @@ import { appLogger } from "../logger.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as suggestionRepo from "../db/suggestion.repo.js";
 import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "./llm.js";
+import { toPromptSafe } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import type { MarketDataCoordinator } from "./market-data.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
@@ -363,7 +364,8 @@ const signedPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 function describeHolding(h: PortfolioHolding): string {
   const parts = [`weight ${pct(h.weightPercent)}`];
   if (h.isPrivate) parts.push("private asset, cannot be traded");
-  else if (h.nativePrice && h.nativeCurrency) parts.push(`price ${h.nativePrice} ${h.nativeCurrency}`);
+  // Only a live market price is public. Without a quote the price is the user's buy price or manual price.
+  else if (h.nativePrice && h.nativeCurrency && !h.quoteMissing && !h.manualPrice) parts.push(`price ${h.nativePrice} ${h.nativeCurrency}`);
   parts.push(`day ${signedPct(h.dayChangePercent)}`, `total gain ${signedPct(h.totalGainLossPercent)}`);
   // Ratios only: the moving averages are in the base currency, the price above in the quote currency.
   if (h.sma200 && h.currentPrice) parts.push(`price vs SMA200 ${signedPct((h.currentPrice / h.sma200 - 1) * 100)}`);
@@ -431,8 +433,8 @@ ${newPositions}
 ${ctx.intelText}`;
 
   return [
-    { role: "system", content: system },
-    { role: "user", content: user },
+    { role: "system", content: toPromptSafe(system) },
+    { role: "user", content: toPromptSafe(user) },
   ];
 }
 
@@ -556,8 +558,8 @@ export class PortfolioSuggestionService {
       const retry = await this.llm.chat(
         [
           ...messages,
-          { role: "assistant", content: first.slice(0, 4000) },
-          { role: "user", content: `${err instanceof Error ? err.message : "Invalid answer"}. Reply again with only the JSON object in the given shape.` },
+          { role: "assistant", content: toPromptSafe(first.slice(0, 4000)) },
+          { role: "user", content: toPromptSafe(`${err instanceof Error ? err.message : "Invalid answer"}. Reply again with only the JSON object in the given shape.`) },
         ],
         { temperature: 0.1 },
       );

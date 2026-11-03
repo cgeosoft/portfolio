@@ -29,6 +29,7 @@ import { sendNtfy } from "../services/ntfy";
 import { OPENROUTER_CALLBACK_PATH, callbackPage, completeOpenRouterConnect, openRouterConnectStatus, startOpenRouterConnect } from "../services/openrouter-connect";
 import * as portfolioMetrics from "../services/portfolio-metrics";
 import { suggestMetricLayout } from "../services/metric-advisor";
+import { toPromptSafe } from "../services/llm-privacy";
 import { getMacroSnapshot } from "../services/intel/macro";
 import { getBenchmarkComparison, getBenchmarkHistory, normalizeBenchmarkRange } from "../services/intel/benchmark";
 import { getHeldMarketStatus } from "../services/intel/market-hours";
@@ -507,8 +508,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     try {
       const result = await llm.chat(
         [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
+          { role: "system", content: toPromptSafe("You are a helpful assistant.") },
+          { role: "user", content: toPromptSafe("Say 'LLM connection verified' in exactly those words.") },
         ],
         { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, maxTokens: 50 },
       );

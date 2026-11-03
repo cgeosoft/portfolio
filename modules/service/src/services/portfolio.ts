@@ -36,6 +36,7 @@ import { rememberJson } from "../json-cache.js";
 import type { SymbolResolver } from "./symbol-resolver.js";
 import { isIsin } from "./providers/identifiers.js";
 import { NotFoundError, ValidationError } from "./errors.js";
+import { rememberPrivateValues } from "./llm-privacy.js";
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 /** How long an expired disk copy counts as fresh in memory while its background refresh runs. */
@@ -472,6 +473,19 @@ export class PortfolioService {
     baseCurrency?: string,
     forceFresh = false,
     /** Quotes from `fetchLiveQuotes()`; a forced build then asks for no quotes of its own. */
+    liveQuotes?: Map<string, YahooQuote>,
+  ): Promise<FinancialPortfolioData> {
+    const data = await this.loadPortfolioData(portfolioOrId, baseCurrency, forceFresh, liveQuotes);
+    // Every prompt is cleaned of these amounts before it reaches a model (llm-privacy.ts).
+    const id = typeof portfolioOrId === "string" ? portfolioOrId : portfolioOrId.id;
+    rememberPrivateValues(`${id}_${data.summary?.baseCurrency ?? ""}`, data);
+    return data;
+  }
+
+  private async loadPortfolioData(
+    portfolioOrId: string | portfolioRepo.PortfolioRow,
+    baseCurrency?: string,
+    forceFresh = false,
     liveQuotes?: Map<string, YahooQuote>,
   ): Promise<FinancialPortfolioData> {
     const portfolio = typeof portfolioOrId === "string" ? portfolioRepo.findById(portfolioOrId) : portfolioOrId;

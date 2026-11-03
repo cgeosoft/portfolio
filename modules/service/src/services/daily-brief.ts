@@ -20,6 +20,7 @@ import { appLogger } from "../logger";
 import * as portfolioRepo from "../db/portfolio.repo";
 import * as conversationRepo from "../db/conversation.repo";
 import type { LlmService, LlmMessage } from "./llm";
+import { toPromptSafe } from "./llm-privacy";
 import type { PortfolioService } from "./portfolio";
 import { formatEventsForPrompt, type AiContextDeps } from "./ai-context";
 import { getCompanyNews } from "./intel/company";
@@ -149,18 +150,20 @@ ${news.join("\n") || "No news available."}${events ? `\n\n=== EVENTS OF HELD SYM
   return [
     {
       role: "system",
-      content: withLanguageInstruction(
-        `You are the portfolio assistant. Write the user's daily brief: a quick overview of what happened in their portfolio during the last trading session.
+      content: toPromptSafe(
+        withLanguageInstruction(
+          `You are the portfolio assistant. Write the user's daily brief: a quick overview of what happened in their portfolio during the last trading session.
 Use ${plainStyle(ctx.language)}. Do not use long dashes. Do not use emojis.
 Use only the data given. Never invent prices, amounts, news or events. Do not give buy or sell advice.
 Output Markdown only, at most 120 words:
 - One bold first line with the portfolio return of the session.
 - Then 2 to 4 short bullet points: the largest moves and their weight, a news item that explains a move when one is given, and any transactions.
 - End with one short line on anything to watch, based only on the data. Name the earnings reports and ex-dividend dates of today and tomorrow when they are given.`,
-        ctx.language,
+          ctx.language,
+        ),
       ),
     },
-    { role: "user", content: `Today is ${today}. Write the daily brief.\n\n${context}` },
+    { role: "user", content: toPromptSafe(`Today is ${today}. Write the daily brief.\n\n${context}`) },
   ];
 }
 
