@@ -1112,10 +1112,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Àkópọ̀"
     suggestions: "Àbá"
-    graph: "Àwòrán ìsopọ̀"
-    history: "Ìtàn"
     reports: "Ìjábọ̀"
   capability:
     not_configured: "Ṣètò olùpèsè AI nínú Ètò, Olùrànlọ́wọ́ AI láti lo atọ́nà àti Àyẹ̀wò Ìtọ́sọ́nà."
@@ -1275,7 +1272,6 @@ analysis:
     title: "Àyẹ̀wò Ìtọ́sọ́nà"
     subtitle: "Olùrànlọ́wọ́ ń kọ́ àwòrán ìsopọ̀ ẹ̀rí yí àpèjúwe àti ìpínkiri ká, lẹ́yìn náà ó kọ àwọn àwárí, àwọn àbá àti ìjábọ̀ kúkúrú."
     start: "Ṣe àyẹ̀wò"
-    runAgain: "Tún ṣe é"
     cancel: "Fagilé"
     watch: "Wo àwòrán ìsopọ̀"
     empty: "Kò sí àyẹ̀wò síbẹ̀. Ìṣiṣẹ́ kan máa gba ìṣẹ́jú díẹ̀; o lè kúrò ní ojú-ìwé yìí nígbà tó ń ṣiṣẹ́."
@@ -1291,8 +1287,6 @@ analysis:
     title: "Ìjábọ̀ kúkúrú"
   graph:
     ariaLabel: "Àwòrán ìsopọ̀ ẹ̀rí àyẹ̀wò"
-    empty: "Ṣe àyẹ̀wò láti rí àwòrán ìsopọ̀ ẹ̀rí rẹ̀."
-    pickRun: "Ìṣiṣẹ́ àyẹ̀wò"
   log:
     title: "Ìgbésẹ̀ ({count})"
     empty: "Kò sí ìgbésẹ̀ àwòṣe síbẹ̀."
@@ -1318,7 +1312,6 @@ analysis:
     showGraph: "Àwòrán ìsopọ̀"
   history:
     empty: "Kò sí ìṣiṣẹ́ àyẹ̀wò síbẹ̀."
-    openGraph: "Àwòrán ìsopọ̀"
     compare: "Fi wéra"
     noPrevious: "Kò sí ìṣiṣẹ́ tó parí ṣáájú láti fi wéra."
     newFindings: "Àwárí tuntun"

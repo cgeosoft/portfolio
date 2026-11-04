@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Áttekintés"
     suggestions: "Javaslatok"
-    graph: "Gráf"
-    history: "Előzmények"
     reports: "Jelentések"
   capability:
     not_configured: "Állítson be egy MI-szolgáltatót a Beállítások, Asszisztens részben a varázsló és az Irányított elemzés használatához."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Irányított elemzés"
     subtitle: "Az asszisztens bizonyítékgráfot épít a profil és az allokáció köré, majd megírja a megállapításokat, a javaslatokat és egy rövid jelentést."
     start: "Elemzés futtatása"
-    runAgain: "Újrafuttatás"
     cancel: "Mégse"
     watch: "Gráf követése"
     empty: "Még nincs elemzés. Egy futtatás néhány percig tart; közben elhagyhatja ezt az oldalt."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Rövid jelentés"
   graph:
     ariaLabel: "Az elemzés bizonyítékgráfja"
-    empty: "Futtasson elemzést a bizonyítékgráf megtekintéséhez."
-    pickRun: "Elemzésfuttatás"
   log:
     title: "Lépések ({count})"
     empty: "Még nincs modelllépés."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Gráf"
   history:
     empty: "Még nincs elemzésfuttatás."
-    openGraph: "Gráf"
     compare: "Összehasonlítás"
     noPrevious: "Nincs korábbi befejezett futtatás az összehasonlításhoz."
     newFindings: "Új megállapítások"

@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Pregled"
     suggestions: "Prijedlozi"
-    graph: "Graf"
-    history: "Povijest"
     reports: "Izvješća"
   capability:
     not_configured: "Postavite pružatelja AI usluge u Postavkama, u odjeljku AI asistent, da biste koristili čarobnjaka i Vođenu analizu."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Vođena analiza"
     subtitle: "Asistent oko smjernica i alokacije gradi graf dokaza, a zatim piše nalaze, prijedloge i kratko izvješće."
     start: "Pokreni analizu"
-    runAgain: "Pokreni ponovno"
     cancel: "Odustani"
     watch: "Prati graf"
     empty: "Još nema analize. Pokretanje traje nekoliko minuta. U međuvremenu možete napustiti ovu stranicu."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Kratko izvješće"
   graph:
     ariaLabel: "Graf dokaza analize"
-    empty: "Pokrenite analizu da biste vidjeli njezin graf dokaza."
-    pickRun: "Pokretanje analize"
   log:
     title: "Koraci ({count})"
     empty: "Model još nije napravio nijedan korak."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Još nema pokretanja analize."
-    openGraph: "Graf"
     compare: "Usporedi"
     noPrevious: "Nema ranijeg završenog pokretanja za usporedbu."
     newFindings: "Novi nalazi"

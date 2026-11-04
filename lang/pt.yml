@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Visão geral"
     suggestions: "Sugestões"
-    graph: "Grafo"
-    history: "Histórico"
     reports: "Relatórios"
   capability:
     not_configured: "Configure um fornecedor de IA em Definições, Assistente de IA para usar o assistente da ficha e a Análise guiada."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Análise guiada"
     subtitle: "O assistente constrói um grafo de evidências em torno da ficha e da alocação, e depois escreve as constatações, as sugestões e um relatório curto."
     start: "Executar análise"
-    runAgain: "Executar novamente"
     cancel: "Cancelar"
     watch: "Ver o grafo"
     empty: "Ainda não há análises. Uma execução demora alguns minutos; pode sair desta página entretanto."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Relatório curto"
   graph:
     ariaLabel: "Grafo de evidências da análise"
-    empty: "Execute uma análise para ver o seu grafo de evidências."
-    pickRun: "Execução da análise"
   log:
     title: "Passos ({count})"
     empty: "Ainda não há passos do modelo."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Grafo"
   history:
     empty: "Ainda não há execuções de análise."
-    openGraph: "Grafo"
     compare: "Comparar"
     noPrevious: "Não há nenhuma execução concluída anterior para comparar."
     newFindings: "Novas constatações"

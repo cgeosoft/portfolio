@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Oversikt"
     suggestions: "Forslag"
-    graph: "Graf"
-    history: "Historikk"
     reports: "Rapporter"
   capability:
     not_configured: "Sett opp en AI-leverandør under Innstillinger, Assistent for å bruke veiviseren og Guidet analyse."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Guidet analyse"
     subtitle: "Assistenten bygger en bevisgraf rundt planen og fordelingen, og skriver deretter funnene, forslagene og en kort rapport."
     start: "Kjør analyse"
-    runAgain: "Kjør igjen"
     cancel: "Avbryt"
     watch: "Følg grafen"
     empty: "Ingen analyse ennå. En kjøring tar noen minutter; du kan forlate siden mens den pågår."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Kort rapport"
   graph:
     ariaLabel: "Bevisgraf for analysen"
-    empty: "Kjør en analyse for å se bevisgrafen."
-    pickRun: "Analysekjøring"
   log:
     title: "Steg ({count})"
     empty: "Ingen modellsteg ennå."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Ingen analysekjøringer ennå."
-    openGraph: "Graf"
     compare: "Sammenlign"
     noPrevious: "Det finnes ingen tidligere fullført kjøring å sammenligne med."
     newFindings: "Nye funn"

@@ -1211,10 +1211,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Przegląd"
     suggestions: "Sugestie"
-    graph: "Graf"
-    history: "Historia"
     reports: "Raporty"
   capability:
     not_configured: "Skonfiguruj dostawcę AI w Ustawieniach, w sekcji Asystent AI, aby używać kreatora i Analizy prowadzonej."
@@ -1374,7 +1371,6 @@ analysis:
     title: "Analiza prowadzona"
     subtitle: "Asystent buduje graf dowodów wokół założeń i alokacji, a potem pisze ustalenia, sugestie i krótki raport."
     start: "Uruchom analizę"
-    runAgain: "Uruchom ponownie"
     cancel: "Anuluj"
     watch: "Obserwuj graf"
     empty: "Brak analizy. Przebieg trwa kilka minut. W tym czasie możesz opuścić tę stronę."
@@ -1390,8 +1386,6 @@ analysis:
     title: "Krótki raport"
   graph:
     ariaLabel: "Graf dowodów analizy"
-    empty: "Uruchom analizę, aby zobaczyć jej graf dowodów."
-    pickRun: "Przebieg analizy"
   log:
     title: "Kroki ({count})"
     empty: "Brak kroków modelu."
@@ -1417,7 +1411,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Brak przebiegów analizy."
-    openGraph: "Graf"
     compare: "Porównaj"
     noPrevious: "Brak wcześniejszego zakończonego przebiegu do porównania."
     newFindings: "Nowe ustalenia"

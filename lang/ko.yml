@@ -1112,10 +1112,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "개요"
     suggestions: "제안"
-    graph: "그래프"
-    history: "기록"
     reports: "보고서"
   capability:
     not_configured: "마법사와 가이드 분석을 사용하려면 설정 → 어시스턴트에서 AI 제공자를 설정하세요."
@@ -1275,7 +1272,6 @@ analysis:
     title: "가이드 분석"
     subtitle: "어시스턴트가 지침과 배분을 중심으로 근거 그래프를 넓힌 뒤 발견 사항, 제안, 짧은 보고서를 작성합니다."
     start: "분석 실행"
-    runAgain: "다시 실행"
     cancel: "취소"
     watch: "그래프 보기"
     empty: "아직 분석이 없습니다. 실행에는 몇 분이 걸리며, 진행 중에 이 페이지를 떠나도 됩니다."
@@ -1291,8 +1287,6 @@ analysis:
     title: "짧은 보고서"
   graph:
     ariaLabel: "분석의 근거 그래프"
-    empty: "분석을 실행하면 근거 그래프를 볼 수 있습니다."
-    pickRun: "분석 실행"
   log:
     title: "단계 ({count})"
     empty: "아직 모델 단계가 없습니다."
@@ -1318,7 +1312,6 @@ analysis:
     showGraph: "그래프"
   history:
     empty: "아직 분석 실행이 없습니다."
-    openGraph: "그래프"
     compare: "비교"
     noPrevious: "비교할 이전 완료 실행이 없습니다."
     newFindings: "새 발견 사항"

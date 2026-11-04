@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Muhtasari"
     suggestions: "Mapendekezo"
-    graph: "Grafu"
-    history: "Historia"
     reports: "Ripoti"
   capability:
     not_configured: "Sanidi mtoa huduma wa AI kwenye Mipangilio, Msaidizi wa AI ili kutumia mwongozo na Uchambuzi Elekezi."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Uchambuzi Elekezi"
     subtitle: "Msaidizi hujenga grafu ya ushahidi kuzunguka maelezo na mgawanyo, kisha huandika matokeo, mapendekezo na ripoti fupi."
     start: "Endesha uchambuzi"
-    runAgain: "Endesha tena"
     cancel: "Ghairi"
     watch: "Tazama grafu"
     empty: "Bado hakuna uchambuzi. Uendeshaji huchukua dakika chache; unaweza kuondoka kwenye ukurasa huu unapoendelea."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Ripoti fupi"
   graph:
     ariaLabel: "Grafu ya ushahidi wa uchambuzi"
-    empty: "Endesha uchambuzi ili kuona grafu yake ya ushahidi."
-    pickRun: "Uendeshaji wa uchambuzi"
   log:
     title: "Hatua ({count})"
     empty: "Bado hakuna hatua ya muundo."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Grafu"
   history:
     empty: "Bado hakuna uendeshaji wa uchambuzi."
-    openGraph: "Grafu"
     compare: "Linganisha"
     noPrevious: "Hakuna uendeshaji uliokamilika awali wa kulinganisha nao."
     newFindings: "Matokeo mapya"

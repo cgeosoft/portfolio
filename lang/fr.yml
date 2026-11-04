@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Vue d'ensemble"
     suggestions: "Suggestions"
-    graph: "Graphe"
-    history: "Historique"
     reports: "Rapports"
   capability:
     not_configured: "Configurez un fournisseur d'IA dans Paramètres, Assistant IA pour utiliser l'assistant de fiche et l'Analyse guidée."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Analyse guidée"
     subtitle: "L'assistant construit un graphe de preuves autour de la fiche et de la répartition, puis rédige les constats, les suggestions et un rapport court."
     start: "Lancer l'analyse"
-    runAgain: "Relancer"
     cancel: "Annuler"
     watch: "Suivre le graphe"
     empty: "Aucune analyse pour l'instant. Une exécution prend quelques minutes ; vous pouvez quitter cette page pendant ce temps."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Rapport court"
   graph:
     ariaLabel: "Graphe des preuves de l'analyse"
-    empty: "Lancez une analyse pour voir son graphe de preuves."
-    pickRun: "Exécution de l'analyse"
   log:
     title: "Étapes ({count})"
     empty: "Aucune étape du modèle pour l'instant."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Graphe"
   history:
     empty: "Aucune exécution d'analyse pour l'instant."
-    openGraph: "Graphe"
     compare: "Comparer"
     noPrevious: "Il n'y a pas d'exécution terminée antérieure à comparer."
     newFindings: "Nouveaux constats"

@@ -1154,10 +1154,7 @@ assistant:
 # ── metrics ──
 analysis:
   sections:
-    overview: "Ülevaade"
     suggestions: "Soovitused"
-    graph: "Graaf"
-    history: "Ajalugu"
     reports: "Aruanded"
   capability:
     not_configured: "Seadista tehisintellekti teenus jaotises Seaded, Assistent, et kasutada viisardit ja Juhitud analüüsi."
@@ -1317,7 +1314,6 @@ analysis:
     title: "Juhitud analüüs"
     subtitle: "Assistent koostab profiili ja varade jaotuse ümber tõendite graafi ning kirjutab seejärel leiud, soovitused ja lühiaruande."
     start: "Käivita analüüs"
-    runAgain: "Käivita uuesti"
     cancel: "Tühista"
     watch: "Jälgi graafi"
     empty: "Analüüsi veel pole. Käivitus võtab paar minutit; võid selle ajal lehelt lahkuda."
@@ -1333,8 +1329,6 @@ analysis:
     title: "Lühiaruanne"
   graph:
     ariaLabel: "Analüüsi tõendite graaf"
-    empty: "Käivita analüüs, et näha selle tõendite graafi."
-    pickRun: "Analüüsi käivitus"
   log:
     title: "Sammud ({count})"
     empty: "Mudeli samme veel pole."
@@ -1360,7 +1354,6 @@ analysis:
     showGraph: "Graaf"
   history:
     empty: "Analüüsi käivitusi veel pole."
-    openGraph: "Graaf"
     compare: "Võrdle"
     noPrevious: "Varasemat lõpetatud käivitust võrdlemiseks pole."
     newFindings: "Uued leiud"

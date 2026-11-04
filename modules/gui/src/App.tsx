@@ -2195,7 +2195,7 @@ export default function App() {
             />
           )}
 
-          {/* TAB: ANALYSIS (Guided Analysis, suggestions, graph, history, reports) */}
+          {/* TAB: ANALYSIS (Guided Analysis runs, suggestions, reports) */}
           {activeTab === "analysis" && (
             <AnalysisTab
               section={guidedSection}

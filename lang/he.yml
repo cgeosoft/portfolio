@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "סקירה"
     suggestions: "הצעות"
-    graph: "גרף"
-    history: "היסטוריה"
     reports: "דוחות"
   capability:
     not_configured: "כדי להשתמש באשף ובניתוח המודרך יש להגדיר ספק AI בהגדרות, עוזר AI."
@@ -1341,7 +1338,6 @@ analysis:
     title: "ניתוח מודרך"
     subtitle: "העוזר בונה גרף ראיות סביב התקציר וההקצאה, ואז כותב את הממצאים, ההצעות ודוח קצר."
     start: "הרצת ניתוח"
-    runAgain: "הרצה חוזרת"
     cancel: "ביטול"
     watch: "צפייה בגרף"
     empty: "אין עדיין ניתוח. הרצה נמשכת כמה דקות; אפשר לעזוב את הדף בזמן שהיא פועלת."
@@ -1357,8 +1353,6 @@ analysis:
     title: "דוח קצר"
   graph:
     ariaLabel: "גרף הראיות של הניתוח"
-    empty: "יש להריץ ניתוח כדי לראות את גרף הראיות שלו."
-    pickRun: "הרצת ניתוח"
   log:
     title: "צעדים ({count})"
     empty: "אין עדיין צעד של המודל."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "גרף"
   history:
     empty: "אין עדיין הרצות ניתוח."
-    openGraph: "גרף"
     compare: "השוואה"
     noPrevious: "אין הרצה מוקדמת שהושלמה להשוואה."
     newFindings: "ממצאים חדשים"

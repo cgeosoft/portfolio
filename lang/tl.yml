@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Pangkalahatang-tanaw"
     suggestions: "Mga Mungkahi"
-    graph: "Graph"
-    history: "Kasaysayan"
     reports: "Mga Report"
   capability:
     not_configured: "Mag-set up ng AI provider sa Mga Setting, AI Assistant para magamit ang wizard at ang Ginabayang Pagsusuri."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Ginabayang Pagsusuri"
     subtitle: "Bumubuo ang assistant ng graph ng ebidensya sa paligid ng brief at alokasyon, pagkatapos ay isinusulat ang mga natuklasan, mga mungkahi at isang maikling report."
     start: "Patakbuhin ang pagsusuri"
-    runAgain: "Patakbuhin muli"
     cancel: "Kanselahin"
     watch: "Panoorin ang graph"
     empty: "Wala pang pagsusuri. Ilang minuto ang isang run; maaari mong iwan ang pahinang ito habang tumatakbo ito."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Maikling report"
   graph:
     ariaLabel: "Graph ng ebidensya ng pagsusuri"
-    empty: "Magpatakbo ng pagsusuri para makita ang graph ng ebidensya nito."
-    pickRun: "Run ng pagsusuri"
   log:
     title: "Mga hakbang ({count})"
     empty: "Wala pang hakbang ng model."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Graph"
   history:
     empty: "Wala pang run ng pagsusuri."
-    openGraph: "Graph"
     compare: "Ihambing"
     noPrevious: "Walang naunang natapos na run na maihahambing."
     newFindings: "Mga bagong natuklasan"

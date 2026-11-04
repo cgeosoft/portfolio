@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Genel bakış"
     suggestions: "Öneriler"
-    graph: "Grafik"
-    history: "Geçmiş"
     reports: "Raporlar"
   capability:
     not_configured: "Sihirbazı ve Rehberli Analizi kullanmak için Ayarlar, Yapay Zekâ Asistanı bölümünde bir yapay zekâ sağlayıcısı ayarlayın."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Rehberli Analiz"
     subtitle: "Asistan tanım ve dağılım etrafında bir kanıt grafiği oluşturur, ardından bulguları, önerileri ve kısa bir rapor yazar."
     start: "Analizi çalıştır"
-    runAgain: "Yeniden çalıştır"
     cancel: "İptal"
     watch: "Grafiği izle"
     empty: "Henüz analiz yok. Bir çalıştırma birkaç dakika sürer; bu sırada sayfadan ayrılabilirsiniz."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Kısa rapor"
   graph:
     ariaLabel: "Analizin kanıt grafiği"
-    empty: "Kanıt grafiğini görmek için bir analiz çalıştırın."
-    pickRun: "Analiz çalıştırması"
   log:
     title: "Adımlar ({count})"
     empty: "Henüz model adımı yok."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Grafik"
   history:
     empty: "Henüz analiz çalıştırması yok."
-    openGraph: "Grafik"
     compare: "Karşılaştır"
     noPrevious: "Karşılaştırılacak daha önce tamamlanmış bir çalıştırma yok."
     newFindings: "Yeni bulgular"

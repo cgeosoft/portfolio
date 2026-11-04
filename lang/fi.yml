@@ -1154,10 +1154,7 @@ assistant:
 # ── metrics ──
 analysis:
   sections:
-    overview: "Yleiskatsaus"
     suggestions: "Ehdotukset"
-    graph: "Graafi"
-    history: "Historia"
     reports: "Raportit"
   capability:
     not_configured: "Määritä tekoälypalveluntarjoaja kohdassa Asetukset, Avustaja, niin voit käyttää ohjattua toimintoa ja Ohjattua analyysiä."
@@ -1317,7 +1314,6 @@ analysis:
     title: "Ohjattu analyysi"
     subtitle: "Avustaja rakentaa näyttögraafin suunnitelman ja jakauman ympärille ja kirjoittaa sitten havainnot, ehdotukset ja lyhyen raportin."
     start: "Suorita analyysi"
-    runAgain: "Suorita uudelleen"
     cancel: "Peruuta"
     watch: "Seuraa graafia"
     empty: "Ei vielä analyysiä. Suoritus kestää muutaman minuutin; voit poistua sivulta sen aikana."
@@ -1333,8 +1329,6 @@ analysis:
     title: "Lyhyt raportti"
   graph:
     ariaLabel: "Analyysin näyttögraafi"
-    empty: "Suorita analyysi nähdäksesi sen näyttögraafin."
-    pickRun: "Analyysin suoritus"
   log:
     title: "Vaiheet ({count})"
     empty: "Ei vielä mallin vaiheita."
@@ -1360,7 +1354,6 @@ analysis:
     showGraph: "Graafi"
   history:
     empty: "Ei vielä analyysin suorituksia."
-    openGraph: "Graafi"
     compare: "Vertaa"
     noPrevious: "Aiempaa valmista suoritusta ei ole vertailtavaksi."
     newFindings: "Uudet havainnot"

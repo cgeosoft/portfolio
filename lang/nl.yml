@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Overzicht"
     suggestions: "Suggesties"
-    graph: "Graaf"
-    history: "Geschiedenis"
     reports: "Rapporten"
   capability:
     not_configured: "Stel een AI-aanbieder in via Instellingen, Assistent om de wizard en Begeleide analyse te gebruiken."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Begeleide analyse"
     subtitle: "De assistent bouwt een bewijsgraaf rond het plan en de allocatie, en schrijft daarna de bevindingen, de suggesties en een kort rapport."
     start: "Analyse uitvoeren"
-    runAgain: "Opnieuw uitvoeren"
     cancel: "Annuleren"
     watch: "Graaf bekijken"
     empty: "Nog geen analyse. Een uitvoering duurt een paar minuten; je kunt deze pagina verlaten terwijl die loopt."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Kort rapport"
   graph:
     ariaLabel: "Bewijsgraaf van de analyse"
-    empty: "Voer een analyse uit om de bewijsgraaf te zien."
-    pickRun: "Analyse-uitvoering"
   log:
     title: "Stappen ({count})"
     empty: "Nog geen modelstap."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Graaf"
   history:
     empty: "Nog geen analyses uitgevoerd."
-    openGraph: "Graaf"
     compare: "Vergelijken"
     noPrevious: "Er is geen eerdere voltooide uitvoering om mee te vergelijken."
     newFindings: "Nieuwe bevindingen"

@@ -1157,10 +1157,7 @@ assistant:
 # ── metrics: dashboard cards and the metric library ───────────────────────
 analysis:
   sections:
-    overview: "Overview"
     suggestions: "Suggestions"
-    graph: "Graph"
-    history: "History"
     reports: "Reports"
   capability:
     not_configured: "Set up an AI provider in Settings, Assistant to use the wizard and Guided Analysis."
@@ -1320,7 +1317,6 @@ analysis:
     title: "Guided Analysis"
     subtitle: "The assistant grows an evidence graph around the brief and the allocation, then writes the findings, the suggestions and a short report."
     start: "Run analysis"
-    runAgain: "Run again"
     cancel: "Cancel"
     watch: "Watch the graph"
     empty: "No analysis yet. A run takes a few minutes; you can leave this page while it works."
@@ -1336,8 +1332,6 @@ analysis:
     title: "Short report"
   graph:
     ariaLabel: "Evidence graph of the analysis"
-    empty: "Run an analysis to see its evidence graph."
-    pickRun: "Analysis run"
   log:
     title: "Steps ({count})"
     empty: "No model step yet."
@@ -1363,7 +1357,6 @@ analysis:
     showGraph: "Graph"
   history:
     empty: "No analysis runs yet."
-    openGraph: "Graph"
     compare: "Compare"
     noPrevious: "There is no earlier completed run to compare with."
     newFindings: "New findings"

@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Übersicht"
     suggestions: "Vorschläge"
-    graph: "Graph"
-    history: "Verlauf"
     reports: "Berichte"
   capability:
     not_configured: "Richten Sie unter Einstellungen, KI-Assistent einen KI-Anbieter ein, um den Steckbrief-Assistenten und die Geführte Analyse zu nutzen."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Geführte Analyse"
     subtitle: "Der Assistent baut um den Steckbrief und die Aufteilung einen Graphen aus Belegen auf und schreibt dann die Befunde, die Vorschläge und einen kurzen Bericht."
     start: "Analyse starten"
-    runAgain: "Erneut starten"
     cancel: "Abbrechen"
     watch: "Graph ansehen"
     empty: "Noch keine Analyse. Ein Lauf dauert einige Minuten. Sie können diese Seite währenddessen verlassen."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Kurzbericht"
   graph:
     ariaLabel: "Graph der Belege der Analyse"
-    empty: "Starten Sie eine Analyse, um ihren Graphen der Belege zu sehen."
-    pickRun: "Analyselauf"
   log:
     title: "Schritte ({count})"
     empty: "Noch kein Modellschritt."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Graph"
   history:
     empty: "Noch keine Analyseläufe."
-    openGraph: "Graph"
     compare: "Vergleichen"
     noPrevious: "Es gibt keinen früheren abgeschlossenen Lauf zum Vergleich."
     newFindings: "Neue Befunde"

@@ -1211,10 +1211,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Přehled"
     suggestions: "Návrhy"
-    graph: "Graf"
-    history: "Historie"
     reports: "Reporty"
   capability:
     not_configured: "Nastavte poskytovatele AI v Nastavení, v sekci AI asistent, abyste mohli používat průvodce a Řízenou analýzu."
@@ -1374,7 +1371,6 @@ analysis:
     title: "Řízená analýza"
     subtitle: "Asistent kolem zadání a alokace postaví graf důkazů a pak napíše zjištění, návrhy a krátký report."
     start: "Spustit analýzu"
-    runAgain: "Spustit znovu"
     cancel: "Zrušit"
     watch: "Sledovat graf"
     empty: "Zatím žádná analýza. Běh trvá několik minut. Mezitím můžete tuto stránku opustit."
@@ -1390,8 +1386,6 @@ analysis:
     title: "Krátký report"
   graph:
     ariaLabel: "Graf důkazů analýzy"
-    empty: "Spusťte analýzu a uvidíte její graf důkazů."
-    pickRun: "Běh analýzy"
   log:
     title: "Kroky ({count})"
     empty: "Zatím žádný krok modelu."
@@ -1417,7 +1411,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Zatím žádné běhy analýzy."
-    openGraph: "Graf"
     compare: "Porovnat"
     noPrevious: "Není žádný dřívější dokončený běh k porovnání."
     newFindings: "Nová zjištění"

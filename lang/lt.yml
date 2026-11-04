@@ -1211,10 +1211,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Apžvalga"
     suggestions: "Pasiūlymai"
-    graph: "Grafas"
-    history: "Istorija"
     reports: "Ataskaitos"
   capability:
     not_configured: "Nustatykite DI teikėją skiltyje Nustatymai, Asistentas, kad galėtumėte naudoti vedlį ir Valdomą analizę."
@@ -1374,7 +1371,6 @@ analysis:
     title: "Valdoma analizė"
     subtitle: "Asistentas aplink profilį ir paskirstymą sukuria įrodymų grafą, tada parašo išvadas, pasiūlymus ir trumpą ataskaitą."
     start: "Vykdyti analizę"
-    runAgain: "Vykdyti dar kartą"
     cancel: "Atšaukti"
     watch: "Stebėti grafą"
     empty: "Analizės dar nėra. Vykdymas trunka kelias minutes; tuo metu galite išeiti iš šio puslapio."
@@ -1390,8 +1386,6 @@ analysis:
     title: "Trumpa ataskaita"
   graph:
     ariaLabel: "Analizės įrodymų grafas"
-    empty: "Vykdykite analizę, kad pamatytumėte jos įrodymų grafą."
-    pickRun: "Analizės vykdymas"
   log:
     title: "Žingsniai ({count})"
     empty: "Modelio žingsnių dar nėra."
@@ -1417,7 +1411,6 @@ analysis:
     showGraph: "Grafas"
   history:
     empty: "Analizės vykdymų dar nėra."
-    openGraph: "Grafas"
     compare: "Palyginti"
     noPrevious: "Nėra ankstesnio baigto vykdymo, su kuriuo būtų galima palyginti."
     newFindings: "Naujos išvados"

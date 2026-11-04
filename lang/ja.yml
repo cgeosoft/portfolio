@@ -1121,10 +1121,7 @@ assistant:
 # ── metrics: dashboard cards and the metric library ───────────────────────
 analysis:
   sections:
-    overview: "概要"
     suggestions: "提案"
-    graph: "グラフ"
-    history: "履歴"
     reports: "レポート"
   capability:
     not_configured: "ウィザードとガイド付き分析を使うには、「設定 → アシスタント」で AI プロバイダーを設定してください。"
@@ -1284,7 +1281,6 @@ analysis:
     title: "ガイド付き分析"
     subtitle: "アシスタントが方針と配分を中心に根拠のグラフを広げ、所見、提案、短いレポートを作成します。"
     start: "分析を実行"
-    runAgain: "再実行"
     cancel: "キャンセル"
     watch: "グラフを見る"
     empty: "まだ分析はありません。実行には数分かかります。実行中はこのページを離れても構いません。"
@@ -1300,8 +1296,6 @@ analysis:
     title: "短いレポート"
   graph:
     ariaLabel: "分析の根拠グラフ"
-    empty: "分析を実行すると根拠グラフが表示されます。"
-    pickRun: "分析の実行"
   log:
     title: "ステップ（{count}）"
     empty: "モデルのステップはまだありません。"
@@ -1327,7 +1321,6 @@ analysis:
     showGraph: "グラフ"
   history:
     empty: "分析の実行はまだありません。"
-    openGraph: "グラフ"
     compare: "比較"
     noPrevious: "比較できる以前の完了した実行がありません。"
     newFindings: "新しい所見"

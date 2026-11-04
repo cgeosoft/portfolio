@@ -1112,10 +1112,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Tổng quan"
     suggestions: "Đề xuất"
-    graph: "Đồ thị"
-    history: "Lịch sử"
     reports: "Báo cáo"
   capability:
     not_configured: "Hãy thiết lập nhà cung cấp AI trong Cài đặt, Trợ lý AI để dùng trình hướng dẫn và Phân tích có hướng dẫn."
@@ -1275,7 +1272,6 @@ analysis:
     title: "Phân tích có hướng dẫn"
     subtitle: "Trợ lý xây dựng một đồ thị bằng chứng quanh bản mô tả và phân bổ, rồi viết các phát hiện, các đề xuất và một báo cáo ngắn."
     start: "Chạy phân tích"
-    runAgain: "Chạy lại"
     cancel: "Hủy"
     watch: "Xem đồ thị"
     empty: "Chưa có phân tích. Một lần chạy mất vài phút; bạn có thể rời trang này trong lúc chạy."
@@ -1291,8 +1287,6 @@ analysis:
     title: "Báo cáo ngắn"
   graph:
     ariaLabel: "Đồ thị bằng chứng của phân tích"
-    empty: "Hãy chạy một phân tích để xem đồ thị bằng chứng."
-    pickRun: "Lần phân tích"
   log:
     title: "Các bước ({count})"
     empty: "Chưa có bước nào của mô hình."
@@ -1318,7 +1312,6 @@ analysis:
     showGraph: "Đồ thị"
   history:
     empty: "Chưa có lần phân tích nào."
-    openGraph: "Đồ thị"
     compare: "So sánh"
     noPrevious: "Không có lần chạy hoàn tất nào trước đó để so sánh."
     newFindings: "Phát hiện mới"

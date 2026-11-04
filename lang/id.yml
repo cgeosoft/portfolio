@@ -1112,10 +1112,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Ringkasan"
     suggestions: "Saran"
-    graph: "Grafik"
-    history: "Riwayat"
     reports: "Laporan"
   capability:
     not_configured: "Siapkan penyedia AI di Pengaturan, Asisten AI untuk memakai panduan dan Analisis Terpandu."
@@ -1275,7 +1272,6 @@ analysis:
     title: "Analisis Terpandu"
     subtitle: "Asisten membangun grafik bukti di sekitar profil dan alokasi, lalu menulis temuan, saran, dan laporan singkat."
     start: "Jalankan analisis"
-    runAgain: "Jalankan lagi"
     cancel: "Batal"
     watch: "Lihat grafik"
     empty: "Belum ada analisis. Satu proses memakan beberapa menit; Anda dapat meninggalkan halaman ini selama berjalan."
@@ -1291,8 +1287,6 @@ analysis:
     title: "Laporan singkat"
   graph:
     ariaLabel: "Grafik bukti analisis"
-    empty: "Jalankan analisis untuk melihat grafik buktinya."
-    pickRun: "Proses analisis"
   log:
     title: "Langkah ({count})"
     empty: "Belum ada langkah model."
@@ -1318,7 +1312,6 @@ analysis:
     showGraph: "Grafik"
   history:
     empty: "Belum ada proses analisis."
-    openGraph: "Grafik"
     compare: "Bandingkan"
     noPrevious: "Tidak ada proses selesai sebelumnya untuk dibandingkan."
     newFindings: "Temuan baru"

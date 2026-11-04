@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Prezentare generală"
     suggestions: "Sugestii"
-    graph: "Graf"
-    history: "Istoric"
     reports: "Rapoarte"
   capability:
     not_configured: "Configurați un furnizor AI în Setări, Asistent pentru a folosi expertul și Analiza ghidată."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Analiză ghidată"
     subtitle: "Asistentul construiește un graf de dovezi în jurul profilului și al alocării, apoi scrie constatările, sugestiile și un raport scurt."
     start: "Rulare analiză"
-    runAgain: "Rulare din nou"
     cancel: "Anulare"
     watch: "Urmăriți graful"
     empty: "Nicio analiză încă. O rulare durează câteva minute; puteți părăsi pagina între timp."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Raport scurt"
   graph:
     ariaLabel: "Graful de dovezi al analizei"
-    empty: "Rulați o analiză pentru a vedea graful de dovezi."
-    pickRun: "Rularea analizei"
   log:
     title: "Pași ({count})"
     empty: "Niciun pas al modelului încă."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Nicio rulare a analizei încă."
-    openGraph: "Graf"
     compare: "Comparare"
     noPrevious: "Nu există o rulare finalizată anterioară pentru comparare."
     newFindings: "Constatări noi"

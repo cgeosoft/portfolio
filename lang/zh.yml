@@ -1121,10 +1121,7 @@ assistant:
 # ── metrics: dashboard cards and the metric library ───────────────────────
 analysis:
   sections:
-    overview: "概览"
     suggestions: "建议"
-    graph: "图谱"
-    history: "历史"
     reports: "报告"
   capability:
     not_configured: "请在“设置 → 助手”中设置 AI 提供商，以使用向导和引导式分析。"
@@ -1284,7 +1281,6 @@ analysis:
     title: "引导式分析"
     subtitle: "助手围绕纲要和配置构建证据图谱，然后写出发现、建议和一份简短报告。"
     start: "运行分析"
-    runAgain: "再次运行"
     cancel: "取消"
     watch: "查看图谱"
     empty: "尚无分析。运行需要几分钟；运行期间您可以离开此页面。"
@@ -1300,8 +1296,6 @@ analysis:
     title: "简短报告"
   graph:
     ariaLabel: "分析的证据图谱"
-    empty: "运行分析以查看其证据图谱。"
-    pickRun: "分析运行"
   log:
     title: "步骤（{count}）"
     empty: "尚无模型步骤。"
@@ -1327,7 +1321,6 @@ analysis:
     showGraph: "图谱"
   history:
     empty: "尚无分析运行。"
-    openGraph: "图谱"
     compare: "比较"
     noPrevious: "没有可比较的较早已完成运行。"
     newFindings: "新发现"

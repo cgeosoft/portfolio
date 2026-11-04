@@ -34,7 +34,7 @@ interface SuggestedActionsCardProps {
   suggestions: GetSuggestionsResponse | null;
   onSuggestionsChange: (data: GetSuggestionsResponse) => void;
   /** Opens the Analysis tab, on a page. */
-  onOpenAnalysis: (section: "overview" | "suggestions" | "graph") => void;
+  onOpenAnalysis: (section: "runs" | "suggestions") => void;
   onOpenSettings: () => void;
 }
 
@@ -115,7 +115,9 @@ export function SuggestedActionsCard({ portfolioId, portfolioName, portfolioData
       const res = await api.startAnalysisRun(portfolioId, currency);
       activeRef.current = res.run.id;
       setActiveRunId(res.run.id);
-      onOpenAnalysis("overview");
+      onOpenAnalysis("runs");
+      // The Analysis tab mounts first, then opens the new run.
+      setTimeout(() => openAnalysisNode({ runId: res.run.id }), 0);
     } catch (e) {
       showToast(e instanceof Error ? e.message : String(e), "error");
     } finally {
@@ -206,7 +208,7 @@ export function SuggestedActionsCard({ portfolioId, portfolioName, portfolioData
                     <button
                       type="button"
                       onClick={() => {
-                        onOpenAnalysis("graph");
+                        onOpenAnalysis("runs");
                         // The Analysis tab mounts first, then picks up the request.
                         setTimeout(() => openAnalysisNode({ runId: s.runId, suggestionId: s.id }), 0);
                       }}

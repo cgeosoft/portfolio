@@ -1145,10 +1145,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Översikt"
     suggestions: "Förslag"
-    graph: "Graf"
-    history: "Historik"
     reports: "Rapporter"
   capability:
     not_configured: "Konfigurera en AI-leverantör under Inställningar, Assistent för att använda guiden och Guidad analys."
@@ -1308,7 +1305,6 @@ analysis:
     title: "Guidad analys"
     subtitle: "Assistenten bygger en bevisgraf kring planen och fördelningen och skriver sedan iakttagelserna, förslagen och en kort rapport."
     start: "Kör analys"
-    runAgain: "Kör igen"
     cancel: "Avbryt"
     watch: "Följ grafen"
     empty: "Ingen analys ännu. En körning tar några minuter; du kan lämna sidan medan den pågår."
@@ -1324,8 +1320,6 @@ analysis:
     title: "Kort rapport"
   graph:
     ariaLabel: "Analysens bevisgraf"
-    empty: "Kör en analys för att se dess bevisgraf."
-    pickRun: "Analyskörning"
   log:
     title: "Steg ({count})"
     empty: "Inget modellsteg ännu."
@@ -1351,7 +1345,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Inga analyskörningar ännu."
-    openGraph: "Graf"
     compare: "Jämför"
     noPrevious: "Det finns ingen tidigare slutförd körning att jämföra med."
     newFindings: "Nya iakttagelser"

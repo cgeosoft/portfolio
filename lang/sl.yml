@@ -1211,10 +1211,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Pregled"
     suggestions: "Predlogi"
-    graph: "Graf"
-    history: "Zgodovina"
     reports: "Poročila"
   capability:
     not_configured: "Nastavite ponudnika UI v Nastavitvah, v razdelku Pomočnik UI, da lahko uporabljate čarovnika in Vodeno analizo."
@@ -1374,7 +1371,6 @@ analysis:
     title: "Vodena analiza"
     subtitle: "Pomočnik okoli izhodišč in alokacije zgradi graf dokazov, nato napiše ugotovitve, predloge in kratko poročilo."
     start: "Zaženi analizo"
-    runAgain: "Zaženi znova"
     cancel: "Prekliči"
     watch: "Spremljaj graf"
     empty: "Analize še ni. Zagon traja nekaj minut. Medtem lahko zapustite to stran."
@@ -1390,8 +1386,6 @@ analysis:
     title: "Kratko poročilo"
   graph:
     ariaLabel: "Graf dokazov analize"
-    empty: "Zaženite analizo, da vidite njen graf dokazov."
-    pickRun: "Zagon analize"
   log:
     title: "Koraki ({count})"
     empty: "Model še ni naredil nobenega koraka."
@@ -1417,7 +1411,6 @@ analysis:
     showGraph: "Graf"
   history:
     empty: "Zagonov analize še ni."
-    openGraph: "Graf"
     compare: "Primerjaj"
     noPrevious: "Ni prejšnjega končanega zagona za primerjavo."
     newFindings: "Nove ugotovitve"

@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Panoramica"
     suggestions: "Suggerimenti"
-    graph: "Grafo"
-    history: "Cronologia"
     reports: "Report"
   capability:
     not_configured: "Configura un provider IA in Impostazioni, Assistente IA per usare la procedura guidata e l'Analisi guidata."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Analisi guidata"
     subtitle: "L'assistente costruisce un grafo di prove attorno alla scheda e all'allocazione, poi scrive i risultati, i suggerimenti e un report breve."
     start: "Avvia l'analisi"
-    runAgain: "Avvia di nuovo"
     cancel: "Annulla"
     watch: "Segui il grafo"
     empty: "Nessuna analisi ancora. Un'esecuzione richiede alcuni minuti; puoi lasciare questa pagina nel frattempo."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Report breve"
   graph:
     ariaLabel: "Grafo delle prove dell'analisi"
-    empty: "Avvia un'analisi per vedere il suo grafo di prove."
-    pickRun: "Esecuzione dell'analisi"
   log:
     title: "Passi ({count})"
     empty: "Nessun passo del modello ancora."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Grafo"
   history:
     empty: "Nessuna esecuzione di analisi ancora."
-    openGraph: "Grafo"
     compare: "Confronta"
     noPrevious: "Non c'è un'esecuzione completata precedente con cui confrontare."
     newFindings: "Nuovi risultati"

@@ -1178,10 +1178,7 @@ assistant:
 
 analysis:
   sections:
-    overview: "Pārskats"
     suggestions: "Ieteikumi"
-    graph: "Grafs"
-    history: "Vēsture"
     reports: "Pārskati"
   capability:
     not_configured: "Iestatiet MI pakalpojumu sniedzēju sadaļā Iestatījumi, Asistents, lai izmantotu vedni un Vadīto analīzi."
@@ -1341,7 +1338,6 @@ analysis:
     title: "Vadītā analīze"
     subtitle: "Asistents ap profilu un sadalījumu izveido pierādījumu grafu, tad uzraksta secinājumus, ieteikumus un īsu pārskatu."
     start: "Palaist analīzi"
-    runAgain: "Palaist vēlreiz"
     cancel: "Atcelt"
     watch: "Skatīt grafu"
     empty: "Analīzes vēl nav. Palaišana aizņem dažas minūtes; tās laikā varat pamest šo lapu."
@@ -1357,8 +1353,6 @@ analysis:
     title: "Īss pārskats"
   graph:
     ariaLabel: "Analīzes pierādījumu grafs"
-    empty: "Palaidiet analīzi, lai redzētu tās pierādījumu grafu."
-    pickRun: "Analīzes palaišana"
   log:
     title: "Soļi ({count})"
     empty: "Modeļa soļu vēl nav."
@@ -1384,7 +1378,6 @@ analysis:
     showGraph: "Grafs"
   history:
     empty: "Analīzes palaišanu vēl nav."
-    openGraph: "Grafs"
     compare: "Salīdzināt"
     noPrevious: "Nav agrākas pabeigtas palaišanas, ar ko salīdzināt."
     newFindings: "Jauni secinājumi"
