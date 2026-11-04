@@ -18,7 +18,7 @@ import { getDatabase, closeDatabase, getDatabasePath } from "./db/database";
 import * as portfolioRepo from "./db/portfolio.repo";
 import * as txRepo from "./db/transaction.repo";
 import * as marketCache from "./db/market-cache.repo";
-import { loadConfig, updateConfig } from "./config";
+import { loadConfig, refreshAutostart, updateConfig } from "./config";
 import { getAppVersion, getEnvironmentName } from "./environment";
 import { createServices } from "./services/container";
 import { telemetry } from "./services/telemetry";
@@ -50,6 +50,7 @@ const dbTimer = appLogger.startTimer("db", "open", `Opening ${getDatabasePath()}
 getDatabase();
 loadConfig();
 writeDesktopSettingsFile();
+refreshAutostart();
 authService.prune();
 dbTimer.end("success", `Database ready (${portfolioRepo.findAll().length} portfolios, ${txRepo.countTotal()} transactions)`);
 

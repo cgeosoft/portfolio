@@ -1,5 +1,6 @@
 /**
- * Window geometry persisted by the desktop shell in `<data>/window-state.json`.
+ * Window geometry persisted by the desktop shell in `<data>/window-state.json`, and whether the
+ * window was last hidden in the tray (a launch at login then starts in the tray).
  * The service knows nothing about windows.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -12,6 +13,8 @@ export interface WindowStateConfig {
   width?: number;
   height?: number;
   isMaximized?: boolean;
+  /** The window was hidden in the tray, not shown, when the app last ran. */
+  inTray?: boolean;
 }
 
 export const MIN_WINDOW_WIDTH = 400;
@@ -25,6 +28,7 @@ export const MAX_WINDOW_COORD = 30000;
 export interface NormalizedWindowState {
   frame: { width: number; height: number; x?: number; y?: number };
   isMaximized: boolean;
+  inTray: boolean;
 }
 
 export interface WindowTarget {
@@ -47,7 +51,7 @@ export function normalizeWindowState(saved?: WindowStateConfig): NormalizedWindo
     x = Math.round(saved!.x!);
     y = Math.round(saved!.y!);
   }
-  return { frame: { width, height, x, y }, isMaximized: Boolean(saved?.isMaximized) };
+  return { frame: { width, height, x, y }, isMaximized: Boolean(saved?.isMaximized), inTray: saved?.inTray === true };
 }
 
 export function readWindowState(file: string): WindowStateConfig | undefined {
@@ -68,6 +72,7 @@ export function writeWindowState(file: string, state: WindowStateConfig): void {
 export class WindowStateManager {
   private normalBounds: { width: number; height: number; x?: number; y?: number };
   private isCurrentlyMaximized: boolean;
+  private isInTray: boolean;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -78,6 +83,7 @@ export class WindowStateManager {
     const normalized = normalizeWindowState(initialState);
     this.normalBounds = { ...normalized.frame };
     this.isCurrentlyMaximized = normalized.isMaximized;
+    this.isInTray = normalized.inTray;
   }
 
   getNormalBounds(): { width: number; height: number; x?: number; y?: number } {
@@ -86,6 +92,17 @@ export class WindowStateManager {
 
   isMaximized(): boolean {
     return this.isCurrentlyMaximized;
+  }
+
+  inTray(): boolean {
+    return this.isInTray;
+  }
+
+  /** Records whether the window is hidden in the tray and saves at once (the app may quit next). */
+  setInTray(inTray: boolean): void {
+    if (this.isInTray === inTray) return;
+    this.isInTray = inTray;
+    this.flushSave();
   }
 
   updateFromWindow(window: WindowTarget): void {
@@ -119,7 +136,7 @@ export class WindowStateManager {
       this.saveTimer = null;
     }
     try {
-      this.onPersist({ ...this.normalBounds, isMaximized: this.isCurrentlyMaximized });
+      this.onPersist({ ...this.normalBounds, isMaximized: this.isCurrentlyMaximized, inTray: this.isInTray });
     } catch {
       // Persisting is best effort.
     }

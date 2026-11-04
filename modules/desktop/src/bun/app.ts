@@ -102,6 +102,17 @@ export function simulatedVersion(): string | undefined {
 }
 
 /**
+ * The variable the Linux autostart entry sets (`Exec=env PORTFOLIO_AUTOSTART=1 ...`, written by
+ * `syncAutostart` in `modules/service/src/config.ts`). Keep the two in step.
+ */
+export const AUTOSTART_ENV = "PORTFOLIO_AUTOSTART";
+
+/** True when the desktop session started the app at login, not the user. */
+export function launchedAtLogin(): boolean {
+  return process.env[AUTOSTART_ENV] === "1";
+}
+
+/**
  * The user data directory, the same in development and in the installed app. It holds
  * `window-state.json`, `desktop-settings.json` (written by the service) and `logs/`. Keep it in
  * step with the data directory rule in `modules/service/src/paths.ts`: Linux

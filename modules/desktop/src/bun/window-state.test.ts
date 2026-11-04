@@ -65,7 +65,7 @@ describe("WindowStateManager", () => {
     const manager = new WindowStateManager(undefined, (state) => saved.push(state), 0);
     manager.updateFromWindow(window({ x: 5, y: 6, width: 900, height: 600 }));
     manager.flushSave();
-    expect(saved.at(-1)).toEqual({ x: 5, y: 6, width: 900, height: 600, isMaximized: false });
+    expect(saved.at(-1)).toEqual({ x: 5, y: 6, width: 900, height: 600, isMaximized: false, inTray: false });
   });
 
   it("keeps the last normal bounds while the window is maximized", () => {
@@ -73,7 +73,7 @@ describe("WindowStateManager", () => {
     const manager = new WindowStateManager({ width: 1000, height: 700, x: 1, y: 2 }, (state) => saved.push(state), 0);
     manager.updateFromWindow(window({ x: 0, y: 0, width: 1920, height: 1080 }, true));
     manager.flushSave();
-    expect(saved.at(-1)).toEqual({ x: 1, y: 2, width: 1000, height: 700, isMaximized: true });
+    expect(saved.at(-1)).toEqual({ x: 1, y: 2, width: 1000, height: 700, isMaximized: true, inTray: false });
   });
 
   it("takes the new normal bounds when the window is unmaximized", () => {
@@ -82,7 +82,7 @@ describe("WindowStateManager", () => {
     expect(manager.isMaximized()).toBe(true);
     manager.updateFromWindow(window({ x: 120, y: 90, width: 1050, height: 720 }));
     manager.flushSave();
-    expect(saved.at(-1)).toEqual({ x: 120, y: 90, width: 1050, height: 720, isMaximized: false });
+    expect(saved.at(-1)).toEqual({ x: 120, y: 90, width: 1050, height: 720, isMaximized: false, inTray: false });
   });
 
   it("ignores a window without a native handle", () => {
@@ -183,7 +183,7 @@ describe("WindowStateManager more", () => {
     const manager = new WindowStateManager({ width: 1000, height: 700, x: 1, y: 2 }, (state) => saved.push(state), 0);
     manager.updateFromWindow(window({ x: 0, y: 0, width: 300, height: 200 }));
     manager.flushSave();
-    expect(saved.at(-1)).toEqual({ x: 1, y: 2, width: 1000, height: 700, isMaximized: false });
+    expect(saved.at(-1)).toEqual({ x: 1, y: 2, width: 1000, height: 700, isMaximized: false, inTray: false });
   });
 
   it("rounds frame values", () => {
@@ -191,7 +191,7 @@ describe("WindowStateManager more", () => {
     const manager = new WindowStateManager(undefined, (state) => saved.push(state), 0);
     manager.updateFromWindow(window({ x: 10.4, y: 20.6, width: 900.5, height: 600.49 }));
     manager.flushSave();
-    expect(saved.at(-1)).toEqual({ x: 10, y: 21, width: 901, height: 600, isMaximized: false });
+    expect(saved.at(-1)).toEqual({ x: 10, y: 21, width: 901, height: 600, isMaximized: false, inTray: false });
   });
 
   it("debounces a burst of updates into one save", async () => {
@@ -243,5 +243,33 @@ describe("WindowStateManager more", () => {
     const bounds = manager.getNormalBounds();
     bounds.width = 1;
     expect(manager.getNormalBounds().width).toBe(1000);
+  });
+});
+
+describe("tray state", () => {
+  it("reads inTray only when it is exactly true", () => {
+    expect(normalizeWindowState(undefined).inTray).toBe(false);
+    expect(normalizeWindowState({ inTray: true }).inTray).toBe(true);
+    expect(normalizeWindowState({ inTray: false }).inTray).toBe(false);
+    expect(normalizeWindowState({ inTray: "yes" as any }).inTray).toBe(false);
+  });
+
+  it("starts from the saved flag and saves each change at once", () => {
+    const saved: WindowStateConfig[] = [];
+    const manager = new WindowStateManager({ width: 1000, height: 700, inTray: true }, (state) => saved.push(state), 10_000);
+    expect(manager.inTray()).toBe(true);
+    manager.setInTray(true);
+    expect(saved).toHaveLength(0);
+    manager.setInTray(false);
+    expect(saved).toEqual([{ width: 1000, height: 700, x: undefined, y: undefined, isMaximized: false, inTray: false }]);
+    manager.setInTray(true);
+    expect(saved.at(-1)?.inTray).toBe(true);
+    expect(manager.inTray()).toBe(true);
+  });
+
+  it("round-trips through the file", () => {
+    const file = join(tempDir(), "window-state.json");
+    writeWindowState(file, { width: 1000, height: 700, isMaximized: false, inTray: true });
+    expect(normalizeWindowState(readWindowState(file)).inTray).toBe(true);
   });
 });
