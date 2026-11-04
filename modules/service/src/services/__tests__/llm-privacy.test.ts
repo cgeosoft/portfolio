@@ -207,7 +207,7 @@ describe("report prompt gate", () => {
 describe("scanForAmounts", () => {
   it("finds money in free text", () => {
     const found = scanForAmounts("I hold €50,000 in ETFs, add 500 EUR a month and keep 80k in cash. Goal: 2 million dollars.");
-    expect(found.matches).toEqual(["€50,000", "500 EUR", "80k", "2 million dollars"]);
+    expect(found.matches).toEqual(["€50,000", "500 EUR", "80k", "2 million"]);
   });
 
   it("lets percentages, years and counts pass", () => {

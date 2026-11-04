@@ -355,7 +355,7 @@ export function AnalysisGraph({ nodes, edges, selectedId, onSelect, highlight, h
       if (cy.getElementById(source).empty() || cy.getElementById(target).empty()) continue;
       const edge = cy.add(definition);
       edge.style("opacity", 0);
-      edge.animate({ style: { opacity: edgeOpacity(definition.data) } }, { duration: EDGE_MS, easing: "ease-out", complete: () => void (edge.removed() || edge.removeStyle("opacity")) });
+      edge.animate({ style: { opacity: edgeOpacity(definition.data as { type?: string; tree?: number }) } }, { duration: EDGE_MS, easing: "ease-out", complete: () => void (edge.removed() || edge.removeStyle("opacity")) });
     }
   };
 
