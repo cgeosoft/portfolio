@@ -35,6 +35,7 @@ import { appLogger } from "../logger.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
 import * as suggestionRepo from "../db/suggestion.repo.js";
 import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "./llm.js";
+import { assertNoLedgerAmounts } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import type { MarketDataCoordinator } from "./market-data.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
@@ -546,6 +547,7 @@ export class PortfolioSuggestionService {
     }
 
     const messages = buildSuggestionPrompt(data, { baseCurrency, intelText, openKeys, dismissedKeys, today: now.toISOString().slice(0, 10), language: loadConfig().language });
+    assertNoLedgerAmounts(messages, data, "suggestions");
     const target = this.llm.resolve({ temperature: 0.2 });
     let raw: Record<string, unknown>;
     const first = await this.llm.chat(messages, { temperature: 0.2 });
