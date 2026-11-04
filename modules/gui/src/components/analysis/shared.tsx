@@ -68,7 +68,8 @@ export function capabilityNote(capability: AiCapabilityResponse | null): string 
 function token(name: string, fallback: string): string {
   if (typeof document === "undefined") return fallback;
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value ? `rgb(${value})` : fallback;
+  // Cytoscape only parses the comma form; some tokens are space separated.
+  return value ? `rgb(${value.split(/[\s,]+/).join(", ")})` : fallback;
 }
 
 export interface GraphPalette {

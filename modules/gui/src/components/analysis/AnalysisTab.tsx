@@ -137,7 +137,8 @@ function useRuns(portfolioId: string | null) {
     try {
       setDetail(await api.getAnalysisRun(runId));
     } catch {
-      setDetail(null);
+      // A failed poll keeps the open run on screen; the next one tries again.
+      setDetail((current) => (current?.run.id === runId ? current : null));
     }
   }, [runId]);
 
