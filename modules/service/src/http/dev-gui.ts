@@ -114,7 +114,7 @@ export const devGuiWebSocket: WebSocketHandler<SocketData> = {
     upstream.binaryType = "arraybuffer";
     ws.data.upstream = upstream;
     upstream.onopen = () => {
-      for (const message of ws.data.pending) upstream.send(message);
+      for (const message of ws.data.pending) upstream.send(message as string | Uint8Array<ArrayBuffer>);
       ws.data.pending = [];
     };
     upstream.onmessage = (event) => {
