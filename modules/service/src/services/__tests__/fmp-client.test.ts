@@ -1,6 +1,6 @@
 /** FmpService beyond getEodChart: request building, caching, error classification, quotes, charts, search and news. */
 import { describe, it, expect, beforeEach, afterEach, mock, setSystemTime } from "bun:test";
-import { FmpService, redactFmpSecrets } from "../fmp";
+import { FmpService, eodAskFrom, eodTtl, redactFmpSecrets } from "../fmp";
 import * as marketCache from "../../db/market-cache.repo";
 import { loadConfig, saveConfig } from "../../config";
 
@@ -69,13 +69,19 @@ describe("get() request building and caching", () => {
   });
 
   it("caches under the sorted URL, refetches when forced and never caches with ttl 0", async () => {
+    const start = Date.parse("2026-03-16T10:00:00Z");
+    setSystemTime(new Date(start));
     const calls = stubFetch(() => Response.json([{ ok: 1 }]));
     const fmp = new KeyedFmp("http://fmp.test");
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, 60000);
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, 120_000);
     expect(marketCache.get("fmp:/zq7-q?a=x&b=2")?.data).toEqual([{ ok: 1 }]);
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, 60000);
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, 120_000);
     expect(calls.length).toBe(1);
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: 60000, forceFresh: true });
+    // A forced refresh of an entry younger than a minute reuses it.
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: 120_000, forceFresh: true });
+    expect(calls.length).toBe(1);
+    setSystemTime(new Date(start + 61_000));
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: 120_000, forceFresh: true });
     expect(calls.length).toBe(2);
 
     await fmp.get("/zq7-nocache", {}, 0);
@@ -281,7 +287,8 @@ describe("daily chart with the live quote", () => {
     const calls = chartRouter(11);
     const chart = await new KeyedFmp("http://fmp.test").getChart("zqlive", "5d", "1d");
     const eod = calls.find((c) => c.url.pathname === "/historical-price-eod/full");
-    expect(eod?.url.searchParams.get("from")).toBe("2026-03-01");
+    // Every range up to a year shares the 1y request.
+    expect(eod?.url.searchParams.get("from")).toBe("2025-03-01");
     expect(chart).toMatchObject({
       symbol: "ZQLIVE",
       currency: "EUR",
@@ -389,5 +396,97 @@ describe("search, news, redaction", () => {
   it("redacts the key from text and leaves very short keys alone", () => {
     expect(redactFmpSecrets("https://x?apikey=SECRET&a=1 and SECRET", "SECRET")).toBe("https://x?apikey=***&a=1 and ***");
     expect(redactFmpSecrets("k=abc", "abc")).toBe("k=abc");
+  });
+});
+
+describe("request limits", () => {
+  it("does not ask again for a symbol a batch quote left out, even on a forced refresh", async () => {
+    const calls = stubFetch((url) => {
+      if (url.pathname === "/batch-quote") return Response.json([{ symbol: "ZQHAVE", price: 10 }]);
+      return Response.json([]);
+    });
+    const fmp = new KeyedFmp("http://fmp.test");
+    const start = Date.parse("2026-03-16T10:00:00Z");
+    setSystemTime(new Date(start));
+    expect([...(await fmp.getBatchQuotes(["ZQHAVE", "ZQGONE"])).keys()]).toEqual(["ZQHAVE"]);
+    expect(calls.length).toBe(1);
+
+    // Two minutes later a forced refresh asks for the known symbol only.
+    setSystemTime(new Date(start + 2 * 60_000));
+    await fmp.getBatchQuotes(["ZQHAVE", "ZQGONE"], true);
+    expect(calls.length).toBe(2);
+    expect(calls[1]!.url.searchParams.get("symbols")).toBe("ZQHAVE");
+
+    // After an hour the missing symbol is tried again.
+    setSystemTime(new Date(start + 61 * 60_000));
+    await fmp.getBatchQuotes(["ZQGONE"]);
+    expect(calls.length).toBe(3);
+    expect(calls[2]!.url.searchParams.get("symbols")).toBe("ZQGONE");
+  });
+
+  it("does not resend a failed request for two minutes", async () => {
+    let status = 500;
+    const calls = stubFetch(() => (status === 200 ? Response.json([{ ok: 1 }]) : new Response("boom", { status })));
+    const fmp = new KeyedFmp("http://fmp.test");
+    const start = Date.parse("2026-03-16T10:00:00Z");
+    setSystemTime(new Date(start));
+    expect(await fmp.get("/zq7-fail", { symbol: "S" }, 60_000)).toBeNull();
+    expect(await fmp.get("/zq7-fail", { symbol: "S" }, 60_000)).toBeNull();
+    expect(calls.length).toBe(1);
+
+    status = 200;
+    setSystemTime(new Date(start + 2 * 60_000 + 1));
+    expect(await fmp.get("/zq7-fail", { symbol: "S" }, 60_000)).toEqual([{ ok: 1 }]);
+    expect(calls.length).toBe(2);
+  });
+
+  it("asks for daily history once per UTC day and shares it between ranges up to a year", async () => {
+    const calls = stubFetch((url) => {
+      if (url.pathname === "/historical-price-eod/full") return Response.json([{ date: "2026-03-13", close: 11 }]);
+      if (url.pathname === "/profile") return Response.json([{ symbol: url.searchParams.get("symbol"), currency: "USD" }]);
+      if (url.pathname === "/batch-quote") return Response.json([{ symbol: url.searchParams.get("symbols"), price: 11, previousClose: 11 }]);
+      return Response.json([]);
+    });
+    const fmp = new KeyedFmp("http://fmp.test");
+    const eodCalls = () => calls.filter((c) => c.url.pathname === "/historical-price-eod/full").length;
+
+    setSystemTime(new Date("2026-03-16T08:00:00Z"));
+    for (const range of ["5d", "1mo", "3mo", "ytd", "1y"]) await fmp.getChart("ZQDAY", range, "1d");
+    expect(eodCalls()).toBe(1);
+
+    // Later the same day: still the cached history.
+    setSystemTime(new Date("2026-03-16T23:00:00Z"));
+    await fmp.getChart("ZQDAY", "1y", "1d");
+    expect(eodCalls()).toBe(1);
+
+    // The next UTC day asks again.
+    setSystemTime(new Date("2026-03-17T00:30:00Z"));
+    await fmp.getChart("ZQDAY", "1y", "1d");
+    expect(eodCalls()).toBe(2);
+  });
+
+  it("keeps the request counts by endpoint path, without symbols", async () => {
+    stubFetch(() => Response.json([]));
+    const fmp = new KeyedFmp("http://fmp.test");
+    const before = fmp.requestStats().byPath["/zq7-count"] ?? 0;
+    await fmp.get("/zq7-count", { symbol: "SECRET1" }, 0);
+    await fmp.get("/zq7-count", { symbol: "SECRET2" }, 0);
+    const stats = fmp.requestStats();
+    expect(stats.byPath["/zq7-count"]).toBe(before + 2);
+    expect(JSON.stringify(stats)).not.toContain("SECRET");
+  });
+});
+
+describe("cache lifetimes", () => {
+  it("eodTtl lasts until the next UTC midnight, an hour at least", () => {
+    expect(eodTtl(Date.parse("2026-03-16T08:00:00Z"))).toBe(16 * 60 * 60_000);
+    expect(eodTtl(Date.parse("2026-03-16T23:30:00Z"))).toBe(60 * 60_000);
+  });
+
+  it("eodAskFrom starts short ranges a year back and keeps older starts at their month", () => {
+    const now = new Date("2026-03-16T08:00:00Z");
+    expect(eodAskFrom("2026-03-09", now)).toBe("2025-03-01");
+    expect(eodAskFrom("2025-03-16", now)).toBe("2025-03-01");
+    expect(eodAskFrom("2021-03-16", now)).toBe("2021-03-01");
   });
 });

@@ -290,7 +290,7 @@ export class CalendarService {
           provider: "fmp",
           isAvailable: () => this.fmp.isConfigured(),
           fetch: async () => {
-            const rows = await this.fmp.get<FmpDividendRow[]>("/dividends", { symbol: toFmpSymbol(sym), limit: 40 }, FMP_TTL.calendar);
+            const rows = await this.fmp.get<FmpDividendRow[]>("/dividends", { symbol: toFmpSymbol(sym), limit: 40 }, FMP_TTL.corporateEvents);
             if (!Array.isArray(rows)) return null;
             const valid = rows.filter((r) => validDate(r.date) && ((finite(r.adjDividend) ?? 0) > 0 || (finite(r.dividend) ?? 0) > 0));
             const history = valid
@@ -345,7 +345,7 @@ export class CalendarService {
           provider: "fmp",
           isAvailable: () => this.fmp.isConfigured(),
           fetch: async () => {
-            const rows = await this.fmp.get<FmpSplitRow[]>("/splits", { symbol: toFmpSymbol(sym), limit: 30 }, FMP_TTL.calendar);
+            const rows = await this.fmp.get<FmpSplitRow[]>("/splits", { symbol: toFmpSymbol(sym), limit: 30 }, FMP_TTL.corporateEvents);
             if (!Array.isArray(rows)) return null;
             return rows
               .filter((r) => validDate(r.date) && (finite(r.numerator) ?? 0) > 0 && (finite(r.denominator) ?? 0) > 0)

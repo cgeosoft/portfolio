@@ -7,6 +7,9 @@
  * - caches the JSON in `market_cache` under `fmp:<path>?<sorted params>` for
  *   the TTL the caller passes (see `FMP_TTL`);
  * - shares one in-flight request between identical callers;
+ * - serves a forced refresh from the cache when the entry is younger than
+ *   `forceFreshMinAge()`, so repeated refresh clicks send nothing;
+ * - waits `ERROR_BACKOFF_MS` before it asks again for a request that failed;
  * - runs through one throttle for the whole app (`FMP_THROTTLE`), far below
  *   the plan limit of 3000 calls a minute;
  * - remembers an endpoint the plan does not include (HTTP 402/403, or a
@@ -52,14 +55,22 @@ export const FMP_TTL = {
   forex: 15 * MINUTE,
   /** Intraday candles. */
   intraday: 5 * MINUTE,
-  /** End-of-day candles, the same as the Yahoo chart TTL. */
+  /**
+   * End-of-day candles, at least. Open-ended history is kept until the next
+   * UTC day (see `eodTtl`): the bars change once a day and the live quote
+   * moves the last candle in between.
+   */
   chart: HOUR,
   /** Market caps. */
   marketCap: HOUR,
   /** General and stock news. */
   news: 30 * MINUTE,
-  /** Calendars: earnings, dividends, splits, IPOs, economic releases. */
+  /** Calendars: earnings, IPOs, economic releases. */
   calendar: 12 * HOUR,
+  /** Dividend and split history of one symbol. */
+  corporateEvents: DAY,
+  /** A symbol a batch call did not return: not asked again for this long. */
+  missingSymbol: HOUR,
   /** Company profiles. */
   profile: DAY,
   /** Statements, ratios, key metrics, ratings, estimates. */
@@ -92,6 +103,36 @@ const AUTH_FAILURE_PAUSE_MS = 5 * MINUTE;
 const LOG_REPEAT_MS = 10 * MINUTE;
 /** How long `requestStatus()` remembers a failed request. */
 const FAILURE_MEMORY_MS = 10 * MINUTE;
+/** A request that failed is not sent again for this long; callers get the stale copy or null. */
+export const ERROR_BACKOFF_MS = 2 * MINUTE;
+/** The request counts are logged once per window, by endpoint path only. */
+const USAGE_LOG_WINDOW_MS = HOUR;
+
+/**
+ * How old a cache entry must be before a forced refresh asks FMP again:
+ * a minute for data that lives less than an hour (quotes, FX), 15 minutes
+ * for the rest (charts, fundamentals, calendars), which change slowly.
+ */
+export function forceFreshMinAge(ttlMs: number): number {
+  return ttlMs < HOUR ? MINUTE : 15 * MINUTE;
+}
+
+/**
+ * Cache lifetime of open-ended end-of-day history: until the next UTC
+ * midnight, and never less than `FMP_TTL.chart`. Markets close and FMP adds
+ * the day's bar before then, so the history is asked about once a day.
+ */
+export function eodTtl(now = Date.now()): number {
+  const d = new Date(now);
+  const nextMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+  return Math.max(FMP_TTL.chart, nextMidnight - now);
+}
+
+/** Age of a cache entry in ms, from its `updatedAt`. Infinity when unknown. */
+function entryAge(entry: { updatedAt: string }, now = Date.now()): number {
+  const at = Date.parse(entry.updatedAt);
+  return Number.isFinite(at) ? Math.max(0, now - at) : Infinity;
+}
 
 export type FmpParamValue = string | number | boolean | undefined | null;
 export type FmpParams = Record<string, FmpParamValue>;
@@ -272,6 +313,17 @@ function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * The `from` sent for open-ended history: the first of the month of `from`,
+ * and no later than the first of the month a year ago, so short ranges share
+ * the 1y request.
+ */
+export function eodAskFrom(from: string, now = new Date()): string {
+  const yearAgo = `${now.getUTCFullYear() - 1}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  const monthStart = `${from.slice(0, 7)}-01`;
+  return monthStart < yearAgo ? monthStart : yearAgo;
+}
+
 /** First day of a Yahoo-style range ("5d", "1mo", "1y", "ytd", "max"), or undefined for an unknown range. */
 function rangeStart(range: string, now = new Date()): string | null | undefined {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -334,6 +386,8 @@ export class FmpService {
   private static readonly offline = new OfflineBreaker({ threshold: OFFLINE_THRESHOLD, pauseMs: OFFLINE_PAUSE_MS });
   private static readonly inFlight = new Map<string, Promise<unknown>>();
   private static readonly lastLogged = new Map<string, number>();
+  /** Requests sent in the current usage window, per endpoint path. */
+  private static usage = { since: Date.now(), byPath: new Map<string, number>() };
   private static authFailedKey = "";
   private static authFailedUntil = 0;
   /** Recent failures per key fingerprint and request, for `requestStatus()`. */
@@ -361,6 +415,33 @@ export class FmpService {
     return FmpService.throttle.stats();
   }
 
+  /** Requests sent to FMP in the current usage window, per endpoint path (no symbols). */
+  public requestStats(): { since: string; total: number; byPath: Record<string, number> } {
+    const byPath = Object.fromEntries(FmpService.usage.byPath);
+    const total = Object.values(byPath).reduce((sum, n) => sum + n, 0);
+    return { since: new Date(FmpService.usage.since).toISOString(), total, byPath };
+  }
+
+  /** Counts one request; logs and resets the counts once the window is over. */
+  private countRequest(relative: string): void {
+    const now = Date.now();
+    const usage = FmpService.usage;
+    if (now - usage.since >= USAGE_LOG_WINDOW_MS) {
+      const total = [...usage.byPath.values()].reduce((sum, n) => sum + n, 0);
+      if (total > 0) {
+        const top = [...usage.byPath.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([path, n]) => `${path} ${n}`)
+          .join(", ");
+        appLogger.logStep("info", "fmp", "usage", `FMP requests in the last ${Math.round((now - usage.since) / MINUTE)} min: ${total} (${top})`);
+      }
+      FmpService.usage = { since: now, byPath: new Map() };
+    }
+    const path = relative.split("?", 1)[0]!;
+    FmpService.usage.byPath.set(path, (FmpService.usage.byPath.get(path) ?? 0) + 1);
+  }
+
   // ---------------------------------------------------------------- core
 
   /**
@@ -382,13 +463,19 @@ export class FmpService {
     const fp = this.fingerprint(key);
 
     const cached = useCache ? marketCache.get<T>(cacheKey) : null;
-    if (cached && !cached.isExpired && !opts.forceFresh) return cached.data;
+    if (cached && !cached.isExpired && (!opts.forceFresh || entryAge(cached) < forceFreshMinAge(opts.ttlMs))) return cached.data;
 
     if (this.isRestricted(fp, path, relative)) return null;
     if (!opts.apiKey && FmpService.authFailedKey === fp && Date.now() < FmpService.authFailedUntil) return null;
     if (FmpService.offline.isOpen()) return opts.staleOnError !== false && cached ? cached.data : null;
 
     const flightKey = `${fp}:${relative}`;
+    // A request that just failed is not repeated on every caller: the stale copy (or null) stands in.
+    const recentFailure = opts.apiKey ? undefined : FmpService.failures.get(flightKey);
+    if (recentFailure?.status === "failed" && Date.now() - recentFailure.at < ERROR_BACKOFF_MS && !FmpService.inFlight.has(flightKey)) {
+      return opts.staleOnError !== false && cached ? cached.data : null;
+    }
+
     const existing = FmpService.inFlight.get(flightKey) as Promise<FetchOutcome<T>> | undefined;
     const pending =
       existing ??
@@ -532,6 +619,7 @@ export class FmpService {
   private async fetchJson<T>(relative: string, key: string): Promise<FetchOutcome<T>> {
     // The key goes in the `apikey` header (documented by FMP), so no URL ever carries it.
     const url = `${this.baseUrl}${relative}`;
+    this.countRequest(relative);
     try {
       let res: Response;
       try {
@@ -581,30 +669,59 @@ export class FmpService {
    * Raw quotes keyed by FMP symbol (upper case), through `/batch-quote` in
    * chunks of `FMP_BATCH_SIZE`. Each symbol is cached on its own
    * (`fmp:quote:<SYMBOL>`, `FMP_TTL.quote`), so only stale symbols are asked.
+   * A forced refresh skips quotes older than `forceFreshMinAge`. A symbol
+   * FMP did not return is not asked again for `FMP_TTL.missingSymbol`, even
+   * when forced: the chain asks the next provider for it.
    */
   public async getBatchQuotes(fmpSymbols: string[], forceFresh = false): Promise<Map<string, FmpQuote>> {
     const out = new Map<string, FmpQuote>();
     if (!this.isConfigured()) return out;
-    const unique = Array.from(new Set(fmpSymbols.map((s) => s.trim().toUpperCase()).filter(Boolean)));
-    const needed: string[] = [];
-    for (const sym of unique) {
-      const cached = forceFresh ? null : marketCache.get<FmpQuote>(`fmp:quote:${sym}`);
-      if (cached && !cached.isExpired) out.set(sym, cached.data);
-      else needed.push(sym);
-    }
+    const needed = this.splitCached<FmpQuote>(fmpSymbols, "quote", FMP_TTL.quote, forceFresh, out);
     await Promise.all(
       chunk(needed, FMP_BATCH_SIZE).map(async (part) => {
         const rows = await this.get<FmpQuote[]>("/batch-quote", { symbols: part.join(",") }, { ttlMs: 0 });
         if (!Array.isArray(rows)) return;
+        const found = new Set<string>();
         for (const row of rows) {
           if (!row || typeof row.symbol !== "string" || !(num(row.price)! > 0)) continue;
           const sym = row.symbol.toUpperCase();
+          found.add(sym);
           out.set(sym, row);
           marketCache.set(`fmp:quote:${sym}`, row, FMP_TTL.quote);
         }
+        this.markMissing("quote", part, found);
       }),
     );
     return out;
+  }
+
+  /**
+   * Fills `out` with the fresh per-symbol cache entries of `kind` and
+   * returns the symbols to ask FMP for: not cached, expired, or (forced)
+   * older than `forceFreshMinAge`, and not marked missing.
+   */
+  private splitCached<T>(fmpSymbols: string[], kind: "quote" | "marketcap", ttlMs: number, forceFresh: boolean, out: Map<string, T>): string[] {
+    const unique = Array.from(new Set(fmpSymbols.map((s) => s.trim().toUpperCase()).filter(Boolean)));
+    const needed: string[] = [];
+    const minAge = forceFreshMinAge(ttlMs);
+    for (const sym of unique) {
+      const cached = marketCache.get<T>(`fmp:${kind}:${sym}`);
+      if (cached && !cached.isExpired && (!forceFresh || entryAge(cached) < minAge)) {
+        out.set(sym, cached.data);
+        continue;
+      }
+      const missing = marketCache.get<boolean>(`fmp:${kind}-missing:${sym}`);
+      if (missing && !missing.isExpired) continue;
+      needed.push(sym);
+    }
+    return needed;
+  }
+
+  /** Marks the symbols of a batch that FMP answered without, so they are not asked again soon. */
+  private markMissing(kind: "quote" | "marketcap", asked: string[], found: Set<string>): void {
+    for (const sym of asked) {
+      if (!found.has(sym)) marketCache.set(`fmp:${kind}-missing:${sym}`, true, FMP_TTL.missingSymbol);
+    }
   }
 
   /**
@@ -639,23 +756,20 @@ export class FmpService {
   public async getMarketCaps(fmpSymbols: string[]): Promise<Map<string, number>> {
     const out = new Map<string, number>();
     if (!this.isConfigured()) return out;
-    const unique = Array.from(new Set(fmpSymbols.map((s) => s.trim().toUpperCase()).filter(Boolean)));
-    const needed: string[] = [];
-    for (const sym of unique) {
-      const cached = marketCache.get<number>(`fmp:marketcap:${sym}`);
-      if (cached && !cached.isExpired) out.set(sym, cached.data);
-      else needed.push(sym);
-    }
+    const needed = this.splitCached<number>(fmpSymbols, "marketcap", FMP_TTL.marketCap, false, out);
     await Promise.all(
       chunk(needed, FMP_BATCH_SIZE).map(async (part) => {
         const rows = await this.get<FmpMarketCapRow[]>("/market-capitalization-batch", { symbols: part.join(",") }, { ttlMs: 0 });
         if (!Array.isArray(rows)) return;
+        const found = new Set<string>();
         for (const row of rows) {
           if (!row?.symbol || !(num(row.marketCap)! > 0)) continue;
           const sym = row.symbol.toUpperCase();
+          found.add(sym);
           out.set(sym, row.marketCap);
           marketCache.set(`fmp:marketcap:${sym}`, row.marketCap, FMP_TTL.marketCap);
         }
+        this.markMissing("marketcap", part, found);
       }),
     );
     return out;
@@ -765,7 +879,11 @@ export class FmpService {
    * its default window when both are omitted. Null when FMP has no answer.
    * Without `to`, FMP is asked from the first of the month of `from` and the
    * earlier bars are dropped: the cache key then changes once a month, not
-   * every day.
+   * every day. A `from` within the last year is asked from the first of the
+   * month a year ago, so every range up to a year (5d, 1mo, ytd, 1y) shares
+   * one request and one cache entry per symbol. Open-ended history is kept
+   * until the next UTC day (`eodTtl`); a window that ended before today
+   * does not change and is kept for `FMP_TTL.etfHoldings`.
    */
   public async getEodChart(
     fmpSymbol: string,
@@ -777,8 +895,10 @@ export class FmpService {
     const path =
       adjustment === "dividend" ? "/historical-price-eod/dividend-adjusted" : adjustment === "none" ? "/historical-price-eod/non-split-adjusted" : "/historical-price-eod/full";
     const from = options.from ?? undefined;
-    const askFrom = from && !options.to ? `${from.slice(0, 7)}-01` : from;
-    const rows = await this.get<Array<Record<string, unknown>>>(path, { symbol, from: askFrom, to: options.to }, { ttlMs: FMP_TTL.chart, forceFresh: options.forceFresh });
+    const askFrom = from && !options.to ? eodAskFrom(from) : from;
+    const today = isoDate(new Date());
+    const ttlMs = options.to && options.to < today ? FMP_TTL.etfHoldings : eodTtl();
+    const rows = await this.get<Array<Record<string, unknown>>>(path, { symbol, from: askFrom, to: options.to }, { ttlMs, forceFresh: options.forceFresh });
     if (!Array.isArray(rows)) return null;
     const bars: FmpEodBar[] = [];
     for (const r of rows) {

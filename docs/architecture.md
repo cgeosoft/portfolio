@@ -71,15 +71,18 @@ Search takes ISIN and CUSIP queries (check digit validated, `providers/identifie
 `FmpService.get<T>(path, params, ttlMs)` is the single entry point for FMP calls. It:
 
 - sends the key in the `apikey` header, so no URL or log carries it;
-- caches each response in `market_cache` under `fmp:<path>?<sorted params>` for the TTL the caller passes (`FMP_TTL`: quotes 5 min, FX 15 min, end-of-day charts 1 h, news 30 min, calendars 12 h, profiles and fundamentals 24 h, ETF holdings 7 days);
+- caches each response in `market_cache` under `fmp:<path>?<sorted params>` for the TTL the caller passes (`FMP_TTL`: quotes 5 min, FX 15 min, news 30 min, calendars 12 h, dividend and split history, profiles and fundamentals 24 h, ETF holdings 7 days);
 - shares one in-flight request between identical callers;
+- serves a forced refresh from the cache while the entry is younger than a minute (data that lives under an hour) or 15 minutes (the rest), so repeated refreshes send nothing;
+- does not resend a request that failed for 2 minutes (`ERROR_BACKOFF_MS`) and returns the stale copy or null meanwhile;
 - runs every call through one throttle (`FMP_THROTTLE`: 6 in flight, 300 a minute, a tenth of the plan limit) and pauses 30 s after HTTP 429;
 - marks an endpoint outside the plan (HTTP 402 or 403, or a "Restricted" or "Premium" message) for 24 h in `market_cache` (`fmp:restricted:...`) and returns null, so the chain falls back;
 - returns an expired cache entry when FMP fails for a transient reason (`marketCache.pruneExpired()` deletes entries 7 days after they expire, at start and hourly; the cached portfolios stay);
-- asks for end-of-day charts from the first of the month and drops the earlier bars, so a chart's cache key changes once a month instead of every day;
+- asks for end-of-day charts from the first of the month and drops the earlier bars, so a chart's cache key changes once a month instead of every day; a start within the last year is asked from the first of the month a year ago, so every range up to a year shares one request per symbol, and open-ended history is kept until the next UTC midnight (`eodTtl`), since the bars change once a day and the live quote moves the last candle in between;
+- counts requests per endpoint path and logs the counts once an hour (`requestStats()`);
 - logs the endpoint path only, once per 10 minutes per kind of failure, and never a symbol, quantity or balance.
 
-Batch endpoints (`/batch-quote`, `/market-capitalization-batch`) take 50 symbols a call and cache each symbol on its own (`fmp:quote:<SYMBOL>`). FMP sends no currency with a quote, so `resolveCurrency()` takes it from the symbol for FX and crypto pairs and from the company profile otherwise (`fmp:currency:<SYMBOL>`, 30 days). A symbol with no known currency is left to the next provider. `toFmpSymbol()` maps app symbols to FMP symbols (`BTC-USD` → `BTCUSD`, `EURUSD=X` → `EURUSD`). Settings → Your Data → Clear stored prices also clears every `fmp:` entry, plan markers included.
+Batch endpoints (`/batch-quote`, `/market-capitalization-batch`) take 50 symbols a call and cache each symbol on its own (`fmp:quote:<SYMBOL>`). A symbol a batch left out is not asked again for an hour, even on a forced refresh (`fmp:quote-missing:<SYMBOL>`); the chain asks the next provider for it. FMP sends no currency with a quote, so `resolveCurrency()` takes it from the symbol for FX and crypto pairs and from the company profile otherwise (`fmp:currency:<SYMBOL>`, 30 days). A symbol with no known currency is left to the next provider. `toFmpSymbol()` maps app symbols to FMP symbols (`BTC-USD` → `BTCUSD`, `EURUSD=X` → `EURUSD`). Settings → Your Data → Clear stored prices also clears every `fmp:` entry, plan markers included.
 
 ### Adding a kind of data
 

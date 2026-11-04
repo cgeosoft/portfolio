@@ -1,5 +1,5 @@
 /** Exchange rates from Yahoo, Finnhub and FMP, pence handling, and the coordinator's FX fallback. */
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, mock, setSystemTime } from "bun:test";
 import { YahooFinanceService } from "../yahoo-finance";
 import { FinnhubService } from "../finnhub";
 import { FmpService } from "../fmp";
@@ -221,15 +221,23 @@ describe("FMP FX", () => {
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
-  it("caches the forex list until forced", async () => {
+  it("caches the forex list until forced, and a forced refresh within a minute reuses it", async () => {
     const { fetchMock } = stubForex();
     const fmp = new KeyedFmp("http://fmp.test");
-    await fmp.getExchangeRates("EUR", ["USD"]);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    await fmp.getExchangeRates("EUR", ["USD"]);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    await fmp.getExchangeRates("EUR", ["USD"], true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const start = Date.now();
+    try {
+      await fmp.getExchangeRates("EUR", ["USD"]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await fmp.getExchangeRates("EUR", ["USD"]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await fmp.getExchangeRates("EUR", ["USD"], true);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      setSystemTime(new Date(start + 61_000));
+      await fmp.getExchangeRates("EUR", ["USD"], true);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      setSystemTime();
+    }
   });
 });
 

@@ -16,6 +16,7 @@ The GUI talks to the service only over HTTP (`/api/...`). The service listens on
 - `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (`index.ts` shell, `dev.ts` development run, `service.ts` child process and logs, tray, window state, Linux icons; `app.ts` is the only file that differs from FintechCrafts Management), `scripts/stage.ts`, `assets/`. `modules/gui/scripts/dev-server.ts` starts Vite for `bun start`.
 - `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) with `releases/latest.json` manifest.
 - `scripts/release.sh` (tag, build, publish), `scripts/docker/Dockerfile.linux`, `scripts/build-deb.sh`, `scripts/build-metrics.ts`.
+- `scripts/test-network-guard.ts` - preloaded by every `bunfig.toml`: a test that reaches a non-loopback host fails. Stub `globalThis.fetch` instead.
 - `lang/<code>.yml` - interface text, one file per ISO 639-1 code; `en.yml` is the source and the fallback. Format and the language list with AI support tiers in `modules/shared/src/i18n.ts`, GUI loader in `modules/gui/src/i18n.ts`.
 - `docs/architecture.md` (modules, config, logging, release), `docs/theme.md`.
 
