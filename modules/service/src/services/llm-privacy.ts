@@ -78,6 +78,8 @@ export const MIN_QUANTITY_DIGITS = 5;
 export interface LedgerFingerprint {
   /** Money amounts in cents. */
   cents: Set<number>;
+  /** Money amounts in tenths, for text that rounds to one decimal ("7,654,321.1"). */
+  tenths: Set<number>;
   /** Money amounts of 1,000 or more, rounded and cut to whole units, for text that leaves the cents out. */
   wholes: Set<number>;
   /** Quantities with enough digits to be telling, as written by `String()`. */
@@ -111,7 +113,7 @@ function significantDigits(n: number): number {
 
 /** Collects the amounts and quantities of `data` that a prompt must never contain. */
 export function ledgerFingerprint(data: FinancialPortfolioData): LedgerFingerprint {
-  const fp: LedgerFingerprint = { cents: new Set(), wholes: new Set(), quantities: new Set() };
+  const fp: LedgerFingerprint = { cents: new Set(), tenths: new Set(), wholes: new Set(), quantities: new Set() };
   // A public price can equal a position value (one share): those stay allowed, the price is public anyway.
   const publicCents = new Set<number>();
   for (const h of data.holdings ?? []) {
@@ -128,6 +130,7 @@ export function ledgerFingerprint(data: FinancialPortfolioData): LedgerFingerpri
     const cents = Math.round(abs * 100);
     if (publicCents.has(cents)) return;
     fp.cents.add(cents);
+    fp.tenths.add(Math.round(abs * 10));
     if (abs >= 1000) {
       for (const whole of [Math.round(abs), Math.floor(abs)]) if (!isYear(whole)) fp.wholes.add(whole);
     }
@@ -162,8 +165,23 @@ export function ledgerFingerprint(data: FinancialPortfolioData): LedgerFingerpri
   return fp;
 }
 
-/** Numbers as people and models write them: 12345.67, 12,345.67, 12.345,67, 12 345, 12'345. */
-const NUMBER_TOKEN = /\d{1,3}(?:[,.'\u00a0\u202f ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
+/** Numbers as people and models write them: 12345.67, 12,345.67, 12.345,67, 12 345, 12'345, 12’345, 1,23,456 (Indian grouping). */
+const NUMBER_TOKEN = /\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d+)?|\d{1,3}(?:[,.'\u2019\u02bc\u00a0\u202f\u2009 ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
+
+/** Other digit scripts and the Arabic separators, as ASCII digits and marks, so "٧٬٦٥٤٬٣٢١٫٠٩" reads as 7,654,321.09. */
+function asciiDigits(text: string): string {
+  return text
+    .replace(/\p{Nd}/gu, (d) => {
+      if (d >= "0" && d <= "9") return d;
+      // Unicode lays out every decimal digit script as runs of ten code points from zero.
+      const code = d.codePointAt(0)!;
+      let start = code;
+      while (/\p{Nd}/u.test(String.fromCodePoint(start - 1))) start--;
+      return String((code - start) % 10);
+    })
+    .replace(/\u066c/g, ",")
+    .replace(/\u066b/g, ".");
+}
 
 /** The readings of one number token: with "," or "." as the decimal mark, as the separators allow. */
 export function readNumberToken(token: string): { value: number; decimals: number; text: string }[] {
@@ -174,10 +192,10 @@ export function readNumberToken(token: string): { value: number; decimals: numbe
     const decimals = text.includes(".") ? text.length - text.indexOf(".") - 1 : 0;
     if (!out.some((o) => o.text === text)) out.push({ value, decimals, text });
   };
-  const plain = token.replace(/['\u00a0\u202f ]/g, "");
+  const plain = token.replace(/['\u2019\u02bc\u00a0\u202f\u2009 ]/g, "");
   // "." decimal with "," thousands (12,345.67), and "," decimal with "." thousands (12.345,67).
   // A thousands mark is always followed by three digits, so "80.00" is never read as 8000.
-  if (/^\d+(?:\.\d+)?$|^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(plain)) push(plain.replace(/,/g, ""));
+  if (/^\d+(?:\.\d+)?$|^\d{1,3}(?:,\d{3})+(?:\.\d+)?$|^\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d+)?$/.test(plain)) push(plain.replace(/,/g, ""));
   if (/^\d+(?:,\d+)?$|^\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(plain)) push(plain.replace(/\./g, "").replace(",", "."));
   return out;
 }
@@ -185,9 +203,10 @@ export function readNumberToken(token: string): { value: number; decimals: numbe
 /** True when `text` holds a number that equals an amount or quantity of the fingerprint. */
 export function containsLedgerAmount(text: string, fp: LedgerFingerprint): boolean {
   if (fp.cents.size === 0 && fp.wholes.size === 0 && fp.quantities.size === 0) return false;
-  for (const match of text.matchAll(NUMBER_TOKEN)) {
+  for (const match of asciiDigits(text).matchAll(NUMBER_TOKEN)) {
     for (const reading of readNumberToken(match[0])) {
       if (reading.decimals === 0 ? fp.wholes.has(reading.value) : fp.cents.has(Math.round(reading.value * 100))) return true;
+      if (reading.decimals === 1 && fp.tenths.has(Math.round(reading.value * 10))) return true;
       if (fp.quantities.has(String(reading.value))) return true;
     }
   }

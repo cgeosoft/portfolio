@@ -127,6 +127,21 @@ describe("ledger amounts in prompt text", () => {
     }
   });
 
+  it("finds an amount in every locale format Intl writes", () => {
+    const locales = ["en-US", "en-GB", "de-DE", "de-CH", "fr-FR", "fr-CH", "it-IT", "es-ES", "nl-NL", "pt-BR", "pl-PL", "sv-SE", "ru-RU", "el-GR", "tr-TR", "cs-CZ", "en-IN", "hi-IN", "ja-JP", "zh-CN", "ar-EG", "fa-IR", "bn-BD"];
+    for (const locale of locales) {
+      for (const options of [{ minimumFractionDigits: 2 }, { style: "currency", currency: "EUR" }, { maximumFractionDigits: 0 }] as Intl.NumberFormatOptions[]) {
+        const text = canary.summary.totalValue.toLocaleString(locale, options);
+        expect({ locale, text, found: containsLedgerAmount(text, fp) }).toEqual({ locale, text, found: true });
+      }
+    }
+  });
+
+  it("finds an amount written with a typographic apostrophe or rounded to one decimal", () => {
+    expect(containsLedgerAmount("7\u2019654\u2019321.09", fp)).toBe(true);
+    expect(containsLedgerAmount("Total 7,654,321.1 EUR", fp)).toBe(true);
+  });
+
   it("finds a telling quantity", () => {
     expect(containsLedgerAmount("You hold 13579.2468 shares", fp)).toBe(true);
     expect(containsLedgerAmount("24681 units", fp)).toBe(true);
