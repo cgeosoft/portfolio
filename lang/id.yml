@@ -2176,6 +2176,7 @@ service:
       toolBudget: "Batas permintaan data proses ini tercapai."
       findingsDropped:
         other: "{count} temuan dibuang: tidak mengutip bukti atau memakai angka yang tidak ada dalam bukti."
+      suggestionsRefused: "Saran yang dibuang oleh pemeriksaan: {count}. Saran tersebut memakai angka tanpa bukti, tidak punya pendanaan, atau melanggar ringkasan."
       themesDropped:
         other: "{count} tema dibuang: tema memerlukan dua fakta yang dikutip dan angka dari fakta itu."
       suggestionsWithoutFinding:

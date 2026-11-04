@@ -2321,6 +2321,7 @@ service:
         few: "{count} zistenia boli vyradené: neuvádzali dôkazy alebo použili čísla, ktoré v dôkazoch nie sú."
         many: "{count} zistenia bolo vyradených: neuvádzali dôkazy alebo použili čísla, ktoré v dôkazoch nie sú."
         other: "{count} zistení bolo vyradených: neuvádzali dôkazy alebo použili čísla, ktoré v dôkazoch nie sú."
+      suggestionsRefused: "Návrhy vyradené kontrolami: {count}. Používali čísla bez dôkazov, nemali financovanie alebo porušovali zadanie."
       themesDropped:
         one: "{count} téma bola vyradená: téma potrebuje dva citované fakty a čísla z nich."
         few: "{count} témy boli vyradené: téma potrebuje dva citované fakty a čísla z nich."

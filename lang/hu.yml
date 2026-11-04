@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} megállapítás kimaradt: nem hivatkozott bizonyítékra, vagy olyan számokat használt, amelyek a bizonyítékokban nem szerepelnek."
         other: "{count} megállapítás kimaradt: nem hivatkozott bizonyítékra, vagy olyan számokat használt, amelyek a bizonyítékokban nem szerepelnek."
+      suggestionsRefused: "Az ellenőrzések által elvetett javaslatok: {count}. Bizonyíték nélküli számokat használtak, nem volt fedezetük, vagy megsértették a leírást."
       themesDropped:
         one: "{count} téma kimaradt: két hivatkozott tény és azokból vett számok kellenek hozzá."
         other: "{count} téma kimaradt: két hivatkozott tény és azokból vett számok kellenek hozzá."

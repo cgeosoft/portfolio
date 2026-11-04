@@ -588,6 +588,8 @@ export class PortfolioSuggestionService {
       /** Evidence by upper-case symbol. */
       evidence?: ReadonlyMap<string, SuggestionEvidence>;
       extraNotes?: string[];
+      /** Further checks of the proposals. An answer they empty changes nothing in the stored list. */
+      vet?: (proposals: SuggestionProposal[]) => { proposals: SuggestionProposal[]; notes: string[] };
     },
   ): Promise<{ summary: string; kept: PortfolioSuggestion[]; notes: string[] }> {
     const { now } = options;
@@ -599,7 +601,12 @@ export class PortfolioSuggestionService {
           .filter((s): s is string => typeof s === "string" && !findHolding(data, s))
       : [];
     const quotes = await this.quotesFor(newSymbols, baseCurrency);
-    const parsed = parseSuggestionAnswer(raw, data, quotes, now);
+    const answer = parseSuggestionAnswer(raw, data, quotes, now);
+    const vetted = options.vet?.(answer.proposals);
+    const parsed = { ...answer, proposals: vetted?.proposals ?? answer.proposals, notes: [...answer.notes, ...(vetted?.notes ?? [])] };
+    if (options.runId && Array.isArray(raw.suggestions) && raw.suggestions.length > 0 && parsed.proposals.length === 0) {
+      return { summary: parsed.summary, kept: [], notes: [...(options.extraNotes ?? []), ...parsed.notes] };
+    }
 
     // Quotes of symbols in older open suggestions, for their validity checks.
     const oldSymbols = existing.filter((s) => s.status === "active" && !findHolding(data, s.symbol)).map((s) => s.symbol);

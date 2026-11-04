@@ -2273,6 +2273,7 @@ service:
         one: "{count} nalaz je odbačen: nije navodio dokaze ili je koristio brojeve kojih u dokazima nema."
         few: "{count} nalaza su odbačena: nisu navodila dokaze ili su koristila brojeve kojih u dokazima nema."
         other: "{count} nalaza je odbačeno: nisu navodila dokaze ili su koristila brojeve kojih u dokazima nema."
+      suggestionsRefused: "Prijedlozi uklonjeni provjerama: {count}. Koristili su brojeve bez dokaza, nisu imali financiranje ili su kršili sažetak."
       themesDropped:
         one: "{count} tema je odbačena: tema treba dvije navedene činjenice i brojeve iz njih."
         few: "{count} teme su odbačene: tema treba dvije navedene činjenice i brojeve iz njih."

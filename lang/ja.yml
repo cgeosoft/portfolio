@@ -2188,6 +2188,7 @@ service:
       toolBudget: "実行のデータ要求の上限に達しました。"
       findingsDropped:
         other: "所見 {count} 件を除外しました。根拠を示していないか、根拠にない数値を使っていました。"
+      suggestionsRefused: "チェックで除外された提案: {count} 件。根拠のない数値を使っていたか、資金の裏付けがないか、ブリーフに反していました。"
       themesDropped:
         other: "テーマ {count} 件を除外しました。テーマには引用された事実 2 つとそれに基づく数値が必要です。"
       suggestionsWithoutFinding:

@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} fund blev udeladt: det henviste ikke til evidens eller brugte tal, som evidensen ikke har."
         other: "{count} fund blev udeladt: de henviste ikke til evidens eller brugte tal, som evidensen ikke har."
+      suggestionsRefused: "Forslag fjernet af kontrollerne: {count}. De brugte tal uden belæg, manglede finansiering eller brød med beskrivelsen."
       themesDropped:
         one: "{count} tema blev udeladt: et tema kræver to henviste fakta og tal fra dem."
         other: "{count} temaer blev udeladt: et tema kræver to henviste fakta og tal fra dem."

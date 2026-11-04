@@ -2321,6 +2321,7 @@ service:
         few: "Odrzucono {count} ustalenia: nie wskazywały dowodów albo podawały liczby, których nie ma w dowodach."
         many: "Odrzucono {count} ustaleń: nie wskazywały dowodów albo podawały liczby, których nie ma w dowodach."
         other: "Odrzucono {count} ustalenia: nie wskazywały dowodów albo podawały liczby, których nie ma w dowodach."
+      suggestionsRefused: "Sugestie odrzucone przez kontrole: {count}. Używały liczb bez dowodów, nie miały finansowania lub naruszały opis."
       themesDropped:
         one: "Odrzucono {count} temat: temat wymaga dwóch wskazanych faktów i liczb z nich."
         few: "Odrzucono {count} tematy: temat wymaga dwóch wskazanych faktów i liczb z nich."

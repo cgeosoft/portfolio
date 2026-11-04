@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "Tokeo {count} liliondolewa: halikutaja ushahidi au lilitumia namba ambazo ushahidi hauna."
         other: "Matokeo {count} yaliondolewa: hayakutaja ushahidi au yalitumia namba ambazo ushahidi hauna."
+      suggestionsRefused: "Mapendekezo yaliyoondolewa na ukaguzi: {count}. Yalitumia namba bila ushahidi, hayakuwa na ufadhili au yalikiuka muhtasari."
       themesDropped:
         one: "Mada {count} iliondolewa: inahitaji hoja mbili zilizotajwa na namba kutoka kwazo."
         other: "Mada {count} ziliondolewa: zinahitaji hoja mbili zilizotajwa na namba kutoka kwazo."

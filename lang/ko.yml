@@ -2176,6 +2176,7 @@ service:
       toolBudget: "실행의 데이터 요청 제한에 도달했습니다."
       findingsDropped:
         other: "발견 사항 {count}개를 제외했습니다. 근거를 인용하지 않았거나 근거에 없는 숫자를 사용했습니다."
+      suggestionsRefused: "검사에서 제외된 제안: {count}건. 근거 없는 숫자를 썼거나 자금 조달이 없거나 브리프를 위반했습니다."
       themesDropped:
         other: "테마 {count}개를 제외했습니다. 테마에는 인용된 사실 두 개와 그 사실의 숫자가 필요합니다."
       suggestionsWithoutFinding:

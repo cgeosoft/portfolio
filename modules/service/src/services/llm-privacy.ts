@@ -325,7 +325,7 @@ export function ledgerFingerprint(data: FinancialPortfolioData): LedgerFingerpri
 const LEDGER_NUMBER_TOKEN = /\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d+)?|\d{1,3}(?:[,.'\u2019\u02bc\u00a0\u202f\u2009 ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
 
 /** Other digit scripts and the Arabic separators, as ASCII digits and marks, so "٧٬٦٥٤٬٣٢١٫٠٩" reads as 7,654,321.09. */
-function ledgerDigits(text: string): string {
+export function ledgerDigits(text: string): string {
   return text
     .replace(/\p{Nd}/gu, (d) => {
       if (d >= "0" && d <= "9") return d;

@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} funn ble fjernet: det viste ikke til belegg eller brukte tall som belegget ikke har."
         other: "{count} funn ble fjernet: de viste ikke til belegg eller brukte tall som belegget ikke har."
+      suggestionsRefused: "Forslag fjernet av kontrollene: {count}. De brukte tall uten belegg, manglet finansiering eller brøt med beskrivelsen."
       themesDropped:
         one: "{count} tema ble fjernet: et tema trenger to henviste fakta og tall fra dem."
         other: "{count} temaer ble fjernet: et tema trenger to henviste fakta og tall fra dem."

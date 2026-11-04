@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} bevinding is weggelaten: die noemde geen bewijs of gebruikte getallen die niet in het bewijs staan."
         other: "{count} bevindingen zijn weggelaten: die noemden geen bewijs of gebruikten getallen die niet in het bewijs staan."
+      suggestionsRefused: "Suggesties die de controles hebben verwijderd: {count}. Ze gebruikten cijfers zonder bewijs, hadden geen financiering of braken de briefing."
       themesDropped:
         one: "{count} thema is weggelaten: een thema heeft twee genoemde feiten en getallen daaruit nodig."
         other: "{count} thema's zijn weggelaten: een thema heeft twee genoemde feiten en getallen daaruit nodig."

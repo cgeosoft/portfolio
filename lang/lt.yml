@@ -2320,6 +2320,7 @@ service:
         few: "Atmestos {count} išvados: jos necitavo įrodymų arba naudojo skaičius, kurių įrodymuose nėra."
         many: "Atmesta {count} išvados: jos necitavo įrodymų arba naudojo skaičius, kurių įrodymuose nėra."
         other: "Atmesta {count} išvadų: jos necitavo įrodymų arba naudojo skaičius, kurių įrodymuose nėra."
+      suggestionsRefused: "Patikrų atmesti pasiūlymai: {count}. Juose buvo skaičių be įrodymų, trūko finansavimo arba jie pažeidė aprašą."
       themesDropped:
         one: "Atmesta {count} tema: jai reikia dviejų cituotų faktų ir iš jų paimtų skaičių."
         few: "Atmestos {count} temos: joms reikia dviejų cituotų faktų ir iš jų paimtų skaičių."

@@ -2225,6 +2225,7 @@ service:
       findingsDropped:
         one: "{count} Befund wurde verworfen: Er nannte keine Belege oder nutzte Zahlen, die in den Belegen nicht vorkommen."
         other: "{count} Befunde wurden verworfen: Sie nannten keine Belege oder nutzten Zahlen, die in den Belegen nicht vorkommen."
+      suggestionsRefused: "Von den Prüfungen entfernte Vorschläge: {count}. Sie nutzten Zahlen ohne Beleg, hatten keine Finanzierung oder verstießen gegen das Briefing."
       themesDropped:
         one: "{count} Thema wurde verworfen: Es braucht zwei belegte Fakten und Zahlen daraus."
         other: "{count} Themen wurden verworfen: Sie brauchen zwei belegte Fakten und Zahlen daraus."

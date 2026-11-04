@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} bulgu çıkarıldı: kanıt göstermedi veya kanıtta olmayan sayılar kullandı."
         other: "{count} bulgu çıkarıldı: kanıt göstermediler veya kanıtta olmayan sayılar kullandılar."
+      suggestionsRefused: "Denetimlerde çıkarılan öneriler: {count}. Kanıtsız sayılar kullandılar, finansmanları yoktu veya özeti ihlal ettiler."
       themesDropped:
         one: "{count} tema çıkarıldı: iki kaynaklı olgu ve onlardan sayılar gerekir."
         other: "{count} tema çıkarıldı: her tema iki kaynaklı olgu ve onlardan sayılar gerektirir."

@@ -39,7 +39,7 @@ export function seedCore(graph: RunGraph, data: FinancialPortfolioData, brief: P
     kind: "brief",
     title: "Portfolio brief",
     facts: empty ? { missing: true } : briefFacts(brief),
-    summary: empty ? "The user has not written a brief. Judge the portfolio as a long-term, diversified investment." : formatBriefForPrompt(brief).replace(/^- /gm, "").replace(/\n/g, "; "),
+    summary: empty ? "The user has not written a brief. Judge the portfolio as a long-term, diversified investment." : formatBriefForPrompt({ ...brief, prose: undefined }).replace(/^- /gm, "").replace(/\n/g, "; ") || "The brief is in the user's own words.",
     source: { provider: "user" },
     createdBy: "seed",
     depth: 0,

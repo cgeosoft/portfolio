@@ -2273,6 +2273,7 @@ service:
         one: "{count} risultato è stato scartato: non citava prove o usava numeri che le prove non contengono."
         many: "{count} risultati sono stati scartati: non citavano prove o usavano numeri che le prove non contengono."
         other: "{count} risultati sono stati scartati: non citavano prove o usavano numeri che le prove non contengono."
+      suggestionsRefused: "Suggerimenti scartati dai controlli: {count}. Usavano numeri senza prove, non avevano copertura o violavano il brief."
       themesDropped:
         one: "{count} tema è stato scartato: servono due fatti citati e numeri tratti da essi."
         many: "{count} temi sono stati scartati: servono due fatti citati e numeri tratti da essi."

@@ -8,15 +8,18 @@ import * as analysisRepo from "../../db/analysis.repo.js";
 import * as portfolioRepo from "../../db/portfolio.repo.js";
 import * as reportRepo from "../../db/report.repo.js";
 import * as suggestionRepo from "../../db/suggestion.repo.js";
-import { RunGraph } from "../analysis/graph.js";
+import { RunGraph, cutSummary } from "../analysis/graph.js";
+import { graphContext } from "../analysis/context.js";
+import { seedCore } from "../analysis/seed.js";
+import { checkProposals } from "../analysis/suggestion-checks.js";
 import { RunHarness, newRunState } from "../analysis/harness.js";
 import { createModelPort, type ModelPort, type PortRequest, type PortTurn } from "../analysis/model-port.js";
-import { dropUngroundedSentences, numbersIn, ungroundedNumbers } from "../analysis/grounding.js";
+import { dropUngroundedSentences, nodeNumbers, numbersIn, ungroundedNumbers } from "../analysis/grounding.js";
 import { alignSeries, beta, concentration, correlation, maxDrawdown, riskContributions } from "../analysis/math.js";
 import { compareRuns } from "../analysis/compare.js";
 import { calcConcentration } from "../analysis/tools/calc.js";
 import type { AnalysisDeps } from "../analysis/types.js";
-import { PortfolioSuggestionService } from "../portfolio-suggestions.js";
+import { PortfolioSuggestionService, type SuggestionProposal } from "../portfolio-suggestions.js";
 import { PrivacyError, toPromptSafe } from "../llm-privacy.js";
 import type { LlmService } from "../llm.js";
 import type { PortfolioService } from "../portfolio.js";
@@ -359,5 +362,166 @@ describe("run comparison", () => {
     expect(res.newFindings.map((f) => f.id)).toEqual(["F2"]);
     expect(res.resolvedFindings.map((f) => f.id)).toEqual(["F3"]);
     expect(res.changedWeights).toEqual([{ symbol: "AAA", previousWeight: 60, currentWeight: 50, diff: -10 }]);
+  });
+});
+
+describe("number grounding of real model text", () => {
+  const fact = (facts: Record<string, unknown>) => nodeNumbers({ kind: "calc", facts, summary: "" } as unknown as AnalysisNode);
+
+  it("needs a source for every percentage, round or not", () => {
+    expect(ungroundedNumbers("AAA is 50% of it, fell 20% and yields 8%.", [99.9])).toEqual([50, 20, 8]);
+    expect(ungroundedNumbers("The 50 day and 200 day averages over 5 years.", [])).toEqual([]);
+    expect(ungroundedNumbers("All of it, 100%, and none of it, 0%.", [])).toEqual([]);
+  });
+
+  it("keeps the sign of a source", () => {
+    const fall = fact({ changePercent: -12.5 });
+    expect(ungroundedNumbers("AAA rose 12.5%.", fall)).toEqual([12.5]);
+    expect(ungroundedNumbers("AAA +12.5%.", fall)).toEqual([12.5]);
+    expect(ungroundedNumbers("AAA fell 12.5%.", fall)).toEqual([]);
+    expect(ungroundedNumbers("AAA fell 12.5%.", fact({ changePercent: 12.5 }))).toEqual([12.5]);
+    expect(ungroundedNumbers("AAA fell as much as 8.2%.", fact({ maxDrawdownPercent: 8.2 }))).toEqual([]);
+  });
+
+  it("keeps the unit of a source", () => {
+    expect(ungroundedNumbers("AAA is 71% of the portfolio.", fact({ rsi: 71 }))).toEqual([71]);
+    expect(ungroundedNumbers("RSI of 71.", fact({ rsi: 71 }))).toEqual([]);
+    expect(ungroundedNumbers("Cut it by 37.3pp and 250bps.", [])).toEqual([37.3, 250]);
+  });
+
+  it("reads the number formats of every language", () => {
+    expect(ungroundedNumbers("AAA ist 34,6 % des Portfolios", [34.6])).toEqual([]);
+    expect(ungroundedNumbers("Rendite 1,5 %", [99.9])).toEqual([1.5]);
+    expect(ungroundedNumbers("الوزن ٣٤٫٥٪", [34.5])).toEqual([]);
+    expect(ungroundedNumbers("الوزن ٨٨٪", [34.5])).toEqual([88]);
+    expect(ungroundedNumbers("占比34.6%。", [34.6])).toEqual([]);
+    expect(ungroundedNumbers("占比88%。", [34.6])).toEqual([88]);
+  });
+});
+
+describe("Guided Analysis failure handling and checks", () => {
+  const fine = (name: string): PortTurn => {
+    if (name === "questions") return ok({ questions: [{ title: "Too large?", briefField: "riskTolerance" }] });
+    if (name === "step result") return { ...ok({ findings: [{ questionId: "Q1", title: "AAA dominates", summary: "AAA is 60% of the portfolio.", stance: "risk", severity: 3, supports: ["H1"] }] }), done: true };
+    if (name === "synthesis") return ok({ themes: [] });
+    if (name === "suggestions") return ok({ summary: "Trim.", suggestions: [{ action: "decrease", symbol: "AAA", fromWeight: 60, targetWeight: 40, title: "Trim AAA", why: "Too big.", findings: ["F1"], evidence: ["H1"] }] });
+    if (name === "report") return ok({ whereYouStand: "AAA is 60% of it.", matters: [{ findingId: "F1", text: "AAA is large." }] });
+    return ok({});
+  };
+
+  async function run(portfolioId: string, script: (name: string) => PortTurn, language?: string) {
+    const row = startRun(portfolioId);
+    const graph = new RunGraph(row.id);
+    const port: ModelPort = { mode: "json", step: async (req) => script(req.output.name) };
+    const suggestions = new PortfolioSuggestionService({} as LlmService, {} as PortfolioService, deps.marketData);
+    const harness = new RunHarness(
+      { row, graph, state: newRunState(), port, data, brief: { purpose: "growth" }, language, signal: new AbortController().signal, onLive: () => {} },
+      { deps, suggestions, seedContext: async () => [] },
+    );
+    return { row, graph, done: harness.execute() };
+  }
+  const activeKeys = (id: string) => suggestionRepo.findByPortfolio(id).filter((s) => s.status === "active").map((s) => s.key);
+
+  it("fails a run with no verified finding and keeps the open suggestions and report list", async () => {
+    const portfolio = portfolioRepo.create({ name: "No findings" });
+    await (await run(portfolio.id, fine)).done;
+    expect(activeKeys(portfolio.id)).toEqual(["decrease:AAA"]);
+
+    const refused = (name: string) => (name === "step result" || name === "fixed findings" ? { ...ok({ findings: [{ questionId: "Q1", title: "Crash", summary: "It could fall 37%.", stance: "risk", severity: 3, supports: ["H1"] }] }), done: true } : fine(name));
+    const second = await run(portfolio.id, refused);
+    await expect(second.done).rejects.toThrow("without a verified finding");
+    expect(activeKeys(portfolio.id)).toEqual(["decrease:AAA"]);
+    expect(reportRepo.findByRun(portfolio.id, second.row.id)).toBeFalsy();
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("counts answers it cannot read as failed steps", async () => {
+    const portfolio = portfolioRepo.create({ name: "Bad shape" });
+    await (await run(portfolio.id, fine)).done;
+    const bad = await run(portfolio.id, () => ({ calls: [], output: null, done: false, note: "", errors: [] }));
+    await expect(bad.done).rejects.toThrow("did not answer");
+    expect(activeKeys(portfolio.id)).toEqual(["decrease:AAA"]);
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("keeps the open suggestions when the suggestion answer has no list", async () => {
+    const portfolio = portfolioRepo.create({ name: "No list" });
+    await (await run(portfolio.id, fine)).done;
+    const noList = await run(portfolio.id, (name) => (name === "suggestions" ? ok({ summary: "Nothing." }) : fine(name)));
+    await noList.done;
+    expect(activeKeys(portfolio.id)).toEqual(["decrease:AAA"]);
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("accepts a finding written with a decimal comma", async () => {
+    const portfolio = portfolioRepo.create({ name: "German" });
+    const german = (name: string) => (name === "step result" ? { ...ok({ findings: [{ questionId: "Q1", title: "AAA dominiert", summary: "AAA macht 60,0 % des Portfolios aus.", stance: "risk", severity: 3, supports: ["H1"] }] }), done: true } : fine(name));
+    const r = await run(portfolio.id, german, "de");
+    await r.done;
+    expect(r.graph.byKind("finding").map((f) => f.title)).toEqual(["AAA dominiert"]);
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("refuses a finding that cites only questions or other findings", async () => {
+    const portfolio = portfolioRepo.create({ name: "No evidence" });
+    const empty = (name: string) => (name === "step result" || name === "fixed findings" ? { ...ok({ findings: [{ questionId: "Q1", title: "A crash is coming", summary: "AAA will collapse.", stance: "risk", severity: 3, supports: ["Q1", "B"] }] }), done: true } : fine(name));
+    const r = await run(portfolio.id, empty);
+    await expect(r.done).rejects.toThrow("without a verified finding");
+    expect(r.graph.byKind("finding")).toEqual([]);
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("removes invented numbers from a suggestion and refuses a title that has one", async () => {
+    const portfolio = portfolioRepo.create({ name: "Invented" });
+    const invented = (name: string) =>
+      name === "suggestions"
+        ? ok({
+            summary: "Analysts expect 73.1% upside. Trim it.",
+            suggestions: [
+              { action: "decrease", symbol: "AAA", fromWeight: 60, targetWeight: 40, title: "Trim AAA to 40%", why: "It is 60% of the portfolio. It will fall 31.4% by March.", findings: ["F1"] },
+              { action: "decrease", symbol: "BBB", fromWeight: 20, targetWeight: 10, title: "BBB falls 47.7%", why: "It is large.", findings: ["F1"] },
+            ],
+          })
+        : fine(name);
+    const r = await run(portfolio.id, invented);
+    await r.done;
+    const saved = suggestionRepo.findByPortfolio(portfolio.id).filter((s) => s.status === "active");
+    expect(saved.map((s) => s.key)).toEqual(["decrease:AAA"]);
+    expect(saved[0]!.why).toBe("It is 60% of the portfolio.");
+    portfolioRepo.deleteById(portfolio.id);
+  });
+
+  it("drops buys that break a constraint or that the answer cannot pay for", () => {
+    const proposal = (action: SuggestionProposal["action"], symbol: string, currentWeight: number, targetWeight: number, priority = 3): SuggestionProposal => ({ key: `${action}:${symbol}`, action, symbol, name: symbol, currentWeight, targetWeight, title: "t", why: "w", priority, validity: { expiresAt: "" }, fundedBy: [] });
+    const portfolio = { summary: { cashWeightPercent: 5 }, holdings: [holding("AAA", 60), holding("BBB", 20)] } as unknown as FinancialPortfolioData;
+    const crypto = checkProposals([proposal("open", "BTC-USD", 0, 3)], portfolio, { constraints: ["no_crypto"] });
+    expect(crypto).toEqual({ proposals: [], dropped: 1 });
+
+    const paid = checkProposals([proposal("decrease", "AAA", 60, 50), proposal("increase", "BBB", 20, 32, 1), proposal("open", "CCC", 0, 10, 2)], portfolio, {});
+    expect(paid.proposals.map((p) => p.symbol)).toEqual(["AAA", "BBB"]);
+    expect(paid.dropped).toBe(1);
+  });
+
+  it("shows the whole brief to the model and ends a long finding at a sentence", () => {
+    const graph = new RunGraph("r");
+    const success = "Retire comfortably and never sell during a crash.";
+    seedCore(graph, data, {
+      purpose: "retirement",
+      horizon: "gt15",
+      riskTolerance: { score: 2, maxDropPercent: 15 },
+      incomeNeed: { required: true, targetYieldPercent: 3 },
+      cashFlowPattern: "contributions",
+      targetBands: [{ assetClass: "equity", minPercent: 60, maxPercent: 80 }, { assetClass: "bonds", minPercent: 10, maxPercent: 30 }],
+      constraints: ["no_crypto", "esg", "home_bias", "tax_wrapper", "no_leverage"],
+      successInOwnWords: success,
+    });
+    const prompt = graphContext(graph);
+    expect(prompt).toContain("no leverage");
+    expect(prompt).toContain(success);
+
+    const long = `${"A first full sentence of the finding. ".repeat(24)}And the end.`;
+    const cut = cutSummary(long, "finding");
+    expect(cut.length).toBeLessThanOrEqual(700);
+    expect(cut.endsWith("finding.")).toBe(true);
   });
 });

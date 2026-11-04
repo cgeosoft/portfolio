@@ -2236,6 +2236,7 @@ service:
       findingsDropped:
         one: "{count} leid jäeti välja: see ei viidanud tõenditele või kasutas numbreid, mida tõendites pole."
         other: "{count} leidu jäeti välja: need ei viidanud tõenditele või kasutasid numbreid, mida tõendites pole."
+      suggestionsRefused: "Kontrollide käigus eemaldatud soovitused: {count}. Need kasutasid tõenditeta arve, neil puudus rahastus või need rikkusid lähteülesannet."
       themesDropped:
         one: "{count} teema jäeti välja: see vajab kahte viidatud fakti ja neist pärit numbreid."
         other: "{count} teemat jäeti välja: need vajavad kahte viidatud fakti ja neist pärit numbreid."

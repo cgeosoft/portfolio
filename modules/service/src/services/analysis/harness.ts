@@ -7,14 +7,16 @@
  * calls or to write reasoning nodes; it never controls the sequence, the
  * budgets or what is stored. After every model turn the harness validates:
  * unknown tools and bad arguments go back as errors, a reasoning node that
- * cites missing ids is dropped, and every number in a finding, theme or
- * report must exist in a cited node (one repair turn, then the claim goes).
+ * cites no fact is dropped, and every number in a finding, theme, suggestion
+ * or report must exist in a cited node (one repair turn, then the claim goes).
  *
  * Every step is stored, and the phase and counters are saved after each one,
  * so a restart resumes from the last finished step. A tool failure becomes a
  * failed node the model can see, never a crashed run. When the model fails a
  * phase the harness falls back (default questions, a report built from the
- * findings) so a run still ends with what it found.
+ * findings) so a run still ends with what it found. A run with no verified
+ * finding fails: it says nothing about the portfolio, so it neither writes a
+ * report nor touches the open suggestions.
  */
 import type { AnalysisNode, AnalysisNodeKind, AnalysisPhase } from "portfolio-shared/api-types";
 import { isBriefField } from "portfolio-shared/brief";
@@ -31,8 +33,8 @@ import { getIsoWeekKey } from "../portfolio-report.js";
 import { describeHolding, heldHoldings, NEW_POSITION_CASH_PERCENT, type PortfolioSuggestionService } from "../portfolio-suggestions.js";
 import { compareRuns } from "./compare.js";
 import { citableIds, graphContext, nodeLine, openQuestions } from "./context.js";
-import { cutText, type RunGraph } from "./graph.js";
-import { dropUngroundedSentences, nodeNumbers, sourcesFor, ungroundedNumbers } from "./grounding.js";
+import { MODEL_KINDS, cutSummary, cutText, type RunGraph } from "./graph.js";
+import { dropUngroundedSentences, nodeNumbers, percentSource, sourcesFor, ungroundedNumbers, type NumberSource } from "./grounding.js";
 import type { ModelPort, PortRequest, PortTurn } from "./model-port.js";
 import {
   EXPAND_OUTPUT,
@@ -48,6 +50,7 @@ import {
   synthesiseSystem,
 } from "./phases.js";
 import { seedContext, seedCore } from "./seed.js";
+import { checkProposals } from "./suggestion-checks.js";
 import { ANALYSIS_TOOLS, findTool } from "./tools/index.js";
 import { ToolInputError, type AnalysisDeps, type AnalysisTool, type ToolCall, type ToolContext } from "./types.js";
 
@@ -129,6 +132,7 @@ const FAILED_KIND: Record<string, AnalysisNodeKind> = {
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean) : []);
 const text = (v: unknown, max: number): string => (typeof v === "string" ? cutText(sanitizeLlmResponse(v), max) : "");
+const summaryText = (v: unknown, kind: AnalysisNodeKind): string => (typeof v === "string" ? cutSummary(sanitizeLlmResponse(v), kind) : "");
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
 function withTimeout<T>(promise: Promise<T>, ms: number, signal: AbortSignal): Promise<T> {
@@ -198,6 +202,12 @@ export class RunHarness {
     return new Date().toISOString().slice(0, 10);
   }
 
+  /** Whether a node is evidence: a fact the app produced, not the brief and not a claim of the model. */
+  private isFact(id: string): boolean {
+    const node = this.graph.get(id);
+    return Boolean(node && node.status === "ready" && node.kind !== "brief" && !MODEL_KINDS.has(node.kind));
+  }
+
   private checkAbort(): void {
     if (this.signal.aborted) throw new RunCancelled();
   }
@@ -243,6 +253,10 @@ export class RunHarness {
       if (phase === "expand" && this.state.modelCalls > 0 && this.state.modelFailures === this.state.modelCalls) {
         throw new Error("The model did not answer any step of the run");
       }
+      // No verified finding says nothing about the portfolio: it is not an all clear.
+      if (phase === "synthesise" && this.graph.byKind("finding").every((f) => f.status !== "ready")) {
+        throw new Error("The analysis ended without a verified finding, so it says nothing about this portfolio. The open suggestions stay as they were.");
+      }
     }
     if (this.state.modelCalls > 0 && this.state.modelFailures === this.state.modelCalls) throw new Error("The model did not answer any step of the run");
   }
@@ -258,7 +272,10 @@ export class RunHarness {
     let turn: PortTurn | null = null;
     let failure = "";
     try {
-      turn = await this.port.step({ ...req, signal: this.signal });
+      const answer = await this.port.step({ ...req, signal: this.signal });
+      // An answer with nothing the harness can read counts as a failed step, not as "nothing to report".
+      if (!answer.output && answer.calls.length === 0 && !answer.done) throw new Error(answer.errors[0] ?? "The model gave no usable answer");
+      turn = answer;
       this.state.consecutiveFailures = 0;
     } catch (err) {
       if (this.signal.aborted) throw new RunCancelled();
@@ -415,12 +432,12 @@ export class RunHarness {
   private parseFinding(raw: unknown, allowed: Set<string>): { finding?: ParsedFinding; error?: string } {
     const o = obj(raw);
     const title = text(o.title, 140);
-    const summary = text(o.summary, 300);
+    const summary = summaryText(o.summary, "finding");
     if (!title || !summary) return { error: "A finding needs a title and a summary." };
     const supports = strings(o.supports).filter((id) => allowed.has(id));
     const contradicts = strings(o.contradicts).filter((id) => allowed.has(id) && !supports.includes(id));
     const missing = strings(o.supports).filter((id) => !allowed.has(id));
-    if (supports.filter((id) => id !== "B").length === 0) {
+    if (!supports.some((id) => this.isFact(id))) {
       return { error: `Finding "${title}" cites no existing fact node${missing.length ? ` (unknown ids: ${missing.join(", ")})` : ""}. Cite the node ids in brackets.` };
     }
     const sources = sourcesFor([...supports, ...contradicts].map((id) => this.graph.get(id)), [this.graph.get("B"), this.graph.get("A")]);
@@ -630,13 +647,12 @@ export class RunHarness {
       "Themes and cross-cutting findings",
     );
     if (!turn?.output) return;
-    const allowed = citableIds(this.graph);
     let dropped = 0;
     for (const item of (Array.isArray(turn.output.themes) ? turn.output.themes : []).slice(0, 4)) {
       const o = obj(item);
       const title = text(o.title, 100);
-      const summary = text(o.summary, 300);
-      const cites = strings(o.cites).filter((id) => allowed.has(id) && id !== "B");
+      const summary = summaryText(o.summary, "theme");
+      const cites = strings(o.cites).filter((id) => this.isFact(id));
       const holdings = strings(o.holdings).map((s) => this.graph.holding(s)).filter((n): n is AnalysisNode => Boolean(n));
       const sources = sourcesFor(cites.map((id) => this.graph.get(id)), [this.graph.get("A"), ...holdings]);
       if (!title || cites.length < 2 || ungroundedNumbers(`${title} ${summary}`, sources).length) {
@@ -668,7 +684,7 @@ export class RunHarness {
     const user = [
       `Date: ${this.today}. Base currency: ${this.row.baseCurrency}.`,
       `## Holdings ledger\n${holdings.map(describeHolding).join("\n") || "- No holdings"}\n- Cash: ${cash.toFixed(2)}%`,
-      findings.length ? `## Findings of this run\n${findings.map((f) => nodeLine(f)).join("\n")}` : "## Findings of this run\nNone. Return an empty list.",
+      `## Findings of this run\n${findings.map((f) => nodeLine(f)).join("\n")}`,
       keys.openKeys.length ? `## Open suggestions\nRepeat one with the same action and symbol only if it still applies:\n${keys.openKeys.map((k) => `- ${k}`).join("\n")}` : "",
       keys.dismissedKeys.length ? `## Dismissed suggestions\nThe user rejected these. Do not suggest them again:\n${keys.dismissedKeys.map((k) => `- ${k}`).join("\n")}` : "",
       cash >= NEW_POSITION_CASH_PERCENT ? `Cash is ${cash.toFixed(2)}% of the portfolio. "open" may fill a clear gap the findings show.` : "",
@@ -676,25 +692,28 @@ export class RunHarness {
     ]
       .filter(Boolean)
       .join("\n\n");
-    const turn = findings.length
-      ? await this.modelStep(
-          "suggest",
-          {
-            system: suggestSystem(this.language),
-            user,
-            tools: [],
-            output: { name: "suggestions", description: "Rebalancing actions, each acting on findings of this run, or an empty list.", schema: SUGGEST_OUTPUT },
-          },
-          `Suggestions from ${findings.length} finding(s)`,
-        )
-      : null;
+    const turn = await this.modelStep(
+      "suggest",
+      {
+        system: suggestSystem(this.language),
+        user,
+        tools: [],
+        output: { name: "suggestions", description: "Rebalancing actions, each acting on findings of this run, or an empty list.", schema: SUGGEST_OUTPUT },
+      },
+      `Suggestions from ${findings.length} finding(s)`,
+    );
 
+    // Only an answer that holds a list can replace the stored suggestions.
+    if (!turn?.output || !Array.isArray(turn.output.suggestions)) {
+      this.note(t("service.analysis.notes.suggestFailed"));
+      return;
+    }
+    const rawList = turn.output.suggestions as unknown[];
     const findingIds = new Set(findings.map((f) => f.id));
-    const allowed = citableIds(this.graph);
-    const rawList = turn?.output && Array.isArray(turn.output.suggestions) ? turn.output.suggestions : [];
     const kept: Record<string, unknown>[] = [];
     const evidence = new Map<string, SuggestionEvidence>();
     let noFinding = 0;
+    let refused = 0;
     for (const item of rawList) {
       const o = obj(item);
       const acts = strings(o.findings).filter((id) => findingIds.has(id));
@@ -702,18 +721,27 @@ export class RunHarness {
         noFinding++;
         continue;
       }
-      const nodes = strings(o.evidence).filter((id) => allowed.has(id) && !findingIds.has(id));
+      const nodes = strings(o.evidence).filter((id) => this.isFact(id));
+      const sources = this.suggestionSources(o, acts, nodes);
+      const why = dropUngroundedSentences(text(o.why, 700), sources);
+      if (!why || ungroundedNumbers(text(o.title, 120), sources).length > 0) {
+        refused++;
+        continue;
+      }
       const goal = isBriefField(o.goal) ? o.goal : undefined;
-      kept.push(o);
+      kept.push({ ...o, why });
       if (typeof o.symbol === "string") evidence.set(o.symbol.trim().toUpperCase(), { findings: acts, nodes, goal });
     }
     const extraNotes = noFinding ? [t("service.analysis.notes.suggestionsWithoutFinding", { count: noFinding })] : [];
-    if (!turn && findings.length) this.note(t("service.analysis.notes.suggestFailed"));
 
-    // A failed step leaves the stored suggestions as they are; an answer, even an empty one, replaces them.
-    // No findings after model failures says nothing about the portfolio, so the list stays too.
-    if (!turn && (findings.length > 0 || this.state.modelFailures > 0)) return;
-    const summary = typeof turn?.output?.summary === "string" ? turn.output.summary : findings.length ? "" : t("service.analysis.noFindingsSummary");
+    // A list the checks emptied says nothing against the open suggestions.
+    if (rawList.length > 0 && kept.length === 0) {
+      for (const n of extraNotes) this.note(n);
+      if (refused) this.note(t("service.analysis.notes.suggestionsRefused", { count: refused }));
+      return;
+    }
+    const everything = this.graph.nodes.filter((n) => n.status === "ready").flatMap(nodeNumbers);
+    const summary = typeof turn.output.summary === "string" ? dropUngroundedSentences(text(turn.output.summary, 600), everything) : "";
     const result = await this.h.suggestions.applyAnswer(this.row.portfolioId, this.row.baseCurrency, this.data, { summary, suggestions: kept }, {
       now,
       fingerprint: this.row.txFingerprint,
@@ -722,8 +750,13 @@ export class RunHarness {
       runId: this.row.id,
       evidence,
       extraNotes,
+      vet: (proposals) => {
+        const checked = checkProposals(proposals, this.data, this.brief);
+        const total = refused + checked.dropped;
+        return { proposals: checked.proposals, notes: total ? [t("service.analysis.notes.suggestionsRefused", { count: total })] : [] };
+      },
     });
-    for (const n of extraNotes) this.note(n);
+    for (const n of result.notes) this.note(n);
 
     for (const s of result.kept) {
       const ev = s.evidence;
@@ -741,6 +774,22 @@ export class RunHarness {
       const holding = this.graph.holding(s.symbol);
       if (holding) this.graph.addEdge(node.id, holding.id, "about", "");
     }
+  }
+
+  /** The numbers a suggestion may use: what its findings and evidence rest on, its holdings, and its own weights. */
+  private suggestionSources(o: Record<string, unknown>, findingIds: readonly string[], nodes: readonly string[]): NumberSource[] {
+    const cited = findingIds.flatMap((id) => {
+      const facts = this.graph.get(id)?.facts;
+      return [...strings(facts?.supports), ...strings(facts?.contradicts)];
+    });
+    const funding = Array.isArray(o.fundedBy) ? o.fundedBy.map(obj) : [];
+    const symbols = [o.symbol, ...funding.map((f) => String(f.key ?? "").split(":")[1])].filter((s): s is string => typeof s === "string" && s !== "");
+    const holdings = symbols.map((s) => this.graph.holding(s));
+    const from = Number(o.fromWeight);
+    const to = Number(o.targetWeight);
+    const own = [from, to, Math.abs(from - to), ...funding.map((f) => Number(f.weight))].filter(Number.isFinite).map(percentSource);
+    const validity = Object.values(obj(o.validity)).filter((v): v is number => typeof v === "number").map((value) => ({ value: Math.abs(value), sign: 0 as const, percent: null }));
+    return [...sourcesFor([...cited, ...nodes, ...holdings.filter(Boolean)].map((n) => (typeof n === "string" ? this.graph.get(n) : n)), [this.graph.get("B"), this.graph.get("A")]), ...own, ...validity];
   }
 
   private async report(): Promise<void> {
@@ -777,7 +826,7 @@ export class RunHarness {
 
     const sources = [
       ...this.graph.nodes.filter((n) => n.status === "ready").flatMap(nodeNumbers),
-      ...comparison.changedWeights.flatMap((w) => [w.previousWeight, w.currentWeight, w.diff]),
+      ...comparison.changedWeights.flatMap((w) => [w.previousWeight, w.currentWeight, w.diff].map(percentSource)),
     ];
     const clean = (value: unknown, max: number) => {
       const raw = text(value, max);
@@ -799,7 +848,8 @@ export class RunHarness {
     );
 
     // Without a model answer the report is built from the findings themselves.
-    if (!stand) stand = findings[0] ? findings[0].summary : t("service.analysis.noFindingsSummary");
+    const fromModel = Boolean(stand);
+    if (!stand) stand = findings[0]?.summary ?? "";
     const top = matters.length ? matters : findings.slice(0, 3).map((f) => ({ finding: f, text: f.summary }));
     if (previous && !changed) {
       changed = t("service.analysis.report.changedFallback", { added: comparison.newFindings.length, resolved: comparison.resolvedFindings.length, moved: comparison.changedWeights.length });
@@ -846,8 +896,8 @@ export class RunHarness {
       },
       model: this.row.model ?? "",
       provider: this.row.provider ?? "",
-      status: turn ? "success" : "fallback",
-      isFallback: !turn,
+      status: fromModel ? "success" : "fallback",
+      isFallback: !fromModel,
       runId: this.row.id,
     });
     const reportNode = this.graph.addNode({

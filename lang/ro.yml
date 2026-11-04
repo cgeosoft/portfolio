@@ -2272,6 +2272,7 @@ service:
         one: "{count} constatare a fost eliminată: nu a citat dovezi sau a folosit cifre care nu apar în dovezi."
         few: "{count} constatări au fost eliminate: nu au citat dovezi sau au folosit cifre care nu apar în dovezi."
         other: "{count} de constatări au fost eliminate: nu au citat dovezi sau au folosit cifre care nu apar în dovezi."
+      suggestionsRefused: "Sugestii eliminate de verificări: {count}. Foloseau cifre fără dovezi, nu aveau finanțare sau încălcau descrierea."
       themesDropped:
         one: "{count} temă a fost eliminată: are nevoie de două fapte citate și de cifre din ele."
         few: "{count} teme au fost eliminate: au nevoie de două fapte citate și de cifre din ele."

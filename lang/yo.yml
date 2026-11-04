@@ -2176,6 +2176,7 @@ service:
       toolBudget: "Ìṣiṣẹ́ dé òpin ìbéèrè dátà rẹ̀."
       findingsDropped:
         other: "A yọ àwárí {count} kúrò: wọn kò tọ́ka sí ẹ̀rí tàbí wọ́n lo nọ́mbà tí kò sí nínú ẹ̀rí."
+      suggestionsRefused: "Àwọn àbá tí àyẹ̀wò yọ kúrò: {count}. Wọ́n lo nọ́ńbà láìsí ẹ̀rí, kò ní owó ìṣúná, tàbí wọ́n rú àkópọ̀."
       themesDropped:
         other: "A yọ àkòrí {count} kúrò: àkòrí kọ̀ọ̀kan nílò òtítọ́ méjì tí a tọ́ka sí àti nọ́mbà láti inú wọn."
       suggestionsWithoutFinding:

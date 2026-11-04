@@ -2188,6 +2188,7 @@ service:
       toolBudget: "已达到本次运行的数据请求上限。"
       findingsDropped:
         other: "已舍弃 {count} 项发现：未引用证据，或使用了证据中没有的数字。"
+      suggestionsRefused: "被检查移除的建议：{count} 条。它们使用了没有依据的数字、缺少资金来源或违反了简介。"
       themesDropped:
         other: "已舍弃 {count} 个主题：主题需要两条引用的事实及其中的数字。"
       suggestionsWithoutFinding:

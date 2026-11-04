@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "{count} iakttagelse togs bort: den hänvisade inte till belägg eller använde siffror som beläggen saknar."
         other: "{count} iakttagelser togs bort: de hänvisade inte till belägg eller använde siffror som beläggen saknar."
+      suggestionsRefused: "Förslag som togs bort av kontrollerna: {count}. De använde siffror utan belägg, saknade finansiering eller bröt mot beskrivningen."
       themesDropped:
         one: "{count} tema togs bort: ett tema behöver två hänvisade fakta och siffror från dem."
         other: "{count} teman togs bort: ett tema behöver två hänvisade fakta och siffror från dem."

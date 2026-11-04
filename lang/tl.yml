@@ -2224,6 +2224,7 @@ service:
       findingsDropped:
         one: "Inalis ang {count} natuklasan: wala itong binanggit na ebidensya o gumamit ito ng mga numerong wala sa ebidensya."
         other: "Inalis ang {count} natuklasan: wala silang binanggit na ebidensya o gumamit sila ng mga numerong wala sa ebidensya."
+      suggestionsRefused: "Mga mungkahing inalis ng mga pagsusuri: {count}. Gumamit ang mga ito ng mga numerong walang ebidensya, walang pondo, o lumabag sa brief."
       themesDropped:
         one: "Inalis ang {count} tema: kailangan nito ng dalawang binanggit na fact at mga numero mula sa mga ito."
         other: "Inalis ang {count} tema: kailangan nila ng dalawang binanggit na fact at mga numero mula sa mga ito."

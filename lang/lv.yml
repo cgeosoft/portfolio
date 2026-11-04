@@ -2272,6 +2272,7 @@ service:
         zero: "Izmesti {count} secinājumi: tie neatsaucās uz pierādījumiem vai izmantoja skaitļus, kuru pierādījumos nav."
         one: "Izmests {count} secinājums: tas neatsaucās uz pierādījumiem vai izmantoja skaitļus, kuru pierādījumos nav."
         other: "Izmesti {count} secinājumi: tie neatsaucās uz pierādījumiem vai izmantoja skaitļus, kuru pierādījumos nav."
+      suggestionsRefused: "Pārbaudēs noraidītie ieteikumi: {count}. Tajos bija skaitļi bez pierādījumiem, trūka finansējuma vai tie pārkāpa aprakstu."
       themesDropped:
         zero: "Izmestas {count} tēmas: tām vajadzīgi divi citēti fakti un skaitļi no tiem."
         one: "Izmesta {count} tēma: tai vajadzīgi divi citēti fakti un skaitļi no tiem."

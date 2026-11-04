@@ -2321,6 +2321,7 @@ service:
         two: "{count} ugotovitvi sta bili izločeni: nista navajali dokazov ali sta uporabili številke, ki jih dokazi nimajo."
         few: "{count} ugotovitve so bile izločene: niso navajale dokazov ali so uporabile številke, ki jih dokazi nimajo."
         other: "{count} ugotovitev je bilo izločenih: niso navajale dokazov ali so uporabile številke, ki jih dokazi nimajo."
+      suggestionsRefused: "Predlogi, ki so jih izločila preverjanja: {count}. Uporabljali so številke brez dokazov, niso imeli financiranja ali so kršili opis."
       themesDropped:
         one: "{count} tema je bila izločena: tema potrebuje dve navedeni dejstvi in številke iz njiju."
         two: "{count} temi sta bili izločeni: tema potrebuje dve navedeni dejstvi in številke iz njiju."

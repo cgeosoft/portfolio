@@ -2176,6 +2176,7 @@ service:
       toolBudget: "Lần chạy đã chạm giới hạn số yêu cầu dữ liệu."
       findingsDropped:
         other: "Đã bỏ {count} phát hiện: chúng không dẫn bằng chứng hoặc dùng số liệu mà bằng chứng không có."
+      suggestionsRefused: "Số gợi ý bị loại khi kiểm tra: {count}. Các gợi ý này dùng số liệu không có bằng chứng, thiếu nguồn vốn hoặc vi phạm bản tóm tắt."
       themesDropped:
         other: "Đã bỏ {count} chủ đề: mỗi chủ đề cần hai dữ kiện được dẫn và số liệu từ chúng."
       suggestionsWithoutFinding:

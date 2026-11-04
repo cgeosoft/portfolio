@@ -2321,6 +2321,7 @@ service:
         few: "{count} zjištění byla vyřazena: neuváděla důkazy nebo použila čísla, která v důkazech nejsou."
         many: "{count} zjištění bylo vyřazeno: neuváděla důkazy nebo použila čísla, která v důkazech nejsou."
         other: "{count} zjištění bylo vyřazeno: neuváděla důkazy nebo použila čísla, která v důkazech nejsou."
+      suggestionsRefused: "Návrhy vyřazené kontrolami: {count}. Používaly čísla bez důkazů, neměly financování nebo porušovaly zadání."
       themesDropped:
         one: "{count} téma bylo vyřazeno: téma potřebuje dva citované fakty a čísla z nich."
         few: "{count} témata byla vyřazena: téma potřebuje dva citované fakty a čísla z nich."

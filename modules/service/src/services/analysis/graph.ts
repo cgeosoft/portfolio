@@ -15,7 +15,10 @@ import type { AnalysisEdge, AnalysisEdgeType, AnalysisNode, AnalysisNodeKind, An
 import * as analysisRepo from "../../db/analysis.repo.js";
 import { assertPercentOnly } from "../llm-privacy.js";
 
-export const SUMMARY_MAX_CHARS = 300;
+/** Characters of a node summary, the text the model sees. */
+const SUMMARY_MAX_CHARS = 300;
+/** Kinds whose summary carries more: cutting these loses the point of the node. */
+const SUMMARY_MAX_BY_KIND: Partial<Record<AnalysisNodeKind, number>> = { brief: 1_500, finding: 700, theme: 500, macro: 1_200, company: 700, report: 700 };
 const TITLE_MAX_CHARS = 120;
 const RATIONALE_MAX_CHARS = 200;
 
@@ -58,6 +61,16 @@ export const MODEL_KINDS: ReadonlySet<AnalysisNodeKind> = new Set(["question", "
 export function cutText(text: string, max: number): string {
   const clean = (text || "").replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
   return clean.length > max ? `${clean.slice(0, max - 3).trimEnd()}...` : clean;
+}
+
+/** A node summary within the limit of its kind, ended at a sentence when it has to be cut. */
+export function cutSummary(text: string, kind: AnalysisNodeKind): string {
+  const max = SUMMARY_MAX_BY_KIND[kind] ?? SUMMARY_MAX_CHARS;
+  const cut = cutText(text, max);
+  if (!cut.endsWith("...")) return cut;
+  const head = cut.slice(0, -3);
+  const end = Math.max(...[...head.matchAll(/[.!?。！？؟](?=\s|$)/gu)].map((m) => m.index ?? -1), -1);
+  return end >= max / 2 ? head.slice(0, end + 1) : cut;
 }
 
 export class RunGraph {
@@ -134,7 +147,7 @@ export class RunGraph {
       title: cutText(draft.title, TITLE_MAX_CHARS),
       facts: draft.facts,
       local: draft.local,
-      summary: cutText(draft.summary, SUMMARY_MAX_CHARS),
+      summary: cutSummary(draft.summary, draft.kind),
       source: draft.source,
       createdBy: draft.createdBy,
       depth: Math.max(0, Math.round(draft.depth)),
@@ -155,7 +168,7 @@ export class RunGraph {
     const next: AnalysisNode = {
       ...node,
       ...patch,
-      summary: patch.summary !== undefined ? cutText(patch.summary, SUMMARY_MAX_CHARS) : node.summary,
+      summary: patch.summary !== undefined ? cutSummary(patch.summary, node.kind) : node.summary,
       title: patch.title !== undefined ? cutText(patch.title, TITLE_MAX_CHARS) : node.title,
     };
     this.nodeMap.set(id, next);

@@ -2236,6 +2236,7 @@ service:
       findingsDropped:
         one: "{count} havainto poistettiin: se ei viitannut näyttöön tai käytti lukuja, joita näytössä ei ole."
         other: "{count} havaintoa poistettiin: ne eivät viitanneet näyttöön tai käyttivät lukuja, joita näytössä ei ole."
+      suggestionsRefused: "Tarkistuksissa poistetut ehdotukset: {count}. Niissä oli lukuja ilman näyttöä, rahoitus puuttui tai ne rikkoivat kuvausta."
       themesDropped:
         one: "{count} teema poistettiin: teema tarvitsee kaksi viitattua tosiasiaa ja niistä otetut luvut."
         other: "{count} teemaa poistettiin: teema tarvitsee kaksi viitattua tosiasiaa ja niistä otetut luvut."

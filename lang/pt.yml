@@ -2273,6 +2273,7 @@ service:
         one: "Foi descartada {count} constatação: não citava evidências ou usava números que as evidências não têm."
         many: "Foram descartadas {count} constatações: não citavam evidências ou usavam números que as evidências não têm."
         other: "Foram descartadas {count} constatações: não citavam evidências ou usavam números que as evidências não têm."
+      suggestionsRefused: "Sugestões descartadas pelas verificações: {count}. Usavam números sem evidência, não tinham financiamento ou violavam o resumo."
       themesDropped:
         one: "Foi descartado {count} tema: precisa de dois factos citados e de números retirados deles."
         many: "Foram descartados {count} temas: precisam de dois factos citados e de números retirados deles."

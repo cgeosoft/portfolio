@@ -2239,6 +2239,7 @@ service:
       findingsDropped:
         one: "{count} finding was dropped: it cited no evidence or used numbers the evidence does not have."
         other: "{count} findings were dropped: they cited no evidence or used numbers the evidence does not have."
+      suggestionsRefused: "Suggestions dropped by the checks: {count}. They used numbers without evidence, lacked funding or broke the brief."
       themesDropped:
         one: "{count} theme was dropped: it needs two cited facts and numbers from them."
         other: "{count} themes were dropped: they need two cited facts and numbers from them."

@@ -77,7 +77,7 @@ const findingSchema: JsonSchema = {
   properties: {
     questionId: { type: "string", description: "The question this finding answers, such as Q2." },
     title: { type: "string", description: "The finding, at most 12 words." },
-    summary: { type: "string", description: "1 to 3 sentences with the facts and what they mean for the brief." },
+    summary: { type: "string", description: "1 to 3 sentences with the facts and what they mean for the brief, at most 600 characters." },
     stance: { type: "string", enum: ["risk", "opportunity", "neutral"] },
     severity: { type: "integer", minimum: 1, maximum: 3, description: "3 needs action soon, 1 is worth knowing." },
     briefField: briefFieldSchema,
