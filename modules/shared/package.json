@@ -12,6 +12,6 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "typescript": "^5.7.3"
+    "typescript": "^7.0.2"
   }
 }
