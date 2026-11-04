@@ -20,6 +20,7 @@ import { appLogger } from "../logger";
 import * as portfolioRepo from "../db/portfolio.repo";
 import * as conversationRepo from "../db/conversation.repo";
 import type { LlmService, LlmMessage } from "./llm";
+import { assertNoLedgerAmounts } from "./llm-privacy";
 import type { PortfolioService } from "./portfolio";
 import { formatEventsForPrompt, type AiContextDeps } from "./ai-context";
 import { getCompanyNews } from "./intel/company";
@@ -256,7 +257,9 @@ export class DailyBriefService {
 
           let content: string;
           try {
-            content = (await this.llm.chat(buildDailyBriefPrompt(ctx), this.llm.resolve())).trim();
+            const prompt = buildDailyBriefPrompt(ctx);
+            assertNoLedgerAmounts(prompt, data, "daily brief");
+            content = (await this.llm.chat(prompt, this.llm.resolve())).trim();
             if (!content) throw new Error("The assistant returned an empty reply");
           } catch (err) {
             errors.push(`Assistant: ${err instanceof Error ? err.message : String(err)}`);

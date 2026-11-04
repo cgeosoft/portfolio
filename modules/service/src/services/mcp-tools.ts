@@ -14,42 +14,13 @@
 import type { BenchmarkComparison, PortfolioEvent, PortfolioExposureResponse, PortfolioIncomeSummary } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData, PortfolioHolding } from "portfolio-shared/portfolio";
 import * as portfolioRepo from "../db/portfolio.repo";
+import { assertPercentOnly } from "./llm-privacy";
 import { getBenchmarkComparison, normalizeBenchmarkRange } from "./intel/benchmark";
 import type { AppServices } from "./container";
 
-/** Numbers that are not money: counts, an index from 0 to 100 and day spans. */
-const ALLOWED_NUMBER_KEYS = new Set(["rsi", "holdingsCount", "commonHoldings", "days"]);
-
+export { assertPercentOnly } from "./llm-privacy";
 /** Thrown when an answer would carry a number that is not a percentage. The tool call then fails. */
-export class McpPrivacyError extends Error {
-  constructor(path: string) {
-    super(`Refused to send a non-percentage number (${path})`);
-    this.name = "McpPrivacyError";
-  }
-}
-
-/**
- * Throws `McpPrivacyError` when `value` holds a number under a key that is
- * neither `percent`, a `...Percent` key nor in `ALLOWED_NUMBER_KEYS`, or a number in an
- * array. Strings, booleans and null pass.
- */
-export function assertPercentOnly(value: unknown, path = "$", key = ""): void {
-  if (value === null || value === undefined) return;
-  if (typeof value === "number" || typeof value === "bigint") {
-    if (!/^percent$|Percent$/.test(key) && !ALLOWED_NUMBER_KEYS.has(key)) throw new McpPrivacyError(path);
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item, i) => {
-      if (typeof item === "number") throw new McpPrivacyError(`${path}[${i}]`);
-      assertPercentOnly(item, `${path}[${i}]`, key);
-    });
-    return;
-  }
-  if (typeof value === "object") {
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) assertPercentOnly(v, `${path}.${k}`, k);
-  }
-}
+export { PromptPrivacyError as McpPrivacyError } from "./llm-privacy";
 
 // ── tool definitions ────────────────────────────────────────────────────────
 

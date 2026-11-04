@@ -11,6 +11,7 @@
 
 import { loadConfig } from "../config.js";
 import type { LlmService, LlmMessage } from "./llm.js";
+import { assertNoLedgerAmounts } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import { buildAssistantMarketContext, type AiContextDeps } from "./ai-context.js";
 import { plainStyle, withLanguageInstruction } from "./output-language.js";
@@ -122,7 +123,10 @@ export class PortfolioChatService {
       this.portfolioService.getPortfolioData(portfolio.id, baseCurrency),
       this.aiContext ? buildAssistantMarketContext(this.aiContext, portfolio.id, baseCurrency).catch(() => "") : Promise.resolve(""),
     ]);
-    return buildPortfolioSystemPrompt(portfolio, data, marketContext, config.language);
+    const prompt = buildPortfolioSystemPrompt(portfolio, data, marketContext, config.language);
+    // Only the system prompt: the user may type their own amounts into the chat.
+    assertNoLedgerAmounts(prompt, data, "assistant system prompt");
+    return prompt;
   }
 
   /** The history list: no message bodies, which the GUI loads one conversation at a time. */

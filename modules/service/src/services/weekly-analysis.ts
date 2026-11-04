@@ -17,7 +17,8 @@
 import { loadConfig, updateConfig } from "../config";
 import { appLogger } from "../logger";
 import * as portfolioRepo from "../db/portfolio.repo";
-import type { LlmService } from "./llm";
+import type { LlmMessage, LlmService } from "./llm";
+import { assertNoLedgerAmounts } from "./llm-privacy";
 import type { PortfolioService } from "./portfolio";
 import { getIsoWeekKey, type PortfolioReportService } from "./portfolio-report";
 import { channelNames, configuredChannels, notifyAll } from "./notify";
@@ -26,7 +27,7 @@ import { collectWeeklyFacts, type AiContextDeps, type WeeklyFacts } from "./ai-c
 import { plainStyle, withLanguageInstruction } from "./output-language";
 import { t } from "../i18n";
 import type { AutomationStatus, RunAutomationResponse } from "portfolio-shared/api-types";
-import type { PortfolioItem, PortfolioReport } from "portfolio-shared/portfolio";
+import type { FinancialPortfolioData, PortfolioItem, PortfolioReport } from "portfolio-shared/portfolio";
 
 const CHECK_INTERVAL_MS = 60_000;
 /** How long after the set time a start still writes the missed analysis. */
@@ -164,7 +165,7 @@ export class WeeklyAnalysisService {
             const facts = this.aiContext
               ? await collectWeeklyFacts(this.aiContext, row.id, { from: report.weekStartDate, to: report.weekEndDate }, baseCurrency).catch(() => undefined)
               : undefined;
-            const summary = report.isFallback ? fallbackSummary(report, facts) : await this.summarize(report, errors, facts);
+            const summary = report.isFallback ? fallbackSummary(report, facts) : await this.summarize(report, portfolioData, errors, facts);
             const sent = await notifyAll({ title: t("service.weeklyAnalysis.notificationTitle", { portfolio: row.name }), message: summary }, channels);
             if (sent.ok) delivered++;
             errors.push(...sent.errors);
@@ -189,27 +190,27 @@ export class WeeklyAnalysisService {
   }
 
   /** A phone-sized summary of the report, without money amounts. */
-  private async summarize(report: PortfolioReport, errors: string[], facts?: WeeklyFacts): Promise<string> {
+  private async summarize(report: PortfolioReport, data: FinancialPortfolioData, errors: string[], facts?: WeeklyFacts): Promise<string> {
     const extra = facts && facts.lines.length > 0 ? `\n\n=== FACTS FOR THE WEEK AHEAD ===\n${facts.lines.join("\n")}` : "";
     const language = loadConfig().language;
     try {
-      const text = await this.llm.chat(
-        [
-          {
-            role: "system",
-            content: withLanguageInstruction(
-              `Summarize the weekly portfolio analysis below for a push notification on a phone.
+      const messages: LlmMessage[] = [
+        {
+          role: "system",
+          content: withLanguageInstruction(
+            `Summarize the weekly portfolio analysis below for a push notification on a phone.
 Use ${plainStyle(language)}. Do not use long dashes. Do not use emojis.
 Use only facts from the analysis. Never write money amounts, balances or position values; percentages and tickers are allowed. Do not give buy or sell advice.
 Output Markdown only, at most 100 words: one bold first line with the return of the week, then 3 short bullet points with the main findings.
 When facts for the week ahead are given, use one of the bullet points for the result against the benchmark or the most important upcoming event.`,
-              language,
-            ),
-          },
-          { role: "user", content: `${report.content}${extra}` },
-        ],
-        this.llm.resolve(),
-      );
+            language,
+          ),
+        },
+        { role: "user", content: `${report.content}${extra}` },
+      ];
+      // The report is model output, but it goes back to a model: the same gate as every other prompt.
+      assertNoLedgerAmounts(messages, data, "weekly summary");
+      const text = await this.llm.chat(messages, this.llm.resolve());
       if (text.trim()) return `${text.trim()}\n\n_${t("service.weeklyAnalysis.openReports")}_`;
     } catch (err) {
       errors.push(`Assistant summary: ${err instanceof Error ? err.message : String(err)}`);

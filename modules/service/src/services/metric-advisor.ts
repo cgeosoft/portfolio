@@ -14,6 +14,7 @@ import {
 import type { MetricListing, SuggestPortfolioMetricsResponse } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
 import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "./llm.js";
+import { assertNoLedgerAmounts } from "./llm-privacy.js";
 import type { MetricsService } from "./metrics/index.js";
 import type { PortfolioService } from "./portfolio.js";
 import { getPortfolioMetrics } from "./portfolio-metrics.js";
@@ -136,7 +137,9 @@ export async function suggestMetricLayout(
 
   const data = await deps.portfolioService.getPortfolioData(portfolioId, baseCurrency);
   // Strip think blocks before looking for the JSON: their text may hold braces.
-  const reply = parseReply(sanitizeLlmResponse(await deps.llm.chat(buildPrompt(data, candidates, serviceLanguage()), deps.llm.resolve({ temperature: 0.2 }))));
+  const prompt = buildPrompt(data, candidates, serviceLanguage());
+  assertNoLedgerAmounts(prompt, data, "metric layout");
+  const reply = parseReply(sanitizeLlmResponse(await deps.llm.chat(prompt, deps.llm.resolve({ temperature: 0.2 }))));
 
   const allowed = new Set(candidates.map((c) => c.id));
   const taken = new Set<string>();

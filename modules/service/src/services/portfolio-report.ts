@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { sanitizeLlmResponse, type LlmService } from "./llm.js";
+import { assertNoLedgerAmounts } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
@@ -279,6 +280,9 @@ ${structureInstructions}
 3. Do not split section with lines ---
 4. Do not use long dash characters
 ${languageRule ? `5. ${languageRule}\n` : ""}`;
+
+    // The prompt preview and both report paths use this context: a leak stops them all.
+    assertNoLedgerAmounts([{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }], data, "report");
 
     const metrics: ReportMetrics = {
       totalPortfolioValue: summary.totalPortfolioValue || summary.totalValue,
