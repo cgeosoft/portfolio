@@ -71,9 +71,9 @@ Search takes ISIN and CUSIP queries (check digit validated, `providers/identifie
 `FmpService.get<T>(path, params, ttlMs)` is the single entry point for FMP calls. It:
 
 - sends the key in the `apikey` header, so no URL or log carries it;
-- caches each response in `market_cache` under `fmp:<path>?<sorted params>` for the TTL the caller passes (`FMP_TTL`: quotes 5 min, FX 15 min, news 30 min, calendars 12 h, dividend and split history, profiles and fundamentals 24 h, ETF holdings 7 days);
+- caches each response in `market_cache` under `fmp:<path>?<sorted params>` for the TTL the caller passes (`FMP_TTL`: quotes, FX and news 1 h, calendars 12 h, dividend and split history, profiles and fundamentals 24 h, ETF holdings 7 days);
 - shares one in-flight request between identical callers;
-- serves a forced refresh from the cache while the entry is younger than a minute (data that lives under an hour) or 15 minutes (the rest), so repeated refreshes send nothing;
+- asks for the same data at most once an hour (`FMP_MIN_REFETCH_MS`): it raises shorter TTLs, and a forced refresh inside the hour gets the cached copy. Settings → Test bypasses this;
 - does not resend a request that failed for 2 minutes (`ERROR_BACKOFF_MS`) and returns the stale copy or null meanwhile;
 - runs every call through one throttle (`FMP_THROTTLE`: 6 in flight, 300 a minute, a tenth of the plan limit) and pauses 30 s after HTTP 429;
 - marks an endpoint outside the plan (HTTP 402 or 403, or a "Restricted" or "Premium" message) for 24 h in `market_cache` (`fmp:restricted:...`) and returns null, so the chain falls back;

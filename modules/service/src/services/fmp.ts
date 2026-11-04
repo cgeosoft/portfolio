@@ -7,8 +7,8 @@
  * - caches the JSON in `market_cache` under `fmp:<path>?<sorted params>` for
  *   the TTL the caller passes (see `FMP_TTL`);
  * - shares one in-flight request between identical callers;
- * - serves a forced refresh from the cache when the entry is younger than
- *   `forceFreshMinAge()`, so repeated refresh clicks send nothing;
+ * - asks for the same data at most once in `FMP_MIN_REFETCH_MS`: shorter TTLs
+ *   are raised to it and a forced refresh inside it gets the cached copy;
  * - waits `ERROR_BACKOFF_MS` before it asks again for a request that failed;
  * - runs through one throttle for the whole app (`FMP_THROTTLE`), far below
  *   the plan limit of 3000 calls a minute;
@@ -47,14 +47,17 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
+/** The same data goes to FMP at most once in this time, even on a forced refresh. */
+export const FMP_MIN_REFETCH_MS = HOUR;
+
 /** Cache lifetimes per kind of data. Pass one of these as `ttlMs` to `get()`. */
 export const FMP_TTL = {
-  /** Live quotes, the same as the Finnhub quote TTL. */
-  quote: 5 * MINUTE,
+  /** Live quotes. */
+  quote: FMP_MIN_REFETCH_MS,
   /** The forex quote list behind FX rates. */
-  forex: 15 * MINUTE,
+  forex: FMP_MIN_REFETCH_MS,
   /** Intraday candles. */
-  intraday: 5 * MINUTE,
+  intraday: FMP_MIN_REFETCH_MS,
   /**
    * End-of-day candles, at least. Open-ended history is kept until the next
    * UTC day (see `eodTtl`): the bars change once a day and the live quote
@@ -64,7 +67,7 @@ export const FMP_TTL = {
   /** Market caps. */
   marketCap: HOUR,
   /** General and stock news. */
-  news: 30 * MINUTE,
+  news: FMP_MIN_REFETCH_MS,
   /** Calendars: earnings, IPOs, economic releases. */
   calendar: 12 * HOUR,
   /** Dividend and split history of one symbol. */
@@ -109,15 +112,6 @@ export const ERROR_BACKOFF_MS = 2 * MINUTE;
 const USAGE_LOG_WINDOW_MS = HOUR;
 
 /**
- * How old a cache entry must be before a forced refresh asks FMP again:
- * a minute for data that lives less than an hour (quotes, FX), 15 minutes
- * for the rest (charts, fundamentals, calendars), which change slowly.
- */
-export function forceFreshMinAge(ttlMs: number): number {
-  return ttlMs < HOUR ? MINUTE : 15 * MINUTE;
-}
-
-/**
  * Cache lifetime of open-ended end-of-day history: until the next UTC
  * midnight, and never less than `FMP_TTL.chart`. Markets close and FMP adds
  * the day's bar before then, so the history is asked about once a day.
@@ -138,9 +132,9 @@ export type FmpParamValue = string | number | boolean | undefined | null;
 export type FmpParams = Record<string, FmpParamValue>;
 
 export interface FmpRequestOptions {
-  /** Cache lifetime in ms; 0 disables the cache for this call. */
+  /** Cache lifetime in ms, at least `FMP_MIN_REFETCH_MS`; 0 disables the cache for this call. */
   ttlMs: number;
-  /** Skip a fresh cache entry. The call is still throttled and shared. */
+  /** Skip a cache entry older than `FMP_MIN_REFETCH_MS`. The call is still throttled and shared. */
   forceFresh?: boolean;
   /** Return an expired cache entry when FMP fails for a transient reason. Default true. */
   staleOnError?: boolean;
@@ -456,6 +450,7 @@ export class FmpService {
     const key = this.getApiKey(opts.apiKey);
     if (!key) return null;
     const useCache = opts.ttlMs > 0 && !opts.apiKey;
+    const ttlMs = Math.max(opts.ttlMs, FMP_MIN_REFETCH_MS);
 
     const query = this.buildQuery(params);
     const relative = query ? `${path}?${query}` : path;
@@ -463,7 +458,7 @@ export class FmpService {
     const fp = this.fingerprint(key);
 
     const cached = useCache ? marketCache.get<T>(cacheKey) : null;
-    if (cached && !cached.isExpired && (!opts.forceFresh || entryAge(cached) < forceFreshMinAge(opts.ttlMs))) return cached.data;
+    if (cached && !cached.isExpired && (!opts.forceFresh || entryAge(cached) < FMP_MIN_REFETCH_MS)) return cached.data;
 
     if (this.isRestricted(fp, path, relative)) return null;
     if (!opts.apiKey && FmpService.authFailedKey === fp && Date.now() < FmpService.authFailedUntil) return null;
@@ -494,7 +489,7 @@ export class FmpService {
 
     switch (outcome.kind) {
       case "ok":
-        if (useCache && !existing) marketCache.set(cacheKey, outcome.data, opts.ttlMs);
+        if (useCache && !existing) marketCache.set(cacheKey, outcome.data, ttlMs);
         return outcome.data;
       case "restricted":
         if (!existing) {
@@ -669,14 +664,14 @@ export class FmpService {
    * Raw quotes keyed by FMP symbol (upper case), through `/batch-quote` in
    * chunks of `FMP_BATCH_SIZE`. Each symbol is cached on its own
    * (`fmp:quote:<SYMBOL>`, `FMP_TTL.quote`), so only stale symbols are asked.
-   * A forced refresh skips quotes older than `forceFreshMinAge`. A symbol
+   * A forced refresh skips quotes older than `FMP_MIN_REFETCH_MS`. A symbol
    * FMP did not return is not asked again for `FMP_TTL.missingSymbol`, even
    * when forced: the chain asks the next provider for it.
    */
   public async getBatchQuotes(fmpSymbols: string[], forceFresh = false): Promise<Map<string, FmpQuote>> {
     const out = new Map<string, FmpQuote>();
     if (!this.isConfigured()) return out;
-    const needed = this.splitCached<FmpQuote>(fmpSymbols, "quote", FMP_TTL.quote, forceFresh, out);
+    const needed = this.splitCached<FmpQuote>(fmpSymbols, "quote", forceFresh, out);
     await Promise.all(
       chunk(needed, FMP_BATCH_SIZE).map(async (part) => {
         const rows = await this.get<FmpQuote[]>("/batch-quote", { symbols: part.join(",") }, { ttlMs: 0 });
@@ -698,15 +693,14 @@ export class FmpService {
   /**
    * Fills `out` with the fresh per-symbol cache entries of `kind` and
    * returns the symbols to ask FMP for: not cached, expired, or (forced)
-   * older than `forceFreshMinAge`, and not marked missing.
+   * older than `FMP_MIN_REFETCH_MS`, and not marked missing.
    */
-  private splitCached<T>(fmpSymbols: string[], kind: "quote" | "marketcap", ttlMs: number, forceFresh: boolean, out: Map<string, T>): string[] {
+  private splitCached<T>(fmpSymbols: string[], kind: "quote" | "marketcap", forceFresh: boolean, out: Map<string, T>): string[] {
     const unique = Array.from(new Set(fmpSymbols.map((s) => s.trim().toUpperCase()).filter(Boolean)));
     const needed: string[] = [];
-    const minAge = forceFreshMinAge(ttlMs);
     for (const sym of unique) {
       const cached = marketCache.get<T>(`fmp:${kind}:${sym}`);
-      if (cached && !cached.isExpired && (!forceFresh || entryAge(cached) < minAge)) {
+      if (cached && !cached.isExpired && (!forceFresh || entryAge(cached) < FMP_MIN_REFETCH_MS)) {
         out.set(sym, cached.data);
         continue;
       }
@@ -756,7 +750,7 @@ export class FmpService {
   public async getMarketCaps(fmpSymbols: string[]): Promise<Map<string, number>> {
     const out = new Map<string, number>();
     if (!this.isConfigured()) return out;
-    const needed = this.splitCached<number>(fmpSymbols, "marketcap", FMP_TTL.marketCap, false, out);
+    const needed = this.splitCached<number>(fmpSymbols, "marketcap", false, out);
     await Promise.all(
       chunk(needed, FMP_BATCH_SIZE).map(async (part) => {
         const rows = await this.get<FmpMarketCapRow[]>("/market-capitalization-batch", { symbols: part.join(",") }, { ttlMs: 0 });

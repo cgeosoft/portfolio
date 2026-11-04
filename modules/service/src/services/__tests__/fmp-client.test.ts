@@ -1,6 +1,6 @@
 /** FmpService beyond getEodChart: request building, caching, error classification, quotes, charts, search and news. */
 import { describe, it, expect, beforeEach, afterEach, mock, setSystemTime } from "bun:test";
-import { FmpService, eodAskFrom, eodTtl, redactFmpSecrets } from "../fmp";
+import { FMP_MIN_REFETCH_MS, FmpService, eodAskFrom, eodTtl, redactFmpSecrets } from "../fmp";
 import * as marketCache from "../../db/market-cache.repo";
 import { loadConfig, saveConfig } from "../../config";
 
@@ -73,20 +73,35 @@ describe("get() request building and caching", () => {
     setSystemTime(new Date(start));
     const calls = stubFetch(() => Response.json([{ ok: 1 }]));
     const fmp = new KeyedFmp("http://fmp.test");
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, 120_000);
+    const day = 24 * FMP_MIN_REFETCH_MS;
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, day);
     expect(marketCache.get("fmp:/zq7-q?a=x&b=2")?.data).toEqual([{ ok: 1 }]);
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, 120_000);
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, day);
     expect(calls.length).toBe(1);
-    // A forced refresh of an entry younger than a minute reuses it.
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: 120_000, forceFresh: true });
+    // A forced refresh inside the hour reuses the entry.
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: day, forceFresh: true });
     expect(calls.length).toBe(1);
-    setSystemTime(new Date(start + 61_000));
-    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: 120_000, forceFresh: true });
+    setSystemTime(new Date(start + FMP_MIN_REFETCH_MS + 1000));
+    await fmp.get("/zq7-q", { b: 2, a: "x" }, { ttlMs: day, forceFresh: true });
     expect(calls.length).toBe(2);
 
     await fmp.get("/zq7-nocache", {}, 0);
     await fmp.get("/zq7-nocache", {}, 0);
     expect(calls.length).toBe(4);
+  });
+
+  it("raises a short TTL to one hour", async () => {
+    const start = Date.parse("2026-03-16T10:00:00Z");
+    setSystemTime(new Date(start));
+    const calls = stubFetch(() => Response.json([{ ok: 1 }]));
+    const fmp = new KeyedFmp("http://fmp.test");
+    await fmp.get("/zq7-hour", {}, 60_000);
+    setSystemTime(new Date(start + FMP_MIN_REFETCH_MS - 1000));
+    await fmp.get("/zq7-hour", {}, 60_000);
+    expect(calls.length).toBe(1);
+    setSystemTime(new Date(start + FMP_MIN_REFETCH_MS + 1000));
+    await fmp.get("/zq7-hour", {}, 60_000);
+    expect(calls.length).toBe(2);
   });
 
   it("shares one fetch between two concurrent identical calls", async () => {
@@ -411,17 +426,16 @@ describe("request limits", () => {
     expect([...(await fmp.getBatchQuotes(["ZQHAVE", "ZQGONE"])).keys()]).toEqual(["ZQHAVE"]);
     expect(calls.length).toBe(1);
 
-    // Two minutes later a forced refresh asks for the known symbol only.
+    // Inside the hour a forced refresh asks for nothing.
     setSystemTime(new Date(start + 2 * 60_000));
     await fmp.getBatchQuotes(["ZQHAVE", "ZQGONE"], true);
-    expect(calls.length).toBe(2);
-    expect(calls[1]!.url.searchParams.get("symbols")).toBe("ZQHAVE");
+    expect(calls.length).toBe(1);
 
-    // After an hour the missing symbol is tried again.
+    // After an hour both symbols are asked again.
     setSystemTime(new Date(start + 61 * 60_000));
-    await fmp.getBatchQuotes(["ZQGONE"]);
-    expect(calls.length).toBe(3);
-    expect(calls[2]!.url.searchParams.get("symbols")).toBe("ZQGONE");
+    await fmp.getBatchQuotes(["ZQHAVE", "ZQGONE"], true);
+    expect(calls.length).toBe(2);
+    expect(calls[1]!.url.searchParams.get("symbols")).toBe("ZQHAVE,ZQGONE");
   });
 
   it("does not resend a failed request for two minutes", async () => {
