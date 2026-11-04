@@ -29,7 +29,7 @@
     "bun-types": "^1.4.4",
     "playwright-core": "^1.64.1",
     "typescript": "^5.7.3",
-    "wrangler": "^4.153.0"
+    "wrangler": "^4.156.0"
   },
   "overrides": {
     "dompurify": "^3.4.17",
