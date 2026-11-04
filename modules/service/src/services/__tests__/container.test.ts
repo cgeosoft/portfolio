@@ -20,7 +20,7 @@ afterAll(() => {
 });
 
 describe("createServices", () => {
-  it("returns the 17 services", () => {
+  it("returns the 19 services", () => {
     const services = make();
     expect(Object.keys(services).sort()).toEqual(
       [
@@ -41,6 +41,8 @@ describe("createServices", () => {
         "calendar",
         "income",
         "eventAlerts",
+        "briefService",
+        "analysis",
       ].sort(),
     );
     for (const value of Object.values(services)) {

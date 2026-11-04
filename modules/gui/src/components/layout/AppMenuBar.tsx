@@ -183,9 +183,9 @@ export function AppMenuBar({
   const zoom = zoomLevel ?? 1;
   const viewItems: MenuItemDef[] = [
     { label: t("layout.tabs.overview"), icon: PieChart, checked: activeTab === "overview", action: run(() => onSelectTab("overview")) },
-    { label: t("layout.tabs.analysis"), icon: BarChart3, checked: activeTab === "analysis", action: run(() => onSelectTab("analysis")) },
+    { label: t("layout.tabs.insights"), icon: BarChart3, checked: activeTab === "insights", action: run(() => onSelectTab("insights")) },
     { label: t("layout.tabs.transactions"), icon: History, checked: activeTab === "transactions", action: run(() => onSelectTab("transactions")) },
-    { label: t("layout.tabs.reports"), icon: FileText, checked: activeTab === "reports", action: run(() => onSelectTab("reports")) },
+    { label: t("layout.tabs.analysis"), icon: FileText, checked: activeTab === "analysis", action: run(() => onSelectTab("analysis")) },
     { type: "separator" },
     ...(onToggleAssistant
       ? [{ label: t("layout.menu.view.assistant"), shortcut: "Ctrl+J", icon: Sparkles, checked: !!isAssistantOpen, action: run(onToggleAssistant) } satisfies MenuItemDef]

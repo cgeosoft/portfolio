@@ -444,13 +444,14 @@ describe("report prompt privacy and fallback", () => {
   it("writes the style rules for English and adds a language rule for other languages", async () => {
     const english = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
     expect(english.userPrompt).toContain("1. Use ASD-STE100 simplified english text");
-    expect(english.userPrompt.split("\n").some((l) => l.startsWith("5. "))).toBe(false);
+    expect(english.userPrompt).toContain("5. Keep the whole report between 700 and 1400 words.");
+    expect(english.userPrompt.split("\n").some((l) => l.startsWith("6. "))).toBe(false);
 
     updateConfig({ language: "de" });
     try {
       const german = await reportService(async () => "ok").prepareReportPrompt(extPortfolioId, {});
       expect(german.userPrompt).toContain("1. Use short, simple sentences");
-      expect(german.userPrompt).toContain("5. Write your whole answer in German, headings included.");
+      expect(german.userPrompt).toContain("6. Write your whole answer in German, headings included.");
     } finally {
       updateConfig({ language: "en" });
     }

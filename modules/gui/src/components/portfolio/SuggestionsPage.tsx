@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
   Lightbulb,
+  Network,
   RefreshCw,
   Sparkles,
   Undo2,
@@ -40,6 +41,15 @@ interface SuggestionsPageProps {
   hideValues?: boolean;
   /** Receives every loaded or changed result, so the header badge follows the page. */
   onDataChange?: (data: GetSuggestionsResponse) => void;
+  /**
+   * Shows the one-shot generator. Guided Analysis writes the suggestions; the
+   * generator stays for models that cannot run it.
+   */
+  showGenerate?: boolean;
+  /** Opens the reasoning path of a suggestion that came from Guided Analysis. */
+  onWhy?: (s: PortfolioSuggestion) => void;
+  /** Changes when a run finished, so the list reloads. */
+  reloadKey?: string;
 }
 
 /** How often the page asks for the result while a generation runs. */
@@ -107,7 +117,7 @@ function rangeText(min?: number, max?: number, unit = ""): string {
 }
 
 /** Rebalancing ideas from the assistant, with amounts computed here from live prices. */
-export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValues = false, onDataChange }: SuggestionsPageProps) {
+export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValues = false, onDataChange, showGenerate = true, onWhy, reloadKey }: SuggestionsPageProps) {
   const [data, setData] = useState<GetSuggestionsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +143,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
   useEffect(() => {
     setLoading(true);
     void load().finally(() => setLoading(false));
-  }, [load, dataStamp]);
+  }, [load, dataStamp, reloadKey]);
 
   useEffect(() => {
     if (data) onDataChange?.(data);
@@ -252,6 +262,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
               {hideDone ? t("assistant.suggestions.showDone", { count: doneCount }) : t("assistant.suggestions.hideDone", { count: doneCount })}
             </button>
           )}
+          {(showGenerate || running) && (
           <button
             type="button"
             onClick={() => void generate()}
@@ -261,11 +272,12 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
             {running ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             {running ? t("assistant.suggestions.generating") : hasAny ? t("assistant.suggestions.recalculate") : t("assistant.suggestions.generate")}
           </button>
+          )}
         </div>
       </div>
 
       {/* Banners */}
-      {data?.stale && !running && (
+      {data?.stale && !running && showGenerate && (
         <div className="rounded-xl border border-cream/40 bg-cream/10 px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-cream shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -297,7 +309,13 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
             {running ? t("assistant.suggestions.generatingTitle") : data?.generatedAt ? t("assistant.suggestions.noChangeTitle") : t("assistant.suggestions.emptyTitle")}
           </div>
           <p className="max-w-md text-xs text-slate-400 leading-relaxed">
-            {running ? t("assistant.suggestions.generatingDescription") : data?.generatedAt ? data.summary || t("assistant.suggestions.noneActive") : t("assistant.suggestions.emptyDescription")}
+            {running
+              ? t("assistant.suggestions.generatingDescription")
+              : data?.generatedAt
+                ? data.summary || t("assistant.suggestions.noneActive")
+                : showGenerate
+                  ? t("assistant.suggestions.emptyDescription")
+                  : t("analysis.suggestions.emptyDescription")}
           </p>
         </div>
       ) : (
@@ -334,6 +352,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
                   onToggleExcluded={() => toggleExcluded(r.s.id)}
                   onCheck={() => void setStatus(r.s, "done")}
                   onDismiss={() => void setStatus(r.s, "dismissed")}
+                  onWhy={onWhy && r.s.evidence ? () => onWhy(r.s) : undefined}
                 />
               ) : (
                 // A manual tick can be taken back; a reached target cannot.
@@ -399,9 +418,11 @@ interface SuggestionCardProps {
   onCheck?: () => void;
   onDismiss?: () => void;
   onReopen?: () => void;
+  /** Opens the reasoning path in the graph. */
+  onWhy?: () => void;
 }
 
-function SuggestionCard({ row, all, currency, hideValues, busy, compact, excluded, onToggleExcluded, onCheck, onDismiss, onReopen }: SuggestionCardProps) {
+function SuggestionCard({ row, all, currency, hideValues, busy, compact, excluded, onToggleExcluded, onCheck, onDismiss, onReopen, onWhy }: SuggestionCardProps) {
   const { s, ev } = row;
   const sell = isSell(s);
   const active = ev.status === "active";
@@ -512,6 +533,17 @@ function SuggestionCard({ row, all, currency, hideValues, busy, compact, exclude
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
+          {onWhy && (
+            <button
+              type="button"
+              onClick={onWhy}
+              title={t("analysis.why.button")}
+              className="h-7 inline-flex items-center gap-1 px-2 rounded-md border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-300 hover:border-slate-700 hover:text-slate-100 cursor-pointer"
+            >
+              <Network className="w-3 h-3" />
+              {t("analysis.why.button")}
+            </button>
+          )}
           {onToggleExcluded && (
             <button
               type="button"

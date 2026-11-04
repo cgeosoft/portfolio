@@ -98,9 +98,9 @@ describe("assertPercentOnly", () => {
     expect(() => assertPercentOnly({ totalValue: 1 })).toThrow(McpPrivacyError);
   });
 
-  it("toPromptSafe returns the value when it passes", () => {
+  it("toPromptSafe returns the value as JSON when it passes", () => {
     const value = { weightPercent: 4 };
-    expect(toPromptSafe(value) as unknown).toBe(value);
+    expect(String(toPromptSafe(value))).toBe(JSON.stringify(value));
     expect(() => toPromptSafe({ shares: 4 })).toThrow(PromptPrivacyError);
   });
 });
@@ -207,10 +207,10 @@ describe("report prompt gate", () => {
 describe("scanForAmounts", () => {
   it("finds money in free text", () => {
     const found = scanForAmounts("I hold €50,000 in ETFs, add 500 EUR a month and keep 80k in cash. Goal: 2 million dollars.");
-    expect(found.map((f) => f.text)).toEqual(["€50,000", "500 EUR", "80k", "2 million dollars"]);
+    expect(found.matches).toEqual(["€50,000", "500 EUR", "80k", "2 million dollars"]);
   });
 
   it("lets percentages, years and counts pass", () => {
-    expect(scanForAmounts("Retire in 2045, 15 years away. Keep 60% equity, 3 ETFs, max drawdown 25%.")).toEqual([]);
+    expect(scanForAmounts("Retire in 2045, 15 years away. Keep 60% equity, 3 ETFs, max drawdown 25%.")).toEqual({ hasAmounts: false, matches: [] });
   });
 });

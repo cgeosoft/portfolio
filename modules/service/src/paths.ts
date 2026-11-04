@@ -28,8 +28,8 @@
  * import it.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 const ROOT_PACKAGE_NAME = "portfolio";
@@ -83,18 +83,31 @@ export function defaultDataDir(): string {
 }
 
 /**
- * Absolute path to the user data directory. A live binding: tests point it at
- * a scratch directory with `setDataDirForTests`.
+ * True under `bun test`, whose entry point is the test file. The test preload
+ * also moves the data, but `bun test` reads `bunfig.toml` only from the folder
+ * it starts in, and a run from any other folder would open the user's real
+ * data: test cleanup deletes every portfolio. `NODE_ENV` is no signal, since a
+ * shell that exports it keeps its own value under `bun test`.
  */
-export let DATA_DIR: string = defaultDataDir();
+const RUNNING_TESTS = typeof Bun !== "undefined" && /[._](test|spec)\.[cm]?[jt]sx?$/.test(Bun.main);
+
+/**
+ * Absolute path to the user data directory. A live binding: tests point it at
+ * a scratch directory with `setDataDirForTests`, and under `bun test` it never
+ * starts at the real one.
+ */
+export let DATA_DIR: string = RUNNING_TESTS ? mkdtempSync(join(tmpdir(), "portfolio-test-")) : defaultDataDir();
 
 /**
  * The directories that held the data before 0.6, for the one-time import in
  * `bootstrap.ts`: `~/.config/portfolio` on Linux, the data directory itself
  * on macOS and Windows (only the database file moved there).
  */
-export let LEGACY_DATA_DIR: string | undefined =
-  process.platform === "linux" ? join(homedir(), ".config", APP_DIR_NAME) : DATA_DIR;
+export let LEGACY_DATA_DIR: string | undefined = RUNNING_TESTS
+  ? undefined
+  : process.platform === "linux"
+    ? join(homedir(), ".config", APP_DIR_NAME)
+    : DATA_DIR;
 
 /**
  * Test preload hook: every file goes to `dir`, and the one-time import of the

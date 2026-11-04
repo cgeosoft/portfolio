@@ -25,7 +25,7 @@ import { appLogger } from "../../logger.js";
 import { FMP_TTL, toFmpSymbol, type FmpNewsArticle, type FmpParams, type FmpService } from "../fmp.js";
 import type { FinnhubBasicFinancials, FinnhubInsiderTransaction, FinnhubService } from "../finnhub.js";
 import type { MarketDataCoordinator } from "../market-data.js";
-import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "../llm.js";
+import { sanitizeLlmResponse, toPromptSafe, type LlmMessage, type LlmService } from "../llm.js";
 import { withLanguageInstruction } from "../output-language.js";
 import { serviceLanguage } from "../../i18n.js";
 import { mapWithConcurrencyLimit } from "../yahoo-finance.js";
@@ -918,25 +918,29 @@ export function buildTranscriptSummaryPrompt(meta: TranscriptMeta, transcript: s
   return [
     {
       role: "system",
-      content: withLanguageInstruction(
-        [
-          "You are an equity analyst. Summarize an earnings call transcript for a private investor.",
-          "Use only facts stated in the transcript. Do not invent numbers. Say so when the call does not cover a section.",
-          "Write Markdown with these sections, each a short bulleted list:",
-          "## Results (revenue, earnings, margins, versus last year or guidance)",
-          "## Guidance and outlook",
-          "## Strategy and management comments",
-          "## Analyst questions",
-          "## Risks and concerns",
-          "## Tone (one line: confident, cautious or mixed, and why)",
-          "Keep it under 300 words. Short active sentences. No preamble.",
-        ].join("\n"),
-        language,
+      content: toPromptSafe(
+        withLanguageInstruction(
+          [
+            "You are an equity analyst. Summarize an earnings call transcript for a private investor.",
+            "Use only facts stated in the transcript. Do not invent numbers. Say so when the call does not cover a section.",
+            "Write Markdown with these sections, each a short bulleted list:",
+            "## Results (revenue, earnings, margins, versus last year or guidance)",
+            "## Guidance and outlook",
+            "## Strategy and management comments",
+            "## Analyst questions",
+            "## Risks and concerns",
+            "## Tone (one line: confident, cautious or mixed, and why)",
+            "Keep it under 300 words. Short active sentences. No preamble.",
+          ].join("\n"),
+          language,
+        ),
       ),
     },
     {
       role: "user",
-      content: `${company}, Q${meta.quarter} fiscal ${meta.fiscalYear} earnings call${meta.date ? ` on ${meta.date}` : ""}.${trimmed ? " The transcript was shortened; a marker shows the cut." : ""}\n\nTranscript:\n\n${transcript}`,
+      content: toPromptSafe(
+        `${company}, Q${meta.quarter} fiscal ${meta.fiscalYear} earnings call${meta.date ? ` on ${meta.date}` : ""}.${trimmed ? " The transcript was shortened; a marker shows the cut." : ""}\n\nTranscript:\n\n${transcript}`,
+      ),
     },
   ];
 }

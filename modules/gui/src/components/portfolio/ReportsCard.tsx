@@ -36,7 +36,7 @@ import { getLocale, t } from "../../i18n";
 const AnalyzePortfolioModal = lazy(() => import("./AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
 
 /** Styles of the report body; module level, so the elements are not remounted on every render. */
-const REPORT_MARKDOWN: Components = {
+export const REPORT_MARKDOWN: Components = {
   h1: ({ node: _n, ...props }) => (
     <h1 className="text-sm font-bold uppercase tracking-wider text-[#DD3C73] border-b border-slate-800 pb-1.5 mt-4 mb-2" {...props} />
   ),

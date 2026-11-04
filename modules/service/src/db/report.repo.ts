@@ -18,6 +18,8 @@ export interface ReportRow {
   status: "success" | "fallback" | "error";
   error: string | null;
   isFallback: number; // 0 or 1
+  /** The Guided Analysis run of a short report; null for the long report. */
+  runId?: string | null;
 }
 
 export interface ReportMetrics {
@@ -47,7 +49,7 @@ export function findByPortfolio(portfolioId: string, limit = 52): ReportRow[] {
   const db = getDatabase();
   return db
     .query(
-      `SELECT id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, metrics, model, provider, status, error, isFallback
+      `SELECT id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, metrics, model, provider, status, error, isFallback, runId
        FROM reports WHERE portfolioId = ? ORDER BY weekStartDate DESC, createdAt DESC LIMIT ?`,
     )
     .all(portfolioId, limit) as ReportRow[];
@@ -81,27 +83,34 @@ export function upsert(data: {
   status?: "success" | "fallback" | "error";
   error?: string | null;
   isFallback?: boolean;
+  runId?: string | null;
 }): ReportRow {
   const db = getDatabase();
   const metricsJson = JSON.stringify(data.metrics);
   const now = new Date().toISOString();
 
   db.run(
-    `INSERT INTO reports (id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, prompt, metrics, model, provider, status, error, isFallback)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO reports (id, portfolioId, createdAt, period, weekStartDate, weekEndDate, weekKey, title, summary, content, prompt, metrics, model, provider, status, error, isFallback, runId)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        title = excluded.title, summary = excluded.summary, content = excluded.content, prompt = excluded.prompt,
        metrics = excluded.metrics, model = excluded.model, provider = excluded.provider,
-       status = excluded.status, error = excluded.error, isFallback = excluded.isFallback`,
+       status = excluded.status, error = excluded.error, isFallback = excluded.isFallback, runId = excluded.runId`,
     [
       data.id, data.portfolioId, now, data.period, data.weekStartDate, data.weekEndDate,
       data.weekKey, data.title, data.summary, data.content, data.prompt ?? null, metricsJson,
       data.model, data.provider, data.status ?? "success", data.error ?? null,
       data.isFallback ? 1 : 0,
+      data.runId ?? null,
     ],
   );
 
   return findById(data.id)!;
+}
+
+/** The short report of a Guided Analysis run, or null. */
+export function findByRun(portfolioId: string, runId: string): ReportRow | null {
+  return (getDatabase().query("SELECT * FROM reports WHERE portfolioId = ? AND runId = ?").get(portfolioId, runId) as ReportRow | null) ?? null;
 }
 
 export function deleteById(id: string, portfolioId: string): boolean {

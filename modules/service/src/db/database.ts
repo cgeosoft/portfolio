@@ -70,6 +70,13 @@ function initializeSchema(database: Database): void {
   if (!portfolioColumns.some((col) => col.name === "color")) {
     database.run("ALTER TABLE portfolios ADD COLUMN color TEXT");
   }
+  // Portfolio brief: structured JSON and updated timestamp
+  if (!portfolioColumns.some((col) => col.name === "briefJson")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN briefJson TEXT");
+  }
+  if (!portfolioColumns.some((col) => col.name === "briefUpdatedAt")) {
+    database.run("ALTER TABLE portfolios ADD COLUMN briefUpdatedAt TEXT");
+  }
 
   database.run(`
     CREATE TABLE IF NOT EXISTS transactions (
@@ -130,6 +137,10 @@ function initializeSchema(database: Database): void {
   const reportColumns = database.query("PRAGMA table_info(reports)").all() as { name: string }[];
   if (!reportColumns.some((col) => col.name === "prompt")) {
     database.run("ALTER TABLE reports ADD COLUMN prompt TEXT");
+  }
+  // The Guided Analysis run that wrote the short report; null for the long report.
+  if (!reportColumns.some((col) => col.name === "runId")) {
+    database.run("ALTER TABLE reports ADD COLUMN runId TEXT");
   }
 
   database.run(`CREATE INDEX IF NOT EXISTS idx_reports_portfolio ON reports(portfolioId)`);
@@ -245,6 +256,14 @@ function initializeSchema(database: Database): void {
     )
   `);
   database.run("CREATE INDEX IF NOT EXISTS idx_suggestions_portfolio ON suggestions(portfolioId, status)");
+  // Guided Analysis: the run that made a suggestion and its evidence node ids (JSON).
+  const suggestionColumns = database.query("PRAGMA table_info(suggestions)").all() as { name: string }[];
+  if (!suggestionColumns.some((col) => col.name === "runId")) {
+    database.run("ALTER TABLE suggestions ADD COLUMN runId TEXT");
+  }
+  if (!suggestionColumns.some((col) => col.name === "evidenceJson")) {
+    database.run("ALTER TABLE suggestions ADD COLUMN evidenceJson TEXT");
+  }
   // One row per portfolio: the last generation and the transaction state it saw.
   database.run(`
     CREATE TABLE IF NOT EXISTS suggestion_runs (
@@ -255,6 +274,83 @@ function initializeSchema(database: Database): void {
       notes TEXT NOT NULL,
       provider TEXT,
       model TEXT
+    )
+  `);
+
+  // Guided Analysis (see analysis.repo.ts and services/analysis/). A run grows
+  // a graph of nodes and edges around the brief and the allocation; each
+  // model turn is a step. Node facts are percent-only JSON; `local` holds the
+  // amounts the GUI shows and never reaches a model.
+  database.run(`
+    CREATE TABLE IF NOT EXISTS analysis_runs (
+      id TEXT PRIMARY KEY,
+      portfolioId TEXT NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+      status TEXT NOT NULL,
+      phase TEXT NOT NULL,
+      briefJson TEXT NOT NULL,
+      briefFingerprint TEXT NOT NULL,
+      txFingerprint TEXT NOT NULL,
+      baseCurrency TEXT NOT NULL,
+      provider TEXT,
+      model TEXT,
+      toolMode TEXT,
+      trigger TEXT,
+      stepCount INTEGER NOT NULL DEFAULT 0,
+      toolCount INTEGER NOT NULL DEFAULT 0,
+      nodeCount INTEGER NOT NULL DEFAULT 0,
+      summary TEXT,
+      notes TEXT NOT NULL DEFAULT '[]',
+      stateJson TEXT,
+      startedAt TEXT NOT NULL,
+      endedAt TEXT,
+      error TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    )
+  `);
+  database.run("CREATE INDEX IF NOT EXISTS idx_analysis_runs_portfolio ON analysis_runs(portfolioId, startedAt DESC)");
+  database.run(`
+    CREATE TABLE IF NOT EXISTS analysis_nodes (
+      runId TEXT NOT NULL REFERENCES analysis_runs(id) ON DELETE CASCADE,
+      id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      title TEXT NOT NULL,
+      factsJson TEXT NOT NULL,
+      localJson TEXT,
+      summary TEXT NOT NULL,
+      sourceJson TEXT,
+      createdBy TEXT NOT NULL,
+      depth INTEGER NOT NULL,
+      relevance REAL NOT NULL,
+      status TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (runId, id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS analysis_edges (
+      runId TEXT NOT NULL REFERENCES analysis_runs(id) ON DELETE CASCADE,
+      id TEXT NOT NULL,
+      sourceId TEXT NOT NULL,
+      targetId TEXT NOT NULL,
+      type TEXT NOT NULL,
+      rationale TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (runId, id)
+    )
+  `);
+  database.run(`
+    CREATE TABLE IF NOT EXISTS analysis_steps (
+      runId TEXT NOT NULL REFERENCES analysis_runs(id) ON DELETE CASCADE,
+      stepIndex INTEGER NOT NULL,
+      phase TEXT NOT NULL,
+      requestSummary TEXT,
+      actionsJson TEXT,
+      resultsJson TEXT,
+      note TEXT,
+      durationMs INTEGER NOT NULL,
+      createdAt TEXT NOT NULL,
+      PRIMARY KEY (runId, stepIndex)
     )
   `);
 

@@ -64,8 +64,8 @@ describe("writeDesktopSettingsFile", () => {
 });
 
 describe("settings catalog", () => {
-  it("defines five known settings", () => {
-    expect(SETTING_DEFINITIONS.map((d) => d.key)).toEqual(["marketQuotesInterval", "startWithBoot", "closeToTray", "telemetryEnabled", "checkForUpdates"]);
+  it("defines six known settings", () => {
+    expect(SETTING_DEFINITIONS.map((d) => d.key)).toEqual(["marketQuotesInterval", "startWithBoot", "closeToTray", "telemetryEnabled", "checkForUpdates", "llmToolMode"]);
     for (const d of SETTING_DEFINITIONS) {
       expect(CONFIG_KEYS.has(d.key)).toBe(true);
       if (d.kind === "choice") expect(d.options?.length ?? 0).toBeGreaterThan(0);
@@ -82,8 +82,9 @@ describe("settings catalog", () => {
       ["closeToTray", true, true],
       ["telemetryEnabled", false, true],
       ["checkForUpdates", true, true],
+      ["llmToolMode", "auto", true],
     ]);
-    expect(views.map((v) => v.section)).toEqual(["market", "app", "app", "security", "app"]);
+    expect(views.map((v) => v.section)).toEqual(["market", "app", "app", "security", "app", "assistant"]);
     views.forEach((v, i) => {
       expect(v.label).toBe(SETTING_DEFINITIONS[i].label);
       expect(v.description).toBe(SETTING_DEFINITIONS[i].description);

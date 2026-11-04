@@ -100,6 +100,18 @@ export interface DesktopConfig {
   llmBaseUrls: Record<string, string>;
   /** Per-provider selected models */
   llmModels?: Record<string, string>;
+  /**
+   * `provider|model|baseUrl` of the last model setup that answered a request
+   * (the Settings test or any feature). The brief wizard and Guided Analysis
+   * need it to match the current setup. Written by the service.
+   */
+  llmVerified?: string;
+  /**
+   * How Guided Analysis talks to the model: "auto" probes the model once;
+   * "native" sends real tools; "json" uses the JSON action protocol; "off"
+   * turns Guided Analysis off for this setup.
+   */
+  llmToolMode: LlmToolMode;
   /** Optional Finnhub API key for market intelligence in AI reports */
   finnhubApiKey?: string;
   /** Optional Financial Modeling Prep API key. Masked like the other keys. */
@@ -177,6 +189,8 @@ export interface DesktopConfig {
   weeklyAnalysisPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled weekly analysis. Written by the service. */
   weeklyAnalysisLastRun?: string;
+  /** What the weekly schedule writes: a Guided Analysis run ("graph") or the long report ("report"). */
+  weeklyAnalysisMode: WeeklyAnalysisMode;
   /** Whether a daily push names the ex-dividend dates and earnings reports of the next day for held symbols (Settings, Notifications, Dividend & Earnings Alerts). */
   eventAlertsEnabled: boolean;
   /** Local time of day the event alerts run, "HH:MM". */
@@ -222,9 +236,13 @@ export const DEFAULT_REMOTE_PORT = 5130;
 export const DEFAULT_MCP_PORT = 5131;
 
 /** Settings the GUI cannot change through `PATCH /api/config`. */
-export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "mcpEnabled", "mcpPort", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"] as const;
+export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "remotePort", "mcpEnabled", "mcpPort", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun", "llmVerified"] as const;
 
 export type AppTheme = "dark" | "light" | "system";
+
+export type LlmToolMode = "auto" | "native" | "json" | "off";
+
+export type WeeklyAnalysisMode = "graph" | "report";
 
 /**
  * What `GET /api/config` returns in place of a stored API key. The service

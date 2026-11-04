@@ -44,6 +44,10 @@ const cols = (db: Database, t: string) => (db.query(`PRAGMA table_info(${t})`).a
 const versions = (db: Database) => db.query("SELECT version FROM schema_version").all();
 
 const ALL_TABLES = [
+  "analysis_edges",
+  "analysis_nodes",
+  "analysis_runs",
+  "analysis_steps",
   "assistant_conversations",
   "installed_metrics",
   "kv_entries",
@@ -94,7 +98,7 @@ describe("fresh database", () => {
     expect(existsSync(getDatabasePath())).toBe(true);
   });
 
-  it("has exactly the 15 tables and no config table", () => {
+  it("has exactly the 19 tables and no config table", () => {
     const names = tables(getDatabase()).sort();
     expect(names).toEqual(ALL_TABLES);
     expect(names).not.toContain("config");
@@ -102,7 +106,7 @@ describe("fresh database", () => {
 
   it("has the current named indexes and none of the dropped ones", () => {
     const names = indexes(getDatabase());
-    for (const idx of ["idx_transactions_portfolio_order", "idx_reports_portfolio", "idx_conversations_portfolio_updated", "idx_suggestions_portfolio"]) {
+    for (const idx of ["idx_transactions_portfolio_order", "idx_reports_portfolio", "idx_conversations_portfolio_updated", "idx_suggestions_portfolio", "idx_analysis_runs_portfolio"]) {
       expect(names).toContain(idx);
     }
     for (const idx of [
@@ -170,7 +174,7 @@ describe("existing database files", () => {
     seed.close();
 
     const db = openDir(dir);
-    expect(cols(db, "portfolios")).toEqual(["id", "name", "description", "baseCurrency", "createdAt", "updatedAt", "metricsJson", "color"]);
+    expect(cols(db, "portfolios")).toEqual(["id", "name", "description", "baseCurrency", "createdAt", "updatedAt", "metricsJson", "color", "briefJson", "briefUpdatedAt"]);
     const p = portfolioRepo.findById("p-old");
     expect(p).not.toBeNull();
     expect(p!.name).toBe("Old");
@@ -197,7 +201,7 @@ describe("existing database files", () => {
       closeDatabase();
       getDatabase();
     }).not.toThrow();
-    expect(cols(getDatabase(), "portfolios").length).toBe(8);
+    expect(cols(getDatabase(), "portfolios").length).toBe(10);
   });
 
   it("keeps an existing schema_version value", () => {

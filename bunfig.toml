@@ -1,3 +1,6 @@
+# `bun test` started from the repo root also loads the service test setup, so
+# a test never opens the real data directory, and tests fail when they try to
+# reach the network (scripts/test-network-guard.ts). modules/service/bunfig.toml
+# does the same for runs started in that folder.
 [test]
-# Tests fail when they try to reach the network (scripts/test-network-guard.ts).
-preload = ["./scripts/test-network-guard.ts"]
+preload = ["./scripts/test-network-guard.ts", "./modules/service/src/test-setup.ts"]

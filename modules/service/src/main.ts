@@ -110,6 +110,8 @@ appUpdateService.startPeriodicChecks();
 void services.metricsService.warmUp();
 services.dailyBrief.start();
 services.weeklyAnalysis.start();
+// A Guided Analysis run the last stop interrupted goes on from its last finished step.
+services.analysis.resumeInterrupted();
 services.eventAlerts.start();
 const pruneTimer = setInterval(() => {
   authService.prune();

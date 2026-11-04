@@ -1,6 +1,6 @@
 /** LLM service over the OpenAI-compatible API: streaming frames, errors, headers and stored-key scoping. */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "bun:test";
-import { LlmService } from "../llm.js";
+import { LlmService, toPromptSafe } from "../llm.js";
 import { loadConfig, updateConfig } from "../../config.js";
 
 interface Call {
@@ -22,7 +22,7 @@ const sse = (chunks: (string | Uint8Array)[]) =>
 const d = (text: string) => `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}`;
 const completion = (content: string) => new Response(JSON.stringify({ choices: [{ message: { content } }] }), { status: 200 });
 
-const msgs = [{ role: "user" as const, content: "Hi" }];
+const msgs = [{ role: "user" as const, content: toPromptSafe("Hi") }];
 const originalFetch = globalThis.fetch;
 let calls: Call[] = [];
 

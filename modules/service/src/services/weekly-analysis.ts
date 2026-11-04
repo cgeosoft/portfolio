@@ -18,7 +18,7 @@ import { loadConfig, updateConfig } from "../config";
 import { appLogger } from "../logger";
 import * as portfolioRepo from "../db/portfolio.repo";
 import type { LlmMessage, LlmService } from "./llm";
-import { assertNoLedgerAmounts } from "./llm-privacy";
+import { assertNoLedgerAmounts, toPromptSafe } from "./llm-privacy";
 import type { PortfolioService } from "./portfolio";
 import { getIsoWeekKey, type PortfolioReportService } from "./portfolio-report";
 import { channelNames, configuredChannels, notifyAll } from "./notify";
@@ -28,6 +28,7 @@ import { plainStyle, withLanguageInstruction } from "./output-language";
 import { t } from "../i18n";
 import type { AutomationStatus, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData, PortfolioItem, PortfolioReport } from "portfolio-shared/portfolio";
+import type { AnalysisService } from "./analysis/run";
 
 const CHECK_INTERVAL_MS = 60_000;
 /** How long after the set time a start still writes the missed analysis. */
@@ -104,7 +105,32 @@ export class WeeklyAnalysisService {
     private readonly reportService: PortfolioReportService,
     /** For the weekly facts of the push summary; without it the summary uses the report alone. */
     private readonly aiContext?: AiContextDeps,
+    /** Guided Analysis, the default weekly mode; without it the long report runs. */
+    private readonly analysis?: AnalysisService,
   ) {}
+
+  /**
+   * A Guided Analysis run for the schedule, when the mode asks for it and the
+   * model can run one. Null means the long report runs instead.
+   */
+  private async guidedRun(portfolioId: string, baseCurrency: string, errors: string[]): Promise<{ summary: string; actions: string[] } | null> {
+    if (!this.analysis || loadConfig().weeklyAnalysisMode !== "graph") return null;
+    const capability = await this.analysis.capability();
+    if (capability.reason) return null;
+    try {
+      const started = await this.analysis.start(portfolioId, { baseCurrency, trigger: "schedule" });
+      await this.analysis.waitFor(started.id);
+      const res = this.analysis.get(started.id);
+      if (res.run.status !== "completed") {
+        if (res.run.error) errors.push(`Guided Analysis: ${res.run.error}`);
+        return null;
+      }
+      return { summary: res.run.summary ?? "", actions: (res.suggestions ?? []).filter((s) => s.status === "active").map((s) => s.title) };
+    } catch (err) {
+      errors.push(`Guided Analysis: ${err instanceof Error ? err.message : String(err)}`);
+      return null;
+    }
+  }
 
   public start(): void {
     if (this.timer) return;
@@ -155,13 +181,27 @@ export class WeeklyAnalysisService {
       for (const row of portfolios) {
         const portfolio: PortfolioItem = { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency };
         try {
-          const portfolioData = await this.portfolioService.getPortfolioData(row.id, row.baseCurrency || cfg.baseCurrency || "EUR", true);
+          const baseCurrency = row.baseCurrency || cfg.baseCurrency || "EUR";
+          const guided = await this.guidedRun(row.id, baseCurrency, errors);
+          if (guided) {
+            written++;
+            if (channels.length > 0) {
+              // Sections 1 and 4 of the short report: where the portfolio stands and the suggested actions.
+              const lines = [`**${t("service.weeklyAnalysis.guidedHeading")}**`, guided.summary || t("service.analysis.noFindingsSummary")];
+              if (guided.actions.length) lines.push("", ...guided.actions.slice(0, 5).map((a) => `- ${a}`));
+              lines.push("", `_${t("service.weeklyAnalysis.openAnalysis")}_`);
+              const sent = await notifyAll({ title: t("service.weeklyAnalysis.notificationTitle", { portfolio: row.name }), message: lines.join("\n") }, channels);
+              if (sent.ok) delivered++;
+              errors.push(...sent.errors);
+            }
+            continue;
+          }
+          const portfolioData = await this.portfolioService.getPortfolioData(row.id, baseCurrency, true);
           const report = await this.reportService.generateReport(portfolio, { weekKey, portfolioData });
           written++;
           if (report.isFallback && report.error) errors.push(`Assistant: ${report.error}`);
 
           if (channels.length > 0) {
-            const baseCurrency = row.baseCurrency || cfg.baseCurrency || "EUR";
             const facts = this.aiContext
               ? await collectWeeklyFacts(this.aiContext, row.id, { from: report.weekStartDate, to: report.weekEndDate }, baseCurrency).catch(() => undefined)
               : undefined;
@@ -182,8 +222,8 @@ export class WeeklyAnalysisService {
     const success = written > 0 && delivered === (channels.length > 0 ? written : 0);
     const message =
       channels.length === 0
-        ? `Wrote ${written} weekly report(s) to Reports. Set up a phone app under Settings, Notifications to receive a summary as a push notification.`
-        : `Wrote ${written} weekly report(s) and delivered ${delivered} summary(ies) through ${channelNames(channels)}.`;
+        ? `Wrote ${written} weekly analysis(es) to the Analysis tab. Set up a phone app under Settings, Notifications to receive a summary as a push notification.`
+        : `Wrote ${written} weekly analysis(es) and delivered ${delivered} summary(ies) through ${channelNames(channels)}.`;
     this.last = { at: now.toISOString(), trigger, success, message, errors: unique };
     timer.end(success ? "success" : "warning", `Weekly analysis: ${written} written, ${delivered} delivered, ${unique.length} problem(s)`);
     return { success, portfolios: written, delivered, message, error: unique[0] };
@@ -197,16 +237,18 @@ export class WeeklyAnalysisService {
       const messages: LlmMessage[] = [
         {
           role: "system",
-          content: withLanguageInstruction(
-            `Summarize the weekly portfolio analysis below for a push notification on a phone.
+          content: toPromptSafe(
+            withLanguageInstruction(
+              `Summarize the weekly portfolio analysis below for a push notification on a phone.
 Use ${plainStyle(language)}. Do not use long dashes. Do not use emojis.
 Use only facts from the analysis. Never write money amounts, balances or position values; percentages and tickers are allowed. Do not give buy or sell advice.
 Output Markdown only, at most 100 words: one bold first line with the return of the week, then 3 short bullet points with the main findings.
 When facts for the week ahead are given, use one of the bullet points for the result against the benchmark or the most important upcoming event.`,
-            language,
+              language,
+            ),
           ),
         },
-        { role: "user", content: `${report.content}${extra}` },
+        { role: "user", content: toPromptSafe(`${report.content}${extra}`) },
       ];
       // The report is model output, but it goes back to a model: the same gate as every other prompt.
       assertNoLedgerAmounts(messages, data, "weekly summary");

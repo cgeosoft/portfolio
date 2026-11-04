@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { sanitizeLlmResponse, type LlmService } from "./llm.js";
-import { assertNoLedgerAmounts } from "./llm-privacy.js";
+import { assertNoLedgerAmounts, toPromptSafe } from "./llm-privacy.js";
 import type { PortfolioService } from "./portfolio.js";
 import * as reportRepo from "../db/report.repo.js";
 import * as portfolioRepo from "../db/portfolio.repo.js";
@@ -15,6 +15,7 @@ import type { ReportMetrics } from "../db/report.repo.js";
 import { buildReportIntelSections, collectReportIntel, EMPTY_REPORT_INTEL, type AiContextDeps, type ReportIntel, type ReportIntelRequest } from "./ai-context.js";
 import { isEnglishOutput, languageInstruction, plainStyle } from "./output-language.js";
 import { t } from "../i18n.js";
+import { briefPromptSection, readBrief } from "./portfolio-brief.js";
 import { localDate } from "./daily-brief.js";
 import type { PortfolioItem, FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
 import type {
@@ -95,6 +96,14 @@ interface ReportStreamSession {
 
 /** Collects the market context of a report. Tests pass a stub; without one a report has the ledger only. */
 export type ReportIntelLoader = (req: ReportIntelRequest) => Promise<ReportIntel>;
+
+/**
+ * Length of the long report. The prompt asks for about 1,024 to 2,048 output
+ * tokens, about 700 to 1,400 words; the request cap (LONG_REPORT_MAX_TOKENS)
+ * stays above it so a reasoning model is not cut off while it thinks.
+ */
+export const LONG_REPORT_WORDS = { min: 700, max: 1_400 } as const;
+export const LONG_REPORT_MAX_TOKENS = 3_000;
 
 /** A report week counts as current while it has not ended more than this many days ago. */
 const CURRENT_WEEK_GRACE_DAYS = 3;
@@ -260,6 +269,7 @@ export class PortfolioReportService {
       "You are a sophisticated, analytical quantitative investment portfolio analyst. You provide objective, concise, actionable commentary on portfolio performance, asset allocation, technical market trends, risk concentrations, and strategic rebalancing recommendations in clean markdown format. Maintain a professional, cyberpunk-tactical yet measured tone.";
 
     const languageRule = languageInstruction(language);
+    const briefSection = briefPromptSection(readBrief(portfolio));
     const userPrompt = `
 Analyze the following investment portfolio state for portfolio **"${portfolio.name}"** for period **${period}** (${weekKey}):
 
@@ -269,6 +279,7 @@ Analyze the following investment portfolio state for portfolio **"${portfolio.na
 - **Day Change**: ${summary.dayGainLossPercent >= 0 ? "+" : ""}${summary.dayGainLossPercent}%
 - **Asset Breakdown**: Stocks ${summary.stockWeightPercent}%, ETFs ${summary.etfWeightPercent}%, Crypto ${summary.cryptoWeightPercent}%, Private & Other ${summary.otherWeightPercent ?? 0}%, Cash ${summary.cashWeightPercent}%
 
+${briefSection}
 ## Holdings Ledger
 ${holdingsContext}
 ${intelContext}
@@ -279,7 +290,8 @@ ${structureInstructions}
 2. Do not use emojis or special characters
 3. Do not split section with lines ---
 4. Do not use long dash characters
-${languageRule ? `5. ${languageRule}\n` : ""}`;
+5. Keep the whole report between ${LONG_REPORT_WORDS.min} and ${LONG_REPORT_WORDS.max} words. Prefer short bullet points over long paragraphs.${briefSection ? "\n6. Judge the portfolio against the brief: say where it serves the purpose and where it does not." : ""}
+${languageRule ? `${briefSection ? 7 : 6}. ${languageRule}\n` : ""}`;
 
     // The prompt preview and both report paths use this context: a leak stops them all.
     assertNoLedgerAmounts([{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }], data, "report");
@@ -388,8 +400,8 @@ ${languageRule ? `5. ${languageRule}\n` : ""}`;
         try {
           content = await this.llm.chatStream(
             [
-              { role: "system", content: ctx.systemPrompt },
-              { role: "user", content: ctx.userPrompt },
+              { role: "system", content: toPromptSafe(ctx.systemPrompt) },
+              { role: "user", content: toPromptSafe(ctx.userPrompt) },
             ],
             (chunk) => {
               if (session.status !== "running") return;
@@ -403,6 +415,7 @@ ${languageRule ? `5. ${languageRule}\n` : ""}`;
               apiKey,
               baseUrl,
               isReport: true,
+              maxTokens: LONG_REPORT_MAX_TOKENS,
               signal: abortController.signal,
             },
           );
@@ -522,10 +535,10 @@ ${languageRule ? `5. ${languageRule}\n` : ""}`;
     try {
       content = await this.llm.chat(
         [
-          { role: "system", content: ctx.systemPrompt },
-          { role: "user", content: ctx.userPrompt },
+          { role: "system", content: toPromptSafe(ctx.systemPrompt) },
+          { role: "user", content: toPromptSafe(ctx.userPrompt) },
         ],
-        { provider, model, apiKey, baseUrl, isReport: true },
+        { provider, model, apiKey, baseUrl, isReport: true, maxTokens: LONG_REPORT_MAX_TOKENS },
       );
       content = sanitizeLlmResponse(content, true);
     } catch (err: unknown) {

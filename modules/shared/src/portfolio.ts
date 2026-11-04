@@ -1,6 +1,30 @@
 // Domain types for Portfolio desktop app
 // Merged from old service + GUI types, minus auth/notification types
 
+export interface TargetBand {
+  assetClass: string;
+  minPercent: number;
+  maxPercent: number;
+}
+
+export interface PortfolioBrief {
+  purpose?: string;
+  horizon?: string;
+  riskTolerance?: {
+    score?: number; // 1 to 5
+    maxDropPercent?: number;
+  };
+  incomeNeed?: {
+    required?: boolean;
+    targetYieldPercent?: number;
+  };
+  cashFlowPattern?: "contributions" | "lump_sum" | "drawdown" | "none" | string;
+  targetBands?: TargetBand[];
+  constraints?: string[];
+  successInOwnWords?: string;
+  prose?: string;
+}
+
 export interface PortfolioItem {
   id: string;
   name: string;
@@ -9,6 +33,8 @@ export interface PortfolioItem {
   /** Colour of the portfolio dot, `#rrggbb`; null or absent for the default. */
   color?: string | null;
   isShared?: boolean;
+  brief?: PortfolioBrief | null;
+  briefUpdatedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -131,6 +157,8 @@ export interface PortfolioReport {
   content: string;
   /** The exact prompt; null in the reports list, which leaves it out (`GET /api/portfolios/:id/reports/:reportId/prompt`). */
   prompt?: string | null;
+  /** The Guided Analysis run of a short report; absent for the long report. */
+  runId?: string | null;
   metrics: {
     totalPortfolioValue: number;
     periodGainLossDollar?: number;

@@ -12,17 +12,20 @@
  * defaults.
  */
 
-import { isSameServer, loadConfig } from "../config.js";
+import { isSameServer, loadConfig, updateConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { fetchWithCheckedRedirects } from "./outbound-target.js";
 import { CLI_PROVIDER_MODELS, CLI_PROVIDER_NAMES, DEFAULT_OPENAI_COMPATIBLE_URL, type CliProviderId } from "portfolio-shared/llm-defaults";
 import type { CliProviderStatusResponse } from "portfolio-shared/api-types";
 import { claudeCliComplete, getClaudeCliStatus } from "./claude-cli.js";
 import { codexCliComplete, getCodexCliStatus } from "./codex-cli.js";
+import { toPromptSafe, type PromptSafe } from "./llm-privacy.js";
+export { toPromptSafe, type PromptSafe } from "./llm-privacy.js";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  /** Only `toPromptSafe()` makes this type, so every prompt passes the privacy gate. */
+  content: PromptSafe;
 }
 
 export interface LlmChatOptions {
@@ -46,6 +49,30 @@ export interface LlmTarget {
   baseUrl: string;
   temperature: number;
 }
+
+/** A tool offered to a model with native tool calling. The description is prompt text, so it passes the gate too. */
+export interface LlmToolSpec {
+  name: string;
+  description: PromptSafe;
+  /** JSON Schema of the arguments. */
+  parameters: object;
+}
+
+export interface LlmToolCall {
+  id: string;
+  name: string;
+  /** The raw JSON argument string the model wrote. */
+  arguments: string;
+}
+
+export interface LlmToolReply {
+  /** Text the model wrote next to or instead of tool calls, cleaned. */
+  text: string;
+  toolCalls: LlmToolCall[];
+}
+
+/** How a model setup can run Guided Analysis. */
+export type ToolCallingMode = "native" | "json" | "none";
 
 export interface TestStepResult {
   success: boolean;
@@ -148,7 +175,13 @@ function requestHeaders(apiKey: string): Record<string, string> {
 }
 
 interface ChatReply {
-  choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>;
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+      reasoning_content?: string;
+      tool_calls?: Array<{ id?: string; type?: string; function?: { name?: string; arguments?: string | object } }>;
+    };
+  }>;
 }
 
 /** Text of a non-streamed reply; empty when the server returned none. */
@@ -284,7 +317,31 @@ function stripThinkTags(input: string): string {
 
 // ── service ─────────────────────────────────────────────────────────────────
 
+/** The identity of a model setup: provider, model and server. Secrets stay out. */
+export function setupSignature(target: Pick<LlmTarget, "provider" | "model" | "baseUrl">): string {
+  return `${target.provider}|${target.model.trim()}|${target.baseUrl.trim().replace(/\/+$/, "")}`;
+}
+
+/**
+ * Records that a model setup answered. The brief wizard and Guided Analysis
+ * are open only while the stored setup is one that answered. Writes only on
+ * a change, so a busy feature does not write the settings on every call.
+ */
+function markVerified(target: LlmTarget): void {
+  const signature = setupSignature(target);
+  try {
+    if (loadConfig().llmVerified !== signature) updateConfig({ llmVerified: signature });
+  } catch {
+    // A settings write failure must not fail the model call that succeeded.
+  }
+}
+
+/** How long a probe answer stays valid for a server and model. */
+const TOOL_PROBE_CACHE_MS = 6 * 60 * 60_000;
+
 export class LlmService {
+  /** Tool-calling probe answers per server base URL and model. */
+  private static readonly toolProbes = new Map<string, { mode: ToolCallingMode; at: number }>();
   /** Model auto-detected per server base URL, see detectServerModel(). */
   private static readonly detectedModels = new Map<string, { model: string; at: number }>();
   /** Request fields learned from a rejected request, per server base URL and model. */
@@ -337,12 +394,15 @@ export class LlmService {
     });
 
     if (isCliProvider(target.provider)) {
-      return CLI_PROVIDERS[target.provider].complete(messages, {
+      const text = await CLI_PROVIDERS[target.provider].complete(messages, {
         model: target.model,
         signal: requestSignal(options.signal, CLI_TIMEOUT_MS),
         onChunk,
       });
+      if (text.trim()) markVerified(target);
+      return text;
     }
+    const verifiedAs = { ...target };
 
     if (!isHttpUrl(target.baseUrl)) throw new Error(`${target.name} server URL must start with http:// or https://`);
     if (!target.model) target.model = await this.detectServerModel(target);
@@ -383,6 +443,7 @@ export class LlmService {
     if (!onChunk) {
       const text = replyText((await res.json()) as ChatReply);
       if (!text) throw new Error(`No completion content returned from ${target.name}`);
+      markVerified(verifiedAs);
       return text;
     }
     if (!res.body) throw new Error(`No response body returned from ${target.name}`);
@@ -393,7 +454,112 @@ export class LlmService {
       full += delta;
       onChunk(delta);
     });
+    if (full.trim()) markVerified(verifiedAs);
     return full;
+  }
+
+  /**
+   * One non-streamed completion with native tools, OpenAI chat completions
+   * style. Only the OpenAI-compatible provider supports it; the CLI providers
+   * run with tools off and use the JSON action protocol instead. A server that
+   * refuses `tool_choice: "required"` is asked again with "auto".
+   */
+  public async chatWithTools(
+    messages: LlmMessage[],
+    tools: readonly LlmToolSpec[],
+    options: LlmChatOptions & { toolChoice?: "auto" | "required" } = {},
+  ): Promise<LlmToolReply> {
+    const target = this.resolve(options);
+    if (isCliProvider(target.provider)) throw new Error(`${target.name} does not take native tools`);
+    if (!isHttpUrl(target.baseUrl)) throw new Error(`${target.name} server URL must start with http:// or https://`);
+    const verifiedAs = { ...target };
+    if (!target.model) target.model = await this.detectServerModel(target);
+    const signal = requestSignal(options.signal, REQUEST_TIMEOUT_MS);
+    const shapeKey = `${target.baseUrl}\n${target.model}`;
+    let shape = LlmService.learnedShapes.get(shapeKey) ?? requestShapeFor(target.model);
+    let toolChoice: "auto" | "required" = options.toolChoice ?? "auto";
+    appLogger.logStep("info", "llm", "chat_tools", "Executing tool request", undefined, { provider: target.provider, model: target.model || "default", tools: tools.length });
+    const send = () =>
+      fetchWithCheckedRedirects(buildOpenAIUrl(target.baseUrl, "chat/completions"), {
+        method: "POST",
+        headers: requestHeaders(target.apiKey),
+        body: JSON.stringify({
+          model: target.model || undefined,
+          messages,
+          tools: tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } })),
+          tool_choice: toolChoice,
+          ...(shape.temperature ? { temperature: options.temperature ?? target.temperature } : {}),
+          [shape.tokenField]: options.maxTokens ?? 3000,
+          stream: false,
+        }),
+        signal,
+      });
+    let res = await send();
+    for (let attempt = 0; !res.ok && attempt < 3; attempt++) {
+      const detail = await res.text().catch(() => "");
+      if (res.status !== 400) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
+      const lower = detail.toLowerCase();
+      if (toolChoice === "required" && lower.includes("tool_choice")) {
+        toolChoice = "auto";
+      } else {
+        const retry = shapeAfterRejection(shape, detail);
+        if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
+        shape = retry;
+        LlmService.learnedShapes.set(shapeKey, shape);
+      }
+      res = await send();
+    }
+    if (!res.ok) throw new Error(`${target.name} API request failed with status ${res.status}`);
+    const json = (await res.json()) as ChatReply;
+    const message = json.choices?.[0]?.message;
+    const toolCalls: LlmToolCall[] = (message?.tool_calls ?? [])
+      .filter((c) => c.function?.name)
+      .map((c, i) => ({
+        id: c.id || `call_${i}`,
+        name: c.function!.name!,
+        arguments: typeof c.function!.arguments === "string" ? c.function!.arguments : JSON.stringify(c.function!.arguments ?? {}),
+      }));
+    const text = sanitizeLlmResponse(typeof message?.content === "string" ? message.content : "");
+    if (toolCalls.length > 0 || text) markVerified(verifiedAs);
+    return { text, toolCalls };
+  }
+
+  /**
+   * How Guided Analysis can talk to the current model setup. A mode forced in
+   * Settings wins. The CLI providers use JSON actions. An OpenAI-compatible
+   * model is asked once to call a small tool; one that does gets native tools,
+   * one that does not cannot start a run. The answer is cached per server and
+   * model; a connection error is thrown, not cached.
+   */
+  public async toolCallingMode(force = false): Promise<{ mode: ToolCallingMode; forced: boolean }> {
+    const config = loadConfig();
+    const setting = config.llmToolMode ?? "auto";
+    if (setting === "off") return { mode: "none", forced: true };
+    if (setting === "native" || setting === "json") return { mode: setting, forced: true };
+    const target = this.resolve();
+    if (isCliProvider(target.provider)) return { mode: "json", forced: false };
+    const key = `${target.baseUrl}\n${target.model}`;
+    const cached = LlmService.toolProbes.get(key);
+    if (!force && cached && Date.now() - cached.at < TOOL_PROBE_CACHE_MS) return { mode: cached.mode, forced: false };
+    let mode: ToolCallingMode = "none";
+    try {
+      const reply = await this.chatWithTools(
+        [
+          { role: "system", content: toPromptSafe("You are a test harness. Always answer by calling the tool you are given.") },
+          { role: "user", content: toPromptSafe("Call record_answer with the answer \"ok\".") },
+        ],
+        [{ name: "record_answer", description: toPromptSafe("Records the answer of the test."), parameters: { type: "object", properties: { answer: { type: "string" } }, required: ["answer"] } }],
+        { toolChoice: "required", maxTokens: 400, temperature: 0 },
+      );
+      if (reply.toolCalls.some((c) => c.name === "record_answer")) mode = "native";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // A 400 that names tools means the server or model has no tool calling; anything else is a connection problem.
+      if (!/status 400/.test(message) || !/tool|function/i.test(message)) throw err;
+    }
+    LlmService.toolProbes.set(key, { mode, at: Date.now() });
+    appLogger.logStep("info", "llm", "tool_probe", `Tool-calling probe: ${mode}`);
+    return { mode, forced: false };
   }
 
   /**
@@ -488,8 +654,8 @@ export class LlmService {
       try {
         const raw = await this.complete(
           [
-            { role: "system", content: "You are a concise assistant." },
-            { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
+            { role: "system", content: toPromptSafe("You are a concise assistant.") },
+            { role: "user", content: toPromptSafe("Say 'LLM connection verified' in exactly those words.") },
           ],
           { ...typed, maxTokens: TEST_INFERENCE_MAX_TOKENS },
         );
@@ -518,6 +684,17 @@ export class LlmService {
     }
 
     return fail(`Unknown step identifier: ${step}`);
+  }
+
+  /**
+   * Whether the stored model setup has answered a request: the gate of the
+   * brief wizard and Guided Analysis. Empty provider means no AI is set up.
+   */
+  public isReady(): { ready: boolean; target: LlmTarget; configured: boolean } {
+    const config = loadConfig();
+    const target = this.resolve();
+    const configured = Boolean(config.llmProvider?.trim());
+    return { ready: configured && config.llmVerified === setupSignature(target), target, configured };
   }
 
   /** Whether the CLI of a CLI provider is installed on this machine and signed in. */

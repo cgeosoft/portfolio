@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { codexCliComplete, codexCliWorkDir } from "../codex-cli.js";
 import { DATA_DIR } from "../../paths.js";
-import type { LlmMessage } from "../llm.js";
+import { toPromptSafe, type LlmMessage } from "../llm.js";
 
 /** One start of the fake CLI. */
 interface FakeRun {
@@ -56,8 +56,8 @@ process.exit(${code});
 
 const LEDGER = "=== FULL HOLDINGS LEDGER ===\n- **AAPL** (Apple Inc, Type: Stock): weight 12.5%";
 const messages: LlmMessage[] = [
-  { role: "system", content: LEDGER },
-  { role: "user", content: "How concentrated is my portfolio?" },
+  { role: "system", content: toPromptSafe(LEDGER) },
+  { role: "user", content: toPromptSafe("How concentrated is my portfolio?") },
 ];
 const timeout = () => AbortSignal.timeout(20_000);
 
@@ -95,7 +95,7 @@ describe.skipIf(process.platform === "win32")("Codex CLI process", () => {
 
   it("starts without an instructions file when there is no system prompt, and passes the model", async () => {
     const cli = fakeCli(SUCCESS);
-    await codexCliComplete([{ role: "user", content: "Hello" }], { bin: cli.bin, model: "gpt-6-sol", signal: timeout() });
+    await codexCliComplete([{ role: "user", content: toPromptSafe("Hello") }], { bin: cli.bin, model: "gpt-6-sol", signal: timeout() });
 
     const [run] = cli.runs();
     expect(run!.systemFile).toBeNull();
@@ -154,7 +154,7 @@ describe.skipIf(process.platform === "win32")("Codex CLI failures and streaming"
   it("hands a reply without a system message to onChunk once", async () => {
     const cli = fakeCli(SUCCESS);
     const chunks: string[] = [];
-    const answer = await codexCliComplete([{ role: "user", content: "Hello" }], { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) });
+    const answer = await codexCliComplete([{ role: "user", content: toPromptSafe("Hello") }], { bin: cli.bin, signal: timeout(), onChunk: (c) => chunks.push(c) });
     expect(answer).toBe("Fine.");
     expect(chunks).toEqual(["Fine."]);
   });

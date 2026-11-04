@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { rpc } from "../../rpc";
-import { X, Pencil, Lock, Check, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { X, Pencil, Lock, Check, Loader2, AlertCircle, Trash2, Target } from "lucide-react";
+import { BriefEditorModal } from "../analysis/BriefEditorModal";
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "./PortfolioCard";
 import { PortfolioColorField, PortfolioDot, portfolioColor } from "./portfolioColor";
 import { t } from "../../i18n";
@@ -38,6 +39,7 @@ export function EditPortfolioModal({
   const [color, setColor] = useState(portfolioColor(null));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
 
   useEffect(() => {
     if (portfolio) {
@@ -50,13 +52,13 @@ export function EditPortfolioModal({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen && !isLoading) {
+      if (e.key === "Escape" && isOpen && !isLoading && !briefOpen) {
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isLoading, onClose]);
+  }, [isOpen, isLoading, onClose, briefOpen]);
 
   if (!isOpen || !portfolio) return null;
 
@@ -147,6 +149,17 @@ export function EditPortfolioModal({
             />
           </div>
 
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+            <div className="min-w-0">
+              <div className={LABEL_CLASS}>{t("analysis.brief.title")}</div>
+              <p className="text-[11px] text-slate-400 mt-0.5">{t("analysis.brief.settingsHint")}</p>
+            </div>
+            <button type="button" onClick={() => setBriefOpen(true)} disabled={isLoading} className={SECONDARY_BUTTON}>
+              <Target className="w-3.5 h-3.5" />
+              {portfolio.brief ? t("analysis.brief.edit") : t("analysis.brief.write")}
+            </button>
+          </div>
+
           <PortfolioColorField color={color} onChange={setColor} disabled={isLoading} />
 
           <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
@@ -186,6 +199,18 @@ export function EditPortfolioModal({
           </div>
         </form>
       </div>
+      <BriefEditorModal
+        isOpen={briefOpen}
+        onClose={() => setBriefOpen(false)}
+        portfolioId={portfolio.id}
+        portfolioName={portfolio.name}
+        brief={portfolio.brief ?? null}
+        onSaved={(brief) => {
+          // The prose of the brief is the description.
+          setDescription(brief?.prose ?? "");
+          onPortfolioUpdated({ ...portfolio, brief, description: brief?.prose ?? null });
+        }}
+      />
     </div>
   );
 }

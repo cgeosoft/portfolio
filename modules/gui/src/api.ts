@@ -85,6 +85,19 @@ import type { PortfolioEventsResponse, PortfolioIncomeSummary } from "portfolio-
 import type { GetCompanyIntelResponse, GetTranscriptResponse, SummarizeTranscriptResponse } from "portfolio-shared/api-types";
 import type { CompanyIntelPart } from "portfolio-shared/company-intel";
 import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
+import type {
+  AiCapabilityResponse,
+  AnalysisRunListItem,
+  BriefWizardDraftRequest,
+  BriefWizardDraftResponse,
+  BriefWizardFollowupResponse,
+  CompareAnalysisRunsResponse,
+  GetAnalysisRunResponse,
+  GetPortfolioBriefResponse,
+  ListAnalysisRunsResponse,
+  ScanAmountsResponse,
+} from "portfolio-shared/api-types";
+import type { PortfolioBrief } from "portfolio-shared/portfolio";
 import type { BenchmarkComparison, BenchmarkHistoryResponse, MacroSnapshot, MarketStatusResponse } from "portfolio-shared/api-types";
 
 export class ApiError extends Error {
@@ -257,6 +270,29 @@ export const api = {
     request<SuggestionGeneration>(`/api/portfolios/${enc(body.portfolioId)}/suggestions/generate`, { method: "POST", body: json(body) }),
   updateSuggestionStatus: (body: UpdateSuggestionStatusRequest & { baseCurrency?: string }) =>
     request<PortfolioSuggestion>(`/api/portfolios/${enc(body.portfolioId)}/suggestions/${enc(body.suggestionId)}/status`, { method: "POST", body: json(body) }),
+
+  // ---- portfolio brief and wizard
+  getPortfolioBrief: (portfolioId: string) => request<GetPortfolioBriefResponse>(`/api/portfolios/${enc(portfolioId)}/brief`),
+  savePortfolioBrief: (portfolioId: string, brief: PortfolioBrief) =>
+    request<GetPortfolioBriefResponse>(`/api/portfolios/${enc(portfolioId)}/brief`, { method: "PUT", body: json({ brief }) }),
+  briefWizardFollowups: (portfolioId: string, answers: Record<string, unknown>) =>
+    request<BriefWizardFollowupResponse>(`/api/portfolios/${enc(portfolioId)}/brief/wizard/followups`, { method: "POST", body: json({ answers }) }, { timeoutMs: 300_000 }),
+  briefWizardDraft: (portfolioId: string, body: BriefWizardDraftRequest) =>
+    request<BriefWizardDraftResponse>(`/api/portfolios/${enc(portfolioId)}/brief/wizard/draft`, { method: "POST", body: json(body) }, { timeoutMs: 300_000 }),
+  /** Money amounts in the user's own text, so a form can ask for percentages before it saves. */
+  scanAmounts: (texts: string[]) => request<ScanAmountsResponse>("/api/privacy/scan-amounts", { method: "POST", body: json({ texts }) }),
+
+  // ---- guided analysis
+  /** Whether the AI features can run; `probe` repeats the tool-calling test. */
+  getAiCapability: (probe = false) => request<AiCapabilityResponse>(`/api/ai/capability${probe ? "?probe=1" : ""}`, {}, { timeoutMs: 120_000 }),
+  listAnalysisRuns: (portfolioId: string) => request<ListAnalysisRunsResponse>(`/api/portfolios/${enc(portfolioId)}/analysis/runs`),
+  startAnalysisRun: (portfolioId: string, baseCurrency?: string) =>
+    request<{ run: AnalysisRunListItem }>(`/api/portfolios/${enc(portfolioId)}/analysis/runs`, { method: "POST", body: json({ baseCurrency }) }, { timeoutMs: 120_000 }),
+  getAnalysisRun: (runId: string) => request<GetAnalysisRunResponse>(`/api/analysis/runs/${enc(runId)}`),
+  cancelAnalysisRun: (runId: string) => request<{ success: boolean }>(`/api/analysis/runs/${enc(runId)}/cancel`, { method: "POST" }),
+  compareAnalysisRun: (runId: string) => request<CompareAnalysisRunsResponse>(`/api/analysis/runs/${enc(runId)}/compare`),
+  deleteAnalysisRun: (portfolioId: string, runId: string) =>
+    request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}/analysis/runs/${enc(runId)}`, { method: "DELETE" }),
 
   // ---- assistant
   getAssistantConversations: (portfolioId: string) => request<{ conversations: AssistantConversationSummary[] }>(`/api/portfolios/${enc(portfolioId)}/assistant/conversations`),

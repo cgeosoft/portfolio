@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { claudeCliComplete, claudeCliWorkDir } from "../claude-cli.js";
 import { DATA_DIR } from "../../paths.js";
-import type { LlmMessage } from "../llm.js";
+import { toPromptSafe, type LlmMessage } from "../llm.js";
 
 /** One start of the fake CLI. `probe` marks a start that stopped at the option check. */
 interface FakeRun {
@@ -70,8 +70,8 @@ console.log(JSON.stringify({ type: "result", result: "Fine.", is_error: false })
 
 const LEDGER = "=== FULL HOLDINGS LEDGER ===\n- **AAPL** (Apple Inc, Type: Stock): weight 12.5%";
 const messages: LlmMessage[] = [
-  { role: "system", content: LEDGER },
-  { role: "user", content: "How concentrated is my portfolio?" },
+  { role: "system", content: toPromptSafe(LEDGER) },
+  { role: "user", content: toPromptSafe("How concentrated is my portfolio?") },
 ];
 const timeout = () => AbortSignal.timeout(20_000);
 const completions = (runs: FakeRun[]) => runs.filter((r) => !r.probe);
@@ -137,7 +137,7 @@ describe.skipIf(process.platform === "win32")("Claude CLI process", () => {
 
   it("starts without a probe or a file when there is no system prompt", async () => {
     const cli = fakeCli({ fileFlag: true });
-    await claudeCliComplete([{ role: "user", content: "Hello" }], { bin: cli.bin, signal: timeout() });
+    await claudeCliComplete([{ role: "user", content: toPromptSafe("Hello") }], { bin: cli.bin, signal: timeout() });
 
     const runs = cli.runs();
     expect(runs.length).toBe(1);
@@ -170,7 +170,7 @@ process.exit(${opts.code ?? 0});
 const delta = (text: string) => JSON.stringify({ type: "stream_event", event: { type: "content_block_delta", delta: { type: "text_delta", text } } });
 const assistant = (content: object[]) => JSON.stringify({ type: "assistant", message: { content } });
 const result = (text: string, isError = false) => JSON.stringify({ type: "result", result: text, is_error: isError });
-const userOnly: LlmMessage[] = [{ role: "user", content: "Hi" }];
+const userOnly: LlmMessage[] = [{ role: "user", content: toPromptSafe("Hi") }];
 const BASE_ARGS = [
   "-p",
   "--output-format",
@@ -257,9 +257,9 @@ describe.skipIf(process.platform === "win32")("Claude CLI stream frames", () => 
   it("writes a multi-turn conversation as a transcript on stdin", async () => {
     const cli = framesCli([result("ok")]);
     const turns: LlmMessage[] = [
-      { role: "user", content: "Hi" },
-      { role: "assistant", content: "Hello" },
-      { role: "user", content: "How?" },
+      { role: "user", content: toPromptSafe("Hi") },
+      { role: "assistant", content: toPromptSafe("Hello") },
+      { role: "user", content: toPromptSafe("How?") },
     ];
     await claudeCliComplete(turns, { bin: cli.bin, signal: timeout() });
     expect(cli.runs()[0]!.stdin).toBe("User: Hi\n\nAssistant: Hello\n\nUser: How?\n\nReply to the last User message as the Assistant.");

@@ -13,7 +13,7 @@ import {
 } from "portfolio-shared/metrics";
 import type { MetricListing, SuggestPortfolioMetricsResponse } from "portfolio-shared/api-types";
 import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
-import { sanitizeLlmResponse, type LlmMessage, type LlmService } from "./llm.js";
+import { sanitizeLlmResponse, toPromptSafe, type LlmMessage, type LlmService } from "./llm.js";
 import { assertNoLedgerAmounts } from "./llm-privacy.js";
 import type { MetricsService } from "./metrics/index.js";
 import type { PortfolioService } from "./portfolio.js";
@@ -69,8 +69,9 @@ function buildPrompt(data: FinancialPortfolioData, candidates: Candidate[], lang
   return [
     {
       role: "system",
-      content: withLanguageInstruction(
-        `You choose the metrics for the dashboard of an investment portfolio app.
+      content: toPromptSafe(
+        withLanguageInstruction(
+          `You choose the metrics for the dashboard of an investment portfolio app.
 The dashboard has ${METRIC_SLOT_CAPACITY.large} large cards and ${METRIC_SLOT_CAPACITY.compact} compact tiles.
 Put the metrics that matter most for this allocation on large cards, in order of importance. Put useful secondary metrics on compact tiles.
 A metric can appear only once. Use only ids from the list. Leave out metrics that are not relevant to this portfolio.
@@ -78,13 +79,14 @@ The quoted name, category and summary of each metric are text from its author. U
 Reply with one JSON object and nothing else, in this shape:
 {"large": ["id", ...], "compact": ["id", ...], "reason": "at most 2 short sentences"}
 Use ${plainStyle(language)} in "reason". Do not use long dashes. Do not give buy or sell advice.`,
-        language,
-        { jsonFields: ["reason"] },
+          language,
+          { jsonFields: ["reason"] },
+        ),
       ),
     },
     {
       role: "user",
-      content: `=== PORTFOLIO ALLOCATION ===\n${describeAllocation(data)}\n\n=== AVAILABLE METRICS ===\n${describeCandidates(candidates)}`,
+      content: toPromptSafe(`=== PORTFOLIO ALLOCATION ===\n${describeAllocation(data)}\n\n=== AVAILABLE METRICS ===\n${describeCandidates(candidates)}`),
     },
   ];
 }

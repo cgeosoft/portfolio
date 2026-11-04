@@ -72,6 +72,7 @@ describe("defaults and storage", () => {
       llmApiKeys: {},
       llmBaseUrls: {},
       llmModels: {},
+      llmToolMode: "auto",
       finnhubApiKey: "",
       fmpApiKey: "",
       dataProviderRouting: DEFAULT_DATA_PROVIDER_ROUTING,
@@ -102,6 +103,7 @@ describe("defaults and storage", () => {
       weeklyAnalysisDay: 6,
       weeklyAnalysisTime: "09:00",
       weeklyAnalysisPortfolioId: "",
+      weeklyAnalysisMode: "graph",
       eventAlertsEnabled: false,
       eventAlertsTime: "18:00",
       eventAlertsPortfolioId: "",
@@ -109,7 +111,7 @@ describe("defaults and storage", () => {
       chartRange: "1y",
     } as unknown as Omit<DesktopConfig, "deviceId">);
     const all = cfg as Record<string, unknown>;
-    for (const key of ["lastQuotesSync", "lastUpdateCheck", "dismissedUpdateVersion", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun"]) {
+    for (const key of ["lastQuotesSync", "lastUpdateCheck", "dismissedUpdateVersion", "dailyBriefLastRun", "weeklyAnalysisLastRun", "eventAlertsLastRun", "llmVerified"]) {
       expect(all[key]).toBeUndefined();
     }
     const routing = DEFAULT_DATA_PROVIDER_ROUTING as unknown as Record<string, string>;
@@ -133,8 +135,8 @@ describe("defaults and storage", () => {
     expect(Object.keys(rows())).toEqual(["deviceId"]);
   });
 
-  it("lists 54 config keys", () => {
-    expect(CONFIG_KEYS.size).toBe(54);
+  it("lists 57 config keys", () => {
+    expect(CONFIG_KEYS.size).toBe(57);
     expect(CONFIG_KEYS.has("deviceId")).toBe(true);
     expect(CONFIG_KEYS.has("zoomLevel")).toBe(true);
     expect(CONFIG_KEYS.has("windowState")).toBe(false);

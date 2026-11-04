@@ -29,6 +29,8 @@ import { sendNtfy } from "../services/ntfy";
 import { OPENROUTER_CALLBACK_PATH, callbackPage, completeOpenRouterConnect, openRouterConnectStatus, startOpenRouterConnect } from "../services/openrouter-connect";
 import * as portfolioMetrics from "../services/portfolio-metrics";
 import { suggestMetricLayout } from "../services/metric-advisor";
+import { scanForAmounts, toPromptSafe } from "../services/llm-privacy";
+import { readBrief } from "../services/portfolio-brief";
 import { getMacroSnapshot } from "../services/intel/macro";
 import { getBenchmarkComparison, getBenchmarkHistory, normalizeBenchmarkRange } from "../services/intel/benchmark";
 import { getHeldMarketStatus } from "../services/intel/market-hours";
@@ -67,6 +69,13 @@ import type {
   UpdateMcpAccessRequest,
   UpdateRemoteAccessRequest,
   UpdateSuggestionStatusRequest,
+  UpdatePortfolioBriefRequest,
+  BriefWizardFollowupRequest,
+  BriefWizardDraftRequest,
+  ScanAmountsRequest,
+  ScanAmountsResponse,
+  AiCapabilityResponse,
+  StartAnalysisRunRequest,
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
@@ -117,7 +126,17 @@ function currencyParam(value: unknown): string | undefined {
 }
 
 function toItem(row: portfolioRepo.PortfolioRow) {
-  return { id: row.id, name: row.name, description: row.description, baseCurrency: row.baseCurrency, color: row.color, createdAt: row.createdAt, updatedAt: row.updatedAt };
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    baseCurrency: row.baseCurrency,
+    color: row.color,
+    brief: readBrief(row),
+    briefUpdatedAt: row.briefUpdatedAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }
 
 /** The PIN counter and session lifetime a request gets: the desktop window's or other devices'. */
@@ -131,7 +150,7 @@ function isHttps(req: Request): boolean {
 }
 
 export function registerRoutes(router: Router, services: AppServices, onQuit: () => void): void {
-  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis } = services;
+  const { portfolioService, reportService, chatService, suggestionService, metricsService, marketData, llm, finnhub, fmp, yahoo, dailyBrief, weeklyAnalysis, briefService, analysis } = services;
 
   // ── middleware: remote-access gate and session ──────────────────────────
 
@@ -271,6 +290,35 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.delete("/api/portfolios/:id", (ctx) => ({ success: portfolioService.deletePortfolio(ctx.params.id!) }));
+
+  // ── portfolio brief and wizard ──────────────────────────────────────────
+
+  router.get("/api/portfolios/:id/brief", (ctx) => briefService.getBrief(ctx.params.id!));
+
+  router.put("/api/portfolios/:id/brief", async (ctx) => {
+    const body = await ctx.body<UpdatePortfolioBriefRequest>();
+    const res = briefService.saveBrief(ctx.params.id!, body.brief ?? {});
+    telemetry.capture("portfolio_brief_saved");
+    return res;
+  });
+
+  router.post("/api/portfolios/:id/brief/wizard/followups", async (ctx) => {
+    const body = await ctx.body<BriefWizardFollowupRequest>();
+    return briefService.followups(ctx.params.id!, body.answers ?? {});
+  });
+
+  router.post("/api/portfolios/:id/brief/wizard/draft", async (ctx) => {
+    const body = await ctx.body<BriefWizardDraftRequest>();
+    return briefService.draft(ctx.params.id!, body.answers ?? {}, body.followupAnswers ?? {});
+  });
+
+  /** Amounts in the user's own text, so a form can ask for percentages before it saves. */
+  router.post("/api/privacy/scan-amounts", async (ctx): Promise<ScanAmountsResponse> => {
+    const body = await ctx.body<ScanAmountsRequest>();
+    const texts = Array.isArray(body.texts) ? body.texts.filter((x): x is string => typeof x === "string").slice(0, 50) : [];
+    const matches = [...new Set(texts.flatMap((text) => scanForAmounts(text.slice(0, 4_000)).matches))];
+    return { hasAmounts: matches.length > 0, matches };
+  });
 
   router.get("/api/portfolios/:id/data", async (ctx) => {
     const timer = appLogger.startTimer("api", "portfolioData");
@@ -468,6 +516,26 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     return suggestionService.updateStatus(ctx.params.id!, ctx.params.suggestionId!, status, currencyParam(body.baseCurrency));
   });
 
+  // ── guided analysis ─────────────────────────────────────────────────────
+
+  /** Whether the AI features can run: an AI setup that answered, and tool calling for Guided Analysis. */
+  router.get("/api/ai/capability", (ctx): Promise<AiCapabilityResponse> => analysis.capability(ctx.url.searchParams.get("probe") === "1"));
+
+  router.get("/api/portfolios/:id/analysis/runs", (ctx) => analysis.list(ctx.params.id!));
+
+  router.post("/api/portfolios/:id/analysis/runs", async (ctx) => {
+    const body = await ctx.body<Partial<StartAnalysisRunRequest>>();
+    return { run: await analysis.start(ctx.params.id!, { baseCurrency: currencyParam(body.baseCurrency), trigger: "manual" }) };
+  });
+
+  router.delete("/api/portfolios/:id/analysis/runs/:runId", (ctx) => ({ success: analysis.delete(ctx.params.id!, ctx.params.runId!) }));
+
+  router.get("/api/analysis/runs/:runId", (ctx) => analysis.get(ctx.params.runId!));
+
+  router.post("/api/analysis/runs/:runId/cancel", (ctx) => ({ success: analysis.cancel(ctx.params.runId!) }));
+
+  router.get("/api/analysis/runs/:runId/compare", (ctx) => analysis.compare(ctx.params.runId!));
+
   // ── assistant ───────────────────────────────────────────────────────────
 
   router.get("/api/portfolios/:id/assistant/conversations", (ctx) => ({ conversations: chatService.getConversations(ctx.params.id!) }));
@@ -507,8 +575,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     try {
       const result = await llm.chat(
         [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: "Say 'LLM connection verified' in exactly those words." },
+          { role: "system", content: toPromptSafe("You are a helpful assistant.") },
+          { role: "user", content: toPromptSafe("Say 'LLM connection verified' in exactly those words.") },
         ],
         { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, maxTokens: 50 },
       );

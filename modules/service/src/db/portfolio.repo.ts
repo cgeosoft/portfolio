@@ -8,6 +8,9 @@ export interface PortfolioRow {
   baseCurrency: string;
   metricsJson: string | null;
   color: string | null;
+  /** The structured portfolio brief as JSON (shared/brief.ts); the prose lives in `description`. */
+  briefJson: string | null;
+  briefUpdatedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,6 +59,14 @@ export function update(
     id,
   ]);
   return findById(id);
+}
+
+/** Stores the brief: the structured part as JSON, the prose as the description. */
+export function updateBrief(id: string, briefJson: string | null, prose: string | null): PortfolioRow | null {
+  const db = getDatabase();
+  const now = new Date().toISOString();
+  const result = db.run("UPDATE portfolios SET briefJson = ?, description = ?, briefUpdatedAt = ?, updatedAt = ? WHERE id = ?", [briefJson, prose, now, now, id]);
+  return result.changes > 0 ? findById(id) : null;
 }
 
 export function deleteById(id: string): boolean {

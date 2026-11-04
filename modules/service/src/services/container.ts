@@ -17,6 +17,8 @@ import { ExposureService } from "./exposure";
 import { CalendarService } from "./intel/calendar";
 import { IncomeService } from "./income";
 import { EventAlertsService } from "./event-alerts";
+import { PortfolioBriefService } from "./portfolio-brief";
+import { AnalysisService } from "./analysis/run";
 
 export interface AppServices {
   yahoo: YahooFinanceService;
@@ -43,6 +45,10 @@ export interface AppServices {
   income: IncomeService;
   /** Daily push of the next day's ex-dividend dates and earnings reports (event-alerts.ts). */
   eventAlerts: EventAlertsService;
+  /** The purpose and goal of each portfolio, and the brief wizard (portfolio-brief.ts). */
+  briefService: PortfolioBriefService;
+  /** Guided Analysis: the evidence graph runs (analysis/run.ts). */
+  analysis: AnalysisService;
 }
 
 export function createServices(): AppServices {
@@ -64,6 +70,8 @@ export function createServices(): AppServices {
   const suggestionService = new PortfolioSuggestionService(llm, portfolioService, marketData, aiContext);
   const metricsService = new MetricsService(portfolioService, fmp);
   const dailyBrief = new DailyBriefService(llm, portfolioService, aiContext);
-  const weeklyAnalysis = new WeeklyAnalysisService(llm, portfolioService, reportService, aiContext);
-  return { yahoo, finnhub, fmp, marketData, llm, portfolioService, reportService, chatService, suggestionService, metricsService, dailyBrief, weeklyAnalysis, etfIntel, exposure, calendar, income, eventAlerts };
+  const briefService = new PortfolioBriefService(llm, portfolioService);
+  const analysis = new AnalysisService(llm, portfolioService, suggestionService, { ...aiContext, metricsService });
+  const weeklyAnalysis = new WeeklyAnalysisService(llm, portfolioService, reportService, aiContext, analysis);
+  return { yahoo, finnhub, fmp, marketData, llm, portfolioService, reportService, chatService, suggestionService, metricsService, dailyBrief, weeklyAnalysis, etfIntel, exposure, calendar, income, eventAlerts, briefService, analysis };
 }
