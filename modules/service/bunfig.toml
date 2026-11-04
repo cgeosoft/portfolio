@@ -1,3 +1,4 @@
 [test]
-# Tests run against a throwaway data directory, never the user's real one.
-preload = ["./src/test-setup.ts"]
+# Tests run against a throwaway data directory, never the user's real one,
+# and fail when they try to reach the network (scripts/test-network-guard.ts).
+preload = ["../../scripts/test-network-guard.ts", "./src/test-setup.ts"]
