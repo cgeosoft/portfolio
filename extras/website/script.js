@@ -1,6 +1,7 @@
 /**
  * Marketing site script: OS detection, download links from the latest
- * release and opt-in PostHog analytics. The screenshot tour is tour.js.
+ * release and opt-in PostHog analytics. The screenshot tour is tour.js, the
+ * evidence graph is graph.js.
  */
 (function () {
   "use strict";
@@ -130,56 +131,6 @@
     }
   }
 
-  // Hero demo: the demo portfolio value counts up while the chart draws, then
-  // the assistant card types a rotating set of example suggestions. The
-  // figures are made up for the demo; reduced motion shows the final state.
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const DEMO_MESSAGES = [
-    ["Daily brief 08:00", "Portfolio up 1.2% yesterday, led by NVDA at +3.4%. Cash sits at 8.3% of the total."],
-    ["Suggestion", "NVDA is 15.6% of the portfolio, and two of your ETFs hold it too. Real exposure is closer to 19%."],
-    ["Upcoming", "AAPL goes ex-dividend on Friday. Expected income this month is 12% above last year."],
-    ["Weekly report", "The portfolio beat its benchmark by 0.8% this week. Tech weight rose to 41%."],
-  ];
-
-  function initDemo() {
-    const valueEl = $("#demo-value");
-    const gainEl = $("#demo-gain");
-    const tagEl = $("#demo-tag");
-    const msgEl = $("#demo-msg");
-    if (!valueEl || !msgEl || reducedMotion) return;
-
-    const target = 84449.99;
-    const fmt = new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" });
-    const start = performance.now() + 300;
-    const duration = 2600;
-    function count(now) {
-      const t = Math.min(1, Math.max(0, (now - start) / duration));
-      const eased = 1 - Math.pow(1 - t, 3);
-      valueEl.textContent = fmt.format(12000 + (target - 12000) * eased);
-      if (gainEl) gainEl.textContent = (9.91 * eased).toFixed(2);
-      if (t < 1) requestAnimationFrame(count);
-    }
-    requestAnimationFrame(count);
-
-    let index = 0;
-    function type() {
-      const [tag, text] = DEMO_MESSAGES[index];
-      if (tagEl) tagEl.textContent = tag;
-      msgEl.textContent = "";
-      msgEl.classList.add("typing");
-      let i = 0;
-      const timer = setInterval(() => {
-        msgEl.textContent = text.slice(0, ++i);
-        if (i < text.length) return;
-        clearInterval(timer);
-        msgEl.classList.remove("typing");
-        index = (index + 1) % DEMO_MESSAGES.length;
-        setTimeout(type, 4500);
-      }, 24);
-    }
-    setTimeout(type, 2400);
-  }
-
   // Analytics: PostHog loads opted out; nothing is sent until the visitor accepts.
   function consent(value) {
     try {
@@ -248,7 +199,6 @@
       el.addEventListener("click", () => track("download_clicked", { os: el.dataset.os || activeOS, type: el.dataset.type || "installer" }))
     );
     $$("#current-year").forEach((el) => (el.textContent = String(new Date().getFullYear())));
-    initDemo();
     initCookieBanner();
     loadRelease();
   }

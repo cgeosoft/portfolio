@@ -70,7 +70,7 @@ export interface Screen {
   hotspots: Hotspot[];
 }
 
-/** The subtitle of the Income & Events card: unique to the card, while its title also labels the Analysis sidebar entry. */
+/** The subtitle of the Income & Events card: unique to the card, while its title also labels the Insights sidebar entry. */
 const INCOME_CARD = "Dividends of the next 12 months";
 
 /**
@@ -95,7 +95,210 @@ async function scrollToCard(page: Page, text: string): Promise<void> {
   throw new Error(`could not scroll to the card with ${text}`);
 }
 
+/** Opens the newest analysis from the Analysis home and waits until its graph has grown. */
+async function openRun(page: Page): Promise<void> {
+  await page.locator("table tbody tr button").first().click();
+  await page.getByRole("tablist", { name: "Guided Analysis" }).waitFor({ timeout: 15_000 });
+  // The graph plays its growth when a run opens.
+  await page.waitForTimeout(5000);
+}
+
+const ANALYSIS_SCREENS: Screen[] = [
+  {
+    id: "graph",
+    label: "Evidence graph",
+    title: "An analysis you can walk through",
+    text: "Six stages over one graph. Pick a stage and its nodes light up, with what the model did in the panel beside it.",
+    hash: "analysis",
+    ready: "Run analysis",
+    prepare: openRun,
+    settleMs: 1500,
+    hotspots: [
+      {
+        id: "stages",
+        title: "Six stages",
+        text: "Seed, survey, expand, synthesise, suggest, report. Each shows its node count and its time.",
+        target: { css: "[role=tablist]" },
+        at: [0.5, 0.35],
+      },
+      {
+        id: "graph",
+        title: "The evidence graph",
+        text: "Your brief and allocation sit at the centre. Evidence fans out in rings, and it grows live while a run works.",
+        target: { css: "canvas", nth: 0 },
+        crop: { css: "canvas", nth: 0, sub: [0.28, 0.3, 0.5, 0.55] },
+        at: [0.5, 0.5],
+      },
+      {
+        id: "kinds",
+        title: "Filter by kind",
+        text: "Show or hide questions, calculations, themes, findings and the rest.",
+        target: [{ css: "button[aria-pressed]", text: "Brief" }, { css: "button[aria-pressed]", text: "Suggestion" }],
+        at: [0.5, 0.5],
+      },
+      {
+        id: "report",
+        title: "Short report",
+        text: "Where the portfolio stands against its brief. Its links open the nodes behind each claim.",
+        target: { text: "Where you stand", mode: "card" },
+        at: [0.5, 0.2],
+      },
+      {
+        id: "compare",
+        title: "Compare runs",
+        text: "New, resolved and kept findings since the last analysis, and how the weights moved.",
+        target: { text: "Compare", exact: true, mode: "control" },
+        at: [0.5, 0.5],
+      },
+    ],
+  },
+  {
+    id: "why",
+    label: "Why this?",
+    title: "Every suggestion shows its path",
+    text: "Ask why and the graph narrows to the goal, the findings and the evidence behind a suggestion, counter-evidence included.",
+    hash: "analysis",
+    ready: "Run analysis",
+    prepare: async (page) => {
+      await page.getByRole("button", { name: "Why", exact: true }).first().click();
+      await page.getByText("Why this suggestion").waitFor({ timeout: 15_000 });
+      await page.waitForTimeout(5000);
+    },
+    settleMs: 1500,
+    hotspots: [
+      {
+        id: "path",
+        title: "The reasoning path",
+        text: "Only the nodes behind this suggestion stay lit.",
+        target: { css: "canvas", nth: 0 },
+        crop: { css: "canvas", nth: 0, sub: [0.3, 0.05, 0.5, 0.6] },
+        at: [0.5, 0.5],
+      },
+      {
+        id: "goal",
+        title: "Your goal first",
+        text: "Each suggestion names the part of your brief it serves.",
+        target: { text: "Goal from the brief", up: 1 },
+        at: [0.9, 0.5],
+      },
+      {
+        id: "findings",
+        title: "Findings and evidence",
+        text: "A suggestion must act on a finding, and a finding must cite facts. Click any row to open that node.",
+        target: { text: "Findings", exact: true },
+        crop: { text: "Why this suggestion", mode: "card", sub: [0, 0, 1, 0.7] },
+        at: [0.1, 0.5],
+      },
+    ],
+  },
+  {
+    id: "compare",
+    label: "Compare",
+    title: "See what moved between two runs",
+    text: "Each analysis can compare itself with the one before: new, resolved and kept findings, and the weights that changed.",
+    hash: "analysis",
+    ready: "Run analysis",
+    prepare: async (page) => {
+      await openRun(page);
+      await page.getByRole("button", { name: "Compare", exact: true }).click();
+      await page.getByText("Still open").first().waitFor({ timeout: 15_000 });
+    },
+    settleMs: 1500,
+    hotspots: [
+      {
+        id: "findings",
+        title: "Findings over time",
+        text: "What is new, what got resolved and what stayed, run by run.",
+        target: [{ text: "New findings", up: 1 }, { text: "Resolved since the run before", up: 1 }],
+        at: [0.8, 0.3],
+        pad: 8,
+      },
+    ],
+  },
+  {
+    id: "analysis",
+    label: "Analysis",
+    title: "Every analysis in one place",
+    text: "Run one by hand or weekly on a schedule. The home keeps the history, your brief, the open suggestions and the last summary.",
+    hash: "analysis",
+    ready: "Run analysis",
+    settleMs: 2000,
+    hotspots: [
+      {
+        id: "run",
+        title: "Run analysis",
+        text: "A run takes a few minutes. Leave the page and it keeps working.",
+        target: { text: "Run analysis", mode: "control" },
+        at: [0.5, 0.5],
+      },
+      {
+        id: "history",
+        title: "Runs by month",
+        text: "Status, source, findings and suggestions of each analysis. Flags tell you when the brief or the transactions changed since.",
+        target: { css: "table" },
+        crop: { css: "table", sub: [0, 0, 1, 1] },
+        at: [0.5, 0.5],
+      },
+      {
+        id: "brief",
+        title: "Portfolio brief",
+        text: "What this portfolio is for and what success looks like. A wizard asks a few questions and drafts it for you.",
+        target: { text: "Portfolio brief", mode: "card" },
+        at: [0.85, 0.2],
+      },
+      {
+        id: "suggestions",
+        title: "Suggestions at hand",
+        text: "The latest ideas with their target weights, one click from the path behind them.",
+        target: { text: "Suggestions", exact: true, mode: "card" },
+        at: [0.85, 0.2],
+      },
+    ],
+  },
+];
+
 export const SCREENS: Screen[] = [
+  ...ANALYSIS_SCREENS,
+  {
+    id: "suggestions",
+    label: "Suggestions",
+    title: "Rebalancing ideas, with the math done",
+    text: "Guided Analysis proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
+    hash: "analysis/suggestions",
+    ready: "Target Portfolio",
+    hotspots: [
+      {
+        id: "idea",
+        title: "A concrete trade",
+        text: "Action, shares, amount and the weight before and after, with the reason and a price range.",
+        target: { re: "^p[1-5]$", mode: "card" },
+        crop: { re: "^p[1-5]$", mode: "card", sub: [0, 0, 0.6, 1] },
+        at: [0.55, 0.45],
+      },
+      {
+        id: "private",
+        title: "Weights only",
+        text: "The model never sees money amounts. The app computes them on your machine.",
+        target: { text: "The assistant sees weights only", up: 1 },
+        at: [0.5, 0.5],
+      },
+      {
+        id: "target",
+        title: "Target portfolio",
+        text: "Every holding now and after the selected suggestions, with the change in percentage points.",
+        target: { text: "Target Portfolio", mode: "card" },
+        crop: { text: "Target Portfolio", mode: "card", sub: [0, 0, 1, 0.44] },
+        at: [0.5, 0.3],
+      },
+      {
+        id: "why",
+        title: "Ask why",
+        text: "One click opens the graph on the path behind this suggestion.",
+        target: { text: "Why", exact: true, mode: "control" },
+        at: [0.5, 0.5],
+      },
+    ],
+  },
   {
     id: "overview",
     label: "Overview",
@@ -127,11 +330,18 @@ export const SCREENS: Screen[] = [
         at: [0.5, 0.5],
       },
       {
+        id: "actions",
+        title: "Suggested actions",
+        text: "The open ideas of the last analysis, with the path behind each one a click away.",
+        target: { text: "Suggested actions", mode: "card" },
+        at: [0.96, 0.12],
+      },
+      {
         id: "benchmark",
         title: "Against a benchmark",
         text: "Draw the S&P 500, Nasdaq 100, MSCI World, Euro Stoxx 50 or FTSE All-World over your returns. Zoom from one month to all time.",
         target: [{ text: "vs S&P 500", mode: "control" }, { text: "ALL", exact: true, mode: "control" }],
-        crop: { text: "Portfolio Performance History", mode: "card", sub: [0.58, 0, 0.42, 0.62] },
+        crop: { text: "Portfolio Performance History", mode: "card", sub: [0.58, 0, 0.42, 0.5] },
         at: [0.3, 0.5],
       },
       {
@@ -139,16 +349,16 @@ export const SCREENS: Screen[] = [
         title: "Performance history",
         text: "Value with cash, invested capital and cost basis, day by day since the first transaction.",
         target: { text: "Portfolio Performance History", mode: "card" },
-        crop: { text: "Portfolio Performance History", mode: "card", sub: [0.08, 0.3, 0.46, 0.7] },
-        at: [0.62, 0.6],
+        crop: { text: "Portfolio Performance History", mode: "card", sub: [0.1, 0.1, 0.55, 0.4] },
+        at: [0.3, 0.32],
       },
       {
         id: "allocation",
         title: "Allocation",
         text: "Asset classes on the inner ring, single holdings on the outer one.",
         target: { text: "Asset Allocation & Weight", mode: "card" },
-        crop: { text: "Asset Allocation & Weight", mode: "card", sub: [0.12, 0.18, 0.76, 0.82] },
-        at: [0.5, 0.58],
+        crop: { text: "Asset Allocation & Weight", mode: "card", sub: [0.1, 0.1, 0.8, 0.4] },
+        at: [0.5, 0.32],
       },
     ],
   },
@@ -208,16 +418,11 @@ export const SCREENS: Screen[] = [
   },
   {
     id: "income",
-    label: "Analysis",
+    label: "Insights",
     title: "Dividends you got and dividends to come",
-    text: "The Analysis tab: exposure, income, markets and suggestions. Here, twelve months of expected income, yields and the next ex-dividend dates.",
-    hash: "analysis",
-    ready: "Income & Events",
-    prepare: async (page) => {
-      // Analysis shows one card at a time; the sidebar picks it.
-      await page.getByRole("button", { name: "Income & Events" }).click();
-      await page.getByText(INCOME_CARD).waitFor({ timeout: 15_000 });
-    },
+    text: "The Insights tab: exposure, income and markets, no model involved. Here, twelve months of expected income, yields and the next ex-dividend dates.",
+    hash: "insights/income",
+    ready: INCOME_CARD,
     hotspots: [
       {
         id: "summary",
@@ -255,7 +460,7 @@ export const SCREENS: Screen[] = [
         id: "sections",
         title: "Three views",
         text: "Exposure to sectors, countries and the stocks inside your funds, income and events, and the markets. One at a time.",
-        target: { css: "nav[aria-label='Analysis']" },
+        target: { css: "nav[aria-label='Insights']" },
         at: [0.85, 0.5],
       },
     ],
@@ -264,7 +469,7 @@ export const SCREENS: Screen[] = [
     id: "assistant",
     label: "Assistant",
     title: "An assistant that knows your portfolio",
-    text: "Ask anything about your holdings. It runs on the model you pick: local, a cloud key or the Claude Code CLI.",
+    text: "Ask anything about your holdings. It runs on the model you pick: local, a cloud key or a CLI.",
     hash: "overview",
     ready: "Portfolio Performance History",
     prepare: async (page) => {
@@ -292,7 +497,7 @@ export const SCREENS: Screen[] = [
       {
         id: "model",
         title: "Your model",
-        text: "Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude Code CLI.",
+        text: "Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude and Codex CLIs.",
         target: { text: "Model:", up: 1 },
         at: [0.3, 0.5],
       },
@@ -307,46 +512,6 @@ export const SCREENS: Screen[] = [
     ],
   },
   {
-    id: "suggestions",
-    label: "Suggestions",
-    title: "Rebalancing ideas, with the math done",
-    text: "The assistant proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
-    hash: "analysis/suggestions",
-    ready: "Target Portfolio",
-    hotspots: [
-      {
-        id: "idea",
-        title: "A concrete trade",
-        text: "Action, shares, amount and the weight before and after, with the reason and a price range.",
-        target: { text: "P1", exact: true, mode: "card" },
-        crop: { text: "P1", exact: true, mode: "card", sub: [0, 0, 0.6, 1] },
-        at: [0.55, 0.45],
-      },
-      {
-        id: "private",
-        title: "Weights only",
-        text: "The model never sees money amounts. The app computes them on your machine.",
-        target: { text: "The assistant sees weights only", up: 1 },
-        at: [0.5, 0.5],
-      },
-      {
-        id: "target",
-        title: "Target portfolio",
-        text: "Every holding now and after the selected suggestions, with the change in percentage points.",
-        target: { text: "Target Portfolio", mode: "card" },
-        crop: { text: "Target Portfolio", mode: "card", sub: [0, 0, 1, 0.44] },
-        at: [0.5, 0.3],
-      },
-      {
-        id: "recalculate",
-        title: "Fresh ideas",
-        text: "Run it again after you trade. The list says when transactions changed since the last run.",
-        target: { text: "Recalculate", mode: "control" },
-        at: [0.5, 0.5],
-      },
-    ],
-  },
-  {
     id: "transactions",
     label: "Transactions",
     title: "Every trade, dividend and deposit",
@@ -357,7 +522,7 @@ export const SCREENS: Screen[] = [
       {
         id: "import",
         title: "Broker CSV import",
-        text: "Trade Republic, Scalable Capital, Interactive Brokers and Degiro, with a dry-run preview.",
+        text: "Trade Republic, Trading 212, Scalable Capital, Interactive Brokers, DEGIRO and more, with a dry-run preview.",
         target: { text: "Import CSV", mode: "control" },
         at: [0.5, 0.5],
       },

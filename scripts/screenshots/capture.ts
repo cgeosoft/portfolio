@@ -6,7 +6,7 @@
  *   bun run website:screenshots [--llm claude-cli[:model]] [--data <dir>] [--only id,id]
  *                               [--chrome <path>] [--debug <dir>]
  *
- * --llm     generate suggestions and a daily brief first, with
+ * --llm     write a brief, then generate a Guided Analysis and a daily brief with
  *           this provider (the Claude CLI, or an OpenAI-compatible server already
  *           set up in the --data directory). Without it the LLM screens show
  *           whatever the data directory holds.
@@ -21,7 +21,8 @@
  *   tour/<screen>.webp            the screen, 2000 px wide
  *   tour/<screen>-<spot>.webp     the crop of each hotspot, at 2x
  *   tour/tour.json                screens, hotspot positions and texts
- *   screenshot.png                the overview at 1600x900 (README, og:image)
+ *   tour/run.json                 the Guided Analysis on the home page (`run-data.ts`)
+ *   screenshot.png                the analysis at 1600x900 (README, og:image)
  */
 
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -30,6 +31,7 @@ import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import type { Page } from "playwright-core";
 import { Api, generateLlmContent, launchBrowser, prepareData, rectOf, ROOT, startGui, startService, stopChildren } from "./app";
+import { runData } from "./run-data";
 import { SCREENS, type Rect, type Screen } from "./shots";
 const ASSETS = join(ROOT, "extras", "website", "assets");
 const OUT = join(ASSETS, "tour");
@@ -38,6 +40,8 @@ const SCALE = 2;
 const SCREEN_WIDTH = 2000;
 const CROP_MAX_WIDTH = 1100;
 const FULL: Rect = { x: 0, y: 0, w: VIEWPORT.width, h: VIEWPORT.height };
+/** The screen that also becomes `screenshot.png`. */
+const COVER = "graph";
 
 const { values: args } = parseArgs({
   options: {
@@ -146,7 +150,7 @@ async function captureScreen(page: Page, encoder: Page, gui: string, screen: Scr
     { rect: FULL, width: SCREEN_WIDTH, type: "image/webp", quality: 0.86 },
     ...spots.map(({ crop }) => ({ rect: crop, width: Math.min(crop.w * SCALE, CROP_MAX_WIDTH), type: "image/webp" as const, quality: 0.9 })),
   ];
-  if (screen.id === "overview") jobs.push({ rect: FULL, width: VIEWPORT.width, type: "image/png" });
+  if (screen.id === COVER) jobs.push({ rect: FULL, width: VIEWPORT.width, type: "image/png" });
   if (args.debug) jobs.push({ rect: FULL, width: VIEWPORT.width, type: "image/png", boxes: spots.map((s) => s.crop) });
   const images = await encode(encoder, png, jobs);
 
@@ -167,7 +171,7 @@ async function captureScreen(page: Page, encoder: Page, gui: string, screen: Scr
     };
   });
   let next = spots.length + 1;
-  if (screen.id === "overview") writeFileSync(join(ASSETS, "screenshot.png"), images[next++]!);
+  if (screen.id === COVER) writeFileSync(join(ASSETS, "screenshot.png"), images[next++]!);
   if (args.debug) writeFileSync(join(args.debug, `${screen.id}-debug.png`), images[next++]!);
 
   return { id: screen.id, label: screen.label, title: screen.title, text: screen.text, image: `/assets/tour/${screen.id}.webp`, hotspots };
@@ -189,6 +193,9 @@ const servicePort = await startService(dataDir);
 const api = new Api(`http://127.0.0.1:${servicePort}`);
 const portfolio = await prepareData(api);
 if (args.llm) await generateLlmContent(api, portfolio, args.llm);
+const run = await runData(api, portfolio.id);
+if (run) writeFileSync(join(OUT, "run.json"), JSON.stringify(run) + "\n");
+else console.warn("no finished Guided Analysis: run.json stays as it was");
 const gui = await startGui(servicePort);
 
 const browser = await launchBrowser(args.chrome);

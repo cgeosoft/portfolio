@@ -2,15 +2,15 @@
 
 An offline-first, private personal investment portfolio tracker for Linux, Windows and macOS built with **Bun**, **bun:sqlite**, **React 19** and **Electrobun**.
 
-Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and AI analytical briefings can be generated on-demand through any OpenAI-compatible server or API (llama.cpp, Ollama, LM Studio, OpenAI, Groq, OpenRouter and others) or the Claude Code CLI with a Claude subscription.
+Your portfolio data stays strictly on your local device. Market quotes are fetched live from Yahoo Finance, and Guided Analysis and the assistant run through any OpenAI-compatible server or API (llama.cpp, Ollama, LM Studio, OpenAI, Groq, OpenRouter and others) or the Claude and Codex CLIs.
 
 <p align="center">
   <img src="extras/website/assets/screenshot.png" width="900"
-       alt="Portfolio overview tab: metric cards for total value, day gain and lifetime gain, a performance history chart benchmarked against the S&amp;P 500, an asset allocation donut, and a live positions table with 52-week ranges and RSI.">
+       alt="An open Guided Analysis: six stages above the evidence graph, with the brief and allocation at the centre and findings and suggestions in rings around them, and the short report beside it.">
 </p>
 
 <p align="center">
-  <sub>The overview dashboard on the built-in demo portfolio: metric cards, performance history against invested capital and the S&amp;P 500, asset allocation by class and weight, and live positions with technical gauges.</sub>
+  <sub>Guided Analysis on the built-in demo portfolio: the stages of the run, the evidence graph it grew, and the short report that links back to its nodes.</sub>
 </p>
 
 ---
@@ -24,7 +24,7 @@ Your portfolio data stays strictly on your local device. Market quotes are fetch
 - **Sandboxed Metric Modules**: Every metric is a WebAssembly module with a YAML manifest that declares its developer, version, and the data scopes it reads. Modules run in a separate engine process with no file, network, or system access, a memory ceiling, and a time budget. Preferences → Metrics lists the metrics of a portfolio, a bounded dashboard (4 large cards, 6 compact tiles) that feeds the Overview, and a marketplace built from [`extras/metrics/repository.yml`](extras/metrics/README.md). Third-party modules can be installed from a URL after a scope consent dialog and stay marked UNVERIFIED.
 - **Technical Indicators**: 50-day and 200-day Simple Moving Averages (SMA 50, SMA 200), 14-day Relative Strength Index (RSI), and 52-week ranges.
 - **Broker CSV Importer**: Intelligent CSV and Excel (.xlsx) import wizard with automatic template detection (Trade Republic, Trading 212, Scalable Capital, Interactive Brokers, DEGIRO, eToro, Revolut, XTB, Saxo) with dry-run diff preview and duplicate protection.
-- **On-Demand AI Analyst**: Generate tactical markdown portfolio performance briefings via local or cloud LLMs.
+- **Guided Analysis**: Write a brief with the purpose and goal of a portfolio. A run grows an evidence graph around it in six stages (seed, survey, expand, synthesise, suggest, report). The app runs the tools and checks the output: a finding must cite facts, a suggestion must act on a finding, and every suggestion shows the path back to your goal. Runs can be compared and scheduled weekly. Local or cloud LLMs, or the Claude and Codex CLIs.
 - **Setup Wizard**: full-screen 3-step onboarding: a welcome step that asks for the Terms of Use, an optional 100-transaction demo portfolio, and an opt-in anonymous telemetry toggle.
 - **Anonymous Telemetry (Opt-in)**: Privacy-preserving telemetry using PostHog, completely optional (default off). No financial data, portfolio values, or personal identifiers are ever transmitted.
 - **Dark Terminal Aesthetic**: dark navy canvas, Portfolio's pink accent, `Plus Jakarta Sans` for text and `JetBrains Mono` for numbers, interactive Chart.js visualizations.

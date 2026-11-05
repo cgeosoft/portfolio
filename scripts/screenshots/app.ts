@@ -107,19 +107,47 @@ export async function prepareData(api: Api): Promise<{ id: string; baseCurrency:
   return portfolio;
 }
 
-/** Fills the LLM screens: suggestions and, last so the sidebar opens on it, a daily brief. */
+/** The purpose and goal of the demo portfolio; Guided Analysis measures every finding against it. */
+const DEMO_BRIEF = {
+  purpose: "Grow long-term savings for retirement",
+  horizon: "20 years",
+  riskTolerance: { score: 3, maxDropPercent: 30 },
+  incomeNeed: { required: false },
+  cashFlowPattern: "contributions",
+  targetBands: [
+    { assetClass: "STOCK", minPercent: 50, maxPercent: 70 },
+    { assetClass: "ETF", minPercent: 25, maxPercent: 40 },
+    { assetClass: "CRYPTO", minPercent: 0, maxPercent: 5 },
+  ],
+  constraints: ["No single stock above 15% of the portfolio"],
+  successInOwnWords: "Beat a world index over ten years without a drop I would panic about.",
+};
+
+async function runAnalysis(api: Api, portfolio: { id: string; baseCurrency: string }): Promise<void> {
+  console.log("LLM: Guided Analysis");
+  const { run } = await api.call<{ run: { id: string } }>("POST", `/api/portfolios/${portfolio.id}/analysis/runs`, { baseCurrency: portfolio.baseCurrency });
+  // A run stops itself after 10 minutes.
+  for (let i = 0; ; i++) {
+    const res = await api.call<{ run: { status: string; phase: string; error?: string } }>("GET", `/api/analysis/runs/${run.id}`);
+    if (res.run.status === "completed") return;
+    if (res.run.status !== "running") throw new Error(`analysis ${res.run.status}: ${res.run.error ?? ""}`);
+    if (i === 300) throw new Error("analysis did not finish in 15 minutes");
+    if (i % 10 === 0) console.log(`LLM: analysis at ${res.run.phase}`);
+    await Bun.sleep(3000);
+  }
+}
+
+/** Fills the LLM screens: the brief, two Guided Analysis runs and, last so the sidebar opens on it, a daily brief. */
 export async function generateLlmContent(api: Api, portfolio: { id: string; baseCurrency: string }, spec: string): Promise<void> {
   const [provider = "claude-cli", model = provider === "claude-cli" ? "sonnet" : ""] = spec.split(":");
   await api.call("PATCH", "/api/config", { llmProvider: provider, llmModel: model, llmModels: { [provider]: model } });
+  const test = await api.call<{ success: boolean; message: string }>("POST", "/api/llm/test", { provider, model });
+  if (!test.success) throw new Error(`model test failed: ${test.message}`);
   const id = portfolio.id;
-  console.log("LLM: suggestions");
-  await api.call("POST", `/api/portfolios/${id}/suggestions/generate`, { baseCurrency: portfolio.baseCurrency });
-  for (let i = 0; i < 120; i++) {
-    const res = await api.call<{ generation: { status: string; error?: string } }>("GET", `/api/portfolios/${id}/suggestions?baseCurrency=${portfolio.baseCurrency}`);
-    if (res.generation.status === "fail") throw new Error(`suggestions failed: ${res.generation.error}`);
-    if (res.generation.status !== "running") break;
-    await Bun.sleep(3000);
-  }
+  await api.call("PUT", `/api/portfolios/${id}/brief`, { brief: DEMO_BRIEF });
+  // Two runs, so the history has a list and Compare has something to compare.
+  await runAnalysis(api, portfolio);
+  await runAnalysis(api, portfolio);
   console.log("LLM: daily brief");
   await api.call("POST", "/api/automation/daily-brief/run");
 }

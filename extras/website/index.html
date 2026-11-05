@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portfolio - Personal Investment Tracker</title>
-  <meta name="description" content="A free investment tracker that runs on your own computer. Live quotes, broker CSV import and an AI assistant you choose. One file on your disk. No account, no cloud.">
+  <meta name="description" content="A free investment tracker that runs on your own computer. Guided Analysis checks your portfolio against your own goal and shows the evidence behind every suggestion. No account, no cloud.">
   <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg">
   <link rel="apple-touch-icon" href="assets/icon-512.png">
-  <meta property="og:title" content="Portfolio - Track every holding. Tell no one.">
-  <meta property="og:description" content="A free investment tracker that runs on your own computer. No account, no cloud, your data stays with you.">
+  <meta property="og:title" content="Portfolio - Question every holding. Tell no one.">
+  <meta property="og:description" content="Guided Analysis grows a graph of evidence around your goal and shows the path behind every suggestion. Free, on your own computer, no account.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/screenshot.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,8 +30,8 @@
 <body>
   <div class="tape" aria-hidden="true">
     <div class="tape-track">
-      <span>CLOUD <b class="dn">0</b></span><span>ACCOUNTS <b class="dn">0</b></span><span>PRICE <b class="up">FREE</b></span><span>FILES ON DISK <b class="up">1</b></span><span>LICENSE <b class="up">MIT</b></span><span>BROKER CSV <b class="up">4</b></span><span>LLM <b class="up">YOUR PICK</b></span><span>OS <b class="up">3</b></span>
-      <span>CLOUD <b class="dn">0</b></span><span>ACCOUNTS <b class="dn">0</b></span><span>PRICE <b class="up">FREE</b></span><span>FILES ON DISK <b class="up">1</b></span><span>LICENSE <b class="up">MIT</b></span><span>BROKER CSV <b class="up">4</b></span><span>LLM <b class="up">YOUR PICK</b></span><span>OS <b class="up">3</b></span>
+      <span>CLOUD <b class="dn">0</b></span><span>ACCOUNTS <b class="dn">0</b></span><span>PRICE <b class="up">FREE</b></span><span>ANALYSIS STAGES <b class="up">6</b></span><span>EVERY CLAIM <b class="up">CITED</b></span><span>LICENSE <b class="up">MIT</b></span><span>BROKERS <b class="up">9</b></span><span>LLM <b class="up">YOUR PICK</b></span><span>OS <b class="up">3</b></span>
+      <span>CLOUD <b class="dn">0</b></span><span>ACCOUNTS <b class="dn">0</b></span><span>PRICE <b class="up">FREE</b></span><span>ANALYSIS STAGES <b class="up">6</b></span><span>EVERY CLAIM <b class="up">CITED</b></span><span>LICENSE <b class="up">MIT</b></span><span>BROKERS <b class="up">9</b></span><span>LLM <b class="up">YOUR PICK</b></span><span>OS <b class="up">3</b></span>
     </div>
   </div>
 
@@ -42,6 +42,7 @@
         <span class="brand-name">Portfolio</span>
       </a>
       <nav class="main-nav" aria-label="Primary">
+        <a href="#analysis">Guided Analysis</a>
         <a href="/tour/">Tour</a>
         <a href="#privacy">Privacy</a>
         <a href="#ledger">Features</a>
@@ -56,58 +57,144 @@
   </header>
 
   <main>
-    <section class="hero container">
-      <div class="hero-copy">
-        <p class="label"><span class="dot"></span>Runs on your computer</p>
-        <h1 class="hero-headline">Track every holding.<br><em>Tell no one.</em></h1>
-        <p class="hero-lede">Portfolio is a free investment tracker that runs on your computer. Live quotes, broker imports and an AI assistant you pick, all writing to one file on your own disk.</p>
+    <section class="hero" data-graph-hero>
+      <canvas class="hero-canvas" role="img" aria-label="Evidence graph of a Guided Analysis on the demo portfolio: the brief and the allocation at the centre, with holdings, questions, evidence, findings and suggestions in rings around them."></canvas>
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <a class="hero-new" href="#analysis"><span class="pill pill-accent">New in 0.17</span>Guided Analysis</a>
+          <h1 class="hero-headline">Question every holding.<br><em>Tell no one.</em></h1>
+          <p class="hero-lede">Portfolio is a free investment tracker that runs on your computer. Guided Analysis checks your holdings against your own goal, builds a graph of evidence, and shows the path behind every suggestion.</p>
 
-        <div class="hero-cta">
-          <a href="#downloads" class="btn btn-big" id="primary-download-btn">
-            <span id="download-title">Download for Linux</span>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-          </a>
-          <p class="hero-alt">
-            <span id="download-meta" class="mono">.deb</span>
-            <span class="sep">|</span>
-            also for
-            <button type="button" class="os-switch" data-target-os="windows">Windows</button>
-            <button type="button" class="os-switch" data-target-os="macos">macOS</button>
-            <button type="button" class="os-switch" data-target-os="linux">Linux</button>
-          </p>
+          <div class="hero-cta">
+            <div class="hero-buttons">
+              <a href="#downloads" class="btn btn-big" id="primary-download-btn">
+                <span id="download-title">Download for Linux</span>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              </a>
+              <a href="#analysis" class="btn btn-ghost">Watch an analysis</a>
+            </div>
+            <p class="hero-alt">
+              <span id="download-meta" class="mono">.deb</span>
+              <span class="sep">|</span>
+              also for
+              <button type="button" class="os-switch" data-target-os="windows">Windows</button>
+              <button type="button" class="os-switch" data-target-os="macos">macOS</button>
+              <button type="button" class="os-switch" data-target-os="linux">Linux</button>
+            </p>
+          </div>
         </div>
       </div>
+      <div class="hero-trace" data-hero-trace aria-hidden="true"><span class="hero-trace-tag mono">Why this suggestion</span><span data-hero-trace-text></span></div>
+    </section>
 
-      <div class="hero-demo" aria-label="Animated demo of the app">
-        <div class="card demo-chart">
-          <div class="card-head">
-            <span class="label"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Total portfolio value</span>
-            <span class="pill">Demo</span>
-          </div>
-          <p class="demo-value mono"><span id="demo-value">&euro;84,449.99</span></p>
-          <p class="demo-delta mono">+<span id="demo-gain">9.91</span>% all-time return</p>
-          <svg class="demo-svg" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#DD3C73" stop-opacity="0.35"/>
-                <stop offset="1" stop-color="#DD3C73" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g class="grid"><line x1="0" y1="50" x2="600" y2="50"/><line x1="0" y1="100" x2="600" y2="100"/><line x1="0" y1="150" x2="600" y2="150"/></g>
-            <path class="invested" pathLength="1" d="M0.0,175.5 L14.0,172.3 L27.9,169.1 L41.9,166.0 L55.8,162.8 L69.8,159.6 L83.7,156.4 L97.7,153.3 L111.6,150.1 L125.6,146.9 L139.5,143.7 L153.5,140.5 L167.4,137.4 L181.4,134.2 L195.3,131.0 L209.3,127.8 L223.3,124.7 L237.2,121.5 L251.2,118.3 L265.1,115.1 L279.1,111.9 L293.0,108.8 L307.0,105.6 L320.9,102.4 L334.9,99.2 L348.8,96.1 L362.8,92.9 L376.7,89.7 L390.7,86.5 L404.7,83.3 L418.6,80.2 L432.6,77.0 L446.5,73.8 L460.5,70.6 L474.4,67.5 L488.4,64.3 L502.3,61.1 L516.3,57.9 L530.2,54.7 L544.2,51.6 L558.1,48.4 L572.1,45.2 L586.0,42.0 L600.0,38.9"/>
-            <path class="area" d="M0.0,176.0 L14.0,172.1 L27.9,169.3 L41.9,165.4 L55.8,162.0 L69.8,160.6 L83.7,157.6 L97.7,150.9 L111.6,150.1 L125.6,146.9 L139.5,139.5 L153.5,138.9 L167.4,133.3 L181.4,131.9 L195.3,127.4 L209.3,127.1 L223.3,120.2 L237.2,114.9 L251.2,113.9 L265.1,108.5 L279.1,105.4 L293.0,107.0 L307.0,97.2 L320.9,95.0 L334.9,94.1 L348.8,93.2 L362.8,81.0 L376.7,81.3 L390.7,74.9 L404.7,69.2 L418.6,67.2 L432.6,60.8 L446.5,63.3 L460.5,54.3 L474.4,54.9 L488.4,44.6 L502.3,41.3 L516.3,48.0 L530.2,43.7 L544.2,38.6 L558.1,23.7 L572.1,27.5 L586.0,20.5 L600.0,21.5 L600,200 L0,200 Z"/>
-            <path class="value" pathLength="1" d="M0.0,176.0 L14.0,172.1 L27.9,169.3 L41.9,165.4 L55.8,162.0 L69.8,160.6 L83.7,157.6 L97.7,150.9 L111.6,150.1 L125.6,146.9 L139.5,139.5 L153.5,138.9 L167.4,133.3 L181.4,131.9 L195.3,127.4 L209.3,127.1 L223.3,120.2 L237.2,114.9 L251.2,113.9 L265.1,108.5 L279.1,105.4 L293.0,107.0 L307.0,97.2 L320.9,95.0 L334.9,94.1 L348.8,93.2 L362.8,81.0 L376.7,81.3 L390.7,74.9 L404.7,69.2 L418.6,67.2 L432.6,60.8 L446.5,63.3 L460.5,54.3 L474.4,54.9 L488.4,44.6 L502.3,41.3 L516.3,48.0 L530.2,43.7 L544.2,38.6 L558.1,23.7 L572.1,27.5 L586.0,20.5 L600.0,21.5"/>
-          </svg>
-          <div class="demo-legend mono"><span class="lg-value">Total inc. cash</span><span class="lg-invested">Invested</span></div>
+    <section class="section run" id="analysis" data-run>
+      <div class="container run-container">
+        <div class="run-head">
+          <p class="label"><span class="dot"></span>Guided Analysis</p>
+          <h2 class="big-title">One analysis.<br>Six stages. <em>All of it on show.</em></h2>
+          <p class="lede">This is a real run on the demo portfolio, not a mock-up: <span class="mono" data-run-stat="nodes">44</span> nodes in the same graph the app draws. Click a stage, a node or a citation.</p>
         </div>
+        <div class="run-stepper-wrap">
+          <div class="run-stages" role="tablist" aria-label="Stages of the analysis" data-run-stages></div>
+        </div>
+        <div class="run-grid">
+          <div class="card run-graph">
+            <canvas role="img" aria-label="Evidence graph. The stage you pick lights up its nodes."></canvas>
+            <div class="graph-tip" data-run-tip hidden></div>
+            <button type="button" class="run-toggle mono" data-run-toggle aria-pressed="false">Play</button>
+            <img class="graph-fallback" src="assets/tour/graph.webp" alt="The evidence graph of an analysis in the app, with six stages above it and the short report beside it." loading="lazy" decoding="async">
+          </div>
+          <aside class="card run-panel" data-run-panel aria-live="polite"></aside>
+        </div>
+        <ul class="kind-legend mono" aria-label="Node kinds">
+          <li><span class="kind-dot" style="color: var(--accent)"></span>Brief and allocation</li>
+          <li><span class="kind-dot" style="color: var(--text)"></span>Holding</li>
+          <li><span class="kind-dot kind-question" style="color: var(--cream)"></span>Question</li>
+          <li><span class="kind-dot" style="color: var(--plum)"></span>Evidence</li>
+          <li><span class="kind-dot kind-theme" style="color: var(--plum)"></span>Theme</li>
+          <li><span class="kind-dot kind-finding" style="color: var(--error)"></span>Finding</li>
+          <li><span class="kind-dot kind-suggestion" style="color: var(--mint)"></span>Suggestion</li>
+        </ul>
+      </div>
+    </section>
 
-        <div class="card demo-assistant" aria-live="off">
-          <div class="card-head">
-            <span class="label"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>Assistant</span>
-            <span class="pill pill-accent" id="demo-tag">Daily brief 08:00</span>
-          </div>
-          <p class="demo-msg" id="demo-msg">Portfolio up 1.2% yesterday, led by NVDA at +3.4%. Cash sits at 8.3% of the total.</p>
+    <section class="section why" id="why" data-why>
+      <div class="container why-grid">
+        <div class="why-copy">
+          <p class="label"><span class="dot dot-mint"></span>Why this?</p>
+          <h2 class="big-title">Trace any suggestion back to your goal.</h2>
+          <p class="lede">Ask why and the graph narrows to one path: the part of your brief it serves, the findings it acts on, the evidence behind them, and the evidence against.</p>
+          <div class="why-tabs" role="tablist" aria-label="Suggestions of this analysis" data-why-tabs></div>
+          <div class="why-canvas card"><canvas role="img" aria-label="The evidence graph with the path of the chosen suggestion lit up."></canvas></div>
         </div>
+        <div class="why-chain" data-why-chain></div>
+      </div>
+    </section>
+
+    <section class="section container harness" id="guardrails">
+      <p class="label">Guardrails</p>
+      <h2 class="big-title">The app runs the analysis.<br>The model only decides.</h2>
+      <p class="lede">The app fetches the data, does the math and checks every answer. The model picks what to look at and writes the reasoning.</p>
+      <div class="rule-grid">
+        <article class="card rule">
+          <p class="rule-tag mono">Findings</p>
+          <h3>No claim without a source</h3>
+          <p>A finding must cite fact nodes, and every number in it must exist in a node it cites. One repair turn, then the claim is dropped.</p>
+        </article>
+        <article class="card rule">
+          <p class="rule-tag mono">Suggestions</p>
+          <h3>No idea without a finding</h3>
+          <p>A suggestion must act on a finding of the same run. It then passes the same checks as every other suggestion in the app.</p>
+        </article>
+        <article class="card rule">
+          <p class="rule-tag mono">Privacy</p>
+          <h3>Percentages only</h3>
+          <p>Every node passes a privacy gate. Amounts and quantities stay in a field no prompt reads, so the model works from weights.</p>
+        </article>
+        <article class="card rule">
+          <p class="rule-tag mono">Limits</p>
+          <h3>A budget for every run</h3>
+          <dl class="budget mono">
+            <div><dt>Expand steps</dt><dd>12</dd></div>
+            <div><dt>Tool calls</dt><dd>40</dd></div>
+            <div><dt>Nodes</dt><dd>150</dd></div>
+            <div><dt>Minutes</dt><dd>10</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="section container around" id="workflow">
+      <p class="label">Around the graph</p>
+      <h2 class="big-title">It starts with your goal,<br>and it keeps watching.</h2>
+      <div class="bento">
+        <article class="card bento-item bento-brief">
+          <div class="bento-copy">
+            <h3>Write the brief once</h3>
+            <p>Say what the portfolio is for, how far it may fall and what success looks like. A wizard asks a few questions and drafts it. Every finding is measured against it.</p>
+          </div>
+          <img src="assets/tour/analysis-brief.webp" alt="The portfolio brief card: purpose, horizon, risk, target bands, constraints and success in your own words." loading="lazy" decoding="async">
+        </article>
+        <article class="card bento-item bento-compare">
+          <div class="bento-copy">
+            <h3>Compare runs</h3>
+            <p>See new, resolved and open findings since the last analysis, and how the weights moved.</p>
+          </div>
+          <img src="assets/tour/compare-findings.webp" alt="A comparison of two analyses: new findings, findings resolved since the run before and findings still open." loading="lazy" decoding="async">
+        </article>
+        <article class="card bento-item bento-weekly">
+          <div class="bento-copy">
+            <h3>Weekly, on a schedule</h3>
+            <p>Pick the portfolios and the app runs an analysis for each, then pushes a summary to your phone over Gotify or ntfy. App closed at that time? It catches up on a start within two days.</p>
+          </div>
+        </article>
+        <article class="card bento-item bento-models">
+          <div class="bento-copy">
+            <h3>Your model, your choice</h3>
+            <p>Any OpenAI-compatible model with tool calling, local or in the cloud, or the Claude and Codex CLIs. Run it on Ollama and nothing leaves your computer but ticker lookups.</p>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -115,16 +202,16 @@
       <div class="tour-head">
         <div>
           <p class="label">Tour</p>
-          <h2 class="big-title">See it at work.</h2>
+          <h2 class="big-title">The whole app, screen by screen.</h2>
         </div>
-        <p>Real screenshots of the app with a demo portfolio. Click a marker to look closer.</p>
+        <p>Real screenshots of the app with the demo portfolio. Click a marker to look closer.</p>
       </div>
-      <img class="tour-fallback" src="assets/screenshot.png" width="1600" height="900" alt="Portfolio overview tab: total value, day gain and lifetime gain cards, a performance chart against the S&amp;P 500 and an allocation donut." loading="lazy" decoding="async">
+      <img class="tour-fallback" src="assets/screenshot.png" width="1600" height="900" alt="An open analysis in Portfolio: six stages above the evidence graph, with the short report beside it." loading="lazy" decoding="async">
     </section>
 
     <section class="section container" id="privacy">
       <p class="label">Privacy</p>
-      <h2 class="big-title">What stays home.<br>What leaves.</h2>
+      <h2 class="big-title">Track every holding.<br>Tell no one.</h2>
       <div class="split-cols">
         <div class="card col col-stay">
           <p class="label"><span class="dot dot-mint"></span>Stays on your disk</p>
@@ -144,6 +231,10 @@
           </ul>
         </div>
       </div>
+      <div class="card gate">
+        <p class="label"><span class="dot dot-mint"></span>Privacy gate</p>
+        <p class="gate-text">Code enforces this, not a line in a prompt. Before a prompt leaves, the app reads every number in it. If one equals an amount or quantity in your ledger, the send stops.</p>
+      </div>
     </section>
 
     <section class="section container" id="ledger">
@@ -151,14 +242,17 @@
       <h2 class="big-title">What it does</h2>
       <ol class="ledger-list">
         <li class="card"><h3>Live quotes, any currency</h3><p>Stocks, ETFs and crypto from Yahoo Finance, converted to your base currency.</p></li>
-        <li class="card"><h3>Broker CSV import</h3><p>Trade Republic, Trading 212, Scalable Capital, Interactive Brokers, DEGIRO, eToro, Revolut, XTB and Saxo, with a dry-run preview.</p></li>
-        <li class="card"><h3>An assistant you choose</h3><p>Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude Code CLI.</p></li>
-        <li class="card"><h3>Daily brief, weekly report</h3><p>Scheduled write-ups. Missed one while the app was closed? It runs on the next start.</p></li>
-        <li class="card"><h3>Exposure look-through</h3><p>Sector, country and the stocks inside your funds, with overlap warnings.</p></li>
+        <li class="card"><h3>Broker import</h3><p>CSV and Excel from Trade Republic, Trading 212, Scalable Capital, Interactive Brokers, DEGIRO, eToro, Revolut, XTB and Saxo, with a dry-run preview.</p></li>
+        <li class="card"><h3>An assistant you choose</h3><p>Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude and Codex CLIs.</p></li>
+        <li class="card"><h3>Exposure look-through</h3><p>Sector, country and the stocks inside your funds, with overlap warnings. On the new Insights tab.</p></li>
         <li class="card"><h3>Income calendar</h3><p>Dividends received and expected, yields and the next ex-dividend dates.</p></li>
+        <li class="card"><h3>Markets</h3><p>Treasury yields, sectors and the economic calendar in one place.</p></li>
+        <li class="card"><h3>Daily brief</h3><p>A scheduled write-up each morning. Missed one while the app was closed? It runs on the next start.</p></li>
         <li class="card"><h3>Indicators</h3><p>SMA 50/200, RSI 14 and 52-week range for every position.</p></li>
         <li class="card"><h3>Metric modules</h3><p>Sandboxed WebAssembly cards. Browse them in the <a href="/metrics/">catalog</a>.</p></li>
+        <li class="card"><h3>MCP server</h3><p>Let Claude Desktop, Claude Code or Cursor read your portfolio. Read-only, and percentages only.</p></li>
         <li class="card"><h3>PIN and home network</h3><p>Lock it with a PIN, then open it from your phone on the same network.</p></li>
+        <li class="card"><h3>One file, no account</h3><p>Everything lives in one database on your disk. Back it up by copying the file.</p></li>
       </ol>
     </section>
 
@@ -191,6 +285,18 @@
       <h2 class="big-title">Asked first</h2>
       <div class="card faq-list">
         <details open>
+          <summary>What does Guided Analysis need?</summary>
+          <p>A portfolio, a brief and a model that can call tools, or the Claude or Codex CLI. A run takes a few minutes and you can leave the page while it works. Without a model, the tracker, Insights and the metric modules still work.</p>
+        </details>
+        <details>
+          <summary>Does it trade for me?</summary>
+          <p>No. Portfolio never connects to your broker. It suggests changes and you decide. It is a record and a research aid, not financial advice.</p>
+        </details>
+        <details>
+          <summary>What does the model see during an analysis?</summary>
+          <p>Weights, percentages, tickers and public market data. Never amounts, quantities or balances. The app computes those on your computer when it turns a suggestion into shares.</p>
+        </details>
+        <details>
           <summary>Where is my data?</summary>
           <p>In one database file on your computer. No servers, no account. Back it up by copying the file.</p>
         </details>
@@ -200,7 +306,7 @@
         </details>
         <details>
           <summary>Which AI does the assistant use?</summary>
-          <p>The one you set up. A local runtime keeps everything offline. A cloud key or the Claude Code CLI sends requests straight to that provider, never through a server of ours. Chats and briefs carry percentages, weights and tickers, not money amounts.</p>
+          <p>The one you set up. A local runtime keeps everything offline. A cloud key or a CLI sends requests straight to that provider, never through a server of ours. Chats and briefs carry percentages, weights and tickers, not money amounts.</p>
         </details>
         <details>
           <summary>Can I use it from my phone?</summary>
@@ -229,6 +335,7 @@
   </footer>
 
   <script src="script.js" defer></script>
+  <script src="graph.js" defer></script>
   <script src="tour.js" defer></script>
 </body>
 </html>

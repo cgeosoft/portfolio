@@ -1,8 +1,325 @@
 {
-  "version": "0.13.0",
+  "version": "0.17.0",
   "width": 1600,
   "height": 900,
   "screens": [
+    {
+      "id": "graph",
+      "label": "Evidence graph",
+      "title": "An analysis you can walk through",
+      "text": "Six stages over one graph. Pick a stage and its nodes light up, with what the model did in the panel beside it.",
+      "image": "/assets/tour/graph.webp",
+      "hotspots": [
+        {
+          "id": "stages",
+          "title": "Six stages",
+          "text": "Seed, survey, expand, synthesise, suggest, report. Each shows its node count and its time.",
+          "x": 50,
+          "y": 12.2,
+          "box": {
+            "x": 28.63,
+            "y": 9.28,
+            "w": 42.75,
+            "h": 7.78
+          },
+          "image": "/assets/tour/graph-stages.webp",
+          "width": 1100,
+          "height": 135
+        },
+        {
+          "id": "graph",
+          "title": "The evidence graph",
+          "text": "Your brief and allocation sit at the centre. Evidence fans out in rings, and it grows live while a run works.",
+          "x": 31.44,
+          "y": 52.39,
+          "box": {
+            "x": 4.19,
+            "y": 18.06,
+            "w": 54.5,
+            "h": 68.67
+          },
+          "image": "/assets/tour/graph-graph.webp",
+          "width": 916,
+          "height": 723
+        },
+        {
+          "id": "kinds",
+          "title": "Filter by kind",
+          "text": "Show or hide questions, calculations, themes, findings and the rest.",
+          "x": 26.3,
+          "y": 88.39,
+          "box": {
+            "x": 4.19,
+            "y": 86.39,
+            "w": 44.22,
+            "h": 4
+          },
+          "image": "/assets/tour/graph-kinds.webp",
+          "width": 1100,
+          "height": 79
+        },
+        {
+          "id": "report",
+          "title": "Short report",
+          "text": "Where the portfolio stands against its brief. Its links open the nodes behind each claim.",
+          "x": 77.82,
+          "y": 29.39,
+          "box": {
+            "x": 59.27,
+            "y": 17.06,
+            "w": 37.1,
+            "h": 59.67
+          },
+          "image": "/assets/tour/graph-report.webp",
+          "width": 1100,
+          "height": 998
+        },
+        {
+          "id": "compare",
+          "title": "Compare runs",
+          "text": "New, resolved and kept findings since the last analysis, and how the weights moved.",
+          "x": 89.71,
+          "y": 80.61,
+          "box": {
+            "x": 86.11,
+            "y": 78.17,
+            "w": 7.2,
+            "h": 4.89
+          },
+          "image": "/assets/tour/graph-compare.webp",
+          "width": 262,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "id": "why",
+      "label": "Why this?",
+      "title": "Every suggestion shows its path",
+      "text": "Ask why and the graph narrows to the goal, the findings and the evidence behind a suggestion, counter-evidence included.",
+      "image": "/assets/tour/why.webp",
+      "hotspots": [
+        {
+          "id": "path",
+          "title": "The reasoning path",
+          "text": "Only the nodes behind this suggestion stay lit.",
+          "x": 31.44,
+          "y": 52.39,
+          "box": {
+            "x": 4.19,
+            "y": 18.06,
+            "w": 54.5,
+            "h": 68.67
+          },
+          "image": "/assets/tour/why-path.webp",
+          "width": 916,
+          "height": 783
+        },
+        {
+          "id": "goal",
+          "title": "Your goal first",
+          "text": "Each suggestion names the part of your brief it serves.",
+          "x": 91.61,
+          "y": 27.06,
+          "box": {
+            "x": 60.21,
+            "y": 23.61,
+            "w": 35.22,
+            "h": 6.89
+          },
+          "image": "/assets/tour/why-goal.webp",
+          "width": 1100,
+          "height": 148
+        },
+        {
+          "id": "findings",
+          "title": "Findings and evidence",
+          "text": "A suggestion must act on a finding, and a finding must cite facts. Click any row to open that node.",
+          "x": 64.03,
+          "y": 34.06,
+          "box": {
+            "x": 60.21,
+            "y": 32.5,
+            "w": 35.22,
+            "h": 3.11
+          },
+          "image": "/assets/tour/why-findings.webp",
+          "width": 1100,
+          "height": 714
+        }
+      ]
+    },
+    {
+      "id": "compare",
+      "label": "Compare",
+      "title": "See what moved between two runs",
+      "text": "Each analysis can compare itself with the one before: new, resolved and kept findings, and the weights that changed.",
+      "image": "/assets/tour/compare.webp",
+      "hotspots": [
+        {
+          "id": "findings",
+          "title": "Findings over time",
+          "text": "What is new, what got resolved and what stayed, run by run.",
+          "x": 87.75,
+          "y": 81.2,
+          "box": {
+            "x": 60.9,
+            "y": 76.6,
+            "w": 33.85,
+            "h": 14.44
+          },
+          "image": "/assets/tour/compare-findings.webp",
+          "width": 1091,
+          "height": 268
+        }
+      ]
+    },
+    {
+      "id": "analysis",
+      "label": "Analysis",
+      "title": "Every analysis in one place",
+      "text": "Run one by hand or weekly on a schedule. The home keeps the history, your brief, the open suggestions and the last summary.",
+      "image": "/assets/tour/analysis.webp",
+      "hotspots": [
+        {
+          "id": "run",
+          "title": "Run analysis",
+          "text": "A run takes a few minutes. Leave the page and it keeps working.",
+          "x": 91.59,
+          "y": 12.08,
+          "box": {
+            "x": 86.8,
+            "y": 9.64,
+            "w": 9.58,
+            "h": 4.89
+          },
+          "image": "/assets/tour/analysis-run.webp",
+          "width": 338,
+          "height": 120
+        },
+        {
+          "id": "history",
+          "title": "Runs by month",
+          "text": "Status, source, findings and suggestions of each analysis. Flags tell you when the brief or the transactions changed since.",
+          "x": 31.45,
+          "y": 25.72,
+          "box": {
+            "x": 3.69,
+            "y": 16.67,
+            "w": 55.52,
+            "h": 18.11
+          },
+          "image": "/assets/tour/analysis-history.webp",
+          "width": 1100,
+          "height": 218
+        },
+        {
+          "id": "brief",
+          "title": "Portfolio brief",
+          "text": "What this portfolio is for and what success looks like. A wizard asks a few questions and drafts it for you.",
+          "x": 90.55,
+          "y": 22.79,
+          "box": {
+            "x": 59.27,
+            "y": 16.56,
+            "w": 37.1,
+            "h": 29.17
+          },
+          "image": "/assets/tour/analysis-brief.webp",
+          "width": 1100,
+          "height": 503
+        },
+        {
+          "id": "suggestions",
+          "title": "Suggestions at hand",
+          "text": "The latest ideas with their target weights, one click from the path behind them.",
+          "x": 50.66,
+          "y": 32.59,
+          "box": {
+            "x": 3.63,
+            "y": 16.56,
+            "w": 55.65,
+            "h": 78.17
+          },
+          "image": "/assets/tour/analysis-suggestions.webp",
+          "width": 1100,
+          "height": 873
+        }
+      ]
+    },
+    {
+      "id": "suggestions",
+      "label": "Suggestions",
+      "title": "Rebalancing ideas, with the math done",
+      "text": "Guided Analysis proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
+      "image": "/assets/tour/suggestions.webp",
+      "hotspots": [
+        {
+          "id": "idea",
+          "title": "A concrete trade",
+          "text": "Action, shares, amount and the weight before and after, with the reason and a price range.",
+          "x": 40.71,
+          "y": 36.18,
+          "box": {
+            "x": 3.63,
+            "y": 27.11,
+            "w": 67.5,
+            "h": 20
+          },
+          "image": "/assets/tour/suggestions-idea.webp",
+          "width": 1100,
+          "height": 322
+        },
+        {
+          "id": "private",
+          "title": "Weights only",
+          "text": "The model never sees money amounts. The app computes them on your machine.",
+          "x": 25.31,
+          "y": 16.97,
+          "box": {
+            "x": 3.63,
+            "y": 14.17,
+            "w": 43.38,
+            "h": 5.61
+          },
+          "image": "/assets/tour/suggestions-private.webp",
+          "width": 1100,
+          "height": 103
+        },
+        {
+          "id": "target",
+          "title": "Target portfolio",
+          "text": "Every holding now and after the selected suggestions, with the change in percentage points.",
+          "x": 84,
+          "y": 43.69,
+          "box": {
+            "x": 71.63,
+            "y": 21.44,
+            "w": 24.75,
+            "h": 73.28
+          },
+          "image": "/assets/tour/suggestions-target.webp",
+          "width": 824,
+          "height": 626
+        },
+        {
+          "id": "why",
+          "title": "Ask why",
+          "text": "One click opens the graph on the path behind this suggestion.",
+          "x": 64.14,
+          "y": 31,
+          "box": {
+            "x": 62.09,
+            "y": 28.78,
+            "w": 4.09,
+            "h": 4.44
+          },
+          "image": "/assets/tour/suggestions-why.webp",
+          "width": 163,
+          "height": 112
+        }
+      ]
+    },
     {
       "id": "overview",
       "label": "Overview",
@@ -59,52 +376,68 @@
           "height": 192
         },
         {
+          "id": "actions",
+          "title": "Suggested actions",
+          "text": "The open ideas of the last analysis, with the path behind each one a click away.",
+          "x": 92.32,
+          "y": 39.46,
+          "box": {
+            "x": 3.63,
+            "y": 35.28,
+            "w": 92.75,
+            "h": 30.67
+          },
+          "image": "/assets/tour/overview-actions.webp",
+          "width": 1100,
+          "height": 214
+        },
+        {
           "id": "benchmark",
           "title": "Against a benchmark",
           "text": "Draw the S&P 500, Nasdaq 100, MSCI World, Euro Stoxx 50 or FTSE All-World over your returns. Zoom from one month to all time.",
           "x": 22.72,
-          "y": 40.49,
+          "y": 72.49,
           "box": {
             "x": 4.94,
-            "y": 38.19,
+            "y": 70.19,
             "w": 58.77,
             "h": 4.58
           },
           "image": "/assets/tour/overview-benchmark.webp",
           "width": 874,
-          "height": 543
+          "height": 449
         },
         {
           "id": "chart",
           "title": "Performance history",
           "text": "Value with cash, invested capital and cost basis, day by day since the first transaction.",
-          "x": 41.72,
-          "y": 62.11,
+          "x": 22.25,
+          "y": 81.9,
           "box": {
             "x": 3.63,
-            "y": 35.28,
+            "y": 67.28,
             "w": 61.58,
-            "h": 44.94
+            "h": 32.72
           },
           "image": "/assets/tour/overview-chart.webp",
-          "width": 951,
-          "height": 606
+          "width": 1100,
+          "height": 361
         },
         {
           "id": "allocation",
           "title": "Allocation",
           "text": "Asset classes on the inner ring, single holdings on the outer one.",
           "x": 81.17,
-          "y": 61.24,
+          "y": 81.9,
           "box": {
             "x": 65.96,
-            "y": 35.28,
+            "y": 67.28,
             "w": 30.42,
-            "h": 44.94
+            "h": 32.72
           },
           "image": "/assets/tour/overview-allocation.webp",
-          "width": 777,
-          "height": 700
+          "width": 815,
+          "height": 370
         }
       ]
     },
@@ -119,32 +452,32 @@
           "id": "holding",
           "title": "Positions",
           "text": "Ticker, asset type, shares and average cost for each holding.",
-          "x": 11,
+          "x": 11.03,
           "y": 33.59,
           "box": {
             "x": 3.69,
             "y": 18.5,
-            "w": 35.41,
+            "w": 35.57,
             "h": 33.39
           },
           "image": "/assets/tour/positions-holding.webp",
           "width": 1100,
-          "height": 479
+          "height": 477
         },
         {
           "id": "price",
           "title": "Any currency",
           "text": "The price in its own currency next to the value in yours, converted at live FX rates, with the portfolio weight.",
-          "x": 47.26,
+          "x": 47.2,
           "y": 33.59,
           "box": {
-            "x": 38.35,
+            "x": 38.51,
             "y": 18.5,
-            "w": 17.82,
+            "w": 17.4,
             "h": 33.39
           },
           "image": "/assets/tour/positions-price.webp",
-          "width": 602,
+          "width": 589,
           "height": 633
         },
         {
@@ -154,45 +487,45 @@
           "x": 66.29,
           "y": 33.59,
           "box": {
-            "x": 55.42,
+            "x": 55.15,
             "y": 18.5,
-            "w": 21.73,
+            "w": 22.27,
             "h": 33.39
           },
           "image": "/assets/tour/positions-returns.webp",
-          "width": 728,
+          "width": 745,
           "height": 633
         },
         {
           "id": "range",
           "title": "52-week range",
           "text": "Where the price sits between the low and the high of the last year.",
-          "x": 82.85,
+          "x": 83.03,
           "y": 33.59,
           "box": {
-            "x": 76.41,
+            "x": 76.67,
             "y": 18.5,
-            "w": 12.89,
+            "w": 12.72,
             "h": 33.39
           },
           "image": "/assets/tour/positions-range.webp",
-          "width": 444,
+          "width": 439,
           "height": 633
         },
         {
           "id": "rsi",
           "title": "RSI 14",
           "text": "Momentum for each holding, marked oversold, neutral or overbought.",
-          "x": 92.43,
+          "x": 92.48,
           "y": 33.59,
           "box": {
-            "x": 88.54,
+            "x": 88.64,
             "y": 18.5,
-            "w": 7.77,
+            "w": 7.67,
             "h": 33.39
           },
           "image": "/assets/tour/positions-rsi.webp",
-          "width": 281,
+          "width": 278,
           "height": 633
         },
         {
@@ -204,7 +537,7 @@
           "box": {
             "x": 74,
             "y": 12.58,
-            "w": 21.07,
+            "w": 21.06,
             "h": 4.89
           },
           "image": "/assets/tour/positions-filter.webp",
@@ -215,9 +548,9 @@
     },
     {
       "id": "income",
-      "label": "Analysis",
+      "label": "Insights",
       "title": "Dividends you got and dividends to come",
-      "text": "The Analysis tab: exposure, income and markets. Here, twelve months of expected income, yields and the next ex-dividend dates.",
+      "text": "The Insights tab: exposure, income and markets, no model involved. Here, twelve months of expected income, yields and the next ex-dividend dates.",
       "image": "/assets/tour/income.webp",
       "hotspots": [
         {
@@ -281,7 +614,7 @@
             "h": 20.67
           },
           "image": "/assets/tour/income-table.webp",
-          "width": 1054,
+          "width": 1063,
           "height": 345
         },
         {
@@ -306,7 +639,7 @@
       "id": "assistant",
       "label": "Assistant",
       "title": "An assistant that knows your portfolio",
-      "text": "Ask anything about your holdings. It runs on the model you pick: local, a cloud key or the Claude Code CLI.",
+      "text": "Ask anything about your holdings. It runs on the model you pick: local, a cloud key or a CLI.",
       "image": "/assets/tour/assistant.webp",
       "hotspots": [
         {
@@ -314,16 +647,16 @@
           "title": "Daily brief",
           "text": "Each morning the assistant sums up the last session. The brief lands here, so you can ask a follow-up.",
           "x": 85.84,
-          "y": 45.6,
+          "y": 48.38,
           "box": {
             "x": 73.06,
             "y": 23.03,
             "w": 25.56,
-            "h": 41.17
+            "h": 46.22
           },
           "image": "/assets/tour/assistant-brief.webp",
           "width": 850,
-          "height": 773
+          "height": 864
         },
         {
           "id": "context",
@@ -344,17 +677,17 @@
         {
           "id": "model",
           "title": "Your model",
-          "text": "Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude Code CLI.",
-          "x": 75.8,
+          "text": "Ollama, llama.cpp, LM Studio, any OpenAI-compatible key, or the Claude and Codex CLIs.",
+          "x": 75.78,
           "y": 12.11,
           "box": {
             "x": 73.06,
             "y": 10.56,
-            "w": 8.64,
+            "w": 8.56,
             "h": 3.11
           },
           "image": "/assets/tour/assistant-model.webp",
-          "width": 308,
+          "width": 306,
           "height": 88
         },
         {
@@ -376,168 +709,6 @@
       ]
     },
     {
-      "id": "reports",
-      "label": "Reports",
-      "title": "A written report every week",
-      "text": "The assistant reviews the week: movers, risks and what to watch. Missed one while the app was closed? It runs on the next start.",
-      "image": "/assets/tour/reports.webp",
-      "hotspots": [
-        {
-          "id": "summary",
-          "title": "Executive summary",
-          "text": "The week in one line, on top of the full review.",
-          "x": 40,
-          "y": 23.67,
-          "box": {
-            "x": 5.19,
-            "y": 19.33,
-            "w": 69.63,
-            "h": 8.67
-          },
-          "image": "/assets/tour/reports-summary.webp",
-          "width": 1100,
-          "height": 163
-        },
-        {
-          "id": "body",
-          "title": "The review",
-          "text": "Winners, laggards, macro context and risks, written from your holdings and live market data.",
-          "x": 40,
-          "y": 41.34,
-          "box": {
-            "x": 5.19,
-            "y": 27.77,
-            "w": 69.63,
-            "h": 33.6
-          },
-          "image": "/assets/tour/reports-body.webp",
-          "width": 1032,
-          "height": 515
-        },
-        {
-          "id": "week",
-          "title": "Any week",
-          "text": "Each report covers one week. Pick an earlier week or analyze the current one again.",
-          "x": 79.36,
-          "y": 12.08,
-          "box": {
-            "x": 67.89,
-            "y": 9.64,
-            "w": 28.49,
-            "h": 4.89
-          },
-          "image": "/assets/tour/reports-week.webp",
-          "width": 944,
-          "height": 120
-        },
-        {
-          "id": "stats",
-          "title": "The numbers",
-          "text": "Value, period return, cash and the top winner and loser of the week.",
-          "x": 85.97,
-          "y": 38.56,
-          "box": {
-            "x": 76.63,
-            "y": 18.44,
-            "w": 18.69,
-            "h": 40.22
-          },
-          "image": "/assets/tour/reports-stats.webp",
-          "width": 630,
-          "height": 756
-        },
-        {
-          "id": "prompt",
-          "title": "No black box",
-          "text": "The model, the time and the full prompt behind each report.",
-          "x": 85.97,
-          "y": 72.53,
-          "box": {
-            "x": 76.63,
-            "y": 58.67,
-            "w": 18.69,
-            "h": 34.33
-          },
-          "image": "/assets/tour/reports-prompt.webp",
-          "width": 630,
-          "height": 650
-        }
-      ]
-    },
-    {
-      "id": "suggestions",
-      "label": "Suggestions",
-      "title": "Rebalancing ideas, with the math done",
-      "text": "The assistant proposes trades from weights alone. The app turns them into shares and amounts with live prices.",
-      "image": "/assets/tour/suggestions.webp",
-      "hotspots": [
-        {
-          "id": "idea",
-          "title": "A concrete trade",
-          "text": "Action, shares, amount and the weight before and after, with the reason and a price range.",
-          "x": 40.71,
-          "y": 33.33,
-          "box": {
-            "x": 3.63,
-            "y": 25.39,
-            "w": 67.5,
-            "h": 17.5
-          },
-          "image": "/assets/tour/suggestions-idea.webp",
-          "width": 1100,
-          "height": 285
-        },
-        {
-          "id": "private",
-          "title": "Weights only",
-          "text": "The model never sees money amounts. The app computes them on your machine.",
-          "x": 24.14,
-          "y": 12.08,
-          "box": {
-            "x": 3.63,
-            "y": 9.28,
-            "w": 41.03,
-            "h": 5.61
-          },
-          "image": "/assets/tour/suggestions-private.webp",
-          "width": 1100,
-          "height": 109
-        },
-        {
-          "id": "target",
-          "title": "Target portfolio",
-          "text": "Every holding now and after the selected suggestions, with the change in percentage points.",
-          "x": 84,
-          "y": 40.27,
-          "box": {
-            "x": 71.63,
-            "y": 16.56,
-            "w": 24.75,
-            "h": 78.17
-          },
-          "image": "/assets/tour/suggestions-target.webp",
-          "width": 824,
-          "height": 665
-        },
-        {
-          "id": "recalculate",
-          "title": "Fresh ideas",
-          "text": "Run it again after you trade. The list says when transactions changed since the last run.",
-          "x": 91.76,
-          "y": 12.08,
-          "box": {
-            "x": 87.14,
-            "y": 9.64,
-            "w": 9.24,
-            "h": 4.89
-          },
-          "image": "/assets/tour/suggestions-recalculate.webp",
-          "width": 328,
-          "height": 120
-        }
-      ]
-    },
-    {
       "id": "transactions",
       "label": "Transactions",
       "title": "Every trade, dividend and deposit",
@@ -547,81 +718,81 @@
         {
           "id": "import",
           "title": "Broker CSV import",
-          "text": "Trade Republic, Scalable Capital, Interactive Brokers and Degiro, with a dry-run preview.",
-          "x": 81.19,
+          "text": "Trade Republic, Trading 212, Scalable Capital, Interactive Brokers, DEGIRO and more, with a dry-run preview.",
+          "x": 81.44,
           "y": 12.08,
           "box": {
-            "x": 76.94,
+            "x": 77.25,
             "y": 9.64,
-            "w": 8.5,
+            "w": 8.38,
             "h": 4.89
           },
           "image": "/assets/tour/transactions-import.webp",
-          "width": 304,
+          "width": 300,
           "height": 120
         },
         {
           "id": "add",
           "title": "Add by hand",
           "text": "Buys, sells, dividends, interest, deposits and withdrawals, with fees and taxes.",
-          "x": 90.78,
+          "x": 90.88,
           "y": 12.08,
           "box": {
-            "x": 85.19,
+            "x": 85.38,
             "y": 9.64,
-            "w": 11.19,
+            "w": 11,
             "h": 4.89
           },
           "image": "/assets/tour/transactions-add.webp",
-          "width": 390,
+          "width": 384,
           "height": 120
         },
         {
           "id": "search",
           "title": "Search the ledger",
           "text": "Filter by symbol or by transaction type.",
-          "x": 67.72,
+          "x": 68.09,
           "y": 12.08,
           "box": {
-            "x": 58.26,
+            "x": 58.69,
             "y": 9.64,
-            "w": 18.93,
+            "w": 18.81,
             "h": 4.89
           },
           "image": "/assets/tour/transactions-search.webp",
-          "width": 638,
+          "width": 634,
           "height": 120
         },
         {
           "id": "types",
           "title": "Clear types",
           "text": "Each entry carries its type, so dividends and sells stand out at a glance.",
-          "x": 20.18,
+          "x": 19.77,
           "y": 33.69,
           "box": {
-            "x": 15.55,
+            "x": 15.18,
             "y": 16.67,
-            "w": 17.79,
+            "w": 17.62,
             "h": 34.06
           },
           "image": "/assets/tour/transactions-types.webp",
-          "width": 981,
+          "width": 963,
           "height": 473
         },
         {
           "id": "costs",
           "title": "Fees and taxes",
           "text": "Kept per transaction and summed on the overview.",
-          "x": 81.33,
+          "x": 80.92,
           "y": 33.69,
           "box": {
-            "x": 75.5,
+            "x": 74.93,
             "y": 16.67,
-            "w": 11.66,
+            "w": 11.99,
             "h": 34.06
           },
           "image": "/assets/tour/transactions-costs.webp",
-          "width": 839,
+          "width": 864,
           "height": 473
         }
       ]
