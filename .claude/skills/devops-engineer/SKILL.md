@@ -1,31 +1,32 @@
 ---
 name: devops-engineer
-description: "Build, verify, package, deploy and release the project: workspace scripts, containers or static output, environment and secrets, CI and release tags. Use for build errors, deployment, releases, or configuration."
+description: "Build, package, release and deploy Portfolio: workspace scripts, release.sh, Docker builds of the OS packages, GitHub releases, the website deploy and secrets. Use it for build errors, packages, releases, CI or deploys."
+trimmedAt: 2026-11-05
 ---
 
 # DevOps Engineer
 
-## Overview
+## Commands
 
-Runs build, verification and release, and keeps deployment config, secrets handling and versioning correct.
+- `bun run typecheck` and `bun run test`: the checks.
+- `bun run build:metrics`: compiles `extras/metrics` with AssemblyScript. Then `bun run website:metrics` makes the metrics page of the website again.
+- `bun run build`: stages the GUI and the service, then runs `electrobun build` in `modules/desktop`. The output goes to `modules/desktop/artifacts`.
+- `bun run release:build [linux|windows|macos]`: builds the OS packages in Docker (`scripts/docker/Dockerfile.linux`). The output goes to `dist/<version>/`, 2 packages for each OS.
+- `bun run release [minor|patch|major|X.Y.Z] [--dry-run] [--allow-dirty] [--no-push]`: increases the version (minor is the default), writes the changelog entry, commits, tags `vX.Y.Z` and pushes. Then it builds the 3 OS packages in Docker and uploads them to GitHub Releases with `gh`.
+- `bun run website:screenshots [--llm claude-cli]`: makes the website tour screenshots from the app with demo data.
+- `bun run website:publish`: writes `extras/website/releases/latest.json` and deploys the website to Cloudflare Pages (`extras/website/deploy.sh`). GitHub Releases keeps the binaries. The website does not keep them.
 
-## When to Use
+## Release procedure
 
-- Build, typecheck, packaging or container failures.
-- Deploying, tagging, releasing, env vars, secrets or CI.
+A release request from the user is also a request to run the checks.
 
-## General Instructions
+1. Run `bun run typecheck` and `bun run test`. Make sure that they pass.
+2. Run `bun run release:build`. Make sure that `dist/<version>/` has all 6 packages.
+3. Run `bun run release --dry-run`.
+4. Tell the user that the real release commits, tags, pushes and publishes. Run `bun run release` only after the user agrees.
 
-- Run the full chain (typecheck, tests, build) before a deploy; report what ran and what was skipped.
-- `--dry-run` first. Warn before a real release or deploy: it publishes, commits, tags or pushes.
-- Release scripts refuse a dirty tree; do not bypass that unless asked.
-- `--frozen-lockfile` builds mean the lockfile is committed with every dependency change.
-- Secrets come from git-ignored `.env*` files; never commit, print or log values.
-- Say which targets you could not verify from this machine.
+## Rules
 
-## Project Instructions
-
-- Lifecycle: `bun run typecheck && bun run test`; `bun run build:metrics && bun run website:metrics` (asc-compile `extras/metrics`, regenerate the website page); `bun run build` (stage GUI + service, `electrobun build` in `modules/desktop`); `bun run release:build` (builds Linux, Windows and macOS packages locally inside Docker). Packages land in `dist/<version>/`.
-- `bun run release [minor|patch|major|X.Y.Z] [--dry-run] [--allow-dirty] [--no-push]` bumps version (minor by default), commits, tags, pushes, builds all 3 OS packages locally in Docker, and uploads artifacts to GitHub Releases via `gh release create`.
-- `bun run website:publish` writes `releases/latest.json` into `extras/website/releases/` and deploys to Cloudflare Pages (`extras/website/deploy.sh`). Binaries are hosted on GitHub Releases.
-- Release checklist: typecheck and tests pass; `bun run release:build` produces all 6 packages in `dist/<version>/`; `bun run release --dry-run`, then the real release.
+- `release.sh` stops when the working tree is not clean. Do not use `--allow-dirty` unless the user tells you to.
+- The secrets are in the git-ignored `.env*` files. Do not commit, print or log their values. The Docker build cannot read these files.
+- Tell the user which packages you could not test on this computer.

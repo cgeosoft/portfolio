@@ -1,33 +1,37 @@
 ---
 name: electrobun-engineer
-description: "Electrobun desktop app: Bun main process, window lifecycle, webview bridge, config, logging, staging and packaging. Use for desktop features, main-process changes, RPC methods, or packaging."
+description: "Electrobun desktop shell and service wiring: shell process, window, tray, dev run, staging, service start-up, settings table, logger and database. Use it for desktop features, main-process changes, a new API call, a new setting or staging problems."
+trimmedAt: 2026-11-05
 ---
 
 # Electrobun Engineer
 
-## Overview
+## Shell files (`modules/desktop/`)
 
-Owns the Electrobun shell: Bun main process, webview, the bridge between them, local config and packaging.
+- `src/bun/index.ts`: the shell. It starts the service, waits for `/api/health` and opens the window. It owns the tray, the window state and the external links.
+- `src/bun/dev.ts`: the `bun start` run. It runs the service under `bun --watch` and the Vite dev server from the checkout.
+- `src/bun/service.ts`: the service child process and its daily log file.
+- `src/bun/app.ts`: the only file for this app. The other `src/bun/` files are the same as in FintechCrafts Management.
+- `scripts/stage.ts`: builds the GUI and the service into `stage/` and sets the `--define` constants.
+- `electrobun.config.ts`: copies `stage/service` and `stage/gui` into the bundle. Add other bundle files to `extraCopies`.
 
-## When to Use
+## Service files (`modules/service/src/`)
 
-- Main-process code, window or tray lifecycle, exposing a capability to the webview.
-- Desktop config, logging, staging or packaging problems.
+- `config.ts`: the `settings` table and `DesktopConfig`.
+- `logger.ts`: `appLogger` with `logStep()` and `startTimer()`. Put the metadata in `data`.
+- `db/database.ts`: WAL, foreign keys, additive migrations with `PRAGMA table_info`. Use one repo module for each table.
+- `services/metrics/runtime.ts`: starts the metric engine process.
+- `services/remote-access.ts`: the LAN listener. `services/auth.ts`: the PIN and the sessions.
 
-## General Instructions
+## Procedures
 
-- Never import `bun`, `node:*` or main-process modules from view code.
-- Thin bridge handlers; logic in services; typed payloads on both sides.
-- New assets or view files need a `build.copy` entry in `electrobun.config.ts`.
-- Never log secrets or personal data; use the project logger, not `console.log`.
-- Packaging is verifiable only on the host OS; say which targets you built.
-- Warn before a release script without `--dry-run`: it commits, tags and pushes.
-- `bun run typecheck` after every edit.
+- New API call: do CLAUDE.md rule 4. For old call sites, also add an entry in `modules/gui/src/rpc.ts`.
+- New setting: add the type in `modules/shared/src/config-types.ts` and a `DEFAULT_CONFIG` entry in `config.ts`.
 
-## Project Instructions
+## Rules
 
-- Bun main process with `bun:sqlite`, no React here. Relative imports use `.js`. `bun run typecheck` checks both TS contexts.
-- Files: `modules/desktop/src/bun/index.ts` (shell: spawns `service/main.js`, reads its `SERVICE_PORT=<port>` line, waits for `/api/health`, loads `http://127.0.0.1:<port>`, tray and close to tray, window state, external links), `dev.ts` (`bun start`: the unpackaged shell finds the checkout, runs `src/main.ts` under `bun --watch` and `modules/gui/scripts/dev-server.ts`, and sends each new service port to Vite on stdin), `service.ts` (child process; appends its output to `<data>/logs/service-YYYY-MM-DD.log`), `app.ts` (the only per-app file: names, data directory rule, colours; the other `src/bun/` files are identical to FintechCrafts Management), `modules/desktop/scripts/stage.ts` (builds GUI and service into `stage/`, bakes `APP_VERSION` and `POSTHOG_API_KEY` with `--define`), `modules/desktop/electrobun.config.ts`. Service side: `modules/service/src/main.ts` (Bun.serve), `src/http/routes.ts` (every route), `src/config.ts` (`settings` table, `DesktopConfig`; a new field needs a `DEFAULT_CONFIG` entry in `config.ts` and the type in `modules/shared/src/config-types.ts`), `src/logger.ts` (`appLogger` with `logStep()` / `startTimer()`; metadata goes in `data`), `src/db/database.ts` (WAL, foreign keys, additive migrations via `PRAGMA table_info`; one repo module per table), `src/services/metrics/` (`runtime.ts` spawns the engine process, `registry.ts` merges built-ins with URL installs), `src/services/host-settings.ts` (remote-access switch), `src/services/auth.ts` (PIN, sessions).
-- New API call: payload types in `modules/shared/src/api-types.ts`; a route in `modules/service/src/http/routes.ts` calling a service; a method in `modules/gui/src/api.ts` (and, for old call sites, an entry in `modules/gui/src/rpc.ts`).
-- Never instantiate WebAssembly in the main process; a WASM loop cannot be interrupted in-thread, so metrics run in a killable child process.
-- `bun run build:metrics` runs before `tsc`, `bun test` or `electrobun` (scripts chain it); its bundle is git-ignored.
+- Do not use React in the shell. Keep the handlers thin and the payloads typed.
+- Log through the project logger, not `console.log`.
+- Do not create a WebAssembly instance in the main process. A WASM loop cannot stop in its own thread.
+- For a new service capability (for example a new `bun:` module), update `capabilities` in `electrobun.config.ts`. Hutch scans only the main-process bundle.
+- After a change in `src/bun/`, the user must start `bun start` again.

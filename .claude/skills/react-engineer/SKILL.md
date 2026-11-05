@@ -1,34 +1,29 @@
 ---
 name: react-engineer
-description: "React frontend: components, hooks, client state, routing, the typed backend client, streams and rendering. Use for UI features, client state, data fetching, or rendering issues."
+description: "React GUI: components, hooks, client state, views, the typed HTTP client, charts and rendering. Use it for GUI features, client state, data fetching or rendering bugs."
+trimmedAt: 2026-11-05
 ---
 
 # React Engineer
 
-## Overview
+## Files (`modules/gui/src/`)
 
-Builds the React UI: components, hooks, state, navigation and the typed client that talks to the backend.
+- Stack: React 19, Chart.js 4, Cytoscape, Lucide, built by Vite.
+- `App.tsx`: the views (dashboard, portfolios, settings, sponsorship, terms). The dashboard tabs are Overview, Insights, Transactions and Analysis.
+- `api.ts`: the typed HTTP client (`api.<name>()`, with cookies). `rpc.ts` keeps `rpc.request.<name>(payload)` for old components. Use `api` in new code.
+- `environment.ts`: `openExternal()` sends external links to the system browser.
+- `components/`: `layout/`, `common/`, `auth/`, `settings/`, `portfolio/`, `analysis/`, `metrics/`.
+- `portfolio/` has the cards, the modals, `AssistantSidebar` and `utils.ts`. `analysis/` has the brief, the Analysis tab and the Cytoscape graph. `metrics/` has `MetricsTab`, `MetricDashboard` and `metric-view.ts`.
 
-## When to Use
+## Rules
 
-- Screens, components, modals, hooks, client state or persistence.
-- Streams, reconnect logic, data fetching or rendering bugs.
-
-## General Instructions
-
-- Function components and hooks only; type new code explicitly even in a non-strict tsconfig.
-- Backend access only through the project's typed client; never inline `fetch` or import backend code.
-- Shared state lives in the designated store or top-level page; do not mirror it in component state.
-- Every socket, timer or subscription effect cleans up; `StrictMode` double-invokes effects in dev.
-- Errors go through the project's toast or status pattern.
-- Use the shared class constants and tokens; no ad-hoc hex or one-off CSS.
-- `bun run typecheck` after every edit.
-
-## Project Instructions
-
-- React 19, Chart.js 4, Lucide, built by Vite (`modules/gui`). No `bun` or `node:*` imports.
-- All backend access is HTTP through `modules/gui/src/api.ts` (`api.<name>()`, cookies included); `modules/gui/src/rpc.ts` keeps `rpc.request.<name>(payload)` working for older components. Read `modules/shared/src/api-types.ts` before adding a call. External links go through `openExternal()` in `environment.ts` (the desktop shell hands them to the system browser).
-- Files: `App.tsx` (router: dashboard, settings, portfolios, terms), `components/` (`layout/`, `common/`, `portfolio/` with cards, modals, `AssistantSidebar`, `utils.ts`; `metrics/` with `MetricsTab`, `MetricDashboard`, `metric-view.ts`; `settings/`).
-- Money and percent only through `fmtCurrency` / `fmtPercent` from `components/portfolio/utils.ts`; `fmtCurrency` / `hideValues` is the only place the privacy mask applies, except that `displayMetric()` hides every figure of an unverified metric module while values are hidden.
-- Metrics: the webview never formats a metric itself; call `evaluatePortfolioMetrics` and render through `displayMetric()`. Selection edits go through the helpers in `modules/shared/src/metrics.ts` (capacity 4 large, 6 compact).
-- Use the `cx-card` surface and the tokens in `index.css` for consistent card, lock screen, menu bar and footer styling.
+- Use function components and hooks only.
+- Get backend data only through `api.ts`. Read `modules/shared/src/api-types.ts` before you add a call. Do not use `fetch` in a component.
+- Keep shared state in the top-level page. Do not copy it into component state.
+- Clean up each socket, timer and subscription in its effect. `StrictMode` runs effects 2 times in development.
+- Show errors with the toast or status pattern of the project.
+- Format money and percentages only with `fmtCurrency` and `fmtPercent` (`modules/shared/src/format.ts`, exported again by `components/portfolio/utils.ts`).
+- The `hideValues` argument of `fmtCurrency` is the only privacy mask. One exception: `displayMetric()` hides all figures of a metric module that is not verified while the values are hidden.
+- Do not format a metric in the webview. Call `evaluatePortfolioMetrics` and show the result through `displayMetric()`.
+- Change the metric selection only with the helpers in `modules/shared/src/metrics.ts`. The dashboard holds 4 large cards and 6 compact tiles.
+- For styles, use the `cx-card` surface and the tokens in `index.css`. Do not use a hex value or one-time CSS in a component.

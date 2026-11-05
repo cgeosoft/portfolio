@@ -1,61 +1,56 @@
+---
+trimmedAt: 2026-11-05
+---
+
 # CLAUDE.md
 
-## What this repo is
+## Project
 
-Portfolio is an offline personal investment tracker for Linux, Windows and macOS. Bun workspace layout: a pure Bun service (`modules/service`, `Bun.serve` + `bun:sqlite`, no framework), a React 19 GUI built with Vite (`modules/gui`) and served by the service, a thin Electrobun shell (`modules/desktop`) that spawns the service and points one window at it, and `modules/shared` for the types both sides use. TypeScript strict throughout.
+Portfolio is an offline personal investment tracker for Linux, Windows and macOS. It is a Bun workspace in strict TypeScript. All user data stays on the local computer. The app has no remote accounts and no remote database.
 
-Offline-first and private: no remote accounts or databases. Yahoo Finance and Finnhub provide quotes, news and FX. Local or cloud LLMs generate reports and answer in the assistant sidebar. PostHog telemetry is off by default and never sends balances, holdings or personal data. Metric modules are sandboxed AssemblyScript (`extras/metrics/`) run in a separate engine process.
+## Modules
 
-The GUI talks to the service only over HTTP (`/api/...`). The service listens on loopback on a random port and prints `SERVICE_PORT=<port>`; Settings → Privacy & Security can lock the app with a PIN and, once a PIN is set, open a second listener on a user-set port for other devices on the network.
+- `modules/service`: the Bun service (`Bun.serve`, `bun:sqlite`, no framework). It owns the `/api` routes, the database and the settings. It serves the GUI on `/`.
+- `modules/gui`: the React 19 GUI, built with Vite.
+- `modules/desktop`: the Electrobun shell. It starts the service and opens one window.
+- `modules/shared`: the shared types and helpers.
+- `extras/metrics`: sandboxed AssemblyScript metric modules. Read its README first. The metric contracts are in `modules/shared/src/metric*.ts`.
+- `extras/website`: the marketing site on Cloudflare Pages.
+- `lang/<code>.yml`: the interface text, one file for each ISO 639-1 code. `en.yml` is the source and the fallback. The format and the language list are in `modules/shared/src/i18n.ts`.
 
-## Layout
+FMP, Yahoo Finance and Finnhub supply the market data through a provider chain. Local or cloud LLMs write the reports and answer in the assistant sidebar. PostHog telemetry is off by default.
 
-- `modules/service/src/` - `main.ts` (bootstrap, `Bun.serve`), `http/` (router, routes, static GUI), `services/` (portfolio, market data, LLM, portfolio brief, Guided Analysis harness and tools in `analysis/`, reports, suggestions, chat, daily brief, weekly analysis, Gotify, ntfy, metrics runtime, auth, remote access, MCP server for other LLM clients (`mcp-*.ts`, percentages only), privacy gate of every prompt and MCP answer (`llm-privacy.ts`), update check, support, database backup), `db/` (schema and repositories), `config.ts` (settings in the `settings` table), `paths.ts` (data directory, repo root, bundled files), `bootstrap.ts` (creates the data directory, one-time import of the old one), `globals.d.ts` (build-time constants), `logger.ts` (stdout only; the desktop shell writes `<data>/logs/service-YYYY-MM-DD.log`). Tests in `services/__tests__/`.
-- `modules/gui/src/` - `App.tsx`, `api.ts` (typed HTTP client), `rpc.ts` (compatibility shim `rpc.request.<name>` over `api`), `components/{layout,common,portfolio,analysis,metrics,settings}/` (`analysis/` holds the brief, the Analysis tab and the Cytoscape graph), `index.css` (design tokens). Tabs: Overview, Insights (exposure, income, markets), Transactions, Analysis (Guided Analysis and the reports).
-- `modules/shared/src/` - `api-types.ts`, `config-types.ts`, `brand.ts`, `log-format.ts`, `portfolio.ts` (domain models), metric contracts (`metrics.ts`, `metric-abi.ts`, `metric-manifest.ts`, `metric-output.ts`).
-- `modules/desktop/` - `electrobun.config.ts`, `src/bun/` (`index.ts` shell, `dev.ts` development run, `service.ts` child process and logs, tray, window state, Linux icons; `app.ts` is the only file that differs from FintechCrafts Management), `scripts/stage.ts`, `assets/`. `modules/gui/scripts/dev-server.ts` starts Vite for `bun start`.
-- `extras/metrics/` - metric modules (read its README first). `extras/website/` - marketing site (Cloudflare Pages) with `releases/latest.json` manifest.
-- `scripts/release.sh` (tag, build, publish), `scripts/docker/Dockerfile.linux`, `scripts/build-deb.sh`, `scripts/build-metrics.ts`.
-- `scripts/test-network-guard.ts` - preloaded by every `bunfig.toml`: a test that reaches a non-loopback host fails. Stub `globalThis.fetch` instead.
-- `lang/<code>.yml` - interface text, one file per ISO 639-1 code; `en.yml` is the source and the fallback. Format and the language list with AI support tiers in `modules/shared/src/i18n.ts`, GUI loader in `modules/gui/src/i18n.ts`.
-- `docs/architecture.md` (modules, config, logging, release), `docs/theme.md`.
+For files, configuration, access, logs and release, read `docs/architecture.md`. For tests, read `docs/testing.md`. A test that connects to a non-loopback host fails (`scripts/test-network-guard.ts`). Stub `globalThis.fetch`.
 
 ## Skills
 
-Load the matching skill before you change that area.
-
-| Skill | Use for |
-|---|---|
-| [`electrobun-engineer`](.claude/skills/electrobun-engineer/SKILL.md) | Desktop shell, staging, packaging, `release.sh` |
-| [`financial-engineer`](.claude/skills/financial-engineer/SKILL.md) | Portfolio math, Yahoo Finance, Finnhub, FX, indicators |
-| [`prompt-engineer`](.claude/skills/prompt-engineer/SKILL.md) | LLM reports, assistant chat, providers, output cleanup |
-| [`react-engineer`](.claude/skills/react-engineer/SKILL.md) | GUI components, HTTP client, Chart.js |
-| [`ui-engineer`](.claude/skills/ui-engineer/SKILL.md) | Tailwind styling, design tokens |
-| [`devops-engineer`](.claude/skills/devops-engineer/SKILL.md) | Build, packaging, release, website deploy |
+Before you change an area, load its skill from `.claude/skills/`. The skill description tells which area the skill covers.
 
 ## Commands
 
 ```bash
-bun install                       # links the workspace packages
-bun start                         # desktop window on Vite (hot reload), service under bun --watch; random ports, no stage
-bun run typecheck | bun run test
-bun run build:metrics             # after changing extras/metrics
-bun run release [minor|patch|major]      # tag, build 3 OS artifacts in Docker, GitHub release
-bun run release:build [linux|windows|macos] # build OS packages locally in Docker
-bun run website:screenshots [--llm claude-cli] # website tour screenshots from the app with demo data
-bun run website:publish                   # write latest.json and deploy website to Cloudflare Pages
+bun install            # link the workspace packages
+bun start              # desktop window on Vite with hot reload, service under bun --watch
+bun run typecheck
+bun run test
+bun run build:metrics  # after a change in extras/metrics
 ```
+
+The release and website commands are in `devops-engineer`.
 
 ## Rules
 
-1. Do not run build, typecheck or test after edits unless asked; the user validates against the running app.
-2. Commit only your changes; other agents may work in parallel.
-3. Never log or send balances, tickers, quantities or personal data.
-4. GUI and service talk only over HTTP: a route in `modules/service/src/http/routes.ts`, a method in `modules/gui/src/api.ts`, types in `modules/shared/src/api-types.ts`. No `bun` or `node:*` imports in `modules/gui`.
-5. Keep route handlers thin; logic in `modules/service/src/services/`.
-6. Settings live in the `settings` table (`loadConfig`/`updateConfig`), never in a .env file. The service reads no environment variables: `paths.ts` derives the paths, build-time values are `--define` constants (`globals.d.ts`).
-7. Clean LLM output with `sanitizeLlmResponse()` before display.
-8. A metric never runs in the main process or webview; the ABI changes only with a new version.
-9. User-visible GUI text goes through `t("section.key")` with the English text in `lang/en.yml`, never at module top level (the language loads before the first render). Add new keys to every language; `bun run scripts/check-lang.ts` lists missing ones. LLM prompts stay English; `language` in the config sets the output language.
-10. Writing: short active sentences. No em-dashes, emojis or AI clichés. State only verified facts.
-11. Remotes: `origin` is `cg@cronus:/mnt/repos/portfolio.git`. `github` is `cgeosoft/portfolio` (PRs, Dependabot, Actions). Push only when Christos asks.
+1. After you edit code, run `bun run typecheck`. Do not run the tests or the build unless the user tells you to. The user checks the changes in the running app.
+2. Commit only your changes. Other agents can work in this repo at the same time.
+3. Do not log or send balances, tickers, quantities or personal data.
+4. The GUI and the service communicate only through HTTP. For a new call, add the types in `modules/shared/src/api-types.ts`, a route in `modules/service/src/http/routes.ts` and a method in `modules/gui/src/api.ts`.
+5. Do not import `bun` or `node:*` in `modules/gui`.
+6. Keep the route handlers thin. Put the logic in `modules/service/src/services/`.
+7. Keep the settings in the `settings` table (`loadConfig`, `updateConfig`). Do not use a `.env` file. The service reads no environment variables. `paths.ts` makes the paths. Build-time values are `--define` constants (`globals.d.ts`).
+8. Clean all LLM output with `sanitizeLlmResponse()` before you show it.
+9. Do not run a metric in the main process or in the webview. Change the metric ABI only with a new ABI version.
+10. Send all user-visible GUI text through `t("section.key")`. Write the English text in `lang/en.yml`. Do not call `t()` at module top level, because the language loads before the first render.
+11. Add each new text key to all languages. `bun run scripts/check-lang.ts` shows the missing keys.
+12. Write the LLM prompts in English. The `language` setting sets the output language.
+13. Write short, active sentences. Do not use em-dashes, emojis or AI clichés. Write only facts that you verified.
+14. Remotes: `origin` is `cg@cronus:/mnt/repos/portfolio.git`. `github` is `cgeosoft/portfolio` (pull requests, Dependabot, Actions). Push only when Christos tells you to.

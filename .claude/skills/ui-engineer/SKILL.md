@@ -1,32 +1,26 @@
 ---
 name: ui-engineer
-description: "Styling and design system: CSS or Tailwind setup, colour tokens, typography, shared surface classes, responsive layout and theme consistency. Use for CSS issues, visual styling, theme or token changes."
+description: "Styling and design system: Tailwind setup, colour tokens, fonts, shared surface classes, light and dark themes, responsive layout. Use it for CSS issues, visual styling, theme or token changes."
+trimmedAt: 2026-11-05
 ---
 
 # UI Engineer
 
-## Overview
+## Setup
 
-Keeps the visual layer consistent: stylesheet entry point, design tokens, typography, shared surfaces and the CSS build.
+- Tailwind CSS 4 through `@tailwindcss/postcss`. Vite compiles the CSS. There is no separate CSS build and no `tailwind.config.js`.
+- `modules/gui/src/index.css` is the only stylesheet entry. It has the `@theme inline` block, the tokens in `@layer base` and the shared classes.
+- Tokens are CSS custom properties. Dark is the default. `html.light` and the system light preference select the light palette.
+- The accent is Cyber Pink `#DD3C73` (`--accent`, `--accent-rgb`). Read all other values in `index.css`. `docs/theme.md` is older than `index.css`.
+- Fonts: `Plus Jakarta Sans` for text, `JetBrains Mono` for numbers, tickers and tables.
+- Shared classes: `.cx-card`, `.custom-scrollbar`, `.glass-panel`, `.app-menubar`, `.app-menu*`, the footer styles.
 
-## When to Use
+## Rules
 
-- CSS or Tailwind changes, new utilities or shared surfaces.
-- Palette, token, font, theme, layout or responsive issues.
-
-## General Instructions
-
-- Reuse tokens; a new colour needs a token, not an inline hex, plus an `-rgb` sibling where `rgba()` consumes it.
-- Utilities in the template or component; CSS rules only for repeated patterns, custom properties, keyframes, pseudo-elements or media queries.
-- One stylesheet entry per project. Never edit compiled CSS.
-- After a class or token change run the CSS build (when one exists) and confirm the output changed; a class without a rule does nothing.
-- Keep dark surfaces legible: selects, scrollbars, focus states, breakpoints.
-- Grep the old value when changing a token so every copy moves.
-
-## Project Instructions
-
-- Tailwind CSS 4 via `@tailwindcss/postcss`; the theme lives in the `@theme inline` block at the top of `modules/gui/src/index.css` (no `tailwind.config.js`). Custom component classes sit in `@layer utilities` so they keep the Tailwind 3 cascade; a `hover:`/`sm:` variant that must beat one of them needs the `!` suffix. Tokens are CSS custom properties in `modules/gui/src/index.css` (dark navy canvas, indigo accent `#6366f1`, `Plus Jakarta Sans` body, `JetBrains Mono` numbers). Vite compiles the CSS; no separate build step.
-- `JetBrains Mono` for numbers, tickers and tables; `Inter` for prose. Dark default (`color-scheme: dark`).
-- Tokens: canvas `#0b0f19` (`--background`), widget `#111726`, card `#151d30`; border `#1e293b`; primary accent Cyber Pink `#DD3C73` (`--accent`, `--accent-rgb`); status mint `#A7E2C0` success, `#DD3C73` error, `#E3EACD` warning, `#243C8F` info; text `#f8fafc` main, `#94a3b8` muted.
-- `input.css`: `@tailwind` directives, `@layer base` with color-scheme, custom properties, font stack, scrollbar; shared surfaces `.cx-card`, `.custom-scrollbar`.
-- Utility classes in `.tsx`, CSS in `index.css`. Maintain `.app-menubar`, `.app-menu*` and the footer styling; no `backdrop-filter` on scrolling surfaces (software-rendered WebKitGTK).
+- Use the tokens. A new colour needs a token, not an inline hex. Add an `-rgb` token too when `rgba()` uses it.
+- Write utility classes in the `.tsx` file. Write CSS rules in `index.css` only for repeated patterns, custom properties, keyframes, pseudo-elements or media queries.
+- Put custom component classes in `@layer utilities`, so they keep the Tailwind 3 order. A `hover:` or `sm:` variant that must win over one of them needs the `!` suffix.
+- Do not use `backdrop-filter` on surfaces that scroll. WebKitGTK renders them in software.
+- Keep dark and light surfaces legible: selects, scrollbars, focus states, breakpoints.
+- When you change a token value, search for the old value and change each copy.
+- Do not edit compiled CSS.
