@@ -5,7 +5,6 @@ import {
   PieChart,
   BrainCircuit,
   History,
-  Settings,
 } from "lucide-react";
 import { t } from "../../i18n";
 
@@ -21,7 +20,6 @@ interface HeaderProps {
   onOpenManagePortfolios?: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
-  onOpenSettings?: () => void;
   lastUpdated?: string;
   activeTab?: PortfolioTabKey;
   onTabChange?: (tab: PortfolioTabKey) => void;
@@ -42,7 +40,6 @@ export function Header({
   onTabChange,
   activeView = "dashboard",
   onNavigateDashboard,
-  onOpenSettings,
   transactionsCount = 0,
   suggestionsCount = 0,
 }: HeaderProps) {
@@ -99,28 +96,6 @@ export function Header({
             </Fragment>
           );
         })}
-
-        {onOpenSettings && (
-          <>
-            <div
-              className="h-4 w-px bg-slate-800 shrink-0 mx-0.5"
-              aria-hidden="true"
-            />
-            <button
-              type="button"
-              onClick={() => onOpenSettings()}
-              className={`h-7 w-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${
-                activeView === "settings"
-                  ? "bg-[#DD3C73]/15 text-[#DD3C73] border border-[#DD3C73]/40 shadow-xs"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"
-              }`}
-              title={t("layout.header.settingsShortcut", { shortcut: "Ctrl+," })}
-              aria-label={t("layout.header.settings")}
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-          </>
-        )}
       </nav>
     </header>
   );

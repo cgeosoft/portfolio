@@ -1772,7 +1772,6 @@ export default function App() {
           onOpenManagePortfolios={handleOpenManagePortfolios}
           onRefresh={() => loadData("refresh")}
           isRefreshing={true}
-          onOpenSettings={handleOpenSettings}
           activeTab={activeTab}
           onTabChange={handleTabChange}
           activeView={view}
@@ -1866,7 +1865,6 @@ export default function App() {
           onOpenManagePortfolios={handleOpenManagePortfolios}
           onRefresh={() => loadData("refresh")}
           isRefreshing={isRefreshing}
-          onOpenSettings={handleOpenSettings}
           activeTab={activeTab}
           onTabChange={handleTabChange}
           activeView={view}
@@ -1987,6 +1985,7 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         pinEnabled={pinEnabled}
+        isSettingsOpen={view === "settings"}
         onLock={handleLock}
       />
       )}
@@ -2005,7 +2004,6 @@ export default function App() {
             onOpenManagePortfolios={handleOpenManagePortfolios}
             onRefresh={() => loadData("refresh")}
             isRefreshing={isRefreshing}
-            onOpenSettings={handleOpenSettings}
             lastUpdated={summary?.lastUpdated}
             activeTab={activeTab}
             onTabChange={handleTabChange}
