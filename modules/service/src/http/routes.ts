@@ -43,10 +43,8 @@ import type {
   ChatWithPortfolioRequest,
   CompleteSetupRequest,
   CreatePortfolioRequest,
-  GetReportPromptResponse,
   GetSettingsResponse,
   EvaluatePortfolioMetricsRequest,
-  GenerateReportRequest,
   GenerateSuggestionsRequest,
   GetProviderModelsRequest,
   InstallMetricRequest,
@@ -54,11 +52,9 @@ import type {
   SetIsinSymbolRequest,
   SetManualPriceRequest,
   OpenSupportTicketRequest,
-  PrepareReportPromptRequest,
   PreviewMetricInstallRequest,
   SavePortfolioMetricsRequest,
   SuggestPortfolioMetricsRequest,
-  StartReportStreamRequest,
   TestFinnhubConnectionRequest,
   TestFmpConnectionRequest,
   TestGotifyRequest,
@@ -462,39 +458,6 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   // ── reports ─────────────────────────────────────────────────────────────
 
   router.get("/api/portfolios/:id/reports", (ctx) => reportService.getReports(ctx.params.id!));
-
-  router.post("/api/portfolios/:id/reports/prompt", async (ctx) => {
-    const body = await ctx.body<PrepareReportPromptRequest>();
-    return reportService.prepareReportPrompt(ctx.params.id!, { provider: body.provider, model: body.model, weekKey: body.weekKey });
-  });
-
-  router.post("/api/portfolios/:id/reports/stream", async (ctx) => {
-    const body = await ctx.body<StartReportStreamRequest>();
-    await assertRemoteTargets(ctx, body.baseUrl);
-    const res = await reportService.startReportStream({ ...body, apiKey: requestSecret(body.apiKey), portfolioId: ctx.params.id! });
-    telemetry.capture("report_generated", { provider: body.provider, streaming: true });
-    return res;
-  });
-
-  router.get("/api/reports/stream/:sessionId", (ctx) => reportService.pollReportStream(ctx.params.sessionId!));
-  router.delete("/api/reports/stream/:sessionId", (ctx) => reportService.cancelReportStream(ctx.params.sessionId!));
-
-  router.post("/api/portfolios/:id/reports", async (ctx) => {
-    const body = await ctx.body<GenerateReportRequest>();
-    await assertRemoteTargets(ctx, body.baseUrl);
-    const portfolio = portfolioRepo.findById(ctx.params.id!);
-    if (!portfolio) throw new HttpError(404, "Portfolio not found");
-    const report = await reportService.generateReport(
-      { id: portfolio.id, name: portfolio.name, baseCurrency: portfolio.baseCurrency },
-      { provider: body.provider, model: body.model, apiKey: requestSecret(body.apiKey), baseUrl: body.baseUrl, weekKey: body.weekKey },
-    );
-    telemetry.capture("report_generated", { provider: body.provider });
-    return report;
-  });
-
-  router.get("/api/portfolios/:id/reports/:reportId/prompt", (ctx): GetReportPromptResponse => reportService.getReportPrompt(ctx.params.id!, ctx.params.reportId!));
-
-  router.delete("/api/portfolios/:id/reports/:reportId", (ctx) => ({ success: reportService.deleteReport(ctx.params.id!, ctx.params.reportId!) }));
 
   // ── suggestions ─────────────────────────────────────────────────────────
 

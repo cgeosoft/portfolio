@@ -65,13 +65,13 @@ export function createServices(): AppServices {
   const eventAlerts = new EventAlertsService(income);
   // Market context of the AI features (ai-context.ts). The exposure service registers itself above.
   const aiContext = { fmp, finnhub, yahoo, marketData, portfolioService, income };
-  const reportService = new PortfolioReportService(llm, portfolioService, aiContext);
+  const reportService = new PortfolioReportService();
   const chatService = new PortfolioChatService(llm, portfolioService, aiContext);
   const suggestionService = new PortfolioSuggestionService(llm, portfolioService, marketData, aiContext);
   const metricsService = new MetricsService(portfolioService, fmp);
   const dailyBrief = new DailyBriefService(llm, portfolioService, aiContext);
   const briefService = new PortfolioBriefService(llm, portfolioService);
   const analysis = new AnalysisService(llm, portfolioService, suggestionService, { ...aiContext, metricsService });
-  const weeklyAnalysis = new WeeklyAnalysisService(llm, portfolioService, reportService, aiContext, analysis);
+  const weeklyAnalysis = new WeeklyAnalysisService(analysis);
   return { yahoo, finnhub, fmp, marketData, llm, portfolioService, reportService, chatService, suggestionService, metricsService, dailyBrief, weeklyAnalysis, etfIntel, exposure, calendar, income, eventAlerts, briefService, analysis };
 }

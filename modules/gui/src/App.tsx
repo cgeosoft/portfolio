@@ -2,7 +2,6 @@ import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } fro
 import type {
   FinancialPortfolioData,
   PortfolioTransaction,
-  PortfolioReport,
   PortfolioItem,
 } from "portfolio-shared/portfolio";
 import { Header, type PortfolioTabKey } from "./components/layout/Header";
@@ -73,7 +72,6 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 const SettingsPage = lazy(() => import("./components/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
 const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
-const AnalyzePortfolioModal = lazy(() => import("./components/portfolio/AnalyzePortfolioModal").then((m) => ({ default: m.AnalyzePortfolioModal })));
 // Dialogs load on their first open and stay mounted after it, so they keep their state when closed.
 const SetupWizardPage = lazy(() => import("./components/common/SetupWizardPage").then((m) => ({ default: m.SetupWizardPage })));
 const ChangelogModal = lazy(() => import("./components/common/ChangelogModal").then((m) => ({ default: m.ChangelogModal })));
@@ -151,8 +149,8 @@ function routeFromHash(hash: string): HashRoute {
   if (head === "insights") return { tab: "insights", insights: resolveInsightsSection(sub) ?? undefined };
   // Suggestions was a tab, then a page of the old Analysis tab; it lives in the new Analysis tab now.
   if (head === "suggestions") return { tab: "analysis", guided: "suggestions", redirect: "#analysis/suggestions" };
-  // The Reports tab became the Reports page of Analysis.
-  if (head === "reports") return { tab: "analysis", guided: "reports", redirect: "#analysis/reports" };
+  // The Reports tab became a page of Analysis, and each run now holds its report.
+  if (head === "reports") return { tab: "analysis", guided: "runs", redirect: "#analysis/runs" };
   if (head === "analysis") {
     // `#analysis/<exposure|income|markets>` named the data pages, which are Insights now.
     const insights = resolveInsightsSection(sub);
@@ -380,7 +378,6 @@ export default function App() {
 
   const [portfolioData, setPortfolioData] = useState<FinancialPortfolioData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [reports, setReports] = useState<PortfolioReport[]>([]);
   const [suggestions, setSuggestions] = useState<GetSuggestionsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -882,7 +879,6 @@ export default function App() {
   const [editingTx, setEditingTx] = useState<PortfolioTransaction | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const importModalMounted = useOpenedOnce(isImportModalOpen);
-  const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
   const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -1272,18 +1268,6 @@ export default function App() {
     if (authState === "ready") loadPortfolios();
   }, [loadPortfolios, authState]);
 
-  // Fetch reports for active portfolio
-  const loadReports = useCallback(async () => {
-    if (!activePortfolioId) return;
-    try {
-      await ensureRpcReady();
-      const res = await rpc.request.getReports({ portfolioId: activePortfolioId });
-      setReports(res.reports || []);
-    } catch (e) {
-      console.error("Error loading reports:", e);
-    }
-  }, [activePortfolioId]);
-
   // Fetch suggestions for the header badge; the Suggestions page keeps it current while open.
   const loadSuggestions = useCallback(async () => {
     if (!activePortfolioId) return;
@@ -1377,10 +1361,9 @@ export default function App() {
         setIsLoading(false);
         setIsRefreshing(false);
       }
-      void loadReports();
       void loadSuggestions();
     },
-    [activePortfolioId, currency, loadReports, loadSuggestions],
+    [activePortfolioId, currency, loadSuggestions],
   );
 
   // One refresh at a time: a click while one runs does nothing.
@@ -1472,7 +1455,6 @@ export default function App() {
     const remaining = portfolios.filter((p) => p.id !== id);
     setPortfolios(remaining);
     if (activePortfolioId !== id) return;
-    setReports([]);
     setSuggestions(null);
     if (remaining.length > 0) {
       handleSelectPortfolio(remaining[0]!.id);
@@ -1520,17 +1502,6 @@ export default function App() {
       transactionId: id,
     });
     await loadData("reload");
-  };
-
-  const handleDeleteReport = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this report?")) return;
-    const targetId = activePortfolioId || portfolios[0]?.id;
-    if (!targetId) return;
-
-    const res = await rpc.request.deleteReport({ portfolioId: targetId, reportId: id });
-    if (res.success) {
-      setReports((prev) => prev.filter((r) => r.id !== id));
-    }
   };
 
   const handleSetupComplete = useCallback(async () => {
@@ -1750,7 +1721,6 @@ export default function App() {
           onRefresh={() => loadData("refresh")}
           isRefreshing={true}
           onReload={handleReload}
-          onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={openSetupWizard}
           onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
@@ -1776,7 +1746,6 @@ export default function App() {
           onTabChange={handleTabChange}
           activeView={view}
           onNavigateDashboard={handleNavigateDashboard}
-          reportsCount={reports.length}
           transactionsCount={0}
           suggestionsCount={suggestionsCount}
         />
@@ -1843,7 +1812,6 @@ export default function App() {
           onRefresh={() => loadData("refresh")}
           isRefreshing={isRefreshing}
           onReload={handleReload}
-          onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
           onOpenSetupWizard={openSetupWizard}
           onReportIssue={() => setIsSupportTicketOpen(true)}
           onQuit={handleQuitApp}
@@ -1869,7 +1837,6 @@ export default function App() {
           onTabChange={handleTabChange}
           activeView={view}
           onNavigateDashboard={handleNavigateDashboard}
-          reportsCount={reports.length}
           transactionsCount={0}
           suggestionsCount={suggestionsCount}
         />
@@ -1970,7 +1937,6 @@ export default function App() {
         onRefresh={() => loadData("refresh")}
         isRefreshing={isRefreshing}
         onReload={handleReload}
-        onAnalyzePortfolio={() => setIsAnalyzeModalOpen(true)}
         onOpenSetupWizard={openSetupWizard}
         onReportIssue={() => setIsSupportTicketOpen(true)}
         onQuit={handleQuitApp}
@@ -2008,7 +1974,6 @@ export default function App() {
             onTabChange={handleTabChange}
             activeView={view}
             onNavigateDashboard={handleNavigateDashboard}
-            reportsCount={reports.length}
             transactionsCount={transactions.length}
             suggestionsCount={suggestionsCount}
             isAssistantOpen={isAssistantOpen}
@@ -2192,7 +2157,7 @@ export default function App() {
             />
           )}
 
-          {/* TAB: ANALYSIS (Guided Analysis runs, suggestions, reports) */}
+          {/* TAB: ANALYSIS (Guided Analysis runs, suggestions) */}
           {activeTab === "analysis" && (
             <AnalysisTab
               section={guidedSection}
@@ -2203,9 +2168,6 @@ export default function App() {
               currency={currency}
               hideValues={hideCurrencyValues}
               theme={theme}
-              reports={reports}
-              onRefreshReports={loadReports}
-              onDeleteReport={handleDeleteReport}
               suggestionsCount={suggestionsCount}
               onSuggestionsChange={setSuggestions}
               onOpenSettings={() => handleOpenSettings("assistant")}
@@ -2323,24 +2285,6 @@ export default function App() {
             portfolioName={activePortfolio?.name}
             baseCurrency={currency}
             onSuccess={() => loadData("reload")}
-          />
-        </Suspense>
-      )}
-
-      {/* Mounted while open; it starts a fresh wizard on every open anyway */}
-      {isAnalyzeModalOpen && (
-        <Suspense fallback={null}>
-          <AnalyzePortfolioModal
-            isOpen
-            onClose={() => setIsAnalyzeModalOpen(false)}
-            portfolioData={portfolioData}
-            portfolioId={activePortfolioId || undefined}
-            hideCurrencyValues={hideCurrencyValues}
-            onReportGenerated={async () => {
-              await loadReports();
-              handleGuidedSectionChange("reports");
-              handleTabChange("analysis");
-            }}
           />
         </Suspense>
       )}

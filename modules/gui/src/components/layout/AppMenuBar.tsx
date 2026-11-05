@@ -53,7 +53,6 @@ export interface AppMenuBarProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   onReload?: () => void;
-  onAnalyzePortfolio: () => void;
   onOpenSetupWizard: () => void;
   /** Help → Report an Issue...: the support ticket form. */
   onReportIssue: () => void;
@@ -102,7 +101,6 @@ export function AppMenuBar({
   onRefresh,
   isRefreshing,
   onReload,
-  onAnalyzePortfolio,
   onOpenSetupWizard,
   onReportIssue,
   onQuit,
@@ -176,7 +174,6 @@ export function AppMenuBar({
     { label: t("layout.menu.portfolio.addTransaction"), shortcut: "Ctrl+T", icon: PlusCircle, action: run(onAddTransaction), disabled: !activePortfolio },
     { label: isRefreshing ? t("layout.menu.portfolio.refreshingQuotes") : t("layout.menu.portfolio.refreshQuotes"), icon: RefreshCw, action: run(onRefresh), disabled: isRefreshing || !activePortfolio },
     { type: "separator" },
-    { label: t("layout.menu.portfolio.analyze"), icon: Sparkles, action: run(onAnalyzePortfolio), disabled: !activePortfolio },
   ];
 
   // View: what is on screen (page, panels, masking, zoom, theme) — never data mutations.

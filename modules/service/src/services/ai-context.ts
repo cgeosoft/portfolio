@@ -467,44 +467,6 @@ export function buildReportIntelSections(intel: ReportIntel, week: { from: strin
   return { text, sections: out.map((s) => s.title), sources, newsCount };
 }
 
-// ── weekly analysis ─────────────────────────────────────────────────────────
-
-export interface WeeklyFacts {
-  /** Short Markdown bullet lines, percent and dates only. */
-  lines: string[];
-}
-
-/**
- * Facts for the weekly push summary: the week against the benchmark, the
- * events of the next 7 days, yield moves of the week and exposure warnings.
- */
-export async function collectWeeklyFacts(deps: AiContextDeps, portfolioId: string, week: { from: string; to: string }, baseCurrency: string): Promise<WeeklyFacts> {
-  const [benchmark, events, macro, exposure] = await Promise.all([
-    settleWithin("weekly_benchmark", REPORT_TIMEOUT_MS, () => getBenchmarkComparison(deps, portfolioId, "3mo")),
-    settleWithin("weekly_events", REPORT_TIMEOUT_MS, () => deps.income.getUpcomingEvents(portfolioId, 7)),
-    settleWithin("weekly_macro", REPORT_TIMEOUT_MS, () => getMacroSnapshot(deps, { baseCurrency })),
-    settleWithin("weekly_exposure", REPORT_TIMEOUT_MS, () => getPortfolioExposureSummary(portfolioId)),
-  ]);
-  const lines: string[] = [];
-  const w = benchmark ? comparisonForWindow(benchmark, week.from, week.to) : null;
-  if (benchmark && w) lines.push(`- Week vs ${benchmark.label}: ${signedPct(w.portfolioReturnPercent)} vs ${signedPct(w.benchmarkReturnPercent)} (${signed(w.excessReturnPercent)} pts)`);
-  const curve = macro?.yieldCurve;
-  if (curve) {
-    const y10 = weeklyYieldChange(curve.history, "year10");
-    const now10 = curve.points.find((p) => p.tenor === "year10");
-    if (y10 !== undefined && now10) lines.push(`- US 10Y yield ${now10.yield.toFixed(2)}% (${signed(y10)} pts on the week)`);
-  }
-  const upcoming = (events?.events ?? []).filter((e) => e.kind === "earnings" || e.kind === "exDividend" || e.kind === "split");
-  if (upcoming.length > 0) {
-    const shown = upcoming.slice(0, 5).map((e) => `${instrumentLabel(e.symbol, e.name)} ${EVENT_TEXT[e.kind]} ${e.date.slice(5)}`);
-    lines.push(`- Next 7 days: ${shown.join(", ")}${upcoming.length > 5 ? `, ${upcoming.length - 5} more` : ""}`);
-  }
-  const high = (macro?.calendar?.events ?? []).filter((e) => e.impact === "High").slice(0, 3);
-  if (high.length > 0) lines.push(`- Key releases: ${high.map((e) => `${e.currency} ${e.event} ${e.date.slice(5, 10)}`).join(", ")}`);
-  for (const warning of (exposure?.warnings ?? []).slice(0, 2)) lines.push(`- Exposure: ${warning}`);
-  return { lines };
-}
-
 // ── assistant chat ──────────────────────────────────────────────────────────
 
 /**

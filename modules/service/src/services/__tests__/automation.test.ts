@@ -2,7 +2,7 @@ import { describe, it, expect } from "bun:test";
 import { isBriefDue, nextBriefRun, localDate } from "../daily-brief";
 import { gotifyMessageUrl } from "../gotify";
 import { isValidNtfyTopic, ntfyPublishUrl } from "../ntfy";
-import { analysisWeekKey, isAnalysisDue, nextAnalysisRun } from "../weekly-analysis";
+import { isAnalysisDue, nextAnalysisRun } from "../weekly-analysis";
 
 const base = { dailyBriefEnabled: true, dailyBriefTime: "08:00", dailyBriefDays: "weekdays" as string, dailyBriefLastRun: undefined as string | undefined };
 
@@ -62,11 +62,6 @@ describe("Weekly analysis schedule", () => {
     expect(isAnalysisDue({ ...weekly, weeklyAnalysisLastRun: "2026-10-03" }, at("2026-10-04", "10:00"))).toBe(false);
     const next = nextAnalysisRun({ ...weekly, weeklyAnalysisLastRun: "2026-10-03" }, at("2026-10-04", "10:00"));
     expect(localDate(new Date(next!))).toBe("2026-10-10");
-  });
-
-  it("covers the week of the day before", () => {
-    expect(analysisWeekKey(at("2026-10-03", "09:00"))).toBe("2026-w40");
-    expect(analysisWeekKey(at("2026-10-05", "09:00"))).toBe("2026-w40");
   });
 });
 

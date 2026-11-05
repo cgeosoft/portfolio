@@ -189,8 +189,6 @@ export interface DesktopConfig {
   weeklyAnalysisPortfolioId: string;
   /** Local date (YYYY-MM-DD) of the last scheduled weekly analysis. Written by the service. */
   weeklyAnalysisLastRun?: string;
-  /** What the weekly schedule writes: a Guided Analysis run ("graph") or the long report ("report"). */
-  weeklyAnalysisMode: WeeklyAnalysisMode;
   /** Whether a daily push names the ex-dividend dates and earnings reports of the next day for held symbols (Settings, Notifications, Dividend & Earnings Alerts). */
   eventAlertsEnabled: boolean;
   /** Local time of day the event alerts run, "HH:MM". */
@@ -241,8 +239,6 @@ export const PROTECTED_CONFIG_KEYS = ["deviceId", "allowRemoteConnections", "rem
 export type AppTheme = "dark" | "light" | "system";
 
 export type LlmToolMode = "auto" | "native" | "json" | "off";
-
-export type WeeklyAnalysisMode = "graph" | "report";
 
 /**
  * What `GET /api/config` returns in place of a stored API key. The service

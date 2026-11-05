@@ -11,10 +11,8 @@ import * as portfolioRepo from "../../db/portfolio.repo";
 import { loadConfig, updateConfig } from "../../config";
 import { PortfolioService, type IMarketDataProvider } from "../portfolio";
 import { LlmService } from "../llm";
-import { PortfolioReportService } from "../portfolio-report";
 import { PortfolioSuggestionService } from "../portfolio-suggestions";
 import { PortfolioChatService } from "../portfolio-chat";
-import { WeeklyAnalysisService } from "../weekly-analysis";
 import { buildDailyBriefPrompt, localDate } from "../daily-brief";
 import { EMPTY_REPORT_INTEL } from "../ai-context";
 import type { MarketDataCoordinator } from "../market-data";
@@ -224,14 +222,6 @@ describe("canary run through every prompting feature", () => {
 
   afterEach(() => {
     prompts = [];
-  });
-
-  it("the weekly report and its push summary", async () => {
-    const weekly = new WeeklyAnalysisService(llm, service, new PortfolioReportService(llm, service));
-    const result = await weekly.run("manual");
-    expect(result.portfolios).toBe(1);
-    expect(prompts.length).toBe(4); // report system and user, summary system and user
-    expect(leaksIn(prompts)).toEqual([]);
   });
 
   it("suggestions", async () => {

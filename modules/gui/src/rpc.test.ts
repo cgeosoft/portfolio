@@ -157,12 +157,6 @@ describe("rpc.request shim", () => {
     expect(calls.at(-1)!.init.body).toBe('{"force":false}');
   });
 
-  it("maps deleteReport", async () => {
-    await (rpc.request as any).deleteReport({ portfolioId: "p", reportId: "r 1" });
-    expect(calls.at(-1)!.url).toBe("/api/portfolios/p/reports/r%201");
-    expect(calls.at(-1)!.init.method).toBe("DELETE");
-  });
-
   it("maps installMetric", async () => {
     await (rpc.request as any).installMetric({ url: "u", grantedScopes: ["holdings"] });
     expect(calls.at(-1)!.init.body).toBe('{"url":"u","grantedScopes":["holdings"]}');

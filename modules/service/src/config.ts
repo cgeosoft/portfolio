@@ -69,7 +69,6 @@ const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   weeklyAnalysisTime: "09:00",
   weeklyAnalysisPortfolioId: "",
   weeklyAnalysisLastRun: undefined,
-  weeklyAnalysisMode: "graph",
   eventAlertsEnabled: false,
   eventAlertsTime: "18:00",
   eventAlertsPortfolioId: "",
@@ -257,7 +256,6 @@ function normalize(parsed: Record<string, unknown>): DesktopConfig {
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cfg.dailyBriefTime)) cfg.dailyBriefTime = "08:00";
   if (cfg.dailyBriefDays !== "daily" && cfg.dailyBriefDays !== "weekdays") cfg.dailyBriefDays = "weekdays";
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cfg.weeklyAnalysisTime)) cfg.weeklyAnalysisTime = "09:00";
-  if (cfg.weeklyAnalysisMode !== "graph" && cfg.weeklyAnalysisMode !== "report") cfg.weeklyAnalysisMode = "graph";
   if (!["auto", "native", "json", "off"].includes(cfg.llmToolMode)) cfg.llmToolMode = "auto";
   if (!Number.isInteger(cfg.weeklyAnalysisDay) || cfg.weeklyAnalysisDay < 0 || cfg.weeklyAnalysisDay > 6) cfg.weeklyAnalysisDay = 6;
   if (typeof cfg.deviceId !== "string" || !cfg.deviceId) {

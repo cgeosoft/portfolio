@@ -86,7 +86,6 @@ layout:
       addTransaction: "添加交易…"
       refreshQuotes: "刷新市场行情"
       refreshingQuotes: "正在刷新市场行情…"
-      analyze: "用 AI 分析…"
     view:
       assistant: "助手侧栏"
       maskValues: "隐藏金额"
@@ -649,181 +648,6 @@ transactions:
     yearsAgo: "{count} 年前"
 
 # ── reports: Analyze with AI and saved reports ────────────────────────────
-reports:
-  card:
-    title: "报告"
-    subtitle: "根据您的投资组合生成的报告"
-    reportFallbackName: "报告"
-    refreshFailed: "刷新报告列表失败"
-    history: "历史简报（{count}）"
-    fallbackBadge: "备用"
-    analyze: "分析"
-    analyzePortfolio: "分析投资组合"
-    notice: "提示：{message}"
-    loadingTitle: "正在加载投资组合简报"
-    loadingDescription: "正在获取已保存的定量和定性报告…"
-    emptyTitle: "尚无报告"
-    emptyDescription: "自主 AI 会分析您的多资产投资组合，评估移动平均线，并生成战术性的定性再平衡简报。"
-    fallbackTitle: "AI 备用数据提示："
-    fallbackWithError: "推理提示：{error}。现显示基础定量数据。"
-    fallbackNoError: "AI 推理顾问未能完成推理。现显示基础定量数据。"
-    executiveSummary: "执行摘要"
-    performance: "业绩状况"
-    valuation: "投资组合估值"
-    periodReturn: "期间收益"
-    cashLiquidity: "现金流动资金"
-    positionsTracked: "跟踪的仓位"
-    assets:
-      other: "{count} 项资产"
-    topWinner: "涨幅最大"
-    topLoser: "跌幅最大"
-    telemetry: "报告数据"
-    generatedAt: "生成时间"
-    periodWindow: "期间范围"
-    model: "推理模型"
-    health: "运行状况"
-    healthDegraded: "备用 / 降级"
-    healthOptimal: "最佳（AI 生成）"
-    prompt: "推理提示词"
-    inspectPrompt: "查看 LLM 提示词 →"
-    commands: "命令"
-    copyMarkdown: "复制 Markdown"
-    copyMarkdownTitle: "将 Markdown 报告复制到剪贴板"
-    downloadTitle: "将报告下载为 Markdown 或 PDF"
-    deleteTitle: "删除当前报告"
-    deleteReport: "删除报告"
-  analyze:
-    title: "报告生成向导"
-    closeWizard: "关闭向导"
-    steps:
-      period: "期间"
-      prompt: "提示词"
-      process: "处理"
-      result: "结果"
-    weekLabel: "{week}（{start} - {end}）"
-    assetsEvaluated:
-      other: "已评估 {count} 项资产"
-    buildContext: "构建上下文"
-    runAnalysis: "运行分析"
-    cancelGeneration: "取消生成"
-    viewReport: "查看报告"
-    restartWizard: "重新开始向导"
-    errors:
-      compileContext: "汇总投资组合上下文和提示词失败。"
-      generationFailed: "报告生成失败"
-      pollFailed: "获取生成状态失败"
-      startFailed: "启动报告生成流失败"
-    period:
-      heading: "选择分析期间"
-      description: "选择要进行业绩归因、技术动量指标（SMA50、SMA200、RSI）和 AI 投资组合诊断的目标周。"
-      targetWeek: "目标周"
-      targetWeekAria: "目标周"
-      tagCurrent: "[本周]"
-      tagDefault: "[默认 / 已结束]"
-      tagReportExists: "[已有报告]"
-      currentWeekNotice: "提示：本周仍在进行中。市场数据和每周指标并不完整。"
-      existingReportNotice: "提示：本周已有报告。运行分析将替换现有报告。"
-      valuation: "估值"
-      positions: "仓位"
-      assetsTracked:
-        other: "跟踪 {count} 项资产"
-      cashLiquidity: "现金流动资金"
-      pipeline: "处理步骤"
-      pipelineWeights: "权重配置与收益"
-      pipelineMomentum: "SMA 50/200 与 RSI 动量"
-      pipelineRebalancing: "战术再平衡建议"
-      pipelineSnapshot: "每周快照归档"
-      pipelineNews: "新闻、公司信息、宏观与事件"
-    prompt:
-      heading: "上下文汇总与完整提示词"
-      enriched: "已补充：{sources}（{count} 条新闻）"
-      noMarketContext: "市场上下文：无"
-      contextReady: "上下文已就绪"
-      loadingTitle: "正在提取台账和技术上下文"
-      loadingDescription: "正在汇总价格通道、指标和估值状况…"
-      errorTitle: "构建报告上下文失败"
-      retry: "重新汇总上下文"
-      periodLabel: "期间："
-      targetModel: "目标模型："
-      fullPrompt: "完整提示词"
-      copyTitle: "将完整提示词复制到剪贴板"
-    process:
-      heading: "LLM 自主推理进行中"
-      chunks:
-        other: "已接收 {count} 个令牌块"
-      establishing: "正在建立数据流…"
-      streamWindow: "实时数据流窗口（最后 50 个词）"
-      liveWindow: "实时窗口"
-      awaiting: "正在等待模型推理数据流令牌…"
-      trailingNote: "显示实时数据流的最后几个词。"
-    result:
-      successTitle: "报告生成成功"
-      successDescription: "自主定量诊断已完成，并已归档到报告历史中。"
-      summaryFallback: "已生成定量战略回顾和战术再平衡建议。"
-      cancelledTitle: "报告生成已取消"
-      cancelledDescription: "生成过程在完成前被停止。未归档新报告。"
-      cancelledBadge: "已取消"
-      failedTitle: "报告生成失败"
-      failedFallback: "无法与投资组合顾问引擎通信。"
-  prompt:
-    title: "报告生成提示词"
-    localProvider: "本地"
-    closeTitle: "关闭提示词查看器"
-    tabs:
-      all: "完整提示词"
-      system: "系统"
-      user: "用户"
-    payload: "提示词内容"
-    words:
-      other: "{count} 个词"
-    chars:
-      other: "{count} 个字符"
-    tokens:
-      other: "约 {count} 个令牌"
-    loading: "正在加载提示词…"
-    emptyTitle: "未记录提示词"
-    emptyDescription: "此历史报告未记录提示词。投资组合顾问今后生成的所有报告都会在此保存并显示完整提示词。"
-    copyTitle: "复制提示词文本"
-    copyPrompt: "复制提示词"
-    footerSent: "发送给 LLM 用于生成报告的输入提示词"
-    footerEmpty: "提示词查看数据"
-  download:
-    title: "下载报告"
-    step1: "第 1 步，共 2 步：选择格式"
-    step2: "第 2 步，共 2 步：选择下载路径"
-    closeDialog: "关闭对话框"
-    saveFailed: "保存报告失败"
-    downloadFailed: "下载报告失败"
-    success: "报告已下载"
-    openFolder: "打开文件夹"
-    selectFormat: "选择导出格式"
-    markdownTitle: "Markdown 文档（.md）"
-    markdownDescription: "带 YAML 元数据头的纯文本格式。适用于 Obsidian、Notion 或本地归档。"
-    pdfTitle: "PDF 文档（.pdf）"
-    pdfDescription: "排版后的文档，含执行摘要、业绩卡片、表格和分页。"
-    selectedFormat: "所选格式："
-    fileName: "文件名"
-    saveLocation: "保存位置"
-    downloadsFolder: "下载文件夹"
-    browserDownload: "浏览器下载"
-    downloading: "正在下载…"
-  export:
-    markdownTitle: "投资组合战术简报（{period}）"
-    markdownSummary: "执行摘要："
-    pdfTitle: "每周投资组合战术简报"
-    pdfPortfolio: "投资组合：{name}"
-    pdfPeriod: "期间：{period}"
-    pdfModel: "模型：{model}"
-    pdfDate: "日期：{date}"
-    pdfAssets:
-      other: "{count} 项资产"
-    pdfValuation: "投资组合估值"
-    pdfPeriodReturn: "期间收益"
-    pdfCashLiquidity: "现金流动资金"
-    pdfPositionsTracked: "跟踪的仓位"
-    pdfSummary: "执行摘要"
-    pdfFooter: "Portfolio - 战术报告"
-    pdfPage: "第 {page} 页，共 {total} 页"
 
 # ── assistant: chat sidebar, suggestions, company intel ──────────────────
 assistant:
@@ -1122,7 +946,6 @@ assistant:
 analysis:
   sections:
     suggestions: "建议"
-    reports: "报告"
   capability:
     not_configured: "请在“设置 → 助手”中设置 AI 提供商，以使用向导和引导式分析。"
     not_verified: "请在“设置 → 助手”中测试 AI 提供商。模型应答后，向导和引导式分析即可使用。"
@@ -1327,7 +1150,11 @@ analysis:
     none: "此建议在图谱中没有对应的发现。"
     showGraph: "图谱"
   history:
-    empty: "尚无分析运行。"
+    columns:
+      date: "日期"
+      status: "状态"
+      source: "来源"
+      findings: "发现"
     compare: "比较"
     noPrevious: "没有可比较的较早已完成运行。"
     newFindings: "新发现"
@@ -1845,11 +1672,6 @@ settings:
       daily: "每天"
     weekday: "星期几"
     weekdayDescription: "报告涵盖前一天所在的那一周，因此周六或周日运行涵盖刚结束的一周，周一运行则涵盖上一周。"
-    weeklyMode: "生成内容"
-    weeklyModeDescription: "引导式分析构建证据图谱，更新建议并写出一份简短报告。长报告是包含五个部分的报告，适用于不支持工具调用的模型。"
-    weeklyModes:
-      graph: "引导式分析"
-      report: "长报告"
     weekdays:
       mon: "周一"
       tue: "周二"
@@ -1880,14 +1702,14 @@ settings:
       title: "每周报告"
       blurb: "助手每周为每个投资组合撰写一次周报，并向您发送摘要。"
       toggleTitle: "撰写每周报告"
-      toggleDescription: "助手会撰写完整的每周报告，与“报告”中“生成”的报告相同：业绩、资产配置、风险、技术信号和本周新闻。报告保存在“报告”中；您的通知应用会收到简短摘要。"
+      toggleDescription: "助手围绕纲要和配置构建证据图谱，然后写出发现、建议和一份简短报告。"
       timeDescription: "这台电脑的本地时间。Portfolio 必须在窗口或托盘中运行。如果当时未运行，只要在两天内启动，报告就会在启动时撰写。"
       nextRun: "下次报告 {when}。"
       portfolioDescription: "每个投资组合一份报告和一条通知。"
       portfoliosLabel: "报告包含的投资组合"
-      noChannel: "尚未设置通知渠道。报告仍会保存在“报告”中，但不会发送推送通知。请在“手机应用”中设置 Gotify 或 ntfy。"
+      noChannel: "尚未设置通知渠道。请在“手机应用”中设置 Gotify 或 ntfy。"
       delivered: "每份报告的简短摘要都会作为推送通知发送到 {channels}。"
-      privacy: "报告能看到的内容与“报告”中“生成”发送给您的 AI 提供商的内容相同。通知摘要只包含百分比和代码，绝不包括余额或金额。"
+      privacy: "离开 Portfolio 的只有百分比：权重、收益率、敞口和股息率。金额、价格、数量和余额从不离开。"
       runningText: "正在刷新行情并撰写每周报告。这可能需要几分钟…"
       failed: "报告失败。"
       lastTitle: "上次报告"
@@ -2125,15 +1947,6 @@ setup:
 service:
   assistant:
     untitledChat: "聊天会话"
-  report:
-    title: "{portfolio} - 每周简报（{period}）"
-    summary:
-      other: "估值 {currency}{value}，{count} 项资产累计收益 {change}%。"
-    fallback:
-      heading: "投资组合自动简报（{period}）"
-      overviewLabel: "市场概览"
-      overview: "投资组合总估值为 {currency}{value}，总收益为 {change}%。"
-      note: "注意：详细报告所用的 LLM 模型暂时无法访问（{error}）。技术指标和账本数值仍经过核实。"
   suggestions:
     dropped:
       invalid:
@@ -2167,14 +1980,8 @@ service:
       note: "助手不可用，因此本简报仅显示数据。"
   weeklyAnalysis:
     notificationTitle: "{portfolio}：每周分析"
-    openReports: "打开 Portfolio 的“分析”查看完整报告。"
     guidedHeading: "本周引导式分析"
     openAnalysis: "打开 Portfolio 的“分析”查看发现、图谱以及每条建议背后的原因。"
-    fallback:
-      heading: "每周分析 {period}"
-      weekReturn: "本周收益：{change}"
-      topGainer: "涨幅最大：{symbol} {change}"
-      topDecliner: "跌幅最大：{symbol} {change}"
   analysis:
     noFindingsSummary: "分析未发现需要根据纲要做出更改的内容。"
     live:

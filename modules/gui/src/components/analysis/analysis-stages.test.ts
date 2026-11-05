@@ -1,7 +1,7 @@
 /** Analysis stages: states, the stage of a node and the runs by month. */
 import { describe, expect, it } from "bun:test";
 import type { AnalysisNode, AnalysisRunListItem, AnalysisStep } from "portfolio-shared/api-types";
-import { defaultStage, fmtStageTime, groupRunsByMonth, nodesByStage, stageDurations, stageStates } from "./analysis-stages";
+import { defaultStage, fmtStageTime, groupRunsByMonth, lastCompletedRun, nodesByStage, stageDurations, stageStates } from "./analysis-stages";
 
 const node = (id: string, kind: AnalysisNode["kind"], createdAt: string, status: AnalysisNode["status"] = "ready"): AnalysisNode => ({
   id,
@@ -99,5 +99,18 @@ describe("groupRunsByMonth", () => {
     const months = groupRunsByMonth([run("oct", "2026-10-15T12:00:00.000Z"), run("nov1", "2026-11-02T12:00:00.000Z"), run("nov2", "2026-11-04T12:00:00.000Z")], "en");
     expect(months.map((m) => m.label)).toEqual(["November 2026", "October 2026"]);
     expect(months[0]!.runs.map((r) => r.id)).toEqual(["nov2", "nov1"]);
+  });
+});
+
+describe("lastCompletedRun", () => {
+  const run = (id: string, startedAt: string, status: AnalysisRunListItem["status"]) => ({ id, startedAt, status }) as AnalysisRunListItem;
+
+  it("skips a run that is going or failed", () => {
+    const runs = [run("old", "2026-10-15T12:00:00.000Z", "completed"), run("new", "2026-11-02T12:00:00.000Z", "completed"), run("failed", "2026-11-03T12:00:00.000Z", "failed"), run("live", "2026-11-04T12:00:00.000Z", "running")];
+    expect(lastCompletedRun(runs)?.id).toBe("new");
+  });
+
+  it("finds nothing without a finished run", () => {
+    expect(lastCompletedRun([])).toBeUndefined();
   });
 });

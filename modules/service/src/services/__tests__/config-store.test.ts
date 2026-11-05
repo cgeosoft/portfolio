@@ -103,7 +103,6 @@ describe("defaults and storage", () => {
       weeklyAnalysisDay: 6,
       weeklyAnalysisTime: "09:00",
       weeklyAnalysisPortfolioId: "",
-      weeklyAnalysisMode: "graph",
       eventAlertsEnabled: false,
       eventAlertsTime: "18:00",
       eventAlertsPortfolioId: "",
@@ -135,8 +134,8 @@ describe("defaults and storage", () => {
     expect(Object.keys(rows())).toEqual(["deviceId"]);
   });
 
-  it("lists 57 config keys", () => {
-    expect(CONFIG_KEYS.size).toBe(57);
+  it("lists 56 config keys", () => {
+    expect(CONFIG_KEYS.size).toBe(56);
     expect(CONFIG_KEYS.has("deviceId")).toBe(true);
     expect(CONFIG_KEYS.has("zoomLevel")).toBe(true);
     expect(CONFIG_KEYS.has("windowState")).toBe(false);

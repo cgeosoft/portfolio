@@ -1,53 +1,46 @@
 /**
- * The Analysis tab. The sidebar holds the brief, every analysis by month, and
- * the two lists that span analyses (open suggestions, stored reports).
+ * The Analysis tab. Its home holds every analysis in a table by month, with
+ * the brief and the suggestions and summary of the last analysis at the side.
+ * Opening an analysis or the full list of suggestions fills the page, with
+ * Back to the home.
  *
- * With no analysis picked the page offers a new one. A picked analysis shows
- * its stages as a track over one graph: each stage has its own panel and lights
- * up its nodes. A running analysis fills in by polling; the shown stage follows
- * it until a stage is picked, and picking one only changes what is on screen.
+ * An open analysis shows its stages as a stepper over one graph: each stage has
+ * its own panel and lights up its nodes. A running analysis fills in by
+ * polling; the shown stage follows it until a stage is picked, and picking one
+ * only changes what is on screen.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { AlertCircle, AlertTriangle, BrainCircuit, FileText, GitCompare, Lightbulb, Loader2, Play, Settings, Square, Trash2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowLeft, BrainCircuit, GitCompare, Loader2, Play, Settings, Square, Trash2 } from "lucide-react";
 import type { AnalysisNodeKind, AnalysisPhase, AnalysisRunListItem, CompareAnalysisRunsResponse, GetAnalysisRunResponse, GetSuggestionsResponse, ListAnalysisRunsResponse, AppTheme } from "portfolio-shared/api-types";
-import type { FinancialPortfolioData, PortfolioReport } from "portfolio-shared/portfolio";
+import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
 import { api } from "../../api";
 import { getLocale, t } from "../../i18n";
 import { showToast } from "../common/Toaster";
 import type { InAppLinkRenderer } from "../common/SafeMarkdown";
-import { SidebarEntry, type SidebarSection } from "../settings/SettingsPrimitives";
-import { ReportsCard } from "../portfolio/ReportsCard";
 import { SuggestionsPage } from "../portfolio/SuggestionsPage";
 import { renderHoldingAnchor } from "../portfolio/holding-links";
 import { AnalysisGraph, KindFilters } from "./AnalysisGraph";
 import { BriefCard } from "./BriefCard";
+import { LastAnalysis } from "./LastAnalysis";
 import { NodeDetails } from "./NodeDetails";
 import { RunList } from "./RunList";
 import { StageBar, StagePanel } from "./RunStages";
 import { WhyPathPanel, whyPath } from "./WhyPath";
-import { defaultStage, nodesByStage, stageDurations, stageStates, type AnalysisStage } from "./analysis-stages";
+import { defaultStage, lastCompletedRun, nodesByStage, stageDurations, stageStates, type AnalysisStage } from "./analysis-stages";
 import { OPEN_ANALYSIS_NODE_EVENT, capabilityNote, useAiCapability, type OpenAnalysisNodeDetail } from "./shared";
 
-export type GuidedSectionId = "runs" | "suggestions" | "reports";
-
-/** The lists under the analyses. */
-const LISTS: (SidebarSection & { id: GuidedSectionId })[] = [
-  { id: "suggestions", labelKey: "analysis.sections.suggestions", icon: Lightbulb },
-  { id: "reports", labelKey: "analysis.sections.reports", icon: FileText },
-];
-
-const NEW_ANALYSIS: SidebarSection = { id: "new", labelKey: "analysis.run.start", icon: Play };
+export type GuidedSectionId = "runs" | "suggestions";
 
 const STORAGE_KEY = "portfolio_guided_section";
 const POLL_MS = 2_000;
 
-/** Overview, Graph and History were pages before; each now lives in an analysis. */
-const OLD_SECTIONS = new Set(["overview", "graph", "history"]);
+/** Overview, Graph, History and Reports were pages before; each now lives in an analysis. */
+const OLD_SECTIONS = new Set(["overview", "graph", "history", "reports"]);
 
 export function resolveGuidedSection(id: string | undefined): GuidedSectionId | null {
   if (id === "runs" || (id && OLD_SECTIONS.has(id))) return "runs";
-  return LISTS.some((s) => s.id === id) ? (id as GuidedSectionId) : null;
+  return id === "suggestions" ? id : null;
 }
 
 export function savedGuidedSection(): GuidedSectionId {
@@ -67,7 +60,7 @@ export function saveGuidedSection(id: GuidedSectionId): void {
 }
 
 /** Pages that fill the height and scroll inside. */
-export const GUIDED_FILL_SECTIONS: ReadonlySet<GuidedSectionId> = new Set(["runs", "suggestions", "reports"]);
+export const GUIDED_FILL_SECTIONS: ReadonlySet<GuidedSectionId> = new Set(["runs", "suggestions"]);
 
 const BUTTON =
   "h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-slate-800 bg-slate-950 text-xs font-bold text-slate-300 hover:bg-slate-900 hover:border-slate-700 hover:text-slate-50 transition-colors cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed";
@@ -82,7 +75,7 @@ function fmtWhen(iso: string | undefined): string {
 
 // ── runs ────────────────────────────────────────────────────────────────────
 
-/** The analysis picked per portfolio; survives leaving the tab. `null` is the new-analysis page. */
+/** The analysis open per portfolio; survives leaving the tab. `null` is the home. */
 const pickedRuns = new Map<string, string | null>();
 
 /** The runs of a portfolio and the picked one in full, polled while a run is going. */
@@ -106,15 +99,13 @@ function useRuns(portfolioId: string | null) {
     try {
       const res = await api.listAnalysisRuns(portfolioId);
       setList(res);
-      // A run that just ended changes the suggestions and the reports.
+      // A run that just ended changes the suggestions.
       if (lastActive.current && !res.activeRunId) setFinishedStamp(new Date().toISOString());
       lastActive.current = res.activeRunId;
-      // Nothing picked yet on this portfolio: a running analysis is what to show.
-      if (res.activeRunId && !pickedRuns.has(portfolioId)) selectRun(res.activeRunId);
     } catch {
       // The next poll or reload tries again.
     }
-  }, [portfolioId, selectRun]);
+  }, [portfolioId]);
 
   useEffect(() => {
     setList(null);
@@ -124,7 +115,7 @@ function useRuns(portfolioId: string | null) {
     void loadList();
   }, [portfolioId, loadList]);
 
-  // A deleted or expired run falls back to the new-analysis page.
+  // A deleted or expired run falls back to the home.
   const runId = selectedRunId && (!list || list.runs.some((r) => r.id === selectedRunId)) ? selectedRunId : null;
   const wanted = useRef(runId);
   wanted.current = runId;
@@ -173,69 +164,150 @@ function RunBadges({ run }: { run: AnalysisRunListItem }) {
   );
 }
 
-interface NewAnalysisProps {
-  hasRuns: boolean;
+interface HomeHeaderProps {
   activeRunId?: string;
-  note: string | null;
   canRun: boolean;
   starting: boolean;
-  noToolCalling: boolean;
   onStart: () => void;
   onOpenRun: (id: string) => void;
+}
+
+/** The head of the home, laid out like the other pages. */
+function HomeHeader({ activeRunId, canRun, starting, onStart, onOpenRun }: HomeHeaderProps) {
+  return (
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80 shrink-0">
+      <div className="min-w-0">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-widest font-mono min-w-0">
+          <BrainCircuit className="w-4 h-4 text-[#DD3C73] shrink-0" />
+          <span className="truncate">{t("analysis.run.title")}</span>
+        </h2>
+        <p className="pl-6 text-[11px] text-slate-400 mt-0.5 font-mono">{t("analysis.run.subtitle")}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 shrink-0">
+        {activeRunId && (
+          <span className="inline-flex items-center gap-2 text-xs text-slate-300">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
+            {t("analysis.actions.running")}
+            <button type="button" onClick={() => onOpenRun(activeRunId)} className="font-bold uppercase tracking-wider text-[11px] text-[#DD3C73] hover:underline cursor-pointer">
+              {t("analysis.run.watch")}
+            </button>
+          </span>
+        )}
+        <button type="button" onClick={onStart} disabled={!canRun || starting} className={ACCENT_BUTTON}>
+          {starting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+          {t("analysis.run.start")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface CapabilityBannerProps {
+  note: string;
+  noToolCalling: boolean;
   onProbe: () => void;
   onOpenSettings: () => void;
 }
 
-function NewAnalysis({ hasRuns, activeRunId, note, canRun, starting, noToolCalling, onStart, onOpenRun, onProbe, onOpenSettings }: NewAnalysisProps) {
+/** Why a run cannot start, with the way to fix it. */
+function CapabilityBanner({ note, noToolCalling, onProbe, onOpenSettings }: CapabilityBannerProps) {
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-      <div className="cx-card p-6 space-y-4">
-        <div>
-          <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-100">
-            <BrainCircuit className="w-4 h-4 text-[#DD3C73] shrink-0" />
-            {t("analysis.run.title")}
-          </h3>
-          <p className="pl-6 text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl font-sans">{t("analysis.run.subtitle")}</p>
-          {!hasRuns && !note && <p className="pl-6 text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl font-sans">{t("analysis.run.empty")}</p>}
-        </div>
-
-        {note && !activeRunId && (
-          <div className="rounded-xl border border-cream/40 bg-cream/10 px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-cream">
-            <div className="flex items-start gap-2 min-w-0">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-px" />
-              <span>{note}</span>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              {noToolCalling && (
-                <button type="button" onClick={onProbe} className="font-bold uppercase tracking-wider hover:underline cursor-pointer">
-                  {t("analysis.capability.retest")}
-                </button>
-              )}
-              <button type="button" onClick={onOpenSettings} className="inline-flex items-center gap-1 font-bold uppercase tracking-wider hover:underline cursor-pointer">
-                <Settings className="w-3.5 h-3.5" />
-                {t("analysis.capability.openSettings")}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="pl-6 flex flex-wrap items-center gap-3">
-          <button type="button" onClick={onStart} disabled={!canRun || starting} className={ACCENT_BUTTON}>
-            {starting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-            {t("analysis.run.start")}
+    <div className="shrink-0 rounded-xl border border-cream/40 bg-cream/10 px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-cream">
+      <div className="flex items-start gap-2 min-w-0">
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-px" />
+        <span>{note}</span>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        {noToolCalling && (
+          <button type="button" onClick={onProbe} className="font-bold uppercase tracking-wider hover:underline cursor-pointer">
+            {t("analysis.capability.retest")}
           </button>
-          {activeRunId && (
-            <span className="inline-flex items-center gap-2 text-xs text-slate-300">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#DD3C73]" />
-              {t("analysis.actions.running")}
-              <button type="button" onClick={() => onOpenRun(activeRunId)} className="font-bold uppercase tracking-wider text-[11px] text-[#DD3C73] hover:underline cursor-pointer">
-                {t("analysis.run.watch")}
-              </button>
-            </span>
+        )}
+        <button type="button" onClick={onOpenSettings} className="inline-flex items-center gap-1 font-bold uppercase tracking-wider hover:underline cursor-pointer">
+          <Settings className="w-3.5 h-3.5" />
+          {t("analysis.capability.openSettings")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface RunSummaryProps {
+  run: AnalysisRunListItem;
+  comparison: CompareAnalysisRunsResponse | null;
+  onCancel: () => void;
+  onCompare: () => void;
+  onDelete: () => void;
+}
+
+/** The status of an open analysis, its stats and what can be done with it. */
+function RunSummary({ run, comparison, onCancel, onCompare, onDelete }: RunSummaryProps) {
+  return (
+    <section className="cx-card shrink-0 mt-auto p-3 space-y-2 text-[11px] text-slate-400 lg:max-h-[45%] overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex flex-wrap items-baseline gap-x-2">
+          <span className={`font-bold text-xs ${run.status === "failed" ? "text-rose-400" : run.status === "running" ? "text-[#DD3C73]" : "text-slate-100"}`}>{t(`analysis.run.status.${run.status}`)}</span>
+          <span>{fmtWhen(run.startedAt)}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {run.status === "running" && (
+            <button type="button" onClick={onCancel} className={BUTTON}>
+              <Square className="w-3.5 h-3.5" />
+              {t("analysis.run.cancel")}
+            </button>
+          )}
+          {run.status === "completed" && (
+            <button type="button" onClick={onCompare} aria-pressed={Boolean(comparison)} className={BUTTON}>
+              <GitCompare className="w-3.5 h-3.5" />
+              {t("analysis.history.compare")}
+            </button>
+          )}
+          {run.status !== "running" && (
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label={t("common.delete")}
+              title={t("common.delete")}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-300 hover:bg-slate-800/40 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>
-    </div>
+      <div>
+        {t(`analysis.history.trigger.${run.trigger === "schedule" ? "schedule" : "manual"}`)} · {run.provider ?? ""}
+        {run.model ? ` ${run.model}` : ""}
+      </div>
+      {run.status !== "running" && <div>{t("analysis.run.counts", { findings: run.findingsCount, suggestions: run.suggestionsCount, steps: run.stepCount, tools: run.toolCount })}</div>}
+      <div className="flex flex-wrap items-center gap-1.5 empty:hidden">
+        <RunBadges run={run} />
+      </div>
+      {run.error && (
+        <div className="flex items-start gap-2 text-xs text-rose-400">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{run.error}</span>
+        </div>
+      )}
+      {run.notes.length > 0 && (
+        <ul className="text-slate-500 space-y-0.5">
+          {run.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
+      {comparison && <ComparisonView comparison={comparison} />}
+    </section>
+  );
+}
+
+/** Back to the home, at the head of every full page. */
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={BUTTON}>
+      <ArrowLeft className="w-3.5 h-3.5" />
+      {t("common.back")}
+    </button>
   );
 }
 
@@ -250,9 +322,6 @@ interface AnalysisTabProps {
   currency: string;
   hideValues: boolean;
   theme?: AppTheme;
-  reports: PortfolioReport[];
-  onRefreshReports: () => Promise<void>;
-  onDeleteReport: (id: string) => void;
   /** Open suggestions, shown next to the Suggestions entry. */
   suggestionsCount?: number;
   onSuggestionsChange?: (data: GetSuggestionsResponse) => void;
@@ -267,9 +336,6 @@ export function AnalysisTab({
   portfolioData,
   currency,
   hideValues,
-  reports,
-  onRefreshReports,
-  onDeleteReport,
   suggestionsCount = 0,
   onSuggestionsChange,
   onOpenSettings,
@@ -294,11 +360,6 @@ export function AnalysisTab({
   const stages = useMemo(() => nodesByStage(detail?.nodes ?? [], detail?.steps ?? []), [detail]);
   const stageNodes = stages.get(stage) ?? [];
   const stageIds = useMemo(() => new Set(stageNodes.map((n) => n.id)), [stageNodes]);
-
-  // A finished run changes the reports.
-  useEffect(() => {
-    if (runs.finishedStamp) void onRefreshReports();
-  }, [runs.finishedStamp, onRefreshReports]);
 
   // Each analysis opens on its own stage, without the last one's comparison.
   useEffect(() => {
@@ -437,25 +498,40 @@ export function AnalysisTab({
 
   let body: ReactNode = null;
 
+  const goHome = () => openRun(null);
+
   if (section === "runs" && !runs.runId) {
+    const allRuns = runs.list?.runs ?? [];
     body = (
-      <NewAnalysis
-        hasRuns={(runs.list?.runs.length ?? 0) > 0}
-        activeRunId={runs.list?.activeRunId}
-        note={note}
-        canRun={canRun}
-        starting={starting}
-        noToolCalling={capability?.reason === "no_tool_calling"}
-        onStart={() => void start()}
-        onOpenRun={openRun}
-        onProbe={() => void probe()}
-        onOpenSettings={onOpenSettings}
-      />
+      <div className="flex-1 min-h-0 flex flex-col gap-3.5">
+        <HomeHeader activeRunId={runs.list?.activeRunId} canRun={canRun} starting={starting} onStart={() => void start()} onOpenRun={openRun} />
+        {note && !runs.list?.activeRunId && <CapabilityBanner note={note} noToolCalling={capability?.reason === "no_tool_calling"} onProbe={() => void probe()} onOpenSettings={onOpenSettings} />}
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 lg:grid-rows-[minmax(0,1fr)] gap-3 overflow-y-auto lg:overflow-hidden custom-scrollbar">
+          <div className="lg:col-span-3 min-w-0 min-h-0 flex flex-col">
+            <RunList runs={allRuns} onOpen={openRun} />
+          </div>
+          <aside className="lg:col-span-2 min-w-0 min-h-0 space-y-3 lg:overflow-y-auto custom-scrollbar">
+            <BriefCard portfolioId={portfolioId} portfolioName={portfolioName} aiReady={Boolean(capability?.aiReady)} />
+            <LastAnalysis
+              runId={lastCompletedRun(allRuns)?.id}
+              suggestionsCount={suggestionsCount}
+              onOpenRun={openRun}
+              onWhy={openWhy}
+              onOpenSuggestions={() => onSectionChange("suggestions")}
+            />
+          </aside>
+        </div>
+      </div>
     );
   } else if (section === "runs" && !detail) {
     body = (
-      <div className="cx-card flex-1 flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+      <div className="flex-1 min-h-0 flex flex-col gap-3">
+        <div className="shrink-0">
+          <BackButton onClick={goHome} />
+        </div>
+        <div className="cx-card flex-1 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+        </div>
       </div>
     );
   } else if (section === "runs" && detail) {
@@ -463,67 +539,15 @@ export function AnalysisTab({
     const selected = selectedNode ? detail.nodes.find((n) => n.id === selectedNode) : undefined;
     body = (
       <div className="flex-1 min-h-0 flex flex-col gap-3">
-        <StageBar states={stageStates(phase, status)} status={status} counts={stages} durations={stageDurations(detail.steps)} selected={stage} onSelect={pickStage} />
-        <div className="shrink-0 space-y-2">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 min-w-0">
-              <span className={`font-bold text-xs ${run.status === "failed" ? "text-rose-400" : run.status === "running" ? "text-[#DD3C73]" : "text-slate-100"}`}>{t(`analysis.run.status.${run.status}`)}</span>
-              <span>{fmtWhen(run.startedAt)}</span>
-              <span>
-                · {t(`analysis.history.trigger.${run.trigger === "schedule" ? "schedule" : "manual"}`)} · {run.provider ?? ""}
-                {run.model ? ` ${run.model}` : ""}
-              </span>
-              {run.status !== "running" && <span>· {t("analysis.run.counts", { findings: run.findingsCount, suggestions: run.suggestionsCount, steps: run.stepCount, tools: run.toolCount })}</span>}
-              <RunBadges run={run} />
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {run.status === "running" && (
-                <button type="button" onClick={() => void cancel()} className={BUTTON}>
-                  <Square className="w-3.5 h-3.5" />
-                  {t("analysis.run.cancel")}
-                </button>
-              )}
-              {run.status === "completed" && (
-                <button type="button" onClick={() => void compare(run.id)} aria-pressed={Boolean(comparison)} className={BUTTON}>
-                  <GitCompare className="w-3.5 h-3.5" />
-                  {t("analysis.history.compare")}
-                </button>
-              )}
-              {run.status !== "running" && (
-                <button
-                  type="button"
-                  onClick={() => void remove(run.id)}
-                  aria-label={t("common.delete")}
-                  title={t("common.delete")}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-rose-300 hover:bg-slate-800/40 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,42rem)_1fr] items-center gap-2">
+          <div className="justify-self-start">
+            <BackButton onClick={goHome} />
           </div>
-          {run.error && (
-            <div className="flex items-start gap-2 text-xs text-rose-400">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{run.error}</span>
-            </div>
-          )}
-          {run.notes.length > 0 && (
-            <ul className="text-[11px] text-slate-500 space-y-0.5 max-h-16 overflow-y-auto custom-scrollbar">
-              {run.notes.map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
-          )}
-          {comparison?.currentRunId === run.id && (
-            <div className="max-h-48 overflow-y-auto custom-scrollbar">
-              <ComparisonView comparison={comparison} />
-            </div>
-          )}
+          <StageBar states={stageStates(phase, status)} status={status} counts={stages} durations={stageDurations(detail.steps)} selected={stage} onSelect={pickStage} />
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3">
-          <div className="cx-card flex-1 min-h-[360px] min-w-0 flex flex-col p-2">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 lg:grid-rows-[minmax(0,1fr)] gap-3 overflow-y-auto lg:overflow-hidden">
+          <div className="lg:col-span-3 cx-card min-h-[360px] min-w-0 flex flex-col p-2">
             <div className="flex-1 min-h-0">
               <AnalysisGraph
                 nodes={detail.nodes}
@@ -552,7 +576,7 @@ export function AnalysisTab({
               />
             </div>
           </div>
-          <aside className={`shrink-0 min-h-0 flex flex-col max-h-[60vh] lg:max-h-none ${stage === "report" ? "lg:w-1/2" : "lg:w-80 xl:w-96"}`}>
+          <aside className="lg:col-span-2 min-w-0 min-h-0 flex flex-col gap-3">
             {whySuggestion && path ? (
               <WhyPathPanel suggestion={whySuggestion} path={path} onSelect={(id) => setSelectedNode(id)} />
             ) : selected ? (
@@ -565,55 +589,34 @@ export function AnalysisTab({
                 <NodeDetails node={selected} nodes={detail.nodes} edges={detail.edges} hideValues={hideValues} onSelect={setSelectedNode} onClose={() => setSelectedNode(null)} />
               </div>
             )}
+            <RunSummary run={run} comparison={comparison?.currentRunId === run.id ? comparison : null} onCancel={() => void cancel()} onCompare={() => void compare(run.id)} onDelete={() => void remove(run.id)} />
           </aside>
         </div>
       </div>
     );
   } else if (section === "suggestions") {
     body = (
-      <SuggestionsPage
-        portfolioId={portfolioId}
-        portfolioData={portfolioData}
-        currency={currency}
-        hideValues={hideValues}
-        onDataChange={onSuggestionsChange}
-        showGenerate={capability?.reason === "no_tool_calling" || capability?.reason === "turned_off"}
-        onWhy={openWhy}
-        reloadKey={runs.finishedStamp}
-      />
-    );
-  } else if (section === "reports") {
-    body = (
-      <div className="flex-1 flex flex-col min-h-0">
-        <ReportsCard
-          reports={reports}
-          portfolioData={portfolioData}
-          currency={currency}
-          portfolioId={portfolioId}
-          portfolioName={portfolioName}
-          onRefreshReports={onRefreshReports}
-          onDeleteReport={onDeleteReport}
-          hideValues={hideValues}
-        />
+      <div className="flex-1 min-h-0 flex flex-col gap-3">
+        <div className="shrink-0">
+          <BackButton onClick={goHome} />
+        </div>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <SuggestionsPage
+            portfolioId={portfolioId}
+            portfolioData={portfolioData}
+            currency={currency}
+            hideValues={hideValues}
+            onDataChange={onSuggestionsChange}
+            showGenerate={capability?.reason === "no_tool_calling" || capability?.reason === "turned_off"}
+            onWhy={openWhy}
+            reloadKey={runs.finishedStamp}
+          />
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-6 font-mono flex-1 min-h-0 grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-      <aside className="w-full min-h-0 flex flex-col gap-3 max-h-[40vh] lg:max-h-none overflow-y-auto custom-scrollbar">
-        <BriefCard portfolioId={portfolioId} portfolioName={portfolioName} aiReady={Boolean(capability?.aiReady)} compact />
-        <SidebarEntry section={NEW_ANALYSIS} isActive={section === "runs" && !runs.runId} onSelect={() => openRun(null)} />
-        <RunList runs={runs.list?.runs ?? []} selectedId={section === "runs" ? runs.runId : null} onSelect={openRun} />
-        <nav className="space-y-1 mt-auto pt-3 border-t border-line" aria-label={t("layout.tabs.analysis")}>
-          {LISTS.map((sec) => (
-            <SidebarEntry key={sec.id} section={sec} isActive={section === sec.id} onSelect={() => onSectionChange(sec.id)} badge={sec.id === "suggestions" && suggestionsCount > 0 ? suggestionsCount : undefined} />
-          ))}
-        </nav>
-      </aside>
-      <div className="min-w-0 min-h-0 flex flex-col">{body}</div>
-    </div>
-  );
+  return <div className="font-mono flex-1 min-w-0 min-h-0 flex flex-col">{body}</div>;
 }
 
 function ComparisonView({ comparison }: { comparison: CompareAnalysisRunsResponse }) {

@@ -107,13 +107,11 @@ export async function prepareData(api: Api): Promise<{ id: string; baseCurrency:
   return portfolio;
 }
 
-/** Fills the LLM screens: a weekly report, suggestions and, last so the sidebar opens on it, a daily brief. */
+/** Fills the LLM screens: suggestions and, last so the sidebar opens on it, a daily brief. */
 export async function generateLlmContent(api: Api, portfolio: { id: string; baseCurrency: string }, spec: string): Promise<void> {
   const [provider = "claude-cli", model = provider === "claude-cli" ? "sonnet" : ""] = spec.split(":");
   await api.call("PATCH", "/api/config", { llmProvider: provider, llmModel: model, llmModels: { [provider]: model } });
   const id = portfolio.id;
-  console.log(`LLM: weekly report (${provider} ${model})`);
-  await api.call("POST", `/api/portfolios/${id}/reports`, { provider, model });
   console.log("LLM: suggestions");
   await api.call("POST", `/api/portfolios/${id}/suggestions/generate`, { baseCurrency: portfolio.baseCurrency });
   for (let i = 0; i < 120; i++) {

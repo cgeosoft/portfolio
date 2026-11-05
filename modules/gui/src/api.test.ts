@@ -248,12 +248,6 @@ describe("api URL building", () => {
     expect(last().init.body).toBe('{"force":true}');
   });
 
-  it("encodes the report id on delete", async () => {
-    await (api as any).deleteReport("p", "r 1");
-    expect(last().url).toBe("/api/portfolios/p/reports/r%201");
-    expect(last().init.method).toBe("DELETE");
-  });
-
   it("patches a portfolio with the whole argument", async () => {
     const arg = { portfolioId: "a b", name: "x" };
     await (api as any).updatePortfolio(arg);

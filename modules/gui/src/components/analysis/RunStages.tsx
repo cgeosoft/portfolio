@@ -10,10 +10,10 @@ import { isBriefEmpty } from "portfolio-shared/brief";
 import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
 import { t } from "../../i18n";
 import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
-import { REPORT_MARKDOWN } from "../portfolio/ReportsCard";
 import { HoldingLink, useHoldingLinkPlugin } from "../portfolio/holding-links";
 import { ANALYSIS_STAGES, fmtStageTime, type AnalysisStage, type StageState } from "./analysis-stages";
 import { briefLines } from "./BriefFields";
+import { REPORT_MARKDOWN } from "./report-markdown";
 import { KIND_ORDER, graphPalette, kindLabel, nodeColor, phaseLabel } from "./shared";
 
 // ── stage track ─────────────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ function BriefUsed({ detail }: { detail: GetAnalysisRunResponse }) {
   );
 }
 
-function Suggestions({ suggestions, onWhy }: { suggestions: readonly PortfolioSuggestion[]; onWhy: (s: PortfolioSuggestion) => void }) {
+export function Suggestions({ suggestions, onWhy }: { suggestions: readonly PortfolioSuggestion[]; onWhy: (s: PortfolioSuggestion) => void }) {
   return (
     <ul className="space-y-2">
       {suggestions.map((s) => (
@@ -268,7 +268,7 @@ interface StagePanelProps {
 export function StagePanel({ detail, stage, nodes, onSelectNode, onWhy, onOpenSuggestions, renderLink }: StagePanelProps) {
   const suggestions = detail.suggestions ?? [];
   return (
-    <div className="cx-card p-3.5 flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scrollbar text-xs">
+    <div className="cx-card p-3.5 lg:flex-1 flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto custom-scrollbar text-xs">
       {stage !== "report" && <p className="font-sans text-slate-400">{t(`analysis.stages.${stage}`)}</p>}
       {stage === "seed" && <BriefUsed detail={detail} />}
       {stage === "report" && <Report detail={detail} renderLink={renderLink} />}

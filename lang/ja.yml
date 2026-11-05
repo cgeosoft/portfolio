@@ -86,7 +86,6 @@ layout:
       addTransaction: "取引を追加…"
       refreshQuotes: "相場を更新"
       refreshingQuotes: "相場を更新中…"
-      analyze: "AI で分析…"
     view:
       assistant: "アシスタントサイドバー"
       maskValues: "金額を隠す"
@@ -649,181 +648,6 @@ transactions:
     yearsAgo: "{count} 年前"
 
 # ── reports: Analyze with AI and saved reports ────────────────────────────
-reports:
-  card:
-    title: "レポート"
-    subtitle: "ポートフォリオから作成されたレポート"
-    reportFallbackName: "レポート"
-    refreshFailed: "レポート一覧を更新できませんでした"
-    history: "過去のブリーフィング（{count}）"
-    fallbackBadge: "代替"
-    analyze: "分析"
-    analyzePortfolio: "ポートフォリオを分析"
-    notice: "お知らせ：{message}"
-    loadingTitle: "ポートフォリオのブリーフィングを読み込み中"
-    loadingDescription: "保存済みの定量・定性レポートを取得しています…"
-    emptyTitle: "レポートはまだありません"
-    emptyDescription: "自律型 AI がマルチアセットのポートフォリオを分析し、移動平均を評価して、戦術的なリバランスの定性ブリーフィングをまとめます。"
-    fallbackTitle: "AI 代替データのお知らせ："
-    fallbackWithError: "推論のお知らせ：{error}。基本の定量データを表示しています。"
-    fallbackNoError: "AI 推論アドバイザーが推論を完了できませんでした。基本の定量データを表示しています。"
-    executiveSummary: "エグゼクティブサマリー"
-    performance: "パフォーマンス状況"
-    valuation: "ポートフォリオ評価額"
-    periodReturn: "期間リターン"
-    cashLiquidity: "現金・流動性"
-    positionsTracked: "追跡中のポジション"
-    assets:
-      other: "{count} 資産"
-    topWinner: "上昇率トップ"
-    topLoser: "下落率トップ"
-    telemetry: "レポートデータ"
-    generatedAt: "作成日時"
-    periodWindow: "対象期間"
-    model: "推論モデル"
-    health: "実行状態"
-    healthDegraded: "代替 / 機能低下"
-    healthOptimal: "最適（AI が作成）"
-    prompt: "推論プロンプト"
-    inspectPrompt: "LLM プロンプトを確認 →"
-    commands: "コマンド"
-    copyMarkdown: "Markdown をコピー"
-    copyMarkdownTitle: "Markdown レポートをクリップボードにコピー"
-    downloadTitle: "レポートを Markdown または PDF でダウンロード"
-    deleteTitle: "表示中のレポートを削除"
-    deleteReport: "レポートを削除"
-  analyze:
-    title: "レポート作成ウィザード"
-    closeWizard: "ウィザードを閉じる"
-    steps:
-      period: "期間"
-      prompt: "プロンプト"
-      process: "処理"
-      result: "結果"
-    weekLabel: "{week}（{start} - {end}）"
-    assetsEvaluated:
-      other: "{count} 資産を評価"
-    buildContext: "コンテキストを作成"
-    runAnalysis: "分析を実行"
-    cancelGeneration: "作成をキャンセル"
-    viewReport: "レポートを表示"
-    restartWizard: "ウィザードをやり直す"
-    errors:
-      compileContext: "ポートフォリオのコンテキストとプロンプトをまとめられませんでした。"
-      generationFailed: "レポートの作成に失敗しました"
-      pollFailed: "作成状況を取得できませんでした"
-      startFailed: "レポート作成ストリームを開始できませんでした"
-    period:
-      heading: "分析対象期間を選択"
-      description: "パフォーマンス要因分析、テクニカルのモメンタム指標（SMA50、SMA200、RSI）、AI によるポートフォリオ診断の対象となる週を選択してください。"
-      targetWeek: "対象週"
-      targetWeekAria: "対象週"
-      tagCurrent: "[今週]"
-      tagDefault: "[既定 / 完了済み]"
-      tagReportExists: "[レポートあり]"
-      currentWeekNotice: "お知らせ：今週はまだ進行中です。市場データと週次指標は一部のみです。"
-      existingReportNotice: "お知らせ：この週のレポートはすでにあります。分析を実行すると既存のレポートが置き換えられます。"
-      valuation: "評価額"
-      positions: "ポジション"
-      assetsTracked:
-        other: "{count} 資産を追跡中"
-      cashLiquidity: "現金・流動性"
-      pipeline: "処理内容"
-      pipelineWeights: "ウェイト配分とリターン"
-      pipelineMomentum: "SMA 50/200 と RSI のモメンタム"
-      pipelineRebalancing: "戦術的なリバランスの助言"
-      pipelineSnapshot: "週次スナップショットの保存"
-      pipelineNews: "ニュース、企業情報、マクロ、イベント"
-    prompt:
-      heading: "コンテキストの作成と完全なプロンプト"
-      enriched: "追加情報：{sources}（ニュース {count} 件）"
-      noMarketContext: "市場コンテキスト：なし"
-      contextReady: "コンテキスト準備完了"
-      loadingTitle: "台帳とテクニカルのコンテキストを抽出中"
-      loadingDescription: "価格チャネル、指標、評価状況を集計しています…"
-      errorTitle: "レポートのコンテキストを作成できませんでした"
-      retry: "コンテキストの作成を再試行"
-      periodLabel: "期間："
-      targetModel: "対象モデル："
-      fullPrompt: "完全なプロンプト"
-      copyTitle: "完全なプロンプトをクリップボードにコピー"
-    process:
-      heading: "LLM による自律推論を実行中"
-      chunks:
-        other: "トークンチャンク {count} 件を受信"
-      establishing: "ストリームを確立中…"
-      streamWindow: "リアルタイムストリーム（最新 50 語）"
-      liveWindow: "ライブ表示"
-      awaiting: "モデルの推論ストリームのトークンを待機中…"
-      trailingNote: "リアルタイムストリームの末尾の語を表示しています。"
-    result:
-      successTitle: "レポートを作成しました"
-      successDescription: "自律的な定量診断が完了し、レポート履歴に保存されました。"
-      summaryFallback: "定量的な戦略レビューと戦術的なリバランス推奨を作成しました。"
-      cancelledTitle: "レポートの作成をキャンセルしました"
-      cancelledDescription: "作成処理は完了前に停止されました。新しいレポートは保存されていません。"
-      cancelledBadge: "キャンセル済み"
-      failedTitle: "レポートの作成に失敗しました"
-      failedFallback: "ポートフォリオアドバイザーエンジンと通信できませんでした。"
-  prompt:
-    title: "レポート作成プロンプト"
-    localProvider: "ローカル"
-    closeTitle: "プロンプトビューアーを閉じる"
-    tabs:
-      all: "完全なプロンプト"
-      system: "システム"
-      user: "ユーザー"
-    payload: "プロンプトの内容"
-    words:
-      other: "{count} 語"
-    chars:
-      other: "{count} 文字"
-    tokens:
-      other: "約 {count} トークン"
-    loading: "プロンプトを読み込み中…"
-    emptyTitle: "プロンプトの記録なし"
-    emptyDescription: "この過去のレポートではプロンプトが記録されていません。今後ポートフォリオアドバイザーが作成するレポートでは、完全なプロンプトがここに保存・表示されます。"
-    copyTitle: "プロンプトのテキストをコピー"
-    copyPrompt: "プロンプトをコピー"
-    footerSent: "レポート作成のために LLM に送信した入力プロンプト"
-    footerEmpty: "プロンプト確認データ"
-  download:
-    title: "レポートをダウンロード"
-    step1: "ステップ 1/2：形式を選択"
-    step2: "ステップ 2/2：保存先を選択"
-    closeDialog: "ダイアログを閉じる"
-    saveFailed: "レポートを保存できませんでした"
-    downloadFailed: "レポートをダウンロードできませんでした"
-    success: "レポートをダウンロードしました"
-    openFolder: "フォルダーを開く"
-    selectFormat: "エクスポート形式を選択"
-    markdownTitle: "Markdown ドキュメント（.md）"
-    markdownDescription: "YAML メタデータのフロントマター付きプレーンテキスト形式。Obsidian、Notion、ローカル保存に最適です。"
-    pdfTitle: "PDF ドキュメント（.pdf）"
-    pdfDescription: "エグゼクティブサマリー、パフォーマンスカード、表、ページ番号付きの整形済みドキュメント。"
-    selectedFormat: "選択した形式："
-    fileName: "ファイル名"
-    saveLocation: "保存先"
-    downloadsFolder: "ダウンロードフォルダー"
-    browserDownload: "ブラウザでダウンロード"
-    downloading: "ダウンロード中…"
-  export:
-    markdownTitle: "ポートフォリオ戦術ブリーフィング（{period}）"
-    markdownSummary: "エグゼクティブサマリー："
-    pdfTitle: "週次ポートフォリオ戦術ブリーフィング"
-    pdfPortfolio: "ポートフォリオ：{name}"
-    pdfPeriod: "期間：{period}"
-    pdfModel: "モデル：{model}"
-    pdfDate: "日付：{date}"
-    pdfAssets:
-      other: "{count} 資産"
-    pdfValuation: "ポートフォリオ評価額"
-    pdfPeriodReturn: "期間リターン"
-    pdfCashLiquidity: "現金・流動性"
-    pdfPositionsTracked: "追跡中のポジション"
-    pdfSummary: "エグゼクティブサマリー"
-    pdfFooter: "Portfolio - 戦術レポート"
-    pdfPage: "{page} / {total} ページ"
 
 # ── assistant: chat sidebar, suggestions, company intel ──────────────────
 assistant:
@@ -1122,7 +946,6 @@ assistant:
 analysis:
   sections:
     suggestions: "提案"
-    reports: "レポート"
   capability:
     not_configured: "ウィザードとガイド付き分析を使うには、「設定 → アシスタント」で AI プロバイダーを設定してください。"
     not_verified: "「設定 → アシスタント」で AI プロバイダーをテストしてください。モデルが応答すると、ウィザードとガイド付き分析が使えるようになります。"
@@ -1327,7 +1150,11 @@ analysis:
     none: "この提案にはグラフ上の所見がありません。"
     showGraph: "グラフ"
   history:
-    empty: "分析の実行はまだありません。"
+    columns:
+      date: "日付"
+      status: "状態"
+      source: "ソース"
+      findings: "所見"
     compare: "比較"
     noPrevious: "比較できる以前の完了した実行がありません。"
     newFindings: "新しい所見"
@@ -1845,11 +1672,6 @@ settings:
       daily: "毎日"
     weekday: "曜日"
     weekdayDescription: "レポートは前日が属する週を対象とします。そのため土曜か日曜の実行では終わったばかりの週、月曜の実行ではその前の週が対象になります。"
-    weeklyMode: "作成する内容"
-    weeklyModeDescription: "ガイド付き分析は根拠グラフを作成し、提案を更新して短いレポートを書きます。長いレポートは 5 つのセクションからなるレポートで、ツール呼び出しに対応していないモデル向けです。"
-    weeklyModes:
-      graph: "ガイド付き分析"
-      report: "長いレポート"
     weekdays:
       mon: "月"
       tue: "火"
@@ -1880,14 +1702,14 @@ settings:
       title: "週次レポート"
       blurb: "週に 1 回、アシスタントが各ポートフォリオの週次レポートを作成し、要約を送ります。"
       toggleTitle: "週次レポートを作成"
-      toggleDescription: "アシスタントが、「レポート」の「作成」と同じ完全な週次レポートを書きます：パフォーマンス、資産配分、リスク、テクニカルシグナル、その週のニュース。レポートは「レポート」に保存され、通知アプリには短い要約が届きます。"
+      toggleDescription: "アシスタントが方針と配分を中心に根拠のグラフを広げ、所見、提案、短いレポートを作成します。"
       timeDescription: "このコンピューターの現地時刻です。Portfolio がウィンドウまたはトレイで動作している必要があります。その時刻に動作していなかった場合は、2 日以内に起動すれば、起動時にレポートが作成されます。"
       nextRun: "次回のレポート：{when}。"
       portfolioDescription: "ポートフォリオごとに 1 件のレポートと 1 件の通知。"
       portfoliosLabel: "レポートの対象ポートフォリオ"
-      noChannel: "通知チャネルが設定されていません。レポートは「レポート」に保存されますが、プッシュ通知は送信されません。「スマートフォンアプリ」で Gotify または ntfy を設定してください。"
+      noChannel: "通知チャネルが設定されていません。「スマートフォンアプリ」で Gotify または ntfy を設定してください。"
       delivered: "各レポートの短い要約がプッシュ通知として {channels} に送信されます。"
-      privacy: "レポートが見る情報は、「レポート」の「作成」が AI プロバイダーに送る情報と同じです。通知の要約にはパーセンテージとティッカーのみが含まれ、残高や金額は一切含みません。"
+      privacy: "Portfolio から出るのはパーセンテージだけです：比率、リターン、エクスポージャー、配当利回り。金額、価格、数量、残高は決して出ません。"
       runningText: "相場を更新して週次レポートを作成中です。数分かかる場合があります…"
       failed: "レポートに失敗しました。"
       lastTitle: "前回のレポート"
@@ -2125,15 +1947,6 @@ setup:
 service:
   assistant:
     untitledChat: "チャットセッション"
-  report:
-    title: "{portfolio} - 週次ブリーフィング（{period}）"
-    summary:
-      other: "評価額 {currency}{value}、{count} 資産全体の累積リターンは {change}%。"
-    fallback:
-      heading: "ポートフォリオ自動ブリーフィング（{period}）"
-      overviewLabel: "市場概況"
-      overview: "ポートフォリオの総評価額は {currency}{value}、全体のリターンは {change}% です。"
-      note: "注：詳細レポート用の LLM モデルに一時的に接続できませんでした（{error}）。テクニカル指標と台帳の数値は検証済みです。"
   suggestions:
     dropped:
       invalid:
@@ -2167,14 +1980,8 @@ service:
       note: "アシスタントを利用できなかったため、このブリーフには数値のみを表示しています。"
   weeklyAnalysis:
     notificationTitle: "{portfolio}：週次分析"
-    openReports: "詳しいレポートは Portfolio の「分析」を開いてください。"
     guidedHeading: "今週のガイド付き分析"
     openAnalysis: "所見、グラフ、各提案の理由は Portfolio の「分析」を開いてください。"
-    fallback:
-      heading: "週次分析 {period}"
-      weekReturn: "今週のリターン：{change}"
-      topGainer: "値上がり率トップ：{symbol} {change}"
-      topDecliner: "値下がり率トップ：{symbol} {change}"
   analysis:
     noFindingsSummary: "分析の結果、方針に照らして変更が必要なものは見つかりませんでした。"
     live:

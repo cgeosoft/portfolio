@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { BellRing, BrainCircuit, Briefcase, CalendarClock, CalendarDays, CalendarRange, Clock, History, Loader2, Newspaper, Play, ShieldCheck, type LucideIcon } from "lucide-react";
+import { BellRing, Briefcase, CalendarClock, CalendarDays, CalendarRange, Clock, History, Loader2, Newspaper, Play, ShieldCheck, type LucideIcon } from "lucide-react";
 import type { AutomationStatus, DailyBriefDays, DesktopConfig, NotificationChannel, RunAutomationResponse } from "portfolio-shared/api-types";
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { api } from "../../api";
@@ -84,31 +84,20 @@ const DEFINITIONS: Record<AutomationId, AutomationDefinition> = {
     loadStatus: api.getWeeklyAnalysisStatus,
     run: api.runWeeklyAnalysis,
     days: (config, save, saving) => (
-      <>
-        <SettingItem icon={CalendarDays} title={t("settings.automation.weekday")} description={t("settings.automation.weekdayDescription")}>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("settings.automation.weekday")}>
-            {WEEKDAY_OPTIONS.map((option) => (
-              <ChoiceButton
-                key={option.value}
-                active={config.weeklyAnalysisDay === option.value}
-                disabled={saving}
-                onClick={() => config.weeklyAnalysisDay !== option.value && save({ weeklyAnalysisDay: option.value })}
-              >
-                {t(`settings.automation.weekdays.${option.key}`)}
-              </ChoiceButton>
-            ))}
-          </div>
-        </SettingItem>
-        <SettingItem icon={BrainCircuit} title={t("settings.automation.weeklyMode")} description={t("settings.automation.weeklyModeDescription")}>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("settings.automation.weeklyMode")}>
-            {(["graph", "report"] as const).map((mode) => (
-              <ChoiceButton key={mode} active={config.weeklyAnalysisMode === mode} disabled={saving} onClick={() => config.weeklyAnalysisMode !== mode && save({ weeklyAnalysisMode: mode })}>
-                {t(`settings.automation.weeklyModes.${mode}`)}
-              </ChoiceButton>
-            ))}
-          </div>
-        </SettingItem>
-      </>
+      <SettingItem icon={CalendarDays} title={t("settings.automation.weekday")} description={t("settings.automation.weekdayDescription")}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("settings.automation.weekday")}>
+          {WEEKDAY_OPTIONS.map((option) => (
+            <ChoiceButton
+              key={option.value}
+              active={config.weeklyAnalysisDay === option.value}
+              disabled={saving}
+              onClick={() => config.weeklyAnalysisDay !== option.value && save({ weeklyAnalysisDay: option.value })}
+            >
+              {t(`settings.automation.weekdays.${option.key}`)}
+            </ChoiceButton>
+          ))}
+        </div>
+      </SettingItem>
     ),
   },
   "event-alerts": {

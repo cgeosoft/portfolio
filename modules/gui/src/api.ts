@@ -7,7 +7,6 @@ import type {
   AppUpdateInfo,
   AssistantConversationSummary,
   GetAssistantConversationResponse,
-  CancelReportStreamResponse,
   ChatWithPortfolioRequest,
   ChatWithPortfolioResponse,
   ClaudeCliStatusResponse,
@@ -24,7 +23,6 @@ import type {
   UpdateDownloadState,
   EvaluatePortfolioMetricsRequest,
   EvaluatePortfolioMetricsResponse,
-  GenerateReportRequest,
   GenerateSuggestionsRequest,
   GetSuggestionsResponse,
   SuggestionGeneration,
@@ -36,7 +34,6 @@ import type {
   GetPortfoliosResponse,
   GetProviderModelsRequest,
   GetProviderModelsResponse,
-  GetReportPromptResponse,
   GetSettingsResponse,
   InstallMetricResponse,
   LogClientEventRequest,
@@ -44,9 +41,6 @@ import type {
   ManageTransactionResponse,
   OpenSupportTicketRequest,
   OpenSupportTicketResponse,
-  PollReportStreamResponse,
-  PrepareReportPromptRequest,
-  PrepareReportPromptResponse,
   PreviewMetricInstallResponse,
   RemoteAccessInfo,
   McpAccessInfo,
@@ -63,8 +57,6 @@ import type {
   SetIsinSymbolResponse,
   SetManualPriceRequest,
   ManualPriceResponse,
-  StartReportStreamRequest,
-  StartReportStreamResponse,
   SyncQuotesResponse,
   TestFinnhubConnectionResponse,
   TestFmpConnectionResponse,
@@ -251,17 +243,6 @@ export const api = {
 
   // ---- reports
   getReports: (portfolioId: string) => request<{ reports: PortfolioReport[]; latestReport?: PortfolioReport }>(`/api/portfolios/${enc(portfolioId)}/reports`),
-  prepareReportPrompt: (body: PrepareReportPromptRequest) =>
-    request<PrepareReportPromptResponse>(`/api/portfolios/${enc(body.portfolioId)}/reports/prompt`, { method: "POST", body: json(body) }),
-  startReportStream: (body: StartReportStreamRequest) =>
-    request<StartReportStreamResponse>(`/api/portfolios/${enc(body.portfolioId)}/reports/stream`, { method: "POST", body: json(body) }),
-  pollReportStream: (sessionId: string) => request<PollReportStreamResponse>(`/api/reports/stream/${enc(sessionId)}`),
-  cancelReportStream: (sessionId: string) => request<CancelReportStreamResponse>(`/api/reports/stream/${enc(sessionId)}`, { method: "DELETE" }),
-  generateReport: (body: GenerateReportRequest) => request<PortfolioReport>(`/api/portfolios/${enc(body.portfolioId)}/reports`, { method: "POST", body: json(body) }),
-  deleteReport: (portfolioId: string, reportId: string) => request<{ success: boolean }>(`/api/portfolios/${enc(portfolioId)}/reports/${enc(reportId)}`, { method: "DELETE" }),
-  /** The prompt of one report; the reports list leaves it out. */
-  getReportPrompt: (portfolioId: string, reportId: string) =>
-    request<GetReportPromptResponse>(`/api/portfolios/${enc(portfolioId)}/reports/${enc(reportId)}/prompt`),
 
   // ---- suggestions
   getSuggestions: (portfolioId: string, baseCurrency?: string) =>

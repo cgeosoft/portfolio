@@ -6,7 +6,7 @@
  *   bun run website:screenshots [--llm claude-cli[:model]] [--data <dir>] [--only id,id]
  *                               [--chrome <path>] [--debug <dir>]
  *
- * --llm     generate a weekly report, suggestions and a daily brief first, with
+ * --llm     generate suggestions and a daily brief first, with
  *           this provider (the Claude CLI, or an OpenAI-compatible server already
  *           set up in the --data directory). Without it the LLM screens show
  *           whatever the data directory holds.

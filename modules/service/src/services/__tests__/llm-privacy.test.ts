@@ -14,11 +14,6 @@ import { McpPrivacyError } from "../mcp-tools.js";
 import { buildPortfolioSystemPrompt } from "../portfolio-chat.js";
 import { buildSuggestionPrompt } from "../portfolio-suggestions.js";
 import { buildDailyBriefPrompt } from "../daily-brief.js";
-import { PortfolioReportService } from "../portfolio-report.js";
-import { EMPTY_REPORT_INTEL } from "../ai-context.js";
-import { getDatabase } from "../../db/database.js";
-import type { LlmService } from "../llm.js";
-import type { PortfolioService } from "../portfolio.js";
 
 // Canary portfolio: every amount and quantity has digits no prompt should ever print.
 function holding(symbol: string, extra: Partial<PortfolioHolding>): PortfolioHolding {
@@ -179,28 +174,6 @@ describe("prompt builders keep the ledger out", () => {
   it("daily brief prompt", () => {
     const messages = buildDailyBriefPrompt({ portfolio, data: canary, since: "2026-11-01", today: "2026-11-04", news: [], language: "en" });
     expect(() => assertNoLedgerAmounts(messages, canary)).not.toThrow();
-  });
-});
-
-describe("report prompt gate", () => {
-  const id = "llm-privacy-canary";
-  const report = () => {
-    const db = getDatabase();
-    db.run("INSERT OR REPLACE INTO portfolios (id, name, baseCurrency) VALUES (?, ?, ?)", [id, "Canary", "EUR"]);
-    const llm = { chat: async () => "unused" } as unknown as LlmService;
-    return new PortfolioReportService(llm, { getPortfolioData: async () => canary } as unknown as PortfolioService, async () => EMPTY_REPORT_INTEL);
-  };
-
-  it("builds the report prompt of the canary portfolio", async () => {
-    await expect(report().buildReportContext(id, { portfolioData: canary })).resolves.toBeDefined();
-    getDatabase().run("DELETE FROM portfolios WHERE id = ?", [id]);
-  });
-
-  it("stops a report whose prompt would carry an amount", async () => {
-    // A holding named after its own value: the builder prints names, the gate catches the number.
-    const leaky = { ...canary, holdings: [{ ...canary.holdings[0]!, name: "Fund worth 3,141,592.65" }, ...canary.holdings.slice(1)] } as FinancialPortfolioData;
-    await expect(report().buildReportContext(id, { portfolioData: leaky })).rejects.toThrow(PromptPrivacyError);
-    getDatabase().run("DELETE FROM portfolios WHERE id = ?", [id]);
   });
 });
 

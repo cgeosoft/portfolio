@@ -130,7 +130,7 @@ const REQUEST_TIMEOUT_MS = 120_000;
 /** A CLI starts a fresh session per request, so it gets more time than an HTTP call. */
 const CLI_TIMEOUT_MS = 300_000;
 
-/** A request with the caller's own signal (a report stream) lives at most as long as its session, 15 minutes (portfolio-report.ts). */
+/** A request with the caller's own signal lives at most 15 minutes. */
 const CALLER_SIGNAL_LIMIT_MS = 15 * 60_000;
 
 /** The caller's signal capped at the session lifetime, else the request's own limit: a stalled server never holds a request forever. */

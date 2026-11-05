@@ -64,6 +64,11 @@ export function nodesByStage(nodes: readonly AnalysisNode[], steps: readonly Ana
   return out;
 }
 
+/** The newest finished run: its suggestions and report are the current ones. */
+export function lastCompletedRun(runs: readonly AnalysisRunListItem[]): AnalysisRunListItem | undefined {
+  return [...runs].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).find((r) => r.status === "completed");
+}
+
 /** The model time each stage took: the sum of its steps. */
 export function stageDurations(steps: readonly AnalysisStep[]): Map<AnalysisStage, number> {
   const durations = new Map<AnalysisStage, number>();

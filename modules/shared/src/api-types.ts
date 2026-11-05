@@ -9,7 +9,6 @@ import type {
   PortfolioSummary,
   PortfolioHistoricalPoint,
   PortfolioTransaction,
-  PortfolioReport,
   ReportMetrics,
   FinancialPortfolioData,
   ManualPrice,
@@ -264,55 +263,6 @@ export interface SearchSymbolResponse {
   results: { symbol: string; name: string; exchange: string; quoteType: string; typeDisp?: string }[];
 }
 
-export interface GenerateReportRequest {
-  portfolioId: string;
-  provider?: string;
-  model?: string;
-  apiKey?: string;
-  baseUrl?: string;
-  weekKey?: string;
-}
-
-export interface PrepareReportPromptRequest {
-  portfolioId: string;
-  provider?: string;
-  model?: string;
-  weekKey?: string;
-}
-
-/** `GET /api/portfolios/:id/reports/:reportId/prompt`: the reports list leaves the prompts out. */
-export interface GetReportPromptResponse {
-  /** The exact prompt the report was written from; null for a report from before prompts were stored. */
-  prompt: string | null;
-}
-
-export interface PrepareReportPromptResponse {
-  portfolioId: string;
-  portfolioName: string;
-  baseCurrency: string;
-  period: string;
-  weekKey: string;
-  weekStartDate: string;
-  weekEndDate: string;
-  systemPrompt: string;
-  userPrompt: string;
-  fullPrompt: string;
-  provider: string;
-  model: string;
-  holdingsCount: number;
-  metrics: ReportMetrics;
-  /** Whether Finnhub supplied part of the market context of this prompt */
-  finnhubConfigured?: boolean;
-  /** Market and company headlines in this prompt (kept for older GUIs; same as `newsCount`) */
-  finnhubNewsCount?: number;
-  /** Providers behind the market context sections, in first-seen order */
-  contextSources?: DataProviderId[];
-  /** Titles of the market context sections in the prompt; empty when only the ledger is sent */
-  contextSections?: string[];
-  /** Market and company headlines in this prompt */
-  newsCount?: number;
-}
-
 export interface TestFinnhubConnectionRequest {
   apiKey?: string;
 }
@@ -347,47 +297,8 @@ export interface ClearMarketCacheResponse {
   clearedEntries?: number;
 }
 
-export interface StartReportStreamRequest {
-  portfolioId: string;
-  provider?: string;
-  model?: string;
-  apiKey?: string;
-  baseUrl?: string;
-  weekKey?: string;
-}
-
-export interface StartReportStreamResponse {
-  sessionId: string;
-}
-
-export interface PollReportStreamRequest {
-  sessionId: string;
-}
-
-export interface PollReportStreamResponse {
-  sessionId: string;
-  status: "running" | "success" | "fail" | "cancelled";
-  lastWords: string;
-  chunkCount: number;
-  report?: PortfolioReport;
-  error?: string;
-}
-
-export interface CancelReportStreamRequest {
-  sessionId: string;
-}
-
-export interface CancelReportStreamResponse {
-  success: boolean;
-}
-
 export interface GetReportsRequest {
   portfolioId: string;
-}
-
-export interface DeleteReportRequest {
-  portfolioId: string;
-  reportId: string;
 }
 
 export interface PortfolioChatMessage {

@@ -25,7 +25,6 @@ interface HeaderProps {
   onTabChange?: (tab: PortfolioTabKey) => void;
   activeView?: "dashboard" | "settings" | "terms" | "sponsorship" | "portfolios";
   onNavigateDashboard?: (tab?: PortfolioTabKey) => void;
-  reportsCount?: number;
   transactionsCount?: number;
   /** Open suggestions, shown next to the Overview tab, where the Suggested actions card lists them. */
   suggestionsCount?: number;
