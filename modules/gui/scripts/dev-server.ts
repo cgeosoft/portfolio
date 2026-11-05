@@ -8,10 +8,13 @@
  * the window. When the service restarts under `bun --watch` on a new port, the shell writes
  * `SERVICE_PORT=<port>` to this process's stdin and the proxy follows it without a reload.
  *
+ * The shell runs this script with the `bun` on PATH, not with cottontail, whose `ws` breaks the
+ * HMR socket (see `viteRuntime` in `modules/desktop/src/bun/dev.ts`).
+ *
  * The proxy is a middleware on `fetch`, not Vite's `server.proxy`: under the cottontail runtime
- * the shell runs this script with, http-proxy stalls on responses larger than about 190 KB
- * (the portfolio data is over 200 KB) and the request times out. The service has no streaming
- * or WebSocket routes, so each response is read whole and then sent.
+ * http-proxy stalls on responses larger than about 190 KB (the portfolio data is over 200 KB)
+ * and the request times out. The service has no streaming or WebSocket routes, so each response
+ * is read whole and then sent.
  *
  * The same file lives in Portfolio and in FintechCrafts Management. The project's own
  * `vite.config.*` supplies the plugins; this script supplies the server settings.

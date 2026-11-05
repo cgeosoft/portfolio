@@ -5,8 +5,8 @@
  *
  *   service     `<bun> --watch modules/service/src/main.ts`, restarted on every service change;
  *               each start prints `SERVICE_PORT=<port>` (a new random port every time)
- *   Vite        `<bun> modules/gui/scripts/dev-server.ts <servicePort>` with hot reload; it
- *               proxies `/api` to the service and prints `GUI_URL=<url>`
+ *   Vite        `<system bun> modules/gui/scripts/dev-server.ts <servicePort>` with hot reload;
+ *               it proxies `/api` to the service and prints `GUI_URL=<url>`
  *   window      on GUI_URL
  *
  * After a restart of the service the shell sends the new port to the dev server on its stdin,
@@ -56,6 +56,16 @@ export function devServiceCommand(repoRoot: string, inspect = process.env.SERVIC
   return { command: [process.execPath, ...flags, join(serviceDir, "src", "main.ts")], cwd: serviceDir };
 }
 
+/**
+ * The runtime of the Vite dev server: the `bun` on PATH, which `bun start` needs anyway. Vite
+ * loads `ws` through `import.meta.require` on Bun, and cottontail answers with its own `ws`,
+ * whose `handleUpgrade` throws (`websocketAcceptKey` is undefined in 0.7.3). The HMR socket then
+ * never opens and the window stops updating, with nothing in the logs.
+ */
+export function viteRuntime(): string {
+  return Bun.which("bun") ?? process.execPath;
+}
+
 /** The Vite dev server of a development run (`modules/gui/scripts/dev-server.ts`). */
 export class DevGuiServer {
   private proc: Bun.Subprocess<"pipe", "pipe", "pipe"> | null = null;
@@ -74,7 +84,7 @@ export class DevGuiServer {
   /** Starts Vite with `/api` proxied to `servicePort`. */
   start(servicePort: number): void {
     const guiDir = join(this.repoRoot, "modules", "gui");
-    this.proc = Bun.spawn([process.execPath, join(guiDir, "scripts", "dev-server.ts"), String(servicePort)], {
+    this.proc = Bun.spawn([viteRuntime(), join(guiDir, "scripts", "dev-server.ts"), String(servicePort)], {
       cwd: guiDir,
       stdin: "pipe",
       stdout: "pipe",
