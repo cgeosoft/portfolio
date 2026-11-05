@@ -1130,6 +1130,13 @@ analysis:
     suggest: "Àbá"
     report: "Ìjábọ̀"
     done: "Ó ti parí"
+  stages:
+    seed: "Ó ń gbé àpèjúwe rẹ, ìpín rẹ àti ipò ọjà wọlé."
+    survey: "Ó ń sọ àpèjúwe di àwọn ìbéèrè láti ṣàyẹ̀wò."
+    expand: "Ó ń kó dátà àti ẹ̀rí jọ fún ìbéèrè kọ̀ọ̀kan."
+    synthesise: "Ó ń to àwọn àbájáde sí àwọn àkòrí."
+    suggest: "Ó ń dábàá àwọn àyípadà sí pọ́tífóòlíò."
+    report: "Ó ń kọ ìjábọ̀ kúkúrú."
   kinds:
     brief: "Àpèjúwe"
     allocation: "Ìpínkiri"

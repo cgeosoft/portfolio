@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Ieteikšana"
     report: "Pārskats"
     done: "Gatavs"
+  stages:
+    seed: "Ielādē jūsu profilu, sadalījumu un tirgus kontekstu."
+    survey: "Pārvērš profilu pārbaudāmos jautājumos."
+    expand: "Vāc datus un pierādījumus katram jautājumam."
+    synthesise: "Sagrupē secinājumus tēmās."
+    suggest: "Ierosina izmaiņas portfelī."
+    report: "Uzraksta īso pārskatu."
   kinds:
     brief: "Profils"
     allocation: "Sadalījums"

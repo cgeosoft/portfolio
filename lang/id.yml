@@ -1130,6 +1130,13 @@ analysis:
     suggest: "Saran"
     report: "Laporan"
     done: "Selesai"
+  stages:
+    seed: "Memuat profil, alokasi, dan konteks pasar Anda."
+    survey: "Mengubah profil menjadi pertanyaan untuk diperiksa."
+    expand: "Mengumpulkan data dan bukti untuk setiap pertanyaan."
+    synthesise: "Mengelompokkan temuan ke dalam tema."
+    suggest: "Mengusulkan perubahan pada portofolio."
+    report: "Menulis laporan singkat."
   kinds:
     brief: "Profil"
     allocation: "Alokasi"

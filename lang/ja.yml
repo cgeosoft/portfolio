@@ -1139,6 +1139,13 @@ analysis:
     suggest: "提案"
     report: "レポート"
     done: "完了"
+  stages:
+    seed: "方針、資産配分、市場の状況を読み込みます。"
+    survey: "方針を確認すべき質問に変えます。"
+    expand: "質問ごとにデータと根拠を集めます。"
+    synthesise: "調査結果をテーマにまとめます。"
+    suggest: "ポートフォリオの変更を提案します。"
+    report: "短いレポートを書きます。"
   kinds:
     brief: "方針"
     allocation: "配分"

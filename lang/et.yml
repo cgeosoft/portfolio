@@ -1172,6 +1172,13 @@ analysis:
     suggest: "Soovitus"
     report: "Aruanne"
     done: "Valmis"
+  stages:
+    seed: "Laadib sinu profiili, jaotuse ja turukonteksti."
+    survey: "Muudab profiili kontrollitavateks küsimusteks."
+    expand: "Kogub iga küsimuse kohta andmeid ja tõendeid."
+    synthesise: "Rühmitab leiud teemadeks."
+    suggest: "Pakub portfelli muudatusi."
+    report: "Kirjutab lühiaruande."
   kinds:
     brief: "Profiil"
     allocation: "Jaotus"

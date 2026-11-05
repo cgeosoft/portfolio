@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Vorschläge"
     report: "Bericht"
     done: "Fertig"
+  stages:
+    seed: "Lädt deinen Steckbrief, deine Allokation und den Marktkontext."
+    survey: "Macht aus dem Steckbrief zu prüfende Fragen."
+    expand: "Sammelt Daten und Belege zu jeder Frage."
+    synthesise: "Fasst die Erkenntnisse zu Themen zusammen."
+    suggest: "Schlägt Änderungen am Portfolio vor."
+    report: "Schreibt den Kurzbericht."
   kinds:
     brief: "Steckbrief"
     allocation: "Aufteilung"

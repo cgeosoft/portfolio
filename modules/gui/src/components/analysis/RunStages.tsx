@@ -1,70 +1,110 @@
 /**
- * One analysis, stage by stage: the buttons above it and the panel of the
+ * One analysis, stage by stage: the track above it and the panel of the
  * chosen stage. The panel only reads the run it is given, so looking at an
  * earlier stage leaves the run itself alone.
  */
-import { AlertCircle, CheckCircle2, Circle, Loader2, Network } from "lucide-react";
-import type { AnalysisNode, GetAnalysisRunResponse } from "portfolio-shared/api-types";
+import { Check, Loader2, Network, X } from "lucide-react";
+import type { KeyboardEvent } from "react";
+import type { AnalysisNode, AnalysisRunStatus, GetAnalysisRunResponse } from "portfolio-shared/api-types";
 import { isBriefEmpty } from "portfolio-shared/brief";
 import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
 import { t } from "../../i18n";
 import { SafeMarkdown, type InAppLinkRenderer } from "../common/SafeMarkdown";
 import { REPORT_MARKDOWN } from "../portfolio/ReportsCard";
 import { HoldingLink, useHoldingLinkPlugin } from "../portfolio/holding-links";
-import { ANALYSIS_STAGES, type AnalysisStage, type StageState } from "./analysis-stages";
+import { ANALYSIS_STAGES, fmtStageTime, type AnalysisStage, type StageState } from "./analysis-stages";
 import { briefLines } from "./BriefFields";
 import { KIND_ORDER, graphPalette, kindLabel, nodeColor, phaseLabel } from "./shared";
 
-// ── stage buttons ───────────────────────────────────────────────────────────
+// ── stage track ─────────────────────────────────────────────────────────────
 
-const STATE_ICON: Record<StageState, typeof Circle> = {
-  done: CheckCircle2,
-  active: Loader2,
-  stopped: AlertCircle,
-  todo: Circle,
+const NODE_TONE: Record<StageState, string> = {
+  done: "border-mint/30 bg-mint/10 text-mint",
+  active: "border-accent-500/50 bg-accent-500/10 text-accent-500",
+  stopped: "border-cream/40 bg-cream/10 text-cream",
+  todo: "border-line text-slate-600",
 };
 
-const STATE_TONE: Record<StageState, string> = {
-  done: "text-mint",
-  active: "text-accent-500 animate-spin",
-  stopped: "text-cream",
-  todo: "text-slate-600",
-};
+function StageNode({ state, position, selected }: { state: StageState; position: number; selected: boolean }) {
+  const tone = selected ? "border-accent-500 bg-accent-500 text-white shadow-[0_0_0_4px_rgba(var(--accent-rgb),0.15)]" : NODE_TONE[state];
+  return (
+    <span className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold font-mono transition-colors ${tone}`}>
+      {state === "done" && <Check className="w-3.5 h-3.5" />}
+      {state === "active" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+      {state === "stopped" && <X className="w-3.5 h-3.5" />}
+      {state === "todo" && position}
+    </span>
+  );
+}
+
+/** What a stage reports under its name: its state while unfinished, its result after. */
+function StageMeta({ state, status, count, durationMs }: { state: StageState; status: AnalysisRunStatus; count: number; durationMs: number }) {
+  if (state === "todo") return null;
+  if (state !== "done") return <span className={`hidden sm:block truncate text-[10px] ${state === "active" ? "text-accent-500" : "text-cream"}`}>{t(`analysis.run.status.${status}`)}</span>;
+  return (
+    <span className="hidden sm:flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono">
+      {count > 0 && (
+        <span className="inline-flex items-center gap-0.5">
+          <Network className="w-2.5 h-2.5" aria-hidden="true" />
+          {count}
+        </span>
+      )}
+      {count > 0 && durationMs > 0 && <span aria-hidden="true">·</span>}
+      {durationMs > 0 && <span className="truncate">{fmtStageTime(durationMs)}</span>}
+    </span>
+  );
+}
 
 interface StageBarProps {
   states: Record<AnalysisStage, StageState>;
+  status: AnalysisRunStatus;
   counts: ReadonlyMap<AnalysisStage, AnalysisNode[]>;
+  durations: ReadonlyMap<AnalysisStage, number>;
   selected: AnalysisStage;
   onSelect: (stage: AnalysisStage) => void;
 }
 
-export function StageBar({ states, counts, selected, onSelect }: StageBarProps) {
+/** Arrow keys walk the stages a run reached, in reading order. */
+function moveFocus(e: KeyboardEvent<HTMLDivElement>) {
+  const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=tab]:not(:disabled)")];
+  const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+  const forward = document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight";
+  const backward = forward === "ArrowLeft" ? "ArrowRight" : "ArrowLeft";
+  const to = e.key === forward ? at + 1 : e.key === backward ? at - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
+  if (to === null || tabs.length === 0) return;
+  e.preventDefault();
+  const tab = tabs[(to + tabs.length) % tabs.length]!;
+  tab.focus();
+  tab.click();
+}
+
+export function StageBar({ states, status, counts, durations, selected, onSelect }: StageBarProps) {
   return (
-    <div role="tablist" aria-label={t("analysis.run.title")} className="flex flex-wrap gap-1.5 shrink-0">
+    <div role="tablist" aria-label={t("analysis.run.title")} onKeyDown={moveFocus} className="flex justify-center shrink-0">
       {ANALYSIS_STAGES.map((stage, i) => {
         const state = states[stage];
-        const Icon = STATE_ICON[state];
         const active = stage === selected;
-        const count = counts.get(stage)?.length ?? 0;
+        const last = i === ANALYSIS_STAGES.length - 1;
         return (
-          <button
-            key={stage}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            disabled={state === "todo"}
-            onClick={() => onSelect(stage)}
-            className={`h-8 inline-flex items-center gap-1.5 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition-colors ${
-              active ? "border-accent-500/40 bg-accent-500/15 text-accent-500" : "border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-900 hover:border-slate-700 hover:text-slate-50"
-            } ${state === "todo" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-          >
-            <Icon className={`w-3.5 h-3.5 shrink-0 ${STATE_TONE[state]}`} />
-            <span>
-              {i > 0 && `${i}. `}
-              {phaseLabel(stage)}
-            </span>
-            {count > 0 && <span className="text-[10px] font-normal text-slate-500">{count}</span>}
-          </button>
+          <div key={stage} className="relative flex-1 min-w-0 max-w-28">
+            {!last && <span className={`absolute top-3 start-[calc(50%+16px)] w-[calc(100%-32px)] h-px ${state === "done" ? "bg-mint/30" : "bg-line"}`} aria-hidden="true" />}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={active}
+              tabIndex={active ? 0 : -1}
+              disabled={state === "todo"}
+              title={t(`analysis.stages.${stage}`)}
+              onClick={() => onSelect(stage)}
+              className={`group w-full flex flex-col items-center gap-1 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 ${state === "todo" ? "cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <StageNode state={state} position={i + 1} selected={active} />
+              <span className="w-full min-w-0 px-1 text-center">
+                <span className={`block truncate text-[10px] font-bold uppercase sm:tracking-wider transition-colors ${active ? "text-accent-500" : state === "todo" ? "text-slate-600" : "text-slate-300 group-hover:text-slate-50"}`}>{phaseLabel(stage)}</span>
+                <StageMeta state={state} status={status} count={counts.get(stage)?.length ?? 0} durationMs={durations.get(stage) ?? 0} />
+              </span>
+            </button>
+          </div>
         );
       })}
     </div>
@@ -229,6 +269,7 @@ export function StagePanel({ detail, stage, nodes, onSelectNode, onWhy, onOpenSu
   const suggestions = detail.suggestions ?? [];
   return (
     <div className="cx-card p-3.5 flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scrollbar text-xs">
+      {stage !== "report" && <p className="font-sans text-slate-400">{t(`analysis.stages.${stage}`)}</p>}
       {stage === "seed" && <BriefUsed detail={detail} />}
       {stage === "report" && <Report detail={detail} renderLink={renderLink} />}
       {stage === "suggest" && suggestions.length > 0 && (

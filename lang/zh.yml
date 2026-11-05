@@ -1139,6 +1139,13 @@ analysis:
     suggest: "建议"
     report: "报告"
     done: "完成"
+  stages:
+    seed: "加载你的纲要、资产配置和市场背景。"
+    survey: "把纲要变成需要核实的问题。"
+    expand: "为每个问题收集数据和证据。"
+    synthesise: "把发现归纳为主题。"
+    suggest: "提出投资组合调整建议。"
+    report: "撰写简短报告。"
   kinds:
     brief: "纲要"
     allocation: "配置"

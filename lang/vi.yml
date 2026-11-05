@@ -1130,6 +1130,13 @@ analysis:
     suggest: "Đề xuất"
     report: "Báo cáo"
     done: "Xong"
+  stages:
+    seed: "Tải bản mô tả, phân bổ và bối cảnh thị trường của bạn."
+    survey: "Biến bản mô tả thành các câu hỏi cần kiểm tra."
+    expand: "Thu thập dữ liệu và bằng chứng cho từng câu hỏi."
+    synthesise: "Nhóm các phát hiện thành chủ đề."
+    suggest: "Đề xuất thay đổi cho danh mục."
+    report: "Viết báo cáo ngắn."
   kinds:
     brief: "Bản mô tả"
     allocation: "Phân bổ"

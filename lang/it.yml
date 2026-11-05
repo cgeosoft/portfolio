@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Suggerimenti"
     report: "Report"
     done: "Fatto"
+  stages:
+    seed: "Carica la tua scheda, la tua allocazione e il contesto di mercato."
+    survey: "Trasforma la scheda in domande da verificare."
+    expand: "Raccoglie dati e prove per ogni domanda."
+    synthesise: "Raggruppa i risultati in temi."
+    suggest: "Propone modifiche al portafoglio."
+    report: "Scrive il report breve."
   kinds:
     brief: "Scheda"
     allocation: "Allocazione"

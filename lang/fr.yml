@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Suggestions"
     report: "Rapport"
     done: "Terminé"
+  stages:
+    seed: "Charge votre fiche, votre allocation et le contexte de marché."
+    survey: "Transforme la fiche en questions à vérifier."
+    expand: "Réunit des données et des preuves pour chaque question."
+    synthesise: "Regroupe les constats en thèmes."
+    suggest: "Propose des changements pour le portefeuille."
+    report: "Rédige le rapport court."
   kinds:
     brief: "Fiche"
     allocation: "Répartition"

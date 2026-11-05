@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Javaslat"
     report: "Jelentés"
     done: "Kész"
+  stages:
+    seed: "Betölti a profilt, az allokációt és a piaci környezetet."
+    survey: "A profilból ellenőrizendő kérdéseket készít."
+    expand: "Adatokat és bizonyítékokat gyűjt minden kérdéshez."
+    synthesise: "Témákba rendezi a megállapításokat."
+    suggest: "Változtatásokat javasol a portfólióban."
+    report: "Megírja a rövid jelentést."
   kinds:
     brief: "Profil"
     allocation: "Allokáció"

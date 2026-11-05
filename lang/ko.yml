@@ -1130,6 +1130,13 @@ analysis:
     suggest: "제안"
     report: "보고서"
     done: "완료"
+  stages:
+    seed: "지침, 자산 배분, 시장 상황을 불러옵니다."
+    survey: "지침을 확인할 질문으로 바꿉니다."
+    expand: "질문별로 데이터와 근거를 모읍니다."
+    synthesise: "발견한 내용을 주제로 묶습니다."
+    suggest: "포트폴리오 변경을 제안합니다."
+    report: "짧은 보고서를 작성합니다."
   kinds:
     brief: "지침"
     allocation: "배분"

@@ -1172,6 +1172,13 @@ analysis:
     suggest: "Ehdotus"
     report: "Raportti"
     done: "Valmis"
+  stages:
+    seed: "Lataa suunnitelmasi, allokaatiosi ja markkinatilanteen."
+    survey: "Muuttaa suunnitelman tarkistettaviksi kysymyksiksi."
+    expand: "Kerää tietoa ja näyttöä jokaisesta kysymyksestä."
+    synthesise: "Ryhmittelee havainnot teemoiksi."
+    suggest: "Ehdottaa muutoksia salkkuun."
+    report: "Kirjoittaa lyhyen raportin."
   kinds:
     brief: "Suunnitelma"
     allocation: "Jakauma"

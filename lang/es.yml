@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Sugerencias"
     report: "Informe"
     done: "Hecho"
+  stages:
+    seed: "Carga tu ficha, tu asignación y el contexto de mercado."
+    survey: "Convierte la ficha en preguntas por comprobar."
+    expand: "Reúne datos y pruebas para cada pregunta."
+    synthesise: "Agrupa los hallazgos en temas."
+    suggest: "Propone cambios en la cartera."
+    report: "Escribe el informe breve."
   kinds:
     brief: "Ficha"
     allocation: "Distribución"

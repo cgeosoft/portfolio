@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Sugerare"
     report: "Raport"
     done: "Gata"
+  stages:
+    seed: "Încarcă profilul, alocarea și contextul pieței."
+    survey: "Transformă profilul în întrebări de verificat."
+    expand: "Adună date și dovezi pentru fiecare întrebare."
+    synthesise: "Grupează constatările pe teme."
+    suggest: "Propune modificări ale portofoliului."
+    report: "Scrie raportul scurt."
   kinds:
     brief: "Profil"
     allocation: "Alocare"

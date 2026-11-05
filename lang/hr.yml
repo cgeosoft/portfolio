@@ -1196,6 +1196,13 @@ analysis:
     suggest: "Prijedlozi"
     report: "Izvješće"
     done: "Gotovo"
+  stages:
+    seed: "Učitava vaše smjernice, alokaciju i tržišni kontekst."
+    survey: "Pretvara smjernice u pitanja za provjeru."
+    expand: "Prikuplja podatke i dokaze za svako pitanje."
+    synthesise: "Grupira nalaze u teme."
+    suggest: "Predlaže promjene portfelja."
+    report: "Piše kratko izvješće."
   kinds:
     brief: "Smjernice"
     allocation: "Alokacija"

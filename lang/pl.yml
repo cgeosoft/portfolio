@@ -1229,6 +1229,13 @@ analysis:
     suggest: "Sugestie"
     report: "Raport"
     done: "Gotowe"
+  stages:
+    seed: "Wczytuje Twoje założenia, alokację i kontekst rynkowy."
+    survey: "Zamienia założenia w pytania do sprawdzenia."
+    expand: "Zbiera dane i dowody dla każdego pytania."
+    synthesise: "Grupuje ustalenia w tematy."
+    suggest: "Proponuje zmiany w portfelu."
+    report: "Pisze krótki raport."
   kinds:
     brief: "Założenia"
     allocation: "Alokacja"

@@ -64,6 +64,21 @@ export function nodesByStage(nodes: readonly AnalysisNode[], steps: readonly Ana
   return out;
 }
 
+/** The model time each stage took: the sum of its steps. */
+export function stageDurations(steps: readonly AnalysisStep[]): Map<AnalysisStage, number> {
+  const durations = new Map<AnalysisStage, number>();
+  for (const step of steps) {
+    if (step.phase !== "done") durations.set(step.phase, (durations.get(step.phase) ?? 0) + step.durationMs);
+  }
+  return durations;
+}
+
+/** A stage time at a glance: "23 s", "1 m 52 s". */
+export function fmtStageTime(ms: number): string {
+  const total = Math.max(1, Math.round(ms / 1000));
+  return total < 60 ? `${total} s` : `${Math.floor(total / 60)} m ${total % 60} s`;
+}
+
 export interface RunMonth {
   key: string;
   label: string;

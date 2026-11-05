@@ -1229,6 +1229,13 @@ analysis:
     suggest: "Návrhy"
     report: "Report"
     done: "Hotovo"
+  stages:
+    seed: "Načte vaše zadání, alokaci a kontext trhu."
+    survey: "Převede zadání na otázky k ověření."
+    expand: "Shromáždí data a důkazy ke každé otázce."
+    synthesise: "Seskupí zjištění do témat."
+    suggest: "Navrhne změny portfolia."
+    report: "Napíše krátkou zprávu."
   kinds:
     brief: "Zadání"
     allocation: "Alokace"

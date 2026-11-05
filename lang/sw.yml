@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Mapendekezo"
     report: "Ripoti"
     done: "Imekamilika"
+  stages:
+    seed: "Hupakia maelezo yako, mgawanyo wako na muktadha wa soko."
+    survey: "Hugeuza maelezo kuwa maswali ya kukagua."
+    expand: "Hukusanya data na ushahidi kwa kila swali."
+    synthesise: "Hupanga matokeo katika mada."
+    suggest: "Hupendekeza mabadiliko kwenye jalada."
+    report: "Huandika ripoti fupi."
   kinds:
     brief: "Maelezo"
     allocation: "Mgawanyo"

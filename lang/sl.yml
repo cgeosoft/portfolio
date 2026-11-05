@@ -1229,6 +1229,13 @@ analysis:
     suggest: "Predlogi"
     report: "Poročilo"
     done: "Končano"
+  stages:
+    seed: "Naloži vaša izhodišča, alokacijo in tržni kontekst."
+    survey: "Izhodišča spremeni v vprašanja za preverjanje."
+    expand: "Zbere podatke in dokaze za vsako vprašanje."
+    synthesise: "Ugotovitve združi v teme."
+    suggest: "Predlaga spremembe portfelja."
+    report: "Napiše kratko poročilo."
   kinds:
     brief: "Izhodišča"
     allocation: "Alokacija"

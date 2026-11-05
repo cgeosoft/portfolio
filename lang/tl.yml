@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Pagmumungkahi"
     report: "Report"
     done: "Tapos na"
+  stages:
+    seed: "Nilo-load ang iyong brief, alokasyon at konteksto ng merkado."
+    survey: "Ginagawang mga tanong na susuriin ang brief."
+    expand: "Nangangalap ng datos at ebidensya para sa bawat tanong."
+    synthesise: "Pinapangkat ang mga natuklasan sa mga tema."
+    suggest: "Nagmumungkahi ng mga pagbabago sa portfolio."
+    report: "Isinusulat ang maikling ulat."
   kinds:
     brief: "Brief"
     allocation: "Alokasyon"

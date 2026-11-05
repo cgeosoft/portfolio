@@ -1,7 +1,7 @@
 /** Analysis stages: states, the stage of a node and the runs by month. */
 import { describe, expect, it } from "bun:test";
 import type { AnalysisNode, AnalysisRunListItem, AnalysisStep } from "portfolio-shared/api-types";
-import { defaultStage, groupRunsByMonth, nodesByStage, stageStates } from "./analysis-stages";
+import { defaultStage, fmtStageTime, groupRunsByMonth, nodesByStage, stageDurations, stageStates } from "./analysis-stages";
 
 const node = (id: string, kind: AnalysisNode["kind"], createdAt: string, status: AnalysisNode["status"] = "ready"): AnalysisNode => ({
   id,
@@ -24,6 +24,21 @@ const step = (phase: AnalysisStep["phase"], createdAt: string, durationMs: numbe
   phase,
   durationMs,
   createdAt,
+});
+
+describe("stage times", () => {
+  it("adds up the steps of each stage and skips the end marker", () => {
+    const durations = stageDurations([step("survey", "2026-01-01T00:00:10Z", 4000), step("survey", "2026-01-01T00:00:20Z", 6000), step("done", "2026-01-01T00:00:30Z", 9000)]);
+    expect(durations.get("survey")).toBe(10_000);
+    expect(durations.has("expand")).toBe(false);
+    expect([...durations.keys()]).toEqual(["survey"]);
+  });
+
+  it("reads in seconds, then minutes", () => {
+    expect(fmtStageTime(200)).toBe("1 s");
+    expect(fmtStageTime(59_000)).toBe("59 s");
+    expect(fmtStageTime(112_000)).toBe("1 m 52 s");
+  });
 });
 
 describe("stageStates", () => {

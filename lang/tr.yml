@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Öneri"
     report: "Rapor"
     done: "Bitti"
+  stages:
+    seed: "Tanımınızı, varlık dağılımınızı ve piyasa bağlamını yükler."
+    survey: "Tanımı kontrol edilecek sorulara dönüştürür."
+    expand: "Her soru için veri ve kanıt toplar."
+    synthesise: "Bulguları temalar altında gruplar."
+    suggest: "Portföy için değişiklikler önerir."
+    report: "Kısa raporu yazar."
   kinds:
     brief: "Tanım"
     allocation: "Dağılım"

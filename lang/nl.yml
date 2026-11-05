@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Voorstellen"
     report: "Rapport"
     done: "Klaar"
+  stages:
+    seed: "Laadt je plan, je allocatie en de marktcontext."
+    survey: "Zet het plan om in vragen om te controleren."
+    expand: "Verzamelt gegevens en bewijs voor elke vraag."
+    synthesise: "Groepeert de bevindingen in thema's."
+    suggest: "Stelt wijzigingen in de portefeuille voor."
+    report: "Schrijft het korte rapport."
   kinds:
     brief: "Plan"
     allocation: "Allocatie"

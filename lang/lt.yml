@@ -1229,6 +1229,13 @@ analysis:
     suggest: "Pasiūlymai"
     report: "Ataskaita"
     done: "Atlikta"
+  stages:
+    seed: "Įkelia jūsų profilį, paskirstymą ir rinkos kontekstą."
+    survey: "Paverčia profilį tikrintinais klausimais."
+    expand: "Renka duomenis ir įrodymus kiekvienam klausimui."
+    synthesise: "Sugrupuoja išvadas į temas."
+    suggest: "Siūlo portfelio pakeitimus."
+    report: "Parašo trumpą ataskaitą."
   kinds:
     brief: "Profilis"
     allocation: "Paskirstymas"

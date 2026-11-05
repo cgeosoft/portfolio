@@ -3,7 +3,7 @@
  * the two lists that span analyses (open suggestions, stored reports).
  *
  * With no analysis picked the page offers a new one. A picked analysis shows
- * its stages as buttons over one graph: each stage has its own panel and lights
+ * its stages as a track over one graph: each stage has its own panel and lights
  * up its nodes. A running analysis fills in by polling; the shown stage follows
  * it until a stage is picked, and picking one only changes what is on screen.
  */
@@ -26,7 +26,7 @@ import { NodeDetails } from "./NodeDetails";
 import { RunList } from "./RunList";
 import { StageBar, StagePanel } from "./RunStages";
 import { WhyPathPanel, whyPath } from "./WhyPath";
-import { defaultStage, nodesByStage, stageStates, type AnalysisStage } from "./analysis-stages";
+import { defaultStage, nodesByStage, stageDurations, stageStates, type AnalysisStage } from "./analysis-stages";
 import { OPEN_ANALYSIS_NODE_EVENT, capabilityNote, useAiCapability, type OpenAnalysisNodeDetail } from "./shared";
 
 export type GuidedSectionId = "runs" | "suggestions" | "reports";
@@ -463,6 +463,7 @@ export function AnalysisTab({
     const selected = selectedNode ? detail.nodes.find((n) => n.id === selectedNode) : undefined;
     body = (
       <div className="flex-1 min-h-0 flex flex-col gap-3">
+        <StageBar states={stageStates(phase, status)} status={status} counts={stages} durations={stageDurations(detail.steps)} selected={stage} onSelect={pickStage} />
         <div className="shrink-0 space-y-2">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 min-w-0">
@@ -520,8 +521,6 @@ export function AnalysisTab({
             </div>
           )}
         </div>
-
-        <StageBar states={stageStates(phase, status)} counts={stages} selected={stage} onSelect={pickStage} />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3">
           <div className="cx-card flex-1 min-h-[360px] min-w-0 flex flex-col p-2">

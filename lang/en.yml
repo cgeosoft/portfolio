@@ -1175,6 +1175,13 @@ analysis:
     suggest: "Suggest"
     report: "Report"
     done: "Done"
+  stages:
+    seed: "Loads your brief, your allocation and the market context."
+    survey: "Turns the brief into questions to check."
+    expand: "Gathers data and evidence for each question."
+    synthesise: "Groups the findings into themes."
+    suggest: "Proposes changes to the portfolio."
+    report: "Writes the short report."
   kinds:
     brief: "Brief"
     allocation: "Allocation"

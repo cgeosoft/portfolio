@@ -1163,6 +1163,13 @@ analysis:
     suggest: "Forslag"
     report: "Rapport"
     done: "Ferdig"
+  stages:
+    seed: "Laster inn planen, allokeringen og markedskonteksten."
+    survey: "Gjør planen om til spørsmål som skal undersøkes."
+    expand: "Samler data og belegg for hvert spørsmål."
+    synthesise: "Samler funnene i temaer."
+    suggest: "Foreslår endringer i porteføljen."
+    report: "Skriver den korte rapporten."
   kinds:
     brief: "Plan"
     allocation: "Fordeling"
