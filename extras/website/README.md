@@ -26,7 +26,7 @@ bun run dev            # bunx serve .
 
 ## Analytics
 
-PostHog is loaded with capturing opted out. `script.js` shows a cookie banner on the first visit and only calls `opt_in_capturing()` after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. The HTML carries the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`.
+PostHog loads only after the visitor accepts. Before that, the page makes no request to it. `script.js` shows a cookie banner on the first visit and adds the PostHog script after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. Each page carries `<meta name="posthog-key">` with the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`. Without a real key, the banner does not show and PostHog does not load.
 
 ## Download links
 

@@ -10,16 +10,7 @@
   <link rel="preload" href="/assets/fonts/sansation-700-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
 
-  <!-- PostHog Analytics (consent-gated: no tracking until the visitor opts in) -->
-  <script>
-    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing has_opted_in_capturing reset addFeatureFlag getFeatureFlag getFeatureFlagPayload getFeatureFlagBoolean reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onFeatureFlags callback getSurveys getNextSurveyStep onSurveysLoaded onSessionId onSurveysLiked uh_hooks identify_psq set_session_recording_id".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('YOUR_POSTHOG_PROJECT_API_KEY', {
-      api_host: 'https://eu.i.posthog.com',
-      opt_out_capturing_by_default: true,
-      capture_pageview: true,
-      disable_session_recording: true
-    });
-  </script>
+  <meta name="posthog-key" content="YOUR_POSTHOG_PROJECT_API_KEY">
 </head>
 <body>
   <header class="site-header">
@@ -127,7 +118,7 @@
     <section class="legal-section" id="cookie-policy">
       <h2>10. Website Analytics and Cookies</h2>
       <p>This website uses PostHog to collect anonymous, aggregated analytics (for example page views and download clicks) so we can understand how visitors use the site and improve it.</p>
-      <p><strong>Analytics are opt-in.</strong> On your first visit a cookie notice appears. If you decline, no analytics cookies are set and no events are sent. If you accept, PostHog sets a small cookie to remember your choice and to associate anonymous events with your visit. You can change your choice at any time by clearing this site's cookies and local storage.</p>
+      <p><strong>Analytics are opt-in.</strong> On your first visit a cookie notice appears. The site loads PostHog only after you accept. If you decline, the page makes no request to PostHog, no analytics cookies are set and no events are sent. If you accept, PostHog sets a small cookie to remember your choice and to associate anonymous events with your visit. You can change your choice at any time by clearing this site's cookies and local storage.</p>
       <p>PostHog does not receive your name, your portfolios, your balances, your transactions or any other personal data. Events carry only an anonymous identifier. The desktop application stays fully offline and sends no analytics unless you separately opt in from inside the application.</p>
     </section>
 

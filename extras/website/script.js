@@ -131,7 +131,40 @@
     }
   }
 
-  // Analytics: PostHog loads opted out; nothing is sent until the visitor accepts.
+  // Analytics: PostHog loads only after the visitor accepts. Before that, the
+  // page makes no request to it. deploy.sh writes the key into the meta tag.
+  const POSTHOG_SCRIPT = "https://eu-assets.i.posthog.com/static/array.js";
+  let posthogLoading = null;
+
+  function posthogKey() {
+    const meta = $('meta[name="posthog-key"]');
+    const key = meta ? meta.content : "";
+    return /^phc_/.test(key) && key !== "phc_PLACEHOLDER" ? key : "";
+  }
+
+  function loadPostHog() {
+    if (posthogLoading) return posthogLoading;
+    posthogLoading = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = POSTHOG_SCRIPT;
+      script.async = true;
+      script.onload = () => {
+        window.posthog.init(posthogKey(), {
+          api_host: "https://eu.i.posthog.com",
+          capture_pageview: true,
+          disable_session_recording: true,
+        });
+        resolve();
+      };
+      script.onerror = reject;
+      document.head.append(script);
+    });
+    posthogLoading.catch(() => {
+      posthogLoading = null;
+    });
+    return posthogLoading;
+  }
+
   function consent(value) {
     try {
       if (value) localStorage.setItem(CONSENT_KEY, value);
@@ -142,25 +175,21 @@
   }
 
   function track(name, props) {
-    try {
-      if (window.posthog && consent() === "accepted") window.posthog.capture(name, props || {});
-    } catch (err) {}
+    if (!posthogLoading || consent() !== "accepted") return;
+    posthogLoading.then(() => window.posthog.capture(name, props || {})).catch(() => {});
   }
 
   function setAnalytics(on) {
     consent(on ? "accepted" : "declined");
-    try {
-      if (!window.posthog) return;
-      if (on) {
-        window.posthog.opt_in_capturing();
-        window.posthog.capture("$pageview");
-      } else {
-        window.posthog.opt_out_capturing();
-      }
-    } catch (err) {}
+    if (on) {
+      loadPostHog().then(() => window.posthog.opt_in_capturing()).catch(() => {});
+    } else if (window.posthog) {
+      window.posthog.opt_out_capturing();
+    }
   }
 
   function initCookieBanner() {
+    if (!posthogKey()) return;
     const stored = consent();
     if (stored) return setAnalytics(stored === "accepted");
 
