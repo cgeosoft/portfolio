@@ -1,5 +1,5 @@
 # Cloudflare Pages response headers. Conservative on purpose: no script-src or
-# connect-src policy, so PostHog, the GitHub API and the Binance quotes keep
+# connect-src policy, so PostHog and the GitHub API keep
 # working. Only transport, sniffing, referrer and framing are constrained.
 /*
   Strict-Transport-Security: max-age=31536000
