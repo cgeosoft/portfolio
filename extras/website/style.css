@@ -1,6 +1,10 @@
 /* Portfolio website. One stylesheet for the home, terms and metrics pages.
  * Tokens follow modules/gui/src/index.css so the site looks like the app. */
 
+@font-face { font-family: "Plus Jakarta Sans"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2"); }
+@font-face { font-family: "Sansation"; font-style: normal; font-weight: 700; font-display: swap; src: url("assets/fonts/sansation-700-latin.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 600; font-display: swap; src: url("assets/fonts/jetbrains-mono-latin.woff2") format("woff2"); }
+
 :root {
   --canvas: #07090e;
   --widget: #131722;

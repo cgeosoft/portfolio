@@ -13,6 +13,7 @@ The site uses vanilla HTML, `style.css`, `script.js`, `graph.js` and `tour.js`. 
 - `sponsorship/index.html` - the offer for sponsors: the matched marketing budget, the example banner from `sponsor/` live in an iframe (`_headers` allows framing it from the same origin), and the placements with screenshots from `assets/sponsorship/`. Placements the app does not have yet are drawn over the screenshot and marked "Preview". Linked from every footer.
 - `sponsor/index.html` - self-contained sponsor page (dark theme) with its own inline styles.
 - `sponsor/light/index.html` - self-contained sponsor page (light theme) for light mode.
+- `assets/fonts/` - self-hosted fonts (Latin subset) with their OFL licenses. `style.css` loads them. The site makes no request to Google Fonts.
 - `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x900, an open analysis with the demo portfolio; README and og:image), `tour/` (generated, see Screenshots).
 
 ## Local preview
