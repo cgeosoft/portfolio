@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.17.0] - 2026-11-05
+
+### Added
+- Guided Analysis is a new way to review your portfolio. An AI works through stages and shows its evidence as a graph that builds step by step.
+- The new Analysis tab lists your brief and your runs by month. Each run shows its stages in a centered stepper with a tooltip for every stage.
+- You can use arrow keys, Home and End to move between the stages of a run.
+- A portfolio brief describes your goals and rules. You can fill it in with a form or a guided wizard, and the form works without an AI provider.
+- The Overview tab has a Suggested actions card with your top 3 open suggestions. You can mark them Done, Dismiss them, or see Why.
+- The Overview tab shows the date of the last analysis, badges for stale results and changed briefs, and a Run analysis button.
+- The Insights tab holds exposure, income and markets. Old links and saved tabs still work.
+- New settings let you choose how Guided Analysis uses tool calling with your AI model.
+- The app now starts in the tray at login if it was in the tray the last time you closed it.
+
+### Changed
+- The weekly schedule now always runs Guided Analysis.
+- The last analysis is shown in a summary, and the run status, stats and actions are in a box in the right panel.
+- The Settings button is no longer in the top menu bar. Use File > Settings or Ctrl+, to open Settings.
+- The weekly report now asks for 700 to 1,400 words.
+- Prices of the same data are now requested from the market data provider at most once an hour, and failed requests are not retried for 2 minutes. This means fewer requests and less waiting.
+- End-of-day price history and dividend and split history are cached longer.
+- Suggestions now need a matching finding and evidence, and the short report links to graph nodes.
+- Only the newest 10 analysis runs are kept for each portfolio.
+- All interface languages now include the text for the brief and Guided Analysis.
+
+### Fixed
+- A Guided Analysis run now fails clearly when no finding can be verified or the model gives an unreadable answer. It no longer says nothing needs to change, and your open suggestions stay as they were.
+- Number checks in Guided Analysis now read more number formats, and they match units and signs.
+- Buy suggestions that break your rules, or that cannot be paid for by sales and cash, are now dropped.
+- The evidence graph was invisible because it had no height. It now shows, with correct colors.
+- A failed refresh no longer closes the run you have open.
+- Menus no longer flicker when they open on Linux.
+- Live updates of the window work again in development mode.
+- Tests no longer touch your real data folder.
+
+### Removed
+- The old report generation screens, report streaming and PDF export are gone.
+- The weekly analysis mode setting is gone.
+
+### Security
+- Every text sent to an AI model is now checked, and it is refused if it holds amounts or quantities from your portfolio.
+- The check reads many number formats, including other digit scripts and different thousand marks.
+- The weekly summary is checked too, and the portfolio brief cannot contain money amounts.
+- Buy prices and manual prices are no longer sent to the AI model in suggestions.
+- Tests can no longer reach the internet by accident.
+
+
 ## [0.16.1] - 2026-10-31
 
 ### Changed
