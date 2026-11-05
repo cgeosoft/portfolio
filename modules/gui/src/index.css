@@ -721,17 +721,7 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(221, 60, 115, 0.18);
 }
 
-@keyframes app-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* No open animation: in WebKitGTK the fade flickers and shows the page through the menu. */
 .app-menu {
   position: absolute;
   left: 0;
@@ -744,8 +734,6 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(17, 21, 32, 0.98);
   box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(221, 60, 115, 0.08);
-  transform-origin: top;
-  animation: app-menu-in 0.12s ease-out;
 }
 
 /* A menu that opens upward, for the status bar. */
@@ -754,7 +742,6 @@ html.light .custom-scrollbar::-webkit-scrollbar-thumb {
   bottom: 100%;
   margin-top: 0;
   margin-bottom: 0.375rem;
-  transform-origin: bottom;
 }
 
 .app-menu-separator {
@@ -955,10 +942,6 @@ html.light .app-menu {
   overscroll-behavior: contain;
 }
 
-.cx-select-menu[data-placement="top"] {
-  transform-origin: bottom;
-}
-
 .cx-select-menu .cx-menu-item {
   flex-shrink: 0;
 }
@@ -973,17 +956,7 @@ html.light .app-menu {
    Custom popover menus
    -------------------------------------------------------------------------- */
 
-@keyframes cx-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
+/* No open animation, as on .app-menu. */
 .cx-menu {
   background-color: rgba(17, 23, 38, 0.98);
   background-image: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(11, 15, 25, 0.35));
@@ -993,9 +966,6 @@ html.light .app-menu {
   box-shadow:
     0 24px 48px -16px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(var(--accent-rgb), 0.06);
-  
-  transform-origin: top;
-  animation: cx-menu-in 0.14s ease-out;
 }
 
 .cx-menu-label {
