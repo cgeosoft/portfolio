@@ -46,8 +46,6 @@ export interface AppMenuBarProps {
   onAddTransaction: () => void;
   onManagePortfolios: () => void;
   onOpenSettings: (section?: any) => void;
-  /** The Settings page is on screen: marks the settings button at the right edge. */
-  isSettingsOpen?: boolean;
   onSelectTab: (tab: PortfolioTabKey) => void;
   activeTab: string;
   hideCurrencyValues: boolean;
@@ -97,7 +95,6 @@ export function AppMenuBar({
   onAddTransaction,
   onManagePortfolios,
   onOpenSettings,
-  isSettingsOpen = false,
   onSelectTab,
   activeTab,
   hideCurrencyValues,
@@ -401,19 +398,6 @@ export function AppMenuBar({
             <span>{t("layout.menu.lockShort")}</span>
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            closeMenu();
-            onOpenSettings();
-          }}
-          className="app-menubar-trigger flex items-center"
-          data-open={isSettingsOpen}
-          title={t("layout.header.settingsShortcut", { shortcut: "Ctrl+," })}
-          aria-label={t("layout.header.settings")}
-        >
-          <Settings className="w-3.5 h-3.5" />
-        </button>
         {onToggleAssistant && (
           <button
             type="button"

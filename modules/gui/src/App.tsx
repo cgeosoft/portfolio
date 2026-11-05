@@ -1985,7 +1985,6 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         pinEnabled={pinEnabled}
-        isSettingsOpen={view === "settings"}
         onLock={handleLock}
       />
       )}
