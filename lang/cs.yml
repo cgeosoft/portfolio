@@ -1558,6 +1558,16 @@ settings:
     storedPlaceholder: "•••••••• (uloženo)"
     showHide: "Zobrazit nebo skrýt hodnotu"
     storedHint: "Hodnota je uložena. Zadejte novou, která ji nahradí, nebo něco napište a pole vymažte, čímž ji odstraníte."
+  privacy:
+    noticeTitle: "Zásady ochrany soukromí"
+    noticeDescription: "Co každá možnost odesílá, kdo to přijímá a jak požádat o smazání."
+    open: "Otevřít"
+    idTitle: "ID analytiky"
+    idDescription: "Náhodné ID, které odesílá analytika používání. Žádost o smazání toto ID vyžaduje, proto ho před obnovením zkopírujte."
+    copy: "Kopírovat"
+    copied: "Zkopírováno"
+    reset: "Obnovit"
+    localOnly: "Změňte to v okně desktopové aplikace."
   catalog:
     marketQuotesInterval:
       title: "Aktualizovat ceny každých"
@@ -1575,9 +1585,12 @@ settings:
     closeToTray:
       title: "Běžet i po zavření okna"
       description: "Po zavření okna Portfolio dál běží jako ikona v oznamovací oblasti vedle hodin, takže naplánované přehledy a upozornění se dál odesílají. Ukončete ho z této ikony."
-    telemetryEnabled:
-      title: "Sdílet anonymní statistiky používání"
-      description: "Sdělte vývojářům, které funkce se používají, a pomozte tak Portfolio vylepšit. Pozice, zůstatky a transakce se nikdy neodesílají."
+    analyticsEnabled:
+      title: "Analytika používání"
+      description: "Odesílat události funkcí, například spuštění aplikace, s náhodným ID této instalace. Vidíme tak, které funkce lidé používají."
+    errorReportingEnabled:
+      title: "Hlášení chyb"
+      description: "Odeslat hlášení o pádu, když aplikace selže. Hlášení obsahuje typ chyby, místo v kódu, verzi aplikace a váš operační systém. Neobsahuje ID instalace ani text chyby."
     checkForUpdates:
       title: "Kontrolovat aktualizace"
       description: "Hledat novou verzi při spuštění Portfolia a poté každou hodinu."
@@ -1607,7 +1620,7 @@ settings:
     startingTitle: "Spouštění a zavírání"
     helpTitle: "Nápověda"
     helpQuestion: "Něco nefunguje nebo máte nápad?"
-    helpText: "Napište na {email}. Vaše verze se doplní a můžete přiložit anonymní protokol aplikace za poslední den."
+    helpText: "Napište na {email}. Vaše verze je už vyplněná a můžete přiložit protokol aplikace za poslední den s odstraněnými soukromými údaji."
     reportIssue: "Nahlásit problém"
     shortcutsTitle: "Klávesové zkratky"
     shortcuts:
@@ -1927,14 +1940,14 @@ settings:
   support:
     title: "Nahlásit problém"
     description: "Otevřete požadavek na technickou podporu nebo nahlaste problém přímo na {email}."
-    guaranteeTitle: "Záruka důsledné anonymizace protokolů"
-    guaranteeText: "Všechny záznamy diagnostického protokolu jsou před zabalením do souboru ZIP zcela anonymizovány. Uživatelská jména, domovské adresáře, cesty k souborům, názvy portfolií, tickery, množství, finanční hodnoty a klíče API jsou automaticky odstraněny a skryty."
+    guaranteeTitle: "Odstranění soukromých údajů z protokolů"
+    guaranteeText: "Aplikace odstraní z protokolů známé soukromé údaje dříve, než je zabalí do souboru ZIP: uživatelská jména, domovské složky, názvy portfolií, částky a klíče API. Používá pevné vzory, proto soubor před odesláním zkontrolujte."
     recipient: "E-mail příjemce"
     subject: "Předmět požadavku"
     subjectPlaceholder: "např. Problém s importem transakcí nebo synchronizací cen"
     message: "Popis problému (volitelné)"
     messagePlaceholder: "Popište, co se stalo, nebo kroky k reprodukci…"
-    includeLogs: "Přiložit protokoly za poslední den jako anonymizovanou přílohu ZIP"
+    includeLogs: "Přiložit protokol za poslední den s odstraněnými soukromými údaji"
     includeLogsHint: "Zabalí diagnostické události a systémová metadata za posledních 24 hodin do souboru ZIP. Osobní cesty k souborům, názvy portfolií, finanční hodnoty a přihlašovací údaje jsou automaticky skryty."
     openedSaved: "E-mail pro podporu otevřen. Diagnostický archiv byl uložen do složky Stažené soubory; přiložte ho k e-mailu."
     openedDownloaded: "E-mail pro podporu otevřen. Diagnostický archiv byl stažen; přiložte ho k e-mailu."
@@ -1961,7 +1974,7 @@ setup:
     title: "Vítejte v {app}"
     subtitle: "Sledujte akcie, ETF a kryptoměny na jednom místě."
     privateTitle: "Soukromí od základu"
-    privateText: "Vaše data zůstávají v tomto počítači. Žádný účet, žádný cloud."
+    privateText: "Vaše pozice a částky zůstávají v tomto počítači. Žádný účet, žádný cloud."
     pricesTitle: "Ceny, které se aktualizují samy"
     pricesText: "Zjistěte, jakou hodnotu mají vaše investice dnes, ve vaší vlastní měně."
     assistantTitle: "AI asistent"
@@ -1990,12 +2003,20 @@ setup:
       etfs: "ETF"
       crypto: "Krypto"
   telemetry:
-    title: "Anonymní analytika"
-    description: "Pomozte nám vylepšit {app} sdílením telemetrie, která chrání soukromí."
-    toggle: "Zapnout anonymní telemetrii"
-    posthog: "PostHog používáme k zaznamenávání základních událostí aplikace (např. spuštění aplikace, import CSV, vytvoření reportu). Identifikace probíhá pomocí náhodného UUID."
-    guaranteeTitle: "Přísná záruka soukromí:"
-    guaranteeText: "Pozice v portfoliu, peněžní hodnoty, částky transakcí, názvy brokerů ani osobní údaje se nikdy neodesílají. Změnit to můžete kdykoli v Nastavení."
+    title: "Pomozte vylepšit aplikaci"
+    description: "Obě možnosti jsou vypnuté. Zapněte jen to, co chcete. Můžete to kdykoli změnit v Nastavení."
+    analyticsTitle: "Analytika používání"
+    analyticsText: "Odesílat události funkcí, například spuštění aplikace, s náhodným ID této instalace. Vidíme tak, které funkce lidé používají."
+    errorsTitle: "Hlášení chyb"
+    errorsText: "Odeslat hlášení o pádu, když aplikace selže. Hlášení obsahuje typ chyby, místo v kódu, verzi aplikace a váš operační systém. Neobsahuje ID instalace ani text chyby."
+    vendorText: "PostHog tato data přijímá za nás. Vidí vaši IP adresu a neukládá ji."
+    guaranteeTitle: "Nikdy se neodesílá:"
+    guaranteeText: "Pozice, částky, tickery, transakce a názvy účtů."
+    noticeLink: "Přečtěte si Zásady ochrany soukromí"
+  privacyPrompt:
+    title: "Vaše volby soukromí"
+    description: "{app} má nově dvě oddělené možnosti. Hlášení chyb zůstane vypnuté, dokud ho nezapnete."
+    save: "Uložit"
 
 service:
   assistant:

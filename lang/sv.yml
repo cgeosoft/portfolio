@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (sparad)"
     showHide: "Visa eller dölj värdet"
     storedHint: "Ett värde är sparat. Skriv ett nytt för att ersätta det, eller skriv och töm fältet för att ta bort det."
+  privacy:
+    noticeTitle: "Integritetsmeddelande"
+    noticeDescription: "Vad varje alternativ skickar, vem som tar emot det och hur du begär radering."
+    open: "Öppna"
+    idTitle: "Analys-ID"
+    idDescription: "Ett slumpmässigt ID som användningsstatistiken skickar. En raderingsbegäran kräver detta ID, så kopiera det innan du återställer det."
+    copy: "Kopiera"
+    copied: "Kopierat"
+    reset: "Återställ"
+    localOnly: "Ändra detta i skrivbordsfönstret."
   catalog:
     marketQuotesInterval:
       title: "Uppdatera kurser var"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Fortsätt köra när fönstret stängs"
       description: "När fönstret stängs fortsätter Portfolio att köra som en ikon i systemfältet bredvid klockan, så att schemalagda översikter och larm fortfarande skickas. Avsluta från den ikonen."
-    telemetryEnabled:
-      title: "Dela anonym användningsstatistik"
-      description: "Berätta för utvecklarna vilka funktioner som används, för att hjälpa till att förbättra Portfolio. Innehav, saldon och transaktioner skickas aldrig."
+    analyticsEnabled:
+      title: "Användningsstatistik"
+      description: "Skicka funktionshändelser, till exempel att appen startat, med ett slumpmässigt installations-ID. Det visar oss vilka funktioner folk använder."
+    errorReportingEnabled:
+      title: "Felrapportering"
+      description: "Skicka en kraschrapport när appen fallerar. Rapporten innehåller feltyp, kodplats, appversion och ditt operativsystem. Den innehåller inget installations-ID och inget felmeddelande."
     checkForUpdates:
       title: "Sök efter uppdateringar"
       description: "Sök efter en ny version när Portfolio startar och därefter varje timme."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Start och avslutning"
     helpTitle: "Hjälp"
     helpQuestion: "Fungerar något inte, eller har du en idé?"
-    helpText: "Skriv till {email}. Din version är ifylld och du kan bifoga en anonym applogg från det senaste dygnet."
+    helpText: "Skriv till {email}. Din version fylls i, och du kan bifoga en applogg för det senaste dygnet där privata uppgifter har tagits bort."
     reportIssue: "Rapportera ett problem"
     shortcutsTitle: "Kortkommandon"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Rapportera ett problem"
     description: "Öppna ett tekniskt supportärende eller rapportera ett problem direkt till {email}."
-    guaranteeTitle: "Garanti för strikt anonymisering av loggar"
-    guaranteeText: "Alla diagnostiska loggposter anonymiseras helt innan de packas i ZIP-filen. Personliga användarnamn, hemkataloger, filsökvägar, portföljnamn, tickers, antal, ekonomiska värden och API-nycklar tas bort och maskeras automatiskt."
+    guaranteeTitle: "Borttagning av privata data i loggar"
+    guaranteeText: "Appen tar bort kända privata data från loggarna innan den packar ZIP-filen: användarnamn, hemmappar, portföljnamn, belopp och API-nycklar. Den använder fasta mönster, så kontrollera filen innan du skickar den."
     recipient: "Mottagarens e-post"
     subject: "Ärendets ämne"
     subjectPlaceholder: "t.ex. Problem med import av transaktioner eller synkronisering av kurser"
     message: "Beskrivning av problemet (valfritt)"
     messagePlaceholder: "Beskriv vad som hände eller stegen för att återskapa det…"
-    includeLogs: "Skicka loggar från det senaste dygnet som anonymiserad ZIP-bilaga"
+    includeLogs: "Bifoga en logg från det senaste dygnet utan privata data"
     includeLogsHint: "Packar diagnostiska händelser och systemmetadata från de senaste 24 timmarna i en ZIP-fil. Personliga filsökvägar, portföljnamn, ekonomiska värden och inloggningsuppgifter maskeras automatiskt."
     openedSaved: "Supportmejlet har öppnats. Diagnostikarkivet sparades i mappen Hämtade filer; bifoga det till mejlet."
     openedDownloaded: "Supportmejlet har öppnats. Diagnostikarkivet laddades ned; bifoga det till mejlet."
@@ -1904,7 +1917,7 @@ setup:
     title: "Välkommen till {app}"
     subtitle: "Följ dina aktier, ETF:er och krypto på ett ställe."
     privateTitle: "Privat från grunden"
-    privateText: "Dina data stannar på den här datorn. Inget konto, inget moln."
+    privateText: "Dina innehav och belopp stannar på den här datorn. Inget konto, inget moln."
     pricesTitle: "Kurser som uppdateras av sig själva"
     pricesText: "Se vad dina investeringar är värda i dag, i din egen valuta."
     assistantTitle: "En AI-assistent"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "ETF:er"
       crypto: "Krypto"
   telemetry:
-    title: "Anonym analys"
-    description: "Hjälp oss att förbättra {app} genom att dela integritetsskyddad telemetri."
-    toggle: "Aktivera anonym telemetri"
-    posthog: "Vi använder PostHog för att registrera grundläggande apphändelser (t.ex. appen startad, CSV importerad, rapport skapad). Identifieras med ett slumpmässigt UUID."
-    guaranteeTitle: "Strikt integritetsgaranti:"
-    guaranteeText: "Portföljinnehav, penningvärden, transaktionsbelopp, mäklarnamn eller personliga identiteter skickas aldrig. Du kan ändra detta när som helst i Inställningar."
+    title: "Hjälp till att förbättra appen"
+    description: "Båda alternativen är avstängda. Slå bara på det du vill ha. Du kan ändra detta när som helst i Inställningar."
+    analyticsTitle: "Användningsstatistik"
+    analyticsText: "Skicka funktionshändelser, till exempel att appen startat, med ett slumpmässigt installations-ID. Det visar oss vilka funktioner folk använder."
+    errorsTitle: "Felrapportering"
+    errorsText: "Skicka en kraschrapport när appen fallerar. Rapporten innehåller feltyp, kodplats, appversion och ditt operativsystem. Den innehåller inget installations-ID och inget felmeddelande."
+    vendorText: "PostHog tar emot dessa data åt oss. Tjänsten ser din IP-adress och lagrar den inte."
+    guaranteeTitle: "Skickas aldrig:"
+    guaranteeText: "Innehav, belopp, tickers, transaktioner och namn på dina investeringskonton."
+    noticeLink: "Läs integritetsmeddelandet"
+  privacyPrompt:
+    title: "Dina integritetsval"
+    description: "{app} har nu två separata alternativ. Felrapportering förblir avstängd tills du slår på den."
+    save: "Spara"
 
 service:
   assistant:

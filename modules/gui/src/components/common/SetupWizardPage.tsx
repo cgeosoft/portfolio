@@ -5,7 +5,7 @@ import {
   Lock,
   BarChart3,
   Bot,
-  Activity,
+  Bug,
   ArrowRight,
   Check,
   Zap,
@@ -15,16 +15,34 @@ import {
   RefreshCw,
   Languages,
 } from "lucide-react";
+import { PRIVACY_NOTICE_URL } from "portfolio-shared/brand";
 import { api } from "../../api";
 import { rpc } from "../../rpc";
 import { applyLanguageNow, getLanguage, switchLanguage, systemLanguage, t } from "../../i18n";
 import { BrandScreen } from "./BrandScreen";
 import { LanguagePicker, LanguageTierNote } from "./LanguageSelect";
 import { WebsitePage } from "./WebsitePage";
-import { APP_NAME } from "../../environment";
+import { APP_NAME, openExternal } from "../../environment";
+import { Toggle } from "../settings/SettingsFields";
 import type { SetupStep } from "./setup-steps";
 
 const STEP_COUNT = 4;
+
+/** One privacy option of the last step. Both start off and neither depends on the other. */
+function ConsentOption({ icon: Icon, title, text, checked, onChange }: { icon: typeof Bug; title: string; text: string; checked: boolean; onChange: () => void }) {
+  return (
+    <div className="p-4 rounded-xl bg-card border border-line space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Icon className="w-4 h-4 text-mint" />
+          <span className="text-xs font-bold text-slate-200">{title}</span>
+        </div>
+        <Toggle checked={checked} onChange={onChange} label={title} />
+      </div>
+      <p className="text-[11px] text-slate-400 leading-relaxed">{text}</p>
+    </div>
+  );
+}
 
 interface SetupWizardPageProps {
   isOpen: boolean;
@@ -127,7 +145,8 @@ export function SetupWizardPage({
   const [step, setStep] = useState<SetupStep>(startStep);
   const [termsChecked, setTermsChecked] = useState(false);
   const [populateDemo, setPopulateDemo] = useState(true);
-  const [enableTelemetry, setEnableTelemetry] = useState(false);
+  const [enableAnalytics, setEnableAnalytics] = useState(false);
+  const [enableErrorReporting, setEnableErrorReporting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** The full Terms of Use, shown in place of the card so the app behind stays covered. */
@@ -219,7 +238,8 @@ export function SetupWizardPage({
     try {
       await rpc.request.completeSetup({
         populateDemo,
-        enableTelemetry,
+        enableAnalytics,
+        enableErrorReporting,
       });
       await commitLanguage();
       onComplete();
@@ -431,34 +451,22 @@ export function SetupWizardPage({
               <p className="text-xs text-slate-400 leading-relaxed">{t("setup.telemetry.description", { app: APP_NAME })}</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-card border border-line space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Activity className="w-4 h-4 text-mint" />
-                  <span className="text-xs font-bold text-slate-200">{t("setup.telemetry.toggle")}</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={enableTelemetry}
-                  onClick={() => setEnableTelemetry((prev) => !prev)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                    enableTelemetry ? "bg-[#DD3C73]" : "bg-slate-800"
-                  }`}
-                >
-                  <span className="sr-only">{t("setup.telemetry.toggle")}</span>
-                  <span
-                    aria-hidden="true"
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      enableTelemetry ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                {t("setup.telemetry.posthog")}
-              </p>
-            </div>
+            <ConsentOption
+              icon={BarChart3}
+              title={t("setup.telemetry.analyticsTitle")}
+              text={t("setup.telemetry.analyticsText")}
+              checked={enableAnalytics}
+              onChange={() => setEnableAnalytics((prev) => !prev)}
+            />
+            <ConsentOption
+              icon={Bug}
+              title={t("setup.telemetry.errorsTitle")}
+              text={t("setup.telemetry.errorsText")}
+              checked={enableErrorReporting}
+              onChange={() => setEnableErrorReporting((prev) => !prev)}
+            />
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">{t("setup.telemetry.vendorText")}</p>
 
             <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-emerald-300">
               <Shield className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -466,6 +474,15 @@ export function SetupWizardPage({
                 <strong>{t("setup.telemetry.guaranteeTitle")}</strong> {t("setup.telemetry.guaranteeText")}
               </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => openExternal(PRIVACY_NOTICE_URL)}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-accent-300 transition-colors cursor-pointer"
+            >
+              <span>{t("setup.telemetry.noticeLink")}</span>
+              <ExternalLink className="w-3 h-3" />
+            </button>
           </StepPanel>
         </div>
 

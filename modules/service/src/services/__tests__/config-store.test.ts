@@ -61,7 +61,8 @@ describe("defaults and storage", () => {
     const { deviceId: _deviceId, ...cfg } = loadConfig();
     expect(cfg).toEqual({
       setupCompleted: false,
-      telemetryEnabled: false,
+      analyticsEnabled: false,
+      errorReportingEnabled: false,
       baseCurrency: "EUR",
       hideCurrencyValues: false,
       llmProvider: "",
@@ -142,24 +143,39 @@ describe("defaults and storage", () => {
   });
 
   it("stores strings as text and everything else as JSON", () => {
-    updateConfig({ baseCurrency: "USD", zoomLevel: 1.25, telemetryEnabled: true, llmModels: { x: "m" } });
+    updateConfig({ baseCurrency: "USD", zoomLevel: 1.25, analyticsEnabled: true, llmModels: { x: "m" } });
     const r = rows();
     expect(r.baseCurrency).toBe("USD");
     expect(r.zoomLevel).toBe("1.25");
-    expect(r.telemetryEnabled).toBe("true");
+    expect(r.analyticsEnabled).toBe("true");
     expect(r.llmModels).toBe('{"x":"m"}');
   });
 
   it("decodes hand-written rows", () => {
     rawRow("zoomLevel", "{bad");
     rawRow("marketQuotesInterval", "30");
-    rawRow("telemetryEnabled", "true");
+    rawRow("analyticsEnabled", "true");
     rawRow("baseCurrency", '"USD"');
     const cfg = loadConfig();
     expect(cfg.zoomLevel).toBe(1);
     expect(cfg.marketQuotesInterval).toBe(30);
-    expect(cfg.telemetryEnabled).toBe(true);
+    expect(cfg.analyticsEnabled).toBe(true);
     expect(cfg.baseCurrency).toBe('"USD"');
+  });
+
+  it("moves an old telemetry choice to analytics only", () => {
+    rawRow("telemetryEnabled", "true");
+    const cfg = loadConfig();
+    expect(cfg.analyticsEnabled).toBe(true);
+    expect(cfg.errorReportingEnabled).toBe(false);
+    expect(rows().telemetryEnabled).toBeUndefined();
+    expect(rows().analyticsEnabled).toBe("true");
+  });
+
+  it("keeps an old telemetry choice that was off", () => {
+    rawRow("telemetryEnabled", "false");
+    expect(loadConfig().analyticsEnabled).toBe(false);
+    expect(rows().telemetryEnabled).toBeUndefined();
   });
 
   it("coerces a string number for a numeric key through JSON", () => {

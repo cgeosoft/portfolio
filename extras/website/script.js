@@ -152,7 +152,14 @@
         window.posthog.init(posthogKey(), {
           api_host: "https://eu.i.posthog.com",
           capture_pageview: true,
+          autocapture: false,
+          rageclick: false,
+          capture_dead_clicks: false,
+          capture_heatmaps: false,
+          capture_exceptions: false,
+          capture_performance: false,
           disable_session_recording: true,
+          disable_surveys: true,
         });
         resolve();
       };
@@ -199,8 +206,8 @@
     banner.setAttribute("aria-label", "Cookie consent");
     banner.innerHTML =
       '<div class="cookie-banner-title">Analytics?</div>' +
-      "<p>With your OK, PostHog counts anonymous page views and download clicks. No personal data. " +
-      '<a href="/terms/#cookie-policy">Cookie policy</a>.</p>' +
+      "<p>With your OK, PostHog records page views and download clicks with a random ID. " +
+      '<a href="/privacy/">Privacy Notice</a>.</p>' +
       '<div class="cookie-banner-actions">' +
       '<button type="button" class="btn" data-choice="no">Decline</button>' +
       '<button type="button" class="btn btn-primary" data-choice="yes">Accept</button>' +

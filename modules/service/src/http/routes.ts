@@ -22,7 +22,9 @@ import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../s
 import { createDatabaseBackup } from "../services/backup";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
-import { telemetry } from "../services/telemetry";
+import { analyticsProvider, telemetry } from "../services/telemetry";
+import { errorReporting } from "../services/error-reporting";
+import { applyConsent, consentStatus, resetAnalyticsId, takeConsentChanges } from "../services/privacy-consent";
 import { sendGotify } from "../services/gotify";
 import { sendNtfy } from "../services/ntfy";
 import { OPENROUTER_CALLBACK_PATH, callbackPage, completeOpenRouterConnect, openRouterConnectStatus, startOpenRouterConnect } from "../services/openrouter-connect";
@@ -38,6 +40,7 @@ import { DEFAULT_BENCHMARK_SYMBOL } from "portfolio-shared/config-types";
 import { getCompanyIntel, getTranscriptResponse, parseIntelParts, summarizeTranscriptResponse } from "../services/intel/company";
 import { WEBPAGE_URL, SUPPORT_EMAIL } from "portfolio-shared/brand";
 import type { AppServices } from "../services/container";
+import type { PrivacyConsentResponse, PrivacyPromptAnswerRequest, ReportClientErrorRequest } from "portfolio-shared/api-types";
 import type {
   ChatWithPortfolioRequest,
   CompleteSetupRequest,
@@ -87,6 +90,12 @@ const PRE_TERMS_PATHS = new Set(["/api/auth/me", "/api/auth/accept-terms", "/api
 
 function authStatus() {
   return { pinEnabled: authService.isPinEnabled(), hasAcceptedTerms: authService.hasAcceptedTerms(), acceptedTermsAt: authService.acceptedTermsAt() };
+}
+
+/** Applies a changed privacy choice to the running clients, with no restart. */
+function reloadPrivacyClients(): void {
+  telemetry.reinitialize();
+  errorReporting.reinitialize();
 }
 
 function assertLocal(ctx: RequestContext, what: string): void {
@@ -521,7 +530,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       provider: body.provider,
       model: body.model,
     });
-    telemetry.capture("assistant_chat_sent", { provider: res.provider });
+    telemetry.capture("assistant_chat_sent", { provider: analyticsProvider(res.provider) });
     return res;
   });
 
@@ -640,7 +649,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.get("/api/config", () => maskSecrets(loadConfig()));
 
-  router.get("/api/settings", (): GetSettingsResponse => ({ settings: listSettings() }));
+  router.get("/api/settings", (ctx): GetSettingsResponse => ({ settings: listSettings(ctx.isLocal) }));
 
   router.patch("/api/config", async (ctx) => {
     const body = await ctx.body<Partial<DesktopConfig>>();
@@ -648,8 +657,14 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     for (const key of Object.keys(record)) if (!CONFIG_KEYS.has(key)) delete record[key];
     for (const key of PROTECTED_CONFIG_KEYS) delete record[key];
     await assertRemoteTargets(ctx, body.llmBaseUrl, ...Object.values(body.llmBaseUrls ?? {}), body.gotifyUrl, body.ntfyUrl);
-    const updated = updateConfig(unmaskUpdates(body, ctx.isLocal));
-    if ("telemetryEnabled" in body) telemetry.reinitialize();
+    const consent = takeConsentChanges(body);
+    if (consent) assertLocal(ctx, "Changing a privacy choice");
+    let updated = updateConfig(unmaskUpdates(body, ctx.isLocal));
+    if (consent) {
+      applyConsent(consent, "settings");
+      updated = loadConfig();
+      reloadPrivacyClients();
+    }
     if ("closeToTray" in body) writeDesktopSettingsFile();
     if (body.checkForUpdates === true) appUpdateService.checkForUpdates().catch(() => {});
     return maskSecrets(updated);
@@ -693,10 +708,31 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
       await portfolioService.createDemoPortfolio(loadConfig().baseCurrency);
       appLogger.logStep("success", "setup", "demo", "Demo portfolio created");
     }
-    updateConfig({ setupCompleted: true, telemetryEnabled: body.enableTelemetry === true });
-    telemetry.reinitialize();
-    telemetry.capture("setup_completed", { demo: body.populateDemo, telemetry: body.enableTelemetry });
+    updateConfig({ setupCompleted: true });
+    // Only the desktop window gives consent: a setup from another device leaves both options off.
+    applyConsent({ analytics: ctx.isLocal && body.enableAnalytics === true, errorReporting: ctx.isLocal && body.enableErrorReporting === true }, "setup");
+    reloadPrivacyClients();
+    telemetry.capture("setup_completed", { demo: body.populateDemo });
     return { success: true };
+  });
+
+  // ── privacy ─────────────────────────────────────────────────────────────
+
+  router.get("/api/privacy/consent", (ctx): PrivacyConsentResponse => consentStatus(ctx.isLocal));
+
+  router.put("/api/privacy/prompt-answer", async (ctx) => {
+    assertLocal(ctx, "Changing a privacy choice");
+    const body = await ctx.body<PrivacyPromptAnswerRequest>();
+    applyConsent({ analytics: body.analytics === true, errorReporting: body.errorReporting === true }, "update-prompt");
+    reloadPrivacyClients();
+    return consentStatus(true);
+  });
+
+  router.post("/api/privacy/reset-analytics-id", (ctx) => {
+    assertLocal(ctx, "Resetting the analytics ID");
+    const analyticsId = resetAnalyticsId();
+    telemetry.reinitialize();
+    return { analyticsId };
   });
 
   // ── app: info, updates, logs, support, files ────────────────────────────
@@ -724,6 +760,14 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     return appUpdateService.downloadUpdate(str(body.version, "version"), ctx.isLocal, (body.dialogTitle || "").trim() || "Download folder");
   });
   router.get("/api/app/update/download", () => appUpdateService.getDownloadState());
+
+  router.post("/api/app/error-report", async (ctx) => {
+    const body = await ctx.body<ReportClientErrorRequest>(64 * 1024);
+    if (body.source !== "boundary" && body.source !== "window") throw new HttpError(400, "source is not valid");
+    appLogger.logStep("error", "gui", body.source, `Uncaught error: ${String(body.stack ?? body.name ?? "unknown").slice(0, 8000)}`);
+    errorReporting.report({ name: body.name, stack: body.stack }, body.source === "boundary" ? "gui:boundary" : "gui:window");
+    return { success: true };
+  });
 
   router.post("/api/app/logs", async (ctx) => {
     logClientEvent(await ctx.body<Record<string, unknown>>(64 * 1024));

@@ -22,6 +22,7 @@ import { loadConfig, refreshAutostart, updateConfig } from "./config";
 import { getAppVersion, getEnvironmentName } from "./environment";
 import { createServices } from "./services/container";
 import { telemetry } from "./services/telemetry";
+import { errorReporting } from "./services/error-reporting";
 import { appUpdateService } from "./services/app-update";
 import { authService } from "./services/auth";
 import { writeDesktopSettingsFile } from "./services/desktop-settings";
@@ -56,6 +57,7 @@ dbTimer.end("success", `Database ready (${portfolioRepo.findAll().length} portfo
 
 const services = createServices();
 telemetry.initialize();
+errorReporting.initialize();
 telemetry.capture("app_launched");
 
 // ── background work ─────────────────────────────────────────────────────────
@@ -236,6 +238,7 @@ async function shutdown(): Promise<void> {
   stopMcpAccess();
   server.stop(true);
   await telemetry.shutdown();
+  await errorReporting.shutdown();
   closeDatabase();
   process.exit(0);
 }
@@ -245,7 +248,9 @@ process.on("SIGTERM", () => void shutdown());
 
 process.on("uncaughtException", (err) => {
   appLogger.logStep("error", "main", "uncaught", `Uncaught exception: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+  errorReporting.report(err, "service:uncaught");
 });
 process.on("unhandledRejection", (reason) => {
   appLogger.logStep("error", "main", "unhandled", `Unhandled promise rejection: ${reason instanceof Error ? (reason.stack ?? reason.message) : String(reason)}`);
+  errorReporting.report(reason, "service:unhandled");
 });

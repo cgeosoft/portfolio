@@ -170,9 +170,8 @@ cat << EOF > "${STAGE_DIR}/usr/share/metainfo/portfolio.appdata.xml"
       <li>Multiple portfolios, multiple currencies, and a demo portfolio to explore before adding your own data</li>
     </ul>
     <p>
-      Portfolio does not phone home. Anonymous usage statistics are off by default and only
-      ever switched on by you. Your holdings, balances and transactions are never sent
-      anywhere.
+      Usage analytics and error reporting are off by default and only ever switched on by
+      you. Your holdings, balances and transactions stay on your computer.
     </p>
   </description>
   <developer id="com.cgeosoft">
@@ -237,8 +236,8 @@ Description: Personal investment tracker that keeps your data on your PC
  Build your own dashboard from a catalogue of metric cards, follow
  performance history and asset allocation, and optionally ask for an
  AI-written briefing using a model on your own machine or a cloud provider
- with your own key. Anonymous usage statistics are off by default, and your
- holdings and transactions are never sent anywhere.
+ with your own key. Usage analytics and error reporting are off by default,
+ and your holdings and transactions stay on your computer.
 EOF
 chmod 644 "${STAGE_DIR}/DEBIAN/control"
 

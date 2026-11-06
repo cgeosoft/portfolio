@@ -4,6 +4,7 @@ import { api, ApiError } from "../../api";
 import { t } from "../../i18n";
 import type { McpAccessInfo, RemoteAccessInfo } from "portfolio-shared/api-types";
 import { PinInput, type PinInputHandle } from "../common/PinInput";
+import { PrivacyDetails } from "./PrivacyDetails";
 import { SectionHeader, SettingItem, SettingsFields, Toggle } from "./SettingsFields";
 
 const PIN_RULE = /^[0-9]{6}$/;
@@ -486,7 +487,7 @@ export function AccessRows({ onPinEnabledChange }: { onPinEnabledChange?: (enabl
   );
 }
 
-/** Settings → Privacy & Security: the app lock, signed-in devices, remote access and usage statistics. */
+/** Settings → Privacy & Security: the app lock, signed-in devices, remote access and the privacy options. */
 export function SecuritySection({ onPinEnabledChange }: { onPinEnabledChange?: (enabled: boolean) => void }) {
   return (
     <div className="cx-card p-5 sm:p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl space-y-6">
@@ -494,6 +495,7 @@ export function SecuritySection({ onPinEnabledChange }: { onPinEnabledChange?: (
       <div className="divide-y divide-slate-800/80">
         <AccessRows onPinEnabledChange={onPinEnabledChange} />
         <SettingsFields section="security" />
+        <PrivacyDetails />
       </div>
     </div>
   );

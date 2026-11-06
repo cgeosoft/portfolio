@@ -25,7 +25,7 @@ export const APP = {
   desktopEntry: {
     name: "Portfolio",
     genericName: "Personal Investment Tracker",
-    comment: "Offline-first personal investment portfolio tracker",
+    comment: "Personal investment portfolio tracker",
     categories: "Office;Finance;",
   },
   tray: {

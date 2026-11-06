@@ -76,9 +76,11 @@ export interface WindowStateConfig {
 export interface DesktopConfig {
   /** Whether the first-launch setup wizard has been completed */
   setupCompleted: boolean;
-  /** Whether anonymous PostHog telemetry is enabled */
-  telemetryEnabled: boolean;
-  /** Random device identifier (no PII) */
+  /** Consent for usage analytics. Change it through `privacy-consent.ts`. */
+  analyticsEnabled: boolean;
+  /** Consent for crash reports. Change it through `privacy-consent.ts`. */
+  errorReportingEnabled: boolean;
+  /** Random install ID, sent only with usage analytics */
   deviceId: string;
   /** Base display currency for portfolio valuations */
   baseCurrency: string;

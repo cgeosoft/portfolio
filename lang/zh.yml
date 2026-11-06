@@ -1492,6 +1492,16 @@ settings:
     storedPlaceholder: "••••••••（已保存）"
     showHide: "显示或隐藏值"
     storedHint: "已保存一个值。输入新值可替换它，输入后再清空字段可将其删除。"
+  privacy:
+    noticeTitle: "隐私声明"
+    noticeDescription: "每个选项发送什么、谁接收，以及如何申请删除。"
+    open: "打开"
+    idTitle: "分析 ID"
+    idDescription: "使用分析发送的随机 ID。删除请求需要此 ID，因此重置前请先复制。"
+    copy: "复制"
+    copied: "已复制"
+    reset: "重置"
+    localOnly: "请在桌面窗口中更改。"
   catalog:
     marketQuotesInterval:
       title: "价格更新频率"
@@ -1509,9 +1519,12 @@ settings:
     closeToTray:
       title: "关闭窗口后保持运行"
       description: "关闭窗口后，Portfolio 会以图标形式在时钟旁的系统托盘中继续运行，因此定时简报和提醒仍会发出。从该图标退出。"
-    telemetryEnabled:
-      title: "分享匿名使用统计"
-      description: "告诉开发者哪些功能被使用，以帮助改进 Portfolio。绝不会发送持仓、余额和交易。"
+    analyticsEnabled:
+      title: "使用分析"
+      description: "发送功能事件（例如应用启动）和一个随机的安装 ID。这能让我们了解大家使用哪些功能。"
+    errorReportingEnabled:
+      title: "错误报告"
+      description: "应用出错崩溃时发送崩溃报告。报告包含错误类型、代码位置、应用版本和您的操作系统。报告不含安装 ID，也不含错误消息。"
     checkForUpdates:
       title: "检查更新"
       description: "在 Portfolio 启动时及之后每小时检查一次新版本。"
@@ -1541,7 +1554,7 @@ settings:
     startingTitle: "启动与关闭"
     helpTitle: "帮助"
     helpQuestion: "遇到问题或有想法？"
-    helpText: "发送邮件至 {email}。版本号会自动填写，您还可以附上最近一天的匿名应用日志。"
+    helpText: "请写信至 {email}。系统会填入您的版本，您还可以附上最近一天已去除隐私数据的应用日志。"
     reportIssue: "报告问题"
     shortcutsTitle: "键盘快捷键"
     shortcuts:
@@ -1852,14 +1865,14 @@ settings:
   support:
     title: "报告问题"
     description: "提交技术支持工单，或直接向 {email} 报告问题。"
-    guaranteeTitle: "严格的日志匿名化保证"
-    guaranteeText: "所有诊断日志条目在打包成 ZIP 文件前都会完全匿名化。个人用户名、主目录、文件路径、投资组合名称、代码、数量、财务数值和 API 密钥都会被自动删除和遮盖。"
+    guaranteeTitle: "日志隐私数据清除"
+    guaranteeText: "打包 ZIP 文件前，应用会从日志中删除已知的隐私数据：用户名、主目录、投资组合名称、金额和 API 密钥。它使用固定的匹配规则，所以发送前请检查该文件。"
     recipient: "收件人邮箱"
     subject: "工单主题"
     subjectPlaceholder: "例如：交易导入或行情同步问题"
     message: "问题描述（可选）"
     messagePlaceholder: "描述发生了什么或重现步骤…"
-    includeLogs: "以匿名 ZIP 附件提交最近一天的日志"
+    includeLogs: "附上已清除隐私数据的最近一天日志"
     includeLogsHint: "将过去 24 小时的诊断事件和系统元数据打包成 ZIP 文件。个人文件路径、投资组合名称、财务数值和凭据会被自动遮盖。"
     openedSaved: "已打开支持邮件。诊断归档已保存到您的下载文件夹；请将其附加到邮件中。"
     openedDownloaded: "已打开支持邮件。诊断归档已下载；请将其附加到邮件中。"
@@ -1887,7 +1900,7 @@ setup:
     title: "欢迎使用 {app}"
     subtitle: "在一个地方跟踪您的股票、ETF 和加密货币。"
     privateTitle: "从设计上保护隐私"
-    privateText: "您的数据保存在这台电脑上。无需账户，不用云端。"
+    privateText: "您的持仓和金额保存在这台电脑上。无需账户，不用云端。"
     pricesTitle: "自动更新的价格"
     pricesText: "以您自己的货币查看投资今天的价值。"
     assistantTitle: "AI 助手"
@@ -1916,12 +1929,20 @@ setup:
       etfs: "ETF"
       crypto: "加密货币"
   telemetry:
-    title: "匿名分析"
-    description: "分享保护隐私的遥测数据，帮助我们改进 {app}。"
-    toggle: "启用匿名遥测"
-    posthog: "我们使用 PostHog 记录基本的应用事件（例如应用启动、CSV 导入、报告生成），以随机 UUID 标识。"
-    guaranteeTitle: "严格的隐私保证："
-    guaranteeText: "绝不会传输任何持仓、金额、交易金额、券商名称或个人身份信息。您可以随时在设置中更改此选项。"
+    title: "帮助改进应用"
+    description: "两个选项都已关闭。只开启您想要的选项。您可以随时在设置中更改。"
+    analyticsTitle: "使用分析"
+    analyticsText: "发送功能事件（例如应用启动）和一个随机的安装 ID。这能让我们了解大家使用哪些功能。"
+    errorsTitle: "错误报告"
+    errorsText: "应用出错崩溃时发送崩溃报告。报告包含错误类型、代码位置、应用版本和您的操作系统。报告不含安装 ID，也不含错误消息。"
+    vendorText: "PostHog 为我们接收这些数据。它能看到您的 IP 地址，但不会存储。"
+    guaranteeTitle: "绝不发送："
+    guaranteeText: "持仓、金额、股票代码、交易和投资账户名称。"
+    noticeLink: "阅读隐私声明"
+  privacyPrompt:
+    title: "您的隐私选择"
+    description: "{app} 现在有两个独立的选项。错误报告保持关闭，直到您开启。"
+    save: "保存"
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

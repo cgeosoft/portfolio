@@ -1517,6 +1517,16 @@ settings:
     storedPlaceholder: "•••••••• (tallennettu)"
     showHide: "Näytä tai piilota arvo"
     storedHint: "Arvo on tallennettu. Korvaa se kirjoittamalla uusi, tai poista se kirjoittamalla ja tyhjentämällä kenttä."
+  privacy:
+    noticeTitle: "Tietosuojaseloste"
+    noticeDescription: "Mitä kukin valinta lähettää, kuka sen vastaanottaa ja miten pyydät poistoa."
+    open: "Avaa"
+    idTitle: "Analytiikan tunnus"
+    idDescription: "Satunnainen tunnus, jonka käyttöanalytiikka lähettää. Poistopyyntö vaatii tämän tunnuksen, joten kopioi se ennen kuin palautat sen."
+    copy: "Kopioi"
+    copied: "Kopioitu"
+    reset: "Palauta"
+    localOnly: "Muuta tämä työpöytäikkunassa."
   catalog:
     marketQuotesInterval:
       title: "Päivitä hinnat"
@@ -1534,9 +1544,12 @@ settings:
     closeToTray:
       title: "Pidä käynnissä, kun ikkuna suljetaan"
       description: "Ikkunan sulkeminen jättää Portfolion käyntiin kuvakkeena ilmoitusalueelle kellon viereen, jotta ajastetut katsaukset ja ilmoitukset lähtevät edelleen. Lopeta sovellus tuosta kuvakkeesta."
-    telemetryEnabled:
-      title: "Jaa anonyymejä käyttötilastoja"
-      description: "Kerro kehittäjille, mitä ominaisuuksia käytetään, jotta Portfoliota voidaan parantaa. Omistuksia, saldoja ja tapahtumia ei koskaan lähetetä."
+    analyticsEnabled:
+      title: "Käyttöanalytiikka"
+      description: "Lähetä toimintotapahtumia, kuten sovelluksen käynnistys, satunnaisen asennustunnuksen kanssa. Näin näemme, mitä ominaisuuksia ihmiset käyttävät."
+    errorReportingEnabled:
+      title: "Virheraportointi"
+      description: "Lähetä kaatumisraportti, kun sovellus epäonnistuu. Raportti sisältää virheen tyypin, koodin sijainnin, sovelluksen version ja käyttöjärjestelmäsi. Se ei sisällä asennustunnusta eikä virheilmoitusta."
     checkForUpdates:
       title: "Tarkista päivitykset"
       description: "Etsi uutta versiota, kun Portfolio käynnistyy, ja sen jälkeen tunnin välein."
@@ -1566,7 +1579,7 @@ settings:
     startingTitle: "Käynnistys ja sulkeminen"
     helpTitle: "Ohje"
     helpQuestion: "Jokin ei toimi tai sinulla on idea?"
-    helpText: "Kirjoita osoitteeseen {email}. Versiosi täytetään valmiiksi, ja voit liittää anonyymin sovelluslokin viimeiseltä vuorokaudelta."
+    helpText: "Kirjoita osoitteeseen {email}. Versiosi täytetään valmiiksi, ja voit liittää mukaan viimeisen päivän sovelluslokin, josta yksityiset tiedot on poistettu."
     reportIssue: "Ilmoita ongelmasta"
     shortcutsTitle: "Pikanäppäimet"
     shortcuts:
@@ -1880,14 +1893,14 @@ settings:
   support:
     title: "Ilmoita ongelmasta"
     description: "Avaa tekninen tukipyyntö tai ilmoita ongelmasta suoraan osoitteeseen {email}."
-    guaranteeTitle: "Lokien tiukka anonymisointitakuu"
-    guaranteeText: "Kaikki diagnostiikkalokin merkinnät anonymisoidaan kokonaan ennen ZIP-tiedostoon pakkaamista. Käyttäjänimet, kotihakemistot, tiedostopolut, salkkujen nimet, tunnukset, määrät, rahamäärät ja API-avaimet poistetaan ja peitetään automaattisesti."
+    guaranteeTitle: "Lokien yksityisten tietojen poisto"
+    guaranteeText: "Sovellus poistaa lokeista tunnetut yksityiset tiedot ennen ZIP-tiedoston pakkaamista: käyttäjänimet, kotikansiot, salkkujen nimet, summat ja API-avaimet. Se käyttää kiinteitä kaavoja, joten tarkista tiedosto ennen lähettämistä."
     recipient: "Vastaanottajan sähköposti"
     subject: "Tukipyynnön aihe"
     subjectPlaceholder: "esim. Ongelma tapahtumien tuonnissa tai hintojen synkronoinnissa"
     message: "Ongelman kuvaus (valinnainen)"
     messagePlaceholder: "Kuvaa, mitä tapahtui, tai vaiheet ongelman toistamiseksi…"
-    includeLogs: "Lähetä viimeisen vuorokauden lokit anonymisoituna ZIP-liitteenä"
+    includeLogs: "Liitä viimeisen vuorokauden loki ilman yksityisiä tietoja"
     includeLogsHint: "Pakkaa edellisen 24 tunnin diagnostiikkatapahtumat ja järjestelmän metatiedot ZIP-tiedostoon. Henkilökohtaiset tiedostopolut, salkkujen nimet, rahamäärät ja tunnistetiedot peitetään automaattisesti."
     openedSaved: "Tukisähköposti avattiin. Diagnostiikka-arkisto tallennettiin Lataukset-kansioon; liitä se viestiin."
     openedDownloaded: "Tukisähköposti avattiin. Diagnostiikka-arkisto ladattiin; liitä se viestiin."
@@ -1915,7 +1928,7 @@ setup:
     title: "Tervetuloa käyttämään sovellusta {app}"
     subtitle: "Seuraa osakkeita, ETF:iä ja kryptoja yhdessä paikassa."
     privateTitle: "Yksityinen jo lähtökohtaisesti"
-    privateText: "Tietosi pysyvät tällä tietokoneella. Ei tiliä, ei pilveä."
+    privateText: "Omistuksesi ja summasi pysyvät tällä tietokoneella. Ei tiliä, ei pilveä."
     pricesTitle: "Hinnat päivittyvät itsestään"
     pricesText: "Näe sijoitustesi arvo tänään omassa valuutassasi."
     assistantTitle: "Tekoälyavustaja"
@@ -1944,12 +1957,20 @@ setup:
       etfs: "ETF:t"
       crypto: "Krypto"
   telemetry:
-    title: "Anonyymi analytiikka"
-    description: "Auta meitä parantamaan sovellusta {app} jakamalla yksityisyyttä suojaavaa telemetriaa."
-    toggle: "Ota anonyymi telemetria käyttöön"
-    posthog: "Käytämme PostHogia sovelluksen perustapahtumien tallentamiseen (esim. sovellus käynnistetty, CSV tuotu, raportti luotu). Tunnisteena on satunnainen UUID."
-    guaranteeTitle: "Tiukka yksityisyystakuu:"
-    guaranteeText: "Salkun omistuksia, rahamääriä, tapahtumien summia, välittäjien nimiä tai henkilötietoja ei koskaan lähetetä. Voit muuttaa tätä milloin tahansa Asetuksissa."
+    title: "Auta parantamaan sovellusta"
+    description: "Molemmat valinnat ovat pois päältä. Ota käyttöön vain se, mitä haluat. Voit muuttaa tätä milloin tahansa kohdassa Asetukset."
+    analyticsTitle: "Käyttöanalytiikka"
+    analyticsText: "Lähetä toimintotapahtumia, kuten sovelluksen käynnistys, satunnaisen asennustunnuksen kanssa. Näin näemme, mitä ominaisuuksia ihmiset käyttävät."
+    errorsTitle: "Virheraportointi"
+    errorsText: "Lähetä kaatumisraportti, kun sovellus epäonnistuu. Raportti sisältää virheen tyypin, koodin sijainnin, sovelluksen version ja käyttöjärjestelmäsi. Se ei sisällä asennustunnusta eikä virheilmoitusta."
+    vendorText: "PostHog vastaanottaa nämä tiedot puolestamme. Se näkee IP-osoitteesi, eikä se tallenna sitä."
+    guaranteeTitle: "Ei koskaan lähetetä:"
+    guaranteeText: "Omistukset, summat, osaketunnukset, tapahtumat ja tilien nimet."
+    noticeLink: "Lue tietosuojaseloste"
+  privacyPrompt:
+    title: "Tietosuojavalintasi"
+    description: "{app} sisältää nyt kaksi erillistä valintaa. Virheraportointi pysyy pois päältä, kunnes otat sen käyttöön."
+    save: "Tallenna"
 
 # ── service ──
 service:

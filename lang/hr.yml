@@ -1533,6 +1533,16 @@ settings:
     storedPlaceholder: "•••••••• (spremljeno)"
     showHide: "Prikaži ili sakrij vrijednost"
     storedHint: "Vrijednost je spremljena. Upišite novu da biste je zamijenili ili upišite pa obrišite sadržaj polja da biste je uklonili."
+  privacy:
+    noticeTitle: "Obavijest o privatnosti"
+    noticeDescription: "Što svaka opcija šalje, tko to prima i kako zatražiti brisanje."
+    open: "Otvori"
+    idTitle: "ID analitike"
+    idDescription: "Nasumični ID koji šalje analitika korištenja. Zahtjev za brisanje treba ovaj ID, zato ga kopirajte prije vraćanja na zadano."
+    copy: "Kopiraj"
+    copied: "Kopirano"
+    reset: "Vrati na zadano"
+    localOnly: "Promijenite ovo u prozoru za stolna računala."
   catalog:
     marketQuotesInterval:
       title: "Ažuriraj cijene svakih"
@@ -1550,9 +1560,12 @@ settings:
     closeToTray:
       title: "Nastavi raditi nakon zatvaranja prozora"
       description: "Nakon zatvaranja prozora Portfolio nastavlja raditi kao ikona u području obavijesti, pokraj sata, pa se zakazani sažeci i upozorenja i dalje šalju. Aplikaciju zatvorite putem te ikone."
-    telemetryEnabled:
-      title: "Dijeli anonimnu statistiku korištenja"
-      description: "Javlja razvojnim programerima koje se značajke koriste, kako bi se Portfolio poboljšao. Ulaganja, stanja i transakcije nikad se ne šalju."
+    analyticsEnabled:
+      title: "Analitika korištenja"
+      description: "Šalje događaje značajki, poput pokretanja aplikacije, s nasumičnim ID-om instalacije. Tako vidimo koje značajke ljudi koriste."
+    errorReportingEnabled:
+      title: "Prijava pogrešaka"
+      description: "Šalje izvješće o rušenju kada aplikacija zakaže. Izvješće sadrži vrstu pogreške, mjesto u kodu, verziju aplikacije i vaš operacijski sustav. Ne sadrži ID instalacije ni poruku o pogrešci."
     checkForUpdates:
       title: "Provjeravaj ažuriranja"
       description: "Traži novu verziju pri pokretanju aplikacije Portfolio i zatim svaki sat."
@@ -1582,7 +1595,7 @@ settings:
     startingTitle: "Pokretanje i zatvaranje"
     helpTitle: "Pomoć"
     helpQuestion: "Nešto ne radi ili imate ideju?"
-    helpText: "Pišite na {email}. Vaša verzija upisuje se automatski, a možete priložiti anonimni zapisnik aplikacije za zadnji dan."
+    helpText: "Pišite na {email}. Vaša je verzija već upisana, a možete priložiti dnevnik aplikacije za posljednji dan iz kojeg su uklonjeni privatni podaci."
     reportIssue: "Prijavi problem"
     shortcutsTitle: "Tipkovnički prečaci"
     shortcuts:
@@ -1899,14 +1912,14 @@ settings:
   support:
     title: "Prijavi problem"
     description: "Otvorite zahtjev za tehničku podršku ili prijavite problem izravno na {email}."
-    guaranteeTitle: "Jamstvo stroge anonimizacije zapisnika"
-    guaranteeText: "Svi dijagnostički zapisi potpuno se anonimiziraju prije pakiranja u ZIP datoteku. Osobna korisnička imena, kućni direktoriji, putanje datoteka, nazivi portfelja, oznake, količine, financijske vrijednosti i API ključevi automatski se uklanjaju i cenzuriraju."
+    guaranteeTitle: "Uklanjanje privatnih podataka iz zapisnika"
+    guaranteeText: "Aplikacija uklanja poznate privatne podatke iz zapisnika prije pakiranja ZIP datoteke: korisnička imena, matične mape, nazive portfelja, iznose i API ključeve. Koristi fiksne obrasce, zato provjerite datoteku prije slanja."
     recipient: "E-adresa primatelja"
     subject: "Predmet zahtjeva"
     subjectPlaceholder: "npr. problem s uvozom transakcija ili sinkronizacijom cijena"
     message: "Opis problema (neobavezno)"
     messagePlaceholder: "Opišite što se dogodilo ili korake za ponavljanje problema…"
-    includeLogs: "Pošalji zapisnike zadnjeg dana kao anonimizirani ZIP privitak"
+    includeLogs: "Priloži zapisnik zadnjeg dana s uklonjenim privatnim podacima"
     includeLogsHint: "Pakira dijagnostičke događaje i metapodatke sustava iz prethodna 24 sata u ZIP datoteku. Osobne putanje datoteka, nazivi portfelja, financijske vrijednosti i vjerodajnice automatski se cenzuriraju."
     openedSaved: "Poruka podršci je otvorena. Dijagnostička arhiva spremljena je u mapu Preuzimanja; priložite je poruci."
     openedDownloaded: "Poruka podršci je otvorena. Dijagnostička arhiva je preuzeta; priložite je poruci."
@@ -1933,7 +1946,7 @@ setup:
     title: "Dobro došli u {app}"
     subtitle: "Pratite dionice, ETF-ove i kriptovalute na jednom mjestu."
     privateTitle: "Privatnost u temelju"
-    privateText: "Vaši podaci ostaju na ovom računalu. Bez računa, bez oblaka."
+    privateText: "Vaša ulaganja i iznosi ostaju na ovom računalu. Bez računa, bez oblaka."
     pricesTitle: "Cijene koje se same ažuriraju"
     pricesText: "Pogledajte koliko vaša ulaganja danas vrijede, u vašoj valuti."
     assistantTitle: "AI asistent"
@@ -1962,12 +1975,20 @@ setup:
       etfs: "ETF-ovi"
       crypto: "Kripto"
   telemetry:
-    title: "Anonimna analitika"
-    description: "Pomozite nam poboljšati {app} dijeljenjem telemetrije koja čuva privatnost."
-    toggle: "Uključi anonimnu telemetriju"
-    posthog: "Koristimo PostHog za bilježenje osnovnih događaja u aplikaciji (npr. pokretanje aplikacije, uvoz CSV-a, izrada izvješća). Identifikacija putem nasumičnog UUID-a."
-    guaranteeTitle: "Strogo jamstvo privatnosti:"
-    guaranteeText: "Ulaganja u portfelju, novčani iznosi, iznosi transakcija, nazivi brokera i osobni podaci nikada se ne šalju. Ovo možete promijeniti bilo kada u Postavkama."
+    title: "Pomozite poboljšati aplikaciju"
+    description: "Obje opcije su isključene. Uključite samo ono što želite. To možete promijeniti bilo kada u Postavkama."
+    analyticsTitle: "Analitika korištenja"
+    analyticsText: "Šalje događaje značajki, poput pokretanja aplikacije, s nasumičnim ID-om instalacije. Tako vidimo koje značajke ljudi koriste."
+    errorsTitle: "Prijava pogrešaka"
+    errorsText: "Šalje izvješće o rušenju kada aplikacija zakaže. Izvješće sadrži vrstu pogreške, mjesto u kodu, verziju aplikacije i vaš operacijski sustav. Ne sadrži ID instalacije ni poruku o pogrešci."
+    vendorText: "PostHog prima ove podatke za nas. Vidi vašu IP adresu i ne pohranjuje je."
+    guaranteeTitle: "Nikada se ne šalje:"
+    guaranteeText: "Ulaganja, iznosi, oznake dionica, transakcije i nazivi računa."
+    noticeLink: "Pročitajte obavijest o privatnosti"
+  privacyPrompt:
+    title: "Vaši izbori privatnosti"
+    description: "{app} sada ima dvije odvojene opcije. Prijava pogrešaka ostaje isključena dok je ne uključite."
+    save: "Spremi"
 
 service:
   assistant:

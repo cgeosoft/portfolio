@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (imehifadhiwa)"
     showHide: "Onyesha au ficha thamani"
     storedHint: "Thamani imehifadhiwa. Andika mpya ili kuibadilisha, au andika kisha ufute sehemu hii ili kuiondoa."
+  privacy:
+    noticeTitle: "Notisi ya Faragha"
+    noticeDescription: "Kile ambacho kila chaguo hutuma, nani anakipokea na jinsi ya kuomba kufutwa."
+    open: "Fungua"
+    idTitle: "ID ya takwimu"
+    idDescription: "ID nasibu ambayo takwimu za matumizi hutuma. Ombi la kufuta linahitaji ID hii, kwa hiyo iinakili kabla ya kuiweka upya."
+    copy: "Nakili"
+    copied: "Imenakiliwa"
+    reset: "Weka upya"
+    localOnly: "Badilisha hili kwenye dirisha la eneo-kazi."
   catalog:
     marketQuotesInterval:
       title: "Sasisha bei kila"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Endelea kufanya kazi dirisha linapofungwa"
       description: "Kufunga dirisha huacha Portfolio ikiendelea kama ikoni kwenye trei ya mfumo, karibu na saa, ili taarifa na arifa zilizoratibiwa ziendelee kutumwa. Toka kupitia ikoni hiyo."
-    telemetryEnabled:
-      title: "Shiriki takwimu za matumizi bila kujitambulisha"
-      description: "Waambie wasanidi ni vipengele vipi vinavyotumika, ili kusaidia kuboresha Portfolio. Umiliki, salio na miamala havitumwi kamwe."
+    analyticsEnabled:
+      title: "Takwimu za matumizi"
+      description: "Tuma matukio ya vipengele, kama vile programu kuanza, pamoja na ID nasibu ya usakinishaji huu. Hii hutuonyesha ni vipengele gani watu wanatumia."
+    errorReportingEnabled:
+      title: "Kuripoti hitilafu"
+      description: "Tuma ripoti ya kuanguka programu inaposhindwa kufanya kazi. Ripoti ina aina ya hitilafu, mahali pa msimbo, toleo la programu na mfumo wako wa uendeshaji. Haina ID ya usakinishaji wala ujumbe wa hitilafu."
     checkForUpdates:
       title: "Angalia masasisho"
       description: "Tafuta toleo jipya Portfolio inapoanza na kila saa baada ya hapo."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Kuanza na kufunga"
     helpTitle: "Msaada"
     helpQuestion: "Kuna kitu hakifanyi kazi au una wazo?"
-    helpText: "Andika kwa {email}. Toleo lako litajazwa, na unaweza kuambatisha kumbukumbu ya programu ya siku iliyopita bila utambulisho."
+    helpText: "Andika kwa {email}. Toleo lako litajazwa, na unaweza kuambatisha kumbukumbu ya programu ya siku ya mwisho ambayo data za faragha zimeondolewa."
     reportIssue: "Ripoti Tatizo"
     shortcutsTitle: "Njia za mkato za kibodi"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Ripoti Tatizo"
     description: "Fungua tiketi ya msaada wa kiufundi au ripoti tatizo moja kwa moja kwa {email}."
-    guaranteeTitle: "Hakikisho Kali la Kuficha Utambulisho katika Kumbukumbu"
-    guaranteeText: "Maingizo yote ya kumbukumbu za uchunguzi huondolewa utambulisho kabisa kabla ya kufungwa kwenye faili ya ZIP. Majina ya watumiaji, saraka za nyumbani, njia za faili, majina ya majalada, alama, idadi, thamani za kifedha na funguo za API huondolewa na kufichwa kiotomatiki."
+    guaranteeTitle: "Kuondoa data za faragha kwenye kumbukumbu"
+    guaranteeText: "Programu huondoa data za faragha zinazojulikana kwenye kumbukumbu kabla ya kufunga faili ya ZIP: majina ya watumiaji, folda za nyumbani, majina ya portfolio, kiasi cha pesa na funguo za API. Hutumia ruwaza zisizobadilika, kwa hiyo kagua faili kabla ya kuituma."
     recipient: "Barua Pepe ya Mpokeaji"
     subject: "Kichwa cha Tiketi"
     subjectPlaceholder: "k.m. Tatizo la kuleta miamala au kusawazisha bei"
     message: "Maelezo ya Tatizo (Si lazima)"
     messagePlaceholder: "Eleza kilichotokea au hatua za kurudia tatizo…"
-    includeLogs: "Tuma kumbukumbu za siku iliyopita kama kiambatisho cha zip bila utambulisho"
+    includeLogs: "Ambatisha kumbukumbu ya siku iliyopita bila data za faragha"
     includeLogsHint: "Hufunga matukio ya uchunguzi na metadata ya mfumo ya saa 24 zilizopita kwenye faili ya ZIP. Njia za faili binafsi, majina ya majalada, thamani za kifedha na vitambulisho vya kuingia hufichwa kiotomatiki."
     openedSaved: "Barua ya msaada imefunguliwa. Kumbukumbu ya uchunguzi imehifadhiwa kwenye folda yako ya Vipakuliwa; iambatishe kwenye barua."
     openedDownloaded: "Barua ya msaada imefunguliwa. Kumbukumbu ya uchunguzi imepakuliwa; iambatishe kwenye barua."
@@ -1904,7 +1917,7 @@ setup:
     title: "Karibu kwenye {app}"
     subtitle: "Fuatilia hisa, ETF na kripto zako mahali pamoja."
     privateTitle: "Faragha tangu mwanzo"
-    privateText: "Data yako inabaki kwenye kompyuta hii. Hakuna akaunti, hakuna wingu."
+    privateText: "Umiliki na kiasi chako vinabaki kwenye kompyuta hii. Hakuna akaunti, hakuna wingu."
     pricesTitle: "Bei zinazojisasisha zenyewe"
     pricesText: "Ona thamani ya uwekezaji wako leo, kwa sarafu yako mwenyewe."
     assistantTitle: "Msaidizi wa AI"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "ETF"
       crypto: "Kripto"
   telemetry:
-    title: "Takwimu Bila Kujitambulisha"
-    description: "Tusaidie kuboresha {app} kwa kushiriki telemetria inayolinda faragha."
-    toggle: "Washa Telemetria Bila Kujitambulisha"
-    posthog: "Tunatumia PostHog kurekodi matukio ya msingi ya programu (k.m. programu imefunguliwa, CSV imeletwa, ripoti imetengenezwa). Hutambuliwa kwa UUID ya nasibu."
-    guaranteeTitle: "Hakikisho Kali la Faragha:"
-    guaranteeText: "Umiliki wa jalada, thamani za fedha, kiasi cha miamala, majina ya madalali au utambulisho wa mtu binafsi havitumwi kamwe. Unaweza kuwasha au kuzima hili wakati wowote katika Mipangilio."
+    title: "Saidia kuboresha programu"
+    description: "Chaguo zote mbili zimezimwa. Washa tu unachotaka. Unaweza kubadilisha hili wakati wowote katika Mipangilio."
+    analyticsTitle: "Takwimu za matumizi"
+    analyticsText: "Tuma matukio ya vipengele, kama vile programu kuanza, pamoja na ID nasibu ya usakinishaji huu. Hii hutuonyesha ni vipengele gani watu wanatumia."
+    errorsTitle: "Kuripoti hitilafu"
+    errorsText: "Tuma ripoti ya kuanguka programu inaposhindwa kufanya kazi. Ripoti ina aina ya hitilafu, mahali pa msimbo, toleo la programu na mfumo wako wa uendeshaji. Haina ID ya usakinishaji wala ujumbe wa hitilafu."
+    vendorText: "PostHog hupokea data hii kwa niaba yetu. Huona anwani yako ya IP na haihifadhi."
+    guaranteeTitle: "Hazitumwi kamwe:"
+    guaranteeText: "Umiliki, kiasi, alama za hisa, miamala na majina ya akaunti zako za uwekezaji."
+    noticeLink: "Soma Notisi ya Faragha"
+  privacyPrompt:
+    title: "Chaguo zako za faragha"
+    description: "{app} sasa ina chaguo mbili tofauti. Kuripoti hitilafu kunabaki kumezimwa hadi utakapokuwasha."
+    save: "Hifadhi"
 
 service:
   assistant:

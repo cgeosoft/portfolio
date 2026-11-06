@@ -2,7 +2,7 @@
 import { describe, it, expect, afterAll } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { TelemetryService } from "../telemetry.js";
+import { analyticsProvider, TelemetryService } from "../telemetry.js";
 import { loadConfig, updateConfig } from "../../config.js";
 
 interface FakeClient {
@@ -10,14 +10,14 @@ interface FakeClient {
   shutdown: () => Promise<void>;
 }
 
-const savedEnabled = loadConfig().telemetryEnabled;
+const savedEnabled = loadConfig().analyticsEnabled;
 afterAll(() => {
-  updateConfig({ telemetryEnabled: savedEnabled });
+  updateConfig({ analyticsEnabled: savedEnabled });
 });
 
 describe("TelemetryService", () => {
   it("creates no client in a checkout", async () => {
-    updateConfig({ telemetryEnabled: true });
+    updateConfig({ analyticsEnabled: true });
     try {
       const svc = new TelemetryService();
       svc.initialize();
@@ -25,7 +25,7 @@ describe("TelemetryService", () => {
       expect(() => svc.capture("x", { a: 1 })).not.toThrow();
       await svc.shutdown();
     } finally {
-      updateConfig({ telemetryEnabled: false });
+      updateConfig({ analyticsEnabled: false });
     }
   });
 
@@ -36,7 +36,7 @@ describe("TelemetryService", () => {
     (svc as unknown as { client: FakeClient }).client = { capture: (m) => sent.push(m), shutdown: async () => {} };
     svc.capture("report_generated", { provider: "openai-compatible" });
     const deviceId = loadConfig().deviceId;
-    expect(sent[0]).toEqual({ distinctId: deviceId, event: "report_generated", properties: { provider: "openai-compatible" } });
+    expect(sent[0]).toEqual({ distinctId: deviceId, event: "report_generated", properties: { provider: "openai-compatible", consent_version: expect.any(Number) } });
     expect(deviceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
@@ -48,6 +48,13 @@ describe("TelemetryService", () => {
     svc.reinitialize();
     expect(shut).toBe(1);
     expect((svc as unknown as { client: unknown }).client).toBeNull();
+  });
+});
+
+describe("analyticsProvider", () => {
+  it("keeps a CLI id and hides any other provider name", () => {
+    expect(analyticsProvider("claude-cli")).toBe("claude-cli");
+    expect(analyticsProvider("https://my-server.example/v1")).toBe("openai-compatible");
   });
 });
 
@@ -68,7 +75,7 @@ describe("telemetry privacy contract", () => {
   });
 
   it("sends only allowlisted property keys", () => {
-    const allowed = ["count", "provider", "streaming", "demo", "telemetry"];
+    const allowed = ["count", "provider", "streaming", "demo"];
     for (const c of calls) {
       for (const m of c.props.matchAll(/(\w+)\s*:/g)) expect(allowed).toContain(m[1]!);
     }

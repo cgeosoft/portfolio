@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Notice - Portfolio</title>
+  <meta name="description" content="What Portfolio and this website send, who receives it and how to ask for deletion.">
+  <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">
+  <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/sansation-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/style.css">
+
+  <meta name="posthog-key" content="YOUR_POSTHOG_PROJECT_API_KEY">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="/" class="brand-link" aria-label="Portfolio home">
+        <img src="/assets/app-icon.svg" alt="" class="brand-icon" width="32" height="32">
+        <span class="brand-name">Portfolio</span>
+      </a>
+      <nav class="main-nav" aria-label="Primary">
+        <a href="/#analysis">Guided Analysis</a>
+        <a href="/tour/">Tour</a>
+        <a href="/#privacy">Privacy</a>
+        <a href="/#ledger">Features</a>
+        <a href="/metrics/">Metrics</a>
+        <a href="/#faq">FAQ</a>
+        <a href="https://github.com/cgeosoft/portfolio" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="/#downloads" class="btn btn-primary">Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-main">
+    <div class="legal-hero">
+      <span class="section-kicker">Your data and your choices</span>
+      <h1>Privacy Notice</h1>
+      <p>This notice says what Portfolio and this website send, who receives it, how long we keep it and how you can ask for deletion.</p>
+      <div class="legal-meta">Notice version 1 &bull; Last updated: November 6, 2026</div>
+    </div>
+
+    <section class="legal-section">
+      <h2>1. Who is responsible</h2>
+      <p>The controller of this data is <strong>Christos Georgiou</strong>, who publishes Portfolio under the name cgeosoft.</p>
+      <p>For a privacy question or request, write to <a href="mailto:christos@cgeosoft.com">christos@cgeosoft.com</a>.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>2. What stays on your computer</h2>
+      <p>Your holdings, quantities, cash balances, transactions, notes and settings stay in a database file on your computer. We have no server that receives them.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>3. Two options in the app</h2>
+      <p>Portfolio has two separate options: usage analytics and error reporting. Both are off by default. The app sends nothing to PostHog for an option until you turn that option on. You can change either option at any time in Settings, Privacy &amp; Security. A change works at once.</p>
+      <p>The legal basis for both options is your consent (GDPR Art. 6(1)(a)). A "no" costs you no feature.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>4. Usage analytics</h2>
+      <p><strong>Purpose:</strong> to see which features people use, so we can improve them.</p>
+      <p><strong>What it sends:</strong> named events, a random install ID and the notice version you accepted. Events can hold a count, a yes or no value, or the type of AI provider.</p>
+      <p><strong>Example:</strong> the event <code>csv_imported</code> with a count of 42 and the install ID <code>7f3c...e91a</code>.</p>
+      <p>Settings shows your install ID. You can copy it or reset it there.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>5. Error reporting</h2>
+      <p><strong>Purpose:</strong> to find and fix crashes.</p>
+      <p><strong>What it sends:</strong> the error type, a fixed code for the place of the failure, code locations inside the app, the app version, the release channel, your operating system, the processor type and the notice version you accepted.</p>
+      <p><strong>Example:</strong> a <code>TypeError</code> with the code <code>service:uncaught</code> at line 120 of <code>service/main.js</code>, on app version 0.18.0 for Linux.</p>
+      <p>A report holds no install ID and no error message. Each report has a new random ID, so we cannot link reports to each other or to you.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>6. What we never collect</h2>
+      <p>Neither option sends holdings, amounts, ticker symbols, transactions, account names, file paths or anything you type.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>7. This website</h2>
+      <p>This website asks for your consent before it loads PostHog. If you accept, PostHog records page views, download clicks and screenshot zooms with a random ID, which it keeps in a cookie and in your browser storage. If you decline, the page makes no request to PostHog. The legal basis is your consent. To change your choice, clear this site's cookies and local storage.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>8. Who receives the data</h2>
+      <p>PostHog receives this data for us as our processor. We use PostHog Cloud EU, which runs on servers in Frankfurt.</p>
+      <p>PostHog sees your IP address with each request. It does not store the address with the event.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>9. How long we keep it</h2>
+      <p>We keep events for 12 months. PostHog deletes expired events in a monthly cleanup, so an event can stay up to about a month longer.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>10. Your rights</h2>
+      <p>You can ask for access to your data or for its deletion. You can withdraw your consent at any time. A withdrawal stops new data and does not change what was lawful before it. You can also complain to a data protection supervisory authority.</p>
+      <p><strong>For usage analytics,</strong> send us your install ID from Settings. We need it to find your data. Copy it before you reset it, because a reset gives you a new ID.</p>
+      <p><strong>For error reports,</strong> a report has no ID, so we cannot find the reports of one person.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>11. Other connections of the app</h2>
+      <p>The app also connects to other services for its features. We do not receive this data.</p>
+      <ul>
+        <li><strong>Prices:</strong> ticker symbols go to Yahoo Finance, and to Finnhub or Financial Modeling Prep if you add a key.</li>
+        <li><strong>AI:</strong> weights, percentages and tickers go to the AI provider you chose, when you ask. A local model keeps them on your computer.</li>
+        <li><strong>Updates:</strong> the app checks GitHub and this website for a new version. This is on by default, and you can turn it off in Settings.</li>
+        <li><strong>Phone briefs:</strong> briefs go to Gotify or ntfy, if you turn them on.</li>
+      </ul>
+      <p>These services see your IP address, and their own privacy terms apply.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>12. Changes</h2>
+      <p>If the data, the purpose or the recipient changes, we raise the notice version and the app asks you again.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span id="current-year"></span> cgeosoft. Open source under the MIT License. &bull; <a href="/">Back to the site</a> &bull; <a href="/terms/">Terms of use</a></p>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>

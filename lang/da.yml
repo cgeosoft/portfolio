@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (gemt)"
     showHide: "Vis eller skjul værdi"
     storedHint: "Der er gemt en værdi. Skriv en ny for at erstatte den, eller skriv og ryd feltet for at fjerne den."
+  privacy:
+    noticeTitle: "Privatlivsmeddelelse"
+    noticeDescription: "Hvad hvert valg sender, hvem der modtager det, og hvordan du beder om sletning."
+    open: "Åbn"
+    idTitle: "Analyse-ID"
+    idDescription: "Et tilfældigt ID, som brugsanalysen sender. En anmodning om sletning kræver dette ID, så kopiér det, før du nulstiller det."
+    copy: "Kopiér"
+    copied: "Kopieret"
+    reset: "Nulstil"
+    localOnly: "Ændr dette i skrivebordsvinduet."
   catalog:
     marketQuotesInterval:
       title: "Opdater kurser hvert"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Bliv ved med at køre, når vinduet lukkes"
       description: "Når vinduet lukkes, kører Portfolio videre som et ikon i meddelelsesområdet ved uret, så planlagte briefinger og varsler stadig bliver sendt. Afslut fra det ikon."
-    telemetryEnabled:
-      title: "Del anonym brugsstatistik"
-      description: "Fortæl udviklerne, hvilke funktioner der bruges, for at hjælpe med at forbedre Portfolio. Beholdninger, saldi og transaktioner sendes aldrig."
+    analyticsEnabled:
+      title: "Brugsanalyse"
+      description: "Send hændelser for funktioner, for eksempel at appen er startet, med et tilfældigt ID for denne installation. Det viser os, hvilke funktioner folk bruger."
+    errorReportingEnabled:
+      title: "Fejlrapportering"
+      description: "Send en nedbrudsrapport, når appen fejler. En rapport indeholder fejltypen, placeringen i koden, appversionen og dit operativsystem. Den indeholder hverken installations-ID eller fejlmeddelelse."
     checkForUpdates:
       title: "Søg efter opdateringer"
       description: "Søg efter en ny version, når Portfolio starter, og derefter hver time."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Start og lukning"
     helpTitle: "Hjælp"
     helpQuestion: "Virker noget ikke, eller har du en idé?"
-    helpText: "Skriv til {email}. Din version er udfyldt, og du kan vedhæfte en anonym applog fra det seneste døgn."
+    helpText: "Skriv til {email}. Din version er udfyldt, og du kan vedhæfte en renset applog for den seneste dag."
     reportIssue: "Rapportér et problem"
     shortcutsTitle: "Tastaturgenveje"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Rapportér et problem"
     description: "Opret en teknisk supportsag eller rapportér et problem direkte til {email}."
-    guaranteeTitle: "Garanti for streng anonymisering af logs"
-    guaranteeText: "Alle diagnostiske logposter anonymiseres fuldstændigt, før de pakkes i ZIP-filen. Personlige brugernavne, hjemmemapper, filstier, porteføljenavne, tickere, antal, økonomiske værdier og API-nøgler fjernes og sløres automatisk."
+    guaranteeTitle: "Fjernelse af private data i logs"
+    guaranteeText: "Appen fjerner kendte private data fra logs, før den pakker ZIP-filen: brugernavne, hjemmemapper, porteføljenavne, beløb og API-nøgler. Den bruger faste mønstre, så tjek filen, før du sender den."
     recipient: "Modtagerens e-mail"
     subject: "Emne for sagen"
     subjectPlaceholder: "f.eks. Problem med import af transaktioner eller synkronisering af kurser"
     message: "Beskrivelse af problemet (valgfrit)"
     messagePlaceholder: "Beskriv, hvad der skete, eller trinene til at genskabe det…"
-    includeLogs: "Send logs fra det seneste døgn som anonymiseret ZIP-vedhæftning"
+    includeLogs: "Vedhæft en log fra det seneste døgn uden private data"
     includeLogsHint: "Pakker diagnostiske hændelser og systemmetadata fra de seneste 24 timer i en ZIP-fil. Personlige filstier, porteføljenavne, økonomiske værdier og legitimationsoplysninger sløres automatisk."
     openedSaved: "Supportmailen er åbnet. Diagnosearkivet blev gemt i din mappe Overførsler; vedhæft det til mailen."
     openedDownloaded: "Supportmailen er åbnet. Diagnosearkivet blev downloadet; vedhæft det til mailen."
@@ -1904,7 +1917,7 @@ setup:
     title: "Velkommen til {app}"
     subtitle: "Følg dine aktier, ETF'er og krypto ét sted."
     privateTitle: "Privat fra starten"
-    privateText: "Dine data bliver på denne computer. Ingen konto, ingen sky."
+    privateText: "Dine beholdninger og beløb bliver på denne computer. Ingen konto, ingen sky."
     pricesTitle: "Kurser, der opdaterer sig selv"
     pricesText: "Se, hvad dine investeringer er værd i dag, i din egen valuta."
     assistantTitle: "En AI-assistent"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "ETF'er"
       crypto: "Krypto"
   telemetry:
-    title: "Anonym analyse"
-    description: "Hjælp os med at forbedre {app} ved at dele telemetri, der beskytter dit privatliv."
-    toggle: "Slå anonym telemetri til"
-    posthog: "Vi bruger PostHog til at registrere grundlæggende app-hændelser (f.eks. app startet, CSV importeret, rapport genereret). Identificeret med et tilfældigt UUID."
-    guaranteeTitle: "Streng privatlivsgaranti:"
-    guaranteeText: "Porteføljebeholdninger, pengeværdier, transaktionsbeløb, mæglernavne eller personlige identiteter sendes aldrig. Du kan ændre det når som helst under Indstillinger."
+    title: "Hjælp med at forbedre appen"
+    description: "Begge valg er slået fra. Slå kun til, hvad du vil have. Du kan altid ændre det under Indstillinger."
+    analyticsTitle: "Brugsanalyse"
+    analyticsText: "Send hændelser for funktioner, for eksempel at appen er startet, med et tilfældigt ID for denne installation. Det viser os, hvilke funktioner folk bruger."
+    errorsTitle: "Fejlrapportering"
+    errorsText: "Send en nedbrudsrapport, når appen fejler. En rapport indeholder fejltypen, placeringen i koden, appversionen og dit operativsystem. Den indeholder hverken installations-ID eller fejlmeddelelse."
+    vendorText: "PostHog modtager disse data for os. Den ser din IP-adresse og gemmer den ikke."
+    guaranteeTitle: "Sendes aldrig:"
+    guaranteeText: "Beholdninger, beløb, tickere, transaktioner og kontonavne."
+    noticeLink: "Læs privatlivsmeddelelsen"
+  privacyPrompt:
+    title: "Dine privatlivsvalg"
+    description: "{app} har nu to separate valg. Fejlrapportering forbliver slået fra, indtil du slår det til."
+    save: "Gem"
 
 service:
   assistant:

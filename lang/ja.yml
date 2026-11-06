@@ -1492,6 +1492,16 @@ settings:
     storedPlaceholder: "••••••••（保存済み）"
     showHide: "値の表示/非表示"
     storedHint: "値が保存されています。新しい値を入力すると置き換わります。入力してからフィールドを空にすると削除されます。"
+  privacy:
+    noticeTitle: "プライバシーに関するお知らせ"
+    noticeDescription: "各選択肢が送信する内容、受け取る相手、削除を依頼する方法です。"
+    open: "開く"
+    idTitle: "分析 ID"
+    idDescription: "利用状況の分析が送信するランダムな ID です。削除の依頼にはこの ID が必要です。リセットする前にコピーしてください。"
+    copy: "コピー"
+    copied: "コピーしました"
+    reset: "リセット"
+    localOnly: "これはデスクトップのウィンドウで変更してください。"
   catalog:
     marketQuotesInterval:
       title: "価格の更新間隔"
@@ -1509,9 +1519,12 @@ settings:
     closeToTray:
       title: "ウィンドウを閉じても実行を続ける"
       description: "ウィンドウを閉じても、Portfolio は時計の横のシステムトレイにアイコンとして残って動作し続けるため、予定したブリーフやアラートが送信されます。終了はそのアイコンから行います。"
-    telemetryEnabled:
-      title: "匿名の利用統計を送信"
-      description: "どの機能が使われているかを開発者に伝え、Portfolio の改善に役立てます。保有銘柄、残高、取引が送信されることはありません。"
+    analyticsEnabled:
+      title: "利用状況の分析"
+      description: "アプリの起動などの機能イベントを、ランダムなインストール ID とともに送信します。これにより、どの機能が使われているかがわかります。"
+    errorReportingEnabled:
+      title: "エラー報告"
+      description: "アプリが失敗したときにクラッシュレポートを送信します。レポートには、エラーの種類、コードの場所、アプリのバージョン、お使いのオペレーティングシステムが含まれます。インストール ID とエラーメッセージは含まれません。"
     checkForUpdates:
       title: "アップデートを確認"
       description: "Portfolio の起動時と、その後 1 時間ごとに新しいバージョンを確認します。"
@@ -1541,7 +1554,7 @@ settings:
     startingTitle: "起動と終了"
     helpTitle: "ヘルプ"
     helpQuestion: "うまく動かない、またはアイデアがありますか？"
-    helpText: "{email} までご連絡ください。バージョンは自動で入力され、直近 1 日分の匿名のアプリログを添付できます。"
+    helpText: "{email} 宛てにご連絡ください。お使いのバージョンは入力済みで、個人情報を除いた直近1日分のアプリログを添付できます。"
     reportIssue: "問題を報告"
     shortcutsTitle: "キーボードショートカット"
     shortcuts:
@@ -1852,14 +1865,14 @@ settings:
   support:
     title: "問題を報告"
     description: "テクニカルサポートのチケットを作成するか、{email} に直接問題を報告します。"
-    guaranteeTitle: "ログの厳格な匿名化保証"
-    guaranteeText: "すべての診断ログは、ZIP ファイルにまとめる前に完全に匿名化されます。個人のユーザー名、ホームディレクトリ、ファイルパス、ポートフォリオ名、ティッカー、数量、金額、API キーは自動的に削除・伏せ字化されます。"
+    guaranteeTitle: "ログの個人データ削除"
+    guaranteeText: "アプリは ZIP ファイルを作る前に、ログから既知の個人データを削除します。対象は、ユーザー名、ホームフォルダー、ポートフォリオ名、金額、API キーです。固定のパターンを使うため、送信前にファイルを確認してください。"
     recipient: "宛先メールアドレス"
     subject: "チケットの件名"
     subjectPlaceholder: "例：取引のインポートや相場の同期に関する問題"
     message: "問題の説明（任意）"
     messagePlaceholder: "発生した内容や再現手順を記入してください…"
-    includeLogs: "直近 1 日分のログを匿名化した ZIP 添付ファイルとして送信"
+    includeLogs: "直近 1 日分の、個人データを削除したログを添付する"
     includeLogsHint: "過去 24 時間の診断イベントとシステムのメタデータを ZIP ファイルにまとめます。個人のファイルパス、ポートフォリオ名、金額、認証情報は自動的に伏せ字化されます。"
     openedSaved: "サポート用のメールを開きました。診断アーカイブはダウンロードフォルダーに保存されました。メールに添付してください。"
     openedDownloaded: "サポート用のメールを開きました。診断アーカイブをダウンロードしました。メールに添付してください。"
@@ -1887,7 +1900,7 @@ setup:
     title: "{app} へようこそ"
     subtitle: "株式、ETF、暗号資産をひとつの場所で管理できます。"
     privateTitle: "プライバシーを重視した設計"
-    privateText: "データはこのコンピューターに保存されます。アカウントもクラウドも不要です。"
+    privateText: "保有と金額はこのコンピューターに保存されます。アカウントもクラウドも不要です。"
     pricesTitle: "自動で更新される価格"
     pricesText: "投資の今日の価値を、お使いの通貨で確認できます。"
     assistantTitle: "AI アシスタント"
@@ -1916,12 +1929,20 @@ setup:
       etfs: "ETF"
       crypto: "暗号資産"
   telemetry:
-    title: "匿名の分析"
-    description: "プライバシーに配慮したテレメトリを共有して、{app} の改善にご協力ください。"
-    toggle: "匿名テレメトリを有効にする"
-    posthog: "PostHog を使って基本的なアプリのイベント（例：アプリの起動、CSV のインポート、レポートの生成）を記録します。ランダムな UUID で識別されます。"
-    guaranteeTitle: "厳格なプライバシー保証："
-    guaranteeText: "保有銘柄、金額、取引額、証券会社名、個人を特定する情報が送信されることは一切ありません。この設定は「設定」でいつでも切り替えられます。"
+    title: "アプリの改善にご協力ください"
+    description: "2つの選択肢はどちらもオフです。必要なものだけをオンにしてください。この設定は「設定」でいつでも変更できます。"
+    analyticsTitle: "利用状況の分析"
+    analyticsText: "アプリの起動などの機能イベントを、ランダムなインストール ID とともに送信します。これにより、どの機能が使われているかがわかります。"
+    errorsTitle: "エラー報告"
+    errorsText: "アプリが失敗したときにクラッシュレポートを送信します。レポートには、エラーの種類、コードの場所、アプリのバージョン、お使いのオペレーティングシステムが含まれます。インストール ID とエラーメッセージは含まれません。"
+    vendorText: "PostHog が当社に代わってこのデータを受け取ります。PostHog はお使いの IP アドレスを確認しますが、保存しません。"
+    guaranteeTitle: "送信されないもの："
+    guaranteeText: "保有、金額、ティッカーシンボル、取引、口座名。"
+    noticeLink: "プライバシーに関するお知らせを読む"
+  privacyPrompt:
+    title: "プライバシーの選択"
+    description: "{app} に2つの個別の選択肢ができました。エラー報告は、オンにするまでオフのままです。"
+    save: "保存"
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

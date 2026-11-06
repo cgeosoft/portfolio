@@ -1517,6 +1517,16 @@ settings:
     storedPlaceholder: "•••••••• (salvestatud)"
     showHide: "Näita või peida väärtus"
     storedHint: "Väärtus on salvestatud. Selle asendamiseks sisesta uus, eemaldamiseks sisesta midagi ja tühjenda väli."
+  privacy:
+    noticeTitle: "Privaatsusteade"
+    noticeDescription: "Mida iga valik saadab, kes selle saab ja kuidas kustutamist taotleda."
+    open: "Ava"
+    idTitle: "Analüütika ID"
+    idDescription: "Juhuslik ID, mille kasutusanalüütika saadab. Kustutamistaotlus vajab seda ID-d, seega kopeeri see enne lähtestamist."
+    copy: "Kopeeri"
+    copied: "Kopeeritud"
+    reset: "Lähtesta"
+    localOnly: "Muuda seda töölauaaknas."
   catalog:
     marketQuotesInterval:
       title: "Värskenda hindu iga"
@@ -1534,9 +1544,12 @@ settings:
     closeToTray:
       title: "Jätka töötamist akna sulgemisel"
       description: "Akna sulgemisel jääb Portfolio tööle ikoonina süsteemisalves kella kõrval, nii et ajastatud ülevaated ja märguanded saadetakse ikka. Sulge rakendus sellest ikoonist."
-    telemetryEnabled:
-      title: "Jaga anonüümset kasutusstatistikat"
-      description: "Anna arendajatele teada, milliseid funktsioone kasutatakse, et Portfoliot paremaks teha. Osalusi, saldosid ja tehinguid ei saadeta kunagi."
+    analyticsEnabled:
+      title: "Kasutusanalüütika"
+      description: "Saada funktsioonide sündmusi, näiteks rakendus käivitus, selle paigalduse juhusliku ID-ga. See näitab meile, milliseid funktsioone inimesed kasutavad."
+    errorReportingEnabled:
+      title: "Veateated"
+      description: "Saada kokkujooksmise aruanne, kui rakendus ebaõnnestub. Aruanne sisaldab vea tüüpi, koodi asukohta, rakenduse versiooni ja sinu operatsioonisüsteemi. See ei sisalda paigaldus-ID-d ega veateadet."
     checkForUpdates:
       title: "Otsi uuendusi"
       description: "Otsi uut versiooni, kui Portfolio käivitub, ja seejärel kord tunnis."
@@ -1566,7 +1579,7 @@ settings:
     startingTitle: "Käivitamine ja sulgemine"
     helpTitle: "Abi"
     helpQuestion: "Midagi ei tööta või on sul idee?"
-    helpText: "Kirjuta aadressile {email}. Sinu versioon täidetakse automaatselt ja saad lisada viimase ööpäeva anonüümse rakenduse logi."
+    helpText: "Kirjuta aadressile {email}. Sinu versioon on juba täidetud ja saad lisada viimase päeva rakenduselogi, millest on privaatsed andmed eemaldatud."
     reportIssue: "Teata probleemist"
     shortcutsTitle: "Kiirklahvid"
     shortcuts:
@@ -1880,14 +1893,14 @@ settings:
   support:
     title: "Teata probleemist"
     description: "Ava tehnilise toe pöördumine või teata probleemist otse aadressile {email}."
-    guaranteeTitle: "Logide range anonüümimise garantii"
-    guaranteeText: "Kõik diagnostikalogi kirjed anonüümitakse täielikult enne ZIP-faili pakkimist. Kasutajanimed, kodukataloogid, failiteed, portfellide nimed, tikkerid, kogused, rahasummad ja API-võtmed eemaldatakse ja varjatakse automaatselt."
+    guaranteeTitle: "Logide privaatsete andmete eemaldamine"
+    guaranteeText: "Rakendus eemaldab logidest tuntud privaatsed andmed enne ZIP-faili pakkimist: kasutajanimed, kodukaustad, portfellide nimed, summad ja API-võtmed. See kasutab kindlaid mustreid, seega kontrolli faili enne saatmist."
     recipient: "Saaja e-posti aadress"
     subject: "Pöördumise teema"
     subjectPlaceholder: "nt Probleem tehingute impordi või hindade sünkroonimisega"
     message: "Probleemi kirjeldus (valikuline)"
     messagePlaceholder: "Kirjelda, mis juhtus, või sammud probleemi kordamiseks…"
-    includeLogs: "Saada viimase ööpäeva logid anonüümitud ZIP-manusena"
+    includeLogs: "Lisa viimase päeva logi ilma privaatsete andmeteta"
     includeLogsHint: "Pakib eelmise 24 tunni diagnostikasündmused ja süsteemi metaandmed ZIP-faili. Isiklikud failiteed, portfellide nimed, rahasummad ja mandaadid varjatakse automaatselt."
     openedSaved: "Toe e-kiri avati. Diagnostikaarhiiv salvestati allalaadimiste kausta; lisa see kirjale."
     openedDownloaded: "Toe e-kiri avati. Diagnostikaarhiiv laaditi alla; lisa see kirjale."
@@ -1915,7 +1928,7 @@ setup:
     title: "Tere tulemast rakendusse {app}"
     subtitle: "Jälgi oma aktsiaid, ETF-e ja krüptot ühes kohas."
     privateTitle: "Privaatne juba ülesehituselt"
-    privateText: "Sinu andmed jäävad sellesse arvutisse. Pole kontot ega pilve."
+    privateText: "Sinu osalused ja summad jäävad sellesse arvutisse. Kontot ei ole, pilve ei ole."
     pricesTitle: "Hinnad, mis uuenevad ise"
     pricesText: "Vaata, kui palju su investeeringud täna väärt on, sinu enda valuutas."
     assistantTitle: "Tehisintellekti assistent"
@@ -1944,12 +1957,20 @@ setup:
       etfs: "ETF-id"
       crypto: "Krüpto"
   telemetry:
-    title: "Anonüümne analüütika"
-    description: "Aita meil rakendust {app} paremaks teha, jagades privaatsust säilitavat telemeetriat."
-    toggle: "Luba anonüümne telemeetria"
-    posthog: "Kasutame PostHogi rakenduse põhisündmuste salvestamiseks (nt rakendus käivitati, CSV imporditi, aruanne loodi). Tuvastamiseks kasutatakse juhuslikku UUID-d."
-    guaranteeTitle: "Range privaatsuse tagatis:"
-    guaranteeText: "Portfelli osalusi, rahalisi väärtusi, tehingusummasid, maaklerite nimesid ega isikuandmeid ei edastata kunagi. Saad selle igal ajal sisse või välja lülitada jaotises Seaded."
+    title: "Aita rakendust paremaks muuta"
+    description: "Mõlemad valikud on välja lülitatud. Lülita sisse ainult see, mida soovid. Saad seda igal ajal muuta jaotises Seaded."
+    analyticsTitle: "Kasutusanalüütika"
+    analyticsText: "Saada funktsioonide sündmusi, näiteks rakendus käivitus, selle paigalduse juhusliku ID-ga. See näitab meile, milliseid funktsioone inimesed kasutavad."
+    errorsTitle: "Veateated"
+    errorsText: "Saada kokkujooksmise aruanne, kui rakendus ebaõnnestub. Aruanne sisaldab vea tüüpi, koodi asukohta, rakenduse versiooni ja sinu operatsioonisüsteemi. See ei sisalda paigaldus-ID-d ega veateadet."
+    vendorText: "PostHog võtab need andmed meie eest vastu. See näeb sinu IP-aadressi ega salvesta seda."
+    guaranteeTitle: "Ei saadeta kunagi:"
+    guaranteeText: "Osalused, summad, tikkerid, tehingud ja kontode nimed."
+    noticeLink: "Loe privaatsusteadet"
+  privacyPrompt:
+    title: "Sinu privaatsusvalikud"
+    description: "Rakendusel {app} on nüüd kaks eraldi valikut. Veateated jäävad välja lülitatuks, kuni sa need sisse lülitad."
+    save: "Salvesta"
 
 # ── service ──
 service:

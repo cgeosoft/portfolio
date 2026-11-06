@@ -18,7 +18,7 @@ Portfolio is an offline personal investment tracker for Linux, Windows and macOS
 - `extras/website`: the marketing site on Cloudflare Pages.
 - `lang/<code>.yml`: the interface text, one file for each ISO 639-1 code. `en.yml` is the source and the fallback. The format and the language list are in `modules/shared/src/i18n.ts`.
 
-FMP, Yahoo Finance and Finnhub supply the market data through a provider chain. Local or cloud LLMs write the reports and answer in the assistant sidebar. PostHog telemetry is off by default.
+FMP, Yahoo Finance and Finnhub supply the market data through a provider chain. Local or cloud LLMs write the reports and answer in the assistant sidebar. PostHog usage analytics and error reporting are two separate opt-in options, both off by default. Follow `/mnt/files/NoteBook/CGEO/SOFT/App Telemetry and Consent.md`. The Portfolio plan is in `docs/telemetry-consent.md`.
 
 For files, configuration, access, logs and release, read `docs/architecture.md`. For tests, read `docs/testing.md`. A test that connects to a non-loopback host fails (`scripts/test-network-guard.ts`). Stub `globalThis.fetch`.
 

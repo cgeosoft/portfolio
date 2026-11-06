@@ -21,7 +21,8 @@ export { DEFAULT_DATA_PROVIDER_ROUTING } from "portfolio-shared/config-types";
 
 const DEFAULT_CONFIG: Omit<DesktopConfig, "deviceId"> = {
   setupCompleted: false,
-  telemetryEnabled: false,
+  analyticsEnabled: false,
+  errorReportingEnabled: false,
   baseCurrency: "EUR",
   hideCurrencyValues: false,
   llmProvider: "",
@@ -119,6 +120,13 @@ function readRows(): Record<string, unknown> {
     } catch {
       // A corrupt row falls back to the default.
     }
+  }
+  // `telemetryEnabled` became `analyticsEnabled`. The old choice never covers error reporting.
+  if ("telemetryEnabled" in out) {
+    const enabled = out.telemetryEnabled === "true";
+    delete out.telemetryEnabled;
+    out.analyticsEnabled ??= enabled;
+    writeRows({ analyticsEnabled: out.analyticsEnabled, telemetryEnabled: undefined });
   }
   rowsCache = { ...out };
   return out;

@@ -64,8 +64,8 @@ describe("writeDesktopSettingsFile", () => {
 });
 
 describe("settings catalog", () => {
-  it("defines six known settings", () => {
-    expect(SETTING_DEFINITIONS.map((d) => d.key)).toEqual(["marketQuotesInterval", "startWithBoot", "closeToTray", "telemetryEnabled", "checkForUpdates", "llmToolMode"]);
+  it("defines seven known settings", () => {
+    expect(SETTING_DEFINITIONS.map((d) => d.key)).toEqual(["marketQuotesInterval", "startWithBoot", "closeToTray", "analyticsEnabled", "errorReportingEnabled", "checkForUpdates", "llmToolMode"]);
     for (const d of SETTING_DEFINITIONS) {
       expect(CONFIG_KEYS.has(d.key)).toBe(true);
       if (d.kind === "choice") expect(d.options?.length ?? 0).toBeGreaterThan(0);
@@ -80,11 +80,12 @@ describe("settings catalog", () => {
       ["marketQuotesInterval", 15, true],
       ["startWithBoot", false, true],
       ["closeToTray", true, true],
-      ["telemetryEnabled", false, true],
+      ["analyticsEnabled", false, true],
+      ["errorReportingEnabled", false, true],
       ["checkForUpdates", true, true],
       ["llmToolMode", "auto", true],
     ]);
-    expect(views.map((v) => v.section)).toEqual(["market", "app", "app", "security", "app", "assistant"]);
+    expect(views.map((v) => v.section)).toEqual(["market", "app", "app", "security", "security", "app", "assistant"]);
     views.forEach((v, i) => {
       expect(v.label).toBe(SETTING_DEFINITIONS[i].label);
       expect(v.description).toBe(SETTING_DEFINITIONS[i].description);
@@ -92,9 +93,15 @@ describe("settings catalog", () => {
   });
 
   it("reflects updated values", () => {
-    updateConfig({ marketQuotesInterval: 60, telemetryEnabled: true });
+    updateConfig({ marketQuotesInterval: 60, analyticsEnabled: true });
     const byKey = Object.fromEntries(listSettings().map((v) => [v.key, v.value]));
     expect(byKey.marketQuotesInterval).toBe(60);
-    expect(byKey.telemetryEnabled).toBe(true);
+    expect(byKey.analyticsEnabled).toBe(true);
+  });
+
+  it("makes the privacy options read-only on another device", () => {
+    const readOnly = (isLocal: boolean) => listSettings(isLocal).filter((v) => v.readOnly).map((v) => v.key);
+    expect(readOnly(true)).toEqual([]);
+    expect(readOnly(false)).toEqual(["analyticsEnabled", "errorReportingEnabled"]);
   });
 });

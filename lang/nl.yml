@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (opgeslagen)"
     showHide: "Waarde tonen of verbergen"
     storedHint: "Er is een waarde opgeslagen. Typ een nieuwe om deze te vervangen, of typ iets en maak het veld leeg om deze te verwijderen."
+  privacy:
+    noticeTitle: "Privacyverklaring"
+    noticeDescription: "Wat elke optie verstuurt, wie het ontvangt en hoe je om verwijdering vraagt."
+    open: "Openen"
+    idTitle: "Analyse-ID"
+    idDescription: "Een willekeurig ID dat de gebruiksanalyse verstuurt. Een verwijderverzoek heeft dit ID nodig, dus kopieer het voordat je het herstelt."
+    copy: "Kopiëren"
+    copied: "Gekopieerd"
+    reset: "Herstellen"
+    localOnly: "Wijzig dit in het bureaubladvenster."
   catalog:
     marketQuotesInterval:
       title: "Koersen bijwerken elke"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Blijven draaien als het venster sluit"
       description: "Als je het venster sluit, blijft Portfolio draaien als pictogram in het systeemvak naast de klok, zodat geplande briefings en meldingen nog steeds worden verzonden. Sluit af via dat pictogram."
-    telemetryEnabled:
-      title: "Anonieme gebruiksstatistieken delen"
-      description: "Laat de ontwikkelaars weten welke functies worden gebruikt, om Portfolio te verbeteren. Posities, saldi en transacties worden nooit verzonden."
+    analyticsEnabled:
+      title: "Gebruiksanalyse"
+      description: "Stuur functiegebeurtenissen, zoals app gestart, met een willekeurig installatie-ID. Zo zien wij welke functies mensen gebruiken."
+    errorReportingEnabled:
+      title: "Foutrapportage"
+      description: "Stuur een crashrapport wanneer de app faalt. Een rapport bevat het fouttype, de codelocatie, de appversie en je besturingssysteem. Het bevat geen installatie-ID en geen foutmelding."
     checkForUpdates:
       title: "Controleren op updates"
       description: "Zoeken naar een nieuwe versie wanneer Portfolio start en daarna elk uur."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Starten en afsluiten"
     helpTitle: "Help"
     helpQuestion: "Werkt er iets niet of heb je een idee?"
-    helpText: "Schrijf naar {email}. Je versie wordt ingevuld en je kunt een anoniem app-logboek van de afgelopen dag bijvoegen."
+    helpText: "Schrijf naar {email}. Je versie is al ingevuld en je kunt een geredigeerd applogboek van de laatste dag toevoegen."
     reportIssue: "Probleem melden"
     shortcutsTitle: "Sneltoetsen"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Probleem melden"
     description: "Open een supportticket of meld een probleem rechtstreeks aan {email}."
-    guaranteeTitle: "Garantie op strikte anonimisering van logboeken"
-    guaranteeText: "Alle diagnostische logregels worden volledig geanonimiseerd voordat ze in het ZIP-bestand worden verpakt. Gebruikersnamen, thuismappen, bestandspaden, portfolionamen, tickers, aantallen, financiële waarden en API-sleutels worden automatisch verwijderd en afgeschermd."
+    guaranteeTitle: "Privégegevens verwijderen uit logboeken"
+    guaranteeText: "De app verwijdert bekende privégegevens uit de logboeken voordat ze het ZIP-bestand maakt: gebruikersnamen, thuismappen, portfolionamen, bedragen en API-sleutels. Ze gebruikt vaste patronen, dus controleer het bestand voordat je het verstuurt."
     recipient: "E-mailadres ontvanger"
     subject: "Onderwerp van het ticket"
     subjectPlaceholder: "bijv. Probleem met het importeren van transacties of het bijwerken van koersen"
     message: "Beschrijving van het probleem (optioneel)"
     messagePlaceholder: "Beschrijf wat er gebeurde of de stappen om het te reproduceren…"
-    includeLogs: "Logboeken van de afgelopen dag meesturen als geanonimiseerde ZIP-bijlage"
+    includeLogs: "Bijlage met het logboek van de laatste dag zonder privégegevens"
     includeLogsHint: "Verpakt diagnostische gebeurtenissen en systeemmetadata van de afgelopen 24 uur in een ZIP-bestand. Persoonlijke bestandspaden, portfolionamen, financiële waarden en inloggegevens worden automatisch afgeschermd."
     openedSaved: "Supportmail geopend. Het diagnosearchief is opgeslagen in je map Downloads; voeg het als bijlage toe aan de mail."
     openedDownloaded: "Supportmail geopend. Het diagnosearchief is gedownload; voeg het als bijlage toe aan de mail."
@@ -1904,7 +1917,7 @@ setup:
     title: "Welkom bij {app}"
     subtitle: "Volg je aandelen, ETF's en crypto op één plek."
     privateTitle: "Privé door ontwerp"
-    privateText: "Je gegevens blijven op deze computer. Geen account, geen cloud."
+    privateText: "Je posities en bedragen blijven op deze computer. Geen account, geen cloud."
     pricesTitle: "Koersen die zichzelf bijwerken"
     pricesText: "Zie wat je beleggingen vandaag waard zijn, in je eigen valuta."
     assistantTitle: "Een AI-assistent"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "ETF's"
       crypto: "Crypto"
   telemetry:
-    title: "Anonieme analyse"
-    description: "Help ons {app} te verbeteren door privacyvriendelijke telemetrie te delen."
-    toggle: "Anonieme telemetrie inschakelen"
-    posthog: "We gebruiken PostHog om basisgebeurtenissen in de app vast te leggen (bijv. app gestart, CSV geïmporteerd, rapport gemaakt). Herkenbaar aan een willekeurige UUID."
-    guaranteeTitle: "Strikte privacygarantie:"
-    guaranteeText: "Er worden nooit posities, geldbedragen, transactiebedragen, brokernamen of persoonlijke identiteiten verzonden. Je kunt dit altijd wijzigen in Instellingen."
+    title: "Help de app verbeteren"
+    description: "Beide opties staan uit. Zet alleen aan wat je wilt. Je kunt dit op elk moment wijzigen in Instellingen."
+    analyticsTitle: "Gebruiksanalyse"
+    analyticsText: "Stuur functiegebeurtenissen, zoals app gestart, met een willekeurig installatie-ID. Zo zien wij welke functies mensen gebruiken."
+    errorsTitle: "Foutrapportage"
+    errorsText: "Stuur een crashrapport wanneer de app faalt. Een rapport bevat het fouttype, de codelocatie, de appversie en je besturingssysteem. Het bevat geen installatie-ID en geen foutmelding."
+    vendorText: "PostHog ontvangt deze gegevens voor ons. Het ziet je IP-adres en slaat dit niet op."
+    guaranteeTitle: "Nooit verzonden:"
+    guaranteeText: "Posities, bedragen, tickersymbolen, transacties en rekeningnamen."
+    noticeLink: "Lees de Privacyverklaring"
+  privacyPrompt:
+    title: "Je privacykeuzes"
+    description: "{app} heeft nu twee aparte opties. Foutrapportage blijft uit totdat je het aanzet."
+    save: "Opslaan"
 
 service:
   assistant:

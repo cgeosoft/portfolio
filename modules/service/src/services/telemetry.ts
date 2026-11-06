@@ -1,29 +1,33 @@
 /**
- * Anonymous telemetry via PostHog.
- * Only active when the user opts in during setup or via Settings.
- * No PII, no financial data, no portfolio values are collected.
+ * Usage analytics via PostHog: named events with a random install ID.
+ * The client exists only while the user has the option on.
+ * Events never carry money, tickers, names or free text.
  */
 
-import { PostHog } from "posthog-node";
+import type { PostHog } from "posthog-node";
+import { CLI_PROVIDER_NAMES } from "portfolio-shared/llm-defaults";
 import { loadConfig } from "../config.js";
 import { appLogger } from "../logger.js";
+import { createPostHogClient } from "./posthog-client.js";
+import { consentVersion } from "./privacy-consent.js";
 
-/** Baked into the release bundle (see ../globals.d.ts); empty from a checkout. */
-const POSTHOG_KEY = typeof POSTHOG_API_KEY !== "undefined" ? (POSTHOG_API_KEY ?? "") : "";
-const POSTHOG_HOST = "https://eu.i.posthog.com";
+/** The provider as a fixed value: a custom server name or URL never reaches an event. */
+export function analyticsProvider(provider: string): string {
+  return provider in CLI_PROVIDER_NAMES ? provider : "openai-compatible";
+}
 
 export class TelemetryService {
   private client: PostHog | null = null;
   private deviceId = "";
 
-  /** Initialize the PostHog client if telemetry is enabled */
+  /** Initialize the PostHog client if usage analytics is on */
   initialize(): void {
     const config = loadConfig();
     this.deviceId = config.deviceId;
 
-    if (config.telemetryEnabled && POSTHOG_KEY) {
-      this.client = new PostHog(POSTHOG_KEY, { host: POSTHOG_HOST });
-      appLogger.logStep("info", "telemetry", "initialize", "Anonymous analytics enabled");
+    if (config.analyticsEnabled) {
+      this.client = createPostHogClient();
+      if (this.client) appLogger.logStep("info", "telemetry", "initialize", "Usage analytics enabled");
     }
   }
 
@@ -34,12 +38,12 @@ export class TelemetryService {
     this.initialize();
   }
 
-  /** Capture an anonymous event. No-ops if telemetry is disabled. */
+  /** Capture a named event. No-ops if usage analytics is off. */
   capture(event: string, properties?: Record<string, unknown>): void {
     this.client?.capture({
       distinctId: this.deviceId,
       event,
-      properties,
+      properties: { ...properties, consent_version: consentVersion() },
     });
   }
 

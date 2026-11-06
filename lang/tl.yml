@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (naka-store)"
     showHide: "Ipakita o itago ang value"
     storedHint: "May naka-store na value. Mag-type ng bago para palitan ito, o mag-type at i-clear ang field para alisin ito."
+  privacy:
+    noticeTitle: "Paunawa sa Privacy"
+    noticeDescription: "Ang ipinapadala ng bawat opsyon, kung sino ang tumatanggap nito at paano humiling ng pagbura."
+    open: "Buksan"
+    idTitle: "Analytics ID"
+    idDescription: "Random na ID na ipinapadala ng usage analytics. Kailangan ng kahilingan sa pagbura ang ID na ito, kaya kopyahin ito bago mo i-reset."
+    copy: "Kopyahin"
+    copied: "Nakopya"
+    reset: "I-reset"
+    localOnly: "Baguhin ito sa desktop window."
   catalog:
     marketQuotesInterval:
       title: "I-update ang presyo bawat"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Patuloy na tumakbo kapag isinara ang window"
       description: "Kapag isinara ang window, patuloy na tatakbo ang Portfolio bilang icon sa system tray, katabi ng orasan, para maipadala pa rin ang mga naka-iskedyul na brief at alerto. Umalis mula sa icon na iyon."
-    telemetryEnabled:
-      title: "Ibahagi ang anonymous na statistics ng paggamit"
-      description: "Ipaalam sa mga developer kung aling mga feature ang ginagamit, para makatulong na mapabuti ang Portfolio. Hindi kailanman ipinapadala ang holdings, balanse at mga transaksyon."
+    analyticsEnabled:
+      title: "Analytics ng paggamit"
+      description: "Magpadala ng mga event ng feature, tulad ng pagsisimula ng app, kasama ang random na install ID. Ipinapakita nito sa amin kung aling mga feature ang ginagamit ng mga tao."
+    errorReportingEnabled:
+      title: "Pag-uulat ng error"
+      description: "Magpadala ng crash report kapag pumalya ang app. Ang report ay may uri ng error, lokasyon sa code, bersyon ng app at ang iyong operating system. Walang install ID at walang mensahe ng error."
     checkForUpdates:
       title: "Tingnan kung may update"
       description: "Maghanap ng bagong bersyon kapag nagsimula ang Portfolio at bawat oras pagkatapos noon."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Pagsisimula at pagsasara"
     helpTitle: "Tulong"
     helpQuestion: "May hindi gumagana o may ideya ka?"
-    helpText: "Sumulat sa {email}. Nakalagay na ang iyong bersyon, at maaari kang mag-attach ng anonymous na app log ng nakaraang araw."
+    helpText: "Sumulat sa {email}. Pupunan na ang iyong bersyon, at maaari kang mag-attach ng app log ng nakaraang araw na inalisan ng pribadong data."
     reportIssue: "Mag-ulat ng Isyu"
     shortcutsTitle: "Mga keyboard shortcut"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Mag-ulat ng Isyu"
     description: "Magbukas ng technical support ticket o direktang mag-ulat ng isyu sa {email}."
-    guaranteeTitle: "Mahigpit na Garantiya sa Anonymization ng Log"
-    guaranteeText: "Ganap na ina-anonymize ang lahat ng diagnostic log entry bago i-package sa ZIP file. Awtomatikong inaalis at tinatakpan ang mga personal na username, home directory, file path, pangalan ng portfolio, ticker, dami, halagang pinansyal at API key."
+    guaranteeTitle: "Pag-alis ng pribadong data sa mga log"
+    guaranteeText: "Inaalis ng app ang mga kilalang pribadong data sa mga log bago nito i-pack ang ZIP file: username, home folder, pangalan ng portfolio, halaga at API key. Gumagamit ito ng mga takdang pattern, kaya suriin ang file bago mo ito ipadala."
     recipient: "Email ng Tatanggap"
     subject: "Paksa ng Ticket"
     subjectPlaceholder: "hal. Isyu sa pag-import ng transaksyon o pag-sync ng quote"
     message: "Paglalarawan ng Problema (Opsyonal)"
     messagePlaceholder: "Ilarawan ang nangyari o ang mga hakbang para maulit ito…"
-    includeLogs: "Isumite ang mga log ng nakaraang araw bilang anonymized na zip attachment"
+    includeLogs: "Mag-attach ng log ng nakaraang araw na inalisan ng pribadong data"
     includeLogsHint: "Ipina-package ang mga diagnostic event at system metadata mula sa nakaraang 24 na oras sa isang ZIP file. Awtomatikong tinatakpan ang mga personal na file path, pangalan ng portfolio, halagang pinansyal at credential."
     openedSaved: "Nabuksan ang support mail. Na-save ang diagnostics archive sa iyong folder ng Downloads; i-attach ito sa mail."
     openedDownloaded: "Nabuksan ang support mail. Na-download ang diagnostics archive; i-attach ito sa mail."
@@ -1904,7 +1917,7 @@ setup:
     title: "Maligayang pagdating sa {app}"
     subtitle: "Subaybayan ang iyong mga stock, ETF at crypto sa iisang lugar."
     privateTitle: "Pribado mula sa disenyo"
-    privateText: "Nananatili ang iyong data sa computer na ito. Walang account, walang cloud."
+    privateText: "Nananatili sa computer na ito ang iyong holdings at mga halaga. Walang account, walang cloud."
     pricesTitle: "Mga presyong kusang nag-a-update"
     pricesText: "Tingnan ang halaga ng iyong mga investment ngayon, sa sarili mong currency."
     assistantTitle: "Isang AI assistant"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "Mga ETF"
       crypto: "Crypto"
   telemetry:
-    title: "Anonymous na Analytics"
-    description: "Tulungan kaming mapabuti ang {app} sa pagbabahagi ng telemetry na nagpoprotekta sa privacy."
-    toggle: "I-enable ang Anonymous na Telemetry"
-    posthog: "Gumagamit kami ng PostHog para itala ang mga pangunahing event ng app (hal. nailunsad ang app, na-import ang CSV, nagawa ang report). Kinikilala sa pamamagitan ng random na UUID."
-    guaranteeTitle: "Mahigpit na Garantiya sa Privacy:"
-    guaranteeText: "Hindi kailanman ipinapadala ang holdings ng portfolio, mga halaga ng pera, halaga ng mga transaksyon, pangalan ng broker o personal na pagkakakilanlan. Maaari mo itong i-on o i-off anumang oras sa Mga Setting."
+    title: "Tulungang pagbutihin ang app"
+    description: "Naka-off ang dalawang opsyon. I-on lang ang gusto mo. Maaari mo itong baguhin anumang oras sa Mga Setting."
+    analyticsTitle: "Analytics ng paggamit"
+    analyticsText: "Magpadala ng mga event ng feature, tulad ng pagsisimula ng app, kasama ang random na install ID. Ipinapakita nito sa amin kung aling mga feature ang ginagamit ng mga tao."
+    errorsTitle: "Pag-uulat ng error"
+    errorsText: "Magpadala ng crash report kapag pumalya ang app. Ang report ay may uri ng error, lokasyon sa code, bersyon ng app at ang iyong operating system. Walang install ID at walang mensahe ng error."
+    vendorText: "Tinatanggap ng PostHog ang data na ito para sa amin. Nakikita nito ang iyong IP address at hindi ito iniimbak."
+    guaranteeTitle: "Hindi kailanman ipinapadala:"
+    guaranteeText: "Holdings, halaga, ticker, transaksyon at pangalan ng iyong mga investment account."
+    noticeLink: "Basahin ang Paunawa sa Privacy"
+  privacyPrompt:
+    title: "Ang mga pagpipilian mo sa privacy"
+    description: "May dalawang magkahiwalay na opsyon na ngayon ang {app}. Mananatiling naka-off ang pag-uulat ng error hanggang i-on mo ito."
+    save: "I-save"
 
 service:
   assistant:

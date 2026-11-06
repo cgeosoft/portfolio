@@ -370,7 +370,45 @@ export interface GetAssistantSystemPromptResponse {
 
 export interface CompleteSetupRequest {
   populateDemo: boolean;
-  enableTelemetry: boolean;
+  enableAnalytics: boolean;
+  enableErrorReporting: boolean;
+}
+
+export type ConsentSource = "setup" | "settings" | "update-prompt";
+
+export interface ConsentChoice {
+  granted: boolean;
+  /** ISO timestamp of the last change */
+  at: string;
+  source: ConsentSource;
+}
+
+export interface ConsentRecord {
+  noticeVersion: number;
+  analytics: ConsentChoice;
+  errorReporting: ConsentChoice;
+}
+
+export interface PrivacyConsentResponse {
+  record: ConsentRecord | null;
+  needsPrompt: boolean;
+  analyticsEnabled: boolean;
+  errorReportingEnabled: boolean;
+  /** False on a client on another device: only the desktop window changes consent. */
+  canChange: boolean;
+  /** Only for the desktop window. */
+  analyticsId?: string;
+}
+
+export interface PrivacyPromptAnswerRequest {
+  analytics: boolean;
+  errorReporting: boolean;
+}
+
+export interface ReportClientErrorRequest {
+  name?: string;
+  stack?: string;
+  source: "boundary" | "window";
 }
 
 export interface PickFileRequest {
@@ -684,6 +722,8 @@ export interface SettingView {
   placeholder?: string;
   options?: { value: string | number; label: string }[];
   value: string | number | boolean;
+  /** True when this client may not change the setting. */
+  readOnly?: boolean;
   /** Whether a value is stored (a secret comes back masked, so this is the only sign of one). */
   isSet: boolean;
 }

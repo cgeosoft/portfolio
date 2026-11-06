@@ -1557,6 +1557,16 @@ settings:
     storedPlaceholder: "•••••••• (išsaugota)"
     showHide: "Rodyti arba slėpti vertę"
     storedHint: "Vertė išsaugota. Įveskite naują, kad ją pakeistumėte, arba įveskite ir išvalykite lauką, kad ją pašalintumėte."
+  privacy:
+    noticeTitle: "Privatumo pranešimas"
+    noticeDescription: "Ką siunčia kiekviena parinktis, kas tai gauna ir kaip paprašyti ištrinti duomenis."
+    open: "Atidaryti"
+    idTitle: "Analitikos ID"
+    idDescription: "Atsitiktinis ID, kurį siunčia naudojimo analitika. Prašymui ištrinti duomenis reikia šio ID, todėl nukopijuokite jį prieš atkurdami."
+    copy: "Kopijuoti"
+    copied: "Nukopijuota"
+    reset: "Atkurti"
+    localOnly: "Pakeiskite tai darbalaukio lange."
   catalog:
     marketQuotesInterval:
       title: "Atnaujinti kainas kas"
@@ -1574,9 +1584,12 @@ settings:
     closeToTray:
       title: "Veikti uždarius langą"
       description: "Uždarius langą, Portfolio toliau veikia kaip piktograma sistemos dėkle šalia laikrodžio, todėl suplanuotos apžvalgos ir įspėjimai vis tiek išsiunčiami. Išeikite per tą piktogramą."
-    telemetryEnabled:
-      title: "Bendrinti anoniminę naudojimo statistiką"
-      description: "Pranešti kūrėjams, kurios funkcijos naudojamos, kad padėtumėte tobulinti Portfolio. Investicijos, likučiai ir sandoriai niekada nesiunčiami."
+    analyticsEnabled:
+      title: "Naudojimo analitika"
+      description: "Siųsti funkcijų įvykius, pavyzdžiui, programos paleidimą, kartu su atsitiktiniu diegimo ID. Taip matome, kokias funkcijas žmonės naudoja."
+    errorReportingEnabled:
+      title: "Pranešimai apie klaidas"
+      description: "Siųsti strigties ataskaitą, kai programa sugenda. Ataskaitoje yra klaidos tipas, kodo vieta, programos versija ir jūsų operacinė sistema. Joje nėra diegimo ID ir klaidos pranešimo."
     checkForUpdates:
       title: "Ieškoti naujinių"
       description: "Ieškoti naujos versijos paleidus Portfolio ir vėliau kas valandą."
@@ -1606,7 +1619,7 @@ settings:
     startingTitle: "Paleidimas ir uždarymas"
     helpTitle: "Pagalba"
     helpQuestion: "Kažkas neveikia arba turite idėją?"
-    helpText: "Rašykite {email}. Jūsų versija įrašoma automatiškai, ir galite pridėti anoniminį paskutinės dienos programos žurnalą."
+    helpText: "Rašykite adresu {email}. Jūsų versija jau įrašyta, o galite pridėti paskutinės dienos programos žurnalą be privačių duomenų."
     reportIssue: "Pranešti apie problemą"
     shortcutsTitle: "Spartieji klavišai"
     shortcuts:
@@ -1926,14 +1939,14 @@ settings:
   support:
     title: "Pranešti apie problemą"
     description: "Sukurkite techninės pagalbos užklausą arba praneškite apie problemą tiesiogiai adresu {email}."
-    guaranteeTitle: "Griežta žurnalų anonimizavimo garantija"
-    guaranteeText: "Visi diagnostikos žurnalo įrašai visiškai anonimizuojami prieš supakuojant juos į ZIP failą. Asmeniniai naudotojų vardai, namų katalogai, failų keliai, portfelių pavadinimai, tikeriai, kiekiai, finansinės vertės ir API raktai automatiškai pašalinami ir užmaskuojami."
+    guaranteeTitle: "Privačių duomenų šalinimas iš žurnalų"
+    guaranteeText: "Programa pašalina žinomus privačius duomenis iš žurnalų prieš supakuodama ZIP failą: naudotojų vardus, namų aplankus, portfelių pavadinimus, sumas ir API raktus. Ji naudoja fiksuotus šablonus, todėl prieš siųsdami patikrinkite failą."
     recipient: "Gavėjo el. paštas"
     subject: "Užklausos tema"
     subjectPlaceholder: "pvz., Problema importuojant sandorius ar sinchronizuojant kotiruotes"
     message: "Problemos aprašymas (neprivaloma)"
     messagePlaceholder: "Aprašykite, kas nutiko, arba veiksmus, kaip tai pakartoti…"
-    includeLogs: "Pridėti paskutinės dienos žurnalus kaip anonimizuotą ZIP priedą"
+    includeLogs: "Pridėti paskutinės dienos žurnalą be privačių duomenų"
     includeLogsHint: "Supakuoja paskutinių 24 valandų diagnostikos įvykius ir sistemos metaduomenis į ZIP failą. Asmeniniai failų keliai, portfelių pavadinimai, finansinės vertės ir prisijungimo duomenys automatiškai užmaskuojami."
     openedSaved: "Pagalbos laiškas atidarytas. Diagnostikos archyvas išsaugotas jūsų atsisiuntimų aplanke; pridėkite jį prie laiško."
     openedDownloaded: "Pagalbos laiškas atidarytas. Diagnostikos archyvas atsisiųstas; pridėkite jį prie laiško."
@@ -1960,7 +1973,7 @@ setup:
     title: "Sveiki atvykę į {app}"
     subtitle: "Stebėkite savo akcijas, ETF ir kriptovaliutas vienoje vietoje."
     privateTitle: "Privatumas iš esmės"
-    privateText: "Jūsų duomenys lieka šiame kompiuteryje. Jokios paskyros, jokio debesies."
+    privateText: "Jūsų investicijos ir sumos lieka šiame kompiuteryje. Jokios paskyros, jokio debesies."
     pricesTitle: "Kainos, kurios atsinaujina pačios"
     pricesText: "Matykite, kiek šiandien vertos jūsų investicijos, jūsų pačių valiuta."
     assistantTitle: "DI asistentas"
@@ -1989,12 +2002,20 @@ setup:
       etfs: "ETF"
       crypto: "Kripto"
   telemetry:
-    title: "Anoniminė analitika"
-    description: "Padėkite mums tobulinti {app} bendrindami privatumą saugančią telemetriją."
-    toggle: "Įjungti anoniminę telemetriją"
-    posthog: "Naudojame PostHog pagrindiniams programos įvykiams registruoti (pvz., programa paleista, CSV importuotas, ataskaita sugeneruota). Identifikuojama atsitiktiniu UUID."
-    guaranteeTitle: "Griežta privatumo garantija:"
-    guaranteeText: "Portfelio investicijos, piniginės vertės, sandorių sumos, brokerių pavadinimai ar asmens tapatybės duomenys niekada neperduodami. Tai bet kada galite įjungti arba išjungti skiltyje Nustatymai."
+    title: "Padėkite tobulinti programą"
+    description: "Abi parinktys išjungtos. Įjunkite tik tai, ko norite. Tai galite pakeisti bet kada Nustatymuose."
+    analyticsTitle: "Naudojimo analitika"
+    analyticsText: "Siųsti funkcijų įvykius, pavyzdžiui, programos paleidimą, kartu su atsitiktiniu diegimo ID. Taip matome, kokias funkcijas žmonės naudoja."
+    errorsTitle: "Pranešimai apie klaidas"
+    errorsText: "Siųsti strigties ataskaitą, kai programa sugenda. Ataskaitoje yra klaidos tipas, kodo vieta, programos versija ir jūsų operacinė sistema. Joje nėra diegimo ID ir klaidos pranešimo."
+    vendorText: "Šiuos duomenis mums gauna PostHog. Jis mato jūsų IP adresą ir jo nesaugo."
+    guaranteeTitle: "Niekada nesiunčiama:"
+    guaranteeText: "Investicijos, sumos, akcijų simboliai, sandoriai ir sąskaitų pavadinimai."
+    noticeLink: "Skaityti Privatumo pranešimą"
+  privacyPrompt:
+    title: "Jūsų privatumo pasirinkimai"
+    description: "{app} dabar turi dvi atskiras parinktis. Pranešimai apie klaidas lieka išjungti, kol jų neįjungsite."
+    save: "Išsaugoti"
 
 service:
   assistant:

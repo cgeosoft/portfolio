@@ -9,6 +9,7 @@ The site uses vanilla HTML, `style.css`, `script.js`, `graph.js` and `tour.js`. 
 - `index.html` - hero with OS-detected download button, Guided Analysis, the screenshot tour, privacy, features, download matrix, FAQ.
 - `tour/index.html` - the screenshot tour on its own page, sized to fit the window. `#<screen id>` opens a screen.
 - `terms/index.html` - Terms of Use, including the "Analytics and Cookies" section (`#cookie-policy`).
+- `privacy/index.html` - Privacy Notice: what the app and the site send, who receives it, retention and rights. Raise `PRIVACY_NOTICE_VERSION` in `modules/shared/src/brand.ts` when the data, the purpose or the recipient changes.
 - `metrics/index.html` - the Metrics Marketplace catalog. **Generated** by `bun run website:metrics` from `extras/metrics/repository.yml` and each `manifest.yml`; it copies the `<head>`, header and footer of `terms/index.html`. Do not edit by hand; `deploy.sh` regenerates it.
 - `assets/fonts/` - self-hosted fonts (Latin subset) with their OFL licenses. `style.css` loads them. The site makes no request to Google Fonts.
 - `assets/` - `app-icon.svg`, `app-icon.png`, `icon-512.png`, `screenshot.png` (1600x900, an open analysis with the demo portfolio; README and og:image), `tour/` (generated, see Screenshots).
@@ -23,7 +24,7 @@ bun run dev            # bunx serve .
 
 ## Analytics
 
-PostHog loads only after the visitor accepts. Before that, the page makes no request to it. `script.js` shows a cookie banner on the first visit and adds the PostHog script after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. Each page carries `<meta name="posthog-key">` with the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`. Without a real key, the banner does not show and PostHog does not load.
+PostHog loads only after the visitor accepts. Before that, the page makes no request to it. The `posthog.init` options in `script.js` turn off autocapture, dead clicks, heatmaps, exception capture, session recording and surveys, so the site sends only page views and its named events. `script.js` shows a cookie banner on the first visit and adds the PostHog script after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. Each page carries `<meta name="posthog-key">` with the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`. Without a real key, the banner does not show and PostHog does not load.
 
 ## Download links
 

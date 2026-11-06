@@ -4,6 +4,7 @@ import App from "./App";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { installChartZoomFix } from "./components/common/chart-zoom";
 import { clientLogger } from "./rpc";
+import { installErrorReporting } from "./error-reporting";
 import { loadLanguage, preferredLanguage } from "./i18n";
 // Self-hosted fonts: no network round trip for a LAN-only app.
 import "@fontsource/inter/400.css";
@@ -33,6 +34,8 @@ try {
 } catch {
   // localStorage unavailable
 }
+
+installErrorReporting();
 
 // Chart.js measures new charts in zoomed pixels; size them in CSS pixels like its resizes.
 installChartZoomFix();

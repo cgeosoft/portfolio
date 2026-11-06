@@ -1558,6 +1558,16 @@ settings:
     storedPlaceholder: "•••••••• (shranjeno)"
     showHide: "Pokaži ali skrij vrednost"
     storedHint: "Vrednost je shranjena. Vnesite novo, da jo zamenjate, ali vnesite nekaj in polje izpraznite, da jo odstranite."
+  privacy:
+    noticeTitle: "Obvestilo o zasebnosti"
+    noticeDescription: "Kaj pošlje posamezna možnost, kdo to prejme in kako zahtevati izbris."
+    open: "Odpri"
+    idTitle: "ID analitike"
+    idDescription: "Naključni ID, ki ga pošilja analitika uporabe. Zahteva za izbris potrebuje ta ID, zato ga kopirajte, preden ga ponastavite."
+    copy: "Kopiraj"
+    copied: "Kopirano"
+    reset: "Ponastavi"
+    localOnly: "To spremenite v oknu na namizju."
   catalog:
     marketQuotesInterval:
       title: "Posodobi cene vsakih"
@@ -1575,9 +1585,12 @@ settings:
     closeToTray:
       title: "Delovanje po zaprtju okna"
       description: "Po zaprtju okna Portfolio deluje naprej kot ikona v sistemski vrstici ob uri, zato se načrtovani povzetki in opozorila še vedno pošiljajo. Aplikacijo zaprete prek te ikone."
-    telemetryEnabled:
-      title: "Deli anonimno statistiko uporabe"
-      description: "Razvijalcem sporoča, katere funkcije se uporabljajo, da lahko izboljšajo Portfolio. Naložbe, stanja in transakcije se nikoli ne pošiljajo."
+    analyticsEnabled:
+      title: "Analitika uporabe"
+      description: "Pošiljaj dogodke funkcij, na primer zagon aplikacije, z naključnim ID-jem namestitve. Tako vidimo, katere funkcije ljudje uporabljajo."
+    errorReportingEnabled:
+      title: "Poročanje o napakah"
+      description: "Pošlji poročilo o sesutju, ko aplikacija odpove. Poročilo vsebuje vrsto napake, mesto v kodi, različico aplikacije in vaš operacijski sistem. Ne vsebuje ID-ja namestitve ne sporočila o napaki."
     checkForUpdates:
       title: "Preverjaj posodobitve"
       description: "Poišče novo različico ob zagonu aplikacije Portfolio in nato vsako uro."
@@ -1607,7 +1620,7 @@ settings:
     startingTitle: "Zagon in zapiranje"
     helpTitle: "Pomoč"
     helpQuestion: "Nekaj ne deluje ali imate idejo?"
-    helpText: "Pišite na {email}. Vaša različica se izpolni samodejno, priložite pa lahko anonimni dnevnik aplikacije za zadnji dan."
+    helpText: "Pišite na {email}. Vaša različica je že vpisana, priložite pa lahko dnevnik aplikacije za zadnji dan brez zasebnih podatkov."
     reportIssue: "Prijavi težavo"
     shortcutsTitle: "Bližnjice na tipkovnici"
     shortcuts:
@@ -1927,14 +1940,14 @@ settings:
   support:
     title: "Prijavi težavo"
     description: "Odprite zahtevek za tehnično podporo ali prijavite težavo neposredno na {email}."
-    guaranteeTitle: "Jamstvo stroge anonimizacije dnevnikov"
-    guaranteeText: "Vsi diagnostični zapisi so pred pakiranjem v datoteko ZIP popolnoma anonimizirani. Osebna uporabniška imena, domači imeniki, poti datotek, imena portfeljev, oznake, količine, finančne vrednosti in ključi API so samodejno odstranjeni in prikriti."
+    guaranteeTitle: "Odstranjevanje zasebnih podatkov iz dnevnikov"
+    guaranteeText: "Aplikacija pred pakiranjem datoteke ZIP iz dnevnikov odstrani znane zasebne podatke: uporabniška imena, domače mape, imena portfeljev, zneske in ključe API. Uporablja fiksne vzorce, zato datoteko pred pošiljanjem preverite."
     recipient: "E-naslov prejemnika"
     subject: "Zadeva zahtevka"
     subjectPlaceholder: "npr. težava z uvozom transakcij ali sinhronizacijo cen"
     message: "Opis težave (izbirno)"
     messagePlaceholder: "Opišite, kaj se je zgodilo, ali korake za ponovitev…"
-    includeLogs: "Pošlji dnevnike zadnjega dne kot anonimizirano prilogo ZIP"
+    includeLogs: "Priloži dnevnik zadnjega dne brez zasebnih podatkov"
     includeLogsHint: "Zapakira diagnostične dogodke in sistemske metapodatke zadnjih 24 ur v datoteko ZIP. Osebne poti datotek, imena portfeljev, finančne vrednosti in poverilnice so samodejno prikriti."
     openedSaved: "Sporočilo za podporo je odprto. Diagnostični arhiv je shranjen v mapo Prenosi; priložite ga sporočilu."
     openedDownloaded: "Sporočilo za podporo je odprto. Diagnostični arhiv je prenesen; priložite ga sporočilu."
@@ -1961,7 +1974,7 @@ setup:
     title: "Dobrodošli v {app}"
     subtitle: "Spremljajte delnice, ETF-je in kriptovalute na enem mestu."
     privateTitle: "Zasebnost v temelju"
-    privateText: "Vaši podatki ostanejo v tem računalniku. Brez računa, brez oblaka."
+    privateText: "Vaše naložbe in zneski ostanejo v tem računalniku. Brez računa, brez oblaka."
     pricesTitle: "Cene, ki se posodabljajo same"
     pricesText: "Oglejte si, koliko so vaše naložbe vredne danes, v vaši valuti."
     assistantTitle: "Pomočnik UI"
@@ -1990,12 +2003,20 @@ setup:
       etfs: "ETF-ji"
       crypto: "Kripto"
   telemetry:
-    title: "Anonimna analitika"
-    description: "Pomagajte nam izboljšati {app} z deljenjem telemetrije, ki varuje zasebnost."
-    toggle: "Omogoči anonimno telemetrijo"
-    posthog: "PostHog uporabljamo za beleženje osnovnih dogodkov aplikacije (npr. zagon aplikacije, uvoz CSV, ustvarjeno poročilo). Prepoznava z naključnim UUID."
-    guaranteeTitle: "Strogo jamstvo zasebnosti:"
-    guaranteeText: "Naložbe v portfelju, denarne vrednosti, zneski transakcij, imena posrednikov in osebni podatki se nikoli ne pošiljajo. To lahko kadar koli spremenite v Nastavitvah."
+    title: "Pomagajte izboljšati aplikacijo"
+    description: "Obe možnosti sta izklopljeni. Vklopite samo tisto, kar želite. To lahko kadar koli spremenite v Nastavitvah."
+    analyticsTitle: "Analitika uporabe"
+    analyticsText: "Pošiljaj dogodke funkcij, na primer zagon aplikacije, z naključnim ID-jem namestitve. Tako vidimo, katere funkcije ljudje uporabljajo."
+    errorsTitle: "Poročanje o napakah"
+    errorsText: "Pošlji poročilo o sesutju, ko aplikacija odpove. Poročilo vsebuje vrsto napake, mesto v kodi, različico aplikacije in vaš operacijski sistem. Ne vsebuje ID-ja namestitve ne sporočila o napaki."
+    vendorText: "PostHog te podatke prejema namesto nas. Vidi vaš naslov IP in ga ne shranjuje."
+    guaranteeTitle: "Nikoli poslano:"
+    guaranteeText: "Naložbe, zneski, borzne oznake, transakcije in imena računov."
+    noticeLink: "Preberite Obvestilo o zasebnosti"
+  privacyPrompt:
+    title: "Vaše izbire glede zasebnosti"
+    description: "{app} ima zdaj dve ločeni možnosti. Poročanje o napakah ostane izklopljeno, dokler ga ne vklopite."
+    save: "Shrani"
 
 service:
   assistant:

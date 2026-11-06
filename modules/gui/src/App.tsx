@@ -72,6 +72,7 @@ const SettingsPage = lazy(() => import("./components/settings/SettingsPage").the
 const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
 const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
 // Dialogs load on their first open and stay mounted after it, so they keep their state when closed.
+const PrivacyPromptModal = lazy(() => import("./components/common/PrivacyPromptModal").then((m) => ({ default: m.PrivacyPromptModal })));
 const SetupWizardPage = lazy(() => import("./components/common/SetupWizardPage").then((m) => ({ default: m.SetupWizardPage })));
 const ChangelogModal = lazy(() => import("./components/common/ChangelogModal").then((m) => ({ default: m.ChangelogModal })));
 const SupportTicketModal = lazy(() => import("./components/settings/SupportTicketModal").then((m) => ({ default: m.SupportTicketModal })));
@@ -859,6 +860,7 @@ export default function App() {
 
   // Modals state
   const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
+  const [privacyPrompt, setPrivacyPrompt] = useState<{ analyticsEnabled: boolean } | null>(null);
   /** 2 once step 1 of the wizard accepted the Terms of Use, so the reopened wizard goes on from there. */
   const [setupWizardStartStep, setSetupWizardStartStep] = useState<SetupStep>(1);
   const openSetupWizard = useCallback(() => {
@@ -1170,6 +1172,13 @@ export default function App() {
 
         if (!config.setupCompleted || FORCE_ONBOARDING) {
           setIsSetupWizardOpen(true);
+        } else {
+          api
+            .getPrivacyConsent()
+            .then((status) => {
+              if (status.needsPrompt && status.canChange) setPrivacyPrompt({ analyticsEnabled: status.analyticsEnabled });
+            })
+            .catch(() => {});
         }
         if (config.dismissedUpdateVersion) {
           setDismissedUpdateVersion(config.dismissedUpdateVersion);
@@ -2236,6 +2245,12 @@ export default function App() {
             onComplete={handleSetupComplete}
             onClose={() => setIsSetupWizardOpen(false)}
           />
+        </Suspense>
+      )}
+
+      {privacyPrompt && (
+        <Suspense fallback={null}>
+          <PrivacyPromptModal isOpen analyticsEnabled={privacyPrompt.analyticsEnabled} onClose={() => setPrivacyPrompt(null)} />
         </Suspense>
       )}
 

@@ -1533,6 +1533,16 @@ settings:
     storedPlaceholder: "•••••••• (guardado)"
     showHide: "Mostrar ou ocultar o valor"
     storedHint: "Há um valor guardado. Escreva um novo para o substituir, ou escreva algo e limpe o campo para o remover."
+  privacy:
+    noticeTitle: "Aviso de Privacidade"
+    noticeDescription: "O que cada opção envia, quem o recebe e como pedir a eliminação."
+    open: "Abrir"
+    idTitle: "ID de análise"
+    idDescription: "Um ID aleatório que a análise de utilização envia. Um pedido de eliminação precisa deste ID, por isso copie-o antes de o repor."
+    copy: "Copiar"
+    copied: "Copiado"
+    reset: "Repor"
+    localOnly: "Altere isto na janela do ambiente de trabalho."
   catalog:
     marketQuotesInterval:
       title: "Atualizar preços a cada"
@@ -1550,9 +1560,12 @@ settings:
     closeToTray:
       title: "Continuar em execução ao fechar a janela"
       description: "Ao fechar a janela, o Portfolio continua em execução como ícone na área de notificação, junto ao relógio, para que os resumos e alertas agendados continuem a ser enviados. Saia a partir desse ícone."
-    telemetryEnabled:
-      title: "Partilhar estatísticas de utilização anónimas"
-      description: "Indica aos programadores que funcionalidades são usadas, para ajudar a melhorar o Portfolio. Posições, saldos e transações nunca são enviados."
+    analyticsEnabled:
+      title: "Análise de utilização"
+      description: "Enviar eventos de funcionalidades, como a aplicação ter iniciado, com um ID de instalação aleatório. Isto mostra-nos que funcionalidades as pessoas usam."
+    errorReportingEnabled:
+      title: "Relatórios de erros"
+      description: "Enviar um relatório de falha quando a aplicação falha. Um relatório contém o tipo de erro, a localização no código, a versão da aplicação e o seu sistema operativo. Não contém ID de instalação nem mensagem de erro."
     checkForUpdates:
       title: "Procurar atualizações"
       description: "Procura uma nova versão quando o Portfolio inicia e depois a cada hora."
@@ -1582,7 +1595,7 @@ settings:
     startingTitle: "Arranque e encerramento"
     helpTitle: "Ajuda"
     helpQuestion: "Algo não funciona ou tem uma ideia?"
-    helpText: "Escreva para {email}. A sua versão é preenchida automaticamente e pode anexar um registo anónimo da aplicação do último dia."
+    helpText: "Escreva para {email}. A sua versão já vem preenchida e pode anexar um registo da aplicação do último dia, com os dados privados removidos."
     reportIssue: "Comunicar um problema"
     shortcutsTitle: "Atalhos de teclado"
     shortcuts:
@@ -1899,14 +1912,14 @@ settings:
   support:
     title: "Comunicar um problema"
     description: "Abra um pedido de suporte técnico ou comunique um problema diretamente para {email}."
-    guaranteeTitle: "Garantia estrita de anonimização dos registos"
-    guaranteeText: "Todas as entradas de registo de diagnóstico são totalmente anonimizadas antes de serem incluídas no ficheiro ZIP. Os nomes de utilizador, as pastas pessoais, os caminhos de ficheiros, os nomes das carteiras, os tickers, as quantidades, os valores financeiros e as chaves de API são removidos e ocultados automaticamente."
+    guaranteeTitle: "Remoção de dados privados nos registos"
+    guaranteeText: "A app remove dos registos os dados privados conhecidos antes de criar o ficheiro ZIP: nomes de utilizador, pastas pessoais, nomes das carteiras, montantes e chaves de API. Usa padrões fixos, por isso verifique o ficheiro antes de o enviar."
     recipient: "E-mail do destinatário"
     subject: "Assunto do pedido"
     subjectPlaceholder: "p. ex. Problema ao importar transações ou ao sincronizar cotações"
     message: "Descrição do problema (opcional)"
     messagePlaceholder: "Descreva o que aconteceu ou os passos para o reproduzir…"
-    includeLogs: "Anexar os registos do último dia num ZIP anonimizado"
+    includeLogs: "Anexar um registo do último dia sem dados privados"
     includeLogsHint: "Inclui num ficheiro ZIP os eventos de diagnóstico e os metadados do sistema das últimas 24 horas. Os caminhos de ficheiros pessoais, os nomes das carteiras, os valores financeiros e as credenciais são ocultados automaticamente."
     openedSaved: "O e-mail de suporte foi aberto. O arquivo de diagnóstico foi guardado na pasta de transferências; anexe-o ao e-mail."
     openedDownloaded: "O e-mail de suporte foi aberto. O arquivo de diagnóstico foi transferido; anexe-o ao e-mail."
@@ -1933,7 +1946,7 @@ setup:
     title: "Bem-vindo ao {app}"
     subtitle: "Acompanhe as suas ações, ETF e criptomoedas num só lugar."
     privateTitle: "Privado por conceção"
-    privateText: "Os seus dados ficam neste computador. Sem conta, sem nuvem."
+    privateText: "As suas posições e montantes ficam neste computador. Sem conta, sem nuvem."
     pricesTitle: "Preços que se atualizam sozinhos"
     pricesText: "Veja quanto valem hoje os seus investimentos, na sua própria moeda."
     assistantTitle: "Um assistente de IA"
@@ -1962,12 +1975,20 @@ setup:
       etfs: "ETF"
       crypto: "Cripto"
   telemetry:
-    title: "Análise anónima"
-    description: "Ajude-nos a melhorar o {app} partilhando telemetria que preserva a privacidade."
-    toggle: "Ativar telemetria anónima"
-    posthog: "Usamos o PostHog para registar eventos básicos da aplicação (p. ex., aplicação iniciada, CSV importado, relatório gerado). Identificado por um UUID aleatório."
-    guaranteeTitle: "Garantia rigorosa de privacidade:"
-    guaranteeText: "Nunca são transmitidas posições da carteira, valores monetários, montantes de transações, nomes de corretoras nem identidades pessoais. Pode alterar isto a qualquer momento em Definições."
+    title: "Ajude a melhorar a aplicação"
+    description: "As duas opções estão desativadas. Ative só o que quiser. Pode alterar isto a qualquer momento em Definições."
+    analyticsTitle: "Análise de utilização"
+    analyticsText: "Enviar eventos de funcionalidades, como a aplicação ter iniciado, com um ID de instalação aleatório. Isto mostra-nos que funcionalidades as pessoas usam."
+    errorsTitle: "Relatórios de erros"
+    errorsText: "Enviar um relatório de falha quando a aplicação falha. Um relatório contém o tipo de erro, a localização no código, a versão da aplicação e o seu sistema operativo. Não contém ID de instalação nem mensagem de erro."
+    vendorText: "A PostHog recebe estes dados por nós. Vê o seu endereço IP e não o guarda."
+    guaranteeTitle: "Nunca enviado:"
+    guaranteeText: "Posições, montantes, símbolos de ações (tickers), transações e nomes de contas."
+    noticeLink: "Ler o Aviso de Privacidade"
+  privacyPrompt:
+    title: "As suas escolhas de privacidade"
+    description: "{app} tem agora duas opções separadas. Os relatórios de erros ficam desativados até os ativar."
+    save: "Guardar"
 
 service:
   assistant:

@@ -97,7 +97,7 @@ export async function prepareData(api: Api): Promise<{ id: string; baseCurrency:
   await api.call("POST", "/api/auth/accept-terms");
   let { portfolios } = await api.call<{ portfolios: { id: string; baseCurrency: string }[] }>("GET", "/api/portfolios");
   if (portfolios.length === 0) {
-    await api.call("POST", "/api/setup/complete", { populateDemo: true, enableTelemetry: false });
+    await api.call("POST", "/api/setup/complete", { populateDemo: true, enableAnalytics: false, enableErrorReporting: false });
     ({ portfolios } = await api.call("GET", "/api/portfolios"));
   }
   // English: the hotspot targets in shots.ts match English text.

@@ -1482,6 +1482,16 @@ settings:
     storedPlaceholder: "•••••••• (저장됨)"
     showHide: "값 표시 또는 숨기기"
     storedHint: "값이 저장되어 있습니다. 바꾸려면 새 값을 입력하고, 제거하려면 입력한 후 필드를 비우세요."
+  privacy:
+    noticeTitle: "개인정보 처리방침"
+    noticeDescription: "각 옵션이 보내는 내용, 받는 곳, 삭제를 요청하는 방법입니다."
+    open: "열기"
+    idTitle: "분석 ID"
+    idDescription: "사용 분석이 보내는 무작위 ID입니다. 삭제 요청에는 이 ID가 필요하므로 초기화하기 전에 복사하세요."
+    copy: "복사"
+    copied: "복사됨"
+    reset: "초기화"
+    localOnly: "데스크톱 창에서 변경하세요."
   catalog:
     marketQuotesInterval:
       title: "가격 업데이트 주기"
@@ -1499,9 +1509,12 @@ settings:
     closeToTray:
       title: "창을 닫아도 계속 실행"
       description: "창을 닫으면 Portfolio가 시계 옆 시스템 트레이에 아이콘으로 남아 계속 실행되므로, 예약된 브리핑과 알림이 계속 전송됩니다. 종료는 그 아이콘에서 하세요."
-    telemetryEnabled:
-      title: "익명 사용 통계 공유"
-      description: "어떤 기능이 사용되는지 개발자에게 알려 Portfolio 개선에 도움을 줍니다. 보유 종목, 잔액, 거래는 절대 전송되지 않습니다."
+    analyticsEnabled:
+      title: "사용 분석"
+      description: "앱 시작 같은 기능 이벤트를 무작위 설치 ID와 함께 보냅니다. 이를 통해 사람들이 어떤 기능을 사용하는지 알 수 있습니다."
+    errorReportingEnabled:
+      title: "오류 보고"
+      description: "앱이 실패하면 충돌 보고서를 보냅니다. 보고서에는 오류 유형, 코드 위치, 앱 버전, 운영 체제가 들어 있습니다. 설치 ID와 오류 메시지는 들어 있지 않습니다."
     checkForUpdates:
       title: "업데이트 확인"
       description: "Portfolio가 시작될 때와 그 후 매시간 새 버전을 확인합니다."
@@ -1531,7 +1544,7 @@ settings:
     startingTitle: "시작 및 종료"
     helpTitle: "도움말"
     helpQuestion: "작동하지 않는 부분이 있거나 아이디어가 있으신가요?"
-    helpText: "{email}(으)로 연락하세요. 버전 정보가 자동으로 입력되며, 최근 하루 동안의 익명 앱 로그를 첨부할 수 있습니다."
+    helpText: "{email}로 문의하세요. 사용 중인 버전이 미리 입력되며, 개인 데이터를 제거한 최근 하루의 앱 로그를 첨부할 수 있습니다."
     reportIssue: "문제 신고"
     shortcutsTitle: "키보드 단축키"
     shortcuts:
@@ -1842,14 +1855,14 @@ settings:
   support:
     title: "문제 신고"
     description: "기술 지원 티켓을 열거나 {email}(으)로 직접 문제를 신고하세요."
-    guaranteeTitle: "엄격한 로그 익명화 보장"
-    guaranteeText: "모든 진단 로그 항목은 ZIP 파일로 묶기 전에 완전히 익명화됩니다. 개인 사용자 이름, 홈 디렉터리, 파일 경로, 포트폴리오 이름, 티커, 수량, 금액, API 키는 자동으로 제거 및 가려집니다."
+    guaranteeTitle: "로그의 개인 정보 제거"
+    guaranteeText: "앱은 ZIP 파일로 묶기 전에 로그에서 알려진 개인 정보를 제거합니다. 사용자 이름, 홈 폴더, 포트폴리오 이름, 금액, API 키가 대상입니다. 고정된 패턴을 사용하므로 보내기 전에 파일을 확인하세요."
     recipient: "받는 사람 이메일"
     subject: "티켓 제목"
     subjectPlaceholder: "예: 거래 가져오기 또는 시세 동기화 문제"
     message: "문제 설명 (선택 사항)"
     messagePlaceholder: "발생한 일이나 재현 단계를 설명하세요…"
-    includeLogs: "최근 하루 로그를 익명화된 zip 첨부 파일로 제출"
+    includeLogs: "최근 하루의 개인 정보를 제거한 로그 첨부"
     includeLogsHint: "지난 24시간의 진단 이벤트와 시스템 메타데이터를 ZIP 파일로 묶습니다. 개인 파일 경로, 포트폴리오 이름, 금액, 자격 증명은 자동으로 가려집니다."
     openedSaved: "지원 메일이 열렸습니다. 진단 아카이브가 다운로드 폴더에 저장되었으니 메일에 첨부하세요."
     openedDownloaded: "지원 메일이 열렸습니다. 진단 아카이브가 다운로드되었으니 메일에 첨부하세요."
@@ -1876,7 +1889,7 @@ setup:
     title: "{app}에 오신 것을 환영합니다"
     subtitle: "주식, ETF, 암호화폐를 한곳에서 추적하세요."
     privateTitle: "설계부터 개인정보 보호"
-    privateText: "데이터는 이 컴퓨터에 그대로 보관됩니다. 계정도, 클라우드도 필요 없습니다."
+    privateText: "보유와 금액은 이 컴퓨터에 그대로 보관됩니다. 계정도, 클라우드도 필요 없습니다."
     pricesTitle: "자동으로 업데이트되는 가격"
     pricesText: "내 투자의 오늘 가치를 내 통화로 확인하세요."
     assistantTitle: "AI 어시스턴트"
@@ -1905,12 +1918,20 @@ setup:
       etfs: "ETF"
       crypto: "암호화폐"
   telemetry:
-    title: "익명 분석"
-    description: "개인정보를 보호하는 원격 분석 데이터를 공유하여 {app} 개선에 도움을 주세요."
-    toggle: "익명 원격 분석 사용"
-    posthog: "PostHog를 사용해 기본 앱 이벤트(예: 앱 실행, CSV 가져오기, 보고서 생성)를 기록합니다. 무작위 UUID로 식별됩니다."
-    guaranteeTitle: "엄격한 개인정보 보호 보장:"
-    guaranteeText: "보유 종목, 금액, 거래 금액, 증권사 이름, 개인 신원 정보는 절대 전송되지 않습니다. 설정에서 언제든지 변경할 수 있습니다."
+    title: "앱 개선에 도움 주기"
+    description: "두 옵션 모두 꺼져 있습니다. 원하는 것만 켜세요. 설정에서 언제든지 변경할 수 있습니다."
+    analyticsTitle: "사용 분석"
+    analyticsText: "앱 시작 같은 기능 이벤트를 무작위 설치 ID와 함께 보냅니다. 이를 통해 사람들이 어떤 기능을 사용하는지 알 수 있습니다."
+    errorsTitle: "오류 보고"
+    errorsText: "앱이 실패하면 충돌 보고서를 보냅니다. 보고서에는 오류 유형, 코드 위치, 앱 버전, 운영 체제가 들어 있습니다. 설치 ID와 오류 메시지는 들어 있지 않습니다."
+    vendorText: "PostHog가 저희를 대신해 이 데이터를 받습니다. PostHog는 사용자의 IP 주소를 확인하지만 저장하지 않습니다."
+    guaranteeTitle: "절대 전송되지 않는 항목:"
+    guaranteeText: "보유, 금액, 티커, 거래, 계좌 이름."
+    noticeLink: "개인정보 처리방침 읽기"
+  privacyPrompt:
+    title: "개인정보 보호 선택"
+    description: "{app}에 이제 두 가지 별도 옵션이 있습니다. 오류 보고는 켜기 전까지 꺼져 있습니다."
+    save: "저장"
 
 service:
   assistant:

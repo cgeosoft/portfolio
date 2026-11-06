@@ -1520,6 +1520,16 @@ settings:
     storedPlaceholder: "•••••••• (stored)"
     showHide: "Show or hide value"
     storedHint: "A value is stored. Type a new one to replace it, or type and clear the field to remove it."
+  privacy:
+    noticeTitle: "Privacy Notice"
+    noticeDescription: "What each option sends, who receives it and how to ask for deletion."
+    open: "Open"
+    idTitle: "Analytics ID"
+    idDescription: "A random ID that usage analytics sends. A deletion request needs this ID, so copy it before you reset it."
+    copy: "Copy"
+    copied: "Copied"
+    reset: "Reset"
+    localOnly: "Change this in the desktop window."
   catalog:
     marketQuotesInterval:
       title: "Update prices every"
@@ -1537,9 +1547,12 @@ settings:
     closeToTray:
       title: "Keep running when the window closes"
       description: "Closing the window leaves Portfolio running as an icon in the system tray, next to the clock, so scheduled briefs and alerts still go out. Quit from that icon."
-    telemetryEnabled:
-      title: "Share anonymous usage statistics"
-      description: "Tell the developers which features are used, to help improve Portfolio. Holdings, balances and transactions are never sent."
+    analyticsEnabled:
+      title: "Usage analytics"
+      description: "Send feature events, such as app started, with a random install ID. This shows us which features people use."
+    errorReportingEnabled:
+      title: "Error reporting"
+      description: "Send a crash report when the app fails. A report holds the error type, the code location, the app version and your operating system. It holds no install ID and no error message."
     checkForUpdates:
       title: "Check for updates"
       description: "Look for a new version when Portfolio starts and every hour after that."
@@ -1569,7 +1582,7 @@ settings:
     startingTitle: "Starting and closing"
     helpTitle: "Help"
     helpQuestion: "Something is not working or you have an idea?"
-    helpText: "Write to {email}. Your version is filled in, and you can attach an anonymous app log of the last day."
+    helpText: "Write to {email}. Your version is filled in, and you can attach a redacted app log of the last day."
     reportIssue: "Report an Issue"
     shortcutsTitle: "Keyboard shortcuts"
     shortcuts:
@@ -1883,14 +1896,14 @@ settings:
   support:
     title: "Report an Issue"
     description: "Open a technical support ticket or report an issue directly to {email}."
-    guaranteeTitle: "Strict Log Anonymization Guarantee"
-    guaranteeText: "All diagnostic log entries are completely anonymized before packaging into the ZIP file. Personal usernames, home directories, file paths, portfolio names, tickers, quantities, financial values, and API keys are automatically stripped and redacted."
+    guaranteeTitle: "Log redaction"
+    guaranteeText: "The app removes known private data from the logs before it packs the ZIP file: usernames, home folders, portfolio names, amounts and API keys. It uses fixed patterns, so check the file before you send it."
     recipient: "Recipient Email"
     subject: "Ticket Subject"
     subjectPlaceholder: "e.g. Issue with transaction import or quote sync"
     message: "Problem Description (Optional)"
     messagePlaceholder: "Describe what happened or steps to reproduce…"
-    includeLogs: "Submit last day logs as an anonymized zip attachment"
+    includeLogs: "Attach a redacted log of the last day"
     includeLogsHint: "Packages diagnostic events and system metadata from the previous 24 hours into a ZIP file. Personal file paths, portfolio names, financial values, and credentials are automatically redacted."
     openedSaved: "Support mail opened. The diagnostics archive was saved to your Downloads folder; attach it to the mail."
     openedDownloaded: "Support mail opened. The diagnostics archive was downloaded; attach it to the mail."
@@ -1918,7 +1931,7 @@ setup:
     title: "Welcome to {app}"
     subtitle: "Track your stocks, ETFs and crypto in one place."
     privateTitle: "Private by design"
-    privateText: "Your data stays on this computer. No account, no cloud."
+    privateText: "Your holdings and amounts stay on this computer. No account, no cloud."
     pricesTitle: "Prices that update on their own"
     pricesText: "See what your investments are worth today, in your own currency."
     assistantTitle: "An AI assistant"
@@ -1947,12 +1960,20 @@ setup:
       etfs: "ETFs"
       crypto: "Crypto"
   telemetry:
-    title: "Anonymous Analytics"
-    description: "Help us improve {app} by sharing privacy-preserving telemetry."
-    toggle: "Enable Anonymous Telemetry"
-    posthog: "We use PostHog to record basic app events (e.g. app launched, CSV imported, report generated). Identified by a random UUID."
-    guaranteeTitle: "Strict Privacy Guarantee:"
-    guaranteeText: "No portfolio holdings, monetary values, transaction amounts, broker names, or personal identities are ever transmitted. You can toggle this anytime in Settings."
+    title: "Help improve the app"
+    description: "Both options are off. Turn on only what you want. You can change this at any time in Settings."
+    analyticsTitle: "Usage analytics"
+    analyticsText: "Send feature events, such as app started, with a random install ID. This shows us which features people use."
+    errorsTitle: "Error reporting"
+    errorsText: "Send a crash report when the app fails. A report holds the error type, the code location, the app version and your operating system. It holds no install ID and no error message."
+    vendorText: "PostHog receives this data for us. It sees your IP address and does not store it."
+    guaranteeTitle: "Never sent:"
+    guaranteeText: "Holdings, amounts, tickers, transactions and account names."
+    noticeLink: "Read the Privacy Notice"
+  privacyPrompt:
+    title: "Your privacy choices"
+    description: "{app} now has two separate options. Error reporting stays off until you turn it on."
+    save: "Save"
 
 # ── service: text the service sends (notifications, errors) ──────────────
 service:

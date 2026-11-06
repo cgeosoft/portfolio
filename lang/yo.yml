@@ -1482,6 +1482,16 @@ settings:
     storedPlaceholder: "•••••••• (a ti fi pamọ́)"
     showHide: "Fi iye hàn tàbí fi pamọ́"
     storedHint: "A ti fi iye kan pamọ́. Tẹ tuntun láti rọ́pò rẹ̀, tàbí tẹ nǹkan kí o sì pa àyè náà rẹ́ láti yọ ọ́ kúrò."
+  privacy:
+    noticeTitle: "Ìkéde Àṣírí"
+    noticeDescription: "Ohun tí àṣàyàn kọ̀ọ̀kan ń rán, ẹni tó ń gbà á àti bí a ṣe ń béèrè fún pípa rẹ̀ rẹ́."
+    open: "Ṣí"
+    idTitle: "ID ìtúpalẹ̀"
+    idDescription: "ID tí a yàn láìṣètò tí ìtúpalẹ̀ ìlò ń rán. Ìbéèrè láti pa dátà rẹ́ nílò ID yìí, nítorí náà ṣe ẹ̀dà rẹ̀ kí o tó tún un tò."
+    copy: "Ṣe ẹ̀dà"
+    copied: "A ti ṣe ẹ̀dà"
+    reset: "Tún un tò"
+    localOnly: "Yí èyí padà nínú fèrèsé kọ̀ǹpútà."
   catalog:
     marketQuotesInterval:
       title: "Sọ iye owó di tuntun ní"
@@ -1499,9 +1509,12 @@ settings:
     closeToTray:
       title: "Máa ṣiṣẹ́ lọ nígbà tí fèrèsé bá tì"
       description: "Títi fèrèsé ń fi Portfolio sílẹ̀ kí ó máa ṣiṣẹ́ gẹ́gẹ́ bí àmì nínú àtẹ ẹ̀rọ, lẹ́gbẹ̀ẹ́ aago, kí àwọn àkópọ̀ àti ìkìlọ̀ tí a ṣètò lè máa jáde. Jáde láti inú àmì náà."
-    telemetryEnabled:
-      title: "Pín ìṣirò ìlò láìdárúkọ"
-      description: "Sọ fún àwọn olùgbéejáde àwọn ẹ̀yà tí a ń lò, láti ràn wọ́n lọ́wọ́ láti mú Portfolio dára sí i. A kì í fi ohun-ìní, ìyókù owó tàbí ìdúnàádúrà ránṣẹ́ rí."
+    analyticsEnabled:
+      title: "Ìtúpalẹ̀ ìlò"
+      description: "Fi àwọn ìṣẹ̀lẹ̀ àbùdá ránṣẹ́, bíi ìbẹ̀rẹ̀ ìṣàfilọ́lẹ̀, pẹ̀lú ID ìfisílẹ̀ tí a yàn láìṣètò. Èyí ń fi àwọn àbùdá tí àwọn ènìyàn ń lò hàn wá."
+    errorReportingEnabled:
+      title: "Ìjábọ̀ àṣìṣe"
+      description: "Fi ìjábọ̀ ìkọlù ránṣẹ́ nígbà tí ìṣàfilọ́lẹ̀ bá kùnà. Ìjábọ̀ náà ní irú àṣìṣe, ibi tó wà nínú kóòdù, ẹ̀yà ìṣàfilọ́lẹ̀ àti ẹ̀rọ ìṣiṣẹ́ rẹ. Kò ní ID ìfisílẹ̀ kankan, kò sì ní ọ̀rọ̀ àṣìṣe."
     checkForUpdates:
       title: "Ṣàyẹ̀wò fún ìmúdójúìwọ̀n"
       description: "Wá ẹ̀yà tuntun nígbà tí Portfolio bá bẹ̀rẹ̀ àti ní wákàtí kọ̀ọ̀kan lẹ́yìn náà."
@@ -1531,7 +1544,7 @@ settings:
     startingTitle: "Bíbẹ̀rẹ̀ àti títì"
     helpTitle: "Ìrànlọ́wọ́"
     helpQuestion: "Ṣé nǹkan kan kò ṣiṣẹ́ tàbí o ní èrò kan?"
-    helpText: "Kọ̀wé sí {email}. A ó kọ ẹ̀yà rẹ sí i fúnra rẹ̀, o sì lè so àkọsílẹ̀ ìṣiṣẹ́ ètò ti ọjọ́ tó kọjá mọ́ ọn láìdárúkọ."
+    helpText: "Kọ ímeèlì sí {email}. A ó kún ẹ̀yà rẹ sílẹ̀, o sì lè so àkọsílẹ̀ ìṣàfilọ́lẹ̀ ọjọ́ tó kọjá tí a ti yọ àlàyé àṣírí kúrò mọ́ ọn."
     reportIssue: "Jábọ̀ ìṣòro kan"
     shortcutsTitle: "Àwọn ọ̀nà àbùjá kọ́kọ́rọ́"
     shortcuts:
@@ -1842,14 +1855,14 @@ settings:
   support:
     title: "Jábọ̀ ìṣòro kan"
     description: "Ṣí tíkẹ́ẹ̀tì ìrànlọ́wọ́ ìmọ̀-ẹ̀rọ tàbí jábọ̀ ìṣòro kan tààrà sí {email}."
-    guaranteeTitle: "Ìdánilójú líle pé a ó yọ ìdánimọ̀ kúrò nínú àkọsílẹ̀"
-    guaranteeText: "A ń yọ ìdánimọ̀ kúrò pátápátá nínú gbogbo àkọsílẹ̀ àyẹ̀wò kí a tó dì wọ́n sínú fáìlì ZIP. A ń yọ orúkọ olùmúlò, fódà ilé, ọ̀nà fáìlì, orúkọ àkójọ ìdókòwò, àmì, iye ìpín, iye owó àti kọ́kọ́rọ́ API kúrò, a sì ń bò wọ́n mọ́lẹ̀ fúnra rẹ̀."
+    guaranteeTitle: "Yíyọ dátà àṣírí kúrò nínú àkọsílẹ̀"
+    guaranteeText: "Ìṣàfilọ́lẹ̀ náà ń yọ dátà àṣírí tí ó mọ̀ kúrò nínú àkọsílẹ̀ kí ó tó di fáìlì ZIP: orúkọ olùmúlò, fódà ilé, orúkọ àkójọ ìdókòwò, iye owó àti kọ́kọ́rọ́ API. Ó ń lo àwòṣe tí kì í yí padà, nítorí náà ṣàyẹ̀wò fáìlì náà kí o tó fi ránṣẹ́."
     recipient: "Ímeèlì olùgbà"
     subject: "Àkọlé tíkẹ́ẹ̀tì"
     subjectPlaceholder: "àpẹẹrẹ Ìṣòro pẹ̀lú gbígbé ìdúnàádúrà wọlé tàbí mímú iye owó bá ara mu"
     message: "Àpèjúwe ìṣòro (kò pọn dandan)"
     messagePlaceholder: "Ṣàpèjúwe ohun tó ṣẹlẹ̀ tàbí ìgbésẹ̀ láti tún un ṣe…"
-    includeLogs: "Fi àkọsílẹ̀ ọjọ́ tó kọjá ránṣẹ́ gẹ́gẹ́ bí àsomọ́ zip láìsí ìdánimọ̀"
+    includeLogs: "So àkọsílẹ̀ ọjọ́ tó kọjá tí a ti yọ dátà àṣírí kúrò mọ́ ọn"
     includeLogsHint: "Ó ń di àwọn ìṣẹ̀lẹ̀ àyẹ̀wò àti metadata ẹ̀rọ ti wákàtí 24 tó kọjá sínú fáìlì ZIP. A ń bo ọ̀nà fáìlì ara ẹni, orúkọ àkójọ ìdókòwò, iye owó àti ìwé ìwọlé mọ́lẹ̀ fúnra rẹ̀."
     openedSaved: "A ti ṣí ímeèlì ìrànlọ́wọ́. A ti fi àkójọpamọ́ àyẹ̀wò pamọ́ sínú fódà ìgbàsílẹ̀ rẹ; so ó mọ́ ímeèlì náà."
     openedDownloaded: "A ti ṣí ímeèlì ìrànlọ́wọ́. A ti ṣe ìgbàsílẹ̀ àkójọpamọ́ àyẹ̀wò; so ó mọ́ ímeèlì náà."
@@ -1876,7 +1889,7 @@ setup:
     title: "Káàbọ̀ sí {app}"
     subtitle: "Tọpinpin àwọn ìpín, ETF àti crypto rẹ ní ibì kan."
     privateTitle: "Àṣírí láti ìpìlẹ̀"
-    privateText: "Dátà rẹ wà lórí kọ̀ǹpútà yìí. Kò sí àkọọ́lẹ̀, kò sí àwọsánmà."
+    privateText: "Ohun-ìní àti iye owó rẹ wà lórí kọ̀ǹpútà yìí. Kò sí àkọọ́lẹ̀, kò sí àwọsánmà."
     pricesTitle: "Iye owó tí ń ṣe àtúnṣe fúnra rẹ̀"
     pricesText: "Wo iye tí ìdókòwò rẹ tó lónìí, ní owó tìrẹ."
     assistantTitle: "Olùrànlọ́wọ́ AI kan"
@@ -1905,12 +1918,20 @@ setup:
       etfs: "ETF"
       crypto: "Crypto"
   telemetry:
-    title: "Ìtúpalẹ̀ láìdárúkọ"
-    description: "Ràn wá lọ́wọ́ láti mú {app} dára sí i nípa pínpín ìṣirò ìlò tí ó dáàbò bo àṣírí."
-    toggle: "Mú ìṣirò ìlò láìdárúkọ ṣiṣẹ́"
-    posthog: "A ń lo PostHog láti ṣàkọsílẹ̀ àwọn ìṣẹ̀lẹ̀ ìpìlẹ̀ ètò (bí àpẹẹrẹ, ètò ṣí, CSV wọlé, ìjábọ̀ ṣẹ̀dá). A ń fi UUID àìròtẹ́lẹ̀ dá a mọ̀."
-    guaranteeTitle: "Ìdánilójú àṣírí tó le:"
-    guaranteeText: "A kì í fi ohun-ìní àkójọ ìdókòwò, iye owó, iye ìdúnàádúrà, orúkọ alágbàtà tàbí ìdánimọ̀ ara ẹni ránṣẹ́ rí. O lè tan tàbí pa èyí nígbàkúgbà nínú Ètò."
+    title: "Ràn wá lọ́wọ́ láti mú ìṣàfilọ́lẹ̀ náà dára sí i"
+    description: "Àwọn àṣàyàn méjèèjì wà ní pípa. Tan èyí tí o bá fẹ́ nìkan. O lè yí èyí padà nígbàkúgbà nínú Ètò."
+    analyticsTitle: "Ìtúpalẹ̀ ìlò"
+    analyticsText: "Fi àwọn ìṣẹ̀lẹ̀ àbùdá ránṣẹ́, bíi ìbẹ̀rẹ̀ ìṣàfilọ́lẹ̀, pẹ̀lú ID ìfisílẹ̀ tí a yàn láìṣètò. Èyí ń fi àwọn àbùdá tí àwọn ènìyàn ń lò hàn wá."
+    errorsTitle: "Ìjábọ̀ àṣìṣe"
+    errorsText: "Fi ìjábọ̀ ìkọlù ránṣẹ́ nígbà tí ìṣàfilọ́lẹ̀ bá kùnà. Ìjábọ̀ náà ní irú àṣìṣe, ibi tó wà nínú kóòdù, ẹ̀yà ìṣàfilọ́lẹ̀ àti ẹ̀rọ ìṣiṣẹ́ rẹ. Kò ní ID ìfisílẹ̀ kankan, kò sì ní ọ̀rọ̀ àṣìṣe."
+    vendorText: "PostHog ń gba dátà yìí fún wa. Ó rí àdírẹ́sì IP rẹ, kò sì tọ́jú rẹ̀."
+    guaranteeTitle: "A kì í fi ránṣẹ́ láé:"
+    guaranteeText: "Ohun-ìní, iye owó, àmì ọjà, ìdúnàádúrà àti orúkọ àwọn àkọọ́lẹ̀ ìdókòwò rẹ."
+    noticeLink: "Ka Ìkéde Àṣírí"
+  privacyPrompt:
+    title: "Àwọn àṣàyàn àṣírí rẹ"
+    description: "{app} ní àṣàyàn méjì tó yàtọ̀ síra báyìí. Ìjábọ̀ àṣìṣe yóò wà ní pípa títí o fi tan án."
+    save: "Fi pamọ́"
 
 service:
   assistant:

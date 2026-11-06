@@ -1532,6 +1532,16 @@ settings:
     storedPlaceholder: "•••••••• (saglabāts)"
     showHide: "Rādīt vai slēpt vērtību"
     storedHint: "Vērtība ir saglabāta. Ierakstiet jaunu, lai to aizstātu, vai ierakstiet un notīriet lauku, lai to noņemtu."
+  privacy:
+    noticeTitle: "Privātuma paziņojums"
+    noticeDescription: "Ko sūta katra opcija, kas to saņem un kā pieprasīt dzēšanu."
+    open: "Atvērt"
+    idTitle: "Analītikas ID"
+    idDescription: "Nejaušs ID, ko sūta lietojuma analītika. Dzēšanas pieprasījumam šis ID ir vajadzīgs, tāpēc nokopējiet to pirms atiestatīšanas."
+    copy: "Kopēt"
+    copied: "Nokopēts"
+    reset: "Atiestatīt"
+    localOnly: "Mainiet to darbvirsmas logā."
   catalog:
     marketQuotesInterval:
       title: "Atjaunināt cenas ik pēc"
@@ -1549,9 +1559,12 @@ settings:
     closeToTray:
       title: "Turpināt darbu pēc loga aizvēršanas"
       description: "Aizverot logu, Portfolio turpina darboties kā ikona sistēmas teknē blakus pulkstenim, lai ieplānotie kopsavilkumi un brīdinājumi joprojām tiktu nosūtīti. Iziet var no šīs ikonas."
-    telemetryEnabled:
-      title: "Kopīgot anonīmu lietojuma statistiku"
-      description: "Informēt izstrādātājus, kuras funkcijas tiek izmantotas, lai palīdzētu uzlabot Portfolio. Ieguldījumi, atlikumi un darījumi nekad netiek nosūtīti."
+    analyticsEnabled:
+      title: "Lietojuma analītika"
+      description: "Sūtīt funkciju notikumus, piemēram, lietotnes palaišanu, kopā ar nejaušu instalācijas ID. Tas parāda, kuras funkcijas cilvēki izmanto."
+    errorReportingEnabled:
+      title: "Kļūdu ziņošana"
+      description: "Sūtīt avārijas ziņojumu, kad lietotne atteicas. Ziņojumā ir kļūdas veids, koda vieta, lietotnes versija un jūsu operētājsistēma. Tajā nav instalācijas ID un kļūdas ziņojuma."
     checkForUpdates:
       title: "Pārbaudīt atjauninājumus"
       description: "Meklēt jaunu versiju, kad Portfolio tiek palaists, un pēc tam katru stundu."
@@ -1581,7 +1594,7 @@ settings:
     startingTitle: "Palaišana un aizvēršana"
     helpTitle: "Palīdzība"
     helpQuestion: "Kaut kas nedarbojas vai jums ir ideja?"
-    helpText: "Rakstiet uz {email}. Jūsu versija tiek norādīta automātiski, un varat pievienot anonīmu pēdējās dienas lietotnes žurnālu."
+    helpText: "Rakstiet uz {email}. Jūsu versija ir jau ierakstīta, un varat pievienot pēdējās dienas lietotnes žurnālu bez privātiem datiem."
     reportIssue: "Ziņot par problēmu"
     shortcutsTitle: "Īsinājumtaustiņi"
     shortcuts:
@@ -1898,14 +1911,14 @@ settings:
   support:
     title: "Ziņot par problēmu"
     description: "Izveidojiet tehniskā atbalsta pieteikumu vai ziņojiet par problēmu tieši uz {email}."
-    guaranteeTitle: "Stingra žurnālu anonimizācijas garantija"
-    guaranteeText: "Visi diagnostikas žurnāla ieraksti tiek pilnībā anonimizēti pirms iepakošanas ZIP failā. Personīgie lietotājvārdi, mājas direktorijas, failu ceļi, portfeļu nosaukumi, tikeri, daudzumi, finanšu vērtības un API atslēgas tiek automātiski izņemti un aizklāti."
+    guaranteeTitle: "Privāto datu noņemšana no žurnāliem"
+    guaranteeText: "Lietotne noņem no žurnāliem zināmos privātos datus, pirms iepako ZIP failu: lietotājvārdus, mājas mapes, portfeļu nosaukumus, summas un API atslēgas. Tā izmanto fiksētus šablonus, tāpēc pirms sūtīšanas pārbaudiet failu."
     recipient: "Saņēmēja e-pasts"
     subject: "Pieteikuma temats"
     subjectPlaceholder: "piem., Problēma ar darījumu importu vai kotāciju sinhronizāciju"
     message: "Problēmas apraksts (neobligāti)"
     messagePlaceholder: "Aprakstiet, kas notika, vai darbības, kā to atkārtot…"
-    includeLogs: "Pievienot pēdējās dienas žurnālus kā anonimizētu ZIP pielikumu"
+    includeLogs: "Pievienot pēdējās dienas žurnālu bez privātajiem datiem"
     includeLogsHint: "Iepako pēdējo 24 stundu diagnostikas notikumus un sistēmas metadatus ZIP failā. Personīgie failu ceļi, portfeļu nosaukumi, finanšu vērtības un akreditācijas dati tiek automātiski aizklāti."
     openedSaved: "Atbalsta e-pasts atvērts. Diagnostikas arhīvs saglabāts jūsu lejupielāžu mapē; pievienojiet to e-pastam."
     openedDownloaded: "Atbalsta e-pasts atvērts. Diagnostikas arhīvs lejupielādēts; pievienojiet to e-pastam."
@@ -1932,7 +1945,7 @@ setup:
     title: "Laipni lūdzam {app}"
     subtitle: "Sekojiet savām akcijām, ETF un kriptovalūtām vienuviet."
     privateTitle: "Privātums jau pēc būtības"
-    privateText: "Jūsu dati paliek šajā datorā. Bez konta, bez mākoņa."
+    privateText: "Jūsu ieguldījumi un summas paliek šajā datorā. Nav konta, nav mākoņa."
     pricesTitle: "Cenas, kas atjaunojas pašas"
     pricesText: "Redziet, cik šodien ir vērti jūsu ieguldījumi, jūsu pašu valūtā."
     assistantTitle: "MI asistents"
@@ -1961,12 +1974,20 @@ setup:
       etfs: "ETF"
       crypto: "Kripto"
   telemetry:
-    title: "Anonīma analītika"
-    description: "Palīdziet mums uzlabot {app}, kopīgojot privātumu saudzējošu telemetriju."
-    toggle: "Iespējot anonīmu telemetriju"
-    posthog: "Mēs izmantojam PostHog, lai reģistrētu pamata lietotnes notikumus (piem., lietotne palaista, CSV importēts, pārskats izveidots). Identificē pēc nejauša UUID."
-    guaranteeTitle: "Stingra privātuma garantija:"
-    guaranteeText: "Portfeļa ieguldījumi, naudas vērtības, darījumu summas, brokeru nosaukumi vai personas identitāte nekad netiek nosūtīti. To var jebkurā laikā ieslēgt vai izslēgt sadaļā Iestatījumi."
+    title: "Palīdziet uzlabot lietotni"
+    description: "Abas opcijas ir izslēgtas. Ieslēdziet tikai to, ko vēlaties. To var mainīt jebkurā laikā sadaļā Iestatījumi."
+    analyticsTitle: "Lietojuma analītika"
+    analyticsText: "Sūtīt funkciju notikumus, piemēram, lietotnes palaišanu, kopā ar nejaušu instalācijas ID. Tas parāda, kuras funkcijas cilvēki izmanto."
+    errorsTitle: "Kļūdu ziņošana"
+    errorsText: "Sūtīt avārijas ziņojumu, kad lietotne atteicas. Ziņojumā ir kļūdas veids, koda vieta, lietotnes versija un jūsu operētājsistēma. Tajā nav instalācijas ID un kļūdas ziņojuma."
+    vendorText: "PostHog šos datus saņem mūsu vietā. Tas redz jūsu IP adresi un to neglabā."
+    guaranteeTitle: "Nekad netiek sūtīts:"
+    guaranteeText: "Ieguldījumi, summas, akciju simboli, darījumi un kontu nosaukumi."
+    noticeLink: "Lasīt Privātuma paziņojumu"
+  privacyPrompt:
+    title: "Jūsu privātuma izvēles"
+    description: "{app} tagad ir divas atsevišķas opcijas. Kļūdu ziņošana paliek izslēgta, kamēr to neieslēgsiet."
+    save: "Saglabāt"
 
 service:
   assistant:

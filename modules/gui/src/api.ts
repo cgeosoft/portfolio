@@ -72,6 +72,7 @@ import type {
 } from "portfolio-shared/api-types";
 import type { PortfolioItem, PortfolioReport, PortfolioTransaction, FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { MetricScope } from "portfolio-shared/metric-abi";
+import type { PrivacyConsentResponse, PrivacyPromptAnswerRequest, ReportClientErrorRequest } from "portfolio-shared/api-types";
 import type { PortfolioExposureResponse } from "portfolio-shared/api-types";
 import type { PortfolioEventsResponse, PortfolioIncomeSummary } from "portfolio-shared/api-types";
 import type { GetCompanyIntelResponse, GetTranscriptResponse, SummarizeTranscriptResponse } from "portfolio-shared/api-types";
@@ -331,6 +332,10 @@ export const api = {
   downloadUpdate: (version: string, dialogTitle?: string) =>
     request<DownloadUpdateResponse>("/api/app/update/download", { method: "POST", body: json({ version, dialogTitle }) }),
   getUpdateDownload: () => request<UpdateDownloadState>("/api/app/update/download"),
+  getPrivacyConsent: () => request<PrivacyConsentResponse>("/api/privacy/consent"),
+  answerPrivacyPrompt: (body: PrivacyPromptAnswerRequest) => request<PrivacyConsentResponse>("/api/privacy/prompt-answer", { method: "PUT", body: json(body) }),
+  resetAnalyticsId: () => request<{ analyticsId: string }>("/api/privacy/reset-analytics-id", { method: "POST" }),
+  reportClientError: (body: ReportClientErrorRequest) => request<{ success: boolean }>("/api/app/error-report", { method: "POST", body: json(body) }),
   logClientEvent: (entry: LogClientEventRequest) => request<{ success: boolean }>("/api/app/logs", { method: "POST", body: json(entry) }, { timeoutMs: 2000 }),
   openSupportTicket: (body: OpenSupportTicketRequest) => request<OpenSupportTicketResponse>("/api/app/support", { method: "POST", body: json(body) }),
   /** URL of the anonymised diagnostics zip (browser download for remote clients). */

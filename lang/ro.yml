@@ -1532,6 +1532,16 @@ settings:
     storedPlaceholder: "•••••••• (stocat)"
     showHide: "Afișare sau ascundere valoare"
     storedHint: "O valoare este stocată. Introduceți una nouă pentru a o înlocui sau tastați și goliți câmpul pentru a o elimina."
+  privacy:
+    noticeTitle: "Nota de confidențialitate"
+    noticeDescription: "Ce trimite fiecare opțiune, cine primește datele și cum cereți ștergerea."
+    open: "Deschidere"
+    idTitle: "ID de analiză"
+    idDescription: "Un ID aleatoriu pe care îl trimite analiza de utilizare. O cerere de ștergere are nevoie de acest ID, așa că copiați-l înainte de resetare."
+    copy: "Copiere"
+    copied: "Copiat"
+    reset: "Resetare"
+    localOnly: "Modificați asta în fereastra desktop."
   catalog:
     marketQuotesInterval:
       title: "Actualizare prețuri la fiecare"
@@ -1549,9 +1559,12 @@ settings:
     closeToTray:
       title: "Rulare continuă la închiderea ferestrei"
       description: "La închiderea ferestrei, Portfolio rămâne activ ca pictogramă în zona de notificare, lângă ceas, astfel încât buletinele și alertele programate sunt trimise în continuare. Ieșiți din acea pictogramă."
-    telemetryEnabled:
-      title: "Partajare statistici anonime de utilizare"
-      description: "Spuneți dezvoltatorilor ce funcții sunt folosite, pentru a ajuta la îmbunătățirea Portfolio. Deținerile, soldurile și tranzacțiile nu sunt trimise niciodată."
+    analyticsEnabled:
+      title: "Analiză de utilizare"
+      description: "Trimite evenimente ale funcțiilor, cum ar fi pornirea aplicației, împreună cu un ID de instalare aleatoriu. Asta ne arată ce funcții folosesc oamenii."
+    errorReportingEnabled:
+      title: "Raportare erori"
+      description: "Trimite un raport de blocare când aplicația eșuează. Un raport conține tipul erorii, locația în cod, versiunea aplicației și sistemul dvs. de operare. Nu conține ID de instalare și nici mesajul erorii."
     checkForUpdates:
       title: "Căutare actualizări"
       description: "Căutați o versiune nouă la pornirea Portfolio și apoi în fiecare oră."
@@ -1581,7 +1594,7 @@ settings:
     startingTitle: "Pornire și închidere"
     helpTitle: "Ajutor"
     helpQuestion: "Ceva nu funcționează sau aveți o idee?"
-    helpText: "Scrieți la {email}. Versiunea dvs. este completată automat și puteți atașa un jurnal anonim al aplicației din ultima zi."
+    helpText: "Scrieți la {email}. Versiunea dvs. este completată deja și puteți atașa un jurnal al aplicației din ultima zi, fără datele private."
     reportIssue: "Raportare problemă"
     shortcutsTitle: "Comenzi rapide de la tastatură"
     shortcuts:
@@ -1898,14 +1911,14 @@ settings:
   support:
     title: "Raportare problemă"
     description: "Deschideți un tichet de asistență tehnică sau raportați o problemă direct la {email}."
-    guaranteeTitle: "Garanție strictă de anonimizare a jurnalelor"
-    guaranteeText: "Toate intrările din jurnalele de diagnosticare sunt complet anonimizate înainte de a fi incluse în fișierul ZIP. Numele de utilizator, directoarele personale, căile fișierelor, numele portofoliilor, tickerele, cantitățile, valorile financiare și cheile API sunt eliminate și mascate automat."
+    guaranteeTitle: "Eliminarea datelor private din jurnale"
+    guaranteeText: "Aplicația elimină din jurnale datele private cunoscute înainte de a crea fișierul ZIP: nume de utilizator, dosare personale, nume de portofolii, sume și chei API. Folosește tipare fixe, deci verificați fișierul înainte de a-l trimite."
     recipient: "E-mail destinatar"
     subject: "Subiectul tichetului"
     subjectPlaceholder: "ex. Problemă la importul tranzacțiilor sau la sincronizarea cotațiilor"
     message: "Descrierea problemei (opțional)"
     messagePlaceholder: "Descrieți ce s-a întâmplat sau pașii pentru reproducere…"
-    includeLogs: "Trimitere jurnale din ultima zi ca atașament ZIP anonimizat"
+    includeLogs: "Atașați un jurnal din ultima zi fără date private"
     includeLogsHint: "Împachetează evenimentele de diagnosticare și metadatele de sistem din ultimele 24 de ore într-un fișier ZIP. Căile fișierelor personale, numele portofoliilor, valorile financiare și datele de autentificare sunt mascate automat."
     openedSaved: "E-mailul de asistență a fost deschis. Arhiva de diagnosticare a fost salvată în dosarul Descărcări; atașați-o la e-mail."
     openedDownloaded: "E-mailul de asistență a fost deschis. Arhiva de diagnosticare a fost descărcată; atașați-o la e-mail."
@@ -1932,7 +1945,7 @@ setup:
     title: "Bun venit în {app}"
     subtitle: "Urmăriți acțiunile, ETF-urile și criptomonedele într-un singur loc."
     privateTitle: "Confidențialitate încă din concepție"
-    privateText: "Datele dvs. rămân pe acest computer. Fără cont, fără cloud."
+    privateText: "Deținerile și sumele dvs. rămân pe acest computer. Fără cont, fără cloud."
     pricesTitle: "Prețuri care se actualizează singure"
     pricesText: "Vedeți cât valorează astăzi investițiile dvs., în propria monedă."
     assistantTitle: "Asistent AI"
@@ -1961,12 +1974,20 @@ setup:
       etfs: "ETF-uri"
       crypto: "Cripto"
   telemetry:
-    title: "Analize anonime"
-    description: "Ajutați-ne să îmbunătățim {app} prin partajarea telemetriei care protejează confidențialitatea."
-    toggle: "Activare telemetrie anonimă"
-    posthog: "Folosim PostHog pentru a înregistra evenimente de bază din aplicație (de ex. aplicație pornită, CSV importat, raport generat). Identificare printr-un UUID aleatoriu."
-    guaranteeTitle: "Garanție strictă de confidențialitate:"
-    guaranteeText: "Nu se transmit niciodată dețineri din portofoliu, valori monetare, sume ale tranzacțiilor, nume de brokeri sau identități personale. Puteți modifica oricând această opțiune din Setări."
+    title: "Ajutați la îmbunătățirea aplicației"
+    description: "Ambele opțiuni sunt dezactivate. Activați doar ce doriți. Puteți modifica asta oricând în Setări."
+    analyticsTitle: "Analiză de utilizare"
+    analyticsText: "Trimite evenimente ale funcțiilor, cum ar fi pornirea aplicației, împreună cu un ID de instalare aleatoriu. Asta ne arată ce funcții folosesc oamenii."
+    errorsTitle: "Raportare erori"
+    errorsText: "Trimite un raport de blocare când aplicația eșuează. Un raport conține tipul erorii, locația în cod, versiunea aplicației și sistemul dvs. de operare. Nu conține ID de instalare și nici mesajul erorii."
+    vendorText: "PostHog primește aceste date pentru noi. Vede adresa dvs. IP și nu o stochează."
+    guaranteeTitle: "Nu se trimit niciodată:"
+    guaranteeText: "Dețineri, sume, simboluri bursiere, tranzacții și numele conturilor."
+    noticeLink: "Citiți Nota de confidențialitate"
+  privacyPrompt:
+    title: "Opțiunile dvs. de confidențialitate"
+    description: "{app} are acum două opțiuni separate. Raportarea erorilor rămâne dezactivată până o activați."
+    save: "Salvare"
 
 service:
   assistant:

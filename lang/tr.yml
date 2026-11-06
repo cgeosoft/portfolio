@@ -1507,6 +1507,16 @@ settings:
     storedPlaceholder: "•••••••• (kayıtlı)"
     showHide: "Değeri göster veya gizle"
     storedHint: "Kayıtlı bir değer var. Değiştirmek için yenisini yazın veya kaldırmak için yazıp alanı temizleyin."
+  privacy:
+    noticeTitle: "Gizlilik Bildirimi"
+    noticeDescription: "Her seçeneğin ne gönderdiği, veriyi kimin aldığı ve silme talebinin nasıl yapılacağı."
+    open: "Aç"
+    idTitle: "Analitik ID'si"
+    idDescription: "Kullanım analitiğinin gönderdiği rastgele bir ID. Silme talebi bu ID'yi gerektirir, bu yüzden sıfırlamadan önce kopyalayın."
+    copy: "Kopyala"
+    copied: "Kopyalandı"
+    reset: "Sıfırla"
+    localOnly: "Bunu masaüstü penceresinde değiştirin."
   catalog:
     marketQuotesInterval:
       title: "Fiyatları güncelleme sıklığı"
@@ -1524,9 +1534,12 @@ settings:
     closeToTray:
       title: "Pencere kapanınca çalışmaya devam et"
       description: "Pencereyi kapatmak Portfolio'yu saatin yanındaki sistem tepsisinde bir simge olarak çalışır durumda bırakır; böylece zamanlanmış özetler ve uyarılar gönderilmeye devam eder. Çıkmak için o simgeyi kullanın."
-    telemetryEnabled:
-      title: "Anonim kullanım istatistiklerini paylaş"
-      description: "Portfolio'yu geliştirmeye yardımcı olmak için geliştiricilere hangi özelliklerin kullanıldığını bildirin. Varlıklar, bakiyeler ve işlemler asla gönderilmez."
+    analyticsEnabled:
+      title: "Kullanım analitiği"
+      description: "Uygulamanın başlaması gibi özellik olaylarını rastgele bir kurulum ID'siyle gönderir. Bu, insanların hangi özellikleri kullandığını görmemizi sağlar."
+    errorReportingEnabled:
+      title: "Hata bildirimi"
+      description: "Uygulama çöktüğünde bir çökme raporu gönderir. Rapor hata türünü, koddaki konumu, uygulama sürümünü ve işletim sisteminizi içerir. Kurulum ID'si ve hata mesajı içermez."
     checkForUpdates:
       title: "Güncellemeleri denetle"
       description: "Portfolio başladığında ve ardından her saat yeni sürüm arayın."
@@ -1556,7 +1569,7 @@ settings:
     startingTitle: "Başlatma ve kapatma"
     helpTitle: "Yardım"
     helpQuestion: "Bir şey çalışmıyor mu ya da bir fikriniz mi var?"
-    helpText: "{email} adresine yazın. Sürümünüz otomatik doldurulur ve son güne ait anonim bir uygulama günlüğü ekleyebilirsiniz."
+    helpText: "{email} adresine yazın. Sürümünüz otomatik doldurulur ve son güne ait, özel verileri çıkarılmış bir uygulama günlüğü ekleyebilirsiniz."
     reportIssue: "Sorun Bildir"
     shortcutsTitle: "Klavye kısayolları"
     shortcuts:
@@ -1870,14 +1883,14 @@ settings:
   support:
     title: "Sorun Bildir"
     description: "Teknik destek talebi açın veya bir sorunu doğrudan {email} adresine bildirin."
-    guaranteeTitle: "Katı Günlük Anonimleştirme Güvencesi"
-    guaranteeText: "Tüm tanılama günlüğü kayıtları ZIP dosyasına paketlenmeden önce tamamen anonimleştirilir. Kişisel kullanıcı adları, ana dizinler, dosya yolları, portföy adları, semboller, miktarlar, finansal değerler ve API anahtarları otomatik olarak çıkarılır ve gizlenir."
+    guaranteeTitle: "Günlüklerden özel verileri kaldırma"
+    guaranteeText: "Uygulama, ZIP dosyasını paketlemeden önce günlüklerden bilinen özel verileri kaldırır: kullanıcı adları, ana klasörler, portföy adları, tutarlar ve API anahtarları. Sabit kalıplar kullanır, bu yüzden göndermeden önce dosyayı kontrol edin."
     recipient: "Alıcı E-postası"
     subject: "Talep Konusu"
     subjectPlaceholder: "örn. İşlem içe aktarma veya fiyat eşitleme sorunu"
     message: "Sorun Açıklaması (İsteğe bağlı)"
     messagePlaceholder: "Ne olduğunu veya sorunu yeniden oluşturma adımlarını açıklayın…"
-    includeLogs: "Son günün günlüklerini anonimleştirilmiş zip eki olarak gönder"
+    includeLogs: "Son günün özel verileri kaldırılmış günlüğünü ekle"
     includeLogsHint: "Son 24 saatin tanılama olaylarını ve sistem üst verilerini bir ZIP dosyasına paketler. Kişisel dosya yolları, portföy adları, finansal değerler ve kimlik bilgileri otomatik olarak gizlenir."
     openedSaved: "Destek e-postası açıldı. Tanılama arşivi İndirilenler klasörünüze kaydedildi; e-postaya ekleyin."
     openedDownloaded: "Destek e-postası açıldı. Tanılama arşivi indirildi; e-postaya ekleyin."
@@ -1904,7 +1917,7 @@ setup:
     title: "{app} uygulamasına hoş geldiniz"
     subtitle: "Hisselerinizi, ETF'lerinizi ve kriptolarınızı tek yerden takip edin."
     privateTitle: "Tasarımı gereği gizli"
-    privateText: "Verileriniz bu bilgisayarda kalır. Hesap yok, bulut yok."
+    privateText: "Varlıklarınız ve tutarlarınız bu bilgisayarda kalır. Hesap yok, bulut yok."
     pricesTitle: "Kendiliğinden güncellenen fiyatlar"
     pricesText: "Yatırımlarınızın bugün ne kadar ettiğini kendi para biriminizde görün."
     assistantTitle: "Yapay zekâ asistanı"
@@ -1933,12 +1946,20 @@ setup:
       etfs: "ETF'ler"
       crypto: "Kripto"
   telemetry:
-    title: "Anonim Analiz"
-    description: "Gizliliği koruyan telemetri paylaşarak {app} uygulamasını geliştirmemize yardımcı olun."
-    toggle: "Anonim Telemetriyi Etkinleştir"
-    posthog: "Temel uygulama olaylarını (ör. uygulama başlatıldı, CSV içe aktarıldı, rapor oluşturuldu) kaydetmek için PostHog kullanıyoruz. Rastgele bir UUID ile tanımlanır."
-    guaranteeTitle: "Katı Gizlilik Güvencesi:"
-    guaranteeText: "Portföy varlıkları, parasal değerler, işlem tutarları, aracı kurum adları veya kişisel kimlikler asla iletilmez. Bunu istediğiniz zaman Ayarlar'dan değiştirebilirsiniz."
+    title: "Uygulamayı geliştirmeye yardım edin"
+    description: "İki seçenek de kapalı. Yalnızca istediğinizi açın. Bunu istediğiniz zaman Ayarlar bölümünden değiştirebilirsiniz."
+    analyticsTitle: "Kullanım analitiği"
+    analyticsText: "Uygulamanın başlaması gibi özellik olaylarını rastgele bir kurulum ID'siyle gönderir. Bu, insanların hangi özellikleri kullandığını görmemizi sağlar."
+    errorsTitle: "Hata bildirimi"
+    errorsText: "Uygulama çöktüğünde bir çökme raporu gönderir. Rapor hata türünü, koddaki konumu, uygulama sürümünü ve işletim sisteminizi içerir. Kurulum ID'si ve hata mesajı içermez."
+    vendorText: "PostHog bu veriyi bizim için alır. IP adresinizi görür ve saklamaz."
+    guaranteeTitle: "Asla gönderilmez:"
+    guaranteeText: "Varlıklar, tutarlar, semboller, işlemler ve yatırım hesaplarınızın adları."
+    noticeLink: "Gizlilik Bildirimini okuyun"
+  privacyPrompt:
+    title: "Gizlilik tercihleriniz"
+    description: "{app} artık iki ayrı seçenek sunuyor. Hata bildirimi siz açana kadar kapalı kalır."
+    save: "Kaydet"
 
 service:
   assistant:

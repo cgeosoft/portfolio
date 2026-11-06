@@ -1482,6 +1482,16 @@ settings:
     storedPlaceholder: "•••••••• (tersimpan)"
     showHide: "Tampilkan atau sembunyikan nilai"
     storedHint: "Sebuah nilai sudah tersimpan. Ketik nilai baru untuk menggantinya, atau ketik lalu kosongkan kolom untuk menghapusnya."
+  privacy:
+    noticeTitle: "Pemberitahuan Privasi"
+    noticeDescription: "Apa yang dikirim tiap opsi, siapa yang menerimanya, dan cara meminta penghapusan."
+    open: "Buka"
+    idTitle: "ID analitik"
+    idDescription: "ID acak yang dikirim analitik penggunaan. Permintaan penghapusan memerlukan ID ini, jadi salin sebelum Anda mengatur ulang."
+    copy: "Salin"
+    copied: "Disalin"
+    reset: "Atur ulang"
+    localOnly: "Ubah ini di jendela desktop."
   catalog:
     marketQuotesInterval:
       title: "Perbarui harga setiap"
@@ -1499,9 +1509,12 @@ settings:
     closeToTray:
       title: "Tetap berjalan saat jendela ditutup"
       description: "Menutup jendela membuat Portfolio tetap berjalan sebagai ikon di baki sistem, di samping jam, sehingga ringkasan terjadwal dan peringatan tetap terkirim. Keluar melalui ikon tersebut."
-    telemetryEnabled:
-      title: "Bagikan statistik penggunaan anonim"
-      description: "Beri tahu pengembang fitur mana yang digunakan, untuk membantu meningkatkan Portfolio. Kepemilikan, saldo, dan transaksi tidak pernah dikirim."
+    analyticsEnabled:
+      title: "Analitik penggunaan"
+      description: "Kirim peristiwa fitur, seperti aplikasi dimulai, dengan ID instalasi acak. Ini menunjukkan kepada kami fitur mana yang digunakan orang."
+    errorReportingEnabled:
+      title: "Pelaporan error"
+      description: "Kirim laporan crash saat aplikasi gagal. Laporan berisi jenis error, lokasi kode, versi aplikasi, dan sistem operasi Anda. Laporan tidak berisi ID instalasi dan pesan error."
     checkForUpdates:
       title: "Periksa pembaruan"
       description: "Cari versi baru saat Portfolio dimulai dan setiap jam setelahnya."
@@ -1531,7 +1544,7 @@ settings:
     startingTitle: "Memulai dan menutup"
     helpTitle: "Bantuan"
     helpQuestion: "Ada yang tidak berfungsi atau Anda punya ide?"
-    helpText: "Tulis ke {email}. Versi Anda sudah terisi, dan Anda dapat melampirkan log aplikasi anonim dari hari terakhir."
+    helpText: "Tulis ke {email}. Versi Anda sudah terisi, dan Anda dapat melampirkan log aplikasi satu hari terakhir yang data privatnya telah dihapus."
     reportIssue: "Laporkan Masalah"
     shortcutsTitle: "Pintasan keyboard"
     shortcuts:
@@ -1842,14 +1855,14 @@ settings:
   support:
     title: "Laporkan Masalah"
     description: "Buka tiket dukungan teknis atau laporkan masalah langsung ke {email}."
-    guaranteeTitle: "Jaminan Anonimisasi Log yang Ketat"
-    guaranteeText: "Semua entri log diagnostik dianonimkan sepenuhnya sebelum dikemas ke dalam file ZIP. Nama pengguna pribadi, direktori home, jalur file, nama portofolio, ticker, jumlah unit, nilai keuangan, dan kunci API otomatis dihapus dan disensor."
+    guaranteeTitle: "Penghapusan data pribadi dari log"
+    guaranteeText: "Aplikasi menghapus data pribadi yang dikenal dari log sebelum mengemas file ZIP: nama pengguna, folder home, nama portofolio, jumlah uang, dan kunci API. Aplikasi memakai pola tetap, jadi periksa file sebelum Anda mengirimnya."
     recipient: "Email Penerima"
     subject: "Subjek Tiket"
     subjectPlaceholder: "mis. Masalah dengan impor transaksi atau sinkronisasi kuotasi"
     message: "Deskripsi Masalah (Opsional)"
     messagePlaceholder: "Jelaskan apa yang terjadi atau langkah untuk mereproduksinya…"
-    includeLogs: "Kirim log hari terakhir sebagai lampiran zip yang dianonimkan"
+    includeLogs: "Lampirkan log hari terakhir dengan data pribadi dihapus"
     includeLogsHint: "Mengemas peristiwa diagnostik dan metadata sistem dari 24 jam terakhir ke dalam file ZIP. Jalur file pribadi, nama portofolio, nilai keuangan, dan kredensial otomatis disensor."
     openedSaved: "Email dukungan dibuka. Arsip diagnostik disimpan di folder Unduhan Anda; lampirkan ke email."
     openedDownloaded: "Email dukungan dibuka. Arsip diagnostik telah diunduh; lampirkan ke email."
@@ -1876,7 +1889,7 @@ setup:
     title: "Selamat datang di {app}"
     subtitle: "Pantau saham, ETF, dan kripto Anda di satu tempat."
     privateTitle: "Privat sejak dirancang"
-    privateText: "Data Anda tetap di komputer ini. Tanpa akun, tanpa cloud."
+    privateText: "Kepemilikan dan jumlah Anda tetap di komputer ini. Tanpa akun, tanpa cloud."
     pricesTitle: "Harga yang diperbarui sendiri"
     pricesText: "Lihat nilai investasi Anda hari ini, dalam mata uang Anda sendiri."
     assistantTitle: "Asisten AI"
@@ -1905,12 +1918,20 @@ setup:
       etfs: "ETF"
       crypto: "Kripto"
   telemetry:
-    title: "Analitik Anonim"
-    description: "Bantu kami meningkatkan {app} dengan membagikan telemetri yang menjaga privasi."
-    toggle: "Aktifkan Telemetri Anonim"
-    posthog: "Kami menggunakan PostHog untuk mencatat peristiwa dasar aplikasi (mis. aplikasi dibuka, CSV diimpor, laporan dibuat). Diidentifikasi dengan UUID acak."
-    guaranteeTitle: "Jaminan Privasi Ketat:"
-    guaranteeText: "Kepemilikan portofolio, nilai uang, jumlah transaksi, nama broker, atau identitas pribadi tidak pernah dikirim. Anda dapat mengaktifkan atau menonaktifkannya kapan saja di Pengaturan."
+    title: "Bantu tingkatkan aplikasi"
+    description: "Kedua opsi nonaktif. Aktifkan hanya yang Anda inginkan. Anda dapat mengubahnya kapan saja di Pengaturan."
+    analyticsTitle: "Analitik penggunaan"
+    analyticsText: "Kirim peristiwa fitur, seperti aplikasi dimulai, dengan ID instalasi acak. Ini menunjukkan kepada kami fitur mana yang digunakan orang."
+    errorsTitle: "Pelaporan error"
+    errorsText: "Kirim laporan crash saat aplikasi gagal. Laporan berisi jenis error, lokasi kode, versi aplikasi, dan sistem operasi Anda. Laporan tidak berisi ID instalasi dan pesan error."
+    vendorText: "PostHog menerima data ini untuk kami. PostHog melihat alamat IP Anda dan tidak menyimpannya."
+    guaranteeTitle: "Tidak pernah dikirim:"
+    guaranteeText: "Kepemilikan, jumlah, simbol saham, transaksi, dan nama akun."
+    noticeLink: "Baca Pemberitahuan Privasi"
+  privacyPrompt:
+    title: "Pilihan privasi Anda"
+    description: "{app} kini memiliki dua opsi terpisah. Pelaporan error tetap nonaktif sampai Anda mengaktifkannya."
+    save: "Simpan"
 
 service:
   assistant:

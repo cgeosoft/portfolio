@@ -125,6 +125,20 @@ Batch endpoints (`/batch-quote`, `/market-capitalization-batch`) take 50 symbols
 - Finnhub calls share one throttle (`FINNHUB_THROTTLE`: 4 in flight, 50 a minute, a 20 s pause after HTTP 429), so the fallbacks stay inside the free plan. Identical concurrent Finnhub calls share one request.
 - Yahoo calls pause for 60 s after HTTP 429 (the second host is not tried) and serve the stale cached copy meanwhile; a failed cookie and crumb lookup is retried after a minute.
 
+## Privacy and telemetry
+
+The rules and the rule-by-rule plan are in `docs/telemetry-consent.md`.
+
+- Two settings, `analyticsEnabled` and `errorReportingEnabled`, are both off by default. An old `telemetryEnabled` row becomes `analyticsEnabled` on the first read. It never turns on error reporting.
+- `services/privacy-consent.ts` changes both settings and the consent record (`privacy:consent` in `kv_entries`): the state, the time, the source and the notice version. `PATCH /api/config`, `POST /api/setup/complete` and `PUT /api/privacy/prompt-answer` use it.
+- Only the desktop window changes consent or sees the analytics ID (`assertLocal`). A value equal to the stored one is no change, so a remote client can still save a whole config object.
+- `PRIVACY_NOTICE_VERSION` in `modules/shared/src/brand.ts` goes with each event as `consent_version`. Raise it only when the data, the purpose or the recipient changes: the app then asks each user again. `consent_version` 0 means a choice from before the record.
+- `services/posthog-client.ts` creates each PostHog client. A checkout has no key, and a development run sends nothing. A client exists only while its option is on.
+- `services/telemetry.ts` sends named events with `deviceId`. A property is a count, a boolean or a fixed value. `telemetry.test.ts` scans each call.
+- `services/error-reporting.ts` sends crash reports from `uncaughtException`, `unhandledRejection` and `POST /api/app/error-report`. A report is an allowlist: the error type, a fixed capture code and frames from the bundle. It never sends the error message, and it has no install ID. Do not use `anonymizeLogContent` here: it is a denylist.
+- The GUI reports from `ErrorBoundary` and the `window` error events (`modules/gui/src/error-reporting.ts`). The service writes each report to the local log, with both options off too.
+- The app also connects to Yahoo Finance, Finnhub, FMP, the chosen LLM provider, GitHub, `portfolio.cgeosoft.com`, ntfy and Gotify. Keep the Privacy Notice and the website list in step with this list.
+
 ## Logging
 
 The service and desktop write a consistent line layout (`renderFileLogLine` in `modules/shared/src/log-format.ts`):

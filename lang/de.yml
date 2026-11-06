@@ -1508,6 +1508,16 @@ settings:
     storedPlaceholder: "•••••••• (gespeichert)"
     showHide: "Wert anzeigen oder ausblenden"
     storedHint: "Ein Wert ist gespeichert. Geben Sie einen neuen ein, um ihn zu ersetzen, oder tippen Sie etwas und leeren Sie das Feld, um ihn zu entfernen."
+  privacy:
+    noticeTitle: "Datenschutzhinweis"
+    noticeDescription: "Was jede Option sendet, wer es empfängt und wie Sie eine Löschung beantragen."
+    open: "Öffnen"
+    idTitle: "Analyse-ID"
+    idDescription: "Eine zufällige ID, die die Nutzungsanalyse sendet. Ein Löschantrag braucht diese ID. Kopieren Sie sie daher, bevor Sie sie zurücksetzen."
+    copy: "Kopieren"
+    copied: "Kopiert"
+    reset: "Zurücksetzen"
+    localOnly: "Ändern Sie dies im Desktop-Fenster."
   catalog:
     marketQuotesInterval:
       title: "Kurse aktualisieren alle"
@@ -1525,9 +1535,12 @@ settings:
     closeToTray:
       title: "Nach dem Schließen des Fensters weiterlaufen"
       description: "Beim Schließen des Fensters läuft Portfolio als Symbol im Infobereich neben der Uhr weiter, sodass geplante Briefings und Alarme weiterhin versendet werden. Beenden Sie es über dieses Symbol."
-    telemetryEnabled:
-      title: "Anonyme Nutzungsstatistiken teilen"
-      description: "Den Entwicklern mitteilen, welche Funktionen genutzt werden, um Portfolio zu verbessern. Positionen, Salden und Transaktionen werden nie gesendet."
+    analyticsEnabled:
+      title: "Nutzungsanalyse"
+      description: "Funktionsereignisse, etwa App gestartet, mit einer zufälligen Installations-ID senden. So sehen wir, welche Funktionen genutzt werden."
+    errorReportingEnabled:
+      title: "Fehlerberichte"
+      description: "Einen Absturzbericht senden, wenn die App ausfällt. Ein Bericht enthält den Fehlertyp, die Codestelle, die App-Version und Ihr Betriebssystem. Er enthält keine Installations-ID und keine Fehlermeldung."
     checkForUpdates:
       title: "Nach Updates suchen"
       description: "Beim Start von Portfolio und danach stündlich nach einer neuen Version suchen."
@@ -1557,7 +1570,7 @@ settings:
     startingTitle: "Starten und Beenden"
     helpTitle: "Hilfe"
     helpQuestion: "Funktioniert etwas nicht, oder haben Sie eine Idee?"
-    helpText: "Schreiben Sie an {email}. Ihre Version wird eingetragen, und Sie können ein anonymes App-Protokoll des letzten Tages anhängen."
+    helpText: "Schreiben Sie an {email}. Ihre Version ist schon eingetragen, und Sie können ein bereinigtes App-Protokoll des letzten Tages anhängen."
     reportIssue: "Problem melden"
     shortcutsTitle: "Tastenkürzel"
     shortcuts:
@@ -1871,14 +1884,14 @@ settings:
   support:
     title: "Problem melden"
     description: "Eröffnen Sie ein Support-Ticket oder melden Sie ein Problem direkt an {email}."
-    guaranteeTitle: "Garantie für strikte Anonymisierung der Protokolle"
-    guaranteeText: "Alle Diagnoseeinträge werden vor dem Packen in die ZIP-Datei vollständig anonymisiert. Benutzernamen, Home-Verzeichnisse, Dateipfade, Portfolionamen, Ticker, Stückzahlen, Finanzwerte und API-Schlüssel werden automatisch entfernt und geschwärzt."
+    guaranteeTitle: "Schwärzung der Protokolle"
+    guaranteeText: "Die App entfernt bekannte private Daten aus den Protokollen, bevor sie die ZIP-Datei packt: Benutzernamen, Home-Verzeichnisse, Portfolionamen, Beträge und API-Schlüssel. Sie nutzt feste Muster. Prüfen Sie die Datei daher, bevor Sie sie senden."
     recipient: "E-Mail des Empfängers"
     subject: "Betreff des Tickets"
     subjectPlaceholder: "z. B. Problem beim Import von Transaktionen oder beim Abgleich der Kurse"
     message: "Problembeschreibung (optional)"
     messagePlaceholder: "Beschreiben Sie, was passiert ist, oder die Schritte zum Nachstellen…"
-    includeLogs: "Protokolle des letzten Tages als anonymisierten ZIP-Anhang senden"
+    includeLogs: "Geschwärztes Protokoll des letzten Tages anhängen"
     includeLogsHint: "Packt Diagnoseereignisse und Systemmetadaten der letzten 24 Stunden in eine ZIP-Datei. Persönliche Dateipfade, Portfolionamen, Finanzwerte und Zugangsdaten werden automatisch geschwärzt."
     openedSaved: "Support-E-Mail geöffnet. Das Diagnosearchiv wurde in Ihrem Download-Ordner gespeichert; hängen Sie es an die E-Mail an."
     openedDownloaded: "Support-E-Mail geöffnet. Das Diagnosearchiv wurde heruntergeladen; hängen Sie es an die E-Mail an."
@@ -1905,7 +1918,7 @@ setup:
     title: "Willkommen bei {app}"
     subtitle: "Verfolgen Sie Ihre Aktien, ETFs und Kryptowährungen an einem Ort."
     privateTitle: "Privat von Grund auf"
-    privateText: "Ihre Daten bleiben auf diesem Computer. Kein Konto, keine Cloud."
+    privateText: "Ihre Bestände und Beträge bleiben auf diesem Computer. Kein Konto, keine Cloud."
     pricesTitle: "Kurse, die sich selbst aktualisieren"
     pricesText: "Sehen Sie, was Ihre Anlagen heute wert sind, in Ihrer eigenen Währung."
     assistantTitle: "Ein KI-Assistent"
@@ -1934,12 +1947,20 @@ setup:
       etfs: "ETFs"
       crypto: "Krypto"
   telemetry:
-    title: "Anonyme Analyse"
-    description: "Helfen Sie uns, {app} zu verbessern, indem Sie datenschutzfreundliche Telemetrie teilen."
-    toggle: "Anonyme Telemetrie aktivieren"
-    posthog: "Wir verwenden PostHog, um grundlegende App-Ereignisse zu erfassen (z. B. App gestartet, CSV importiert, Bericht erstellt). Identifiziert durch eine zufällige UUID."
-    guaranteeTitle: "Strenge Datenschutzgarantie:"
-    guaranteeText: "Portfoliopositionen, Geldwerte, Transaktionsbeträge, Brokernamen oder persönliche Identitäten werden niemals übertragen. Sie können dies jederzeit in den Einstellungen ändern."
+    title: "Helfen Sie mit, die App zu verbessern"
+    description: "Beide Optionen sind aus. Schalten Sie nur ein, was Sie möchten. Sie können dies jederzeit in den Einstellungen ändern."
+    analyticsTitle: "Nutzungsanalyse"
+    analyticsText: "Funktionsereignisse, etwa App gestartet, mit einer zufälligen Installations-ID senden. So sehen wir, welche Funktionen genutzt werden."
+    errorsTitle: "Fehlerberichte"
+    errorsText: "Einen Absturzbericht senden, wenn die App ausfällt. Ein Bericht enthält den Fehlertyp, die Codestelle, die App-Version und Ihr Betriebssystem. Er enthält keine Installations-ID und keine Fehlermeldung."
+    vendorText: "PostHog empfängt diese Daten für uns. Es sieht Ihre IP-Adresse und speichert sie nicht."
+    guaranteeTitle: "Wird nie gesendet:"
+    guaranteeText: "Bestände, Beträge, Ticker, Transaktionen und Kontonamen."
+    noticeLink: "Datenschutzhinweis lesen"
+  privacyPrompt:
+    title: "Ihre Datenschutzoptionen"
+    description: "{app} hat jetzt zwei getrennte Optionen. Fehlerberichte bleiben aus, bis Sie sie einschalten."
+    save: "Speichern"
 
 service:
   assistant:

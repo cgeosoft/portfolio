@@ -1482,6 +1482,16 @@ settings:
     storedPlaceholder: "•••••••• (đã lưu)"
     showHide: "Hiện hoặc ẩn giá trị"
     storedHint: "Đã lưu một giá trị. Nhập giá trị mới để thay thế, hoặc nhập rồi xóa trống ô để gỡ bỏ."
+  privacy:
+    noticeTitle: "Thông báo riêng tư"
+    noticeDescription: "Mỗi tùy chọn gửi gì, ai nhận và cách yêu cầu xóa."
+    open: "Mở"
+    idTitle: "ID phân tích"
+    idDescription: "Một ID ngẫu nhiên mà phân tích sử dụng gửi đi. Yêu cầu xóa cần ID này, vì vậy hãy sao chép trước khi đặt lại."
+    copy: "Sao chép"
+    copied: "Đã sao chép"
+    reset: "Đặt lại"
+    localOnly: "Hãy đổi mục này trong cửa sổ ứng dụng trên máy tính."
   catalog:
     marketQuotesInterval:
       title: "Cập nhật giá mỗi"
@@ -1499,9 +1509,12 @@ settings:
     closeToTray:
       title: "Tiếp tục chạy khi đóng cửa sổ"
       description: "Khi đóng cửa sổ, Portfolio vẫn chạy dưới dạng biểu tượng trong khay hệ thống, cạnh đồng hồ, để bản tin và cảnh báo đã lên lịch vẫn được gửi. Thoát từ biểu tượng đó."
-    telemetryEnabled:
-      title: "Chia sẻ thống kê sử dụng ẩn danh"
-      description: "Cho nhà phát triển biết tính năng nào được dùng để giúp cải thiện Portfolio. Khoản nắm giữ, số dư và giao dịch không bao giờ được gửi."
+    analyticsEnabled:
+      title: "Phân tích sử dụng"
+      description: "Gửi các sự kiện tính năng, chẳng hạn ứng dụng khởi động, kèm một ID cài đặt ngẫu nhiên. Nhờ đó chúng tôi biết mọi người dùng những tính năng nào."
+    errorReportingEnabled:
+      title: "Báo cáo lỗi"
+      description: "Gửi báo cáo sự cố khi ứng dụng gặp lỗi. Báo cáo gồm loại lỗi, vị trí trong mã, phiên bản ứng dụng và hệ điều hành của bạn. Báo cáo không có ID cài đặt và không có thông báo lỗi."
     checkForUpdates:
       title: "Kiểm tra cập nhật"
       description: "Tìm phiên bản mới khi Portfolio khởi động và mỗi giờ sau đó."
@@ -1531,7 +1544,7 @@ settings:
     startingTitle: "Khởi động và đóng"
     helpTitle: "Trợ giúp"
     helpQuestion: "Có gì đó không hoạt động hoặc bạn có ý tưởng?"
-    helpText: "Hãy viết tới {email}. Phiên bản của bạn được điền sẵn và bạn có thể đính kèm nhật ký ứng dụng ẩn danh của ngày gần nhất."
+    helpText: "Viết đến {email}. Phiên bản của bạn được điền sẵn, và bạn có thể đính kèm nhật ký ứng dụng của ngày vừa qua đã xóa dữ liệu riêng tư."
     reportIssue: "Báo cáo sự cố"
     shortcutsTitle: "Phím tắt"
     shortcuts:
@@ -1842,14 +1855,14 @@ settings:
   support:
     title: "Báo cáo sự cố"
     description: "Mở yêu cầu hỗ trợ kỹ thuật hoặc báo cáo sự cố trực tiếp tới {email}."
-    guaranteeTitle: "Cam kết ẩn danh nhật ký nghiêm ngặt"
-    guaranteeText: "Mọi mục nhật ký chẩn đoán đều được ẩn danh hoàn toàn trước khi đóng gói vào tệp ZIP. Tên người dùng, thư mục chính, đường dẫn tệp, tên danh mục, mã, số lượng, giá trị tài chính và khóa API được tự động loại bỏ và che đi."
+    guaranteeTitle: "Xóa dữ liệu riêng tư khỏi nhật ký"
+    guaranteeText: "Ứng dụng xóa các dữ liệu riêng tư đã biết khỏi nhật ký trước khi đóng gói tệp ZIP: tên người dùng, thư mục chính, tên danh mục đầu tư, số tiền và khóa API. Ứng dụng dùng mẫu cố định, vì vậy hãy kiểm tra tệp trước khi gửi."
     recipient: "Email người nhận"
     subject: "Tiêu đề yêu cầu"
     subjectPlaceholder: "vd. Sự cố khi nhập giao dịch hoặc đồng bộ giá"
     message: "Mô tả sự cố (không bắt buộc)"
     messagePlaceholder: "Mô tả điều đã xảy ra hoặc các bước để tái hiện…"
-    includeLogs: "Gửi nhật ký ngày gần nhất dưới dạng tệp zip đính kèm đã ẩn danh"
+    includeLogs: "Đính kèm nhật ký ngày gần nhất đã xóa dữ liệu riêng tư"
     includeLogsHint: "Đóng gói các sự kiện chẩn đoán và siêu dữ liệu hệ thống của 24 giờ qua vào tệp ZIP. Đường dẫn tệp cá nhân, tên danh mục, giá trị tài chính và thông tin đăng nhập được tự động che đi."
     openedSaved: "Đã mở thư hỗ trợ. Kho lưu trữ chẩn đoán đã được lưu vào thư mục Tải xuống; hãy đính kèm vào thư."
     openedDownloaded: "Đã mở thư hỗ trợ. Kho lưu trữ chẩn đoán đã được tải xuống; hãy đính kèm vào thư."
@@ -1876,7 +1889,7 @@ setup:
     title: "Chào mừng bạn đến với {app}"
     subtitle: "Theo dõi cổ phiếu, ETF và tiền mã hóa ở cùng một nơi."
     privateTitle: "Riêng tư ngay từ thiết kế"
-    privateText: "Dữ liệu của bạn ở lại trên máy tính này. Không tài khoản, không đám mây."
+    privateText: "Khoản nắm giữ và số tiền của bạn ở lại trên máy tính này. Không tài khoản, không đám mây."
     pricesTitle: "Giá tự động cập nhật"
     pricesText: "Xem giá trị hôm nay của các khoản đầu tư, bằng đồng tiền của bạn."
     assistantTitle: "Trợ lý AI"
@@ -1905,12 +1918,20 @@ setup:
       etfs: "ETF"
       crypto: "Tiền mã hóa"
   telemetry:
-    title: "Phân tích ẩn danh"
-    description: "Giúp chúng tôi cải thiện {app} bằng cách chia sẻ dữ liệu đo lường có bảo vệ quyền riêng tư."
-    toggle: "Bật đo lường ẩn danh"
-    posthog: "Chúng tôi dùng PostHog để ghi lại các sự kiện cơ bản của ứng dụng (ví dụ: khởi chạy ứng dụng, nhập CSV, tạo báo cáo). Được nhận dạng bằng một UUID ngẫu nhiên."
-    guaranteeTitle: "Cam kết quyền riêng tư nghiêm ngặt:"
-    guaranteeText: "Không bao giờ gửi đi khoản nắm giữ, giá trị tiền tệ, số tiền giao dịch, tên nhà môi giới hay danh tính cá nhân. Bạn có thể bật hoặc tắt tùy chọn này bất cứ lúc nào trong Cài đặt."
+    title: "Giúp cải thiện ứng dụng"
+    description: "Cả hai tùy chọn đều đang tắt. Chỉ bật những gì bạn muốn. Bạn có thể đổi điều này bất cứ lúc nào trong Cài đặt."
+    analyticsTitle: "Phân tích sử dụng"
+    analyticsText: "Gửi các sự kiện tính năng, chẳng hạn ứng dụng khởi động, kèm một ID cài đặt ngẫu nhiên. Nhờ đó chúng tôi biết mọi người dùng những tính năng nào."
+    errorsTitle: "Báo cáo lỗi"
+    errorsText: "Gửi báo cáo sự cố khi ứng dụng gặp lỗi. Báo cáo gồm loại lỗi, vị trí trong mã, phiên bản ứng dụng và hệ điều hành của bạn. Báo cáo không có ID cài đặt và không có thông báo lỗi."
+    vendorText: "PostHog nhận dữ liệu này cho chúng tôi. PostHog thấy địa chỉ IP của bạn và không lưu địa chỉ đó."
+    guaranteeTitle: "Không bao giờ gửi:"
+    guaranteeText: "Khoản nắm giữ, số tiền, mã, giao dịch và tên các tài khoản đầu tư của bạn."
+    noticeLink: "Đọc Thông báo riêng tư"
+  privacyPrompt:
+    title: "Lựa chọn riêng tư của bạn"
+    description: "{app} nay có hai tùy chọn riêng biệt. Báo cáo lỗi vẫn tắt cho đến khi bạn bật."
+    save: "Lưu"
 
 service:
   assistant:

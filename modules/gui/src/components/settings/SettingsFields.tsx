@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, ArrowDownToLine, BarChart3, Download, Power, RefreshCw, Settings2, type LucideIcon, BrainCircuit } from "lucide-react";
+import { AlertCircle, ArrowDownToLine, BarChart3, Bug, Download, Power, RefreshCw, Settings2, type LucideIcon, BrainCircuit } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SettingSection, SettingView } from "portfolio-shared/api-types";
 import type { DesktopConfig } from "portfolio-shared/config-types";
@@ -37,7 +37,8 @@ const SETTING_ICONS: Record<string, LucideIcon> = {
   marketQuotesInterval: RefreshCw,
   startWithBoot: Power,
   closeToTray: ArrowDownToLine,
-  telemetryEnabled: BarChart3,
+  analyticsEnabled: BarChart3,
+  errorReportingEnabled: Bug,
   checkForUpdates: Download,
   llmToolMode: BrainCircuit,
 };
@@ -125,8 +126,8 @@ function SettingRow({ setting, onSave }: { setting: SettingView; onSave: (key: s
       <SettingItem
         icon={icon}
         title={title}
-        description={description}
-        control={<Toggle checked={checked} onChange={() => onSave(setting.key, !checked)} label={title} />}
+        description={setting.readOnly ? `${description} ${t("settings.privacy.localOnly")}` : description}
+        control={<Toggle checked={checked} disabled={setting.readOnly} onChange={() => onSave(setting.key, !checked)} label={title} />}
       />
     );
   }

@@ -1533,6 +1533,16 @@ settings:
     storedPlaceholder: "•••••••• (guardado)"
     showHide: "Mostrar u ocultar el valor"
     storedHint: "Hay un valor guardado. Escribe uno nuevo para reemplazarlo, o escribe algo y vacía el campo para eliminarlo."
+  privacy:
+    noticeTitle: "Aviso de privacidad"
+    noticeDescription: "Qué envía cada opción, quién lo recibe y cómo pedir la eliminación."
+    open: "Abrir"
+    idTitle: "ID de analítica"
+    idDescription: "Un ID aleatorio que envía la analítica de uso. Una solicitud de eliminación necesita este ID, así que cópialo antes de restablecerlo."
+    copy: "Copiar"
+    copied: "Copiado"
+    reset: "Restablecer"
+    localOnly: "Cámbialo en la ventana de escritorio."
   catalog:
     marketQuotesInterval:
       title: "Actualizar precios cada"
@@ -1550,9 +1560,12 @@ settings:
     closeToTray:
       title: "Seguir en ejecución al cerrar la ventana"
       description: "Al cerrar la ventana, Portfolio sigue en ejecución como icono en la bandeja del sistema, junto al reloj, para que los resúmenes y alertas programados se sigan enviando. Sal desde ese icono."
-    telemetryEnabled:
-      title: "Compartir estadísticas de uso anónimas"
-      description: "Indica a los desarrolladores qué funciones se usan, para ayudar a mejorar Portfolio. Nunca se envían posiciones, saldos ni transacciones."
+    analyticsEnabled:
+      title: "Analítica de uso"
+      description: "Envía eventos de funciones, como app iniciada, con un ID aleatorio de esta instalación. Así vemos qué funciones usa la gente."
+    errorReportingEnabled:
+      title: "Informes de errores"
+      description: "Envía un informe de fallo cuando la app falla. Un informe contiene el tipo de error, la ubicación en el código, la versión de la app y tu sistema operativo. No contiene ID de instalación ni mensaje de error."
     checkForUpdates:
       title: "Buscar actualizaciones"
       description: "Busca una nueva versión al iniciar Portfolio y después cada hora."
@@ -1582,7 +1595,7 @@ settings:
     startingTitle: "Inicio y cierre"
     helpTitle: "Ayuda"
     helpQuestion: "¿Algo no funciona o tienes una idea?"
-    helpText: "Escribe a {email}. Tu versión se rellena automáticamente y puedes adjuntar un registro anónimo de la aplicación del último día."
+    helpText: "Escribe a {email}. Tu versión ya viene rellenada y puedes adjuntar un registro de la app del último día con los datos privados eliminados."
     reportIssue: "Informar de un problema"
     shortcutsTitle: "Atajos de teclado"
     shortcuts:
@@ -1899,14 +1912,14 @@ settings:
   support:
     title: "Informar de un problema"
     description: "Abre una solicitud de soporte técnico o informa de un problema directamente a {email}."
-    guaranteeTitle: "Garantía estricta de anonimización de registros"
-    guaranteeText: "Todas las entradas de registro de diagnóstico se anonimizan por completo antes de empaquetarlas en el archivo ZIP. Se eliminan y ocultan automáticamente los nombres de usuario, los directorios personales, las rutas de archivos, los nombres de las carteras, los tickers, las cantidades, los valores financieros y las claves de API."
+    guaranteeTitle: "Eliminación de datos privados en los registros"
+    guaranteeText: "La app elimina los datos privados conocidos de los registros antes de crear el archivo ZIP: nombres de usuario, carpetas personales, nombres de carteras, importes y claves API. Usa patrones fijos, así que revisa el archivo antes de enviarlo."
     recipient: "Correo del destinatario"
     subject: "Asunto de la solicitud"
     subjectPlaceholder: "p. ej., Problema al importar transacciones o al sincronizar cotizaciones"
     message: "Descripción del problema (opcional)"
     messagePlaceholder: "Describe qué pasó o los pasos para reproducirlo…"
-    includeLogs: "Adjuntar los registros del último día como ZIP anonimizado"
+    includeLogs: "Adjuntar un registro del último día sin datos privados"
     includeLogsHint: "Empaqueta en un archivo ZIP los eventos de diagnóstico y los metadatos del sistema de las últimas 24 horas. Las rutas de archivos personales, los nombres de las carteras, los valores financieros y las credenciales se ocultan automáticamente."
     openedSaved: "Se abrió el correo de soporte. El archivo de diagnóstico se guardó en tu carpeta de descargas; adjúntalo al correo."
     openedDownloaded: "Se abrió el correo de soporte. El archivo de diagnóstico se descargó; adjúntalo al correo."
@@ -1933,7 +1946,7 @@ setup:
     title: "Te damos la bienvenida a {app}"
     subtitle: "Sigue tus acciones, ETF y criptomonedas en un solo lugar."
     privateTitle: "Privado por diseño"
-    privateText: "Tus datos se quedan en este ordenador. Sin cuenta, sin nube."
+    privateText: "Tus posiciones e importes se quedan en este ordenador. Sin cuenta, sin nube."
     pricesTitle: "Precios que se actualizan solos"
     pricesText: "Mira cuánto valen hoy tus inversiones, en tu propia moneda."
     assistantTitle: "Un asistente de IA"
@@ -1962,12 +1975,20 @@ setup:
       etfs: "ETF"
       crypto: "Cripto"
   telemetry:
-    title: "Analítica anónima"
-    description: "Ayúdanos a mejorar {app} compartiendo telemetría que protege la privacidad."
-    toggle: "Activar telemetría anónima"
-    posthog: "Usamos PostHog para registrar eventos básicos de la app (p. ej., app iniciada, CSV importado, informe generado). Se identifica con un UUID aleatorio."
-    guaranteeTitle: "Garantía estricta de privacidad:"
-    guaranteeText: "Nunca se transmiten posiciones de la cartera, valores monetarios, importes de transacciones, nombres de brókeres ni identidades personales. Puedes cambiarlo cuando quieras en Configuración."
+    title: "Ayuda a mejorar la app"
+    description: "Las dos opciones están desactivadas. Activa solo lo que quieras. Puedes cambiarlo en cualquier momento en Configuración."
+    analyticsTitle: "Analítica de uso"
+    analyticsText: "Envía eventos de funciones, como app iniciada, con un ID aleatorio de esta instalación. Así vemos qué funciones usa la gente."
+    errorsTitle: "Informes de errores"
+    errorsText: "Envía un informe de fallo cuando la app falla. Un informe contiene el tipo de error, la ubicación en el código, la versión de la app y tu sistema operativo. No contiene ID de instalación ni mensaje de error."
+    vendorText: "PostHog recibe estos datos por nosotros. Ve tu dirección IP y no la almacena."
+    guaranteeTitle: "Nunca se envía:"
+    guaranteeText: "Posiciones, importes, tickers, transacciones y nombres de cuentas."
+    noticeLink: "Lee el Aviso de privacidad"
+  privacyPrompt:
+    title: "Tus opciones de privacidad"
+    description: "{app} tiene ahora dos opciones separadas. Los informes de errores siguen desactivados hasta que los actives."
+    save: "Guardar"
 
 service:
   assistant:

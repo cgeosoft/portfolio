@@ -249,6 +249,18 @@ describe("api URL building", () => {
     expect(last().init.body).toBe(JSON.stringify(arg));
   });
 
+  it("calls the privacy routes", async () => {
+    await api.getPrivacyConsent();
+    expect(last().url).toBe("/api/privacy/consent");
+    await api.answerPrivacyPrompt({ analytics: true, errorReporting: false });
+    expect(last().url).toBe("/api/privacy/prompt-answer");
+    expect(last().init.method).toBe("PUT");
+    await api.resetAnalyticsId();
+    expect(last().url).toBe("/api/privacy/reset-analytics-id");
+    await api.reportClientError({ name: "TypeError", stack: "x", source: "window" });
+    expect(last().url).toBe("/api/app/error-report");
+  });
+
   it("builds the diagnostics URL without a request", () => {
     expect(api.diagnosticsUrl()).toBe("/api/app/support/diagnostics");
     expect(calls.length).toBe(0);

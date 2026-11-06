@@ -1558,6 +1558,16 @@ settings:
     storedPlaceholder: "•••••••• (uložené)"
     showHide: "Zobraziť alebo skryť hodnotu"
     storedHint: "Hodnota je uložená. Zadajte novú, ktorá ju nahradí, alebo niečo napíšte a pole vymažte, čím ju odstránite."
+  privacy:
+    noticeTitle: "Oznámenie o ochrane súkromia"
+    noticeDescription: "Čo každá voľba odosiela, kto to prijíma a ako požiadať o vymazanie."
+    open: "Otvoriť"
+    idTitle: "ID analytiky"
+    idDescription: "Náhodné ID, ktoré odosiela analytika používania. Žiadosť o vymazanie potrebuje toto ID, preto ho skopírujte pred obnovením."
+    copy: "Kopírovať"
+    copied: "Skopírované"
+    reset: "Resetovať"
+    localOnly: "Zmeňte to v okne na počítači."
   catalog:
     marketQuotesInterval:
       title: "Aktualizovať ceny každých"
@@ -1575,9 +1585,12 @@ settings:
     closeToTray:
       title: "Bežať aj po zatvorení okna"
       description: "Po zatvorení okna Portfolio ďalej beží ako ikona v oblasti oznámení vedľa hodín, takže naplánované prehľady a upozornenia sa ďalej odosielajú. Ukončite ho z tejto ikony."
-    telemetryEnabled:
-      title: "Zdieľať anonymné štatistiky používania"
-      description: "Povedzte vývojárom, ktoré funkcie sa používajú, a pomôžte tak Portfolio vylepšiť. Pozície, zostatky a transakcie sa nikdy neodosielajú."
+    analyticsEnabled:
+      title: "Analytika používania"
+      description: "Odosielať udalosti funkcií, napríklad spustenie aplikácie, s náhodným ID inštalácie. Vidíme tak, ktoré funkcie ľudia používajú."
+    errorReportingEnabled:
+      title: "Hlásenie chýb"
+      description: "Odoslať správu o páde, keď aplikácia zlyhá. Správa obsahuje typ chyby, miesto v kóde, verziu aplikácie a váš operačný systém. Neobsahuje ID inštalácie ani chybovú správu."
     checkForUpdates:
       title: "Kontrolovať aktualizácie"
       description: "Hľadať novú verziu pri spustení Portfolia a potom každú hodinu."
@@ -1607,7 +1620,7 @@ settings:
     startingTitle: "Spúšťanie a zatváranie"
     helpTitle: "Pomoc"
     helpQuestion: "Niečo nefunguje alebo máte nápad?"
-    helpText: "Napíšte na {email}. Vaša verzia sa doplní a môžete priložiť anonymný denník aplikácie za posledný deň."
+    helpText: "Píšte na {email}. Vaša verzia je už vyplnená a môžete priložiť protokol aplikácie za posledný deň bez súkromných údajov."
     reportIssue: "Nahlásiť problém"
     shortcutsTitle: "Klávesové skratky"
     shortcuts:
@@ -1927,14 +1940,14 @@ settings:
   support:
     title: "Nahlásiť problém"
     description: "Otvorte požiadavku na technickú podporu alebo nahláste problém priamo na {email}."
-    guaranteeTitle: "Záruka dôslednej anonymizácie denníkov"
-    guaranteeText: "Všetky záznamy diagnostického denníka sú pred zabalením do súboru ZIP úplne anonymizované. Používateľské mená, domovské adresáre, cesty k súborom, názvy portfólií, tickery, množstvá, finančné hodnoty a kľúče API sa automaticky odstránia a skryjú."
+    guaranteeTitle: "Odstránenie súkromných údajov z denníkov"
+    guaranteeText: "Aplikácia odstráni z denníkov známe súkromné údaje skôr, než zabalí súbor ZIP: používateľské mená, domovské priečinky, názvy portfólií, sumy a kľúče API. Používa pevné vzory, preto súbor pred odoslaním skontrolujte."
     recipient: "E-mail príjemcu"
     subject: "Predmet požiadavky"
     subjectPlaceholder: "napr. Problém s importom transakcií alebo synchronizáciou cien"
     message: "Popis problému (voliteľné)"
     messagePlaceholder: "Opíšte, čo sa stalo, alebo kroky na reprodukciu…"
-    includeLogs: "Priložiť denníky za posledný deň ako anonymizovanú prílohu ZIP"
+    includeLogs: "Priložiť denník za posledný deň bez súkromných údajov"
     includeLogsHint: "Zabalí diagnostické udalosti a systémové metadáta za posledných 24 hodín do súboru ZIP. Osobné cesty k súborom, názvy portfólií, finančné hodnoty a prihlasovacie údaje sa automaticky skryjú."
     openedSaved: "E-mail pre podporu otvorený. Diagnostický archív bol uložený do priečinka Stiahnuté súbory; priložte ho k e-mailu."
     openedDownloaded: "E-mail pre podporu otvorený. Diagnostický archív bol stiahnutý; priložte ho k e-mailu."
@@ -1961,7 +1974,7 @@ setup:
     title: "Vitajte v {app}"
     subtitle: "Sledujte akcie, ETF a kryptomeny na jednom mieste."
     privateTitle: "Súkromie od základu"
-    privateText: "Vaše údaje zostávajú v tomto počítači. Žiadny účet, žiadny cloud."
+    privateText: "Vaše pozície a sumy zostávajú v tomto počítači. Bez účtu, bez cloudu."
     pricesTitle: "Ceny, ktoré sa aktualizujú samy"
     pricesText: "Zistite, akú hodnotu majú vaše investície dnes, vo vašej vlastnej mene."
     assistantTitle: "AI asistent"
@@ -1990,12 +2003,20 @@ setup:
       etfs: "ETF"
       crypto: "Krypto"
   telemetry:
-    title: "Anonymná analytika"
-    description: "Pomôžte nám vylepšiť {app} zdieľaním telemetrie, ktorá chráni súkromie."
-    toggle: "Zapnúť anonymnú telemetriu"
-    posthog: "PostHog používame na zaznamenávanie základných udalostí aplikácie (napr. spustenie aplikácie, import CSV, vytvorenie reportu). Identifikácia prebieha pomocou náhodného UUID."
-    guaranteeTitle: "Prísna záruka súkromia:"
-    guaranteeText: "Pozície v portfóliu, peňažné hodnoty, sumy transakcií, názvy brokerov ani osobné údaje sa nikdy neodosielajú. Zmeniť to môžete kedykoľvek v Nastaveniach."
+    title: "Pomôžte zlepšiť aplikáciu"
+    description: "Obe voľby sú vypnuté. Zapnite len to, čo chcete. Môžete to kedykoľvek zmeniť v Nastaveniach."
+    analyticsTitle: "Analytika používania"
+    analyticsText: "Odosielať udalosti funkcií, napríklad spustenie aplikácie, s náhodným ID inštalácie. Vidíme tak, ktoré funkcie ľudia používajú."
+    errorsTitle: "Hlásenie chýb"
+    errorsText: "Odoslať správu o páde, keď aplikácia zlyhá. Správa obsahuje typ chyby, miesto v kóde, verziu aplikácie a váš operačný systém. Neobsahuje ID inštalácie ani chybovú správu."
+    vendorText: "PostHog tieto údaje prijíma za nás. Vidí vašu IP adresu a neukladá ju."
+    guaranteeTitle: "Nikdy sa neodosiela:"
+    guaranteeText: "Pozície, sumy, burzové symboly, transakcie a názvy účtov."
+    noticeLink: "Prečítať Oznámenie o ochrane súkromia"
+  privacyPrompt:
+    title: "Vaše voľby ochrany súkromia"
+    description: "{app} má teraz dve samostatné voľby. Hlásenie chýb zostane vypnuté, kým ho nezapnete."
+    save: "Uložiť"
 
 service:
   assistant:

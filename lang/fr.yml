@@ -1533,6 +1533,16 @@ settings:
     storedPlaceholder: "•••••••• (enregistré)"
     showHide: "Afficher ou masquer la valeur"
     storedHint: "Une valeur est enregistrée. Saisissez-en une nouvelle pour la remplacer, ou saisissez puis videz le champ pour la supprimer."
+  privacy:
+    noticeTitle: "Avis de confidentialité"
+    noticeDescription: "Ce que chaque option envoie, qui le reçoit et comment demander la suppression."
+    open: "Ouvrir"
+    idTitle: "Identifiant d'analyse"
+    idDescription: "Un identifiant aléatoire envoyé par les statistiques d'utilisation. Une demande de suppression a besoin de cet identifiant : copiez-le avant de le réinitialiser."
+    copy: "Copier"
+    copied: "Copié"
+    reset: "Réinitialiser"
+    localOnly: "Modifiez ceci dans la fenêtre du bureau."
   catalog:
     marketQuotesInterval:
       title: "Mettre à jour les prix toutes les"
@@ -1550,9 +1560,12 @@ settings:
     closeToTray:
       title: "Continuer après la fermeture de la fenêtre"
       description: "La fermeture de la fenêtre laisse Portfolio actif sous forme d'icône dans la zone de notification, près de l'horloge, pour que les briefs et alertes programmés soient toujours envoyés. Quittez depuis cette icône."
-    telemetryEnabled:
-      title: "Partager des statistiques d'utilisation anonymes"
-      description: "Indiquer aux développeurs quelles fonctions sont utilisées, pour aider à améliorer Portfolio. Les positions, soldes et transactions ne sont jamais envoyés."
+    analyticsEnabled:
+      title: "Statistiques d'utilisation"
+      description: "Envoyer des événements de fonctionnalités, comme le démarrage de l'application, avec un identifiant d'installation aléatoire. Cela nous montre quelles fonctionnalités les gens utilisent."
+    errorReportingEnabled:
+      title: "Rapport d'erreurs"
+      description: "Envoyer un rapport de plantage quand l'application échoue. Un rapport contient le type d'erreur, l'emplacement dans le code, la version de l'application et votre système d'exploitation. Il ne contient ni identifiant d'installation ni message d'erreur."
     checkForUpdates:
       title: "Rechercher des mises à jour"
       description: "Rechercher une nouvelle version au démarrage de Portfolio, puis toutes les heures."
@@ -1582,7 +1595,7 @@ settings:
     startingTitle: "Démarrage et fermeture"
     helpTitle: "Aide"
     helpQuestion: "Quelque chose ne fonctionne pas ou vous avez une idée ?"
-    helpText: "Écrivez à {email}. Votre version est déjà indiquée et vous pouvez joindre un journal anonyme de l'application des dernières 24 heures."
+    helpText: "Écrivez à {email}. Votre version est déjà renseignée, et vous pouvez joindre un journal de l'application du dernier jour, dont les données privées ont été retirées."
     reportIssue: "Signaler un problème"
     shortcutsTitle: "Raccourcis clavier"
     shortcuts:
@@ -1899,14 +1912,14 @@ settings:
   support:
     title: "Signaler un problème"
     description: "Ouvrez un ticket d'assistance technique ou signalez un problème directement à {email}."
-    guaranteeTitle: "Garantie stricte d'anonymisation des journaux"
-    guaranteeText: "Toutes les entrées des journaux de diagnostic sont entièrement anonymisées avant d'être placées dans le fichier ZIP. Les noms d'utilisateur, dossiers personnels, chemins de fichiers, noms de portefeuilles, tickers, quantités, montants financiers et clés API sont automatiquement supprimés et masqués."
+    guaranteeTitle: "Masquage des données privées dans les journaux"
+    guaranteeText: "L'application supprime les données privées connues des journaux avant de créer le fichier ZIP : noms d'utilisateur, dossiers personnels, noms de portefeuilles, montants et clés API. Elle utilise des motifs fixes, donc vérifiez le fichier avant de l'envoyer."
     recipient: "E-mail du destinataire"
     subject: "Objet du ticket"
     subjectPlaceholder: "ex. Problème d'import de transactions ou de synchronisation des cours"
     message: "Description du problème (facultatif)"
     messagePlaceholder: "Décrivez ce qui s'est passé ou les étapes pour reproduire le problème…"
-    includeLogs: "Joindre les journaux des dernières 24 heures dans un ZIP anonymisé"
+    includeLogs: "Joindre un journal expurgé du dernier jour"
     includeLogsHint: "Regroupe les événements de diagnostic et les métadonnées système des dernières 24 heures dans un fichier ZIP. Les chemins de fichiers personnels, noms de portefeuilles, montants financiers et identifiants sont automatiquement masqués."
     openedSaved: "E-mail d'assistance ouvert. L'archive de diagnostic a été enregistrée dans votre dossier Téléchargements ; joignez-la à l'e-mail."
     openedDownloaded: "E-mail d'assistance ouvert. L'archive de diagnostic a été téléchargée ; joignez-la à l'e-mail."
@@ -1933,7 +1946,7 @@ setup:
     title: "Bienvenue dans {app}"
     subtitle: "Suivez vos actions, ETF et cryptos en un seul endroit."
     privateTitle: "Confidentiel par conception"
-    privateText: "Vos données restent sur cet ordinateur. Aucun compte, aucun cloud."
+    privateText: "Vos positions et vos montants restent sur cet ordinateur. Aucun compte, aucun cloud."
     pricesTitle: "Des prix qui se mettent à jour tout seuls"
     pricesText: "Voyez ce que valent vos investissements aujourd'hui, dans votre propre devise."
     assistantTitle: "Un assistant IA"
@@ -1962,12 +1975,20 @@ setup:
       etfs: "ETF"
       crypto: "Crypto"
   telemetry:
-    title: "Statistiques anonymes"
-    description: "Aidez-nous à améliorer {app} en partageant une télémétrie respectueuse de la vie privée."
-    toggle: "Activer la télémétrie anonyme"
-    posthog: "Nous utilisons PostHog pour enregistrer des événements de base de l'application (p. ex. application lancée, CSV importé, rapport généré). Identifiés par un UUID aléatoire."
-    guaranteeTitle: "Garantie stricte de confidentialité :"
-    guaranteeText: "Aucune position du portefeuille, valeur monétaire, montant de transaction, nom de courtier ni identité personnelle n'est jamais transmis. Vous pouvez modifier ce choix à tout moment dans Paramètres."
+    title: "Aidez à améliorer l'application"
+    description: "Les deux options sont désactivées. Activez seulement ce que vous voulez. Vous pouvez modifier ce choix à tout moment dans Paramètres."
+    analyticsTitle: "Statistiques d'utilisation"
+    analyticsText: "Envoyer des événements de fonctionnalités, comme le démarrage de l'application, avec un identifiant d'installation aléatoire. Cela nous montre quelles fonctionnalités les gens utilisent."
+    errorsTitle: "Rapport d'erreurs"
+    errorsText: "Envoyer un rapport de plantage quand l'application échoue. Un rapport contient le type d'erreur, l'emplacement dans le code, la version de l'application et votre système d'exploitation. Il ne contient ni identifiant d'installation ni message d'erreur."
+    vendorText: "PostHog reçoit ces données pour nous. Il voit votre adresse IP et ne la conserve pas."
+    guaranteeTitle: "Jamais envoyé :"
+    guaranteeText: "Positions, montants, symboles boursiers, transactions et noms de comptes."
+    noticeLink: "Lire l'avis de confidentialité"
+  privacyPrompt:
+    title: "Vos choix de confidentialité"
+    description: "{app} propose maintenant deux options distinctes. Le rapport d'erreurs reste désactivé tant que vous ne l'activez pas."
+    save: "Enregistrer"
 
 service:
   assistant:

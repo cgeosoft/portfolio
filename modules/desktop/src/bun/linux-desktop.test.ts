@@ -49,7 +49,7 @@ describe.skipIf(process.platform !== "linux")("installDesktopEntry", () => {
       "Type=Application",
       "Name=Portfolio (Development)",
       "GenericName=Personal Investment Tracker",
-      "Comment=Offline-first personal investment portfolio tracker (development checkout)",
+      "Comment=Personal investment portfolio tracker (development checkout)",
       `Exec=/usr/bin/env bash -c "cd '${repo}' && bun start"`,
       "Icon=portfolio-dev",
       "Terminal=false",
@@ -73,7 +73,7 @@ describe.skipIf(process.platform !== "linux")("installDesktopEntry", () => {
     const main = readFileSync(join(apps, "portfolio.desktop"), "utf-8");
     const lines = main.split("\n");
     expect(lines).toContain("Name=Portfolio");
-    expect(lines).toContain("Comment=Offline-first personal investment portfolio tracker");
+    expect(lines).toContain("Comment=Personal investment portfolio tracker");
     expect(lines).toContain(`Exec="${join(tmp, "install", "bin", "launcher")}"`);
     expect(lines).toContain("Icon=portfolio");
     expect(lines).toContain("StartupWMClass=Portfolio");

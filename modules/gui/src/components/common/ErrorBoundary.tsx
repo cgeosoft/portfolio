@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { reloadPage } from "../portfolio/utils.js";
 import { hideBootLoader } from "../../bootLoader";
+import { reportClientError } from "../../error-reporting";
 import { t } from "../../i18n";
 
 interface Props {
@@ -29,6 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     hideBootLoader(true);
     console.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
+    reportClientError(error, "boundary");
     this.setState({ errorInfo });
   }
 

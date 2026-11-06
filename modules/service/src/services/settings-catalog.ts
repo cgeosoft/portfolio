@@ -16,6 +16,8 @@ export interface SettingDefinition {
   description: string;
   placeholder?: string;
   options?: { value: string | number; label: string }[];
+  /** Only the desktop window may change it. */
+  localOnly?: boolean;
 }
 
 export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
@@ -49,11 +51,20 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
     description: "Closing the window leaves Portfolio running as an icon in the system tray, next to the clock, so scheduled briefs and alerts still go out. Quit from that icon.",
   },
   {
-    key: "telemetryEnabled",
+    key: "analyticsEnabled",
     section: "security",
     kind: "toggle",
-    label: "Share anonymous usage statistics",
-    description: "Tell the developers which features are used, to help improve Portfolio. Holdings, balances and transactions are never sent.",
+    localOnly: true,
+    label: "Usage analytics",
+    description: "Send feature events, such as app started, with a random install ID. This shows us which features people use.",
+  },
+  {
+    key: "errorReportingEnabled",
+    section: "security",
+    kind: "toggle",
+    localOnly: true,
+    label: "Error reporting",
+    description: "Send a crash report when the app fails. A report holds the error type, the code location, the app version and your operating system. It holds no install ID and no error message.",
   },
   {
     key: "checkForUpdates",
@@ -77,13 +88,13 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   },
 ];
 
-/** Every catalog setting with its current value. */
-export function listSettings(): SettingView[] {
+/** Every catalog setting with its current value, as this client may use it. */
+export function listSettings(isLocal = true): SettingView[] {
   const config = loadConfig() as unknown as Record<string, unknown>;
-  return SETTING_DEFINITIONS.map((def) => {
+  return SETTING_DEFINITIONS.map(({ localOnly, ...def }) => {
     const raw = config[def.key];
     const value = typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean" ? raw : "";
     // A secret never leaves the service; `isSet` tells the GUI one is stored.
-    return { ...def, value: def.kind === "secret" ? "" : value, isSet: value !== "" };
+    return { ...def, value: def.kind === "secret" ? "" : value, isSet: value !== "", readOnly: Boolean(localOnly) && !isLocal };
   });
 }
