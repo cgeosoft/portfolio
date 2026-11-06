@@ -8,7 +8,7 @@
 - Crash reports are now available if you turn them on. They do not include an install ID or error message, and only show stack frames from the app.
 - A new step in setup and new rows in Settings let you manage your privacy choices.
 - Existing installs see a one-time prompt to choose their privacy options.
-- A Privacy Notice and Terms 1.2 are now included, in all supported languages.
+- A Privacy Notice and Terms 1.2 are now on the website, in English. The privacy text in the app is in all supported languages.
 - The website now opens with Guided Analysis. It shows a live evidence graph from a real run of the demo portfolio.
 - The website has a walkthrough of the six analysis stages, the path behind a suggestion, and the guardrails.
 - The website tour is updated for the current tabs of the app.
