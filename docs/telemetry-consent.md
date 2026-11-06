@@ -198,7 +198,7 @@ The Electrobun shell is out of scope for this version.
 
 Christos does these, or approves each one for an agent to do:
 
-1. Check or sign the DPA at `app.posthog.com/legal`.
+1. Sign the DPA at `eu.posthog.com/legal`. On 2026-11-06 that page listed no signed document.
 2. Turn on "Discard client IP data" on the project. Done on 2026-11-06.
 3. Turn off session recording, console logs, heatmaps, exception autocapture and dead clicks on the project. Done on 2026-11-06. Exception capture for the app does not depend on this, because it uses a manual call.
 4. Set the project retention to 12 months. Done on 2026-11-06. It shows as 1 year.
