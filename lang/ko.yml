@@ -107,8 +107,6 @@ layout:
     statusBar: "애플리케이션 상태 표시줄"
     openVendor: "브라우저에서 cgeosoft.com 열기"
     openTerms: "앱에서 이용 약관 열기"
-    openSponsorship: "앱에서 후원 페이지 열기"
-    sponsorship: "후원"
     terms: "이용 약관"
     switchPortfolio: "포트폴리오 전환"
     portfoliosCount: "포트폴리오 ({count})"
@@ -157,13 +155,6 @@ layout:
     downloading: "다운로드 중…"
     downloadAgain: "다시 다운로드"
     downloadLatest: "최신 버전 다운로드"
-  sponsorship:
-    title: "후원"
-    frameTitle: "{app} 후원"
-    reloadTitle: "후원 페이지 새로고침"
-    openTitle: "웹 브라우저에서 후원 페이지 열기"
-    loading: "{url}에서 {app} 후원 페이지를 불러오는 중…"
-    loadFailed: "{app} 후원 페이지를 불러올 수 없습니다"
   terms:
     title: "이용 약관"
     frameTitle: "{app} 이용 약관"
@@ -240,17 +231,6 @@ portfolios:
     lastPortfolio: "유일한 포트폴리오입니다. {name}(이)라는 빈 포트폴리오로 대체됩니다."
     deleting: "삭제 중…"
     failed: "포트폴리오를 삭제하지 못했습니다. 다시 시도하세요."
-  sponsor:
-    bannerTitle: "스폰서 배너"
-    about: "스폰서십 정보"
-    title: "스폰서 콘텐츠"
-    subtitle: "지속적인 개발 유지"
-    closeLabel: "대화 상자 닫기"
-    partnerContent: "이 상자에는 파트너 콘텐츠가 표시됩니다. 스폰서십은 독립적인 유지 관리, 실시간 시세 및 업데이트 비용을 충당하여 개발을 지속하게 합니다."
-    privacy: "개인 투자 수치, 잔액, 보유 종목은 100% 비공개입니다. 어떤 금융 데이터도 스폰서나 제3자와 공유되지 않습니다."
-    offer: "스폰서십 제안"
-    offerText: "플랫폼이나 금융 서비스를 소개하고 싶으신가요? 개발자 이메일로 직접 연락하실 수 있습니다:"
-    contact: "이메일로 연락"
 
 dashboard:
   availableLiquidity: "가용 유동성 ({currency})"

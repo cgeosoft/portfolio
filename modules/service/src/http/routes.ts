@@ -20,7 +20,6 @@ import { blockedRemoteTargets } from "../services/outbound-target";
 import { writeDesktopSettingsFile } from "../services/desktop-settings";
 import { revealInFileManager, saveBytesToDownloads, saveToDownloads } from "../services/files";
 import { createDatabaseBackup } from "../services/backup";
-import { loadSponsorPage, sponsorFrameResponse, sponsorTheme } from "../services/sponsor";
 import { supportTicketService } from "../services/support-ticket";
 import { appUpdateService } from "../services/app-update";
 import { telemetry } from "../services/telemetry";
@@ -75,12 +74,8 @@ import type {
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
 
-/**
- * Routes that need no session. The sponsor frame serves only the public
- * website page, in its own sandbox; a frame request then works even where a
- * webview withholds the cookie from a sandboxed frame.
- */
-const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/api/app/sponsor/frame", "/intro"]);
+/** Routes that need no session. */
+const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/intro"]);
 /**
  * The OpenRouter sign-in returns through the system browser, which has no
  * session cookie. The route serves only loopback clients and only a one-time
@@ -734,15 +729,6 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
     logClientEvent(await ctx.body<Record<string, unknown>>(64 * 1024));
     return { success: true };
   });
-
-  router.get("/api/app/sponsor", async (ctx) => {
-    const rawUrl = (ctx.url.searchParams.get("url") || "").trim();
-    const html = await loadSponsorPage(sponsorTheme(ctx.url.searchParams.get("theme"), rawUrl), rawUrl);
-    return html ? { success: true, html } : { success: false, html: "", error: "Failed to load sponsor banner" };
-  });
-
-  // The banner as its own sandboxed document (services/sponsor.ts): the overview frames this URL.
-  router.get("/api/app/sponsor/frame", async (ctx) => sponsorFrameResponse(await loadSponsorPage(sponsorTheme(ctx.url.searchParams.get("theme")))));
 
   router.post("/api/app/support", async (ctx) => {
     const body = await ctx.body<OpenSupportTicketRequest>();

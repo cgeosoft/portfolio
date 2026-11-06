@@ -43,8 +43,6 @@ const DEFINES: Record<string, string> = {
  * A directory is copied whole: `lang/` holds the translation files `<code>.yml`.
  */
 const EXTRA_FILES: [string, string][] = [
-  ["extras/website/sponsor/index.html", "service/sponsor.html"],
-  ["extras/website/sponsor/light/index.html", "service/sponsor-light.html"],
   ["lang", "service/lang"],
 ];
 

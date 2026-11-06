@@ -109,8 +109,6 @@ layout:
     statusBar: "שורת המצב של היישום"
     openVendor: "פתיחת cgeosoft.com בדפדפן"
     openTerms: "פתיחת תנאי השימוש ביישום"
-    openSponsorship: "פתיחת דף החסות באפליקציה"
-    sponsorship: "חסות"
     terms: "תנאי שימוש"
     switchPortfolio: "החלפת תיק"
     portfoliosCount: "תיקים ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "מוריד…"
     downloadAgain: "הורדה חוזרת"
     downloadLatest: "הורדת הגרסה האחרונה"
-  sponsorship:
-    title: "חסות"
-    frameTitle: "חסות ל-{app}"
-    reloadTitle: "טעינה מחדש של דף החסות"
-    openTitle: "פתיחת דף החסות בדפדפן האינטרנט"
-    loading: "טוען את דף החסות של {app} מ-{url}…"
-    loadFailed: "לא ניתן לטעון את דף החסות של {app}"
   terms:
     title: "תנאי שימוש"
     frameTitle: "תנאי השימוש של {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "זהו התיק היחיד שלך. תיק ריק בשם {name} יחליף אותו."
     deleting: "מוחק…"
     failed: "מחיקת התיק נכשלה. יש לנסות שוב."
-  sponsor:
-    bannerTitle: "באנר חסות"
-    about: "אודות החסות"
-    title: "תוכן בחסות"
-    subtitle: "שומרים על פיתוח פעיל"
-    closeLabel: "סגירת החלון"
-    partnerContent: "תיבה זו מציגה תוכן של שותפים. החסויות מממנות תחזוקה עצמאית, שערי שוק בזמן אמת ועדכונים ששומרים על פיתוח פעיל."
-    privacy: "נתוני ההשקעות האישיים, היתרות והאחזקות שלך פרטיים ב-100%. שום נתון פיננסי אינו משותף לעולם עם נותני חסות או צדדים שלישיים."
-    offer: "הצעת חסות"
-    offerText: "רוצה להציג את הפלטפורמה או השירות הפיננסי שלך? אפשר לפנות ישירות לכתובת הדוא״ל של המפתח:"
-    contact: "יצירת קשר בדוא״ל"
 
 dashboard:
   availableLiquidity: "נזילות זמינה ({currency})"

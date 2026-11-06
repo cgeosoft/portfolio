@@ -175,13 +175,6 @@ describe("api URL building", () => {
     expect(last().url).toBe("/api/market/macro");
   });
 
-  it("builds the sponsor banner query", async () => {
-    await (api as any).getSponsorBanner();
-    expect(last().url).toBe("/api/app/sponsor");
-    await (api as any).getSponsorBanner("https://x/?a=1&b", "dark");
-    expect(last().url).toBe("/api/app/sponsor?url=https%3A%2F%2Fx%2F%3Fa%3D1%26b&theme=dark");
-  });
-
   it("builds the company intel query", async () => {
     await (api as any).getCompanyIntel("BRK.B", ["profile", "news"], "ETF", true);
     expect(last().url).toBe("/api/symbols/BRK.B/intel?include=profile%2Cnews&assetType=ETF&private=1");
@@ -256,8 +249,7 @@ describe("api URL building", () => {
     expect(last().init.body).toBe(JSON.stringify(arg));
   });
 
-  it("builds frame and diagnostics URLs without a request", () => {
-    expect((api as any).sponsorFrameUrl("light")).toBe("/api/app/sponsor/frame?theme=light");
+  it("builds the diagnostics URL without a request", () => {
     expect(api.diagnosticsUrl()).toBe("/api/app/support/diagnostics");
     expect(calls.length).toBe(0);
   });

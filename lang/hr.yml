@@ -109,8 +109,6 @@ layout:
     statusBar: "Statusna traka aplikacije"
     openVendor: "Otvori cgeosoft.com u pregledniku"
     openTerms: "Otvori uvjete korištenja u aplikaciji"
-    openSponsorship: "Otvori stranicu o sponzorstvu u aplikaciji"
-    sponsorship: "sponzorstvo"
     terms: "uvjeti korištenja"
     switchPortfolio: "Promijeni portfelj"
     portfoliosCount: "Portfelji ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "Preuzimanje…"
     downloadAgain: "Preuzmi ponovno"
     downloadLatest: "Preuzmi najnoviju verziju"
-  sponsorship:
-    title: "Sponzorstvo"
-    frameTitle: "Sponzorstvo za {app}"
-    reloadTitle: "Ponovno učitaj stranicu o sponzorstvu"
-    openTitle: "Otvori stranicu o sponzorstvu u web-pregledniku"
-    loading: "Učitavanje stranice o sponzorstvu za {app} s {url}…"
-    loadFailed: "Nije moguće učitati stranicu o sponzorstvu za {app}"
   terms:
     title: "Uvjeti korištenja"
     frameTitle: "Uvjeti korištenja aplikacije {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "Ovo je vaš jedini portfelj. Zamijenit će ga prazan portfelj naziva {name}."
     deleting: "Brisanje…"
     failed: "Brisanje portfelja nije uspjelo. Pokušajte ponovno."
-  sponsor:
-    bannerTitle: "Sponzorski natpis"
-    about: "O sponzorstvu"
-    title: "Sponzorirani sadržaj"
-    subtitle: "Održavanje aktivnog razvoja"
-    closeLabel: "Zatvori dijalog"
-    partnerContent: "Ovaj okvir prikazuje sadržaj partnera. Sponzorstva financiraju neovisno održavanje, tržišne cijene uživo i ažuriranja kako bi razvoj ostao aktivan."
-    privacy: "Vaši osobni podaci o ulaganjima, stanja i pozicije 100% su privatni. Financijski podaci nikad se ne dijele sa sponzorima ni trećim stranama."
-    offer: "Ponudite sponzorstvo"
-    offerText: "Želite predstaviti svoju platformu ili financijsku uslugu? Možete se izravno javiti na e-adresu razvojnog programera:"
-    contact: "Kontakt e-poštom"
 
 dashboard:
   availableLiquidity: "Raspoloživa likvidnost ({currency})"

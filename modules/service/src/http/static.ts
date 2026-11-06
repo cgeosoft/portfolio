@@ -8,8 +8,7 @@
  * inline script of index.html (the theme bootstrap) by its hash. The GUI
  * shows text from providers, news and language models, so the policy also
  * keeps that text from loading outside images or calling outside servers.
- * The sponsor banner is a separate sandboxed document with its own policy
- * (services/sponsor.ts), and the terms page is framed from the website.
+ * The terms page is framed from the website.
  */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";

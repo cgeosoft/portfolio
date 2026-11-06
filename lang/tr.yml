@@ -108,8 +108,6 @@ layout:
     statusBar: "Uygulama Durum Çubuğu"
     openVendor: "cgeosoft.com'u tarayıcıda aç"
     openTerms: "Kullanım Koşullarını uygulamada aç"
-    openSponsorship: "Sponsorluk sayfasını uygulamada aç"
-    sponsorship: "sponsorluk"
     terms: "kullanım koşulları"
     switchPortfolio: "Portföy Değiştir"
     portfoliosCount: "Portföyler ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "İndiriliyor…"
     downloadAgain: "Yeniden İndir"
     downloadLatest: "En Son Sürümü İndir"
-  sponsorship:
-    title: "Sponsorluk"
-    frameTitle: "{app} sponsorluğu"
-    reloadTitle: "Sponsorluk sayfasını yeniden yükle"
-    openTitle: "Sponsorluk sayfasını web tarayıcısında aç"
-    loading: "{app} sponsorluk sayfası {url} adresinden yükleniyor…"
-    loadFailed: "{app} sponsorluk sayfası yüklenemedi"
   terms:
     title: "Kullanım Koşulları"
     frameTitle: "{app} Kullanım Koşulları"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Bu, tek portföyünüz. Yerine {name} adlı boş bir portföy gelir."
     deleting: "Siliniyor…"
     failed: "Portföy silinemedi. Lütfen yeniden deneyin."
-  sponsor:
-    bannerTitle: "Sponsor Afişi"
-    about: "Sponsorluk hakkında"
-    title: "Sponsor İçeriği"
-    subtitle: "Geliştirmeyi Sürdürmek"
-    closeLabel: "Pencereyi kapat"
-    partnerContent: "Bu kutu iş ortağı içeriği gösterir. Sponsorluklar bağımsız bakımı, canlı piyasa fiyatlarını ve geliştirmeyi sürdüren güncellemeleri finanse eder."
-    privacy: "Kişisel yatırım rakamlarınız, bakiyeleriniz ve varlıklarınız %100 gizlidir. Hiçbir finansal veri sponsorlarla veya üçüncü taraflarla paylaşılmaz."
-    offer: "Sponsorluk Teklif Et"
-    offerText: "Platformunuzu veya finansal hizmetinizi tanıtmak mı istiyorsunuz? Geliştiriciye doğrudan e-posta ile ulaşabilirsiniz:"
-    contact: "E-posta ile İletişim"
 
 dashboard:
   availableLiquidity: "Kullanılabilir Likidite ({currency})"

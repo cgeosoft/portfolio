@@ -110,8 +110,6 @@ layout:
     statusBar: "Programos būsenos juosta"
     openVendor: "Atidaryti cgeosoft.com naršyklėje"
     openTerms: "Atidaryti naudojimo sąlygas programoje"
-    openSponsorship: "Atidaryti rėmimo puslapį programoje"
-    sponsorship: "rėmimas"
     terms: "naudojimo sąlygos"
     switchPortfolio: "Perjungti portfelį"
     portfoliosCount: "Portfeliai ({count})"
@@ -160,13 +158,6 @@ layout:
     downloading: "Atsisiunčiama…"
     downloadAgain: "Atsisiųsti dar kartą"
     downloadLatest: "Atsisiųsti naujausią versiją"
-  sponsorship:
-    title: "Rėmimas"
-    frameTitle: "{app} rėmimas"
-    reloadTitle: "Iš naujo įkelti rėmimo puslapį"
-    openTitle: "Atidaryti rėmimo puslapį naršyklėje"
-    loading: "Įkeliamas {app} rėmimo puslapis iš {url}…"
-    loadFailed: "Nepavyko įkelti {app} rėmimo puslapio"
   terms:
     title: "Naudojimo sąlygos"
     frameTitle: "{app} naudojimo sąlygos"
@@ -243,17 +234,6 @@ portfolios:
     lastPortfolio: "Tai jūsų vienintelis portfelis. Jį pakeis tuščias portfelis pavadinimu {name}."
     deleting: "Trinama…"
     failed: "Nepavyko ištrinti portfelio. Bandykite dar kartą."
-  sponsor:
-    bannerTitle: "Rėmėjo reklamjuostė"
-    about: "Apie rėmimą"
-    title: "Rėmėjo turinys"
-    subtitle: "Kūrimui palaikyti"
-    closeLabel: "Uždaryti langą"
-    partnerContent: "Šiame laukelyje rodomas partnerių turinys. Rėmimas finansuoja nepriklausomą priežiūrą, tiesiogines rinkos kotiruotes ir naujinius, kad kūrimas tęstųsi."
-    privacy: "Jūsų asmeniniai investiciniai duomenys, likučiai ir investicijos yra 100% privatūs. Finansiniai duomenys niekada nebendrinami su rėmėjais ar trečiosiomis šalimis."
-    offer: "Pasiūlyti rėmimą"
-    offerText: "Norite pristatyti savo platformą ar finansinę paslaugą? Galite susisiekti tiesiogiai su kūrėju el. paštu:"
-    contact: "Susisiekti el. paštu"
 
 dashboard:
   availableLiquidity: "Turimas likvidumas ({currency})"

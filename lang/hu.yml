@@ -108,8 +108,6 @@ layout:
     statusBar: "Alkalmazás állapotsora"
     openVendor: "A cgeosoft.com megnyitása böngészőben"
     openTerms: "Felhasználási feltételek megnyitása az alkalmazásban"
-    openSponsorship: "Szponzorációs oldal megnyitása az alkalmazásban"
-    sponsorship: "szponzoráció"
     terms: "felhasználási feltételek"
     switchPortfolio: "Portfólióváltás"
     portfoliosCount: "Portfóliók ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "Letöltés…"
     downloadAgain: "Letöltés újra"
     downloadLatest: "Legújabb verzió letöltése"
-  sponsorship:
-    title: "Szponzoráció"
-    frameTitle: "{app} szponzoráció"
-    reloadTitle: "Szponzorációs oldal újratöltése"
-    openTitle: "Szponzorációs oldal megnyitása a böngészőben"
-    loading: "A(z) {app} szponzorációs oldalának betöltése innen: {url}…"
-    loadFailed: "A(z) {app} szponzorációs oldala nem tölthető be"
   terms:
     title: "Felhasználási feltételek"
     frameTitle: "{app} – Felhasználási feltételek"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Ez az egyetlen portfóliója. Helyére egy üres portfólió kerül ezzel a névvel: {name}."
     deleting: "Törlés…"
     failed: "A portfólió törlése sikertelen. Próbálja újra."
-  sponsor:
-    bannerTitle: "Szponzori szalaghirdetés"
-    about: "A szponzorációról"
-    title: "Szponzorált tartalom"
-    subtitle: "A fejlesztés fenntartásáért"
-    closeLabel: "Párbeszédablak bezárása"
-    partnerContent: "Ez a doboz partneri tartalmat jelenít meg. A szponzorációk finanszírozzák a független karbantartást, a valós idejű piaci árfolyamokat és a fejlesztést életben tartó frissítéseket."
-    privacy: "Személyes befektetési adatai, egyenlegei és tételei 100%-ban privátak. Semmilyen pénzügyi adat nem kerül megosztásra szponzorokkal vagy harmadik felekkel."
-    offer: "Szponzoráció felajánlása"
-    offerText: "Szeretné bemutatni platformját vagy pénzügyi szolgáltatását? Közvetlenül írhat a fejlesztő e-mail-címére:"
-    contact: "Kapcsolat e-mailben"
 
 dashboard:
   availableLiquidity: "Elérhető likviditás ({currency})"

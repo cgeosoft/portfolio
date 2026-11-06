@@ -109,8 +109,6 @@ layout:
     statusBar: "Lietotnes statusa josla"
     openVendor: "Atvērt cgeosoft.com pārlūkā"
     openTerms: "Atvērt lietošanas noteikumus lietotnē"
-    openSponsorship: "Atvērt sponsorēšanas lapu lietotnē"
-    sponsorship: "sponsorēšana"
     terms: "lietošanas noteikumi"
     switchPortfolio: "Pārslēgt portfeli"
     portfoliosCount: "Portfeļi ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "Lejupielādē…"
     downloadAgain: "Lejupielādēt vēlreiz"
     downloadLatest: "Lejupielādēt jaunāko versiju"
-  sponsorship:
-    title: "Sponsorēšana"
-    frameTitle: "{app} sponsorēšana"
-    reloadTitle: "Pārlādēt sponsorēšanas lapu"
-    openTitle: "Atvērt sponsorēšanas lapu tīmekļa pārlūkā"
-    loading: "Ielādē {app} sponsorēšanas lapu no {url}…"
-    loadFailed: "Neizdevās ielādēt {app} sponsorēšanas lapu"
   terms:
     title: "Lietošanas noteikumi"
     frameTitle: "{app} lietošanas noteikumi"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "Šis ir jūsu vienīgais portfelis. To aizstās tukšs portfelis ar nosaukumu {name}."
     deleting: "Dzēš…"
     failed: "Neizdevās dzēst portfeli. Lūdzu, mēģiniet vēlreiz."
-  sponsor:
-    bannerTitle: "Sponsora reklāmkarogs"
-    about: "Par sponsorēšanu"
-    title: "Sponsora saturs"
-    subtitle: "Izstrādes uzturēšanai"
-    closeLabel: "Aizvērt logu"
-    partnerContent: "Šajā lodziņā redzams partneru saturs. Sponsorēšana finansē neatkarīgu uzturēšanu, reāllaika tirgus kotācijas un atjauninājumus, lai izstrāde turpinātos."
-    privacy: "Jūsu personīgie ieguldījumu dati, atlikumi un ieguldījumi ir 100% privāti. Finanšu dati nekad netiek kopīgoti ar sponsoriem vai trešajām pusēm."
-    offer: "Piedāvāt sponsorēšanu"
-    offerText: "Vēlaties parādīt savu platformu vai finanšu pakalpojumu? Varat sazināties tieši ar izstrādātāju pa e-pastu:"
-    contact: "Sazināties pa e-pastu"
 
 dashboard:
   availableLiquidity: "Pieejamā likviditāte ({currency})"

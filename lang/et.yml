@@ -111,8 +111,6 @@ layout:
     statusBar: "Rakenduse olekuriba"
     openVendor: "Ava cgeosoft.com brauseris"
     openTerms: "Ava kasutustingimused rakenduses"
-    openSponsorship: "Ava sponsorluse leht rakenduses"
-    sponsorship: "sponsorlus"
     terms: "kasutustingimused"
     switchPortfolio: "Vaheta portfelli"
     portfoliosCount: "Portfellid ({count})"
@@ -161,13 +159,6 @@ layout:
     downloading: "Allalaadimine…"
     downloadAgain: "Laadi uuesti alla"
     downloadLatest: "Laadi alla uusim versioon"
-  sponsorship:
-    title: "Sponsorlus"
-    frameTitle: "{app} sponsorlus"
-    reloadTitle: "Laadi sponsorluse leht uuesti"
-    openTitle: "Ava sponsorluse leht veebibrauseris"
-    loading: "{app} sponsorluse lehte laaditakse aadressilt {url}…"
-    loadFailed: "{app} sponsorluse lehte ei õnnestunud laadida"
   terms:
     title: "Kasutustingimused"
     frameTitle: "{app} kasutustingimused"
@@ -245,17 +236,6 @@ portfolios:
     lastPortfolio: "See on sinu ainus portfell. Selle asemele tuleb tühi portfell nimega {name}."
     deleting: "Kustutamine…"
     failed: "Portfelli kustutamine nurjus. Proovi uuesti."
-  sponsor:
-    bannerTitle: "Sponsori bänner"
-    about: "Teave sponsorluse kohta"
-    title: "Sponsori sisu"
-    subtitle: "Hoiab arendust käimas"
-    closeLabel: "Sulge aken"
-    partnerContent: "Selles kastis kuvatakse partnerite sisu. Sponsorlus rahastab sõltumatut hooldust, reaalajas turuhindu ja uuendusi, et arendus jätkuks."
-    privacy: "Sinu isiklikud investeerimisnäitajad, saldod ja osalused on 100% privaatsed. Finantsandmeid ei jagata kunagi sponsorite ega kolmandate osapooltega."
-    offer: "Paku sponsorlust"
-    offerText: "Soovid tutvustada oma platvormi või finantsteenust? Võid otse arendajale kirjutada:"
-    contact: "Võta ühendust e-postiga"
 
 # ── dashboard ──
 dashboard:

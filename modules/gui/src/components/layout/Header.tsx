@@ -23,7 +23,7 @@ interface HeaderProps {
   lastUpdated?: string;
   activeTab?: PortfolioTabKey;
   onTabChange?: (tab: PortfolioTabKey) => void;
-  activeView?: "dashboard" | "settings" | "terms" | "sponsorship" | "portfolios";
+  activeView?: "dashboard" | "settings" | "terms" | "portfolios";
   onNavigateDashboard?: (tab?: PortfolioTabKey) => void;
   transactionsCount?: number;
   /** Open suggestions, shown next to the Overview tab, where the Suggested actions card lists them. */

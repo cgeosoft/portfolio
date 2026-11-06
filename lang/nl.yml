@@ -108,8 +108,6 @@ layout:
     statusBar: "Statusbalk van de applicatie"
     openVendor: "cgeosoft.com openen in browser"
     openTerms: "Gebruiksvoorwaarden openen in de app"
-    openSponsorship: "Sponsorpagina in de app openen"
-    sponsorship: "sponsoring"
     terms: "gebruiksvoorwaarden"
     switchPortfolio: "Andere portfolio kiezen"
     portfoliosCount: "Portfolio's ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "Downloaden…"
     downloadAgain: "Opnieuw downloaden"
     downloadLatest: "Nieuwste versie downloaden"
-  sponsorship:
-    title: "Sponsoring"
-    frameTitle: "Sponsoring van {app}"
-    reloadTitle: "Sponsorpagina opnieuw laden"
-    openTitle: "Sponsorpagina in de webbrowser openen"
-    loading: "Sponsorpagina van {app} laden vanaf {url}…"
-    loadFailed: "Kan de sponsorpagina van {app} niet laden"
   terms:
     title: "Gebruiksvoorwaarden"
     frameTitle: "Gebruiksvoorwaarden van {app}"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Dit is je enige portfolio. Een lege portfolio met de naam {name} vervangt deze."
     deleting: "Verwijderen…"
     failed: "Portfolio verwijderen mislukt. Probeer het opnieuw."
-  sponsor:
-    bannerTitle: "Sponsorbanner"
-    about: "Over sponsoring"
-    title: "Gesponsorde inhoud"
-    subtitle: "Zodat de ontwikkeling doorgaat"
-    closeLabel: "Venster sluiten"
-    partnerContent: "Dit vak toont inhoud van partners. Sponsoring financiert onafhankelijk onderhoud, live marktkoersen en updates, zodat de ontwikkeling doorgaat."
-    privacy: "Je persoonlijke beleggingscijfers, saldi en posities blijven 100% privé. Er worden nooit financiële gegevens gedeeld met sponsors of derden."
-    offer: "Sponsoring aanbieden"
-    offerText: "Wil je je platform of financiële dienst onder de aandacht brengen? Neem rechtstreeks contact op via het e-mailadres van de ontwikkelaar:"
-    contact: "Contact via e-mail"
 
 dashboard:
   availableLiquidity: "Beschikbare liquiditeit ({currency})"

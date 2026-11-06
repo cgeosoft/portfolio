@@ -110,8 +110,6 @@ layout:
     statusBar: "应用状态栏"
     openVendor: "在浏览器中打开 cgeosoft.com"
     openTerms: "在应用中打开使用条款"
-    openSponsorship: "在应用中打开赞助页面"
-    sponsorship: "赞助"
     terms: "使用条款"
     switchPortfolio: "切换投资组合"
     portfoliosCount: "投资组合（{count}）"
@@ -160,13 +158,6 @@ layout:
     downloading: "正在下载…"
     downloadAgain: "重新下载"
     downloadLatest: "下载最新版本"
-  sponsorship:
-    title: "赞助"
-    frameTitle: "{app} 赞助"
-    reloadTitle: "重新加载赞助页面"
-    openTitle: "在网页浏览器中打开赞助页面"
-    loading: "正在从 {url} 加载 {app} 赞助页面…"
-    loadFailed: "无法加载 {app} 赞助页面"
   terms:
     title: "使用条款"
     frameTitle: "{app} 使用条款"
@@ -244,17 +235,6 @@ portfolios:
     lastPortfolio: "这是您唯一的投资组合。将由一个名为 {name} 的空投资组合替代它。"
     deleting: "正在删除…"
     failed: "删除投资组合失败。请重试。"
-  sponsor:
-    bannerTitle: "赞助横幅"
-    about: "关于赞助"
-    title: "赞助内容"
-    subtitle: "支持持续开发"
-    closeLabel: "关闭对话框"
-    partnerContent: "此区域显示合作伙伴内容。赞助资金用于独立维护、实时市场行情和更新，以保持持续开发。"
-    privacy: "您的个人投资数字、余额和持仓 100% 私密。任何财务数据都不会与赞助商或第三方共享。"
-    offer: "提供赞助"
-    offerText: "想展示您的平台或金融服务？可直接发送邮件给开发者："
-    contact: "通过邮件联系"
 
 # ── dashboard: overview cards, holdings, charts ───────────────────────────
 dashboard:

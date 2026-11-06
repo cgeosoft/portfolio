@@ -28,7 +28,6 @@ import {
 } from "./components/analysis/AnalysisTab";
 import { SuggestedActionsCard } from "./components/analysis/SuggestedActionsCard";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
-import { SponsorBannerCard } from "./components/portfolio/SponsorBannerCard";
 import { SETUP_STEP_AFTER_TERMS, type SetupStep } from "./components/common/setup-steps";
 import { UpdatePopover } from "./components/common/UpdatePopover";
 import { Toaster } from "./components/common/Toaster";
@@ -80,9 +79,6 @@ const TransactionModal = lazy(() => import("./components/portfolio/TransactionMo
 const MetricInfoModal = lazy(() => import("./components/portfolio/MetricInfoModal").then((m) => ({ default: m.MetricInfoModal })));
 const MetricDetailsModal = lazy(() => import("./components/metrics/MetricDetailsModal").then((m) => ({ default: m.MetricDetailsModal })));
 const ExportPortfolioModal = lazy(() => import("./components/portfolio/ExportPortfolioModal").then((m) => ({ default: m.ExportPortfolioModal })));
-
-/** The overview sponsor banner. Off until the first sponsor signs; users cannot hide it. */
-const SPONSOR_BANNER_ENABLED = false;
 
 /**
  * `?onboarding` opens the setup wizard even when setup is complete. The desktop shell adds it
@@ -194,7 +190,6 @@ export default function App() {
       if (hash === "#metrics") return "settings";
       if (hash.startsWith("#settings")) return "settings";
       if (hash === "#terms") return "terms";
-      if (hash === "#sponsorship") return "sponsorship";
     }
     return "dashboard";
   });
@@ -293,7 +288,7 @@ export default function App() {
     }
   }, []);
 
-  // Terms of Use and Sponsorship: website pages in a frame, opened from the status bar.
+  // Terms of Use: a website page in a frame, opened from the status bar.
   const handleOpenWebsitePage = useCallback((page: WebsitePageId) => {
     setView(page);
     if (typeof window !== "undefined") {
@@ -304,7 +299,6 @@ export default function App() {
     }
   }, []);
   const handleOpenTerms = useCallback(() => handleOpenWebsitePage("terms"), [handleOpenWebsitePage]);
-  const handleOpenSponsorship = useCallback(() => handleOpenWebsitePage("sponsorship"), [handleOpenWebsitePage]);
 
   const handleNavigateDashboard = useCallback((tab?: PortfolioTabKey) => {
     setView("dashboard");
@@ -346,8 +340,6 @@ export default function App() {
         setView("settings");
       } else if (hash === "#terms") {
         setView("terms");
-      } else if (hash === "#sponsorship") {
-        setView("sponsorship");
       } else {
         setView("dashboard");
         const route = window.location.hash ? routeFromHash(window.location.hash) : null;
@@ -837,7 +829,6 @@ export default function App() {
   const [appVersion, setAppVersion] = useState(APP_VERSION || "0.4.0");
   const [isDevMode, setIsDevMode] = useState(false);
   const [webpageUrl, setWebpageUrl] = useState(WEBPAGE_URL);
-  const [devEmail, setDevEmail] = useState<string | undefined>(undefined);
   const [lastQuotesSync, setLastQuotesSync] = useState<string | undefined>(undefined);
 
   // Window title: "Portfolio | <portfolio name> | Dev".
@@ -1195,7 +1186,6 @@ export default function App() {
         else if (APP_VERSION) setAppVersion(APP_VERSION);
         setIsDevMode(appInfo.isDev);
         if (appInfo.webpageUrl) setWebpageUrl(appInfo.webpageUrl);
-        if (appInfo.devEmail) setDevEmail(appInfo.devEmail);
         if (appInfo.lastQuotesSync) setLastQuotesSync(appInfo.lastQuotesSync);
       } catch (e) {
         clientLogger.log("error", "initApp:appInfo_error", `Failed to load app info: ${e}`);
@@ -1774,7 +1764,6 @@ export default function App() {
           version={appVersion}
           lastQuotesSync={lastQuotesSync}
           onOpenTerms={handleOpenTerms}
-          onOpenSponsorship={handleOpenSponsorship}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
           quotesIntervalMins={quotesIntervalMins}
@@ -1870,7 +1859,6 @@ export default function App() {
           version={appVersion}
           lastQuotesSync={lastQuotesSync}
           onOpenTerms={handleOpenTerms}
-          onOpenSponsorship={handleOpenSponsorship}
           onSyncQuotes={handleSyncQuotes}
           isSyncingQuotes={isRefreshing}
           quotesIntervalMins={quotesIntervalMins}
@@ -2047,7 +2035,7 @@ export default function App() {
         </Suspense>
       )}
 
-      {(view === "terms" || view === "sponsorship") && (
+      {view === "terms" && (
         <main className="flex-1 w-full max-w-(--breakpoint-2xl) mx-auto px-2 sm:px-6 lg:px-8 pt-2 pb-6 sm:pb-8 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           <WebsitePage key={view} page={view} onBack={() => handleNavigateDashboard()} webpageUrl={webpageUrl} />
         </main>
@@ -2089,9 +2077,6 @@ export default function App() {
                 }}
                 onOpenSettings={() => handleOpenSettings("assistant")}
               />
-
-              {/* Sponsor Banner Box */}
-              {SPONSOR_BANNER_ENABLED && <SponsorBannerCard webpageUrl={webpageUrl} devEmail={devEmail} theme={theme} />}
 
               {/* Charts & Allocation Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2227,7 +2212,6 @@ export default function App() {
         version={appVersion}
         lastQuotesSync={summary?.lastUpdated || lastQuotesSync}
         onOpenTerms={handleOpenTerms}
-        onOpenSponsorship={handleOpenSponsorship}
         onSyncQuotes={handleSyncQuotes}
         isSyncingQuotes={isRefreshing}
         quotesIntervalMins={quotesIntervalMins}

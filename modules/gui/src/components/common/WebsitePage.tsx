@@ -6,7 +6,6 @@ import {
   ExternalLink,
   ShieldCheck,
   AlertTriangle,
-  HeartHandshake,
   type LucideIcon,
 } from "lucide-react";
 import { rpc } from "../../rpc";
@@ -14,11 +13,10 @@ import { APP_NAME, WEBPAGE_URL } from "../../environment";
 import { t } from "../../i18n";
 
 /** The website pages the app shows in a frame. Each needs a framing exception in `extras/website/_headers`. */
-export type WebsitePageId = "terms" | "sponsorship";
+export type WebsitePageId = "terms";
 
 const PAGES: Record<WebsitePageId, { path: string; icon: LucideIcon }> = {
   terms: { path: "terms", icon: ShieldCheck },
-  sponsorship: { path: "sponsorship", icon: HeartHandshake },
 };
 
 export interface WebsitePageProps {

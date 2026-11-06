@@ -110,8 +110,6 @@ layout:
     statusBar: "Stavový řádek aplikace"
     openVendor: "Otevřít cgeosoft.com v prohlížeči"
     openTerms: "Otevřít podmínky použití v aplikaci"
-    openSponsorship: "Otevřít stránku o sponzorství v aplikaci"
-    sponsorship: "sponzorství"
     terms: "podmínky použití"
     switchPortfolio: "Přepnout portfolio"
     portfoliosCount: "Portfolia ({count})"
@@ -160,13 +158,6 @@ layout:
     downloading: "Stahování…"
     downloadAgain: "Stáhnout znovu"
     downloadLatest: "Stáhnout nejnovější verzi"
-  sponsorship:
-    title: "Sponzorství"
-    frameTitle: "Sponzorství {app}"
-    reloadTitle: "Znovu načíst stránku o sponzorství"
-    openTitle: "Otevřít stránku o sponzorství ve webovém prohlížeči"
-    loading: "Načítání stránky o sponzorství {app} z {url}…"
-    loadFailed: "Stránku o sponzorství {app} nelze načíst"
   terms:
     title: "Podmínky použití"
     frameTitle: "Podmínky použití {app}"
@@ -243,17 +234,6 @@ portfolios:
     lastPortfolio: "Toto je vaše jediné portfolio. Nahradí ho prázdné portfolio s názvem {name}."
     deleting: "Mazání…"
     failed: "Portfolio se nepodařilo smazat. Zkuste to znovu."
-  sponsor:
-    bannerTitle: "Banner sponzora"
-    about: "O sponzorství"
-    title: "Sponzorovaný obsah"
-    subtitle: "Podpora dalšího vývoje"
-    closeLabel: "Zavřít dialog"
-    partnerContent: "Toto pole zobrazuje obsah partnerů. Sponzorství financuje nezávislou údržbu, živé tržní ceny a aktualizace, díky kterým vývoj pokračuje."
-    privacy: "Vaše investiční čísla, zůstatky a pozice jsou 100% soukromé. Žádná finanční data se nikdy nesdílejí se sponzory ani třetími stranami."
-    offer: "Nabídnout sponzorství"
-    offerText: "Chcete představit svou platformu nebo finanční službu? Napište přímo na e-mail vývojáře:"
-    contact: "Kontaktovat e-mailem"
 
 dashboard:
   availableLiquidity: "Dostupná likvidita ({currency})"

@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { StaticSite, inlineScriptHashes, securityHeaders } from "../../http/static";
 import { serveDevGui, type DevGuiServer } from "../../http/dev-gui";
-import { sponsorFrameResponse, sponsorTheme } from "../sponsor";
 
 const THEME_SCRIPT = "\n      (function() { document.documentElement.classList.add('dark'); })();\n    ";
 const INDEX = `<!DOCTYPE html><html><head><script>${THEME_SCRIPT}</script></head>
@@ -61,26 +60,6 @@ describe("StaticSite", () => {
 
   it("serves nothing without a GUI directory (a checkout, where Vite serves the GUI)", () => {
     expect(new StaticSite(undefined).serve(new Request("http://127.0.0.1:4000/"), new URL("http://127.0.0.1:4000/"))).toBeNull();
-  });
-});
-
-describe("sponsor frame", () => {
-  it("serves the banner in a sandbox with an opaque origin", () => {
-    const res = sponsorFrameResponse("<html><body>banner</body></html>");
-    const csp = res.headers.get("Content-Security-Policy") ?? "";
-    expect(csp.startsWith("sandbox allow-scripts allow-popups;")).toBe(true);
-    expect(csp).not.toContain("allow-same-origin");
-    expect(res.headers.get("Content-Type")).toContain("text/html");
-  });
-
-  it("answers 204 when no page is there", () => {
-    expect(sponsorFrameResponse(null).status).toBe(204);
-  });
-
-  it("reads the theme from the parameter or a light page URL", () => {
-    expect(sponsorTheme("light")).toBe("light");
-    expect(sponsorTheme(null, "https://portfolio.cgeosoft.com/sponsor/light/")).toBe("light");
-    expect(sponsorTheme("anything")).toBe("dark");
   });
 });
 

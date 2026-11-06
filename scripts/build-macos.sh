@@ -154,9 +154,6 @@ EOF
 cp -r "${DESKTOP_DIR}/stage/service" "${BUNDLE_DIR}/Contents/Resources/app/"
 cp -r "${DESKTOP_DIR}/stage/gui" "${BUNDLE_DIR}/Contents/Resources/app/"
 cp -f "${ASSETS_DIR}/app-icon.png" "${BUNDLE_DIR}/Contents/Resources/app/app-icon.png"
-if [[ -f "${DESKTOP_DIR}/stage/service/sponsor.html" ]]; then
-  cp -f "${DESKTOP_DIR}/stage/service/sponsor.html" "${BUNDLE_DIR}/Contents/Resources/app/sponsor.html"
-fi
 
 # Bundle desktop main process entrypoint
 echo "[MAC BUILD] Bundling main process entrypoint..."

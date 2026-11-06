@@ -9,7 +9,7 @@ trimmedAt: 2026-11-05
 ## Files (`modules/gui/src/`)
 
 - Stack: React 19, Chart.js 4, Cytoscape, Lucide, built by Vite.
-- `App.tsx`: the views (dashboard, portfolios, settings, sponsorship, terms). The dashboard tabs are Overview, Insights, Transactions and Analysis.
+- `App.tsx`: the views (dashboard, portfolios, settings, terms). The dashboard tabs are Overview, Insights, Transactions and Analysis.
 - `api.ts`: the typed HTTP client (`api.<name>()`, with cookies). `rpc.ts` keeps `rpc.request.<name>(payload)` for old components. Use `api` in new code.
 - `environment.ts`: `openExternal()` sends external links to the system browser.
 - `components/`: `layout/`, `common/`, `auth/`, `settings/`, `portfolio/`, `analysis/`, `metrics/`.

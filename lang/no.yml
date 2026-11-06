@@ -108,8 +108,6 @@ layout:
     statusBar: "Programmets statuslinje"
     openVendor: "Åpne cgeosoft.com i nettleseren"
     openTerms: "Åpne bruksvilkårene i appen"
-    openSponsorship: "Åpne sponsorsiden i appen"
-    sponsorship: "sponsing"
     terms: "bruksvilkår"
     switchPortfolio: "Bytt portefølje"
     portfoliosCount: "Porteføljer ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "Laster ned…"
     downloadAgain: "Last ned på nytt"
     downloadLatest: "Last ned nyeste versjon"
-  sponsorship:
-    title: "Sponsing"
-    frameTitle: "{app} sponsing"
-    reloadTitle: "Last inn sponsorsiden på nytt"
-    openTitle: "Åpne sponsorsiden i nettleseren"
-    loading: "Laster inn {app} sponsorsiden fra {url}…"
-    loadFailed: "Kunne ikke laste inn {app} sponsorsiden"
   terms:
     title: "Bruksvilkår"
     frameTitle: "Bruksvilkår for {app}"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Dette er din eneste portefølje. En tom portefølje med navnet {name} erstatter den."
     deleting: "Sletter…"
     failed: "Kunne ikke slette porteføljen. Prøv igjen."
-  sponsor:
-    bannerTitle: "Sponsorbanner"
-    about: "Om sponsing"
-    title: "Sponsorinnhold"
-    subtitle: "Holder utviklingen i gang"
-    closeLabel: "Lukk dialog"
-    partnerContent: "Denne boksen viser innhold fra partnere. Sponsing finansierer uavhengig vedlikehold, sanntids markedskurser og oppdateringer, slik at utviklingen holdes i gang."
-    privacy: "Dine personlige investeringstall, saldoer og beholdninger er 100 % private. Ingen økonomiske data deles noen gang med sponsorer eller tredjeparter."
-    offer: "Tilby sponsing"
-    offerText: "Vil du vise frem plattformen eller den finansielle tjenesten din? Du kan skrive direkte til utviklerens e-post:"
-    contact: "Kontakt via e-post"
 
 dashboard:
   availableLiquidity: "Tilgjengelig likviditet ({currency})"

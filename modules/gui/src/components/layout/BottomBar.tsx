@@ -13,7 +13,6 @@ export interface BottomBarProps {
   version: string;
   lastQuotesSync?: string;
   onOpenTerms: () => void;
-  onOpenSponsorship: () => void;
   onSyncQuotes: () => void | Promise<void>;
   isSyncingQuotes?: boolean;
   /** Background refresh interval in minutes (0 = manual only); undefined while unknown. */
@@ -30,7 +29,6 @@ export function BottomBar({
   version,
   lastQuotesSync,
   onOpenTerms,
-  onOpenSponsorship,
   onSyncQuotes,
   isSyncingQuotes = false,
   quotesIntervalMins,
@@ -103,7 +101,7 @@ export function BottomBar({
       role="contentinfo"
       aria-label={t("layout.bottomBar.statusBar")}
     >
-      {/* Left side: portfolio v<version> - cgeosoft - sponsorship - terms of use */}
+      {/* Left side: portfolio v<version> - cgeosoft - terms of use */}
       <div className="flex items-center gap-1.5 min-w-0 truncate">
         <span className="text-slate-300">
           Portfolio v{version}
@@ -117,15 +115,6 @@ export function BottomBar({
         >
           <span>cgeosoft</span>
           <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-        </button>
-        <span className="text-slate-600">-</span>
-        <button
-          type="button"
-          onClick={onOpenSponsorship}
-          className="text-slate-400 hover:text-accent-300 transition-colors focus:outline-hidden cursor-pointer"
-          title={t("layout.bottomBar.openSponsorship")}
-        >
-          {t("layout.bottomBar.sponsorship")}
         </button>
         <span className="text-slate-600">-</span>
         <button

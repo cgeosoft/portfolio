@@ -109,8 +109,6 @@ layout:
     statusBar: "Barra de estado da aplicação"
     openVendor: "Abrir cgeosoft.com no navegador"
     openTerms: "Abrir os Termos de Utilização na aplicação"
-    openSponsorship: "Abrir a página de patrocínio na aplicação"
-    sponsorship: "patrocínio"
     terms: "termos de utilização"
     switchPortfolio: "Mudar de carteira"
     portfoliosCount: "Carteiras ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "A transferir…"
     downloadAgain: "Transferir novamente"
     downloadLatest: "Transferir a versão mais recente"
-  sponsorship:
-    title: "Patrocínio"
-    frameTitle: "Patrocínio do {app}"
-    reloadTitle: "Recarregar a página de patrocínio"
-    openTitle: "Abrir a página de patrocínio no navegador"
-    loading: "A carregar a página de patrocínio do {app} a partir de {url}…"
-    loadFailed: "Não foi possível carregar a página de patrocínio do {app}"
   terms:
     title: "Termos de Utilização"
     frameTitle: "Termos de Utilização do {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "Esta é a sua única carteira. Será substituída por uma carteira vazia chamada {name}."
     deleting: "A eliminar…"
     failed: "Não foi possível eliminar a carteira. Tente novamente."
-  sponsor:
-    bannerTitle: "Banner de patrocínio"
-    about: "Sobre o patrocínio"
-    title: "Conteúdo patrocinado"
-    subtitle: "Para manter o desenvolvimento ativo"
-    closeLabel: "Fechar caixa de diálogo"
-    partnerContent: "Esta caixa mostra conteúdo de parceiros. Os patrocínios financiam a manutenção independente, as cotações em tempo real e as atualizações que mantêm o desenvolvimento ativo."
-    privacy: "Os seus números de investimento, saldos e posições são 100% privados. Nenhum dado financeiro é partilhado com patrocinadores ou terceiros."
-    offer: "Oferecer um patrocínio"
-    offerText: "Quer dar a conhecer a sua plataforma ou serviço financeiro? Pode contactar diretamente o e-mail do programador:"
-    contact: "Contactar por e-mail"
 
 dashboard:
   availableLiquidity: "Liquidez disponível ({currency})"

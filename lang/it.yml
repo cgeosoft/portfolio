@@ -109,8 +109,6 @@ layout:
     statusBar: "Barra di stato dell'applicazione"
     openVendor: "Apri cgeosoft.com nel browser"
     openTerms: "Apri le condizioni d'uso nell'app"
-    openSponsorship: "Apri la pagina della sponsorizzazione nell'app"
-    sponsorship: "sponsorizzazione"
     terms: "condizioni d'uso"
     switchPortfolio: "Cambia portafoglio"
     portfoliosCount: "Portafogli ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "Download…"
     downloadAgain: "Scarica di nuovo"
     downloadLatest: "Scarica l'ultima versione"
-  sponsorship:
-    title: "Sponsorizzazione"
-    frameTitle: "Sponsorizzazione di {app}"
-    reloadTitle: "Ricarica la pagina della sponsorizzazione"
-    openTitle: "Apri la pagina della sponsorizzazione nel browser web"
-    loading: "Caricamento della pagina di sponsorizzazione di {app} da {url}…"
-    loadFailed: "Impossibile caricare la pagina di sponsorizzazione di {app}"
   terms:
     title: "Condizioni d'uso"
     frameTitle: "Condizioni d'uso di {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "Questo è il tuo unico portafoglio. Verrà sostituito da un portafoglio vuoto chiamato {name}."
     deleting: "Eliminazione…"
     failed: "Impossibile eliminare il portafoglio. Riprova."
-  sponsor:
-    bannerTitle: "Banner sponsor"
-    about: "Informazioni sulle sponsorizzazioni"
-    title: "Contenuto sponsorizzato"
-    subtitle: "Per mantenere attivo lo sviluppo"
-    closeLabel: "Chiudi la finestra"
-    partnerContent: "Questo riquadro mostra contenuti dei partner. Le sponsorizzazioni finanziano la manutenzione indipendente, le quotazioni in tempo reale e gli aggiornamenti che mantengono attivo lo sviluppo."
-    privacy: "I tuoi dati di investimento, saldi e posizioni restano privati al 100%. Nessun dato finanziario viene mai condiviso con sponsor o terze parti."
-    offer: "Proponi una sponsorizzazione"
-    offerText: "Vuoi presentare la tua piattaforma o il tuo servizio finanziario? Puoi scrivere direttamente all'indirizzo email dello sviluppatore:"
-    contact: "Contatta via email"
 
 dashboard:
   availableLiquidity: "Liquidità disponibile ({currency})"

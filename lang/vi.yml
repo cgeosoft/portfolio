@@ -107,8 +107,6 @@ layout:
     statusBar: "Thanh trạng thái ứng dụng"
     openVendor: "Mở cgeosoft.com trong trình duyệt"
     openTerms: "Mở Điều khoản sử dụng trong ứng dụng"
-    openSponsorship: "Mở trang tài trợ trong ứng dụng"
-    sponsorship: "tài trợ"
     terms: "điều khoản sử dụng"
     switchPortfolio: "Chuyển danh mục"
     portfoliosCount: "Danh mục ({count})"
@@ -157,13 +155,6 @@ layout:
     downloading: "Đang tải xuống…"
     downloadAgain: "Tải xuống lại"
     downloadLatest: "Tải phiên bản mới nhất"
-  sponsorship:
-    title: "Tài trợ"
-    frameTitle: "Tài trợ {app}"
-    reloadTitle: "Tải lại trang tài trợ"
-    openTitle: "Mở trang tài trợ trong trình duyệt web"
-    loading: "Đang tải trang tài trợ {app} từ {url}…"
-    loadFailed: "Không thể tải trang tài trợ {app}"
   terms:
     title: "Điều khoản sử dụng"
     frameTitle: "Điều khoản sử dụng {app}"
@@ -240,17 +231,6 @@ portfolios:
     lastPortfolio: "Đây là danh mục duy nhất của bạn. Một danh mục trống tên {name} sẽ thay thế nó."
     deleting: "Đang xóa…"
     failed: "Không thể xóa danh mục. Vui lòng thử lại."
-  sponsor:
-    bannerTitle: "Biểu ngữ tài trợ"
-    about: "Về tài trợ"
-    title: "Nội dung tài trợ"
-    subtitle: "Duy trì phát triển liên tục"
-    closeLabel: "Đóng hộp thoại"
-    partnerContent: "Ô này hiển thị nội dung đối tác. Khoản tài trợ chi trả cho việc bảo trì độc lập, giá thị trường trực tiếp và các bản cập nhật để duy trì phát triển."
-    privacy: "Số liệu đầu tư cá nhân, số dư và khoản nắm giữ của bạn được giữ riêng tư 100%. Không có dữ liệu tài chính nào được chia sẻ với nhà tài trợ hay bên thứ ba."
-    offer: "Đề nghị tài trợ"
-    offerText: "Bạn muốn giới thiệu nền tảng hoặc dịch vụ tài chính của mình? Bạn có thể liên hệ trực tiếp qua email của nhà phát triển:"
-    contact: "Liên hệ qua email"
 
 dashboard:
   availableLiquidity: "Thanh khoản khả dụng ({currency})"

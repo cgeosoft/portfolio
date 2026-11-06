@@ -108,8 +108,6 @@ layout:
     statusBar: "Programmets statusfält"
     openVendor: "Öppna cgeosoft.com i webbläsaren"
     openTerms: "Öppna användarvillkoren i appen"
-    openSponsorship: "Öppna sponsringssidan i appen"
-    sponsorship: "sponsring"
     terms: "användarvillkor"
     switchPortfolio: "Byt portfölj"
     portfoliosCount: "Portföljer ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "Laddar ned…"
     downloadAgain: "Ladda ned igen"
     downloadLatest: "Ladda ned senaste versionen"
-  sponsorship:
-    title: "Sponsring"
-    frameTitle: "Sponsring av {app}"
-    reloadTitle: "Läs in sponsringssidan igen"
-    openTitle: "Öppna sponsringssidan i webbläsaren"
-    loading: "Läser in sponsringssidan för {app} från {url}…"
-    loadFailed: "Det gick inte att läsa in sponsringssidan för {app}"
   terms:
     title: "Användarvillkor"
     frameTitle: "Användarvillkor för {app}"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Det här är din enda portfölj. En tom portfölj med namnet {name} ersätter den."
     deleting: "Tar bort…"
     failed: "Det gick inte att ta bort portföljen. Försök igen."
-  sponsor:
-    bannerTitle: "Sponsorbanner"
-    about: "Om sponsring"
-    title: "Sponsrat innehåll"
-    subtitle: "Håller utvecklingen igång"
-    closeLabel: "Stäng dialogrutan"
-    partnerContent: "Den här rutan visar innehåll från partner. Sponsring finansierar oberoende underhåll, realtidskurser och uppdateringar så att utvecklingen hålls igång."
-    privacy: "Dina personliga investeringssiffror, saldon och innehav är 100 % privata. Inga ekonomiska data delas någonsin med sponsorer eller tredje parter."
-    offer: "Erbjud sponsring"
-    offerText: "Vill du visa upp din plattform eller finansiella tjänst? Du kan kontakta utvecklaren direkt via e-post:"
-    contact: "Kontakta via e-post"
 
 dashboard:
   availableLiquidity: "Tillgänglig likviditet ({currency})"

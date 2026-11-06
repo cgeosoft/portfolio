@@ -109,8 +109,6 @@ layout:
     statusBar: "Bara de stare a aplicației"
     openVendor: "Deschidere cgeosoft.com în browser"
     openTerms: "Deschidere Termeni de utilizare în aplicație"
-    openSponsorship: "Deschide pagina de sponsorizare în aplicație"
-    sponsorship: "sponsorizare"
     terms: "termeni de utilizare"
     switchPortfolio: "Schimbare portofoliu"
     portfoliosCount: "Portofolii ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "Se descarcă…"
     downloadAgain: "Descărcare din nou"
     downloadLatest: "Descărcare ultima versiune"
-  sponsorship:
-    title: "Sponsorizare"
-    frameTitle: "Sponsorizare {app}"
-    reloadTitle: "Reîncarcă pagina de sponsorizare"
-    openTitle: "Deschide pagina de sponsorizare în browser"
-    loading: "Se încarcă pagina de sponsorizare {app} de la {url}…"
-    loadFailed: "Pagina de sponsorizare {app} nu a putut fi încărcată"
   terms:
     title: "Termeni de utilizare"
     frameTitle: "Termeni de utilizare {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "Acesta este singurul dvs. portofoliu. Va fi înlocuit de un portofoliu gol numit {name}."
     deleting: "Se șterge…"
     failed: "Ștergerea portofoliului a eșuat. Încercați din nou."
-  sponsor:
-    bannerTitle: "Banner sponsor"
-    about: "Despre sponsorizare"
-    title: "Conținut sponsorizat"
-    subtitle: "Pentru o dezvoltare continuă"
-    closeLabel: "Închidere dialog"
-    partnerContent: "Această casetă afișează conținut al partenerilor. Sponsorizările finanțează întreținerea independentă, cotațiile de piață în timp real și actualizările care mențin dezvoltarea activă."
-    privacy: "Cifrele investițiilor, soldurile și deținerile dvs. sunt 100% private. Nicio dată financiară nu este partajată vreodată cu sponsori sau terți."
-    offer: "Oferiți o sponsorizare"
-    offerText: "Doriți să vă prezentați platforma sau serviciul financiar? Puteți contacta direct dezvoltatorul la adresa de e-mail:"
-    contact: "Contact prin e-mail"
 
 dashboard:
   availableLiquidity: "Lichiditate disponibilă ({currency})"

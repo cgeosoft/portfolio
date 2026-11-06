@@ -332,12 +332,6 @@ export const api = {
     request<DownloadUpdateResponse>("/api/app/update/download", { method: "POST", body: json({ version, dialogTitle }) }),
   getUpdateDownload: () => request<UpdateDownloadState>("/api/app/update/download"),
   logClientEvent: (entry: LogClientEventRequest) => request<{ success: boolean }>("/api/app/logs", { method: "POST", body: json(entry) }, { timeoutMs: 2000 }),
-  getSponsorBanner: (url?: string, theme?: string) => {
-    const params = [url ? `url=${enc(url)}` : "", theme ? `theme=${enc(theme)}` : ""].filter(Boolean).join("&");
-    return request<{ success: boolean; html: string; error?: string }>(`/api/app/sponsor${params ? `?${params}` : ""}`);
-  },
-  /** URL of the sponsor banner as its own sandboxed document, for an iframe `src`. */
-  sponsorFrameUrl: (theme: "light" | "dark") => `/api/app/sponsor/frame?theme=${theme}`,
   openSupportTicket: (body: OpenSupportTicketRequest) => request<OpenSupportTicketResponse>("/api/app/support", { method: "POST", body: json(body) }),
   /** URL of the anonymised diagnostics zip (browser download for remote clients). */
   diagnosticsUrl: () => "/api/app/support/diagnostics",

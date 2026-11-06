@@ -110,8 +110,6 @@ layout:
     statusBar: "Pasek stanu aplikacji"
     openVendor: "Otwórz cgeosoft.com w przeglądarce"
     openTerms: "Otwórz warunki użytkowania w aplikacji"
-    openSponsorship: "Otwórz stronę sponsoringu w aplikacji"
-    sponsorship: "sponsoring"
     terms: "warunki użytkowania"
     switchPortfolio: "Przełącz portfel"
     portfoliosCount: "Portfele ({count})"
@@ -160,13 +158,6 @@ layout:
     downloading: "Pobieranie…"
     downloadAgain: "Pobierz ponownie"
     downloadLatest: "Pobierz najnowszą wersję"
-  sponsorship:
-    title: "Sponsoring"
-    frameTitle: "Sponsoring {app}"
-    reloadTitle: "Wczytaj ponownie stronę sponsoringu"
-    openTitle: "Otwórz stronę sponsoringu w przeglądarce"
-    loading: "Wczytywanie strony sponsoringu {app} z {url}…"
-    loadFailed: "Nie można wczytać strony sponsoringu {app}"
   terms:
     title: "Warunki użytkowania"
     frameTitle: "Warunki użytkowania {app}"
@@ -243,17 +234,6 @@ portfolios:
     lastPortfolio: "To twój jedyny portfel. Zastąpi go pusty portfel o nazwie {name}."
     deleting: "Usuwanie…"
     failed: "Nie udało się usunąć portfela. Spróbuj ponownie."
-  sponsor:
-    bannerTitle: "Baner sponsora"
-    about: "O sponsoringu"
-    title: "Treść sponsorowana"
-    subtitle: "Wspieranie dalszego rozwoju"
-    closeLabel: "Zamknij okno"
-    partnerContent: "To pole pokazuje treści partnerów. Sponsoring finansuje niezależne utrzymanie, notowania na żywo i aktualizacje, dzięki którym rozwój trwa."
-    privacy: "Twoje dane inwestycyjne, salda i pozycje są w 100% prywatne. Żadne dane finansowe nie są nigdy udostępniane sponsorom ani podmiotom trzecim."
-    offer: "Zaproponuj sponsoring"
-    offerText: "Chcesz zaprezentować swoją platformę lub usługę finansową? Napisz bezpośrednio na e-mail dewelopera:"
-    contact: "Kontakt e-mailowy"
 
 dashboard:
   availableLiquidity: "Dostępna płynność ({currency})"

@@ -114,8 +114,6 @@ layout:
     statusBar: "Application Status Bar"
     openVendor: "Open cgeosoft.com in browser"
     openTerms: "Open Terms of Use in app"
-    openSponsorship: "Open the sponsorship page in app"
-    sponsorship: "sponsorship"
     terms: "terms of use"
     switchPortfolio: "Switch Portfolio"
     portfoliosCount: "Portfolios ({count})"
@@ -164,13 +162,6 @@ layout:
     downloading: "Downloading…"
     downloadAgain: "Download Again"
     downloadLatest: "Download Latest Version"
-  sponsorship:
-    title: "Sponsorship"
-    frameTitle: "{app} Sponsorship"
-    reloadTitle: "Reload the sponsorship page"
-    openTitle: "Open the sponsorship page in the web browser"
-    loading: "Loading the {app} sponsorship page from {url}…"
-    loadFailed: "Unable to Load the {app} Sponsorship Page"
   terms:
     title: "Terms of Use"
     frameTitle: "{app} Terms of Use"
@@ -248,17 +239,6 @@ portfolios:
     lastPortfolio: "This is your only portfolio. An empty portfolio named {name} replaces it."
     deleting: "Deleting…"
     failed: "Failed to delete portfolio. Please try again."
-  sponsor:
-    bannerTitle: "Sponsor Banner"
-    about: "About sponsorship"
-    title: "Sponsor Content"
-    subtitle: "Keeping Development Active"
-    closeLabel: "Close dialog"
-    partnerContent: "This box shows partner content. Sponsorships fund independent maintenance, live market quotes, and updates to keep development active."
-    privacy: "Your personal investment numbers, balances, and holdings are 100% private. No financial data is ever shared with sponsors or third parties."
-    offer: "Offer a Sponsorship"
-    offerText: "Want to showcase your platform or financial service? You can reach out directly to the developer email:"
-    contact: "Contact via Email"
 
 # ── dashboard: overview cards, holdings, charts ───────────────────────────
 dashboard:

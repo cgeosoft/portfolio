@@ -122,9 +122,6 @@ EOF
 cp -r "${DESKTOP_DIR}/stage/service" "${BUILD_DIR}/Resources/app/"
 cp -r "${DESKTOP_DIR}/stage/gui" "${BUILD_DIR}/Resources/app/"
 cp -f "${ASSETS_DIR}/app-icon.png" "${BUILD_DIR}/Resources/app/app-icon.png"
-if [[ -f "${DESKTOP_DIR}/stage/service/sponsor.html" ]]; then
-  cp -f "${DESKTOP_DIR}/stage/service/sponsor.html" "${BUILD_DIR}/Resources/app/sponsor.html"
-fi
 
 # Bundle desktop main process entrypoint
 echo "[WIN BUILD] Bundling main process entrypoint..."

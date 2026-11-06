@@ -611,16 +611,6 @@ export interface SyncQuotesResponse {
   error?: string;
 }
 
-export interface GetSponsorBannerRequest {
-  url?: string;
-}
-
-export interface GetSponsorBannerResponse {
-  success: boolean;
-  html: string;
-  error?: string;
-}
-
 export interface OpenSupportTicketRequest {
   subject?: string;
   message?: string;

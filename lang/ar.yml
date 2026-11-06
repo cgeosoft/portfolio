@@ -112,8 +112,6 @@ layout:
     statusBar: "شريط حالة التطبيق"
     openVendor: "فتح cgeosoft.com في المتصفح"
     openTerms: "فتح شروط الاستخدام في التطبيق"
-    openSponsorship: "فتح صفحة الرعاية في التطبيق"
-    sponsorship: "الرعاية"
     terms: "شروط الاستخدام"
     switchPortfolio: "تبديل المحفظة"
     portfoliosCount: "المحافظ ({count})"
@@ -162,13 +160,6 @@ layout:
     downloading: "جارٍ التنزيل…"
     downloadAgain: "التنزيل مجددًا"
     downloadLatest: "تنزيل أحدث إصدار"
-  sponsorship:
-    title: "الرعاية"
-    frameTitle: "رعاية {app}"
-    reloadTitle: "إعادة تحميل صفحة الرعاية"
-    openTitle: "فتح صفحة الرعاية في متصفح الويب"
-    loading: "جارٍ تحميل صفحة رعاية {app} من {url}…"
-    loadFailed: "تعذر تحميل صفحة رعاية {app}"
   terms:
     title: "شروط الاستخدام"
     frameTitle: "شروط استخدام {app}"
@@ -245,17 +236,6 @@ portfolios:
     lastPortfolio: "هذه محفظتك الوحيدة. ستحل محلها محفظة فارغة باسم {name}."
     deleting: "جارٍ الحذف…"
     failed: "فشل حذف المحفظة. يُرجى المحاولة مجددًا."
-  sponsor:
-    bannerTitle: "لافتة الراعي"
-    about: "حول الرعاية"
-    title: "محتوى برعاية"
-    subtitle: "استمرار التطوير"
-    closeLabel: "إغلاق النافذة"
-    partnerContent: "يعرض هذا المربع محتوى من الشركاء. تموّل الرعايات الصيانة المستقلة وأسعار السوق المباشرة والتحديثات لاستمرار التطوير."
-    privacy: "أرقام استثماراتك الشخصية وأرصدتك وحيازاتك خاصة بنسبة 100%. لا تُشارك أي بيانات مالية أبدًا مع الرعاة أو أطراف ثالثة."
-    offer: "تقديم رعاية"
-    offerText: "هل تريد عرض منصتك أو خدمتك المالية؟ يمكنك التواصل مباشرةً مع المطوّر عبر البريد الإلكتروني:"
-    contact: "التواصل عبر البريد الإلكتروني"
 
 dashboard:
   availableLiquidity: "السيولة المتاحة ({currency})"

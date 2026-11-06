@@ -110,8 +110,6 @@ layout:
     statusBar: "アプリケーションステータスバー"
     openVendor: "ブラウザで cgeosoft.com を開く"
     openTerms: "アプリ内で利用規約を開く"
-    openSponsorship: "アプリ内でスポンサーページを開く"
-    sponsorship: "スポンサー"
     terms: "利用規約"
     switchPortfolio: "ポートフォリオを切り替え"
     portfoliosCount: "ポートフォリオ（{count}）"
@@ -160,13 +158,6 @@ layout:
     downloading: "ダウンロード中…"
     downloadAgain: "再ダウンロード"
     downloadLatest: "最新バージョンをダウンロード"
-  sponsorship:
-    title: "スポンサー"
-    frameTitle: "{app} スポンサー"
-    reloadTitle: "スポンサーページを再読み込み"
-    openTitle: "ウェブブラウザでスポンサーページを開く"
-    loading: "{url} から {app} のスポンサーページを読み込んでいます…"
-    loadFailed: "{app} のスポンサーページを読み込めません"
   terms:
     title: "利用規約"
     frameTitle: "{app} 利用規約"
@@ -244,17 +235,6 @@ portfolios:
     lastPortfolio: "これは唯一のポートフォリオです。{name} という名前の空のポートフォリオに置き換えられます。"
     deleting: "削除中…"
     failed: "ポートフォリオを削除できませんでした。もう一度お試しください。"
-  sponsor:
-    bannerTitle: "スポンサーバナー"
-    about: "スポンサーについて"
-    title: "スポンサーコンテンツ"
-    subtitle: "開発継続のために"
-    closeLabel: "ダイアログを閉じる"
-    partnerContent: "この枠にはパートナーのコンテンツが表示されます。スポンサー収入は、独立したメンテナンス、リアルタイムの相場、アップデートに充てられ、開発の継続を支えます。"
-    privacy: "あなたの投資額、残高、保有銘柄は 100% 非公開です。財務データがスポンサーや第三者と共有されることは一切ありません。"
-    offer: "スポンサーを申し込む"
-    offerText: "あなたのプラットフォームや金融サービスを紹介しませんか？開発者のメールアドレスに直接ご連絡ください："
-    contact: "メールで連絡"
 
 # ── dashboard: overview cards, holdings, charts ───────────────────────────
 dashboard:

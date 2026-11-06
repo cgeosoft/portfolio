@@ -6,7 +6,7 @@ export const APP_NAME = "Portfolio";
 export const APP_ID = "portfolio";
 export const VENDOR_NAME = "cgeosoft";
 export const VENDOR_URL = "https://cgeosoft.com";
-/** Marketing site; also hosts terms, sponsor page and the release packages. */
+/** Marketing site; also hosts the terms and the release packages. */
 export const WEBPAGE_URL = "https://portfolio.cgeosoft.com";
 export const SUPPORT_EMAIL = "christos@cgeosoft.com";
 export const GITHUB_URL = "https://github.com/cgeosoft/portfolio";

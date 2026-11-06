@@ -108,8 +108,6 @@ layout:
     statusBar: "Statusleiste der Anwendung"
     openVendor: "cgeosoft.com im Browser öffnen"
     openTerms: "Nutzungsbedingungen in der App öffnen"
-    openSponsorship: "Sponsoring-Seite in der App öffnen"
-    sponsorship: "Sponsoring"
     terms: "Nutzungsbedingungen"
     switchPortfolio: "Portfolio wechseln"
     portfoliosCount: "Portfolios ({count})"
@@ -158,13 +156,6 @@ layout:
     downloading: "Wird heruntergeladen…"
     downloadAgain: "Erneut herunterladen"
     downloadLatest: "Neueste Version herunterladen"
-  sponsorship:
-    title: "Sponsoring"
-    frameTitle: "Sponsoring von {app}"
-    reloadTitle: "Sponsoring-Seite neu laden"
-    openTitle: "Sponsoring-Seite im Webbrowser öffnen"
-    loading: "Sponsoring-Seite von {app} wird von {url} geladen…"
-    loadFailed: "Sponsoring-Seite von {app} konnte nicht geladen werden"
   terms:
     title: "Nutzungsbedingungen"
     frameTitle: "Nutzungsbedingungen von {app}"
@@ -241,17 +232,6 @@ portfolios:
     lastPortfolio: "Dies ist Ihr einziges Portfolio. Ein leeres Portfolio namens {name} ersetzt es."
     deleting: "Wird gelöscht…"
     failed: "Portfolio konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
-  sponsor:
-    bannerTitle: "Sponsorenbanner"
-    about: "Über Sponsoring"
-    title: "Gesponserte Inhalte"
-    subtitle: "Damit die Entwicklung weitergeht"
-    closeLabel: "Dialog schließen"
-    partnerContent: "Dieses Feld zeigt Inhalte von Partnern. Sponsoring finanziert die unabhängige Wartung, Live-Marktkurse und Updates, damit die Entwicklung weitergeht."
-    privacy: "Ihre persönlichen Anlagezahlen, Salden und Positionen bleiben zu 100 % privat. Es werden niemals Finanzdaten an Sponsoren oder Dritte weitergegeben."
-    offer: "Sponsoring anbieten"
-    offerText: "Möchten Sie Ihre Plattform oder Ihren Finanzdienst präsentieren? Schreiben Sie direkt an die E-Mail-Adresse des Entwicklers:"
-    contact: "Per E-Mail kontaktieren"
 
 dashboard:
   availableLiquidity: "Verfügbare Liquidität ({currency})"

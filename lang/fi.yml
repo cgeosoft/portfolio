@@ -111,8 +111,6 @@ layout:
     statusBar: "Sovelluksen tilapalkki"
     openVendor: "Avaa cgeosoft.com selaimessa"
     openTerms: "Avaa käyttöehdot sovelluksessa"
-    openSponsorship: "Avaa sponsorointisivu sovelluksessa"
-    sponsorship: "sponsorointi"
     terms: "käyttöehdot"
     switchPortfolio: "Vaihda salkkua"
     portfoliosCount: "Salkut ({count})"
@@ -161,13 +159,6 @@ layout:
     downloading: "Ladataan…"
     downloadAgain: "Lataa uudelleen"
     downloadLatest: "Lataa uusin versio"
-  sponsorship:
-    title: "Sponsorointi"
-    frameTitle: "{app}-sponsorointi"
-    reloadTitle: "Lataa sponsorointisivu uudelleen"
-    openTitle: "Avaa sponsorointisivu verkkoselaimessa"
-    loading: "Ladataan {app}-sponsorointisivua osoitteesta {url}…"
-    loadFailed: "{app}-sponsorointisivun lataus epäonnistui"
   terms:
     title: "Käyttöehdot"
     frameTitle: "Sovelluksen {app} käyttöehdot"
@@ -245,17 +236,6 @@ portfolios:
     lastPortfolio: "Tämä on ainoa salkkusi. Sen tilalle tulee tyhjä salkku nimeltä {name}."
     deleting: "Poistetaan…"
     failed: "Salkun poistaminen epäonnistui. Yritä uudelleen."
-  sponsor:
-    bannerTitle: "Sponsoribanneri"
-    about: "Tietoa sponsoroinnista"
-    title: "Sponsorin sisältö"
-    subtitle: "Pitää kehityksen käynnissä"
-    closeLabel: "Sulje ikkuna"
-    partnerContent: "Tässä ruudussa näkyy kumppanisisältöä. Sponsoroinnit rahoittavat itsenäistä ylläpitoa, reaaliaikaisia markkinahintoja ja päivityksiä, jotta kehitys jatkuu."
-    privacy: "Henkilökohtaiset sijoitusluvut, saldot ja omistukset ovat 100-prosenttisesti yksityisiä. Rahoitustietoja ei koskaan jaeta sponsoreille tai kolmansille osapuolille."
-    offer: "Tarjoa sponsorointia"
-    offerText: "Haluatko esitellä alustaasi tai rahoituspalveluasi? Voit ottaa suoraan yhteyttä kehittäjään sähköpostitse:"
-    contact: "Ota yhteyttä sähköpostitse"
 
 # ── dashboard ──
 dashboard:

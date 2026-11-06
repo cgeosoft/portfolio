@@ -19,10 +19,10 @@
  * `%APPDATA%\portfolio` on Windows. The desktop shell computes the same
  * directory in `modules/desktop/src/bun/app.ts`; keep the two in step.
  *
- * Bundled files (the built GUI, the sponsor pages, `version.txt`, the
- * translation files in `lang/`) sit next to the service bundle. From a
- * checkout the GUI is not served (Vite serves it), the sponsor pages come
- * from `extras/website` and the translation files from `lang/` at the repo root.
+ * Bundled files (the built GUI, `version.txt`, the translation files in
+ * `lang/`) sit next to the service bundle. From a checkout the GUI is not
+ * served (Vite serves it) and the translation files come from `lang/` at the
+ * repo root.
  *
  * This module imports nothing from the project, so every other module can
  * import it.

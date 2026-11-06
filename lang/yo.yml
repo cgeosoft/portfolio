@@ -107,8 +107,6 @@ layout:
     statusBar: "Ọ̀pá ipò ètò"
     openVendor: "Ṣí cgeosoft.com nínú aṣàwákiri"
     openTerms: "Ṣí àwọn òfin ìlò nínú ètò"
-    openSponsorship: "Ṣí ojú-ìwé ìgbọ̀wọ́ nínú áàpù"
-    sponsorship: "ìgbọ̀wọ́"
     terms: "àwọn òfin ìlò"
     switchPortfolio: "Yí àkójọ ìdókòwò padà"
     portfoliosCount: "Àwọn àkójọ ìdókòwò ({count})"
@@ -157,13 +155,6 @@ layout:
     downloading: "Ó ń ṣe ìgbàsílẹ̀…"
     downloadAgain: "Tún ṣe ìgbàsílẹ̀"
     downloadLatest: "Ṣe ìgbàsílẹ̀ ẹ̀yà tuntun jùlọ"
-  sponsorship:
-    title: "Ìgbọ̀wọ́"
-    frameTitle: "Ìgbọ̀wọ́ {app}"
-    reloadTitle: "Tún ojú-ìwé ìgbọ̀wọ́ gbé"
-    openTitle: "Ṣí ojú-ìwé ìgbọ̀wọ́ nínú aṣàwákiri wẹ́ẹ̀bù"
-    loading: "Ń gbé ojú-ìwé ìgbọ̀wọ́ {app} láti {url}…"
-    loadFailed: "Kò ṣeé ṣe láti gbé ojú-ìwé ìgbọ̀wọ́ {app}"
   terms:
     title: "Àwọn òfin ìlò"
     frameTitle: "Àwọn òfin ìlò {app}"
@@ -240,17 +231,6 @@ portfolios:
     lastPortfolio: "Èyí nìkan ni àkójọ ìdókòwò rẹ. Àkójọ ìdókòwò òfìfo tí orúkọ rẹ̀ ń jẹ́ {name} yóò rọ́pò rẹ̀."
     deleting: "Ó ń pa á rẹ́…"
     failed: "Kò ṣeé ṣe láti pa àkójọ ìdókòwò rẹ́. Jọ̀ọ́ tún gbìyànjú."
-  sponsor:
-    bannerTitle: "Àsíá onígbọ̀wọ́"
-    about: "Nípa ìgbọ̀wọ́"
-    title: "Àkóónú onígbọ̀wọ́"
-    subtitle: "Ó ń jẹ́ kí ìdàgbàsókè máa tẹ̀síwájú"
-    closeLabel: "Pa àpótí dé"
-    partnerContent: "Àpótí yìí ń fi àkóónú àwọn alábàáṣiṣẹ́pọ̀ hàn. Ìgbọ̀wọ́ ń sanwó fún ìtọ́jú òmìnira, iye owó ọjà lójú-ẹsẹ̀ àti àwọn ìmúdójúìwọ̀n kí ìdàgbàsókè lè máa tẹ̀síwájú."
-    privacy: "Àwọn nọ́ńbà ìdókòwò ara ẹni rẹ, ìyókù owó àti ohun-ìní rẹ jẹ́ àṣírí ní 100%. A kì í pín dátà owó kankan pẹ̀lú àwọn onígbọ̀wọ́ tàbí ẹnikẹ́ta."
-    offer: "Fún wa ní ìgbọ̀wọ́"
-    offerText: "Ṣé o fẹ́ fi pèpéle rẹ tàbí iṣẹ́ owó rẹ hàn? O lè kàn sí olùgbéejáde náà tààrà nípasẹ̀ ímeèlì yìí:"
-    contact: "Kàn sí wa nípasẹ̀ ímeèlì"
 
 dashboard:
   availableLiquidity: "Owó tó wà lárọ̀ọ́wọ́tó ({currency})"

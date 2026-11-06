@@ -109,8 +109,6 @@ layout:
     statusBar: "Barre d'état de l'application"
     openVendor: "Ouvrir cgeosoft.com dans le navigateur"
     openTerms: "Ouvrir les conditions d'utilisation dans l'application"
-    openSponsorship: "Ouvrir la page de parrainage dans l'application"
-    sponsorship: "parrainage"
     terms: "conditions d'utilisation"
     switchPortfolio: "Changer de portefeuille"
     portfoliosCount: "Portefeuilles ({count})"
@@ -159,13 +157,6 @@ layout:
     downloading: "Téléchargement…"
     downloadAgain: "Télécharger à nouveau"
     downloadLatest: "Télécharger la dernière version"
-  sponsorship:
-    title: "Parrainage"
-    frameTitle: "Parrainage de {app}"
-    reloadTitle: "Recharger la page de parrainage"
-    openTitle: "Ouvrir la page de parrainage dans le navigateur web"
-    loading: "Chargement de la page de parrainage de {app} depuis {url}…"
-    loadFailed: "Impossible de charger la page de parrainage de {app}"
   terms:
     title: "Conditions d'utilisation"
     frameTitle: "Conditions d'utilisation de {app}"
@@ -242,17 +233,6 @@ portfolios:
     lastPortfolio: "C'est votre seul portefeuille. Un portefeuille vide nommé {name} le remplace."
     deleting: "Suppression…"
     failed: "Échec de la suppression du portefeuille. Veuillez réessayer."
-  sponsor:
-    bannerTitle: "Bannière sponsor"
-    about: "À propos du parrainage"
-    title: "Contenu sponsorisé"
-    subtitle: "Soutenir le développement"
-    closeLabel: "Fermer la fenêtre"
-    partnerContent: "Cet encadré affiche du contenu partenaire. Les parrainages financent la maintenance indépendante, les cours en direct et les mises à jour qui font vivre le développement."
-    privacy: "Vos chiffres d'investissement, soldes et positions restent 100 % privés. Aucune donnée financière n'est jamais partagée avec les sponsors ou des tiers."
-    offer: "Proposer un parrainage"
-    offerText: "Vous souhaitez présenter votre plateforme ou votre service financier ? Contactez directement le développeur par e-mail :"
-    contact: "Contacter par e-mail"
 
 dashboard:
   availableLiquidity: "Liquidités disponibles ({currency})"
