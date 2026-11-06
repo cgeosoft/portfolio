@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.17.1] - 2026-11-06
+
+### Added
+- Usage analytics and error reporting are now two separate options. Both are off by default.
+- The app records each privacy choice with its time, source and notice version.
+- Crash reports are now available if you turn them on. They do not include an install ID or error message, and only show stack frames from the app.
+- A new step in setup and new rows in Settings let you manage your privacy choices.
+- Existing installs see a one-time prompt to choose their privacy options.
+- A Privacy Notice and Terms 1.2 are now included, in all supported languages.
+- The website now opens with Guided Analysis. It shows a live evidence graph from a real run of the demo portfolio.
+- The website has a walkthrough of the six analysis stages, the path behind a suggestion, and the guardrails.
+- The website tour is updated for the current tabs of the app.
+
+### Changed
+- Only the desktop window can change privacy consent.
+- The website now collects only page views and named events.
+- The website now hosts its own fonts.
+
+### Fixed
+- The website no longer loads PostHog before you choose. No request is sent until you click Accept.
+- Removed the false claims that the app is anonymous and works offline.
+
+### Removed
+- Sponsorship is removed from the app and the website. This includes the banner, the sponsorship view and link, and the sponsor pages.
+- The crypto price strip is removed from the website.
+- The ticker tape is removed from the website.
+- The old Reports pages are removed from the website tour.
+
+
 ## [0.17.0] - 2026-11-05
 
 ### Added
