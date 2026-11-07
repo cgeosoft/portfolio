@@ -10,7 +10,16 @@
   const REPO = "cgeosoft/portfolio";
   const CACHE_KEY = `${SLUG}_latest_release_v3`;
   const CACHE_TTL_MS = 2 * 60 * 1000;
-  const CONSENT_KEY = `${SLUG}_cookie_consent_v1`;
+  const OLD_CONSENT_KEY = `${SLUG}_cookie_consent_v1`;
+  const CONSENT_KEY = `${SLUG}_consent_v2`;
+  // Raise this with PRIVACY_NOTICE_VERSION in modules/shared/src/brand.ts. Add an
+  // event or a property only with a change to privacy/index.html.
+  const NOTICE_VERSION = 1;
+  const ANALYTICS_EVENTS = ["page_view", "download_clicked", "screenshot_zoomed"];
+  const ANALYTICS_PROPERTIES = [
+    "token", "distinct_id", "$lib", "$lib_version", "$insert_id", "$time", "$process_person_profile",
+    "$geoip_disable", "site", "consent_version", "os", "type",
+  ];
 
   // Release assets follow <slug>_<version>_<platform>.<ext> (scripts/release.sh).
   const ASSETS = {
@@ -135,6 +144,7 @@
   // page makes no request to it. deploy.sh writes the key into the meta tag.
   const POSTHOG_SCRIPT = "https://eu-assets.i.posthog.com/static/array.js";
   let posthogLoading = null;
+  let consentChoice = null;
 
   function posthogKey() {
     const meta = $('meta[name="posthog-key"]');
@@ -151,8 +161,11 @@
       script.onload = () => {
         window.posthog.init(posthogKey(), {
           api_host: "https://eu.i.posthog.com",
-          capture_pageview: true,
+          persistence: "localStorage",
+          person_profiles: "identified_only",
           autocapture: false,
+          capture_pageview: false,
+          capture_pageleave: false,
           rageclick: false,
           capture_dead_clicks: false,
           capture_heatmaps: false,
@@ -160,7 +173,11 @@
           capture_performance: false,
           disable_session_recording: true,
           disable_surveys: true,
+          advanced_disable_feature_flags: true,
+          disable_external_dependency_loading: true,
+          before_send: allowEvent,
         });
+        window.posthog.register({ site: SLUG, consent_version: NOTICE_VERSION, $geoip_disable: true });
         resolve();
       };
       script.onerror = reject;
@@ -172,56 +189,110 @@
     return posthogLoading;
   }
 
-  function consent(value) {
+  /** The last step before a send. Events and fields that are not listed go. */
+  function allowEvent(event) {
+    if (!event || !ANALYTICS_EVENTS.includes(event.event)) return null;
+    const properties = {};
+    ANALYTICS_PROPERTIES.forEach((key) => {
+      if (key in event.properties) properties[key] = event.properties[key];
+    });
+    const { $set, $set_once, ...rest } = event;
+    return { ...rest, properties };
+  }
+
+  /** A choice for an older notice does not count, so the banner shows again. */
+  function readConsent() {
     try {
-      if (value) localStorage.setItem(CONSENT_KEY, value);
-      return localStorage.getItem(CONSENT_KEY);
-    } catch (err) {
-      return null;
-    }
+      localStorage.removeItem(OLD_CONSENT_KEY);
+      const saved = JSON.parse(localStorage.getItem(CONSENT_KEY) || "null");
+      if (saved && saved.version === NOTICE_VERSION) return saved.value;
+    } catch (err) {}
+    return null;
+  }
+
+  function saveConsent(value, source) {
+    consentChoice = value;
+    try {
+      localStorage.setItem(CONSENT_KEY, JSON.stringify({ value, at: new Date().toISOString(), source, version: NOTICE_VERSION }));
+    } catch (err) {}
+  }
+
+  /** Removes the PostHog ID, also from the cookie that earlier versions set. */
+  function clearPostHogData() {
+    try {
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("ph_") || key.startsWith("__ph_"))
+        .forEach((key) => localStorage.removeItem(key));
+      document.cookie
+        .split("; ")
+        .map((cookie) => cookie.split("=")[0])
+        .filter((name) => name.startsWith(`ph_${posthogKey()}`))
+        .forEach((name) => {
+          document.cookie = `${name}=; max-age=0; path=/`;
+          document.cookie = `${name}=; max-age=0; path=/; domain=.${location.hostname.split(".").slice(-2).join(".")}`;
+        });
+    } catch (err) {}
   }
 
   function track(name, props) {
-    if (!posthogLoading || consent() !== "accepted") return;
+    if (!posthogLoading || consentChoice !== "accepted") return;
     posthogLoading.then(() => window.posthog.capture(name, props || {})).catch(() => {});
   }
 
-  function setAnalytics(on) {
-    consent(on ? "accepted" : "declined");
-    if (on) {
-      loadPostHog().then(() => window.posthog.opt_in_capturing()).catch(() => {});
-    } else if (window.posthog) {
-      window.posthog.opt_out_capturing();
+  function setAnalytics(value, source) {
+    saveConsent(value, source);
+    if (value === "accepted") {
+      loadPostHog()
+        .then(() => {
+          window.posthog.opt_in_capturing();
+          track("page_view");
+        })
+        .catch(() => {});
+    } else {
+      if (window.posthog && window.posthog.opt_out_capturing) window.posthog.opt_out_capturing();
+      clearPostHogData();
     }
   }
 
-  function initCookieBanner() {
-    if (!posthogKey()) return;
-    const stored = consent();
-    if (stored) return setAnalytics(stored === "accepted");
-
+  function openBanner(source) {
+    if ($(".cookie-banner")) return;
     const banner = document.createElement("div");
     banner.className = "cookie-banner";
     banner.setAttribute("role", "dialog");
-    banner.setAttribute("aria-label", "Cookie consent");
+    banner.setAttribute("aria-label", "Analytics choice");
+    const state = consentChoice === "accepted" ? "Analytics are on. " : consentChoice === "declined" ? "Analytics are off. " : "";
     banner.innerHTML =
       '<div class="cookie-banner-title">Analytics?</div>' +
-      "<p>With your OK, PostHog records page views and download clicks with a random ID. " +
+      `<p>${state}With your OK, PostHog records page views, download clicks and screenshot zooms with a random ID. ` +
       '<a href="/privacy/">Privacy Notice</a>.</p>' +
       '<div class="cookie-banner-actions">' +
-      '<button type="button" class="btn" data-choice="no">Decline</button>' +
-      '<button type="button" class="btn btn-primary" data-choice="yes">Accept</button>' +
+      '<button type="button" class="btn" data-choice="declined">Decline</button>' +
+      '<button type="button" class="btn" data-choice="accepted">Accept</button>' +
       "</div>";
     document.body.appendChild(banner);
     requestAnimationFrame(() => banner.classList.add("visible"));
     banner.addEventListener("click", (event) => {
       const choice = event.target instanceof Element && event.target.getAttribute("data-choice");
       if (!choice) return;
-      setAnalytics(choice === "yes");
+      setAnalytics(choice, source);
       banner.classList.remove("visible");
       setTimeout(() => banner.remove(), 300);
     });
   }
+
+  function initAnalytics() {
+    // The app shows the Terms in a frame. Its privacy choices are in the app, not here.
+    if (!posthogKey() || window.self !== window.top) return;
+    $$("[data-analytics-choice]").forEach((el) => {
+      el.hidden = false;
+      el.addEventListener("click", () => openBanner("settings"));
+    });
+    consentChoice = readConsent();
+    if (consentChoice === "accepted") loadPostHog().then(() => track("page_view")).catch(() => {});
+    else if (!consentChoice) openBanner("setup");
+  }
+
+  window.portfolioAnalytics = { track };
 
   function init() {
     render();
@@ -235,7 +306,7 @@
       el.addEventListener("click", () => track("download_clicked", { os: el.dataset.os || activeOS, type: el.dataset.type || "installer" }))
     );
     $$("#current-year").forEach((el) => (el.textContent = String(new Date().getFullYear())));
-    initCookieBanner();
+    initAnalytics();
     loadRelease();
   }
 

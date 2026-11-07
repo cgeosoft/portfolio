@@ -39,7 +39,7 @@
       <span class="section-kicker">Your data and your choices</span>
       <h1>Privacy Notice</h1>
       <p>This notice says what Portfolio and this website send, who receives it, how long we keep it and how you can ask for deletion.</p>
-      <div class="legal-meta">Notice version 1 &bull; Last updated: November 6, 2026</div>
+      <div class="legal-meta">Notice version 1 &bull; Last updated: November 7, 2026</div>
     </div>
 
     <section class="legal-section">
@@ -82,12 +82,13 @@
 
     <section class="legal-section">
       <h2>7. This website</h2>
-      <p>This website asks for your consent before it loads PostHog. If you accept, PostHog records page views, download clicks and screenshot zooms with a random ID, which it keeps in a cookie and in your browser storage. If you decline, the page makes no request to PostHog. The legal basis is your consent. To change your choice, clear this site's cookies and local storage.</p>
+      <p>This website asks for your consent before it loads PostHog. If you accept, PostHog records page views, download clicks with the system and file type, and screenshot zooms, with a random ID that it keeps in your browser storage. An event does not hold the page address, the referring page or your browser type. If you decline, the page makes no request to PostHog. The legal basis is your consent. To change your choice, press Analytics choice at the bottom of the page. When you decline, the site stops the analytics and removes the ID from your browser. The Terms page inside the app does not load PostHog.</p>
     </section>
 
     <section class="legal-section">
       <h2>8. Who receives the data</h2>
       <p>PostHog receives this data for us as our processor. We use PostHog Cloud EU, which runs on servers in Frankfurt.</p>
+      <p>The data can also leave the EU. The PostHog sub-processor list names Cloudflare for traffic at global edge locations, and PostHog companies in Germany and the United Kingdom. That list can change.</p>
       <p>PostHog sees your IP address with each request. It does not store the address with the event.</p>
     </section>
 
@@ -109,10 +110,12 @@
       <ul>
         <li><strong>Prices:</strong> ticker symbols go to Yahoo Finance, and to Finnhub or Financial Modeling Prep if you add a key.</li>
         <li><strong>AI:</strong> weights, percentages and tickers go to the AI provider you chose, when you ask. A local model keeps them on your computer.</li>
+        <li><strong>Terms:</strong> the Terms page in the app loads from this website.</li>
         <li><strong>Updates:</strong> the app checks GitHub and this website for a new version. This is on by default, and you can turn it off in Settings.</li>
         <li><strong>Phone briefs:</strong> briefs go to Gotify or ntfy, if you turn them on.</li>
       </ul>
       <p>These services see your IP address, and their own privacy terms apply.</p>
+      <p>The website has its own connections. Cloudflare Pages hosts it and receives your IP address, your browser data and the pages you request on each visit. The site also asks the GitHub API for the latest release. The legal basis for both is the legitimate interest in running the site (GDPR Art. 6(1)(f)).</p>
     </section>
 
     <section class="legal-section">
@@ -123,7 +126,7 @@
 
   <footer class="site-footer">
     <div class="container footer-bottom">
-      <p>&copy; <span id="current-year"></span> cgeosoft. Open source under the MIT License. &bull; <a href="/">Back to the site</a> &bull; <a href="/terms/">Terms of use</a></p>
+      <p>&copy; <span id="current-year"></span> cgeosoft. Open source under the MIT License. &bull; <a href="/">Back to the site</a> &bull; <a href="/terms/">Terms of use</a> &bull; <button type="button" class="link-button" data-analytics-choice hidden>Analytics choice</button></p>
     </div>
   </footer>
 

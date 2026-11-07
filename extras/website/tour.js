@@ -405,9 +405,7 @@
       img.src = screen.image;
       img.alt = `${screen.label} screen, full size.`;
       this.lightbox.showModal();
-      try {
-        if (window.posthog && localStorage.getItem("portfolio_cookie_consent_v1") === "accepted") window.posthog.capture("screenshot_zoomed");
-      } catch (err) {}
+      if (window.portfolioAnalytics) window.portfolioAnalytics.track("screenshot_zoomed");
     }
   }
 

@@ -135,7 +135,7 @@ Rule numbers refer to the standard.
 
 - Remove the `telemetry` property from `setup_completed`.
 - Add `consent_version` inside `capture()`.
-- Website: keep `$pageview`, `download_clicked` and `screenshot_zoomed`.
+- Website: send `page_view`, `download_clicked` and `screenshot_zoomed`. A `before_send` allowlist keeps only these events and their fields. Changed on 2026-11-07, after an audit found page view autocapture still on.
 - Website: pass `autocapture: false`, `capture_dead_clicks: false`, `capture_heatmaps: false` and `capture_exceptions: false` to `posthog.init`. Check each option name against the SDK that the site loads.
 
 ## Error capture points
@@ -202,7 +202,7 @@ Christos does these, or approves each one for an agent to do:
 2. Turn on "Discard client IP data" on the project. Done on 2026-11-06.
 3. Turn off session recording, console logs, heatmaps, exception autocapture and dead clicks on the project. Done on 2026-11-06. Exception capture for the app does not depend on this, because it uses a manual call.
 4. Set the project retention to 12 months. Done on 2026-11-06. It shows as 1 year.
-5. Read the PostHog sub-processor list.
+5. Read the PostHog sub-processor list. Done on 2026-11-06, in the CoCAD audit. The Notice lists the transfers.
 
 Tasks 2 and 3 fix a live problem. They can run before any code changes.
 

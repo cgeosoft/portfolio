@@ -175,7 +175,7 @@
         <article class="card bento-item bento-models">
           <div class="bento-copy">
             <h3>Your model, your choice</h3>
-            <p>Any OpenAI-compatible model with tool calling, local or in the cloud, or the Claude and Codex CLIs. Run it on Ollama and nothing leaves your computer but ticker lookups.</p>
+            <p>Any OpenAI-compatible model with tool calling, local or in the cloud, or the Claude and Codex CLIs. Run it on Ollama and the model runs on your computer. Price lookups still send tickers.</p>
           </div>
         </article>
       </div>
@@ -209,7 +209,7 @@
           <p class="label"><span class="dot"></span>Leaves, and only this</p>
           <ul>
             <li><b>Ticker symbols</b> to Yahoo Finance for prices, plus Finnhub or FMP if you add a key.</li>
-            <li><b>Weights, percentages and tickers</b> to the AI model you chose, when you ask. Pick a local model and nothing leaves.</li>
+            <li><b>Weights, percentages and tickers</b> to the AI model you chose, when you ask. Pick a local model and this data stays on your computer.</li>
             <li><b>Briefs</b> to your phone over Gotify or ntfy, if you switch it on. Never money amounts.</li>
             <li><b>Update checks</b> to GitHub and this website. On by default, and you can switch it off.</li>
             <li><b>Usage analytics and crash reports</b> to PostHog, only if you switch them on. <a href="/privacy/">Privacy Notice</a>.</li>
@@ -291,7 +291,7 @@
         </details>
         <details>
           <summary>Which AI does the assistant use?</summary>
-          <p>The one you set up. A local runtime keeps everything offline. A cloud key or a CLI sends requests straight to that provider, never through a server of ours. Chats and briefs carry percentages, weights and tickers, not money amounts.</p>
+          <p>The one you set up. A local runtime keeps these requests on your computer. A cloud key or a CLI sends requests straight to that provider, never through a server of ours. Chats and briefs carry percentages, weights and tickers, not money amounts.</p>
         </details>
         <details>
           <summary>Can I use it from my phone?</summary>
@@ -315,6 +315,7 @@
         <a href="/privacy/">privacy notice</a>
         <a href="/terms/">terms of use</a>
         <a href="/terms/#cookie-policy">cookies</a>
+        <button type="button" class="link-button" data-analytics-choice hidden>analytics choice</button>
       </nav>
     </div>
   </footer>

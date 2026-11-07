@@ -407,6 +407,7 @@ h1, h2, h3 { margin: 0; line-height: 1.08; }
 .footer-bottom p { margin: 0; }
 
 /* Cookie banner */
+.link-button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .cookie-banner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 50; max-width: 480px; padding: 18px 20px; background: rgba(22, 28, 43, 0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.6); font-size: 14px; opacity: 0; transform: translateY(12px); transition: opacity 0.3s, transform 0.3s; }
 .cookie-banner.visible { opacity: 1; transform: none; }
 .cookie-banner p { margin: 6px 0 14px; color: var(--muted); }

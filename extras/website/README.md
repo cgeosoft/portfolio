@@ -24,7 +24,7 @@ bun run dev            # bunx serve .
 
 ## Analytics
 
-PostHog loads only after the visitor accepts. Before that, the page makes no request to it. The `posthog.init` options in `script.js` turn off autocapture, dead clicks, heatmaps, exception capture, session recording and surveys, so the site sends only page views and its named events. `script.js` shows a cookie banner on the first visit and adds the PostHog script after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. Each page carries `<meta name="posthog-key">` with the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`. Without a real key, the banner does not show and PostHog does not load.
+PostHog loads only after the visitor accepts. Before that, the page makes no request to it. The `posthog.init` options in `script.js` turn off autocapture, page view capture, dead clicks, heatmaps, exception capture, session recording and surveys. A `before_send` allowlist keeps only the named events and their fields. The footer button "Analytics choice" reopens the banner. `script.js` shows a cookie banner on the first visit and adds the PostHog script after "Accept"; the choice is stored in `localStorage` (`portfolio_cookie_consent_v1`). Tracked events: `$pageview`, `download_clicked` (os, type) and `screenshot_zoomed`. Each page carries `<meta name="posthog-key">` with the placeholder `YOUR_POSTHOG_PROJECT_API_KEY`; `deploy.sh` replaces it with `POSTHOG_API_KEY` from the environment or the repo `.env`. Without a real key, the banner does not show and PostHog does not load.
 
 ## Download links
 
