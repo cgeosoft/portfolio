@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.17.2] - 2026-11-07
+
+### Added
+- The website now has an Analytics button, so a visitor can change their privacy choice at any time.
+- The website now records the time, source and notice version of each privacy choice.
+
+### Changed
+- The website no longer captures page views automatically. Analytics events are filtered before they are sent.
+- The website keeps the analytics ID in browser storage and removes it when a visitor declines.
+- The Accept and Decline buttons now look the same and have the same weight.
+- The Privacy Notice now lists data transfers and website connections. The Terms are now version 1.3.
+- A later setup from another device no longer changes a privacy choice.
+- Only events and properties on an approved list are sent for analytics.
+- The 0.17.1 changelog now correctly says that the Privacy Notice and the Terms are in English only.
+
+### Fixed
+- Analytics no longer loads in the Terms page shown inside the app.
+
+### Removed
+- The website no longer claims that nothing leaves your device or that the app works offline.
+
+
 ## [0.17.1] - 2026-11-06
 
 ### Added
