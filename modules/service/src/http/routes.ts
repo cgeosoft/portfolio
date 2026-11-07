@@ -704,15 +704,18 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/setup/complete", async (ctx) => {
     const body = await ctx.body<CompleteSetupRequest>();
+    const alreadyComplete = loadConfig().setupCompleted;
     if (body.populateDemo) {
       await portfolioService.createDemoPortfolio(loadConfig().baseCurrency);
       appLogger.logStep("success", "setup", "demo", "Demo portfolio created");
     }
     updateConfig({ setupCompleted: true });
-    // Only the desktop window gives consent: a setup from another device leaves both options off.
-    applyConsent({ analytics: ctx.isLocal && body.enableAnalytics === true, errorReporting: ctx.isLocal && body.enableErrorReporting === true }, "setup");
-    reloadPrivacyClients();
-    telemetry.capture("setup_completed", { demo: body.populateDemo });
+    // Only the desktop window gives consent: a first setup from another device leaves both options off, and a later call from there changes nothing.
+    if (ctx.isLocal || !alreadyComplete) {
+      applyConsent({ analytics: ctx.isLocal && body.enableAnalytics === true, errorReporting: ctx.isLocal && body.enableErrorReporting === true }, "setup");
+      reloadPrivacyClients();
+    }
+    telemetry.capture("setup_completed", { demo: body.populateDemo === true });
     return { success: true };
   });
 

@@ -2,7 +2,7 @@
 import { describe, it, expect, afterAll } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { analyticsProvider, TelemetryService } from "../telemetry.js";
+import { allowedProperties, analyticsProvider, TelemetryService } from "../telemetry.js";
 import { loadConfig, updateConfig } from "../../config.js";
 
 interface FakeClient {
@@ -34,9 +34,9 @@ describe("TelemetryService", () => {
     svc.initialize();
     const sent: unknown[] = [];
     (svc as unknown as { client: FakeClient }).client = { capture: (m) => sent.push(m), shutdown: async () => {} };
-    svc.capture("report_generated", { provider: "openai-compatible" });
+    svc.capture("assistant_chat_sent", { provider: "openai-compatible" });
     const deviceId = loadConfig().deviceId;
-    expect(sent[0]).toEqual({ distinctId: deviceId, event: "report_generated", properties: { provider: "openai-compatible", consent_version: expect.any(Number) } });
+    expect(sent[0]).toEqual({ distinctId: deviceId, event: "assistant_chat_sent", properties: { provider: "openai-compatible", consent_version: expect.any(Number) } });
     expect(deviceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
 
@@ -48,6 +48,22 @@ describe("TelemetryService", () => {
     svc.reinitialize();
     expect(shut).toBe(1);
     expect((svc as unknown as { client: unknown }).client).toBeNull();
+  });
+});
+
+describe("allowedProperties", () => {
+  it("drops an event that is not on the list", () => {
+    expect(allowedProperties("report_generated", { count: 1 })).toBeNull();
+  });
+
+  it("drops unknown keys and free text", () => {
+    expect(allowedProperties("csv_imported", { count: 3, path: "/home/ann/a.csv" })).toEqual({ count: 3 });
+    expect(allowedProperties("csv_imported", { count: "Acme broker" })).toEqual({});
+    expect(allowedProperties("setup_completed", { demo: "free text" })).toEqual({});
+  });
+
+  it("maps a custom provider to the fixed value", () => {
+    expect(allowedProperties("assistant_chat_sent", { provider: "https://my-server.example/v1" })).toEqual({ provider: "openai-compatible" });
   });
 });
 

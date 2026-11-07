@@ -16,6 +16,36 @@ export function analyticsProvider(provider: string): string {
   return provider in CLI_PROVIDER_NAMES ? provider : "openai-compatible";
 }
 
+/** All analytics events and their property keys. An event or a key that is not here is not sent. */
+const ANALYTICS_EVENTS: Record<string, readonly string[]> = {
+  app_launched: [],
+  portfolio_created: [],
+  portfolio_brief_saved: [],
+  metric_installed: [],
+  suggestions_generated: [],
+  quotes_sync_completed: [],
+  analysis_run_started: [],
+  csv_imported: ["count"],
+  assistant_chat_sent: ["provider"],
+  analysis_run_completed: ["count"],
+  analysis_run_failed: ["count"],
+  analysis_run_cancelled: ["count"],
+  setup_completed: ["demo"],
+};
+
+/** The allowlist at send time: counts, booleans and the fixed provider value only. */
+export function allowedProperties(event: string, properties: Record<string, unknown> = {}): Record<string, number | boolean | string> | null {
+  const keys = ANALYTICS_EVENTS[event];
+  if (!keys) return null;
+  const allowed: Record<string, number | boolean | string> = {};
+  for (const key of keys) {
+    const value = properties[key];
+    if (key === "provider" && typeof value === "string") allowed[key] = analyticsProvider(value);
+    else if (typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))) allowed[key] = value;
+  }
+  return allowed;
+}
+
 export class TelemetryService {
   private client: PostHog | null = null;
   private deviceId = "";
@@ -40,10 +70,13 @@ export class TelemetryService {
 
   /** Capture a named event. No-ops if usage analytics is off. */
   capture(event: string, properties?: Record<string, unknown>): void {
-    this.client?.capture({
+    if (!this.client) return;
+    const allowed = allowedProperties(event, properties);
+    if (!allowed) return;
+    this.client.capture({
       distinctId: this.deviceId,
       event,
-      properties: { ...properties, consent_version: consentVersion() },
+      properties: { ...allowed, consent_version: consentVersion() },
     });
   }
 

@@ -171,10 +171,22 @@ describe("routes", () => {
   });
 
   it("leaves both options off for a setup from another device", async () => {
+    updateConfig({ setupCompleted: false });
     const res = await call("POST", "/api/setup/complete", { populateDemo: false, enableAnalytics: true, enableErrorReporting: true }, false);
     expect(res.status).toBe(200);
     expect(loadConfig().analyticsEnabled).toBe(false);
     expect(loadConfig().errorReportingEnabled).toBe(false);
+  });
+
+  it("keeps the choices when another device calls setup again", async () => {
+    updateConfig({ setupCompleted: true, analyticsEnabled: true, errorReportingEnabled: true });
+    const before = readConsentRecord();
+    const res = await call("POST", "/api/setup/complete", { populateDemo: false }, false);
+    expect(res.status).toBe(200);
+    expect(loadConfig().analyticsEnabled).toBe(true);
+    expect(loadConfig().errorReportingEnabled).toBe(true);
+    expect(readConsentRecord()).toEqual(before);
+    updateConfig({ analyticsEnabled: false, errorReportingEnabled: false });
   });
 
   it("refuses a reset of the analytics ID from another device", async () => {
