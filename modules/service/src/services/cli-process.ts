@@ -9,7 +9,7 @@
  * local user steer it.
  */
 
-import { chmodSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { DATA_DIR } from "../paths.js";
@@ -17,11 +17,25 @@ import type { LlmMessage } from "./llm.js";
 
 const STATUS_TIMEOUT_MS = 15_000;
 
+/** Work directories whose leftover system prompt files this run already removed. */
+const sweptWorkDirs = new Set<string>();
+
 /** `<data>/<name>` with mode 0700, created on first use and tightened when an older release left it open. */
 export function cliWorkDir(name: string): string {
   const dir = join(DATA_DIR, name);
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   if (process.platform !== "win32" && (statSync(dir).mode & 0o777) !== 0o700) chmodSync(dir, 0o700);
+  if (!sweptWorkDirs.has(dir)) {
+    sweptWorkDirs.add(dir);
+    // A system prompt file of a request that a crash or a kill cut short.
+    try {
+      for (const name of readdirSync(dir)) {
+        if (/^system-[0-9a-f-]{36}\.(txt|md)$/.test(name)) rmSync(join(dir, name), { force: true });
+      }
+    } catch {
+      // Best effort.
+    }
+  }
   return dir;
 }
 

@@ -221,6 +221,9 @@ export const calcRiskContribution: AnalysisTool = {
   },
 };
 
+/** The largest absolute percentage a metric module may put into a run. */
+const MAX_METRIC_PERCENT = 1000;
+
 export const runMetric: AnalysisTool = {
   name: "run_metric",
   description: "Runs one installed metric module on the portfolio. Only metrics that return a percentage are kept.",
@@ -234,10 +237,15 @@ export const runMetric: AnalysisTool = {
     const listing = id ? metrics.getCatalog().installed.find((m) => m.id === id) : undefined;
     if (!listing) throw new ToolInputError(`Unknown metric "${id}".`);
     const [result] = await metrics.evaluateForPortfolio({ portfolioId: ctx.portfolioId, baseCurrency: ctx.baseCurrency, ids: [id] });
-    if (!result || result.status !== "ok") throw new Error(result ? result.error : "The metric returned nothing");
+    // The error text of a module can hold portfolio data, so the model gets a fixed sentence.
+    if (!result || result.status !== "ok") throw new ToolInputError("This metric did not return a value.");
     const value = result.output.value;
+    // A module labels its own output. A value outside this range is not a percentage of a portfolio.
+    if (value.format === "percent" && value.amount !== null && Math.abs(value.amount) > MAX_METRIC_PERCENT) throw new ToolInputError("This metric returned a value outside the percent range, so it stays out of the analysis.");
     if (value.format !== "percent" || value.amount === null || !Number.isFinite(value.amount)) throw new ToolInputError("This metric does not return a percentage, so it stays out of the analysis.");
-    const subs = (result.output.sub ?? []).filter((p): p is { amount: number; format: "percent" } => "amount" in p && p.format === "percent" && typeof p.amount === "number");
+    const subs = (result.output.sub ?? []).filter(
+      (p): p is { amount: number; format: "percent" } => "amount" in p && p.format === "percent" && typeof p.amount === "number" && Math.abs(p.amount) <= MAX_METRIC_PERCENT,
+    );
     const name = listing.manifest.name || id;
     const node = ctx.graph.addNode({
       kind: "metric",

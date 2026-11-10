@@ -11,7 +11,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import * as installedRepo from "../../db/installed-metrics.repo.js";
 import { appLogger } from "../../logger.js";
-import { fetchWithCheckedRedirects } from "../outbound-target.js";
+import { fetchWithCheckedRedirects, isInternalTarget } from "../outbound-target.js";
 import type { MetricManifest } from "portfolio-shared/metric-manifest";
 import { isMetricScope, type MetricScope } from "portfolio-shared/metric-abi";
 import type { PreviewMetricInstallResponse } from "portfolio-shared/api-types";
@@ -184,12 +184,21 @@ export class MetricInstaller {
 
   private async fetchAndValidate(rawUrl: string): Promise<Fetched> {
     const manifestUrl = parseHttpUrl(rawUrl, "Manifest URL");
+    // Plain http is for a module the user serves on this computer or the local network.
+    const manifestIsInternal = await isInternalTarget(manifestUrl.toString());
+    if (manifestUrl.protocol !== "https:" && !manifestIsInternal) throw new Error("Manifest URL must use https");
     const manifestBytes = await fetchBounded(manifestUrl, MAX_MANIFEST_BYTES, "Manifest");
     const manifestYaml = new TextDecoder().decode(manifestBytes);
     const manifest = parseManifestYaml(manifestYaml);
     if (!manifest.module) throw new Error("manifest has no module block (url, sha256, size)");
 
     const moduleUrl = parseHttpUrl(new URL(manifest.module.url, manifestUrl).toString(), "module.url");
+    // The route checks only the manifest URL. A public manifest may not send the service to
+    // this computer or the local network, and it may not name a plain http module.
+    if (!manifestIsInternal) {
+      if (moduleUrl.protocol !== "https:") throw new Error("module.url must use https");
+      if (await isInternalTarget(moduleUrl.toString())) throw new Error("module.url names this computer or the local network");
+    }
     if (manifest.module.size > MAX_MODULE_BYTES) {
       throw new Error(`module.size exceeds the ${Math.round(MAX_MODULE_BYTES / 1024)} KiB limit`);
     }

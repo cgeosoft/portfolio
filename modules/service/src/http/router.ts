@@ -15,8 +15,8 @@
 import { randomUUID } from "node:crypto";
 import { appLogger } from "../logger";
 import { isDev } from "../environment";
-import { toJson } from "../json-cache";
-import { ServiceError } from "../services/errors";
+import { gzipJson, toJson } from "../json-cache";
+import { ServiceError, UpstreamError } from "../services/errors";
 
 export class HttpError extends Error {
   constructor(
@@ -201,7 +201,7 @@ export function jsonFor(req: Request, data: unknown, status = 200, headers?: Hea
   }
   h.set("Content-Encoding", "gzip");
   h.set("Vary", "Accept-Encoding");
-  return new Response(Bun.gzipSync(Buffer.from(body, "utf-8")), { status, headers: h });
+  return new Response(gzipJson(data, body), { status, headers: h });
 }
 
 export class Router {
@@ -317,14 +317,16 @@ export class Router {
     } catch (err) {
       const status = err instanceof HttpError || err instanceof ServiceError ? err.status : 500;
       const message = boundedErrorMessage(err);
+      // The text of a provider can repeat the prompt: the log gets the line without it.
+      const logged = err instanceof UpstreamError ? err.logMessage : message;
       const durationMs = Math.round(performance.now() - started);
       if (status >= 500) {
-        appLogger.logStep("error", "http", requestId, `${method} ${matched.path} -> ${status} ${message}`, durationMs, {
+        appLogger.logStep("error", "http", requestId, `${method} ${matched.path} -> ${status} ${logged}`, durationMs, {
           stack: err instanceof Error ? err.stack?.split("\n").slice(1, 4).join(" | ") : undefined,
         });
       } else if (status !== 401 && status !== 404) {
         // Without a session anyone who reaches the port could fill the log file: only a debug record then.
-        appLogger.logStep(ctx.sessionId ? "warning" : "debug", "http", requestId, `${method} ${matched.path} -> ${status} ${message}`, durationMs);
+        appLogger.logStep(ctx.sessionId ? "warning" : "debug", "http", requestId, `${method} ${matched.path} -> ${status} ${logged}`, durationMs);
       }
       return json({ statusCode: status, message, requestId }, status, ctx.responseHeaders);
     }

@@ -19,7 +19,8 @@ import * as portfolioRepo from "./db/portfolio.repo";
 import * as txRepo from "./db/transaction.repo";
 import * as marketCache from "./db/market-cache.repo";
 import { loadConfig, refreshAutostart, updateConfig } from "./config";
-import { getAppVersion, getEnvironmentName } from "./environment";
+import { getAppVersion, getEnvironmentName, isDev } from "./environment";
+import { enableLaunchGate, launchRedirect } from "./services/launch-gate";
 import { createServices } from "./services/container";
 import { telemetry } from "./services/telemetry";
 import { errorReporting } from "./services/error-reporting";
@@ -146,15 +147,25 @@ function hostAllowed(req: Request, loopbackOnly: boolean): boolean {
  * or a page that rebinds its domain to it), so the routes reserved for the
  * desktop window refuse it.
  */
+/** POST routes that hold the request open while a language model works. */
+const LONG_ROUTES =
+  /^\/api\/(automation\/(daily-brief|weekly-analysis)\/run|llm\/[^/]+|portfolios\/[^/]+\/(assistant\/chat|brief\/wizard\/[^/]+|metrics\/suggest|suggestions\/generate)|symbols\/[^/]+\/transcript\/summary)$/;
+
 async function fetchHandler(req: Request, srv: DevGuiServer, loopbackOnly: boolean): Promise<Response | undefined> {
   const ip = srv.requestIP(req)?.address ?? "";
   const isLocal = loopbackOnly && isLoopbackAddress(ip);
   const url = new URL(req.url);
   if (!hostAllowed(req, loopbackOnly)) return json({ statusCode: 403, message: "Invalid Host header" }, 403);
   if (url.pathname.startsWith("/api/")) {
+    // These answers wait for a language model, often longer than `idleTimeout` with no byte sent.
+    // The model calls have their own time limits.
+    if (req.method === "POST" && LONG_ROUTES.test(url.pathname)) srv.timeout(req, 0);
     const res = await router.handle(req, ip, isLocal);
     return res ?? json({ statusCode: 404, message: `No route for ${req.method} ${url.pathname}` }, 404);
   }
+  // The desktop window's first page: trade the launch token for its cookie (services/launch-gate.ts).
+  const launch = isLocal ? launchRedirect(req, url) : null;
+  if (launch) return launch;
   const res = await router.handle(req, ip, isLocal);
   if (res) return res;
   const dev = await serveDevGui(req, url, srv);
@@ -187,6 +198,15 @@ try {
 } catch (err) {
   appLogger.logStep("error", "http", "listen", `Could not listen on ${LOOPBACK_HOST}: ${err instanceof Error ? err.message : err}`);
   process.exit(1);
+}
+
+// The installed app only: a development run has the Vite origin and signs in as before.
+if (!isDev() && site.available) {
+  try {
+    enableLaunchGate();
+  } catch (err) {
+    appLogger.logStep("warning", "auth", "launch", `Could not write the launch token (${err instanceof Error ? err.name : typeof err}); the login stays open to this computer`);
+  }
 }
 
 // The desktop shell reads this exact line from stdout.

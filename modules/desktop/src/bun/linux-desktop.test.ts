@@ -50,7 +50,8 @@ describe.skipIf(process.platform !== "linux")("installDesktopEntry", () => {
       "Name=Portfolio (Development)",
       "GenericName=Personal Investment Tracker",
       "Comment=Personal investment portfolio tracker (development checkout)",
-      `Exec=/usr/bin/env bash -c "cd '${repo}' && bun start"`,
+      // The path is an argument of its own, quoted as the desktop entry spec asks.
+      `Exec=/usr/bin/env bash -c "cd \\"\\$1\\" && bun start" bash "${repo}"`,
       "Icon=portfolio-dev",
       "Terminal=false",
       "StartupNotify=true",

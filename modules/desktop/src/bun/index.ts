@@ -352,7 +352,8 @@ async function main(): Promise<void> {
   service.log(`window on ${appUrl}`);
   // Lock the window to the app origin before the app loads, so no page can navigate it away.
   mainWindow.webview.setNavigationRules(appNavigationRules(appUrl));
-  mainWindow.webview.loadURL(appUrl + startQuery());
+  // A development run has no launch token: the service keeps its gate off there.
+  mainWindow.webview.loadURL(appUrl + startQuery(repoRoot ? undefined : dataDir));
 }
 
 void main();

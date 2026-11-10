@@ -53,6 +53,15 @@ function writeIfChanged(file: string, content: string): boolean {
   return true;
 }
 
+
+/**
+ * One argument of an `Exec=` line, quoted as the desktop entry spec asks: double quotes, with
+ * a backslash before `"`, a backtick, `$` and `\`, and `%` doubled so it is no field code.
+ */
+function execArg(value: string): string {
+  return '"' + value.replace(/(["`$\\])/g, "\\$1").replace(/%/g, "%%") + '"';
+}
+
 /** Installs the icons and the desktop entry for this build (packaged or development). */
 export function installDesktopEntry(options: DesktopEntryOptions): void {
   if (process.platform !== "linux") return;
@@ -96,7 +105,7 @@ export function installDesktopEntry(options: DesktopEntryOptions): void {
         console.warn("[desktop] launcher not found; desktop entry not written");
         return;
       }
-      exec = `"${launcher}"`;
+      exec = execArg(launcher);
       name = desktopEntry.name;
       comment = desktopEntry.comment;
     } else {
@@ -104,7 +113,8 @@ export function installDesktopEntry(options: DesktopEntryOptions): void {
         console.warn("[desktop] checkout root not found; desktop entry not written");
         return;
       }
-      exec = `/usr/bin/env bash -c "cd '${options.repoRoot}' && bun start"`;
+      // The path is an argument of its own ($1), never part of the shell text.
+      exec = `/usr/bin/env bash -c "cd \\"\\$1\\" && bun start" bash ${execArg(options.repoRoot)}`;
       name = `${desktopEntry.name} (Development)`;
       comment = `${desktopEntry.comment} (development checkout)`;
     }

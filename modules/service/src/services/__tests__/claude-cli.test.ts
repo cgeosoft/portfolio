@@ -112,7 +112,7 @@ describe.skipIf(process.platform === "win32")("Claude CLI process", () => {
     expect(existsSync(run!.systemFile!)).toBe(false);
   });
 
-  it("falls back to --system-prompt when the CLI lacks the file flag, and probes it only once", async () => {
+  it("sends the system text on stdin when the CLI lacks the file flag, and probes it only once", async () => {
     const cli = fakeCli({ fileFlag: false });
     await claudeCliComplete(messages, { bin: cli.bin, signal: timeout() });
     await claudeCliComplete(messages, { bin: cli.bin, signal: timeout() });
@@ -122,7 +122,10 @@ describe.skipIf(process.platform === "win32")("Claude CLI process", () => {
     const done = completions(runs);
     expect(done.length).toBe(2);
     expect(done[0]!.args).not.toContain("--system-prompt-file");
-    expect(done[0]!.args[done[0]!.args.indexOf("--system-prompt") + 1]).toBe(LEDGER);
+    // A command line is visible to every local user: the ledger goes on stdin.
+    expect(done[0]!.args).not.toContain("--system-prompt");
+    expect(done[0]!.args.join(" ")).not.toContain("AAPL");
+    expect(done[0]!.stdin).toBe(`${LEDGER}\n\nHow concentrated is my portfolio?`);
   });
 
   it("probes a CLI with the file flag only once", async () => {

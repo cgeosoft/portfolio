@@ -13,6 +13,7 @@ import { REPO_ROOT, getLogDir } from "../paths";
 import { join } from "node:path";
 import { getDatabasePath } from "../db/database";
 import * as portfolioRepo from "../db/portfolio.repo";
+import { hasLaunchProof } from "../services/launch-gate";
 import { authService, clearLegacySessionCookie, clearSessionCookie, readSession, sessionCookie, type ClientScope } from "../services/auth";
 import { disableRemoteAccess, isRemoteListening, remoteAccessInfo, setRemoteAccess } from "../services/remote-access";
 import { mcpAccessInfo, rotateMcpToken, setMcpAccess } from "../services/mcp-access";
@@ -76,6 +77,9 @@ import type {
   StartAnalysisRunRequest,
 } from "portfolio-shared/api-types";
 import { PROTECTED_CONFIG_KEYS, type DesktopConfig } from "portfolio-shared/config-types";
+
+/** The longest one assistant reply may take, the limit of a CLI provider. */
+const CHAT_TIMEOUT_MS = 300_000;
 
 /** Routes that need no session. */
 const PUBLIC_PATHS = new Set(["/api/health", "/api/auth/status", "/api/auth/login", "/intro"]);
@@ -162,6 +166,10 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.use((ctx) => {
     if (isPublicPath(ctx.url.pathname)) return;
+    // Cookies ignore the port, so a page of another program on this host is same-site and its
+    // requests carry the session. A GET it starts (an image, a link) may not reach a route.
+    const fetchSite = ctx.req.headers.get("sec-fetch-site");
+    if (!isDev() && (fetchSite === "cross-site" || fetchSite === "same-site")) throw new HttpError(403, "Cross-origin requests are not allowed");
     const session = readSession(ctx.req);
     const sessionId = session?.id ?? null;
     if (!authService.validateSession(sessionId, scopeOf(ctx))) throw new HttpError(401, sessionId ? "Invalid or expired session" : "Session cookie is missing");
@@ -198,6 +206,8 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/auth/login", async (ctx) => {
     // The one body read before a session exists: a PIN needs a few bytes, not 30 MB.
     const body = await ctx.body<{ pin?: unknown }>(4096);
+    // Without a PIN only the desktop window signs in (services/launch-gate.ts).
+    if (!authService.isPinEnabled() && !hasLaunchProof(ctx.req)) throw new HttpError(401, "Open Portfolio from its own window, or set a PIN");
     const id = authService.login(typeof body.pin === "string" ? body.pin : undefined, scopeOf(ctx));
     ctx.responseHeaders.append("Set-Cookie", sessionCookie(id, isHttps(ctx.req), scopeOf(ctx)));
     return { success: true, ...authStatus() };
@@ -217,8 +227,10 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   });
 
   router.put("/api/auth/pin", async (ctx) => {
-    const body = await ctx.body<{ pin?: string; currentPin?: string }>();
-    authService.setPin(String(body.pin ?? ""), body.currentPin, scopeOf(ctx));
+    // A PIN holder on another device could change it and end the desktop session.
+    assertLocal(ctx, "Changing the PIN");
+    const body = await ctx.body<{ pin?: unknown; currentPin?: unknown }>();
+    authService.setPin(String(body.pin ?? ""), typeof body.currentPin === "string" ? body.currentPin : undefined, scopeOf(ctx));
     authService.revokeOtherSessions(ctx.sessionId);
     return { pinEnabled: true };
   });
@@ -228,6 +240,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/auth/sessions/revoke-others", (ctx) => ({ revoked: authService.revokeOtherSessions(ctx.sessionId) }));
 
   router.delete("/api/auth/pin", async (ctx) => {
+    assertLocal(ctx, "Removing the PIN");
     const body = await ctx.body<{ currentPin?: string }>();
     authService.removePin(String(body.currentPin ?? ""), scopeOf(ctx));
     disableRemoteAccess();
@@ -391,8 +404,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/metrics/install", async (ctx) => {
     const body = await ctx.body<InstallMetricRequest>();
     await assertRemoteTargets(ctx, body.url);
-    if (body.sha256 !== undefined && (typeof body.sha256 !== "string" || !/^[0-9a-f]{64}$/i.test(body.sha256))) throw new HttpError(400, "Invalid sha256");
-    const sha256 = body.sha256?.toLowerCase();
+    // The hash the user saw in the preview. Without it the service would install whatever the URL serves now.
+    if (typeof body.sha256 !== "string" || !/^[0-9a-f]{64}$/i.test(body.sha256)) throw new HttpError(400, "Invalid sha256");
+    const sha256 = body.sha256.toLowerCase();
     const metric = await metricsService.install(str(body.url, "url"), body.grantedScopes ?? [], sha256);
     telemetry.capture("metric_installed");
     return { metric };
@@ -524,7 +538,9 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
 
   router.post("/api/portfolios/:id/assistant/chat", async (ctx) => {
     const body = await ctx.body<ChatWithPortfolioRequest>();
-    const res = await chatService.chat(ctx.params.id!, body.messages ?? [], {
+    const res = await chatService.chat(ctx.params.id!, Array.isArray(body.messages) ? body.messages : [], {
+      // A client that went away stops the model call, and with it a CLI process.
+      signal: AbortSignal.any([ctx.req.signal, AbortSignal.timeout(CHAT_TIMEOUT_MS)]),
       conversationId: body.conversationId,
       title: body.title,
       provider: body.provider,
@@ -767,7 +783,7 @@ export function registerRoutes(router: Router, services: AppServices, onQuit: ()
   router.post("/api/app/error-report", async (ctx) => {
     const body = await ctx.body<ReportClientErrorRequest>(64 * 1024);
     if (body.source !== "boundary" && body.source !== "window") throw new HttpError(400, "source is not valid");
-    appLogger.logStep("error", "gui", body.source, `Uncaught error: ${String(body.stack ?? body.name ?? "unknown").slice(0, 8000)}`);
+    appLogger.logStep("error", "gui", body.source, `Uncaught error: ${String(body.stack ?? body.name ?? "unknown").replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "").slice(0, 8000)}`);
     errorReporting.report({ name: body.name, stack: body.stack }, body.source === "boundary" ? "gui:boundary" : "gui:window");
     return { success: true };
   });

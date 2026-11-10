@@ -359,6 +359,11 @@ export function isSameServer(url: string | undefined, stored: string | undefined
   }
 }
 
+/** As LlmService resolves it: a CLI id stays, any other id (or none) is the OpenAI-compatible provider. */
+function llmProviderId(raw: string | undefined): string {
+  return raw && Object.hasOwn(CLI_PROVIDER_NAMES, raw) ? raw : "openai-compatible";
+}
+
 /** An update from the GUI with every SECRET_MASK put back to the stored key. `isLocal` is false for a client on another device. */
 export function unmaskUpdates(updates: Partial<DesktopConfig>, isLocal = true): Partial<DesktopConfig> {
   const cfg = loadConfig();
@@ -370,9 +375,15 @@ export function unmaskUpdates(updates: Partial<DesktopConfig>, isLocal = true): 
   if (out.llmApiKeys) {
     out.llmApiKeys = Object.fromEntries(Object.entries(out.llmApiKeys).map(([id, key]) => [id, unmaskSecret(key, cfg.llmApiKeys?.[id]) ?? ""]));
   }
+  // `llmApiKey` mirrors the key of the chosen provider. It follows the provider: a switch
+  // never carries the key of the provider before it to the server of the new one.
+  const provider = llmProviderId(out.llmProvider || cfg.llmProvider);
+  const switched = provider !== llmProviderId(cfg.llmProvider);
+  const keyOf = (id: string) => out.llmApiKeys?.[id] ?? cfg.llmApiKeys?.[id] ?? "";
   if (out.llmApiKey === SECRET_MASK) {
-    const provider = out.llmProvider || cfg.llmProvider;
-    out.llmApiKey = cfg.llmApiKeys?.[provider] || cfg.llmApiKey;
+    out.llmApiKey = keyOf(provider) || (switched ? "" : cfg.llmApiKey);
+  } else if (switched && out.llmApiKey === undefined) {
+    out.llmApiKey = keyOf(provider);
   }
   dropSecretsOfMovedServers(updates, out, cfg, isLocal);
   return out;
@@ -403,8 +414,7 @@ function dropSecretsOfMovedServers(updates: Partial<DesktopConfig>, out: Partial
     out.ntfyToken = "";
   }
 
-  // As LlmService resolves it: a CLI id stays, any other id (or none) is the OpenAI-compatible provider.
-  const providerId = (raw: string | undefined) => (raw && Object.hasOwn(CLI_PROVIDER_NAMES, raw) ? raw : "openai-compatible");
+  const providerId = llmProviderId;
   const provider = providerId(updates.llmProvider || cfg.llmProvider);
   const savedUrl = (id: string) => cfg.llmBaseUrls?.[id] || (id === providerId(cfg.llmProvider) ? cfg.llmBaseUrl : "");
   const movedProviders = new Set<string>();
@@ -417,7 +427,8 @@ function dropSecretsOfMovedServers(updates: Partial<DesktopConfig>, out: Partial
   for (const id of movedProviders) {
     if (brings(updates.llmApiKeys?.[id]) || (id === provider && brings(updates.llmApiKey))) continue;
     out.llmApiKeys = { ...out.llmApiKeys, [id]: "" };
-    if (id === provider) out.llmApiKey = "";
+    // The mirror holds the key of the provider chosen before or after this update.
+    if (id === provider || id === providerId(cfg.llmProvider)) out.llmApiKey = "";
   }
 }
 

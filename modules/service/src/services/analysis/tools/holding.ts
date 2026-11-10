@@ -115,7 +115,7 @@ export const getHoldingNews: AnalysisTool = {
         kind: "news",
         title: item.title,
         facts: { symbol: holding.symbol, date, publisher: item.publisher ?? "", headline: item.title, summary: (item.summary ?? "").slice(0, 400) },
-        summary: `${date} ${item.publisher ? `(${item.publisher}) ` : ""}${item.title}${item.summary ? `: ${item.summary}` : ""}`,
+        summary: `${date} ${item.publisher ? `(${item.publisher}) ` : ""}${item.title}${item.summary ? `: ${item.summary.slice(0, 400)}` : ""}`,
         source: { provider: res?.source, url: item.url, fetchTime: new Date().toISOString() },
         createdBy: "get_holding_news",
         depth: ctx.depth,

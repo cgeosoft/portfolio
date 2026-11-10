@@ -19,6 +19,7 @@ import { rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ClaudeCliStatusResponse } from "portfolio-shared/api-types";
+import { UpstreamError } from "./errors.js";
 import { cliWorkDir, findCliBinary, parseJsonLine, promptFor, readLines, runCli, stderrTail, systemPromptOf } from "./cli-process.js";
 import type { LlmMessage } from "./llm.js";
 
@@ -139,7 +140,7 @@ export async function claudeCliComplete(messages: LlmMessage[], options: ClaudeC
 
   const cwd = claudeCliWorkDir();
   const system = systemPromptOf(messages);
-  // Only this user can read the file; a command line is visible to every local user.
+  // Only this user can read the file.
   const systemFile = system && (await supportsSystemPromptFile(bin)) ? join(cwd, `system-${randomUUID()}.txt`) : null;
   if (options.signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   if (systemFile) writeFileSync(systemFile, system, { mode: 0o600, flag: "wx" });
@@ -154,20 +155,23 @@ export async function claudeCliComplete(messages: LlmMessage[], options: ClaudeC
       "--strict-mcp-config",
       "--disable-slash-commands",
       "--no-session-persistence",
-      ...(systemFile ? ["--system-prompt-file", systemFile] : system ? ["--system-prompt", system] : []),
+      ...(systemFile ? ["--system-prompt-file", systemFile] : []),
       ...(options.model ? ["--model", options.model] : []),
     ];
-    return await streamCompletion(bin, args, cwd, messages, options);
+    // A CLI without the file option gets the system text on stdin, in front of the prompt.
+    // A command line is visible to every local user, so the text never goes there.
+    const stdinText = !systemFile && system ? `${system}\n\n${promptFor(messages)}` : promptFor(messages);
+    return await streamCompletion(bin, args, cwd, stdinText, options);
   } finally {
     if (systemFile) rmSync(systemFile, { force: true });
   }
 }
 
 /** Spawns the CLI and collects the reply from its `stream-json` frames. */
-async function streamCompletion(bin: string, args: string[], cwd: string, messages: LlmMessage[], options: ClaudeCliCompleteOptions): Promise<string> {
+async function streamCompletion(bin: string, args: string[], cwd: string, stdinText: string, options: ClaudeCliCompleteOptions): Promise<string> {
   const proc = Bun.spawn([bin, ...args], {
     cwd,
-    stdin: new Blob([promptFor(messages)]),
+    stdin: new Blob([stdinText]),
     stdout: "pipe",
     stderr: "pipe",
     signal: options.signal,
@@ -198,7 +202,7 @@ async function streamCompletion(bin: string, args: string[], cwd: string, messag
   if (options.signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   if (isError || code !== 0) {
     const detail = (isError ? result : "") || stderrTail(await stderrText) || `exit code ${code}`;
-    throw new Error(`Claude CLI request failed: ${detail}`);
+    throw new UpstreamError(`Claude CLI request failed: ${detail}`, `Claude CLI request failed (${isError ? "error result" : `exit code ${code}`})`);
   }
   const text = result ?? (streamed || whole);
   if (!text.trim()) throw new Error("No completion content returned from Claude CLI");

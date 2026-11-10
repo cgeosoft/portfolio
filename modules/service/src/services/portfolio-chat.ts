@@ -154,14 +154,16 @@ export class PortfolioChatService {
   public async chat(
     portfolioId: string,
     messages: PortfolioChatMessage[],
-    options: { conversationId?: string; title?: string; provider?: string; model?: string } = {},
+    options: { conversationId?: string; title?: string; provider?: string; model?: string; signal?: AbortSignal } = {},
   ): Promise<{ message: PortfolioChatMessage; conversationId: string; title: string; provider: string; model: string }> {
+    // The system prompt is the app's own. A client sends the turns of the user and the assistant only.
+    messages = messages.filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string");
     const target = this.llm.resolve(options);
     const history: LlmMessage[] = [
       { role: "system", content: toPromptSafe(await this.getSystemPrompt(portfolioId)) },
       ...messages.map(({ role, content }) => ({ role, content: toPromptSafe(content) })),
     ];
-    const reply: PortfolioChatMessage = { role: "assistant", content: await this.llm.chat(history, target) };
+    const reply: PortfolioChatMessage = { role: "assistant", content: await this.llm.chat(history, { ...target, signal: options.signal }) };
 
     const conversationId = options.conversationId || `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const title = options.title || titleFor(messages);

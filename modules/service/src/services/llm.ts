@@ -12,6 +12,7 @@
  * defaults.
  */
 
+import { UpstreamError } from "./errors";
 import { isSameServer, loadConfig, updateConfig } from "../config.js";
 import { appLogger } from "../logger.js";
 import { fetchWithCheckedRedirects } from "./outbound-target.js";
@@ -429,7 +430,7 @@ export class LlmService {
     for (let attempt = 0; !res.ok; attempt++) {
       const detail = await res.text().catch(() => "");
       const retry = res.status === 400 && attempt === 0 ? shapeAfterRejection(shape, detail) : null;
-      if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
+      if (!retry) throw new UpstreamError(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`, `${target.name} API request failed with status ${res.status}`);
       appLogger.logStep("warning", "llm", "chat", "Model rejected a request field, retrying without it", undefined, {
         model: target.model || "default",
         temperature: retry.temperature,
@@ -497,13 +498,13 @@ export class LlmService {
     let res = await send();
     for (let attempt = 0; !res.ok && attempt < 3; attempt++) {
       const detail = await res.text().catch(() => "");
-      if (res.status !== 400) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
+      if (res.status !== 400) throw new UpstreamError(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`, `${target.name} API request failed with status ${res.status}`);
       const lower = detail.toLowerCase();
       if (toolChoice === "required" && lower.includes("tool_choice")) {
         toolChoice = "auto";
       } else {
         const retry = shapeAfterRejection(shape, detail);
-        if (!retry) throw new Error(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`);
+        if (!retry) throw new UpstreamError(`${target.name} API request failed with status ${res.status}: ${shortDetail(detail)}`, `${target.name} API request failed with status ${res.status}`);
         shape = retry;
         LlmService.learnedShapes.set(shapeKey, shape);
       }

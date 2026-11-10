@@ -15,7 +15,7 @@
  * or a crash always belongs to the module whose request was in flight.
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getMetricsDir } from "../../paths.js";
 import { appLogger } from "../../logger.js";
@@ -266,7 +266,14 @@ export class MetricRuntime {
 
   /** Write the engine once per content hash. The rename is atomic, so a starting engine never reads a partial file. */
   private writeEngineFile(): void {
-    if (existsSync(this.enginePath)) return;
+    // The name carries the content hash, but a file under that name can be changed: compare it.
+    if (existsSync(this.enginePath)) {
+      try {
+        if (readFileSync(this.enginePath, "utf8") === METRIC_ENGINE_SOURCE) return;
+      } catch {
+        // Unreadable: write it again.
+      }
+    }
     mkdirSync(this.engineDir, { recursive: true });
     const temp = `${this.enginePath}.${process.pid}.tmp`;
     writeFileSync(temp, METRIC_ENGINE_SOURCE);

@@ -79,7 +79,7 @@ asc index.ts -o my-metric.wasm --runtime stub --optimize --importMemory --noExpo
     --initialMemory 2 --maximumMemory 16
 ```
 
-`--maximumMemory` should match `runtime.memoryPages` in your manifest. Publish the `.wasm` and a `manifest.yml` with a `module` block (`url`, `sha256`, `size`), then use **Install from URL** under Preferences → Metrics. The application checks the size and hash, rejects forbidden imports, and shows the requested scopes before anything is installed.
+`--maximumMemory` should match `runtime.memoryPages` in your manifest. Publish the `.wasm` and a `manifest.yml` with a `module` block (`url`, `sha256`, `size`), then use **Install from URL** under Preferences → Metrics. A public manifest and its module must use https, and a public manifest may not name a module on this computer or the local network. The application checks the size and hash, rejects forbidden imports, and shows the requested scopes before anything is installed.
 
 ## Limits
 

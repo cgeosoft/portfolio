@@ -2,6 +2,7 @@
  * Everything that makes this shell Portfolio. The other files in `src/bun/` are the same in
  * Portfolio and in FintechCrafts Management; only this file differs between the two apps.
  */
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -88,8 +89,27 @@ export const APP = {
  * Query string for the first page the window loads. `PORTFOLIO_ONBOARDING=1` opens the setup
  * wizard even when setup is complete.
  */
-export function startQuery(): string {
-  return process.env.PORTFOLIO_ONBOARDING === "1" ? "?onboarding=1" : "";
+export function startQuery(dataDir?: string): string {
+  const params = new URLSearchParams();
+  if (process.env.PORTFOLIO_ONBOARDING === "1") params.set("onboarding", "1");
+  const launch = dataDir ? readLaunchToken(dataDir) : null;
+  if (launch) params.set("launch", launch);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+/**
+ * The token the installed service wrote for this start (`services/launch-gate.ts` in the
+ * service: file `launch-token`, parameter `launch`). It proves to the service that the page is
+ * the desktop window, for the login without a PIN. Null when the service wrote none.
+ */
+function readLaunchToken(dataDir: string): string | null {
+  try {
+    const token = readFileSync(join(dataDir, "launch-token"), "utf8").trim();
+    return /^[0-9a-f]{64}$/.test(token) ? token : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -383,6 +383,41 @@ describe("secrets", () => {
     expect(unmaskSecret(undefined, "s")).toBeUndefined();
   });
 
+  it("never carries a provider key to a server set while another provider was chosen", () => {
+    saveConfig({
+      ...loadConfig(),
+      llmProvider: "openai-compatible",
+      llmBaseUrls: { "openai-compatible": "https://api.example.com/v1" },
+      llmBaseUrl: "https://api.example.com/v1",
+      llmApiKeys: { "openai-compatible": "k1" },
+      llmApiKey: "k1",
+    } as DesktopConfig);
+    // Switch away and move the server of the first provider in one update.
+    updateConfig(unmaskUpdates({ llmProvider: "claude-cli", llmBaseUrls: { "openai-compatible": "https://other.example.net/v1" } }));
+    expect(loadConfig().llmApiKeys?.["openai-compatible"]).toBe("");
+    expect(loadConfig().llmApiKey).toBe("");
+    // Switch back: no key comes back for the new server.
+    updateConfig(unmaskUpdates({ llmProvider: "openai-compatible" }));
+    expect(loadConfig().llmApiKey).toBe("");
+  });
+
+  it("clears the mirror on a provider switch and on a later server change", () => {
+    saveConfig({
+      ...loadConfig(),
+      llmProvider: "openai-compatible",
+      llmBaseUrls: { "openai-compatible": "https://api.example.com/v1" },
+      llmApiKeys: { "openai-compatible": "k1" },
+      llmApiKey: "k1",
+    } as DesktopConfig);
+    updateConfig(unmaskUpdates({ llmProvider: "claude-cli" }));
+    expect(loadConfig().llmApiKey).toBe("");
+    expect(loadConfig().llmApiKeys?.["openai-compatible"]).toBe("k1");
+    updateConfig(unmaskUpdates({ llmBaseUrls: { "openai-compatible": "https://other.example.net/v1" } }));
+    updateConfig(unmaskUpdates({ llmProvider: "openai-compatible" }));
+    expect(loadConfig().llmApiKey).toBe("");
+    expect(loadConfig().llmApiKeys?.["openai-compatible"]).toBe("");
+  });
+
   it("unmasks updates against the stored secrets", () => {
     saveConfig({
       ...loadConfig(),

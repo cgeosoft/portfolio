@@ -22,6 +22,7 @@ import { rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { CliProviderStatusResponse } from "portfolio-shared/api-types";
+import { UpstreamError } from "./errors.js";
 import { cliWorkDir, findCliBinary, parseJsonLine, promptFor, readLines, runCli, stderrTail, systemPromptOf, versionOf } from "./cli-process.js";
 import type { LlmMessage } from "./llm.js";
 
@@ -145,7 +146,7 @@ async function runExec(bin: string, args: string[], cwd: string, messages: LlmMe
   if (options.signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   if (failure !== undefined || code !== 0) {
     const detail = failure || lastError || stderrTail(await stderrText) || `exit code ${code}`;
-    throw new Error(`Codex CLI request failed: ${detail}`);
+    throw new UpstreamError(`Codex CLI request failed: ${detail}`, "Codex CLI request failed");
   }
   if (!reply.trim()) throw new Error("No completion content returned from Codex CLI");
   options.onChunk?.(reply);
