@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.18.0] - 2026-11-10
+
+### Added
+- Metric installs now need the hash of the preview before they go ahead.
+- The Analysis, Insights, Metrics and holding detail pages now load only when you first open them.
+
+### Changed
+- Without a PIN, only the desktop window can sign in. The service writes a private launch token that the app trades for a sign-in cookie.
+- The PIN can now be changed only from the desktop window.
+- The app starts faster. The loading screen shows for at least 0.4 seconds instead of 2 seconds, and the main download is much smaller.
+- Data now loads once at start. Switching portfolio or currency cancels the load before it.
+- Background updates and timed quote refreshes pause while the window is hidden.
+- Zoom with Ctrl and the mouse wheel is smoother, and the zoom level is saved shortly after you stop.
+- Insights cards and the benchmark keep their last data when you move between pages.
+- The analysis view does less work when nothing has changed.
+- Cache cleanup, database settings and income calculations are faster.
+- Finnhub now pauses after three requests without an answer or after the key is refused.
+- Long AI requests no longer stop because of an idle timeout.
+- Chat accepts only user and assistant messages, and it stops when the request is cancelled.
+- A failing metric now shows the AI a fixed message, and metric percentages must be in a valid range.
+
+### Fixed
+- Finnhub quotes no longer share a cache entry with Yahoo, so a day-old quote or the wrong currency is not shown.
+- A window focus listener is now removed correctly after a reload with Ctrl+R.
+- The Linux desktop entry now handles paths with spaces correctly.
+
+### Security
+- An AI provider key is never sent to another server after you switch provider or move the server address.
+- Session routes now refuse browser requests from the same site or other sites.
+- A public metric manifest can no longer point to a local module or use plain http.
+- AI prompts now tell the model that news and metric text is data, not instructions.
+- The Claude CLI system prompt is no longer placed on the command line.
+- Error text from AI providers is no longer written to the service log.
+
+
 ## [0.17.2] - 2026-11-07
 
 ### Added
