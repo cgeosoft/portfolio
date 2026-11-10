@@ -15,6 +15,19 @@ export function rememberJson(data: object, json?: string): string {
   return text;
 }
 
+type Gzipped = ReturnType<typeof Bun.gzipSync>;
+const gzipped = new WeakMap<object, Gzipped>();
+
+/** Gzip of `text`, kept with `data` when its text is kept: a remote client asks for the same portfolio many times. */
+export function gzipJson(data: unknown, text: string): Gzipped {
+  const tracked = data && typeof data === "object" && texts.get(data) === text ? (data as object) : null;
+  const known = tracked ? gzipped.get(tracked) : undefined;
+  if (known) return known;
+  const bytes = Bun.gzipSync(Buffer.from(text, "utf-8"));
+  if (tracked) gzipped.set(tracked, bytes);
+  return bytes;
+}
+
 /** The kept text of `data`, else a fresh `JSON.stringify`. */
 export function toJson(data: unknown): string {
   if (data && typeof data === "object") {

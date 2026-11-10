@@ -13,6 +13,7 @@ import {
   type YahooSymbolSearchResult,
 } from "./yahoo-finance.js";
 import { RequestThrottle } from "./providers/throttle.js";
+import { OfflineBreaker } from "./providers/offline.js";
 
 export interface FinnhubNewsItem {
   category: string;
@@ -157,11 +158,18 @@ const REQUEST_TIMEOUT_MS = 7_000;
 export const FINNHUB_THROTTLE = { maxConcurrent: 4, maxPerWindow: 50, windowMs: 60_000 } as const;
 /** How long queued calls wait after a 429. */
 const RATE_LIMIT_PAUSE_MS = 20_000;
+/** After this many requests in a row without a response, Finnhub counts as offline for `OFFLINE_PAUSE_MS`. */
+const OFFLINE_THRESHOLD = 3;
+const OFFLINE_PAUSE_MS = 60_000;
+/** A refused key is not sent again for this long. A new key in Settings is tried at once. */
+const AUTH_FAILED_PAUSE_MS = 5 * 60_000;
 
 export class FinnhubService {
   private static readonly throttle = new RequestThrottle(FINNHUB_THROTTLE);
   /** Requests in flight by cache key: identical concurrent calls share one request and one slot of the budget. */
   private static readonly inFlight = new Map<string, Promise<unknown>>();
+  private static readonly offline = new OfflineBreaker({ threshold: OFFLINE_THRESHOLD, pauseMs: OFFLINE_PAUSE_MS });
+  private static authFailed: { key: string; until: number } = { key: "", until: 0 };
   private readonly baseUrl: string;
 
   constructor(baseUrl: string = FINNHUB_BASE_URL) {
@@ -244,7 +252,8 @@ export class FinnhubService {
     const uniqueSymbols = Array.from(new Set(symbols.map((s) => s.trim().toUpperCase())));
 
     await mapWithConcurrencyLimit(uniqueSymbols, 4, async (sym) => {
-      const cacheKey = `quote:${sym}`;
+      // Its own key: Yahoo keeps `quote:<SYMBOL>` for a day and with the real currency.
+      const cacheKey = `finnhub:quote:${sym}`;
       const diskQuote = marketCache.get<YahooQuote>(cacheKey);
       if (!forceFresh && diskQuote && !diskQuote.isExpired) {
         results.set(sym, diskQuote.data);
@@ -415,6 +424,10 @@ export class FinnhubService {
 
   /** One request through the throttle. Caches the answer; on failure returns the expired copy, if any. */
   private async fetchAndCache<T>(relativeUrl: string, cacheKey: string, key: string, ttlMs: number, cached: marketCache.CacheEntry<T> | null): Promise<T | null> {
+    // Offline, or a key the server refused: no request, so a batch does not wait for a timeout per symbol.
+    if (FinnhubService.offline.isOpen() || (FinnhubService.authFailed.key === key && Date.now() < FinnhubService.authFailed.until)) {
+      return cached ? cached.data : null;
+    }
     try {
       const url = `${this.baseUrl}${relativeUrl}`;
       // The timeout starts once the throttle lets the call through.
@@ -428,8 +441,10 @@ export class FinnhubService {
         }),
       );
 
+      FinnhubService.offline.success();
       if (res.status === 401 || res.status === 403) {
         appLogger.logStep("warning", "finnhub", "auth_error", "Finnhub authentication failed: invalid API key");
+        FinnhubService.authFailed = { key, until: Date.now() + AUTH_FAILED_PAUSE_MS };
         return null;
       }
       if (res.status === 429) {
@@ -450,7 +465,10 @@ export class FinnhubService {
       return json;
     } catch (err: unknown) {
       // The URL carries the symbol; log the error type only (CLAUDE.md rule 3).
-      appLogger.logStep("warning", "finnhub", "request_exception", `Finnhub request error (${err instanceof Error ? err.name : typeof err})`);
+      const opened = FinnhubService.offline.failure();
+      if (opened || !FinnhubService.offline.isOpen()) {
+        appLogger.logStep("warning", "finnhub", "request_exception", `Finnhub request error (${err instanceof Error ? err.name : typeof err})${opened ? "; pausing Finnhub requests" : ""}`);
+      }
       if (cached) return cached.data;
       return null;
     }

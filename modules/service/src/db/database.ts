@@ -25,6 +25,11 @@ export function getDatabase(): Database {
   db.run("PRAGMA synchronous = NORMAL");
   db.run("PRAGMA foreign_keys = ON");
   db.run("PRAGMA busy_timeout = 5000");
+  // 16 MB of page cache: the default 2 MB is smaller than one cached portfolio.
+  db.run("PRAGMA cache_size = -16000");
+  db.run("PRAGMA temp_store = MEMORY");
+  // The WAL file shrinks back after a large write instead of keeping its largest size.
+  db.run("PRAGMA journal_size_limit = 67108864");
   restrictFileModes(dbPath);
 
   initializeSchema(db);
@@ -173,6 +178,8 @@ function initializeSchema(database: Database): void {
       expiresAt INTEGER NOT NULL
     )
   `);
+  // The hourly prune and its `key NOT LIKE` filter read this index, not the rows with their large `data`.
+  database.run("CREATE INDEX IF NOT EXISTS idx_market_cache_expires ON market_cache(expiresAt, key)");
 
   database.run(`
     CREATE TABLE IF NOT EXISTS assistant_conversations (
@@ -395,6 +402,12 @@ function initializeSchema(database: Database): void {
 /** Close the database connection */
 export function closeDatabase(): void {
   if (db) {
+    try {
+      // Refreshes the query planner statistics of tables that changed much.
+      db.run("PRAGMA optimize");
+    } catch {
+      // Best effort.
+    }
     db.close();
     db = null;
   }

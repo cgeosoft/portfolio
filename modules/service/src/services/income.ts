@@ -141,6 +141,9 @@ export function detectSplitWarnings(
   }));
 }
 
+/** How long one built context serves both routes. Short: quotes and FX rates move. */
+const CONTEXT_TTL_MS = 60_000;
+
 export class IncomeService {
   constructor(
     private readonly portfolioService: PortfolioService,
@@ -148,7 +151,24 @@ export class IncomeService {
     private readonly calendar: CalendarService,
   ) {}
 
-  private async load(portfolioId: string): Promise<PortfolioContext> {
+  /** The Income card asks for the summary and the events together: both share one context. */
+  private readonly contexts = new Map<string, { version: string; at: number; ctx: Promise<PortfolioContext> }>();
+
+  private load(portfolioId: string): Promise<PortfolioContext> {
+    const version = this.portfolioService.ledgerVersion(portfolioId);
+    const known = this.contexts.get(portfolioId);
+    if (known && known.version === version && Date.now() - known.at < CONTEXT_TTL_MS) return known.ctx;
+    const ctx = this.build(portfolioId);
+    const entry = { version, at: Date.now(), ctx };
+    this.contexts.set(portfolioId, entry);
+    // A failed build is not kept.
+    ctx.catch(() => {
+      if (this.contexts.get(portfolioId) === entry) this.contexts.delete(portfolioId);
+    });
+    return ctx;
+  }
+
+  private async build(portfolioId: string): Promise<PortfolioContext> {
     const row = portfolioRepo.findById(portfolioId);
     if (!row) throw new Error("Portfolio not found");
     const baseCurrency = row.baseCurrency || loadConfig().baseCurrency || "EUR";

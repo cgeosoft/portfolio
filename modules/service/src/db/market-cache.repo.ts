@@ -49,15 +49,15 @@ export function set<T = unknown>(key: string, data: T, ttlMs: number): void {
     const expiresAt = Date.now() + ttlMs;
     const serialized = toJson(data);
 
-    db.run(
+    // `query` keeps the compiled statement: a quote batch writes one row per symbol.
+    db.query(
       `INSERT INTO market_cache (key, data, updatedAt, expiresAt)
        VALUES (?, ?, ?, ?)
        ON CONFLICT(key) DO UPDATE SET
          data = excluded.data,
          updatedAt = excluded.updatedAt,
          expiresAt = excluded.expiresAt`,
-      [key, serialized, now, expiresAt],
-    );
+    ).run(key, serialized, now, expiresAt);
   } catch (err) {
     // The key can name a symbol (CLAUDE.md rule 3), so the log names its kind only.
     appLogger.logStep("warning", "db", "market_cache_set", `Failed to cache a "${key.split(":", 1)[0]}" entry`, undefined, {

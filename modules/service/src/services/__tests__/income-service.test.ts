@@ -74,7 +74,7 @@ const CALENDAR = {
 };
 
 function build(rates: () => Promise<Map<string, number>> = async () => new Map([["USD", 0.8]])) {
-  const portfolioService = { getPortfolioData: mock(async (_row: unknown, _base?: string) => DATA) };
+  const portfolioService = { getPortfolioData: mock(async (_row: unknown, _base?: string) => DATA), ledgerVersion: () => "0:0" };
   const calendar = {
     getCalendars: mock(async (symbols: string[], _opts: (s: string) => { earnings?: boolean }) => new Map(symbols.filter((s) => s === "ZQDIV").map((s) => [s, CALENDAR]))),
   };
