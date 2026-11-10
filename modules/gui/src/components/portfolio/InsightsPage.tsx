@@ -5,8 +5,9 @@ import { SidebarEntry, type SidebarSection } from "../settings/SettingsPrimitive
 import { ExposureCard } from "./ExposureCard";
 import { IncomeEventsCard } from "./IncomeEventsCard";
 import { MarketsCard } from "./MarketsCard";
+import type { InsightsSectionId } from "./insights-sections";
 
-export type InsightsSectionId = "exposure" | "income" | "markets";
+export { resolveInsightsSection, saveInsightsSection, savedInsightsSection, type InsightsSectionId } from "./insights-sections";
 
 /** The pages of the Insights sidebar, in the order they show. Labels are the card titles. */
 const SECTIONS: (SidebarSection & { id: InsightsSectionId })[] = [
@@ -14,35 +15,6 @@ const SECTIONS: (SidebarSection & { id: InsightsSectionId })[] = [
   { id: "income", labelKey: "dashboard.income.title", icon: Coins },
   { id: "markets", labelKey: "dashboard.markets.title", icon: Globe2 },
 ];
-
-const STORAGE_KEY = "portfolio_insights_section";
-/** The key of the release before the tab was named Insights. */
-const OLD_STORAGE_KEY = "portfolio_analysis_section";
-
-/** The section a URL part names (`#insights/<id>`), or null. */
-export function resolveInsightsSection(id: string | undefined): InsightsSectionId | null {
-  return SECTIONS.some((s) => s.id === id) ? (id as InsightsSectionId) : null;
-}
-
-/** The section last opened on this device, else the first one. */
-export function savedInsightsSection(): InsightsSectionId {
-  try {
-    const saved = resolveInsightsSection(localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(OLD_STORAGE_KEY) ?? undefined);
-    if (saved) return saved;
-  } catch {
-    // Storage blocked: open on the first page.
-  }
-  return SECTIONS[0]!.id;
-}
-
-/** Remembers the open section for the next start. */
-export function saveInsightsSection(id: InsightsSectionId): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, id);
-  } catch {
-    // Storage blocked: the choice lasts until the page closes.
-  }
-}
 
 interface InsightsPageProps {
   section: InsightsSectionId;

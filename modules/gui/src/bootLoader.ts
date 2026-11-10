@@ -1,5 +1,5 @@
-/** The shortest time the boot loader stays on screen, so a fast start does not flash it. */
-const MIN_VISIBLE_MS = 2000;
+/** The shortest time the boot loader stays on screen: long enough that a fast start does not flash it, short enough that it does not delay the first screen. */
+const MIN_VISIBLE_MS = 400;
 
 let hiding = false;
 

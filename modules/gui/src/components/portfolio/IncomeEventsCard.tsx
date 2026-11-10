@@ -66,22 +66,39 @@ function eventDetail(e: PortfolioEvent, currency: string, hideValues: boolean): 
   }
 }
 
+/**
+ * The last income and events of each portfolio, with the data stamp they were loaded for. The
+ * card shows them at once when it mounts again and reloads only when the portfolio data changed.
+ */
+const incomeCache = new Map<string, { income: PortfolioIncomeSummary; events: PortfolioEventsResponse; stamp: string | undefined }>();
+
 /** Dividend income of the next 12 months, yields, upcoming dividend, earnings and split dates, and split hints. */
 export function IncomeEventsCard({ portfolioId, currency = "EUR", hideValues = false, theme, refreshStamp }: IncomeEventsCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart<"bar"> | null>(null);
-  const [income, setIncome] = useState<PortfolioIncomeSummary | null>(null);
-  const [events, setEvents] = useState<PortfolioEventsResponse | null>(null);
+  const [income, setIncome] = useState<PortfolioIncomeSummary | null>(() => (portfolioId ? (incomeCache.get(portfolioId)?.income ?? null) : null));
+  const [events, setEvents] = useState<PortfolioEventsResponse | null>(() => (portfolioId ? (incomeCache.get(portfolioId)?.events ?? null) : null));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!portfolioId) return;
-    let cancelled = false;
-    setLoading(true);
+    const cached = incomeCache.get(portfolioId);
+    // Another portfolio: show its last data, or nothing, not the data of the one before.
+    setIncome(cached?.income ?? null);
+    setEvents(cached?.events ?? null);
     setError(null);
+    // The cached data belongs to the portfolio data on screen: nothing to load.
+    if (cached && refreshStamp !== undefined && cached.stamp === refreshStamp) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    // A reload in the background keeps the last data on screen, without the spinner.
+    setLoading(!cached);
     Promise.all([api.getPortfolioIncome(portfolioId), api.getPortfolioEvents(portfolioId, EVENT_DAYS)])
       .then(([incomeRes, eventsRes]) => {
+        incomeCache.set(portfolioId, { income: incomeRes, events: eventsRes, stamp: refreshStamp });
         if (cancelled) return;
         setIncome(incomeRes);
         setEvents(eventsRes);

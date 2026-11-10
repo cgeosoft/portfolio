@@ -56,13 +56,13 @@ describe("hideBootLoader", () => {
     expect(timers.length).toBe(0);
   });
 
-  it("keeps the loader up for at least 2000 ms", () => {
+  it("keeps the loader up for at least 400 ms", () => {
     current = element();
     dataset.bootShownAt = String(performance.now());
     hideBootLoader();
     expect(timers.length).toBe(1);
-    expect(timers[0].ms).toBeGreaterThan(1900);
-    expect(timers[0].ms).toBeLessThanOrEqual(2000);
+    expect(timers[0].ms).toBeGreaterThan(300);
+    expect(timers[0].ms).toBeLessThanOrEqual(400);
   });
 
   it("does not schedule twice while hiding", () => {

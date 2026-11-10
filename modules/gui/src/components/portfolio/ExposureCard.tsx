@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Layers, RefreshCw } from "lucide-react";
 import type { ExposureBreakdown, ExposureUnderlyingStock, PortfolioExposureResponse } from "portfolio-shared/api-types";
 import { DATA_PROVIDER_LABELS } from "portfolio-shared/config-types";
@@ -81,19 +81,30 @@ function StockRow({ stock, currency, hideValues }: { stock: ExposureUnderlyingSt
   );
 }
 
+/**
+ * The last exposure of each portfolio, with the data version it was loaded for. The card shows
+ * it at once when it mounts again and reloads only when the portfolio data changed.
+ */
+const exposureCache = new Map<string, { data: PortfolioExposureResponse; version: string | undefined }>();
+
 /** Sector, country, asset-class and underlying-stock exposure after ETF and fund look-through. */
 export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false, dataVersion }: ExposureCardProps) {
-  const [data, setData] = useState<PortfolioExposureResponse | null>(null);
+  const [data, setData] = useState<PortfolioExposureResponse | null>(() => (portfolioId ? (exposureCache.get(portfolioId)?.data ?? null) : null));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const versionRef = useRef(dataVersion);
+  versionRef.current = dataVersion;
 
   const load = useCallback(
     async (refresh: boolean, isCancelled: () => boolean = () => false) => {
       if (!portfolioId) return;
-      setLoading(true);
+      const version = versionRef.current;
+      // A reload in the background keeps the last data on screen. The spinner shows for a first load and for a rebuild.
+      if (refresh || !exposureCache.has(portfolioId)) setLoading(true);
       setError(null);
       try {
         const result = await api.getPortfolioExposure(portfolioId, refresh);
+        exposureCache.set(portfolioId, { data: result, version });
         if (!isCancelled()) setData(result);
       } catch (err) {
         if (!isCancelled()) setError(err instanceof Error ? err.message : t("dashboard.exposure.loadFailed"));
@@ -105,16 +116,21 @@ export function ExposureCard({ portfolioId, currency = "EUR", hideValues = false
   );
 
   useEffect(() => {
-    setData(null);
+    setData(portfolioId ? (exposureCache.get(portfolioId)?.data ?? null) : null);
+    setLoading(false);
   }, [portfolioId]);
 
   useEffect(() => {
+    if (!portfolioId) return;
+    // The cached exposure belongs to the portfolio data on screen: nothing to load.
+    const cached = exposureCache.get(portfolioId);
+    if (cached && dataVersion !== undefined && cached.version === dataVersion) return;
     let cancelled = false;
     void load(false, () => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [load, dataVersion]);
+  }, [portfolioId, load, dataVersion]);
 
   const sourceNote = data && data.sources.length > 0 ? data.sources.map((s) => DATA_PROVIDER_LABELS[s] ?? s).join(", ") : null;
   const cur = data?.baseCurrency || currency;

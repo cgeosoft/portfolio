@@ -4,6 +4,7 @@ import { openExternal, VENDOR_URL } from "../../environment";
 import { formatTimeAgo } from "../portfolio/utils";
 import { PortfolioDot } from "../portfolio/portfolioColor";
 import { getLocale, t } from "../../i18n";
+import { setVisibleInterval } from "../../visibility";
 
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 
@@ -44,10 +45,9 @@ export function BottomBar({
   // Update relative time periodically
   useEffect(() => {
     setRelativeTime(formatTimeAgo(lastQuotesSync));
-    const interval = setInterval(() => {
+    return setVisibleInterval(() => {
       setRelativeTime(formatTimeAgo(lastQuotesSync));
     }, 30000);
-    return () => clearInterval(interval);
   }, [lastQuotesSync]);
 
   const handleOpenCgeosoft = useCallback(() => {

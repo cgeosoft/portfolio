@@ -100,6 +100,12 @@ function elementsOf(nodes: readonly AnalysisNode[], edges: readonly AnalysisEdge
 
 const edgeOpacity = (data: { type?: string; tree?: number }) => (data.type === "contradicts" ? CONTRADICTION_OPACITY : data.tree ? TREE_EDGE_OPACITY : CROSS_EDGE_OPACITY);
 
+/** True when every field of `next` already has the same value on the element. */
+function sameElementData(current: Record<string, unknown>, next: Record<string, unknown>): boolean {
+  for (const key in next) if (current[key] !== next[key]) return false;
+  return true;
+}
+
 export function AnalysisGraph({ nodes, edges, selectedId, onSelect, highlight, hiddenKinds }: AnalysisGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ringsRef = useRef<SVGGElement>(null);
@@ -388,8 +394,10 @@ export function AnalysisGraph({ nodes, edges, selectedId, onSelect, highlight, h
     let grew = opened;
     cy.batch(() => {
       cy.elements().forEach((el) => {
-        if (wanted.has(el.id())) el.data(wanted.get(el.id())!.data);
-        else el.remove();
+        const next = wanted.get(el.id());
+        if (!next) el.remove();
+        // Setting data restyles the element, so only changed data is written.
+        else if (!sameElementData(el.data() as Record<string, unknown>, next.data as Record<string, unknown>)) el.data(next.data);
       });
     });
 

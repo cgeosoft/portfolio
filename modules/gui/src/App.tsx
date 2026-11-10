@@ -12,20 +12,18 @@ import { PortfolioChartCard } from "./components/portfolio/PortfolioChartCard";
 import { AllocationCard } from "./components/portfolio/AllocationCard";
 import { HoldingsTableCard } from "./components/portfolio/HoldingsTableCard";
 import {
-  InsightsPage,
   resolveInsightsSection,
   saveInsightsSection,
   savedInsightsSection,
   type InsightsSectionId,
-} from "./components/portfolio/InsightsPage";
+} from "./components/portfolio/insights-sections";
 import {
-  AnalysisTab,
   GUIDED_FILL_SECTIONS,
   resolveGuidedSection,
   saveGuidedSection,
   savedGuidedSection,
   type GuidedSectionId,
-} from "./components/analysis/AnalysisTab";
+} from "./components/analysis/guided-sections";
 import { SuggestedActionsCard } from "./components/analysis/SuggestedActionsCard";
 import { TransactionsCard } from "./components/portfolio/TransactionsCard";
 import { SETUP_STEP_AFTER_TERMS, type SetupStep } from "./components/common/setup-steps";
@@ -37,7 +35,6 @@ import { WebsitePage, type WebsitePageId } from "./components/common/WebsitePage
 import { BottomBar } from "./components/layout/BottomBar";
 import type { MetricKey } from "./components/portfolio/MetricInfoModal";
 import { MetricDashboard } from "./components/metrics/MetricDashboard";
-import { MetricsTab } from "./components/metrics/MetricsTab";
 import { AssistantSidebar } from "./components/portfolio/AssistantSidebar";
 import { HoldingLinksHost } from "./components/portfolio/holding-links";
 import { reloadPage } from "./components/portfolio/utils";
@@ -61,6 +58,7 @@ import { api, setUnauthorizedHandler } from "./api";
 import { LockScreen } from "./components/common/LockScreen";
 import { APP_VERSION } from "./environment";
 import { hideBootLoader } from "./bootLoader";
+import { isPageHidden, setVisibleInterval } from "./visibility";
 import {
   getDefaultMetricPreferences,
   type PortfolioMetricPreference,
@@ -70,6 +68,10 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 // The largest views that most sessions never open load on first use, not with the app.
 const SettingsPage = lazy(() => import("./components/settings/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 const ManagePortfoliosPage = lazy(() => import("./components/portfolio/ManagePortfoliosPage").then((m) => ({ default: m.ManagePortfoliosPage })));
+// The Insights and Analysis tabs and the Metrics page load when they first show.
+const InsightsPage = lazy(() => import("./components/portfolio/InsightsPage").then((m) => ({ default: m.InsightsPage })));
+const AnalysisTab = lazy(() => import("./components/analysis/AnalysisTab").then((m) => ({ default: m.AnalysisTab })));
+const MetricsTab = lazy(() => import("./components/metrics/MetricsTab").then((m) => ({ default: m.MetricsTab })));
 const ImportCsvPage = lazy(() => import("./components/portfolio/ImportCsvPage").then((m) => ({ default: m.ImportCsvPage })));
 // Dialogs load on their first open and stay mounted after it, so they keep their state when closed.
 const PrivacyPromptModal = lazy(() => import("./components/common/PrivacyPromptModal").then((m) => ({ default: m.PrivacyPromptModal })));
@@ -113,6 +115,11 @@ function useOpenedOnce(open: boolean): boolean {
  * for new quotes.
  */
 type LoadMode = "initial" | "reload" | "refresh";
+
+/** The zoom levels a zoom step moves between. */
+const ZOOM_STEPS: readonly number[] = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
+/** The shortest time between two zoom steps of the mouse wheel. */
+const WHEEL_ZOOM_STEP_MS = 100;
 
 const VALID_TABS: readonly string[] = ["overview", "insights", "analysis", "transactions"];
 /** localStorage key of the open tab. */
@@ -407,8 +414,22 @@ export default function App() {
     return 1.0;
   });
 
+  // The zoom on screen. A handler reads it here, so two steps before the next render both count.
+  const zoomRef = useRef(zoomLevel);
+  zoomRef.current = zoomLevel;
+  const zoomSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (zoomSaveTimerRef.current) clearTimeout(zoomSaveTimerRef.current);
+    },
+    [],
+  );
+
+  /** Shows the zoom and stores it. A series of steps sends one save to the settings, 500 ms after the last step. */
   const applyZoom = useCallback((zoom: number) => {
     const clamped = Math.min(2.5, Math.max(0.5, Math.round(zoom * 100) / 100));
+    zoomRef.current = clamped;
+    setZoomLevel(clamped);
     if (typeof document !== "undefined") {
       document.documentElement.style.zoom = String(clamped);
       if (typeof window !== "undefined") {
@@ -418,7 +439,11 @@ export default function App() {
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("portfolio_zoom_level", String(clamped));
     }
-    rpc.request.saveConfig({ zoomLevel: clamped }).catch(() => {});
+    if (zoomSaveTimerRef.current) clearTimeout(zoomSaveTimerRef.current);
+    zoomSaveTimerRef.current = setTimeout(() => {
+      zoomSaveTimerRef.current = null;
+      rpc.request.saveConfig({ zoomLevel: clamped }).catch(() => {});
+    }, 500);
   }, []);
 
   // Show the saved zoom at once; the config load may still change it.
@@ -428,33 +453,23 @@ export default function App() {
   }, []);
 
   const handleZoomIn = useCallback(() => {
-    const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
-    setZoomLevel((prev) => {
-      const next = zoomSteps.find((lvl) => lvl > prev + 0.01) ?? 2.5;
-      const target = Math.min(2.5, Math.round(next * 100) / 100);
-      applyZoom(target);
-      return target;
-    });
+    const prev = zoomRef.current;
+    const next = ZOOM_STEPS.find((lvl) => lvl > prev + 0.01) ?? 2.5;
+    if (next !== prev) applyZoom(next);
   }, [applyZoom]);
 
   const handleZoomOut = useCallback(() => {
-    const zoomSteps = [0.5, 0.67, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5];
-    setZoomLevel((prev) => {
-      const smaller = zoomSteps.filter((lvl) => lvl < prev - 0.01);
-      const next = smaller.length > 0 ? smaller[smaller.length - 1]! : 0.5;
-      const target = Math.max(0.5, Math.round(next * 100) / 100);
-      applyZoom(target);
-      return target;
-    });
+    const prev = zoomRef.current;
+    const smaller = ZOOM_STEPS.filter((lvl) => lvl < prev - 0.01);
+    const next = smaller.length > 0 ? smaller[smaller.length - 1]! : 0.5;
+    if (next !== prev) applyZoom(next);
   }, [applyZoom]);
 
   const handleZoomReset = useCallback(() => {
-    setZoomLevel(1.0);
     applyZoom(1.0);
   }, [applyZoom]);
 
   const handleZoomSet = useCallback((zoom: number) => {
-    setZoomLevel(Math.min(2.5, Math.max(0.5, Math.round(zoom * 100) / 100)));
     applyZoom(zoom);
   }, [applyZoom]);
 
@@ -564,11 +579,23 @@ export default function App() {
     }
   }, [openConversation]);
 
+  // The conversations load when the sidebar first opens, and on a portfolio switch only while
+  // it is open. A switch with the sidebar closed drops the list of the portfolio before.
+  const conversationsLoadedForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (activePortfolioId) {
+    if (!activePortfolioId || conversationsLoadedForRef.current === activePortfolioId) return;
+    if (isAssistantOpen) {
+      conversationsLoadedForRef.current = activePortfolioId;
       void loadConversations(activePortfolioId);
+    } else if (conversationsLoadedForRef.current) {
+      conversationsLoadedForRef.current = null;
+      conversationOpenRef.current++;
+      setConversations([]);
+      setCurrentConversationId(null);
+      setChatMessages([]);
+      setChatError(null);
     }
-  }, [activePortfolioId, loadConversations]);
+  }, [activePortfolioId, isAssistantOpen, loadConversations]);
 
   const handleToggleAssistant = useCallback(() => {
     setIsAssistantOpen((prev) => {
@@ -838,6 +865,8 @@ export default function App() {
     document.title = ["Portfolio", activePortfolioName, isDevMode ? "Dev" : undefined].filter(Boolean).join(" | ");
   }, [activePortfolioName, isDevMode]);
   const [quotesIntervalMins, setQuotesIntervalMins] = useState<number | undefined>(undefined);
+  /** Set once the first config request has answered or failed. */
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
 
@@ -1094,11 +1123,16 @@ export default function App() {
     retries = 3,
     delayMs = 250,
     attemptTimeoutMs = 3500,
+    /** Aborts the running attempt and stops the retries: the caller no longer wants the answer. */
+    cancel?: AbortSignal,
   ): Promise<T> => {
     let lastError: unknown;
     for (let i = 0; i < retries; i++) {
+      if (cancel?.aborted) throw cancel.reason;
       const attemptStart = performance.now();
       const attempt = new AbortController();
+      const onCancel = () => attempt.abort(cancel?.reason);
+      cancel?.addEventListener("abort", onCancel, { once: true });
       const timer = setTimeout(
         () => attempt.abort(new Error(`RPC "${name}" attempt timed out after ${attemptTimeoutMs}ms`)),
         attemptTimeoutMs,
@@ -1124,12 +1158,15 @@ export default function App() {
         );
         return res;
       } catch (err) {
+        // A cancelled call is not a failure: no retry and no log line.
+        if (cancel?.aborted) throw err;
         const dur = Math.round(performance.now() - attemptStart);
         lastError = err;
         const msg = err instanceof Error ? err.message : String(err);
         clientLogger.log("warning", `${name}:retry`, `RPC "${name}" attempt ${i + 1}/${retries} failed after ${dur}ms: ${msg}`, dur);
       } finally {
         clearTimeout(timer);
+        cancel?.removeEventListener("abort", onCancel);
       }
       if (i < retries - 1) {
         await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
@@ -1143,8 +1180,11 @@ export default function App() {
   // Check setup status and load initial config on mount
   useEffect(() => {
     const initApp = async () => {
-      clientLogger.log("info", "initApp:start", "Initializing application config and system info");
+      clientLogger.log("debug", "initApp:start", "Initializing application config and system info");
       await ensureRpcReady();
+      // The app info and the update check do not depend on the config: all three run together.
+      const appInfoTask = loadAppInfo();
+      const updateTask = loadUpdateInfo();
       try {
         const config = await callWithRetry<DesktopConfig>("getConfig", (signal) => rpc.request.getConfig({ signal }), 3, 200, 3000);
         if (config.baseCurrency) setCurrency(config.baseCurrency);
@@ -1186,8 +1226,14 @@ export default function App() {
       } catch (e) {
         clientLogger.log("error", "initApp:config_error", `Failed to load initial config: ${e}`);
         console.error("Failed to load initial config:", e);
+      } finally {
+        // The base currency is known, or the config failed: the portfolio data can load.
+        setConfigLoaded(true);
       }
+      await Promise.all([appInfoTask, updateTask]);
+    };
 
+    const loadAppInfo = async () => {
       try {
         const appInfo = await callWithRetry<GetAppInfoResponse>("getAppInfo", (signal) => rpc.request.getAppInfo({ signal }), 3, 200, 3000);
         if (appInfo.version && appInfo.version !== "0.0.0") setAppVersion(appInfo.version);
@@ -1200,7 +1246,9 @@ export default function App() {
         clientLogger.log("error", "initApp:appInfo_error", `Failed to load app info: ${e}`);
         console.error("Failed to load app info:", e);
       }
+    };
 
+    const loadUpdateInfo = async () => {
       try {
         // Trigger a fresh update check on startup, not just read cached info
         const uInfo = await rpc.request.checkForUpdates({ force: false });
@@ -1220,15 +1268,19 @@ export default function App() {
   }, []);
 
   // Load portfolios list
+  // The list load reads the active portfolio from a ref: choosing a portfolio does not load the list again.
+  const activePortfolioIdRef = useRef(activePortfolioId);
+  activePortfolioIdRef.current = activePortfolioId;
   const loadPortfolios = useCallback(async () => {
     try {
-      clientLogger.log("info", "loadPortfolios:start", "Loading portfolios list from database");
+      clientLogger.log("debug", "loadPortfolios:start", "Loading portfolios list from database");
       await ensureRpcReady();
       const data = await callWithRetry<GetPortfoliosResponse>("getPortfolios", (signal) => rpc.request.getPortfolios({ signal }), 3, 200, 3000);
       const list: PortfolioItem[] = data.portfolios || [];
       setPortfolios(list);
+      const activePortfolioId = activePortfolioIdRef.current;
       // Ids only: portfolio names are personal data and stay out of the logs.
-      clientLogger.log("info", "loadPortfolios:received", `Received ${list.length} portfolio(s)`, undefined, {
+      clientLogger.log("debug", "loadPortfolios:received", `Received ${list.length} portfolio(s)`, undefined, {
         portfolioIds: list.map((p) => p.id),
         activePortfolioId,
       });
@@ -1240,6 +1292,7 @@ export default function App() {
 
         if (targetId !== activePortfolioId) {
           clientLogger.log("info", "loadPortfolios:select_active", `Setting active portfolio to ${targetId}`);
+          activePortfolioIdRef.current = targetId;
           setActivePortfolioId(targetId);
           if (typeof localStorage !== "undefined") {
             localStorage.setItem("selected_portfolio_id", targetId);
@@ -1261,7 +1314,7 @@ export default function App() {
     } finally {
       setPortfoliosLoaded(true);
     }
-  }, [activePortfolioId]);
+  }, []);
 
   useEffect(() => {
     if (authState === "ready") loadPortfolios();
@@ -1288,13 +1341,31 @@ export default function App() {
     );
   }, [suggestions, activePortfolioId, portfolioData]);
 
-  // Fetch portfolio data
+  // Fetch portfolio data. A newer call wins: it aborts the request of the call before, and the
+  // older call changes no state when it returns.
+  const loadTicketRef = useRef(0);
+  /** The abort handle of the load in flight, or null when none runs. */
+  const loadAbortRef = useRef<AbortController | null>(null);
+  /** Drops the load in flight without a new one, for example when no portfolio is left. */
+  const cancelLoad = useCallback(() => {
+    loadTicketRef.current++;
+    loadAbortRef.current?.abort(new Error("Superseded"));
+    loadAbortRef.current = null;
+    setIsLoading(false);
+    setIsRefreshing(false);
+  }, []);
   const loadData = useCallback(
     async (mode: LoadMode = "initial") => {
       if (!activePortfolioId) {
         clientLogger.log("warning", "loadData:skipped", "loadData called but activePortfolioId is null");
         return;
       }
+      const ticket = ++loadTicketRef.current;
+      const isCurrent = () => ticket === loadTicketRef.current;
+      loadAbortRef.current?.abort(new Error("Superseded by a newer load"));
+      const abort = new AbortController();
+      loadAbortRef.current = abort;
+
       // A reload after an edit or a refresh keeps the data on screen and shows the refresh spinner.
       const inBackground = mode !== "initial";
       if (inBackground) setIsRefreshing(true);
@@ -1302,7 +1373,7 @@ export default function App() {
 
       const loadStart = performance.now();
       clientLogger.log(
-        "info",
+        "debug",
         "loadData:start",
         `Loading portfolio data (id=${activePortfolioId}, currency=${currency}, mode=${mode})`,
       );
@@ -1310,6 +1381,7 @@ export default function App() {
       setLoadError(null);
       try {
         await ensureRpcReady();
+        if (!isCurrent()) return;
         const data = await callWithRetry<FinancialPortfolioData>(
           `getPortfolioData:${activePortfolioId.slice(0, 8)}`,
           (signal) =>
@@ -1324,13 +1396,15 @@ export default function App() {
           2,
           250,
           30000,
+          abort.signal,
         );
+        if (!isCurrent()) return;
         const dur = Math.round(performance.now() - loadStart);
         setPortfolioData(data);
         setLoadError(null);
         // Counts only: balances never go to the logs.
         clientLogger.log(
-          "success",
+          "debug",
           "loadData:success",
           `Portfolio data loaded (${data.holdings?.length ?? 0} holdings) in ${dur}ms`,
           dur,
@@ -1346,6 +1420,7 @@ export default function App() {
           }
         }
       } catch (e) {
+        if (!isCurrent()) return;
         const dur = Math.round(performance.now() - loadStart);
         const errMsg = e instanceof Error ? e.message : String(e);
         clientLogger.log(
@@ -1357,8 +1432,11 @@ export default function App() {
         console.error("Error loading portfolio data:", e);
         setLoadError(errMsg);
       } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        if (isCurrent()) {
+          loadAbortRef.current = null;
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
       void loadSuggestions();
     },
@@ -1387,11 +1465,26 @@ export default function App() {
     }
   }, [activePortfolioId, loadData]);
 
+  // The first load waits for the config: its base currency replaces the start value of
+  // `currency`, and a load before it would run a second time.
   useEffect(() => {
+    if (!configLoaded) return;
     if (activePortfolioId) {
       loadData();
+    } else {
+      cancelLoad();
     }
-  }, [activePortfolioId, currency, loadData]);
+  }, [configLoaded, activePortfolioId, currency, loadData, cancelLoad]);
+
+  // The App is gone: the request in flight has no reader.
+  useEffect(
+    () => () => {
+      loadTicketRef.current++;
+      loadAbortRef.current?.abort(new Error("Unmounted"));
+      loadAbortRef.current = null;
+    },
+    [],
+  );
 
   // Background quotes refresh timer based on configured interval. The interval comes from the
   // config initApp loads and from Settings (CONFIG_CHANGED_EVENT below); the timer calls the
@@ -1400,17 +1493,21 @@ export default function App() {
   loadDataRef.current = loadData;
   useEffect(() => {
     if (authState !== "ready" || !quotesIntervalMins || quotesIntervalMins <= 0) return;
-    const timer = setInterval(() => {
+    // A hidden window skips its ticks, and one refresh runs when it shows again after a skipped
+    // tick. A tick also does nothing while a load or a refresh already runs.
+    const loadRunning = () => isSyncingRef.current || loadAbortRef.current !== null;
+    return setVisibleInterval(() => {
+      if (loadRunning()) return;
       // Timed refresh only: skip it while every market of the holdings is closed. A manual refresh never asks.
       void api
         .getMarketStatus()
         .catch(() => null)
         .then((status) => {
           if (status && !status.anyOpen) return;
+          if (loadRunning() || isPageHidden()) return;
           void loadDataRef.current("refresh");
         });
     }, quotesIntervalMins * 60 * 1000);
-    return () => clearInterval(timer);
   }, [authState, quotesIntervalMins]);
 
   // Catalog settings saved in Settings apply here without a reload.
@@ -1548,12 +1645,12 @@ export default function App() {
         const onRelease = (up: KeyboardEvent) => {
           if (up.key !== "Control" && up.key !== "Meta") return;
           window.removeEventListener("keyup", onRelease, true);
-          window.removeEventListener("blur-sm", onBlur);
+          window.removeEventListener("blur", onBlur);
           setTimeout(handleReload, 0);
         };
         const onBlur = () => {
           window.removeEventListener("keyup", onRelease, true);
-          window.removeEventListener("blur-sm", onBlur);
+          window.removeEventListener("blur", onBlur);
         };
         window.addEventListener("keyup", onRelease, true);
         window.addEventListener("blur", onBlur);
@@ -1618,9 +1715,14 @@ export default function App() {
 
   // Mouse Wheel Zoom (Ctrl + Wheel)
   useEffect(() => {
+    let lastStepAt = 0;
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
+        // A wheel or a touchpad sends many events for one gesture: one zoom step per 100 ms.
+        const now = performance.now();
+        if (now - lastStepAt < WHEEL_ZOOM_STEP_MS) return;
+        lastStepAt = now;
         if (e.deltaY < 0) {
           handleZoomIn();
         } else if (e.deltaY > 0) {
@@ -1635,7 +1737,7 @@ export default function App() {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     if (isLoading && !portfolioData) {
-      clientLogger.log("info", "sync_screen:shown", "Showing 'Synchronizing Portfolio & Market Quotes...' overlay");
+      clientLogger.log("debug", "sync_screen:shown", "Showing 'Synchronizing Portfolio & Market Quotes...' overlay");
       timer = setTimeout(() => {
         clientLogger.log("warning", "sync_screen:slow_warning", "Market data fetch exceeded 3500ms, showing 'Continue Offline' prompt");
         setLoadingSlowWarning(true);
@@ -1888,6 +1990,7 @@ export default function App() {
   const transactions = portfolioData?.transactions || [];
 
   const metricsPage = (
+    <Suspense fallback={<PageLoading />}>
     <MetricsTab
       portfolioId={activePortfolioId || null}
       portfolioName={activePortfolio?.name}
@@ -1905,6 +2008,7 @@ export default function App() {
       onUninstall={handleMetricUninstall}
       onRetry={handleMetricRetry}
     />
+    </Suspense>
   );
 
   return (
@@ -2140,6 +2244,7 @@ export default function App() {
 
           {/* TAB: INSIGHTS (exposure, income and events, markets; one at a time) */}
           {activeTab === "insights" && (
+            <Suspense fallback={<PageLoading />}>
             <InsightsPage
               section={insightsSection}
               onSectionChange={handleInsightsSectionChange}
@@ -2149,10 +2254,12 @@ export default function App() {
               theme={theme}
               dataVersion={summary?.lastUpdated}
             />
+            </Suspense>
           )}
 
           {/* TAB: ANALYSIS (Guided Analysis runs, suggestions) */}
           {activeTab === "analysis" && (
+            <Suspense fallback={<PageLoading />}>
             <AnalysisTab
               section={guidedSection}
               onSectionChange={handleGuidedSectionChange}
@@ -2166,6 +2273,7 @@ export default function App() {
               onSuggestionsChange={setSuggestions}
               onOpenSettings={() => handleOpenSettings("assistant")}
             />
+            </Suspense>
           )}
 
           {/* TAB: TRANSACTIONS */}

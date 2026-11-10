@@ -4,6 +4,7 @@ import type { AutomationStatus, DailyBriefDays, DesktopConfig, NotificationChann
 import type { PortfolioItem } from "portfolio-shared/portfolio";
 import { api } from "../../api";
 import { getLocale, t } from "../../i18n";
+import { setVisibleInterval } from "../../visibility";
 import { Select } from "../common/Select";
 import { SectionHeader, SettingItem, Toggle } from "./SettingsFields";
 import { ChoiceButton, StatusLine, type StatusResult } from "./SettingsPrimitives";
@@ -151,8 +152,7 @@ function AutomationCard({ def, config, onConfigChange, portfolios, onOpenPhoneSe
 
   useEffect(() => {
     loadStatus();
-    const timer = setInterval(loadStatus, STATUS_POLL_MS);
-    return () => clearInterval(timer);
+    return setVisibleInterval(loadStatus, STATUS_POLL_MS);
   }, [loadStatus]);
 
   const save = async (updates: Partial<DesktopConfig>) => {

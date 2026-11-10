@@ -69,6 +69,16 @@ function benchmarkName(symbol: string): string {
   return BENCHMARK_OPTIONS.find((o) => o.symbol === symbol)?.label ?? symbol;
 }
 
+/** How long the benchmark history of one symbol and range serves from memory. */
+const BENCHMARK_CACHE_MS = 10 * 60 * 1000;
+/** Benchmark points by symbol and range, so opening Overview again does not fetch them again. */
+const benchmarkCache = new Map<string, { points: BenchmarkPoint[]; at: number }>();
+/**
+ * The benchmark and timeframe of the last mount. A new mount starts from them, so the benchmark
+ * request does not wait for the settings. The settings still load and win when they differ.
+ */
+let lastChartChoice: { benchmark: string; range: Timeframe } | null = null;
+
 export function PortfolioChartCard({
   chartHistory,
   currency = "EUR",
@@ -80,15 +90,16 @@ export function PortfolioChartCard({
   const zeroLineColorRef = useRef("");
   // The timeframe lives in the settings (`chartRange`): localStorage does not
   // survive a restart, since the service picks a new port and origin each time.
-  const [range, setRange] = useState<Timeframe>("1y");
+  const [range, setRange] = useState<Timeframe>(() => lastChartChoice?.range ?? "1y");
 
   const handleSelectRange = (r: Timeframe) => {
     setRange(r);
+    if (lastChartChoice) lastChartChoice = { ...lastChartChoice, range: r };
     api.saveConfig({ chartRange: r }).catch((err) => console.warn("Could not save the chart range:", err));
   };
 
   // Benchmark overlay: the choice lives in the settings (`benchmarkSymbol`).
-  const [benchmark, setBenchmark] = useState<string>(NO_BENCHMARK);
+  const [benchmark, setBenchmark] = useState<string>(() => lastChartChoice?.benchmark ?? NO_BENCHMARK);
   const [benchmarkPoints, setBenchmarkPoints] = useState<BenchmarkPoint[] | null>(null);
 
   useEffect(() => {
@@ -97,8 +108,11 @@ export function PortfolioChartCard({
       .getConfig()
       .then((cfg) => {
         if (cancelled) return;
-        setBenchmark(cfg.benchmarkSymbol || DEFAULT_BENCHMARK_SYMBOL);
-        if ((VALID_TIMEFRAMES as readonly string[]).includes(cfg.chartRange)) setRange(cfg.chartRange as Timeframe);
+        const symbol = cfg.benchmarkSymbol || DEFAULT_BENCHMARK_SYMBOL;
+        const savedRange = (VALID_TIMEFRAMES as readonly string[]).includes(cfg.chartRange) ? (cfg.chartRange as Timeframe) : null;
+        lastChartChoice = { benchmark: symbol, range: savedRange ?? lastChartChoice?.range ?? "1y" };
+        setBenchmark(symbol);
+        if (savedRange) setRange(savedRange);
       })
       .catch(() => {
         if (!cancelled) setBenchmark(DEFAULT_BENCHMARK_SYMBOL);
@@ -111,6 +125,7 @@ export function PortfolioChartCard({
   const handleSelectBenchmark = (symbol: string) => {
     setBenchmark(symbol);
     setBenchmarkPoints(null);
+    if (lastChartChoice) lastChartChoice = { ...lastChartChoice, benchmark: symbol };
     api.saveConfig({ benchmarkSymbol: symbol }).catch((err) => console.warn("Could not save the benchmark choice:", err));
   };
 
@@ -122,10 +137,17 @@ export function PortfolioChartCard({
       setBenchmarkPoints(null);
       return;
     }
+    const key = `${benchmark}|${historyRange}`;
+    const cached = benchmarkCache.get(key);
+    if (cached && Date.now() - cached.at < BENCHMARK_CACHE_MS) {
+      setBenchmarkPoints(cached.points);
+      return;
+    }
     let cancelled = false;
     api
       .getBenchmarkHistory(benchmark, historyRange)
       .then((res) => {
+        benchmarkCache.set(key, { points: res.points, at: Date.now() });
         if (!cancelled) setBenchmarkPoints(res.points);
       })
       .catch(() => {

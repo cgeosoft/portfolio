@@ -16,6 +16,7 @@ import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
 import { compareSuggestions, evaluateSuggestion, marketForSymbol, type PortfolioSuggestion } from "portfolio-shared/suggestions";
 import { api } from "../../api";
 import { t } from "../../i18n";
+import { setVisibleInterval } from "../../visibility";
 import { showToast } from "../common/Toaster";
 import { HoldingLink } from "../portfolio/holding-links";
 import { formatTimeAgo } from "../portfolio/utils";
@@ -77,8 +78,7 @@ export function SuggestedActionsCard({ portfolioId, portfolioName, portfolioData
 
   useEffect(() => {
     if (!activeRunId) return;
-    const timer = setInterval(() => void loadRuns(), POLL_MS);
-    return () => clearInterval(timer);
+    return setVisibleInterval(() => void loadRuns(), POLL_MS);
   }, [activeRunId, loadRuns]);
 
   const holdings = useMemo(() => portfolioData?.holdings ?? [], [portfolioData]);

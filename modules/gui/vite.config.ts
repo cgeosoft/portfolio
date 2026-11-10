@@ -14,5 +14,18 @@ export default defineConfig(() => {
       __APP_VERSION__: JSON.stringify(rootPkg.version),
     },
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          // The libraries change less often than the app code, so they get their own files.
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return undefined;
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return "vendor-react";
+            if (/[\\/]node_modules[\\/](chart\.js|@kurkle[\\/]color)[\\/]/.test(id)) return "vendor-chart";
+            return undefined;
+          },
+        },
+      },
+    },
   };
 });

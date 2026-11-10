@@ -208,20 +208,36 @@ function CalendarPanel({ calendar }: { calendar: MacroSnapshot["calendar"] }) {
   );
 }
 
+/**
+ * The last macro snapshot of each base currency, with the data stamp it was loaded for. The page
+ * shows it at once when it mounts again and reloads only when the portfolio data changed.
+ */
+const macroCache = new Map<string, { data: MacroSnapshot; stamp: string | undefined }>();
+
 /** The Markets page of Analysis: Treasury yields, sector moves and the next economic releases, each a full-width card. */
 export function MarketsCard({ baseCurrency, refreshStamp }: MarketsCardProps) {
-  const [data, setData] = useState<MacroSnapshot | null>(null);
+  const cacheKey = baseCurrency ?? "";
+  const [data, setData] = useState<MacroSnapshot | null>(() => macroCache.get(cacheKey)?.data ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // The service keeps the snapshot for a few minutes, so a timed quote refresh does not hit the providers each time.
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+    const cached = macroCache.get(cacheKey);
+    setData(cached?.data ?? null);
     setError(null);
+    // The cached snapshot belongs to the portfolio data on screen: nothing to load.
+    if (cached && refreshStamp !== undefined && cached.stamp === refreshStamp) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    // A reload in the background keeps the last snapshot on screen, without the spinner.
+    setLoading(!cached);
     api
       .getMacroSnapshot(baseCurrency)
       .then((result) => {
+        macroCache.set(cacheKey, { data: result, stamp: refreshStamp });
         if (!cancelled) setData(result);
       })
       .catch((err: unknown) => {
@@ -233,7 +249,7 @@ export function MarketsCard({ baseCurrency, refreshStamp }: MarketsCardProps) {
     return () => {
       cancelled = true;
     };
-  }, [baseCurrency, refreshStamp]);
+  }, [baseCurrency, cacheKey, refreshStamp]);
 
   const sources = data
     ? Array.from(

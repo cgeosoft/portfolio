@@ -31,6 +31,7 @@ import {
 import { api } from "../../api";
 import { showToast } from "../common/Toaster";
 import { getLocale, t } from "../../i18n";
+import { setVisibleInterval } from "../../visibility";
 import { fmtCurrency, formatTimeAgo } from "./utils";
 import { HoldingLink } from "./holding-links";
 
@@ -152,8 +153,7 @@ export function SuggestionsPage({ portfolioId, portfolioData, currency, hideValu
   const running = data?.generation.status === "running";
   useEffect(() => {
     if (!running) return;
-    const timer = setInterval(() => void load(), POLL_MS);
-    return () => clearInterval(timer);
+    return setVisibleInterval(() => void load(), POLL_MS);
   }, [running, load]);
 
   const generate = async () => {

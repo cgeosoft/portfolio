@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { PortfolioDataWarning, PortfolioHolding, PortfolioSummary } from "portfolio-shared/portfolio";
 import { fmtCurrency, fmtPercent, getRsiZone, getAssetTypeBadgeClass } from "./utils";
@@ -49,6 +49,10 @@ function assetTypeLabel(type: string): string {
   return key ? t(`dashboard.assetTypes.${key}`) : type;
 }
 
+function isCashHolding(h: PortfolioHolding): boolean {
+  return Boolean(h.assetType === "Cash" || h.symbol === "CASH" || h.name?.toLowerCase().includes("liquidity") || h.name?.toLowerCase().includes("cash"));
+}
+
 export function HoldingsTableCard({
   holdings,
   currency = "EUR",
@@ -63,7 +67,7 @@ export function HoldingsTableCard({
   const [priceHolding, setPriceHolding] = useState<PortfolioHolding | null>(null);
   const [resolving, setResolving] = useState(false);
 
-  const isinOnlyCount = holdings.filter((h) => !h.isPrivate && showsIsin(h)).length;
+  const isinOnlyCount = useMemo(() => holdings.filter((h) => !h.isPrivate && showsIsin(h)).length, [holdings]);
 
   const handleResolveSymbols = async () => {
     if (!portfolioId || resolving) return;
@@ -128,62 +132,54 @@ export function HoldingsTableCard({
     }
   };
 
-  const isCashHolding = (h: PortfolioHolding) =>
-    h.assetType === "Cash" ||
-    h.symbol === "CASH" ||
-    h.name?.toLowerCase().includes("liquidity") ||
-    h.name?.toLowerCase().includes("cash");
-
-  const investedHoldings = holdings.filter((h) => !isCashHolding(h));
-  let cashHoldings = holdings.filter(isCashHolding);
-
+  // The split into invested and cash rows changes only with the holdings or the cash balance.
   const cashBalance = summary?.cashBalance ?? 0;
-  if (cashHoldings.length === 0 && cashBalance > 0) {
-    cashHoldings = [
-      {
-        symbol: "CASH",
-        name: t("dashboard.availableLiquidity", { currency }),
-        assetType: "Cash",
-        shares: cashBalance,
-        buyPrice: 1,
-        currentPrice: 1,
-        previousClose: 1,
-        totalCost: cashBalance,
-        currentValue: cashBalance,
-        dayChangeDollar: 0,
-        dayChangePercent: 0,
-        totalGainLossDollar: 0,
-        totalGainLossPercent: 0,
-        weightPercent: summary?.cashWeightPercent ?? 0,
-        currency,
-      },
-    ];
-  }
+  const cashWeightPercent = summary?.cashWeightPercent ?? 0;
+  const { investedHoldings, cashHoldings } = useMemo(() => {
+    const invested: PortfolioHolding[] = [];
+    let cash: PortfolioHolding[] = [];
+    for (const h of holdings) (isCashHolding(h) ? cash : invested).push(h);
+    if (cash.length === 0 && cashBalance > 0) {
+      cash = [
+        {
+          symbol: "CASH",
+          name: t("dashboard.availableLiquidity", { currency }),
+          assetType: "Cash",
+          shares: cashBalance,
+          buyPrice: 1,
+          currentPrice: 1,
+          previousClose: 1,
+          totalCost: cashBalance,
+          currentValue: cashBalance,
+          dayChangeDollar: 0,
+          dayChangePercent: 0,
+          totalGainLossDollar: 0,
+          totalGainLossPercent: 0,
+          weightPercent: cashWeightPercent,
+          currency,
+        },
+      ];
+    }
+    return { investedHoldings: invested, cashHoldings: cash };
+  }, [holdings, cashBalance, cashWeightPercent, currency]);
 
-  const filteredInvested = investedHoldings
-    .filter((h) => {
-      const matchesSearch =
-        h.symbol.toLowerCase().includes(search.toLowerCase()) ||
-        h.name.toLowerCase().includes(search.toLowerCase());
-      const matchesType = typeFilter === "ALL" || h.assetType === typeFilter;
-      return matchesSearch && matchesType;
-    })
-    .sort((a, b) => {
-      const vA = a[sortField] ?? 0;
-      const vB = b[sortField] ?? 0;
-      if (typeof vA === "string" && typeof vB === "string") {
-        return sortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
-      }
-      return sortAsc ? Number(vA) - Number(vB) : Number(vB) - Number(vA);
-    });
-
-  const filteredCash = cashHoldings.filter((h) => {
-    const matchesSearch =
-      h.symbol.toLowerCase().includes(search.toLowerCase()) ||
-      h.name.toLowerCase().includes(search.toLowerCase());
-    const matchesType = typeFilter === "ALL" || typeFilter === "Cash";
-    return matchesSearch && matchesType;
-  });
+  // The filter and the sort run again only when their inputs change, not on each render.
+  const { filteredInvested, filteredCash } = useMemo(() => {
+    const needle = search.toLowerCase();
+    const matchesSearch = (h: PortfolioHolding) => h.symbol.toLowerCase().includes(needle) || h.name.toLowerCase().includes(needle);
+    const invested = investedHoldings
+      .filter((h) => matchesSearch(h) && (typeFilter === "ALL" || h.assetType === typeFilter))
+      .sort((a, b) => {
+        const vA = a[sortField] ?? 0;
+        const vB = b[sortField] ?? 0;
+        if (typeof vA === "string" && typeof vB === "string") {
+          return sortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+        }
+        return sortAsc ? Number(vA) - Number(vB) : Number(vB) - Number(vA);
+      });
+    const cash = typeFilter === "ALL" || typeFilter === "Cash" ? cashHoldings.filter(matchesSearch) : [];
+    return { filteredInvested: invested, filteredCash: cash };
+  }, [investedHoldings, cashHoldings, search, typeFilter, sortField, sortAsc]);
 
   const totalAssetsCount = filteredInvested.length + filteredCash.length;
 

@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { PortfolioHolding, PortfolioTransaction } from "portfolio-shared/portfolio";
-import { HoldingIntelModal } from "./HoldingIntelModal";
 import { t } from "../../i18n";
 
 /**
@@ -10,6 +9,9 @@ import { t } from "../../i18n";
  * with `openHolding(symbol)` and links names, symbols and ISINs with `HoldingLink` or, in
  * Markdown, `useHoldingLinkPlugin()` plus `holdingSymbolFromHref()` in its `a` override.
  */
+
+// The holding details modal loads on its first open, not with the app.
+const HoldingIntelModal = lazy(() => import("./HoldingIntelModal").then((m) => ({ default: m.HoldingIntelModal })));
 
 export const OPEN_HOLDING_EVENT = "portfolio:open-holding";
 
@@ -195,7 +197,12 @@ export function HoldingLinksHost({ holdings, transactions }: HoldingLinksHostPro
   }, [index]);
 
   if (!open) return null;
-  return createPortal(<HoldingIntelModal holding={open} onClose={() => setOpen(null)} />, document.body);
+  return createPortal(
+    <Suspense fallback={null}>
+      <HoldingIntelModal holding={open} onClose={() => setOpen(null)} />
+    </Suspense>,
+    document.body,
+  );
 }
 
 // ---------------------------------------------------------------------------

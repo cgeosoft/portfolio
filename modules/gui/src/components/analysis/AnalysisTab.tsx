@@ -16,6 +16,7 @@ import type { FinancialPortfolioData } from "portfolio-shared/portfolio";
 import type { PortfolioSuggestion } from "portfolio-shared/suggestions";
 import { api } from "../../api";
 import { getLocale, t } from "../../i18n";
+import { isPageHidden } from "../../visibility";
 import { showToast } from "../common/Toaster";
 import type { InAppLinkRenderer } from "../common/SafeMarkdown";
 import { SuggestionsPage } from "../portfolio/SuggestionsPage";
@@ -28,39 +29,12 @@ import { RunList } from "./RunList";
 import { StageBar, StagePanel } from "./RunStages";
 import { WhyPathPanel, whyPath } from "./WhyPath";
 import { defaultStage, lastCompletedRun, nodesByStage, stageDurations, stageStates, type AnalysisStage } from "./analysis-stages";
+import type { GuidedSectionId } from "./guided-sections";
 import { OPEN_ANALYSIS_NODE_EVENT, capabilityNote, useAiCapability, type OpenAnalysisNodeDetail } from "./shared";
 
-export type GuidedSectionId = "runs" | "suggestions";
+export { GUIDED_FILL_SECTIONS, resolveGuidedSection, saveGuidedSection, savedGuidedSection, type GuidedSectionId } from "./guided-sections";
 
-const STORAGE_KEY = "portfolio_guided_section";
 const POLL_MS = 2_000;
-
-/** Overview, Graph, History and Reports were pages before; each now lives in an analysis. */
-const OLD_SECTIONS = new Set(["overview", "graph", "history", "reports"]);
-
-export function resolveGuidedSection(id: string | undefined): GuidedSectionId | null {
-  if (id === "runs" || (id && OLD_SECTIONS.has(id))) return "runs";
-  return id === "suggestions" ? id : null;
-}
-
-export function savedGuidedSection(): GuidedSectionId {
-  try {
-    return resolveGuidedSection(localStorage.getItem(STORAGE_KEY) ?? undefined) ?? "runs";
-  } catch {
-    return "runs";
-  }
-}
-
-export function saveGuidedSection(id: GuidedSectionId): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, id);
-  } catch {
-    // Storage blocked: the choice lasts until the page closes.
-  }
-}
-
-/** Pages that fill the height and scroll inside. */
-export const GUIDED_FILL_SECTIONS: ReadonlySet<GuidedSectionId> = new Set(["runs", "suggestions"]);
 
 const BUTTON =
   "h-8 inline-flex items-center gap-1.5 px-3.5 rounded-lg border border-slate-800 bg-slate-950 text-xs font-bold text-slate-300 hover:bg-slate-900 hover:border-slate-700 hover:text-slate-50 transition-colors cursor-pointer uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed";
@@ -74,6 +48,24 @@ function fmtWhen(iso: string | undefined): string {
 }
 
 // ── runs ────────────────────────────────────────────────────────────────────
+
+/**
+ * True when a poll brought nothing new for the open run. Nodes, edges and steps are only added
+ * or change their status, so the run fields, the counts, the node statuses and the live line decide.
+ */
+function sameRunDetail(a: GetAnalysisRunResponse, b: GetAnalysisRunResponse): boolean {
+  if (a.run.id !== b.run.id || a.run.updatedAt !== b.run.updatedAt || a.run.status !== b.run.status || a.run.phase !== b.run.phase) return false;
+  if (a.run.stale !== b.run.stale || a.run.briefChanged !== b.run.briefChanged) return false;
+  if (a.nodes.length !== b.nodes.length || a.edges.length !== b.edges.length || a.steps.length !== b.steps.length) return false;
+  if (a.live?.phase !== b.live?.phase || a.live?.message !== b.live?.message || a.live?.since !== b.live?.since) return false;
+  if (Boolean(a.report) !== Boolean(b.report) || (a.suggestions?.length ?? 0) !== (b.suggestions?.length ?? 0)) return false;
+  for (let i = 0; i < a.nodes.length; i++) {
+    const x = a.nodes[i]!;
+    const y = b.nodes[i]!;
+    if (x.id !== y.id || x.status !== y.status || x.relevance !== y.relevance) return false;
+  }
+  return true;
+}
 
 /** The analysis open per portfolio; survives leaving the tab. `null` is the home. */
 const pickedRuns = new Map<string, string | null>();
@@ -127,7 +119,8 @@ function useRuns(portfolioId: string | null) {
     }
     try {
       const res = await api.getAnalysisRun(runId);
-      if (wanted.current === runId) setLoaded(res);
+      // A poll with nothing new keeps the object on screen, so the graph and the panels do not render again.
+      if (wanted.current === runId) setLoaded((current) => (current && sameRunDetail(current, res) ? current : res));
     } catch {
       // A failed poll keeps the open run on screen; the next one tries again.
       setLoaded((current) => (current?.run.id === runId ? current : null));
@@ -140,13 +133,22 @@ function useRuns(portfolioId: string | null) {
 
   const running = Boolean(list?.activeRunId);
   const watching = running && runId === list?.activeRunId;
+  // Each poll starts POLL_MS after the one before has answered, so slow answers do not stack.
+  // A hidden window sends no requests.
   useEffect(() => {
     if (!running) return;
-    const timer = setInterval(() => {
-      void loadList();
-      if (watching) void loadDetail();
-    }, POLL_MS);
-    return () => clearInterval(timer);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const tick = async () => {
+      timer = null;
+      if (!isPageHidden()) await Promise.all([loadList(), watching ? loadDetail() : undefined]);
+      if (!stopped) timer = setTimeout(() => void tick(), POLL_MS);
+    };
+    timer = setTimeout(() => void tick(), POLL_MS);
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [running, watching, loadList, loadDetail]);
 
   const detail = loaded?.run.id === runId ? loaded : null;

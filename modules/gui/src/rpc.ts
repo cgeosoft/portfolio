@@ -5,6 +5,7 @@
  */
 import { api } from "./api";
 import { openExternal } from "./environment";
+import { setVisibleInterval } from "./visibility";
 import type { AppUpdateInfo, LogClientEventRequest } from "portfolio-shared/api-types";
 import { buildConsoleLogLine, CONTINUATION_INDENT, type ConsoleLogLevel } from "portfolio-shared/log-format";
 
@@ -67,13 +68,14 @@ export const rpc = {
 // ── update notifications (polled) ───────────────────────────────────────────
 
 let updateAvailableHandler: ((info: AppUpdateInfo) => void) | null = null;
-let updatePollTimer: ReturnType<typeof setInterval> | null = null;
+let stopUpdatePoll: (() => void) | null = null;
 
 /** Calls `handler` when the service reports a newer version (checked every 10 minutes). */
 export function onUpdateAvailable(handler: (info: AppUpdateInfo) => void): void {
   updateAvailableHandler = handler;
-  if (updatePollTimer) return;
-  updatePollTimer = setInterval(() => {
+  if (stopUpdatePoll) return;
+  // No check while the window is hidden; one runs when it shows again after a missed check.
+  stopUpdatePoll = setVisibleInterval(() => {
     api
       .getUpdateInfo()
       .then((info) => {

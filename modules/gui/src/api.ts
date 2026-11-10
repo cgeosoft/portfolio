@@ -116,6 +116,29 @@ interface RequestOptions {
   timeoutMs?: number;
 }
 
+/** The signal of a request: the caller's signal, the timeout, or one that aborts on the first of the two. */
+function requestSignal(signal: AbortSignal | undefined, timeoutMs: number | undefined): AbortSignal | undefined {
+  if (!timeoutMs) return signal;
+  const timeout = AbortSignal.timeout(timeoutMs);
+  if (!signal) return timeout;
+  if (typeof AbortSignal.any === "function") return AbortSignal.any([signal, timeout]);
+  // Older webviews have no AbortSignal.any.
+  const both = new AbortController();
+  const abort = (source: AbortSignal) => {
+    signal.removeEventListener("abort", onSignal);
+    timeout.removeEventListener("abort", onTimeout);
+    both.abort(source.reason);
+  };
+  const onSignal = () => abort(signal);
+  const onTimeout = () => abort(timeout);
+  if (signal.aborted) abort(signal);
+  else {
+    signal.addEventListener("abort", onSignal, { once: true });
+    timeout.addEventListener("abort", onTimeout, { once: true });
+  }
+  return both.signal;
+}
+
 export async function request<T = unknown>(url: string, init: RequestInit = {}, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
   if (init.body && typeof init.body === "string" && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
@@ -123,7 +146,7 @@ export async function request<T = unknown>(url: string, init: RequestInit = {}, 
     credentials: "include",
     ...init,
     headers,
-    signal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : init.signal ?? undefined,
+    signal: requestSignal(init.signal ?? undefined, opts.timeoutMs),
   });
   if (res.status === 401 && !opts.ownUnauthorized) onUnauthorized?.();
   if (!res.ok) {
